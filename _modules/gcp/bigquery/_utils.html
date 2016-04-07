@@ -1,0 +1,357 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gcp.bigquery._utils &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="gcp.bigquery" href="../bigquery.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.html">gcp package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.bigquery.html">gcp.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.data.html">gcp.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.storage.html">gcp.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../bigquery.html">gcp.bigquery</a> &raquo;</li>
+      
+    <li>gcp.bigquery._utils</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gcp.bigquery._utils</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Useful common utility functions.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+
+<span class="n">DataSetName</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;DataSetName&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;project_id&#39;</span><span class="p">,</span> <span class="s1">&#39;dataset_id&#39;</span><span class="p">])</span>
+<span class="sd">&quot;&quot;&quot; A namedtuple for DataSet names.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    project_id: the project id for the dataset.</span>
+<span class="sd">    dataset_id: the dataset id for the dataset.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">TableName</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;TableName&#39;</span><span class="p">,</span>
+                                   <span class="p">[</span><span class="s1">&#39;project_id&#39;</span><span class="p">,</span> <span class="s1">&#39;dataset_id&#39;</span><span class="p">,</span> <span class="s1">&#39;table_id&#39;</span><span class="p">,</span> <span class="s1">&#39;decorator&#39;</span><span class="p">])</span>
+<span class="sd">&quot;&quot;&quot; A namedtuple for Table names.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    project_id: the project id for the table.</span>
+<span class="sd">    dataset_id: the dataset id for the table.</span>
+<span class="sd">    table_id: the table id for the table.</span>
+<span class="sd">    decorator: the optional decorator for the table (for windowing/snap-shotting).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Absolute project-qualified name pattern: &lt;project&gt;:&lt;dataset&gt;</span>
+<span class="n">_ABS_DATASET_NAME_PATTERN</span> <span class="o">=</span> <span class="s1">r&#39;^([a-z\d\-_\.:]+)\:(\w+)$&#39;</span>
+
+<span class="c1"># Relative name pattern: &lt;dataset&gt;</span>
+<span class="n">_REL_DATASET_NAME_PATTERN</span> <span class="o">=</span> <span class="s1">r&#39;^(\w+)$&#39;</span>
+
+<span class="c1"># Absolute project-qualified name pattern: &lt;project&gt;:&lt;dataset&gt;.&lt;table&gt;</span>
+<span class="n">_ABS_TABLE_NAME_PATTERN</span> <span class="o">=</span> <span class="s1">r&#39;^([a-z\d\-_\.:]+)\:(\w+)\.(\w+)(@[\d\-]+)?$&#39;</span>
+
+<span class="c1"># Relative name pattern: &lt;dataset&gt;.&lt;table&gt;</span>
+<span class="n">_REL_TABLE_NAME_PATTERN</span> <span class="o">=</span> <span class="s1">r&#39;^(\w+)\.(\w+)(@[\d\-]+)?$&#39;</span>
+
+<span class="c1"># Table-only name pattern: &lt;table&gt;. Includes an optional decorator.</span>
+<span class="n">_TABLE_NAME_PATTERN</span> <span class="o">=</span> <span class="s1">r&#39;^(\w+)(@[\d\-]+)$&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">parse_dataset_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">project_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Parses a dataset name into its individual parts.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    name: the name to parse, or a tuple, dictionary or array containing the parts.</span>
+<span class="sd">    project_id: the expected project ID. If the name does not contain a project ID,</span>
+<span class="sd">        this will be used; if the name does contain a project ID and it does not match</span>
+<span class="sd">        this, an exception will be thrown.</span>
+<span class="sd">  Returns:</span>
+<span class="sd">    A DataSetName named tuple for the dataset.</span>
+<span class="sd">  Raises:</span>
+<span class="sd">    Exception: raised if the name doesn&#39;t match the expected formats or a project_id was</span>
+<span class="sd">        specified that does not match that in the name.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">_project_id</span> <span class="o">=</span> <span class="n">_dataset_id</span> <span class="o">=</span> <span class="bp">None</span>
+  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+    <span class="c1"># Try to parse as absolute name first.</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_ABS_DATASET_NAME_PATTERN</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="c1"># Next try to match as a relative name implicitly scoped within current project.</span>
+      <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_REL_DATASET_NAME_PATTERN</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="n">_dataset_id</span> <span class="o">=</span> <span class="n">groups</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">_dataset_id</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="s1">&#39;dataset_id&#39;</span><span class="p">]</span>
+      <span class="n">_project_id</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="s1">&#39;project_id&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+      <span class="k">pass</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="c1"># Try treat as an array or tuple</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+      <span class="c1"># Treat as a tuple or array.</span>
+      <span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="n">_dataset_id</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">_dataset_id</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid dataset name: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">_project_id</span><span class="p">:</span>
+    <span class="n">_project_id</span> <span class="o">=</span> <span class="n">project_id</span>
+
+  <span class="k">return</span> <span class="n">DataSetName</span><span class="p">(</span><span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">parse_table_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">project_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dataset_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Parses a table name into its individual parts.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    name: the name to parse, or a tuple, dictionary or array containing the parts.</span>
+<span class="sd">    project_id: the expected project ID. If the name does not contain a project ID,</span>
+<span class="sd">        this will be used; if the name does contain a project ID and it does not match</span>
+<span class="sd">        this, an exception will be thrown.</span>
+<span class="sd">    dataset_id: the expected dataset ID. If the name does not contain a dataset ID,</span>
+<span class="sd">        this will be used; if the name does contain a dataset ID and it does not match</span>
+<span class="sd">        this, an exception will be thrown.</span>
+<span class="sd">  Returns:</span>
+<span class="sd">    A TableName named tuple consisting of the full name and individual name parts.</span>
+<span class="sd">  Raises:</span>
+<span class="sd">    Exception: raised if the name doesn&#39;t match the expected formats, or a project_id and/or</span>
+<span class="sd">        dataset_id was provided that does not match that in the name.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">_project_id</span> <span class="o">=</span> <span class="n">_dataset_id</span> <span class="o">=</span> <span class="n">_table_id</span> <span class="o">=</span> <span class="n">_decorator</span> <span class="o">=</span> <span class="bp">None</span>
+  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+    <span class="c1"># Try to parse as absolute name first.</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_ABS_TABLE_NAME_PATTERN</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span><span class="p">,</span> <span class="n">_table_id</span><span class="p">,</span> <span class="n">_decorator</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="c1"># Next try to match as a relative name implicitly scoped within current project.</span>
+      <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_REL_TABLE_NAME_PATTERN</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+        <span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span><span class="p">,</span> <span class="n">_table_id</span><span class="p">,</span> <span class="n">_decorator</span> <span class="o">=</span>\
+            <span class="n">project_id</span><span class="p">,</span> <span class="n">groups</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">groups</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">groups</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Finally try to match as a table name only.</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_TABLE_NAME_PATTERN</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+          <span class="n">groups</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+          <span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span><span class="p">,</span> <span class="n">_table_id</span><span class="p">,</span> <span class="n">_decorator</span> <span class="o">=</span>\
+              <span class="n">project_id</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">groups</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">groups</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+  <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">_table_id</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="s1">&#39;table_id&#39;</span><span class="p">]</span>
+      <span class="n">_dataset_id</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="s1">&#39;dataset_id&#39;</span><span class="p">]</span>
+      <span class="n">_project_id</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="s1">&#39;project_id&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+      <span class="k">pass</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="c1"># Try treat as an array or tuple</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+      <span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span><span class="p">,</span> <span class="n">_table_id</span><span class="p">,</span> <span class="n">_decorator</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+      <span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span><span class="p">,</span> <span class="n">_table_id</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+      <span class="n">_dataset_id</span><span class="p">,</span> <span class="n">_table_id</span> <span class="o">=</span> <span class="n">name</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">_table_id</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid table name: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">_project_id</span><span class="p">:</span>
+    <span class="n">_project_id</span> <span class="o">=</span> <span class="n">project_id</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">_dataset_id</span><span class="p">:</span>
+    <span class="n">_dataset_id</span> <span class="o">=</span> <span class="n">dataset_id</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">_decorator</span><span class="p">:</span>
+    <span class="n">_decorator</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+  <span class="k">return</span> <span class="n">TableName</span><span class="p">(</span><span class="n">_project_id</span><span class="p">,</span> <span class="n">_dataset_id</span><span class="p">,</span> <span class="n">_table_id</span><span class="p">,</span> <span class="n">_decorator</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">format_query_errors</span><span class="p">(</span><span class="n">errors</span><span class="p">):</span>
+  <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">error</span><span class="p">[</span><span class="s1">&#39;reason&#39;</span><span class="p">],</span> <span class="n">error</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">])</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

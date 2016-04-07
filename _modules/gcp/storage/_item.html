@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gcp.storage._item &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.html">gcp package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.bigquery.html">gcp.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.data.html">gcp.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.storage.html">gcp.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>gcp.storage._item</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gcp.storage._item</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements Object-related Cloud Storage APIs.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">dateutil.parser</span>
+<span class="kn">import</span> <span class="nn">gcp</span>
+<span class="kn">import</span> <span class="nn">gcp._util</span>
+<span class="kn">import</span> <span class="nn">_api</span>
+
+<span class="c1"># TODO(nikhilko): Read/write operations don&#39;t account for larger files, or non-textual content.</span>
+<span class="c1">#                 Use streaming reads into a buffer or StringIO or into a file handle.</span>
+
+
+<span class="k">class</span> <span class="nc">ItemMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents metadata about a Cloud Storage object.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a ItemMetadata object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      info: a dictionary containing information about an Item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="n">info</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The Content-Type associated with the item, if any.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;contentType&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">etag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The ETag of the item, if any.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;etag&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The name of the item.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The size (in bytes) of the item. 0 for items that don&#39;t exist.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;size&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">updated_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The updated timestamp of the item as a datetime.datetime.&quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;updated&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dateutil</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span> <span class="k">else</span> <span class="bp">None</span>
+
+
+<div class="viewcode-block" id="Item"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Item">[docs]</a><span class="k">class</span> <span class="nc">Item</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents a Cloud Storage object within a bucket.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of an Item.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      bucket: the name of the bucket containing the item.</span>
+<span class="sd">      key: the key of the item.</span>
+<span class="sd">      info: the information about the item if available.</span>
+<span class="sd">      context: an optional Context object providing project_id and credentials. If a specific</span>
+<span class="sd">          project id or credentials are unspecified, the default ones configured at the global</span>
+<span class="sd">          level are used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">context</span> <span class="o">=</span> <span class="n">gcp</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">context</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_api</span> <span class="o">=</span> <span class="n">_api</span><span class="o">.</span><span class="n">Api</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span> <span class="o">=</span> <span class="n">bucket</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">=</span> <span class="n">key</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="n">info</span>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">from_url</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="n">bucket</span><span class="p">,</span> <span class="n">item</span> <span class="o">=</span> <span class="n">_bucket</span><span class="o">.</span><span class="n">parse_name</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Item</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the key of the item.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">uri</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the gs:// URI for the item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;gs://</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Item.__repr__"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Item.__repr__">[docs]</a>  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a representation for the table for showing in the notebook.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;Item </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span></div>
+
+<div class="viewcode-block" id="Item.copy_to"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Item.copy_to">[docs]</a>  <span class="k">def</span> <span class="nf">copy_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">bucket</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Copies this item to the specified new key.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      new_key: the new key to copy this item to.</span>
+<span class="sd">      bucket: the bucket of the new item; if None (the default) use the same bucket.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      An Item corresponding to new key.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if there was an error copying the item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">bucket</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">bucket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">new_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">objects_copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">new_key</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">return</span> <span class="n">Item</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_info</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Item.exists"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Item.exists">[docs]</a>  <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Checks if the item exists. &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+    <span class="k">except</span> <span class="n">gcp</span><span class="o">.</span><span class="n">_util</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="Item.delete"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Item.delete">[docs]</a>  <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deletes this item from its bucket.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if there was an error deleting the item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">objects_delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">)</span>
+      <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="Item.metadata"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Item.metadata">[docs]</a>  <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves metadata about the bucket.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A BucketMetadata instance with information about this bucket.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if there was an error requesting the bucket&#39;s metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">objects_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">)</span>
+      <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">return</span> <span class="n">ItemMetadata</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="k">else</span> <span class="bp">None</span></div>
+
+<div class="viewcode-block" id="Item.read_from"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Item.read_from">[docs]</a>  <span class="k">def</span> <span class="nf">read_from</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reads the content of this item as text.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The text content within the item.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if there was an error requesting the item&#39;s content.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">object_download</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span></div>
+
+<div class="viewcode-block" id="Item.write_to"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Item.write_to">[docs]</a>  <span class="k">def</span> <span class="nf">write_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Writes text content to this item.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      content: the text content to be written.</span>
+<span class="sd">      content_type: the type of text content.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if there was an error requesting the item&#39;s content.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">object_upload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span></div></div>
+
+
+<div class="viewcode-block" id="Items"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Items">[docs]</a><span class="k">class</span> <span class="nc">Items</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents a list of Cloud Storage objects within a bucket.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of an ItemList.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      bucket: the name of the bucket containing the items.</span>
+<span class="sd">      prefix: an optional prefix to match items.</span>
+<span class="sd">      delimiter: an optional string to simulate directory-like semantics. The returned items</span>
+<span class="sd">           will be those whose names do not contain the delimiter after the prefix. For</span>
+<span class="sd">           the remaining items, the names will be returned truncated after the delimiter</span>
+<span class="sd">           with duplicates removed (i.e. as pseudo-directories).</span>
+<span class="sd">      context: an optional Context object providing project_id and credentials. If a specific</span>
+<span class="sd">          project id or credentials are unspecified, the default ones configured at the global</span>
+<span class="sd">          level are used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">context</span> <span class="o">=</span> <span class="n">gcp</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">context</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_api</span> <span class="o">=</span> <span class="n">_api</span><span class="o">.</span><span class="n">Api</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span> <span class="o">=</span> <span class="n">bucket</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span> <span class="o">=</span> <span class="n">prefix</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span> <span class="o">=</span> <span class="n">delimiter</span>
+
+<div class="viewcode-block" id="Items.contains"><a class="viewcode-back" href="../../../gcp.storage.html#gcp.storage.Items.contains">[docs]</a>  <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checks if the specified item exists.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      key: the key of the item to lookup.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      True if the item exists; False otherwise.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if there was an error requesting information about the item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">objects_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">gcp</span><span class="o">.</span><span class="n">_util</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">False</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">return</span> <span class="bp">True</span></div>
+
+  <span class="k">def</span> <span class="nf">_retrieve_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page_token</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">list_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">objects_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span>
+                                         <span class="n">prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span><span class="p">,</span>
+                                         <span class="n">page_token</span><span class="o">=</span><span class="n">page_token</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span>
+
+    <span class="n">items</span> <span class="o">=</span> <span class="n">list_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;items&#39;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">):</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">Item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bucket</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span> <span class="n">info</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span> <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
+      <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unexpected response from server&#39;</span><span class="p">)</span>
+
+    <span class="n">page_token</span> <span class="o">=</span> <span class="n">list_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nextPageToken&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">items</span><span class="p">,</span> <span class="n">page_token</span>
+
+  <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">gcp</span><span class="o">.</span><span class="n">_util</span><span class="o">.</span><span class="n">Iterator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_retrieve_items</span><span class="p">))</span></div>
+
+
+<span class="kn">import</span> <span class="nn">_bucket</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

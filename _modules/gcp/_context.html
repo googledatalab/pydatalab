@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gcp._context &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../gcp.html">gcp package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gcp.bigquery.html">gcp.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gcp.data.html">gcp.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gcp.storage.html">gcp.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>gcp._context</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gcp._context</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2014 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#  http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements Context functionality.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">_util</span>
+
+
+<div class="viewcode-block" id="Context"><a class="viewcode-back" href="../../gcp.html#gcp.Context">[docs]</a><span class="k">class</span> <span class="nc">Context</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Maintains contextual state for connecting to Cloud APIs.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="n">_global_context</span> <span class="o">=</span> <span class="bp">None</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">,</span> <span class="n">credentials</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a Context object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      project_id: the current cloud project.</span>
+<span class="sd">      credentials: the credentials to use to authorize requests.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span> <span class="o">=</span> <span class="n">project_id</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_credentials</span> <span class="o">=</span> <span class="n">credentials</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">credentials</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves the value of the credentials property.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The current credentials used in authorizing API requests.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_credentials</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">project_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves the value of the project_id property.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The current project id to associate with API requests.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Context.default"><a class="viewcode-back" href="../../gcp.html#gcp.Context.default">[docs]</a>  <span class="k">def</span> <span class="nf">default</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Creates a default Context object.</span>
+
+<span class="sd">    The default Context is based on project id and credentials inferred from</span>
+<span class="sd">    metadata returned by the cloud metadata service. It is also managed as a</span>
+<span class="sd">    global shared instance used everytime the default context is retrieved.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      An initialized and shared instance of a Context object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">Context</span><span class="o">.</span><span class="n">_global_context</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">ms</span> <span class="o">=</span> <span class="n">_util</span><span class="o">.</span><span class="n">MetadataService</span><span class="p">()</span>
+      <span class="n">project_id</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">project_id</span>
+      <span class="n">credentials</span> <span class="o">=</span> <span class="n">_util</span><span class="o">.</span><span class="n">MetadataCredentials</span><span class="p">(</span><span class="n">ms</span><span class="p">)</span>
+
+      <span class="n">Context</span><span class="o">.</span><span class="n">_global_context</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">credentials</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Context</span><span class="o">.</span><span class="n">_global_context</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

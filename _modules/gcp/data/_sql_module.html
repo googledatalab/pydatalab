@@ -1,0 +1,323 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gcp.data._sql_module &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="gcp.data" href="../data.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.html">gcp package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.bigquery.html">gcp.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.data.html">gcp.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gcp.storage.html">gcp.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../data.html">gcp.data</a> &raquo;</li>
+      
+    <li>gcp.data._sql_module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gcp.data._sql_module</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Helper functions for %%sql modules.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">types</span>
+
+
+<span class="c1"># It would be nice to be able to inherit from Python module but AFAICT that is not possible.</span>
+<span class="c1"># So this just wraps a bunch of static helpers.</span>
+
+<div class="viewcode-block" id="SqlModule"><a class="viewcode-back" href="../../../gcp.data.html#gcp.data.SqlModule">[docs]</a><span class="k">class</span> <span class="nc">SqlModule</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; A container for SqlStatements defined together and able to reference each other. &quot;&quot;&quot;</span>
+
+  <span class="c1"># Names used for the arg parser, unnamed (main) query and last query in the module.</span>
+  <span class="c1"># Note that every module has a last query, but not every module has a main query.</span>
+
+  <span class="n">_SQL_MODULE_ARGPARSE</span> <span class="o">=</span> <span class="s1">&#39;_sql_module_arg_parser&#39;</span>
+  <span class="n">_SQL_MODULE_MAIN</span> <span class="o">=</span> <span class="s1">&#39;_sql_module_main&#39;</span>
+  <span class="n">_SQL_MODULE_LAST</span> <span class="o">=</span> <span class="s1">&#39;_sql_module_last&#39;</span>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_get_sql_args</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Parse a set of %%sql arguments or get the default value of the arguments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      parser: the argument parser to use.</span>
+<span class="sd">      args: the argument flags. May be a string or a list. If omitted the empty string is used so</span>
+<span class="sd">          we can get the default values for the arguments. These are all used to override the</span>
+<span class="sd">          arg parser. Alternatively args may be a dictionary, in which case it overrides the</span>
+<span class="sd">          default values from the arg parser.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A dictionary of argument names and values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">overrides</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+      <span class="n">command_line</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+      <span class="n">tokens</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command_line</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+      <span class="n">overrides</span> <span class="o">=</span> <span class="n">args</span>
+      <span class="n">tokens</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">tokens</span> <span class="o">=</span> <span class="n">args</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">tokens</span><span class="p">))</span> <span class="k">if</span> <span class="n">parser</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">overrides</span><span class="p">:</span>
+      <span class="n">args</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
+
+    <span class="c1"># Don&#39;t return any args that are None as we don&#39;t want to expand to &#39;None&#39;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">arg</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">arg</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">}</span>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SqlModule.get_default_query_from_module"><a class="viewcode-back" href="../../../gcp.data.html#gcp.data.SqlModule.get_default_query_from_module">[docs]</a>  <span class="k">def</span> <span class="nf">get_default_query_from_module</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Given a %%sql module return the default (last) query for the module.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      module: the %%sql module.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The default query associated with this module.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">):</span>
+      <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SqlModule</span><span class="o">.</span><span class="n">_SQL_MODULE_LAST</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">None</span></div>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SqlModule.get_sql_statement_with_environment"><a class="viewcode-back" href="../../../gcp.data.html#gcp.data.SqlModule.get_sql_statement_with_environment">[docs]</a>  <span class="k">def</span> <span class="nf">get_sql_statement_with_environment</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Given a SQLStatement, string or module plus command line args or a dictionary,</span>
+<span class="sd">     return a SqlStatement and final dictionary for variable resolution.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      item: a SqlStatement, %%sql module, or string containing a query.</span>
+<span class="sd">      args: a string of command line arguments or a dictionary of values.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A SqlStatement for the query or module, plus a dictionary of variable values to use.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">_sql_statement</span><span class="o">.</span><span class="n">SqlStatement</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">_sql_statement</span><span class="o">.</span><span class="n">SqlStatement</span><span class="p">):</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">SqlModule</span><span class="o">.</span><span class="n">get_default_query_from_module</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Expected a SQL statement or module but got </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+
+    <span class="n">env</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">module</span><span class="p">:</span>
+      <span class="n">env</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">__dict__</span><span class="p">)</span>
+      <span class="n">parser</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SqlModule</span><span class="o">.</span><span class="n">_SQL_MODULE_ARGPARSE</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">parser</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">SqlModule</span><span class="o">.</span><span class="n">_get_sql_args</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+      <span class="n">env</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">item</span><span class="p">,</span> <span class="n">env</span></div>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SqlModule.expand"><a class="viewcode-back" href="../../../gcp.data.html#gcp.data.SqlModule.expand">[docs]</a>  <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">udfs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Expand a SqlStatement, query string or SqlModule with a set of arguments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      sql: a SqlStatement, %%sql module, or string containing a query.</span>
+<span class="sd">      args: a string of command line arguments or a dictionary of values. If a string, it is</span>
+<span class="sd">          passed to the argument parser for the SqlModule associated with the SqlStatement or</span>
+<span class="sd">          SqlModule. If a dictionary, it is used to override any default arguments from the</span>
+<span class="sd">          argument parser. If the sql argument is a string then args must be None or a dictionary</span>
+<span class="sd">          as in this case there is no associated argument parser.</span>
+<span class="sd">      udfs: a list of UDFs referenced in the query. This supplements args but does not replace</span>
+<span class="sd">          args, as we want to support passing in UDFs via cell config in magics (which happens</span>
+<span class="sd">          with args).</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      The expanded SQL, list of referenced scripts, and list of referenced external tables.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sql</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">SqlModule</span><span class="o">.</span><span class="n">get_sql_statement_with_environment</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_sql_statement</span><span class="o">.</span><span class="n">SqlStatement</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sql</span><span class="o">.</span><span class="n">_sql</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">udfs</span><span class="p">)</span></div></div>
+
+
+<span class="kn">import</span> <span class="nn">_sql_statement</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

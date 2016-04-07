@@ -1,0 +1,423 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gcp.data package &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="gcp.storage package" href="gcp.storage.html"/>
+        <link rel="prev" title="gcp.bigquery package" href="gcp.bigquery.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gcp.html">gcp package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gcp.bigquery.html">gcp.bigquery package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">gcp.data package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-gcp.data">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gcp.storage.html">gcp.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>gcp.data package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/gcp.data.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="gcp-data-package">
+<h1>gcp.data package<a class="headerlink" href="#gcp-data-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-gcp.data">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-gcp.data" title="Permalink to this headline">¶</a></h2>
+<p>Google Cloud Platform library - Generic SQL Helpers.</p>
+<dl class="function">
+<dt id="gcp.data.sql">
+<code class="descclassname">gcp.data.</code><code class="descname">sql</code><span class="sig-paren">(</span><em>sql_template</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data.html#sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats SQL templates by replacing placeholders with actual values.</p>
+<p>Placeholders in SQL are represented as $&lt;name&gt;. If &#8216;$&#8217; must appear within the
+SQL statement literally, then it can be escaped as &#8216;$$&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql_template</strong> &#8211; the template of the SQL statement with named placeholders.</li>
+<li><strong>**kwargs</strong> &#8211; the dictionary of name/value pairs to use for placeholder values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The formatted SQL statement with placeholders replaced with their values.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li>Exception if a placeholder was found in the SQL statement, but did not have</li>
+<li>a corresponding argument value.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gcp.data.tokenize">
+<code class="descclassname">gcp.data.</code><code class="descname">tokenize</code><span class="sig-paren">(</span><em>sql</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data.html#tokenize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a basic tokenizer for our limited purposes.
+It splits a SQL statement up into a series of segments, where a segment is one of:
+- identifiers
+- left or right parentheses
+- multi-line comments
+- single line comments
+- white-space sequences
+- string literals
+- consecutive strings of characters that are not one of the items above</p>
+<p>The aim is for us to be able to find function calls (identifiers followed by &#8216;(&#8216;), and the
+associated closing &#8216;)&#8217;) so we can augment these if needed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sql</strong> &#8211; a SQL statement as a (possibly multi-line) string.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of strings corresponding to the groups above.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.data.SqlModule">
+<em class="property">class </em><code class="descclassname">gcp.data.</code><code class="descname">SqlModule</code><a class="reference internal" href="_modules/gcp/data/_sql_module.html#SqlModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.SqlModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>A container for SqlStatements defined together and able to reference each other.</p>
+<dl class="staticmethod">
+<dt id="gcp.data.SqlModule.expand">
+<em class="property">static </em><code class="descname">expand</code><span class="sig-paren">(</span><em>sql</em>, <em>args=None</em>, <em>udfs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data/_sql_module.html#SqlModule.expand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.SqlModule.expand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand a SqlStatement, query string or SqlModule with a set of arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; a SqlStatement, %%sql module, or string containing a query.</li>
+<li><strong>args</strong> &#8211; a string of command line arguments or a dictionary of values. If a string, it is
+passed to the argument parser for the SqlModule associated with the SqlStatement or
+SqlModule. If a dictionary, it is used to override any default arguments from the
+argument parser. If the sql argument is a string then args must be None or a dictionary
+as in this case there is no associated argument parser.</li>
+<li><strong>udfs</strong> &#8211; a list of UDFs referenced in the query. This supplements args but does not replace
+args, as we want to support passing in UDFs via cell config in magics (which happens
+with args).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The expanded SQL, list of referenced scripts, and list of referenced external tables.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.data.SqlModule.get_default_query_from_module">
+<em class="property">static </em><code class="descname">get_default_query_from_module</code><span class="sig-paren">(</span><em>module</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data/_sql_module.html#SqlModule.get_default_query_from_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.SqlModule.get_default_query_from_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a %%sql module return the default (last) query for the module.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>module</strong> &#8211; the %%sql module.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The default query associated with this module.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.data.SqlModule.get_sql_statement_with_environment">
+<em class="property">static </em><code class="descname">get_sql_statement_with_environment</code><span class="sig-paren">(</span><em>item</em>, <em>args=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data/_sql_module.html#SqlModule.get_sql_statement_with_environment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.SqlModule.get_sql_statement_with_environment" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Given a SQLStatement, string or module plus command line args or a dictionary,</dt>
+<dd>return a SqlStatement and final dictionary for variable resolution.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> &#8211; a SqlStatement, %%sql module, or string containing a query.</li>
+<li><strong>args</strong> &#8211; a string of command line arguments or a dictionary of values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A SqlStatement for the query or module, plus a dictionary of variable values to use.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.data.SqlStatement">
+<em class="property">class </em><code class="descclassname">gcp.data.</code><code class="descname">SqlStatement</code><span class="sig-paren">(</span><em>sql</em>, <em>module=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data/_sql_statement.html#SqlStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.SqlStatement" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper class for wrapping and manipulating SQL statements.</p>
+<p>Initializes the SqlStatement.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sql</strong> &#8211; a string containing a SQL query with optional variable references.</li>
+<li><strong>module</strong> &#8211; if defined in a %%sql cell, the parent SqlModule object for the SqlStatement.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.data.SqlStatement.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data/_sql_statement.html#SqlStatement.__repr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.SqlStatement.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a friendly representation of this object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The friendly representation of this object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.data.SqlStatement.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data/_sql_statement.html#SqlStatement.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.SqlStatement.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a string representation of this object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The string representation of this object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.data.SqlStatement.format">
+<em class="property">static </em><code class="descname">format</code><span class="sig-paren">(</span><em>sql</em>, <em>args=None</em>, <em>udfs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/data/_sql_statement.html#SqlStatement.format"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.data.SqlStatement.format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve variable references in a query within an environment.</p>
+<p>This computes and resolves the transitive dependencies in the query and raises an
+exception if that fails due to either undefined or circular references.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; query to format.</li>
+<li><strong>args</strong> &#8211; a dictionary of values to use in variable expansion.</li>
+<li><strong>udfs</strong> &#8211; a list of UDFs referenced in the query.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The resolved SQL text, and an array of any referenced UDFs.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception on failure.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.data.SqlStatement.module">
+<code class="descname">module</code><a class="headerlink" href="#gcp.data.SqlStatement.module" title="Permalink to this definition">¶</a></dt>
+<dd><p>The parent SqlModule for the SqlStatement, if any.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.data.SqlStatement.sql">
+<code class="descname">sql</code><a class="headerlink" href="#gcp.data.SqlStatement.sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>The (unexpanded) SQL for the SqlStatement.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gcp.storage.html" class="btn btn-neutral float-right" title="gcp.storage package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="gcp.bigquery.html" class="btn btn-neutral" title="gcp.bigquery package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

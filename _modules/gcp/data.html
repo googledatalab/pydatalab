@@ -1,0 +1,324 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gcp.data &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../gcp.html">gcp package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gcp.bigquery.html">gcp.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gcp.data.html">gcp.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gcp.storage.html">gcp.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>gcp.data</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for gcp.data</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Google Cloud Platform library - Generic SQL Helpers.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">gcp._util</span> <span class="kn">as</span> <span class="nn">_util</span>
+<span class="kn">from</span> <span class="nn">_sql_module</span> <span class="kn">import</span> <span class="n">SqlModule</span>
+<span class="kn">from</span> <span class="nn">_sql_statement</span> <span class="kn">import</span> <span class="n">SqlStatement</span>
+
+
+<div class="viewcode-block" id="sql"><a class="viewcode-back" href="../../gcp.data.html#gcp.data.sql">[docs]</a><span class="k">def</span> <span class="nf">sql</span><span class="p">(</span><span class="n">sql_template</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Formats SQL templates by replacing placeholders with actual values.</span>
+
+<span class="sd">  Placeholders in SQL are represented as $&lt;name&gt;. If &#39;$&#39; must appear within the</span>
+<span class="sd">  SQL statement literally, then it can be escaped as &#39;$$&#39;.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    sql_template: the template of the SQL statement with named placeholders.</span>
+<span class="sd">    **kwargs: the dictionary of name/value pairs to use for placeholder values.</span>
+<span class="sd">  Returns:</span>
+<span class="sd">    The formatted SQL statement with placeholders replaced with their values.</span>
+<span class="sd">  Raises:</span>
+<span class="sd">    Exception if a placeholder was found in the SQL statement, but did not have</span>
+<span class="sd">    a corresponding argument value.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">return</span> <span class="n">_util</span><span class="o">.</span><span class="n">Sql</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sql_template</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_next_token</span><span class="p">(</span><span class="n">sql</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; This is a basic tokenizer for our limited purposes.</span>
+<span class="sd">  It splits a SQL statement up into a series of segments, where a segment is one of:</span>
+<span class="sd">  - identifiers</span>
+<span class="sd">  - left or right parentheses</span>
+<span class="sd">  - multi-line comments</span>
+<span class="sd">  - single line comments</span>
+<span class="sd">  - white-space sequences</span>
+<span class="sd">  - string literals</span>
+<span class="sd">  - consecutive strings of characters that are not one of the items above</span>
+
+<span class="sd">  The aim is for us to be able to find function calls (identifiers followed by &#39;(&#39;), and the</span>
+<span class="sd">  associated closing &#39;)&#39;) so we can augment these if needed.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    sql: a SQL statement as a (possibly multi-line) string.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    For each call, the next token in the initial input.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+
+  <span class="c1"># We use some lambda&#39;s to make the logic more clear. The start_* functions return</span>
+  <span class="c1"># true if i is the index of the start of that construct, while the end_* functions</span>
+  <span class="c1"># return true if i point to the first character beyond that construct or the end of the</span>
+  <span class="c1"># content.</span>
+  <span class="c1">#</span>
+  <span class="c1"># We don&#39;t currently need numbers so the tokenizer here just does sequences of</span>
+  <span class="c1"># digits as a convenience to shrink the total number of tokens. If we needed numbers</span>
+  <span class="c1"># later we would need a special handler for these much like strings.</span>
+
+  <span class="n">start_multi_line_comment</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span>
+  <span class="n">end_multi_line_comment</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span> <span class="ow">and</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span>
+  <span class="n">start_single_line_comment</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span>
+  <span class="n">end_single_line_comment</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+  <span class="n">start_whitespace</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span>
+  <span class="n">end_whitespace</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="ow">not</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span>
+  <span class="n">start_number</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
+  <span class="n">end_number</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="ow">not</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
+  <span class="n">start_identifier</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">or</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span> <span class="ow">or</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span>
+  <span class="n">end_identifier</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="ow">not</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">isalnum</span><span class="p">()</span> <span class="ow">or</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+  <span class="n">start_string</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span><span class="s1">&#39;&quot;&#39;</span> <span class="ow">or</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&#39;&quot;</span>
+  <span class="n">always_true</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="bp">True</span>
+
+  <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sql</span><span class="p">):</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="k">if</span> <span class="n">start_multi_line_comment</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="n">end_checker</span> <span class="o">=</span> <span class="n">end_multi_line_comment</span>
+    <span class="k">elif</span> <span class="n">start_single_line_comment</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="n">end_checker</span> <span class="o">=</span> <span class="n">end_single_line_comment</span>
+    <span class="k">elif</span> <span class="n">start_whitespace</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+      <span class="n">end_checker</span> <span class="o">=</span> <span class="n">end_whitespace</span>
+    <span class="k">elif</span> <span class="n">start_identifier</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+      <span class="n">end_checker</span> <span class="o">=</span> <span class="n">end_identifier</span>
+    <span class="k">elif</span> <span class="n">start_number</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+      <span class="n">end_checker</span> <span class="o">=</span> <span class="n">end_number</span>
+    <span class="k">elif</span> <span class="n">start_string</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+      <span class="c1"># Special handling here as we need to check for escaped closing quotes.</span>
+      <span class="n">quote</span> <span class="o">=</span> <span class="n">sql</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+      <span class="n">end_checker</span> <span class="o">=</span> <span class="n">always_true</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span> <span class="ow">and</span> <span class="n">sql</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">quote</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">sql</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="c1"># We return single characters for everything else</span>
+      <span class="n">end_checker</span> <span class="o">=</span> <span class="n">always_true</span>
+
+    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sql</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">end_checker</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="p">(</span><span class="k">yield</span> <span class="n">sql</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">i</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="tokenize"><a class="viewcode-back" href="../../gcp.data.html#gcp.data.tokenize">[docs]</a><span class="k">def</span> <span class="nf">tokenize</span><span class="p">(</span><span class="n">sql</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; This is a basic tokenizer for our limited purposes.</span>
+<span class="sd">  It splits a SQL statement up into a series of segments, where a segment is one of:</span>
+<span class="sd">  - identifiers</span>
+<span class="sd">  - left or right parentheses</span>
+<span class="sd">  - multi-line comments</span>
+<span class="sd">  - single line comments</span>
+<span class="sd">  - white-space sequences</span>
+<span class="sd">  - string literals</span>
+<span class="sd">  - consecutive strings of characters that are not one of the items above</span>
+
+<span class="sd">  The aim is for us to be able to find function calls (identifiers followed by &#39;(&#39;), and the</span>
+<span class="sd">  associated closing &#39;)&#39;) so we can augment these if needed.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    sql: a SQL statement as a (possibly multi-line) string.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A list of strings corresponding to the groups above.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">_next_token</span><span class="p">(</span><span class="n">sql</span><span class="p">))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

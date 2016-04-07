@@ -1,0 +1,2307 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gcp.bigquery package &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="gcp.data package" href="gcp.data.html"/>
+        <link rel="prev" title="gcp package" href="gcp.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="gcp.html">gcp package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">gcp.bigquery package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-gcp.bigquery">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gcp.data.html">gcp.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gcp.storage.html">gcp.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>gcp.bigquery package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/gcp.bigquery.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="gcp-bigquery-package">
+<h1>gcp.bigquery package<a class="headerlink" href="#gcp-bigquery-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-gcp.bigquery">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-gcp.bigquery" title="Permalink to this headline">¶</a></h2>
+<p>Google Cloud Platform library - BigQuery Functionality.</p>
+<dl class="function">
+<dt id="gcp.bigquery.wait_all">
+<code class="descclassname">gcp.bigquery.</code><code class="descname">wait_all</code><span class="sig-paren">(</span><em>jobs</em>, <em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery.html#wait_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.wait_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return when at all of the specified jobs have completed or timeout expires.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>jobs</strong> &#8211; a single Job or list of Jobs to wait on.</li>
+<li><strong>timeout</strong> &#8211; a timeout in seconds to wait for. None (the default) means no timeout.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of completed Jobs. If the call timed out this will be shorter than the
+list of jobs supplied as a parameter.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gcp.bigquery.wait_any">
+<code class="descclassname">gcp.bigquery.</code><code class="descname">wait_any</code><span class="sig-paren">(</span><em>jobs</em>, <em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery.html#wait_any"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.wait_any" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return when at least one of the specified jobs has completed or timeout expires.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>jobs</strong> &#8211; a list of Jobs to wait on.</li>
+<li><strong>timeout</strong> &#8211; a timeout in seconds to wait for. None (the default) means no timeout.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Once at least one job completes, a list of all completed jobs.
+If the call times out then an empty list will be returned.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.DataSet">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">DataSet</code><span class="sig-paren">(</span><em>name</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of BigQuery tables in a dataset.</p>
+<p>Initializes an instance of a DataSet.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the dataset, as a string or (project_id, dataset_id) tuple.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the name is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.__iter__">
+<code class="descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator for iterating through the Tables in the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.__repr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a representation for the dataset for showing in the notebook.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a string representation of the dataset using its specified name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The string representation of this object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>friendly_name=None</em>, <em>description=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the Dataset with the specified friendly name and description.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>friendly_name</strong> &#8211; (optional) the friendly name for the dataset if it is being created.</li>
+<li><strong>description</strong> &#8211; (optional) a description for the dataset if it is being created.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The DataSet.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the DataSet could not be created.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>delete_contents=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Issues a request to delete the dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>delete_contents</strong> &#8211; if True, any tables and views in the dataset will be deleted. If False
+and the dataset is non-empty an exception will be raised.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None on success.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the delete fails (including if table was nonexistent).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.DataSet.description">
+<code class="descname">description</code><a class="headerlink" href="#gcp.bigquery.DataSet.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>The description of the dataset, if any.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the dataset exists but the metadata for the dataset could not be retrieved.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the dataset exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the dataset exists; False otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if the dataset exists but the metadata for the dataset could not be retrieved.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.DataSet.friendly_name">
+<code class="descname">friendly_name</code><a class="headerlink" href="#gcp.bigquery.DataSet.friendly_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The friendly name of the dataset, if any.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the dataset exists but the metadata for the dataset could not be retrieved.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.DataSet.name">
+<code class="descname">name</code><a class="headerlink" href="#gcp.bigquery.DataSet.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The DataSetName named tuple (project_id, dataset_id) for the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.tables">
+<code class="descname">tables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator for iterating through the Tables in the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>friendly_name=None</em>, <em>description=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Selectively updates DataSet information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>friendly_name</strong> &#8211; if not None, the new friendly name.</li>
+<li><strong>description</strong> &#8211; if not None, the new description.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSet.views">
+<code class="descname">views</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSet.views"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSet.views" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator for iterating through the Views in the dataset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.DataSetName">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">DataSetName</code><span class="sig-paren">(</span><em>project_id</em>, <em>dataset_id</em><span class="sig-paren">)</span><a class="headerlink" href="#gcp.bigquery.DataSetName" title="Permalink to this definition">¶</a></dt>
+<dd><p>A namedtuple for DataSet names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>project_id</strong> &#8211; the project id for the dataset.</li>
+<li><strong>dataset_id</strong> &#8211; the dataset id for the dataset.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.DataSetName.__getnewargs__">
+<code class="descname">__getnewargs__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gcp.bigquery.DataSetName.__getnewargs__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self as a plain tuple.  Used by copy and pickle.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSetName.__getstate__">
+<code class="descname">__getstate__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gcp.bigquery.DataSetName.__getstate__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exclude the OrderedDict from pickling</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.DataSetName.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gcp.bigquery.DataSetName.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a nicely formatted representation string</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.DataSetName.dataset_id">
+<code class="descname">dataset_id</code><a class="headerlink" href="#gcp.bigquery.DataSetName.dataset_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.DataSetName.project_id">
+<code class="descname">project_id</code><a class="headerlink" href="#gcp.bigquery.DataSetName.project_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.DataSets">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">DataSets</code><span class="sig-paren">(</span><em>project_id=None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterator class for enumerating the datasets in a project.</p>
+<p>Initialize the DataSetLister.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>project_id</strong> &#8211; the ID of the project whose datasets you want to list. If None defaults
+to the project in the context.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.DataSets.__iter__">
+<code class="descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_dataset.html#DataSets.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.DataSets.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator for iterating through the DataSets in the project.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.Job">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">Job</code><span class="sig-paren">(</span><em>job_id</em>, <em>context</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_job.html#Job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a BigQuery Job.</p>
+<p>Initializes an instance of a Job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>job_id</strong> &#8211; the BigQuery job ID corresponding to this job.</li>
+<li><strong>context</strong> &#8211; a Context object providing project_id and credentials.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.Job.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_job.html#Job.__repr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Job.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a representation for the job for showing in the notebook.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Job.end_time_utc">
+<code class="descname">end_time_utc</code><a class="headerlink" href="#gcp.bigquery.Job.end_time_utc" title="Permalink to this definition">¶</a></dt>
+<dd><p>The UTC end time of the job (or None if incomplete) as a Python datetime.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Job.start_time_utc">
+<code class="descname">start_time_utc</code><a class="headerlink" href="#gcp.bigquery.Job.start_time_utc" title="Permalink to this definition">¶</a></dt>
+<dd><p>The UTC start time of the job as a Python datetime.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Job.total_time">
+<code class="descname">total_time</code><a class="headerlink" href="#gcp.bigquery.Job.total_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total time in fractional seconds that the job took, or None if not complete.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.Query">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">Query</code><span class="sig-paren">(</span><em>sql</em>, <em>context=None</em>, <em>values=None</em>, <em>udfs=None</em>, <em>data_sources=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a Query object that encapsulates a BigQuery SQL query.</p>
+<p>This object can be used to execute SQL queries and retrieve results.</p>
+<dl class="docutils">
+<dt>Initializes an instance of a Query object.</dt>
+<dd>Note that either values or kwargs may be used, but not both.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; <p>the BigQuery SQL query string to execute, or a SqlStatement object. The latter will
+have any variable references replaced before being associated with the Query (i.e.
+once constructed the SQL associated with a Query is static).</p>
+<p>It is possible to have variable references in a query string too provided the variables
+are passed as keyword arguments to this constructor.</p>
+</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+<li><strong>values</strong> &#8211; a dictionary used to expand variables if passed a SqlStatement or a string with
+variable references.</li>
+<li><strong>udfs</strong> &#8211; array of UDFs referenced in the SQL.</li>
+<li><strong>data_sources</strong> &#8211; dictionary of federated (external) tables referenced in the SQL.</li>
+<li><strong>kwargs</strong> &#8211; arguments to use when expanding the variables if passed a SqlStatement
+or a string with variable references.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if expansion of any variables failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.Query.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.__repr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a friendly representation of this object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The friendly representation of this object (the unmodified SQL).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a string representation of this object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The string representation of this object (the unmodified SQL).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode='create'</em>, <em>use_cache=True</em>, <em>priority='interactive'</em>, <em>allow_large_results=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiate the query, blocking until complete and then return the results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>table_name</strong> &#8211; the result table name as a string or TableName; if None (the default), then a
+temporary table will be used.</li>
+<li><strong>table_mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;overwrite&#8217; or &#8216;append&#8217;. If &#8216;create&#8217; (the default), the request
+will fail if the table exists.</li>
+<li><strong>use_cache</strong> &#8211; whether to use past query results or ignore cache. Has no effect if destination is
+specified (default True).</li>
+<li><strong>priority</strong> &#8211; one of &#8216;batch&#8217; or &#8216;interactive&#8217; (default). &#8216;interactive&#8217; jobs should be scheduled
+to run quickly but are subject to rate limits; &#8216;batch&#8217; jobs could be delayed by as much
+as three hours but are not rate-limited.</li>
+<li><strong>allow_large_results</strong> &#8211; whether to allow large results; i.e. compressed data over 100MB. This is
+slower and requires a table_name to be specified) (default False).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The QueryResultsTable for the query.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if query could not be executed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.execute_async">
+<code class="descname">execute_async</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode='create'</em>, <em>use_cache=True</em>, <em>priority='interactive'</em>, <em>allow_large_results=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.execute_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiate the query and return a QueryJob.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset_id</strong> &#8211; the datasetId for the result table.</li>
+<li><strong>table_name</strong> &#8211; the result table name as a string or TableName; if None (the default), then a
+temporary table will be used.</li>
+<li><strong>table_mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;overwrite&#8217; or &#8216;append&#8217;. If &#8216;create&#8217; (the default), the request
+will fail if the table exists.</li>
+<li><strong>use_cache</strong> &#8211; whether to use past query results or ignore cache. Has no effect if destination is
+specified (default True).</li>
+<li><strong>priority</strong> &#8211; one of &#8216;batch&#8217; or &#8216;interactive&#8217; (default). &#8216;interactive&#8217; jobs should be scheduled
+to run quickly but are subject to rate limits; &#8216;batch&#8217; jobs could be delayed by as much
+as three hours but are not rate-limited.</li>
+<li><strong>allow_large_results</strong> &#8211; whether to allow large results; i.e. compressed data over 100MB. This is
+slower and requires a table_name to be specified) (default False).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A QueryJob.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if query could not be executed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.execute_dry_run">
+<code class="descname">execute_dry_run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.execute_dry_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.execute_dry_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dry run a query, to check the validity of the query and return some useful statistics.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A dict with &#8216;cacheHit&#8217; and &#8216;totalBytesProcessed&#8217; fields.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">An exception if the query was malformed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.extract">
+<code class="descname">extract</code><span class="sig-paren">(</span><em>storage_uris</em>, <em>format='csv'</em>, <em>csv_delimiter='</em>, <em>'</em>, <em>csv_header=True</em>, <em>compress=False</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.extract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.extract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports the query results to GCS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>storage_uris</strong> &#8211; the destination URI(s). Can be a single URI or a list.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; one of &#8216;csv&#8217;, &#8216;json&#8217;, or &#8216;avro&#8217;
+(default &#8216;csv&#8217;).</li>
+<li><strong>csv_delimiter</strong> &#8211; for csv exports, the field delimiter to use (default &#8216;,&#8217;).</li>
+<li><strong>csv_header</strong> &#8211; for csv exports, whether to include an initial header line (default True).</li>
+<li><strong>whether to compress the data on export. Compression is not supported for</strong> (<em>compress</em>) &#8211; AVRO format (default False).</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not (default True).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Job object for the export Job if it was completed successfully; else None.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An Exception if the query or extract failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Query.extract_async">
+<code class="descname">extract_async</code><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.extract_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.extract_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports the query results to GCS. Returns a Job immediately.</p>
+<p>Note that there are two jobs that may need to be run sequentially, one to run the query,
+and the second to extract the resulting table. These are wrapped by a single outer Job.</p>
+<p>If the query has already been executed and you would prefer to get a Job just for the
+extract, you can can call extract_async on the QueryResultsTable instead; i.e.:</p>
+<blockquote>
+<div>query.results().extract_async(...)</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>storage_uris</strong> &#8211; the destination URI(s). Can be a single URI or a list.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; one of &#8216;csv&#8217;, &#8216;json&#8217;, or &#8216;avro&#8217;
+(default &#8216;csv&#8217;).</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use (default &#8216;,&#8217;).</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line (default True).</li>
+<li><strong>whether to compress the data on export. Compression is not supported for</strong> (<em>compress</em>) &#8211; AVRO format (default False).</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not (default True).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Job for the combined (execute, extract) task that will in turn return the Job object for
+the completed extract task when done; else None.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An Exception if the query failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.results">
+<code class="descname">results</code><span class="sig-paren">(</span><em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves table of results for the query. May block if the query must be executed first.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>use_cache</strong> &#8211; whether to use cached results or not. Ignored if append is specified.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A QueryResultsTable containing the result set.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the query could not be executed or query response was malformed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.sample">
+<code class="descname">sample</code><span class="sig-paren">(</span><em>count=5</em>, <em>fields=None</em>, <em>sampling=None</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a sampling of rows for the query.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>count</strong> &#8211; an optional count of rows to retrieve which is used if a specific
+sampling is not specified (default 5).</li>
+<li><strong>fields</strong> &#8211; the list of fields to sample (default None implies all).</li>
+<li><strong>sampling</strong> &#8211; an optional sampling strategy to apply to the table.</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not (default True).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A QueryResultsTable containing a sampling of the result set.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the query could not be executed or query response was malformed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Query.sampling_query">
+<em class="property">static </em><code class="descname">sampling_query</code><span class="sig-paren">(</span><em>sql</em>, <em>context</em>, <em>fields=None</em>, <em>count=5</em>, <em>sampling=None</em>, <em>udfs=None</em>, <em>data_sources=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.sampling_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.sampling_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a sampling Query for the SQL object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; the SQL statement (string) or Query object to sample.</li>
+<li><strong>context</strong> &#8211; a Context object providing project_id and credentials.</li>
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; an optional count of rows to retrieve which is used if a specific
+sampling is not specified.</li>
+<li><strong>sampling</strong> &#8211; an optional sampling strategy to apply to the table.</li>
+<li><strong>udfs</strong> &#8211; array of UDFs referenced in the SQL.</li>
+<li><strong>data_sources</strong> &#8211; dictionary of federated (external) tables referenced in the SQL.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Query object for sampling the table.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Query.scripts">
+<code class="descname">scripts</code><a class="headerlink" href="#gcp.bigquery.Query.scripts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the code for any Javascript UDFs used in the query.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Query.sql">
+<code class="descname">sql</code><a class="headerlink" href="#gcp.bigquery.Query.sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the SQL for the query.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.to_dataframe">
+<code class="descname">to_dataframe</code><span class="sig-paren">(</span><em>start_row=0</em>, <em>max_rows=None</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports the query results to a Pandas dataframe.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start_row</strong> &#8211; the row of the table at which to start the export (default 0).</li>
+<li><strong>max_rows</strong> &#8211; an upper limit on the number of rows to export (default None).</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not (default True).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Pandas dataframe containing the table data.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.to_file">
+<code class="descname">to_file</code><span class="sig-paren">(</span><em>path</em>, <em>format='csv'</em>, <em>csv_delimiter='</em>, <em>'</em>, <em>csv_header=True</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the results to a local file in CSV format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> &#8211; path on the local filesystem for the saved results.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; currently only &#8216;csv&#8217; is supported.</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The path to the local file.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An Exception if the operation failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Query.to_file_async">
+<code class="descname">to_file_async</code><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.to_file_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.to_file_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the results to a local file in CSV format. Returns a Job immediately.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> &#8211; path on the local filesystem for the saved results.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; currently only &#8216;csv&#8217; is supported.</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Job for the save that returns the path to the local file on completion.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An Exception if the operation failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Query.to_view">
+<code class="descname">to_view</code><span class="sig-paren">(</span><em>view_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query.html#Query.to_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Query.to_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a View from this Query.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>view_name</strong> &#8211; the name of the View either as a string or a 3-part tuple
+(projectid, datasetid, name).</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A View for the Query.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.QueryJob">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">QueryJob</code><span class="sig-paren">(</span><em>job_id</em>, <em>table_name</em>, <em>sql</em>, <em>context</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query_job.html#QueryJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.QueryJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a BigQuery Query Job.</p>
+<p>Initializes a QueryJob object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>job_id</strong> &#8211; the ID of the query job.</li>
+<li><strong>table_name</strong> &#8211; the name of the table where the query results will be stored.</li>
+<li><strong>sql</strong> &#8211; the SQL statement that was executed for the query.</li>
+<li><strong>context</strong> &#8211; the Context object providing project_id and credentials that was used
+when executing the query.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryJob.bytes_processed">
+<code class="descname">bytes_processed</code><a class="headerlink" href="#gcp.bigquery.QueryJob.bytes_processed" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of bytes processed, or None if the job is not complete.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryJob.cache_hit">
+<code class="descname">cache_hit</code><a class="headerlink" href="#gcp.bigquery.QueryJob.cache_hit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the query results were obtained from the cache or not, or None if not complete.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryJob.results">
+<code class="descname">results</code><a class="headerlink" href="#gcp.bigquery.QueryJob.results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the table used for the results of the query. If the query is incomplete, this blocks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if we timed out waiting for results or the query failed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryJob.sql">
+<code class="descname">sql</code><a class="headerlink" href="#gcp.bigquery.QueryJob.sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>The SQL statement that was executed for the query.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryJob.total_rows">
+<code class="descname">total_rows</code><a class="headerlink" href="#gcp.bigquery.QueryJob.total_rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total number of rows in the result, or None if not complete.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.QueryJob.wait">
+<code class="descname">wait</code><span class="sig-paren">(</span><em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query_job.html#QueryJob.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.QueryJob.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for the job to complete, or a timeout to happen.</p>
+<blockquote>
+<div>This is more efficient than the version in the base Job class, in that we can
+use a call that blocks for the poll duration rather than a sleep. That means we
+shouldn&#8217;t block unnecessarily long and can also poll less.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> &#8211; how long to wait (in seconds) before giving up; default None which means no timeout.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The QueryJob</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.QueryResultsTable">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">QueryResultsTable</code><span class="sig-paren">(</span><em>name</em>, <em>context</em>, <em>job</em>, <em>is_temporary=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query_results_table.html#QueryResultsTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.QueryResultsTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>A subclass of Table specifically for Query results.</p>
+<p>The primary differences are the additional properties job_id and sql.</p>
+<p>Initializes an instance of a Table object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+<li><strong>job</strong> &#8211; the QueryJob associated with these results.</li>
+<li><strong>is_temporary</strong> &#8211; if True, this is a short-lived table for intermediate results (default False).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.QueryResultsTable.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query_results_table.html#QueryResultsTable.__repr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.QueryResultsTable.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a representation for the dataset for showing in the notebook.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryResultsTable.is_temporary">
+<code class="descname">is_temporary</code><a class="headerlink" href="#gcp.bigquery.QueryResultsTable.is_temporary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this is a short-lived table or not.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryResultsTable.job">
+<code class="descname">job</code><a class="headerlink" href="#gcp.bigquery.QueryResultsTable.job" title="Permalink to this definition">¶</a></dt>
+<dd><p>The QueryJob object that caused the table to be populated.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryResultsTable.job_id">
+<code class="descname">job_id</code><a class="headerlink" href="#gcp.bigquery.QueryResultsTable.job_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>The ID of the query job that caused the table to be populated.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.QueryResultsTable.sql">
+<code class="descname">sql</code><a class="headerlink" href="#gcp.bigquery.QueryResultsTable.sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>The SQL statement for the query that populated the table.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.QueryStats">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">QueryStats</code><span class="sig-paren">(</span><em>total_bytes</em>, <em>is_cached</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_query_stats.html#QueryStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.QueryStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for statistics returned by a dry run query. Useful so we can get an HTML
+representation in a notebook.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.Sampling">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">Sampling</code><a class="reference internal" href="_modules/gcp/bigquery/_sampling.html#Sampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Sampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides common sampling strategies.</p>
+<p>Sampling strategies can be used for sampling tables or queries.</p>
+<p>They are implemented as functions that take in a SQL statement representing the table or query
+that should be sampled, and return a new SQL statement that limits the result set in some manner.</p>
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Sampling.default">
+<em class="property">static </em><code class="descname">default</code><span class="sig-paren">(</span><em>fields=None</em>, <em>count=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_sampling.html#Sampling.default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Sampling.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a simple default sampling strategy which limits the result set by a count.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; optional number of rows to limit the sampled results to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sampling function that can be applied to get a random sampling.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Sampling.hashed">
+<em class="property">static </em><code class="descname">hashed</code><span class="sig-paren">(</span><em>field_name</em>, <em>percent</em>, <em>fields=None</em>, <em>count=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_sampling.html#Sampling.hashed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Sampling.hashed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a sampling strategy based on hashing and selecting a percentage of data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>field_name</strong> &#8211; the name of the field to hash.</li>
+<li><strong>percent</strong> &#8211; the percentage of the resulting hashes to select.</li>
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; optional maximum count of rows to pick.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sampling function that can be applied to get a hash-based sampling.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Sampling.random">
+<em class="property">static </em><code class="descname">random</code><span class="sig-paren">(</span><em>percent</em>, <em>fields=None</em>, <em>count=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_sampling.html#Sampling.random"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Sampling.random" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a sampling strategy that picks a semi-random set of rows.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>percent</strong> &#8211; the percentage of the resulting hashes to select.</li>
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; maximum number of rows to limit the sampled results to (default 5).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sampling function that can be applied to get some random rows. In order for this to
+provide a good random sample percent should be chosen to be ~count/#rows where #rows
+is the number of rows in the object (query, view or table) being sampled.
+The rows will be returned in order; i.e. the order itself is not randomized.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Sampling.sampling_query">
+<em class="property">static </em><code class="descname">sampling_query</code><span class="sig-paren">(</span><em>sql</em>, <em>fields=None</em>, <em>count=5</em>, <em>sampling=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_sampling.html#Sampling.sampling_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Sampling.sampling_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a sampling query for the SQL object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; the SQL object to sample</li>
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; an optional count of rows to retrieve which is used if a specific
+sampling is not specified.</li>
+<li><strong>sampling</strong> &#8211; an optional sampling strategy to apply to the table.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A SQL query string for sampling the input sql.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Sampling.sorted">
+<em class="property">static </em><code class="descname">sorted</code><span class="sig-paren">(</span><em>field_name</em>, <em>ascending=True</em>, <em>fields=None</em>, <em>count=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_sampling.html#Sampling.sorted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Sampling.sorted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a sampling strategy that picks from an ordered set of rows.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>field_name</strong> &#8211; the name of the field to sort the rows by.</li>
+<li><strong>ascending</strong> &#8211; whether to sort in ascending direction or not.</li>
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; optional number of rows to limit the sampled results to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sampling function that can be applied to get the initial few rows.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.Schema">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">Schema</code><span class="sig-paren">(</span><em>definition=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the schema of a BigQuery table as a flattened list of objects representing fields.</p>
+<p>Each field object has name, data_type, mode and description properties. Nested fields
+get flattened with their full-qualified names. So a Schema that has an object A with nested
+field B will be represented as [(name: &#8216;A&#8217;, ...), (name: &#8216;A.b&#8217;, ...)].</p>
+<p>Initializes a Schema from its raw JSON representation, a Pandas Dataframe, or a list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>definition</strong> &#8211; a definition of the schema as a list of dictionaries with &#8216;name&#8217; and &#8216;type&#8217;
+entries and possibly &#8216;mode&#8217; and &#8216;description&#8217; entries. Only used if no data argument was
+provided. &#8216;mode&#8217; can be &#8216;NULLABLE&#8217;, &#8216;REQUIRED&#8217; or &#8216;REPEATED&#8217;. For the allowed types, see:
+<a class="reference external" href="https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes">https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes</a></td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="gcp.bigquery.Schema.Field">
+<em class="property">class </em><code class="descname">Field</code><span class="sig-paren">(</span><em>name</em>, <em>data_type</em>, <em>mode='NULLABLE'</em>, <em>description=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.Field"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.Field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a single field in a Table schema.</p>
+<p>This has the properties:</p>
+<ul>
+<li><p class="first">name: the flattened, full-qualified name of the field.</p>
+</li>
+<li><dl class="first docutils">
+<dt>data_type: the type of the field as a string (&#8216;INTEGER&#8217;, &#8216;BOOLEAN&#8217;, &#8216;FLOAT&#8217;, &#8216;STRING&#8217;</dt>
+<dd><p class="first last">or &#8216;TIMESTAMP&#8217;).</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">mode: the mode of the field; &#8216;NULLABLE&#8217; by default.</p>
+</li>
+<li><p class="first">description: a description of the field, if known; empty string by default.</p>
+</li>
+</ul>
+<dl class="method">
+<dt id="gcp.bigquery.Schema.Field.__eq__">
+<code class="descname">__eq__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.Field.__eq__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.Field.__eq__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compare two schema field objects for equality (ignoring description).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Schema.Field.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.Field.__repr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.Field.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the schema field as a string form of a dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Schema.Field.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.Field.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.Field.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the schema field as a string form of a dictionary.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Schema.__eq__">
+<code class="descclassname">Schema.</code><code class="descname">__eq__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.__eq__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.__eq__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compares two schema for equality.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Schema.__getitem__">
+<code class="descclassname">Schema.</code><code class="descname">__getitem__</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides ability to lookup a schema field by position or by name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Schema.__ne__">
+<code class="descclassname">Schema.</code><code class="descname">__ne__</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.__ne__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.__ne__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compares two schema for inequality.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Schema.__str__">
+<code class="descclassname">Schema.</code><code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a string representation of the non-flattened form of the schema.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Schema.find">
+<code class="descclassname">Schema.</code><code class="descname">find</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the index of a field in the flattened list given its (fully-qualified) name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the fully-qualified name of the field.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The index of the field, if found; else -1.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Schema.from_data">
+<em class="property">static </em><code class="descclassname">Schema.</code><code class="descname">from_data</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.from_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.from_data" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Infers a table/view schema from its JSON representation, a list of records, or a Pandas</dt>
+<dd>dataframe.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>source</strong> &#8211; <p>the Pandas Dataframe, a dictionary representing a record, a list of heterogeneous
+data (record) or homogeneous data (list of records) from which to infer the schema, or
+a definition of the schema as a list of dictionaries with &#8216;name&#8217; and &#8216;type&#8217; entries
+and possibly &#8216;mode&#8217; and &#8216;description&#8217; entries. Only used if no data argument was provided.
+&#8216;mode&#8217; can be &#8216;NULLABLE&#8217;, &#8216;REQUIRED&#8217; or &#8216;REPEATED&#8217;. For the allowed types, see:
+<a class="reference external" href="https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes">https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes</a></p>
+<p>Note that there is potential ambiguity when passing a list of lists or a list of
+dicts between whether that should be treated as a list of records or a single record
+that is a list. The heuristic used is to check the length of the entries in the
+list; if they are equal then a list of records is assumed. To avoid this ambuity
+you can instead use the Schema.from_record method which assumes a single record,
+in either list of values or dictionary of key-values form.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Schema for the data.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Schema.from_dataframe">
+<em class="property">static </em><code class="descclassname">Schema.</code><code class="descname">from_dataframe</code><span class="sig-paren">(</span><em>dataframe</em>, <em>default_type='STRING'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.from_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.from_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Infer a BigQuery table schema from a Pandas dataframe. Note that if you don&#8217;t explicitly set
+the types of the columns in the dataframe, they may be of a type that forces coercion to
+STRING, so even though the fields in the dataframe themselves may be numeric, the type in the
+derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed
+correctly.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataframe</strong> &#8211; The DataFrame.</li>
+<li><strong>default_type</strong> &#8211; The default big query type in case the type of the column does not exist in
+the schema. Defaults to &#8216;STRING&#8217;.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Schema.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="gcp.bigquery.Schema.from_record">
+<em class="property">static </em><code class="descclassname">Schema.</code><code class="descname">from_record</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_schema.html#Schema.from_record"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Schema.from_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Infers a table/view schema from a single record that can contain a list of fields or a
+dictionary of fields. The type of the elements is used for the types in the schema. For a
+dict, key names are used for column names while for a list, the field names are simply named
+&#8216;Column1&#8217;, &#8216;Column2&#8217;, etc. Note that if using a dict you may want to use an OrderedDict
+to ensure column ordering is deterministic.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>source</strong> &#8211; The list of field values or dictionary of key/values.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Schema for the data.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.Table">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">Table</code><span class="sig-paren">(</span><em>name</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a Table object referencing a BigQuery table.</p>
+<p>Initializes an instance of a Table object. The Table need not exist yet.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
+If a string, it must have the form &#8216;&lt;project&gt;:&lt;dataset&gt;.&lt;table&gt;&#8217; or &#8216;&lt;dataset&gt;.&lt;table&gt;&#8217;.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the name is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.Table.__getitem__">
+<code class="descname">__getitem__</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an item or a slice of items from the table. This uses a small cache
+to reduce the number of calls to tabledata.list.</p>
+<p>Note: this is a useful function to have, and supports some current usage like
+query.results()[0], but should be used with care.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.__iter__">
+<code class="descname">__iter__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.__iter__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.__iter__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an iterator for the table.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.__repr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a representation for the table for showing in the notebook.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a string representation of the table using its specified name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The string representation of this object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>schema</em>, <em>overwrite=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the table with the specified schema.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>schema</strong> &#8211; the schema to use to create the table. Should be a list of dictionaries, each
+containing at least a pair of entries, &#8216;name&#8217; and &#8216;type&#8217;.
+See <a class="reference external" href="https://cloud.google.com/bigquery/docs/reference/v2/tables#resource">https://cloud.google.com/bigquery/docs/reference/v2/tables#resource</a></li>
+<li><strong>overwrite</strong> &#8211; if True, delete the table first if it exists. If False and the table exists,
+creation will fail and raise an Exception.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The Table instance.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the table couldn&#8217;t be created or already exists and truncate was False.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the Table no longer exists; False otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the table exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the table exists; False otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error requesting information about the table.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.extract">
+<code class="descname">extract</code><span class="sig-paren">(</span><em>destination</em>, <em>format='csv'</em>, <em>csv_delimiter='</em>, <em>'</em>, <em>csv_header=True</em>, <em>compress=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.extract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.extract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports the table to GCS; blocks until complete.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>destination</strong> &#8211; the destination URI(s). Can be a single URI or a list.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; one of &#8216;csv&#8217;, &#8216;json&#8217;, or &#8216;avro&#8217;
+(default &#8216;csv&#8217;).</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+<li><strong>compress</strong> &#8211; whether to compress the data on export. Compression is not supported for
+AVRO format. Defaults to False.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Job object for the completed export Job if it was started successfully; else None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.extract_async">
+<code class="descname">extract_async</code><span class="sig-paren">(</span><em>destination</em>, <em>format='csv'</em>, <em>csv_delimiter='</em>, <em>'</em>, <em>csv_header=True</em>, <em>compress=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.extract_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.extract_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts a job to export the table to GCS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>destination</strong> &#8211; the destination URI(s). Can be a single URI or a list.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; one of &#8216;csv&#8217;, &#8216;json&#8217;, or &#8216;avro&#8217;
+(default &#8216;csv&#8217;).</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+<li><strong>compress</strong> &#8211; whether to compress the data on export. Compression is not supported for
+AVRO format. Defaults to False.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Job object for the export Job if it was started successfully; else None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.insert_data">
+<code class="descname">insert_data</code><span class="sig-paren">(</span><em>data</em>, <em>include_index=False</em>, <em>index_name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.insert_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.insert_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert the contents of a Pandas DataFrame or a list of dictionaries into the table.</p>
+<p>The insertion will be performed using at most 500 rows per POST, and at most 10 POSTs per
+second, as BigQuery has some limits on streaming rates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; the DataFrame or list to insert.</li>
+<li><strong>include_index</strong> &#8211; whether to include the DataFrame or list index as a column in the BQ table.</li>
+<li><strong>index_name</strong> &#8211; for a list, if include_index is True, this should be the name for the index.
+If not specified, &#8216;Index&#8217; will be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The table.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li>Exception if the table doesn&#8217;t exist, the table&#8217;s schema differs from the data&#8217;s schema,</li>
+<li>or the insert failed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Table.is_temporary">
+<code class="descname">is_temporary</code><a class="headerlink" href="#gcp.bigquery.Table.is_temporary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this is a short-lived table or not. Always False for non-QueryResultsTables.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Table.job">
+<code class="descname">job</code><a class="headerlink" href="#gcp.bigquery.Table.job" title="Permalink to this definition">¶</a></dt>
+<dd><p>For tables resulting from executing queries, the job that created the table.</p>
+<p>Default is None for a Table object; this is overridden by QueryResultsTable.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Table.length">
+<code class="descname">length</code><a class="headerlink" href="#gcp.bigquery.Table.length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the length of the table (number of rows). We don&#8217;t use __len__ as this may
+return -1 for &#8216;unknown&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>source</em>, <em>mode='create'</em>, <em>source_format='csv'</em>, <em>csv_options=None</em>, <em>ignore_unknown_values=False</em>, <em>max_bad_records=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the table from GCS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> &#8211; the URL of the source objects(s). Can include a wildcard &#8216;*&#8217; at the end of the item
+name. Can be a single source or a list.</li>
+<li><strong>mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;append&#8217;, or &#8216;overwrite&#8217;. &#8216;append&#8217; or &#8216;overwrite&#8217; will fail if the
+table does not already exist, while &#8216;create&#8217; will fail if it does. The default is
+&#8216;create&#8217;. If &#8216;create&#8217; the schema will be inferred if necessary.</li>
+<li><strong>source_format</strong> &#8211; the format of the data, &#8216;csv&#8217; or &#8216;json&#8217;; default &#8216;csv&#8217;.</li>
+<li><strong>csv_options</strong> &#8211; if source format is &#8216;csv&#8217;, additional options as a CSVOptions object.</li>
+<li><strong>ignore_unknown_values</strong> &#8211; If True, accept rows that contain values that do not match the schema;
+the unknown values are ignored (default False).</li>
+<li><strong>The maximum number of bad records that are allowed</strong> (<em>max_bad_records</em>) &#8211; returning an &#8216;invalid&#8217; error in the Job result (default 0).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Job object for the completed load Job if it was started successfully; else None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.load_async">
+<code class="descname">load_async</code><span class="sig-paren">(</span><em>source</em>, <em>mode='create'</em>, <em>source_format='csv'</em>, <em>csv_options=None</em>, <em>ignore_unknown_values=False</em>, <em>max_bad_records=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.load_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.load_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts importing a table from GCS and return a Future.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> &#8211; the URL of the source objects(s). Can include a wildcard &#8216;*&#8217; at the end of the item
+name. Can be a single source or a list.</li>
+<li><strong>mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;append&#8217;, or &#8216;overwrite&#8217;. &#8216;append&#8217; or &#8216;overwrite&#8217; will fail if the
+table does not already exist, while &#8216;create&#8217; will fail if it does. The default is
+&#8216;create&#8217;. If &#8216;create&#8217; the schema will be inferred if necessary.</li>
+<li><strong>source_format</strong> &#8211; the format of the data, &#8216;csv&#8217; or &#8216;json&#8217;; default &#8216;csv&#8217;.</li>
+<li><strong>csv_options</strong> &#8211; if source format is &#8216;csv&#8217;, additional options as a CSVOptions object.</li>
+<li><strong>ignore_unknown_values</strong> &#8211; If True, accept rows that contain values that do not match the schema;
+the unknown values are ignored (default False).</li>
+<li><strong>The maximum number of bad records that are allowed</strong> (<em>max_bad_records</em>) &#8211; returning an &#8216;invalid&#8217; error in the Job result (default 0).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Job object for the import if it was started successfully or None if not.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the load job failed to be started or invalid arguments were supplied.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Table.metadata">
+<code class="descname">metadata</code><a class="headerlink" href="#gcp.bigquery.Table.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves metadata about the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A TableMetadata object.</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises</dt>
+<dd>Exception if the request could not be executed or the response was malformed.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Table.name">
+<code class="descname">name</code><a class="headerlink" href="#gcp.bigquery.Table.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The TableName named tuple (project_id, dataset_id, table_id, decorator) for the table.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.range">
+<code class="descname">range</code><span class="sig-paren">(</span><em>start_row=0</em>, <em>max_rows=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an iterator to iterate through a set of table rows.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start_row</strong> &#8211; the row of the table at which to start the iteration (default 0)</li>
+<li><strong>max_rows</strong> &#8211; an upper limit on the number of rows to iterate through (default None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A row iterator.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.sample">
+<code class="descname">sample</code><span class="sig-paren">(</span><em>fields=None</em>, <em>count=5</em>, <em>sampling=None</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a sampling of data from the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; an optional count of rows to retrieve which is used if a specific
+sampling is not specified.</li>
+<li><strong>sampling</strong> &#8211; an optional sampling strategy to apply to the table.</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A QueryResultsTable object containing the resulting data.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the sample query could not be executed or query response was malformed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Table.schema">
+<code class="descname">schema</code><a class="headerlink" href="#gcp.bigquery.Table.schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the schema of the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A Schema object containing a list of schema fields and associated metadata.</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises</dt>
+<dd>Exception if the request could not be executed or the response was malformed.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.snapshot">
+<code class="descname">snapshot</code><span class="sig-paren">(</span><em>at</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.snapshot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.snapshot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new Table which is a snapshot of this table at the specified time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>at</strong> &#8211; <p>the time of the snapshot. This can be a Python datetime (absolute) or timedelta
+(relative to current time). The result must be after the table was created and no more
+than seven days in the past. Passing None will get a reference the oldest snapshot.</p>
+<p>Note that using a datetime will get a snapshot at an absolute point in time, while
+a timedelta will provide a varying snapshot; any queries issued against such a Table
+will be done against a snapshot that has an age relative to the execution time of the
+query.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A new Table object referencing the snapshot.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">An exception if this Table is already decorated, or if the time specified is invalid.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.to_dataframe">
+<code class="descname">to_dataframe</code><span class="sig-paren">(</span><em>start_row=0</em>, <em>max_rows=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports the table to a Pandas dataframe.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start_row</strong> &#8211; the row of the table at which to start the export (default 0)</li>
+<li><strong>max_rows</strong> &#8211; an upper limit on the number of rows to export (default None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Pandas dataframe containing the table data.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.to_file">
+<code class="descname">to_file</code><span class="sig-paren">(</span><em>destination</em>, <em>format='csv'</em>, <em>csv_delimiter='</em>, <em>'</em>, <em>csv_header=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the results to a local file in CSV format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>destination</strong> &#8211; path on the local filesystem for the saved results.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; currently only &#8216;csv&#8217; is supported.</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An Exception if the operation failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.Table.to_file_async">
+<code class="descname">to_file_async</code><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.to_file_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.to_file_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start saving the results to a local file in CSV format and return a Job for completion.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>destination</strong> &#8211; path on the local filesystem for the saved results.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; currently only &#8216;csv&#8217; is supported.</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Job for the async save operation.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An Exception if the operation failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.to_query">
+<code class="descname">to_query</code><span class="sig-paren">(</span><em>fields=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.to_query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.to_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a Query for this Table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> &#8211; the fields to return. If None, all fields will be returned. This can be a string
+which will be injected into the Query after SELECT, or a list of field names.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Query object that will return the specified fields from the records in the Table.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>friendly_name=None</em>, <em>description=None</em>, <em>expiry=None</em>, <em>schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Selectively updates Table information.</p>
+<p>Any parameters that are omitted or None are not updated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>friendly_name</strong> &#8211; if not None, the new friendly name.</li>
+<li><strong>description</strong> &#8211; if not None, the new description.</li>
+<li><strong>expiry</strong> &#8211; if not None, the new expiry time, either as a DateTime or milliseconds since epoch.</li>
+<li><strong>schema</strong> &#8211; if not None, the new schema: either a list of dictionaries or a Schema.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.Table.window">
+<code class="descname">window</code><span class="sig-paren">(</span><em>begin</em>, <em>end=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#Table.window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.Table.window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new Table limited to the rows added to this Table during the specified time range.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>begin</strong> &#8211; <p>the start time of the window. This can be a Python datetime (absolute) or timedelta
+(relative to current time). The result must be after the table was created and no more
+than seven days in the past.</p>
+<p>Note that using a relative value will provide a varying snapshot, not a fixed
+snapshot; any queries issued against such a Table will be done against a snapshot
+that has an age relative to the execution time of the query.</p>
+</li>
+<li><strong>end</strong> &#8211; the end time of the snapshot; if None, then the current time is used. The types and
+interpretation of values is as for start.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A new Table object referencing the window.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An exception if this Table is already decorated, or if the time specified is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.TableMetadata">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">TableMetadata</code><span class="sig-paren">(</span><em>table</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_table.html#TableMetadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.TableMetadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents metadata about a BigQuery table.</p>
+<p>Initializes a TableMetadata instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>table</strong> &#8211; the Table object this belongs to.</li>
+<li><strong>info</strong> &#8211; The BigQuery information about this table as a Python dictionary.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="gcp.bigquery.TableMetadata.created_on">
+<code class="descname">created_on</code><a class="headerlink" href="#gcp.bigquery.TableMetadata.created_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>The creation timestamp.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableMetadata.description">
+<code class="descname">description</code><a class="headerlink" href="#gcp.bigquery.TableMetadata.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>The description of the table if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableMetadata.expires_on">
+<code class="descname">expires_on</code><a class="headerlink" href="#gcp.bigquery.TableMetadata.expires_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>The timestamp for when the table will expire, or None if unknown.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableMetadata.friendly_name">
+<code class="descname">friendly_name</code><a class="headerlink" href="#gcp.bigquery.TableMetadata.friendly_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The friendly name of the table if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableMetadata.modified_on">
+<code class="descname">modified_on</code><a class="headerlink" href="#gcp.bigquery.TableMetadata.modified_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>The timestamp for when the table was last modified.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableMetadata.rows">
+<code class="descname">rows</code><a class="headerlink" href="#gcp.bigquery.TableMetadata.rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of rows within the table, or -1 if unknown.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableMetadata.size">
+<code class="descname">size</code><a class="headerlink" href="#gcp.bigquery.TableMetadata.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The size of the table in bytes, or -1 if unknown.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.TableName">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">TableName</code><span class="sig-paren">(</span><em>project_id</em>, <em>dataset_id</em>, <em>table_id</em>, <em>decorator</em><span class="sig-paren">)</span><a class="headerlink" href="#gcp.bigquery.TableName" title="Permalink to this definition">¶</a></dt>
+<dd><p>A namedtuple for Table names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>project_id</strong> &#8211; the project id for the table.</li>
+<li><strong>dataset_id</strong> &#8211; the dataset id for the table.</li>
+<li><strong>table_id</strong> &#8211; the table id for the table.</li>
+<li><strong>decorator</strong> &#8211; the optional decorator for the table (for windowing/snap-shotting).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.TableName.__getnewargs__">
+<code class="descname">__getnewargs__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gcp.bigquery.TableName.__getnewargs__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return self as a plain tuple.  Used by copy and pickle.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.TableName.__getstate__">
+<code class="descname">__getstate__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gcp.bigquery.TableName.__getstate__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exclude the OrderedDict from pickling</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.TableName.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gcp.bigquery.TableName.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a nicely formatted representation string</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableName.dataset_id">
+<code class="descname">dataset_id</code><a class="headerlink" href="#gcp.bigquery.TableName.dataset_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableName.decorator">
+<code class="descname">decorator</code><a class="headerlink" href="#gcp.bigquery.TableName.decorator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableName.project_id">
+<code class="descname">project_id</code><a class="headerlink" href="#gcp.bigquery.TableName.project_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.TableName.table_id">
+<code class="descname">table_id</code><a class="headerlink" href="#gcp.bigquery.TableName.table_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.UDF">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">UDF</code><span class="sig-paren">(</span><em>inputs</em>, <em>outputs</em>, <em>name</em>, <em>implementation</em>, <em>support_code=None</em>, <em>imports=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_udf.html#UDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.UDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a BigQuery UDF declaration.</p>
+<p>Initializes a Function object from its pieces.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> &#8211; a list of string field names representing the schema of input.</li>
+<li><strong>outputs</strong> &#8211; a list of name/type tuples representing the schema of the output.</li>
+<li><strong>name</strong> &#8211; the name of the javascript function</li>
+<li><strong>implementation</strong> &#8211; a javascript function implementing the logic.</li>
+<li><strong>support_code</strong> &#8211; additional javascript code that the function can use.</li>
+<li><strong>imports</strong> &#8211; a list of GCS URLs or files containing further support code.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the name is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="gcp.bigquery.View">
+<em class="property">class </em><code class="descclassname">gcp.bigquery.</code><code class="descname">View</code><span class="sig-paren">(</span><em>name</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View" title="Permalink to this definition">¶</a></dt>
+<dd><p>An implementation of a BigQuery View.</p>
+<p>Initializes an instance of a View object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the view either as a string or a 3-part tuple
+(projectid, datasetid, name). If a string, it must have the form
+&#8216;&lt;project&gt;:&lt;dataset&gt;.&lt;view&gt;&#8217; or &#8216;&lt;dataset&gt;.&lt;view&gt;&#8217;.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the name is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gcp.bigquery.View.__repr__">
+<code class="descname">__repr__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.__repr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.__repr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a representation for the view for showing in the notebook.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>The full name for the view as a string.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>query</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the view with the specified query.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query</strong> &#8211; the query to use to for the View; either a string containing a SQL query or
+a Query object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The View instance.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the view couldn&#8217;t be created or already exists and overwrite was False.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the view if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.View.description">
+<code class="descname">description</code><a class="headerlink" href="#gcp.bigquery.View.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>The description of the view if it exists.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode='create'</em>, <em>use_cache=True</em>, <em>priority='high'</em>, <em>allow_large_results=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Materialize the View synchronously.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset_id</strong> &#8211; the datasetId for the result table.</li>
+<li><strong>table_name</strong> &#8211; the result table name; if None, then a temporary table will be used.</li>
+<li><strong>table_mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;overwrite&#8217; or &#8216;append&#8217;. If &#8216;create&#8217; (the default), the request
+will fail if the table exists.</li>
+<li><strong>use_cache</strong> &#8211; whether to use past query results or ignore cache. Has no effect if destination is
+specified (default True).</li>
+<li><strong>priority</strong> &#8211; one of &#8216;low&#8217; or &#8216;high&#8217; (default). Note that &#8216;high&#8217; is more expensive, but is
+better suited to exploratory analysis.</li>
+<li><strong>allow_large_results</strong> &#8211; whether to allow large results; i.e. compressed data over 100MB. This is
+slower and requires a table_name to be specified) (default False).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A QueryJob for the materialization</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception (KeyError) if View could not be materialized.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.execute_async">
+<code class="descname">execute_async</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode='create'</em>, <em>use_cache=True</em>, <em>priority='high'</em>, <em>allow_large_results=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.execute_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Materialize the View asynchronously.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset_id</strong> &#8211; the datasetId for the result table.</li>
+<li><strong>table_name</strong> &#8211; the result table name; if None, then a temporary table will be used.</li>
+<li><strong>table_mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;overwrite&#8217; or &#8216;append&#8217;. If &#8216;create&#8217; (the default), the request
+will fail if the table exists.</li>
+<li><strong>use_cache</strong> &#8211; whether to use past query results or ignore cache. Has no effect if destination is
+specified (default True).</li>
+<li><strong>priority</strong> &#8211; one of &#8216;low&#8217; or &#8216;high&#8217; (default). Note that &#8216;high&#8217; is more expensive, but is
+better suited to exploratory analysis.</li>
+<li><strong>allow_large_results</strong> &#8211; whether to allow large results; i.e. compressed data over 100MB. This is
+slower and requires a table_name to be specified) (default False).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A QueryJob for the materialization</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception (KeyError) if View could not be materialized.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the view&#8217;s Query has been executed and the view is available or not.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.View.friendly_name">
+<code class="descname">friendly_name</code><a class="headerlink" href="#gcp.bigquery.View.friendly_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The friendly name of the view if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.View.name">
+<code class="descname">name</code><a class="headerlink" href="#gcp.bigquery.View.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name for the view as a named tuple.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.View.query">
+<code class="descname">query</code><a class="headerlink" href="#gcp.bigquery.View.query" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Query that defines the view.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.results">
+<code class="descname">results</code><span class="sig-paren">(</span><em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Materialize the view synchronously.</p>
+<p>If you require more control over the execution, use execute() or execute_async().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>use_cache</strong> &#8211; whether to use cached results or not.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A QueryResultsTable containing the result set.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the query could not be executed or query response was malformed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.sample">
+<code class="descname">sample</code><span class="sig-paren">(</span><em>fields=None</em>, <em>count=5</em>, <em>sampling=None</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a sampling of data from the view.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; an optional count of rows to retrieve which is used if a specific
+sampling is not specified.</li>
+<li><strong>sampling</strong> &#8211; an optional sampling strategy to apply to the view.</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A QueryResultsTable object containing the resulting data.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the sample query could not be executed or the query response was malformed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gcp.bigquery.View.schema">
+<code class="descname">schema</code><a class="headerlink" href="#gcp.bigquery.View.schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the schema of the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A Schema object containing a list of schema fields and associated metadata.</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises</dt>
+<dd>Exception if the request could not be executed or the response was malformed.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="gcp.bigquery.View.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>friendly_name=None</em>, <em>description=None</em>, <em>query=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gcp/bigquery/_view.html#View.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gcp.bigquery.View.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Selectively updates View information.</p>
+<p>Any parameters that are None (the default) are not applied in the update.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>friendly_name</strong> &#8211; if not None, the new friendly name.</li>
+<li><strong>description</strong> &#8211; if not None, the new description.</li>
+<li><strong>expiry</strong> &#8211; if not None, the new expiry time, either as a DateTime or milliseconds since epoch.</li>
+<li><strong>query</strong> &#8211; if not None, a new query string for the View.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gcp.data.html" class="btn btn-neutral float-right" title="gcp.data package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="gcp.html" class="btn btn-neutral" title="gcp package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
