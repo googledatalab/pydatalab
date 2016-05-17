@@ -1,0 +1,5 @@
+# MANIFEST.in
+
+*.txt
+*.md
+recursive-include tests *
