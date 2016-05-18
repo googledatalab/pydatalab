@@ -1,0 +1,6 @@
+*.pyc
+MANIFEST
+*.egg-info
+dist
+.coverage
+
