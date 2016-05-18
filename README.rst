@@ -1,15 +1,18 @@
-# datalab
+datalab
+=======
 
 Google Datalab Library
 
-## Installation
+Installation
+------------
 
     python setup.py install
     jupyter nbextension install --py datalab.notebook --sys-prefix
 
 The `--sys-prefix` should be omitted if not in a virtualenv.
 
-## Using in Jupyter
+Using in Jupyter
+----------------
 
 In a notebook cell, enable with:
 
@@ -22,6 +25,7 @@ Alternatively add this to your `ipython_config.py` file in your profile:
         'datalab.kernel'
     ]
 
-See [http://ipython.readthedocs.io/en/stable/development/config.html](http://ipython.readthedocs.io/en/stable/development/config.html)
+See `http://ipython.readthedocs.io/en/stable/development/config.html
+<http://ipython.readthedocs.io/en/stable/development/config.html>`_
 for more about IPython profiles.
 
