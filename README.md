@@ -2,7 +2,7 @@
 
 Google Datalab Library. Used in [Google Cloud Datalab]
 (https://github.com/GoogleCloudPlatform/datalab) and can be used
-in [Jupyter Notebook]http://jupyter.org/).
+in [Jupyter Notebook](http://jupyter.org/).
 
 This adds a number of Python modules such as datalab.bigquery, 
 datalab.storage, etc, for accessing [Google Cloud Platform services]
