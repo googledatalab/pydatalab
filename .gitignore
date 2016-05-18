@@ -1,4 +1,6 @@
 *.pyc
+*.pyi
+*.map
 MANIFEST
 *.egg-info
 dist
