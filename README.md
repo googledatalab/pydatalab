@@ -9,6 +9,9 @@ datalab.storage, etc, for accessing [Google Cloud Platform services]
 (https://cloud.google.com/) as well as adding some new cell magics such as `%chart`,
 `%bigquery`, `%storage`, etc.
 
+See [https://github.com/googledatalab/notebooks](https://github.com/googledatalab/notebooks) 
+for samples of using this package.
+
 ## Installation
 
     python setup.py install
@@ -29,7 +32,7 @@ Alternatively add this to your `ipython_config.py` file in your profile:
         'datalab.kernel'
     ]
 
-You will typically put this under ~/.ipython/profile_default. 
+You will typically put this under `~/.ipython/profile_default`. 
 See [http://ipython.readthedocs.io/en/stable/development/config.html]
 (http://ipython.readthedocs.io/en/stable/development/config.html)
 for more about IPython profiles.
