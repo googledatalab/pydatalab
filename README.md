@@ -17,7 +17,8 @@ for samples of using this package.
     python setup.py install
     jupyter nbextension install --py datalab.notebook --sys-prefix
 
-The `--sys-prefix` should be omitted if not in a virtualenv.
+The `--sys-prefix` should be omitted if not in a virtualenv. You can ignore the message
+about running `jupyter nbextension enable`; it is not required.
 
 ## Using in Jupyter
 
