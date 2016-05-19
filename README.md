@@ -1,6 +1,6 @@
 # datalab
 
-Google Datalab Library. Used in [Google Cloud Datalab]
+Google datalab Python package. Used in [Google Cloud Datalab]
 (https://github.com/GoogleCloudPlatform/datalab) and can be used
 in [Jupyter Notebook](http://jupyter.org/).
 
