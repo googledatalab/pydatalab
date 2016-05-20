@@ -14,7 +14,9 @@ for samples of using this package.
 
 ## Installation
 
-    python setup.py install
+    git clone https://github.com/googledatalab/datalab.git
+    cd datalab
+    pip install .
     jupyter nbextension install --py datalab.notebook --sys-prefix
 
 The `--sys-prefix` should be omitted if not in a virtualenv. You can ignore the message
