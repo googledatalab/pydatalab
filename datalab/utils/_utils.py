@@ -11,6 +11,10 @@
 # the License.
 
 """Miscellaneous simple utility functions."""
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import str
 
 import pytz
 import traceback
@@ -24,7 +28,7 @@ def print_exception_with_last_stack(e):
     e: the exception to print.
   """
   traceback.print_exc()
-  print str(e)
+  print(str(e))
 
 
 def get_item(env, name, default=None):

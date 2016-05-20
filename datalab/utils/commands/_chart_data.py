@@ -11,6 +11,9 @@
 # the License.
 
 """Google Cloud Platform library - chart_data cell magic."""
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 
 try:
   import IPython
@@ -24,7 +27,7 @@ import json
 import datalab.data
 import datalab.utils
 
-import _utils
+from . import _utils
 
 
 @IPython.core.magic.register_cell_magic
@@ -42,16 +45,16 @@ def _get_chart_data(line, cell_body=''):
     source_index = int(source_index)
     if source_index >= len(_utils._data_sources):  # Can happen after e.g. kernel restart
       # TODO(gram): get kernel restart events in charting.js and disable any refresh timers.
-      print 'No source %d' % source_index
+      print('No source %d' % source_index)
       return IPython.core.display.JSON({'data': {}})
     source = _utils._data_sources[source_index]
     schema = None
 
     controls = metadata['controls'] if 'controls' in metadata else {}
     data, _ = _utils.get_data(source, fields, controls, first_row, count, schema)
-  except Exception, e:
+  except Exception as e:
     datalab.utils.print_exception_with_last_stack(e)
-    print 'Failed with exception %s' % e
+    print('Failed with exception %s' % e)
     data = {}
 
   # TODO(gram): The old way - commented out below - has the advantage that it worked

@@ -11,8 +11,10 @@
 # the License.
 
 """Implements BigQuery query job results table functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
-import _table
+from . import _table
 
 
 class QueryResultsTable(_table.Table):

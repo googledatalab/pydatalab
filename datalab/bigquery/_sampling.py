@@ -11,6 +11,10 @@
 # the License.
 
 """Sampling for BigQuery."""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from builtins import object
 
 
 class Sampling(object):
@@ -120,7 +124,7 @@ class Sampling(object):
     """
     def _random_sampling(sql):
       projection = Sampling._create_projection(fields)
-      sql = 'SELECT %s FROM (%s) WHERE rand() < %f' % (projection, sql, percent / 100.0)
+      sql = 'SELECT %s FROM (%s) WHERE rand() < %f' % (projection, sql, (float(percent) / 100.0))
       if count != 0:
         sql = '%s LIMIT %d' % (sql, count)
       return sql

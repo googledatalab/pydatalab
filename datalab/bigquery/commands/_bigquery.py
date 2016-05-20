@@ -11,6 +11,12 @@
 # the License.
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import zip
+from builtins import str
+from past.builtins import basestring
 
 try:
   import IPython
@@ -311,7 +317,7 @@ def _sample_cell(args, cell_body):
   else:
     results = table.sample(sampling=sampling)
   if args['verbose']:
-    print results.sql
+    print(results.sql)
   if args['profile']:
     return datalab.utils.commands.profile_df(results.to_dataframe())
   else:
@@ -339,17 +345,17 @@ def _create_cell(args, cell_body):
       datalab.bigquery.Dataset(args['name']).create(friendly_name=args['friendly'],
                                                     description=cell_body)
     except Exception as e:
-      print 'Failed to create dataset %s: %s' % (args['name'], e)
+      print('Failed to create dataset %s: %s' % (args['name'], e))
   else:
     if cell_body is None:
-      print 'Failed to create %s: no schema specified' % args['name']
+      print('Failed to create %s: no schema specified' % args['name'])
     else:
       try:
         record = datalab.utils.commands.parse_config(cell_body, datalab.utils.commands.notebook_environment(), as_dict=False)
         schema = datalab.bigquery.Schema(record)
         datalab.bigquery.Table(args['name']).create(schema=schema, overwrite=args['overwrite'])
       except Exception as e:
-        print 'Failed to create table %s: %s' % (args['name'], e)
+        print('Failed to create table %s: %s' % (args['name'], e))
 
 
 def _delete_cell(args, _):
@@ -372,12 +378,12 @@ def _delete_cell(args, _):
     try:
       datalab.bigquery.Dataset(args['name']).delete()
     except Exception as e:
-      print 'Failed to delete dataset %s: %s' % (args['name'], e)
+      print('Failed to delete dataset %s: %s' % (args['name'], e))
   else:
     try:
       datalab.bigquery.Table(args['name']).delete()
     except Exception as e:
-      print 'Failed to delete table %s: %s' % (args['name'], e)
+      print('Failed to delete table %s: %s' % (args['name'], e))
 
 
 def _dryrun_cell(args, cell_body):
@@ -396,7 +402,7 @@ def _dryrun_cell(args, cell_body):
   query = _get_query_argument(args, cell_body, datalab.utils.commands.notebook_environment())
 
   if args['verbose']:
-    print query.sql
+    print(query.sql)
   result = query.execute_dry_run()
   return datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                               is_cached=result['cacheHit'])
@@ -484,7 +490,7 @@ def _execute_cell(args, cell_body):
   """
   query = _get_query_argument(args, cell_body, datalab.utils.commands.notebook_environment())
   if args['verbose']:
-    print query.sql
+    print(query.sql)
   return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
                        allow_large_results=args['large']).results
 
@@ -506,13 +512,13 @@ def _pipeline_cell(args, cell_body):
     raise Exception('Deploying a pipeline is not yet supported')
 
   env = {}
-  for key, value in datalab.utils.commands.notebook_environment().iteritems():
+  for key, value in datalab.utils.commands.notebook_environment().items():
     if isinstance(value, datalab.bigquery._udf.UDF):
       env[key] = value
 
   query = _get_query_argument(args, cell_body, env)
   if args['verbose']:
-    print query.sql
+    print(query.sql)
   if args['action'] == 'dryrun':
     print(query.sql)
     result = query.execute_dry_run()

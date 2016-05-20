@@ -11,6 +11,9 @@
 # the License.
 
 """Implements Bucket-related Cloud Storage APIs."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
 import dateutil.parser
 import re
@@ -18,8 +21,8 @@ import re
 import datalab.context
 import datalab.utils
 
-import _api
-import _item
+from . import _api
+from . import _item
 
 
 # REs to match bucket names and optionally object names

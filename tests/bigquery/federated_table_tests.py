@@ -10,6 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
+import collections
 import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
@@ -44,13 +47,15 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _get_data():
-    return [
-      {'day': 1, 'weight': 220},
-      {'day': 2, 'weight': 221},
-      {'day': 3, 'weight': 220},
-      {'day': 4, 'weight': 219},
-      {'day': 5, 'weight': 218},
-    ]
+    data = []
+    day = 1
+    for weight in [220, 221, 220, 219, 218]:
+      d = collections.OrderedDict()
+      data.append(d)
+      d['day'] = day
+      day += 1
+      d['weight'] = weight
+    return data
 
   @staticmethod
   def _get_table_definition(uris, skip_rows=0):

@@ -11,6 +11,9 @@
 # the License.
 
 """Implements job view"""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
 
 
 try:
@@ -22,8 +25,8 @@ except ImportError:
 
 import datalab.utils
 
-import _commands
-import _html
+from . import _commands
+from . import _html
 
 
 _local_jobs = {}

@@ -10,6 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
@@ -114,7 +116,7 @@ class TestCases(unittest.TestCase):
         'destination': 'gs://foo/bar1'
       }, None)
     self.assertEqual('More than one source but target gs://foo/bar1 is not a bucket',
-                     error.exception.message)
+                     str(error.exception))
 
   @mock.patch('datalab.storage.commands._storage._storage_copy', autospec=True)
   def test_storage_copy_magic(self, mock_storage_copy):
@@ -148,7 +150,7 @@ class TestCases(unittest.TestCase):
         ]
       }, None)
     self.assertEqual("Couldn't create gs://foo/bar: Invalid bucket name gs://foo/bar",
-                     error.exception.message)
+                     str(error.exception))
 
   @mock.patch('datalab.storage._api.Api.buckets_get', autospec=True)
   @mock.patch('datalab.storage._api.Api.objects_get', autospec=True)
@@ -179,7 +181,7 @@ class TestCases(unittest.TestCase):
         ]
       }, None)
     self.assertEqual('gs://baz does not exist\ngs://baz/item1 does not exist',
-                     error.exception.message)
+                     str(error.exception))
     mock_api_bucket_delete.assert_called_with(mock.ANY, 'bar')
     mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'item1')
 

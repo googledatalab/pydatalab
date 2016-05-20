@@ -10,6 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import unittest
 
 # import Python so we can mock the parts we need to here.
@@ -38,10 +40,11 @@ class TestCases(unittest.TestCase):
     self.assertTrue(chart.find('charts.render(') > 0)
     self.assertTrue(chart.find('\'geo\'') > 0)
     self.assertTrue(chart.find('"fields": "*"') > 0)
-    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0)
-    self.assertTrue(chart.find('{"c": [{"v": "ZA"}, {"v": 50}]}') > 0)
-    self.assertTrue(chart.find('"cols": [{"type": "string", "id": "country", "label": "country"},' +
-                               ' {"type": "number", "id": "quantity", "label": "quantity"}]}') > 0)
+    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0 or 
+                    chart.find('{"c": [{"v": 100}, {"v": "US"}]}') > 0)
+    self.assertTrue(chart.find('{"c": [{"v": "ZA"}, {"v": 50}]}') > 0 or
+                    chart.find('{"c": [{"v": 50}, {"v": "ZA"}]}') > 0)
+
 
   def test_chart_magic(self):
     # TODO(gram): complete this test

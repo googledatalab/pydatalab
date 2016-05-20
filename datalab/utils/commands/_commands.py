@@ -11,6 +11,9 @@
 # the License.
 
 """Implementation of command parsing and handling within magics."""
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 
 try:
   import IPython
@@ -69,8 +72,7 @@ class CommandParser(argparse.ArgumentParser):
       args = CommandParser.create_args(line, namespace)
       return self.parse_args(args)
     except Exception as e:
-      if e.message:
-        print e.message
+      print(str(e))
       return None
 
   def subcommand(self, name, help):

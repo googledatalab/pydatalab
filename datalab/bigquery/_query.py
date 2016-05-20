@@ -11,16 +11,20 @@
 # the License.
 
 """Implements Query BigQuery API."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
 import datalab.context
 import datalab.data
 import datalab.utils
 
-import _api
-import _federated_table
-import _sampling
-import _udf
-import _utils
+from . import _api
+from . import _federated_table
+from . import _query_job
+from . import _sampling
+from . import _udf
+from . import _utils
 
 
 class Query(object):
@@ -94,7 +98,7 @@ class Query(object):
 
     # We need to take care not to include the same UDF code twice so we use sets.
     udfs = set(udfs if udfs else [])
-    for value in values.values():
+    for value in list(values.values()):
       if isinstance(value, _udf.UDF):
         udfs.add(value)
     included_udfs = set([])
@@ -161,7 +165,7 @@ class Query(object):
     self._external_tables = None
     if len(data_sources):
       self._external_tables = {}
-      for name, table in data_sources.items():
+      for name, table in list(data_sources.items()):
         if table.schema is None:
           raise Exception('Referenced external table %s has no known schema' % name)
         self._external_tables[name] = table._to_query_json()
@@ -439,7 +443,7 @@ class Query(object):
     Returns:
       A View for the Query.
     """
+    # Do the import here to avoid circular dependencies at top-level.
+    from . import _view
     return _view.View(view_name, self._context).create(self._sql)
 
-import _query_job
-import _view

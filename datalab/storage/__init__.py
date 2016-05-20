@@ -11,6 +11,7 @@
 # the License.
 
 """Google Cloud Platform library - Cloud Storage Functionality."""
+from __future__ import absolute_import
 
-from _bucket import Bucket, Buckets
-from _item import Item, Items
+from ._bucket import Bucket, Buckets
+from ._item import Item, Items

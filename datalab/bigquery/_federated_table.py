@@ -11,8 +11,11 @@
 # the License.
 
 """Implements External Table functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
-import _csv_options
+from . import _csv_options
 
 
 class FederatedTable(object):

@@ -11,6 +11,11 @@
 # the License.
 
 """A simple LRU cache."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 
 import datetime
 
@@ -80,7 +85,7 @@ class LRUCache(object):
       self._cache[key] = entry = {}
     else:
       # Cache is full; displace an entry
-      entry = min(self._cache.values(), key=lambda x: x['last_used'])
+      entry = min(list(self._cache.values()), key=lambda x: x['last_used'])
       self._cache.pop(entry['key'])
       self._cache[key] = entry
 

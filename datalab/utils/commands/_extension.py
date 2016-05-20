@@ -11,6 +11,8 @@
 # the License.
 
 """Google Cloud Platform library - Extension cell magic."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 try:
   import IPython
@@ -19,8 +21,8 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import _commands
-import _utils
+from . import _commands
+from . import _utils
 
 
 @IPython.core.magic.register_line_magic

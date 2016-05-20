@@ -11,10 +11,18 @@
 # the License.
 
 """Implements SQL statement helper functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from builtins import object
+from past.builtins import basestring
 
 import re
 import types
+
 import datalab.utils
+
+from . import _utils
 
 
 class SqlStatement(object):
@@ -90,7 +98,7 @@ class SqlStatement(object):
       # If it is a SQL module, get the main/last query from the module, so users can refer
       # to $module. Useful especially if final query in module has no DEFINE QUERY <name> part.
       if isinstance(dep, types.ModuleType):
-        dep = _sql_module.SqlModule.get_default_query_from_module(dep)
+        dep = _utils.get_default_query_from_module(dep)
       # If we can't resolve the $name, give up.
       if dep is None:
         raise Exception("Unsatisfied dependency $%s" % dependency)
@@ -152,7 +160,7 @@ class SqlStatement(object):
           raise Exception('Invalid sql. Unable to substitute $%s.' % e.args[0])
 
         if isinstance(value, types.ModuleType):
-          value = _sql_module.SqlModule.get_default_query_from_module(value)
+          value = _utils.get_default_query_from_module(value)
 
         if isinstance(value, SqlStatement):
           sql = value.format(value._sql, resolved_vars)
@@ -160,7 +168,7 @@ class SqlStatement(object):
         elif '_repr_sql_' in dir(value):
           # pylint: disable=protected-access
           value = value._repr_sql_()
-        elif type(value) == str or type(value) == unicode:
+        elif isinstance(value, basestring):
           value = SqlStatement._escape_string(value)
         elif isinstance(value, list) or isinstance(value, tuple):
           if isinstance(value, tuple):
@@ -169,7 +177,7 @@ class SqlStatement(object):
           for v in value:
             if len(expansion) > 1:
               expansion += ', '
-            if type(v) == str or type(v) == unicode:
+            if isinstance(v, basestring):
               expansion += SqlStatement._escape_string(v)
             else:
               expansion += str(v)
@@ -203,4 +211,3 @@ class SqlStatement(object):
         raise Exception('Invalid sql; $ with no following $ or identifier: %s.' % sql)
     return dependencies
 
-import _sql_module

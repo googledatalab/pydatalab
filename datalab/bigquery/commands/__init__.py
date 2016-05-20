@@ -11,5 +11,7 @@
 # the License.
 
 
-import _bigquery
+from __future__ import absolute_import
+
+from . import _bigquery
 

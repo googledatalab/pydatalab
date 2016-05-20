@@ -11,21 +11,22 @@
 # the License.
 
 """Google Cloud Platform library - BigQuery Functionality."""
+from __future__ import absolute_import
 
-from _csv_options import CSVOptions
-from _dataset import Dataset, Datasets
-from _federated_table import FederatedTable
-from _job import Job
-from _query import Query
-from _query_job import QueryJob
-from _query_results_table import QueryResultsTable
-from _query_stats import QueryStats
-from _sampling import Sampling
-from _schema import Schema
-from _table import Table, TableMetadata
-from _udf import UDF
-from _utils import TableName, DatasetName
-from _view import View
+from ._csv_options import CSVOptions
+from ._dataset import Dataset, Datasets
+from ._federated_table import FederatedTable
+from ._job import Job
+from ._query import Query
+from ._query_job import QueryJob
+from ._query_results_table import QueryResultsTable
+from ._query_stats import QueryStats
+from ._sampling import Sampling
+from ._schema import Schema
+from ._table import Table, TableMetadata
+from ._udf import UDF
+from ._utils import TableName, DatasetName
+from ._view import View
 
 
 def wait_any(jobs, timeout=None):
@@ -43,7 +44,7 @@ def wait_any(jobs, timeout=None):
 
 
 def wait_all(jobs, timeout=None):
-  """ Return when at all of the specified jobs have completed or timeout expires.
+  """ Return when all of the specified jobs have completed or timeout expires.
 
   Args:
     jobs: a single Job or list of Jobs to wait on.

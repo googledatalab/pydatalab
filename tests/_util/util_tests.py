@@ -10,6 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import imp
 import unittest
 
@@ -21,7 +23,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _get_data():
     m = imp.new_module('baz')
-    exec 'x = 99' in m.__dict__
+    exec('x = 99', m.__dict__)
     data = {
       'foo': {
         'bar': {

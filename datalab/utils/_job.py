@@ -11,6 +11,10 @@
 # the License.
 
 """Implements Job functionality for async tasks."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from builtins import object
 
 import concurrent.futures
 import datetime
@@ -160,7 +164,7 @@ class Job(object):
       try:
         self._result = self._future.result()
       except Exception as e:
-        message = e.message if e.message else str(e)
+        message = str(e)
         self._fatal_error = JobError(location=traceback.format_exc(), message=message,
                                      reason=str(type(e)))
 

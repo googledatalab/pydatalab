@@ -11,6 +11,10 @@
 # the License.
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from past.builtins import basestring
 
 try:
   import IPython
@@ -162,7 +166,7 @@ def _expand_list(names):
         # Expand possible key values.
         if bucket not in items and key[:1] == '*':
           # We need the full list; cache a copy for efficiency.
-          items[bucket] = [item.metadata.name for item in datalab.storage.Bucket(bucket).items()]
+          items[bucket] = [item.metadata.name for item in list(datalab.storage.Bucket(bucket).items())]
         # If we have a cached copy use it
         if bucket in items:
           candidates = items[bucket]
@@ -214,7 +218,7 @@ def _storage_copy(args, _):
                                                           bucket=destination_bucket)
     except Exception as e:
       errs.append("Couldn't copy %s to %s: %s" %
-                  (source, target, _extract_storage_api_response_error(e.message)))
+                  (source, target, _extract_storage_api_response_error(str(e))))
   if errs:
     raise Exception('\n'.join(errs))
 
@@ -232,7 +236,7 @@ def _storage_create(args, _):
         raise Exception("Invalid bucket name %s" % name)
     except Exception as e:
       errs.append("Couldn't create %s: %s" %
-                  (name, _extract_storage_api_response_error(e.message)))
+                  (name, _extract_storage_api_response_error(str(e))))
   if errs:
     raise Exception('\n'.join(errs))
 
@@ -261,7 +265,7 @@ def _storage_delete(args, _):
         raise Exception("Can't delete item with invalid name %s" % item)
     except Exception as e:
       errs.append("Couldn't delete %s: %s" %
-                  (item, _extract_storage_api_response_error(e.message)))
+                  (item, _extract_storage_api_response_error(str(e))))
   if errs:
     raise Exception('\n'.join(errs))
 
@@ -276,7 +280,7 @@ def _storage_list_buckets(project, pattern):
 
 def _storage_get_keys(bucket, pattern):
   """ Get names of all storage keys in a specified bucket that match a pattern. """
-  return [item for item in bucket.items() if fnmatch.fnmatch(item.metadata.name, pattern)]
+  return [item for item in list(bucket.items()) if fnmatch.fnmatch(item.metadata.name, pattern)]
 
 
 def _storage_get_key_names(bucket, pattern):

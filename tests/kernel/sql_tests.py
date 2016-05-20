@@ -10,6 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import imp
 import mock
 from oauth2client.client import AccessTokenCredentials
@@ -37,56 +39,61 @@ import datalab.utils.commands
 
 class TestCases(unittest.TestCase):
 
+  _SQL_MODULE_MAIN = datalab.data._utils._SQL_MODULE_MAIN
+  _SQL_MODULE_LAST = datalab.data._utils._SQL_MODULE_LAST
+
   def test_split_cell(self):
     # TODO(gram): add tests for argument parser.
     m = imp.new_module('m')
     query = datalab.data.commands._sql._split_cell('', m)
     self.assertIsNone(query)
-    self.assertNotIn(datalab.data.SqlModule._SQL_MODULE_LAST, m.__dict__)
-    self.assertNotIn(datalab.data.SqlModule._SQL_MODULE_MAIN, m.__dict__)
+    self.assertNotIn(TestCases._SQL_MODULE_LAST, m.__dict__)
+    self.assertNotIn(TestCases._SQL_MODULE_MAIN, m.__dict__)
 
     m = imp.new_module('m')
     query = datalab.data.commands._sql._split_cell('\n\n', m)
     self.assertIsNone(query)
-    self.assertNotIn(datalab.data.SqlModule._SQL_MODULE_LAST, m.__dict__)
-    self.assertNotIn(datalab.data.SqlModule._SQL_MODULE_MAIN, m.__dict__)
+    self.assertNotIn(TestCases._SQL_MODULE_LAST, m.__dict__)
+    self.assertNotIn(TestCases._SQL_MODULE_MAIN, m.__dict__)
 
     m = imp.new_module('m')
     query = datalab.data.commands._sql._split_cell('SELECT 3 AS x', m)
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_MAIN])
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST])
-    self.assertEquals('SELECT 3 AS x', m.__dict__[datalab.data.SqlModule._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST].sql)
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
+    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
     m = imp.new_module('m')
     query = datalab.data.commands._sql._split_cell('# This is a comment\n\nSELECT 3 AS x', m)
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_MAIN])
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST])
-    self.assertEquals('SELECT 3 AS x', m.__dict__[datalab.data.SqlModule._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST].sql)
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
+    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell('# This is a comment\n\nfoo="bar"\nSELECT 3 AS x', m)
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_MAIN])
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST])
-    self.assertEquals('SELECT 3 AS x', m.__dict__[datalab.data.SqlModule._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST].sql)
+    query = datalab.data.commands._sql._split_cell(
+        '# This is a comment\n\nfoo="bar"\nSELECT 3 AS x', m)
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
+    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
     m = imp.new_module('m')
     query = datalab.data.commands._sql._split_cell('DEFINE QUERY q1\nSELECT 3 AS x', m)
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST])
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST])
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
     self.assertEquals('SELECT 3 AS x', m.q1.sql)
-    self.assertNotIn(datalab.data.SqlModule._SQL_MODULE_MAIN, m.__dict__)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST].sql)
+    self.assertNotIn(TestCases._SQL_MODULE_MAIN, m.__dict__)
+    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell('DEFINE QUERY q1\nSELECT 3 AS x\nSELECT * FROM $q1', m)
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_MAIN])
-    self.assertEquals(query, m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST])
+    query = datalab.data.commands._sql._split_cell(
+        'DEFINE QUERY q1\nSELECT 3 AS x\nSELECT * FROM $q1', m)
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
     self.assertEquals('SELECT 3 AS x', m.q1.sql)
-    self.assertEquals('SELECT * FROM $q1', m.__dict__[datalab.data.SqlModule._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT * FROM $q1', m.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST].sql)
+    self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
   @mock.patch('datalab.context._context.Context.default')
   def test_arguments(self, mock_default_context):

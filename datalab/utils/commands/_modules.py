@@ -11,6 +11,8 @@
 # the License.
 
 """Implementation of various module magics"""
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 try:
   import IPython
@@ -21,8 +23,8 @@ except ImportError:
 import sys
 import types
 
-import _commands
-import _utils
+from . import _commands
+from . import _utils
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -51,11 +53,11 @@ def _pymodule_cell(args, cell):
 
 def _create_python_module(name, code):
   # By convention the module is associated with a file name matching the module name
-  module = types.ModuleType(name)
+  module = types.ModuleType(str(name))
   module.__file__ = name
   module.__name__ = name
 
-  exec code in module.__dict__
+  exec(code, module.__dict__)
 
   # Hold on to the module if the code executed successfully
   sys.modules[name] = module

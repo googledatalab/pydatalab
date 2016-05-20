@@ -11,6 +11,10 @@
 # the License.
 
 """Useful common utility functions."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from past.builtins import basestring
 
 import collections
 import re
@@ -164,3 +168,5 @@ def parse_table_name(name, project_id=None, dataset_id=None):
 
 def format_query_errors(errors):
   return '\n'.join(['%s: %s' % (error['reason'], error['message']) for error in errors])
+
+

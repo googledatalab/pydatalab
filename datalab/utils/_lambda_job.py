@@ -11,9 +11,11 @@
 # the License.
 
 """Implements OS shell Job functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
-import _async
-import _job
+from . import _async
+from . import _job
 
 
 class LambdaJob(_job.Job):
