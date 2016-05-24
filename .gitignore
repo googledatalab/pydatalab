@@ -1,8 +1,10 @@
 *.pyc
 *.pyi
 *.map
-MANIFEST
 *.egg-info
+.idea
+MANIFEST
+build
 dist
 .coverage
 

@@ -12,15 +12,24 @@ datalab.storage, etc, for accessing [Google Cloud Platform services]
 See [https://github.com/googledatalab/notebooks](https://github.com/googledatalab/notebooks) 
 for samples of using this package.
 
+## Prerequisites
+
+You will need the [Typscript compiler](https://www.typescriptlang.org/) installed.
+In future we should be installable from PyPI.
+
 ## Installation
+
+First:
 
     git clone https://github.com/googledatalab/datalab.git
     cd datalab
-    pip install .
-    jupyter nbextension install --py datalab.notebook --sys-prefix
 
-The `--sys-prefix` should be omitted if not in a virtualenv. You can ignore the message
-about running `jupyter nbextension enable`; it is not required.
+Then do one of the folowing:
+
+    ./install-virtualenv.sh  # For use in Python virtual environments
+    ./install-no-virtualenv.sh  # For installing in a non-virtual environment
+
+You can ignore the message about running `jupyter nbextension enable`; it is not required.
 
 ## Using in Jupyter
 
