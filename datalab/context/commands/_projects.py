@@ -12,6 +12,8 @@
 
 """Implements listing projects and setting default project."""
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 try:
   import IPython
   import IPython.core.magic

@@ -10,6 +10,10 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from builtins import object
 import calendar
 import datetime as dt
 import mock
@@ -35,7 +39,8 @@ class TestCases(unittest.TestCase):
 
   def test_api_paths(self):
     name = datalab.bigquery._utils.TableName('a', 'b', 'c', 'd')
-    self.assertEqual('/projects/a/datasets/b/tables/cd', datalab.bigquery._api.Api._TABLES_PATH % name)
+    self.assertEqual('/projects/a/datasets/b/tables/cd',
+                     datalab.bigquery._api.Api._TABLES_PATH % name)
     self.assertEqual('/projects/a/datasets/b/tables/cd/data',
                      datalab.bigquery._api.Api._TABLEDATA_PATH % name)
     name = datalab.bigquery._utils.DatasetName('a', 'b')
@@ -133,7 +138,7 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       _ = t.schema
-    self.assertEqual(error.exception[0], 'Unexpected table response: missing schema')
+    self.assertEqual('Unexpected table response: missing schema', str(error.exception))
 
   @mock.patch('datalab.bigquery._api.Api.tables_list')
   @mock.patch('datalab.bigquery._api.Api.datasets_get')
@@ -217,7 +222,7 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception) as error:
       _ = TestCases._create_table_with_schema(schema)
     self.assertEqual('Table test:testds.testTable0 could not be created as it already exists',
-                     error.exception[0])
+                     str(error.exception))
 
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
     self.assertIsNotNone(TestCases._create_table_with_schema(schema), 'Expected a table')
@@ -250,7 +255,7 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       table.insert_data(df)
-    self.assertEqual('Table %s does not exist.' % str(table), error.exception[0])
+    self.assertEqual('Table %s does not exist.' % str(table), str(error.exception))
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
@@ -283,7 +288,7 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       table.insert_data(df)
-    self.assertEqual('Table does not contain field headers', error.exception[0])
+    self.assertEqual('Table does not contain field headers', str(error.exception))
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
@@ -318,7 +323,7 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception) as error:
       table.insert_data(df)
     self.assertEqual('Field headers in data has type FLOAT but in table has type STRING',
-                     error.exception[0])
+                     str(error.exception))
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
@@ -539,24 +544,24 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception) as error:
       tbl2 = tbl2.snapshot(dt.timedelta(hours=-2))
     self.assertEqual('Cannot use snapshot() on an already decorated table',
-                     error.exception[0])
+                     str(error.exception))
 
     with self.assertRaises(Exception) as error:
       _ = tbl2.window(dt.timedelta(hours=-2), 0)
     self.assertEqual('Cannot use window() on an already decorated table',
-                     error.exception[0])
+                     str(error.exception))
 
     with self.assertRaises(Exception) as error:
       _ = tbl.snapshot(dt.timedelta(days=-8))
     self.assertEqual(
         'Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
-        error.exception[0])
+        str(error.exception))
 
     with self.assertRaises(Exception) as error:
       _ = tbl.snapshot(dt.timedelta(days=-8))
     self.assertEqual(
         'Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
-        error.exception[0])
+        str(error.exception))
 
     tbl2 = tbl.snapshot(dt.timedelta(days=-1))
     self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
@@ -564,12 +569,12 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception) as error:
       _ = tbl.snapshot(dt.timedelta(days=1))
     self.assertEqual('Invalid snapshot relative when argument: 1 day, 0:00:00',
-                     error.exception[0])
+                     str(error.exception))
 
     with self.assertRaises(Exception) as error:
       tbl2 = tbl.snapshot(1000)
     self.assertEqual('Invalid snapshot when argument type: 1000',
-                     error.exception[0])
+                     str(error.exception))
 
     _ = dt.datetime.utcnow() - dt.timedelta(1)
     self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
@@ -578,13 +583,13 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception) as error:
       _ = tbl.snapshot(when)
     self.assertEqual('Invalid snapshot absolute when argument: %s' % when,
-                     error.exception[0])
+                     str(error.exception))
 
     when = dt.datetime.utcnow() - dt.timedelta(8)
     with self.assertRaises(Exception) as error:
       _ = tbl.snapshot(when)
     self.assertEqual('Invalid snapshot absolute when argument: %s' % when,
-                     error.exception[0])
+                     str(error.exception))
 
   def test_window_decorators(self):
     # The at test above already tests many of the conversion cases. The extra things we
@@ -598,18 +603,18 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception) as error:
       tbl2 = tbl2.window(-400000, 0)
     self.assertEqual('Cannot use window() on an already decorated table',
-                     error.exception[0])
+                     str(error.exception))
 
     with self.assertRaises(Exception) as error:
       _ = tbl2.snapshot(-400000)
     self.assertEqual('Cannot use snapshot() on an already decorated table',
-                     error.exception[0])
+                     str(error.exception))
 
     with self.assertRaises(Exception) as error:
       _ = tbl.window(dt.timedelta(0), dt.timedelta(hours=-1))
     self.assertEqual(
         'window: Between arguments: begin must be before end: 0:00:00, -1 day, 23:00:00',
-        error.exception[0])
+        str(error.exception))
 
   @mock.patch('datalab.bigquery._api.Api.tables_get')
   @mock.patch('datalab.bigquery._api.Api.table_update')

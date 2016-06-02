@@ -11,6 +11,8 @@
 # the License.
 
 """Implements CSV file exploration"""
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 
 try:
@@ -24,8 +26,8 @@ import pandas as pd
 
 import datalab.data
 
-import _commands
-import _utils
+from . import _commands
+from . import _utils
 
 
 @IPython.core.magic.register_line_cell_magic

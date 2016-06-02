@@ -11,6 +11,11 @@
 # the License.
 
 """Google Cloud Platform library - %%arguments IPython Cell Magic Functionality."""
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from builtins import str
+from past.builtins import basestring
 
 try:
   import IPython
@@ -219,7 +224,7 @@ def _arguments(code, module):
     env.update(builtins)
 
     # Execute the cell which should be one or more calls to arg().
-    exec code in env
+    exec(code, env)
 
     # Iterate through the module dictionary. For any newly defined objects,
     # add args to the parser.
@@ -243,7 +248,7 @@ def _arguments(code, module):
         else:
           arg_parser.add_argument(key, default=val, action='store_false')
       elif isinstance(val, basestring) or isinstance(val, int) or isinstance(val, float) \
-          or isinstance(val, long):
+          or isinstance(val, int):
         arg_parser.add_argument(key, default=val)
       elif isinstance(val, list):
         arg_parser.add_argument(key, default=val, nargs='+')
@@ -269,7 +274,7 @@ def _arguments(code, module):
         raise Exception('Cannot generate argument for %s of type %s' % (key, type(val)))
 
   except Exception as e:
-    print "%%sql arguments: %s from code '%s'" % (str(e), str(code))
+    print("%%sql arguments: %s from code '%s'" % (str(e), str(code)))
   return arg_parser
 
 
@@ -315,7 +320,7 @@ def _split_cell(cell, module):
 
         # This is not the first query, so gather the previous query text.
         query = '\n'.join([line for line in lines[last_def:i] if len(line)]).strip()
-        if select_match and name != datalab.data.SqlModule._SQL_MODULE_MAIN and len(query) == 0:
+        if select_match and name != datalab.data._utils._SQL_MODULE_MAIN and len(query) == 0:
           # Avoid DEFINE query name\nSELECT ... being seen as an empty DEFINE followed by SELECT
           continue
 
@@ -323,14 +328,14 @@ def _split_cell(cell, module):
         statement = datalab.data.SqlStatement(query, module)
         module.__dict__[name] = statement
         # And set the 'last' query to be this too
-        module.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST] = statement
+        module.__dict__[datalab.data._utils._SQL_MODULE_LAST] = statement
 
       # Get the query name and strip off our syntactic sugar if appropriate.
       if define_match:
         name = define_match.group(1)
         lines[i] = define_match.group(2)
       else:
-        name = datalab.data.SqlModule._SQL_MODULE_MAIN
+        name = datalab.data._utils._SQL_MODULE_MAIN
 
       # Save the starting line index of the new query
       last_def = i
@@ -344,12 +349,12 @@ def _split_cell(cell, module):
     query = '\n'.join([line for line in lines[last_def:] if len(line)]).strip()
     statement = datalab.data.SqlStatement(query, module)
     module.__dict__[name] = statement
-    module.__dict__[datalab.data.SqlModule._SQL_MODULE_LAST] = statement
+    module.__dict__[datalab.data._utils._SQL_MODULE_LAST] = statement
 
   if code is None:
     code = ''
-  module.__dict__[datalab.data.SqlModule._SQL_MODULE_ARGPARSE] = _arguments(code, module)
-  return module.__dict__.get(datalab.data.SqlModule._SQL_MODULE_LAST, None)
+  module.__dict__[datalab.data._utils._SQL_MODULE_ARGPARSE] = _arguments(code, module)
+  return module.__dict__.get(datalab.data._utils._SQL_MODULE_LAST, None)
 
 
 def sql_cell(args, cell):
@@ -383,4 +388,4 @@ def sql_cell(args, cell):
   else:
     # Add it as a module
     sys.modules[name] = module
-    exec 'import %s' % name in ipy.user_ns
+    exec('import %s' % name, ipy.user_ns)

@@ -10,6 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import range
 import datetime as dt
 import collections
 import mock
@@ -122,7 +125,7 @@ class TestCases(unittest.TestCase):
     ]
     # Use OrderedDicts to make testing the result easier.
     for i in range(0, len(test_data)):
-      test_data[i] = collections.OrderedDict(sorted(test_data[i].items(), key=lambda t: t[0]))
+      test_data[i] = collections.OrderedDict(sorted(list(test_data[i].items()), key=lambda t: t[0]))
 
     return test_data
 
@@ -201,7 +204,7 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception) as error:
       self._test_get_data(['foo', 'bar'], [], [], 0, datalab.utils.commands._utils.get_data)
     self.assertEquals('To get tabular data from a list it must contain dictionaries or lists.',
-                      error.exception.message)
+                      str(error.exception))
 
   def _test_get_data(self, test_data, cols, rows, expected_count, fn):
     self.maxDiff = None

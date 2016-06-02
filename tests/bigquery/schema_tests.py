@@ -10,8 +10,11 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import collections
 import pandas
+import sys
 import unittest
 
 import datalab.bigquery
@@ -61,17 +64,30 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error1:
       _ = datalab.bigquery.Schema.from_data(variant1)
-    self.assertEquals('Cannot create a schema from heterogeneous list [3, 2.0, True, ' +
-                      '[\'cow\', \'horse\', [0, []]]]; perhaps you meant to use ' +
-                      'Schema.from_record?', error1.exception[0])
+    if sys.version_info[0] == 3:
+      self.assertEquals('Cannot create a schema from heterogeneous list [3, 2.0, True, ' +
+                        '[\'cow\', \'horse\', [0, []]]]; perhaps you meant to use ' +
+                        'Schema.from_record?', str(error1.exception))
+    else:
+      self.assertEquals('Cannot create a schema from heterogeneous list [3, 2.0, True, ' +
+                        '[u\'cow\', u\'horse\', [0, []]]]; perhaps you meant to use ' +
+                        'Schema.from_record?', str(error1.exception))
     with self.assertRaises(Exception) as error2:
       _ = datalab.bigquery.Schema.from_data(variant2)
-    self.assertEquals('Cannot create a schema from dict OrderedDict([(\'Column1\', 3), ' +
-                      '(\'Column2\', 2.0), (\'Column3\', True), (\'Column4\', ' +
-                      'OrderedDict([(\'Column1\', \'cow\'), (\'Column2\', \'horse\'), ' +
-                      '(\'Column3\', OrderedDict([(\'Column1\', 0), (\'Column2\', ' +
-                      'OrderedDict())]))]))]); perhaps you meant to use Schema.from_record?',
-                      error2.exception[0])
+    if sys.version_info[0] == 3:
+      self.assertEquals('Cannot create a schema from dict OrderedDict([(\'Column1\', 3), ' +
+                        '(\'Column2\', 2.0), (\'Column3\', True), (\'Column4\', ' +
+                        'OrderedDict([(\'Column1\', \'cow\'), (\'Column2\', \'horse\'), ' +
+                        '(\'Column3\', OrderedDict([(\'Column1\', 0), (\'Column2\', ' +
+                        'OrderedDict())]))]))]); perhaps you meant to use Schema.from_record?',
+                        str(error2.exception))
+    else:
+      self.assertEquals('Cannot create a schema from dict OrderedDict([(u\'Column1\', 3), ' +
+                        '(u\'Column2\', 2.0), (u\'Column3\', True), (u\'Column4\', ' +
+                        'OrderedDict([(u\'Column1\', u\'cow\'), (u\'Column2\', u\'horse\'), ' +
+                        '(u\'Column3\', OrderedDict([(u\'Column1\', 0), (u\'Column2\', ' +
+                        'OrderedDict())]))]))]); perhaps you meant to use Schema.from_record?',
+                        str(error2.exception))
     schema3 = datalab.bigquery.Schema.from_data([variant1])
     schema4 = datalab.bigquery.Schema.from_data([variant2])
     schema5 = datalab.bigquery.Schema.from_data(master)

@@ -11,13 +11,16 @@
 # the License.
 
 """Implements Object-related Cloud Storage APIs."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
 import dateutil.parser
 
 import datalab.utils
 import datalab.context
 
-import _api
+from . import _api
 
 # TODO(nikhilko): Read/write operations don't account for larger files, or non-textual content.
 #                 Use streaming reads into a buffer or StringIO or into a file handle.
@@ -287,5 +290,3 @@ class Items(object):
   def __iter__(self):
     return iter(datalab.utils.Iterator(self._retrieve_items))
 
-
-import _bucket

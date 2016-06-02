@@ -11,11 +11,15 @@
 # the License.
 
 """Implements BigQuery Views."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from builtins import object
 
 import datalab.context
 
-import _query
-import _table
+from . import _query
+from . import _table
 
 # Query import is at end to avoid issues with circular dependencies.
 

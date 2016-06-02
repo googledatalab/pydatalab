@@ -11,6 +11,11 @@
 # the License.
 
 """Utility functions."""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from builtins import str
+from past.builtins import basestring
 
 try:
   import IPython
@@ -34,7 +39,7 @@ import datalab.bigquery
 import datalab.storage
 import datalab.utils
 
-import _html
+from . import _html
 
 
 def notebook_environment():
@@ -149,7 +154,7 @@ def _get_data_from_dataframe(source, fields='*', first_row=0, count=-1, schema=N
   df_slice = source.reset_index(drop=True)[first_row:first_row + count]
   for index, data_frame_row in df_slice.iterrows():
     row = data_frame_row.to_dict()
-    for key in row.keys():
+    for key in list(row.keys()):
       val = row[key]
       if isinstance(val, pandas.Timestamp):
         row[key] = val.to_pydatetime()
@@ -273,7 +278,7 @@ def replace_vars(config, env):
     Exception if any variable references are not found in env.
   """
   if isinstance(config, dict):
-    for k, v in config.items():
+    for k, v in list(config.items()):
       if isinstance(v, dict) or isinstance(v, list) or isinstance(v, tuple):
         replace_vars(v, env)
       elif isinstance(v, basestring):
@@ -439,7 +444,7 @@ def parse_control_options(controls, variable_defaults=None):
   div_id = _html.Html.next_id()
   if variable_defaults is None:
     variable_defaults = {}
-  for varname, control in controls.items():
+  for varname, control in list(controls.items()):
     label = control.get('label', varname)
     control_id = div_id + '__' + varname
     control_ids.append(control_id)
@@ -506,7 +511,7 @@ def parse_control_options(controls, variable_defaults=None):
       if max_ <= min_:
         raise Exception('slider control must specify a min value less than max value')
       step = control.get('step', 1 if isinstance(min_, int) and isinstance(max_, int)
-                         else (max_ - min_) / 10.0)
+                         else (float(max_ - min_) / 10.0))
       if value is None:
         value = min_
       control_html = """

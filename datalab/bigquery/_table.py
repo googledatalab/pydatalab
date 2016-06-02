@@ -11,6 +11,12 @@
 # the License.
 
 """Implements Table, and related Table BigQuery APIs."""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from builtins import str
+from past.utils import old_div
+from builtins import object
 
 import calendar
 import codecs
@@ -25,12 +31,12 @@ import uuid
 import datalab.context
 import datalab.utils
 
-import _api
-import _csv_options
-import _job
-import _parser
-import _schema
-import _utils
+from . import _api
+from . import _csv_options
+from . import _job
+from . import _parser
+from . import _schema
+from . import _utils
 
 
 # import of Query is at end of module as we have a circular dependency of
@@ -263,7 +269,7 @@ class Table(object):
     Returns:
       The sanitized dictionary.
     """
-    for k in record.keys():
+    for k in list(record.keys()):
       v = record[k]
       # If the column is a date, convert to ISO string.
       if isinstance(v, pandas.Timestamp) or isinstance(v, datetime.datetime):
@@ -418,7 +424,7 @@ class Table(object):
                                          csv_delimiter, csv_header)
       return self._init_job_from_response(response)
     except Exception as e:
-      raise datalab.utils.JobError(location=traceback.format_exc(), message=e.message,
+      raise datalab.utils.JobError(location=traceback.format_exc(), message=str(e),
                                    reason=str(type(e)))
 
   def extract(self, destination, format='csv', csv_delimiter=',', csv_header=True, compress=False):
@@ -773,7 +779,7 @@ class Table(object):
             or self._cached_page_index + len(self._cached_page) <= item:
       # cache a new page. To get the start row we round to the nearest multiple of the page
       # size.
-      first = int(math.floor(item / self._DEFAULT_PAGE_SIZE)) * self._DEFAULT_PAGE_SIZE
+      first = old_div(item, self._DEFAULT_PAGE_SIZE) * self._DEFAULT_PAGE_SIZE
       count = self._DEFAULT_PAGE_SIZE
 
       if self.length >= 0:
@@ -891,10 +897,11 @@ class Table(object):
     Returns:
       A Query object that will return the specified fields from the records in the Table.
     """
+    # Do import here to avoid top-level circular dependencies.
+    from . import _query
     if fields is None:
       fields = '*'
     elif isinstance(fields, list):
       fields = ','.join(fields)
     return _query.Query('SELECT %s FROM %s' % (fields, self._repr_sql_()), context=self._context)
 
-import _query

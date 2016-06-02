@@ -11,21 +11,23 @@
 # the License.
 
 """Decorators for async methods and functions to dispatch on threads and support chained calls."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
 import abc
 import concurrent.futures
 import functools
 
-import _job
+from . import _job
+from future.utils import with_metaclass
 
 
-class async(object):
+class async(with_metaclass(abc.ABCMeta, object)):
   """ Base class for async_function/async_method. Creates a wrapped function/method that will
       run the original function/method on a thread pool worker thread and return a Job instance
       for monitoring the status of the thread.
   """
-
-  __metaclass__ = abc.ABCMeta
   executor = concurrent.futures.ThreadPoolExecutor(max_workers=50)  # Pool for doing the work.
 
   def __init__(self, function):
@@ -42,7 +44,7 @@ class async(object):
   def _preprocess_kwargs(**kwargs):
     # Pre-process keyword arguments - if any are Futures block until they can be resolved.
     return {kw: (arg.result() if isinstance(arg, concurrent.futures.Future) else arg)
-            for kw, arg in kwargs.items()}
+            for kw, arg in list(kwargs.items())}
 
   @abc.abstractmethod
   def _call(self, *args, **kwargs):

@@ -10,6 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
 import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
@@ -89,7 +92,7 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       _ = q.results()
-    self.assertEqual('Unexpected response from server', error.exception[0])
+    self.assertEqual('Unexpected response from server', str(error.exception))
 
   def test_udf_expansion(self):
     sql = 'SELECT * FROM udf(source)'

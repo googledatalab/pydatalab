@@ -10,6 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
@@ -21,15 +23,17 @@ import datalab.utils
 
 class TestCases(unittest.TestCase):
 
+  @mock.patch('datalab.storage._api.Api.objects_list')
   @mock.patch('datalab.storage._api.Api.objects_get')
-  def test_item_existence(self, mock_api_objects):
-    mock_api_objects.return_value = TestCases._create_objects_get_result()
+  def test_item_existence(self, mock_api_objects_get, mock_api_objects_list):
+    mock_api_objects_list.return_value = TestCases._create_enumeration_single_result()
+    mock_api_objects_get.return_value = TestCases._create_objects_get_result()
 
     b = TestCases._create_bucket()
     self.assertTrue(b.items().contains('test_item1'))
 
-    mock_api_objects.side_effect = datalab.utils.RequestException(404, 'failed')
-    self.assertFalse(b.items().contains('test_item2'))
+    mock_api_objects_get.side_effect = datalab.utils.RequestException(404, 'failed')
+    self.assertFalse('test_item2' in list(b.items()))
 
   @mock.patch('datalab.storage._api.Api.objects_get')
   def test_item_metadata(self, mock_api_objects):

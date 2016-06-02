@@ -11,10 +11,17 @@
 # the License.
 
 """Implements HTTP client helper functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 
 import datetime
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import httplib2
 
 
@@ -77,7 +84,7 @@ class Http(object):
     headers['user-agent'] = 'GoogleCloudDataLab/1.0'
     # Add querystring to the URL if there are any arguments.
     if args is not None:
-      qs = urllib.urlencode(args)
+      qs = urllib.parse.urlencode(args)
       url = url + '?' + qs
 
     # Setup method to POST if unspecified, and appropriate request headers
@@ -125,7 +132,7 @@ class Http(object):
       if 200 <= response.status < 300:
         if raw_response:
           return content
-        return json.loads(content)
+        return json.loads(str(content, encoding='UTF-8'))
       else:
         raise RequestException(response.status, content)
     except ValueError:

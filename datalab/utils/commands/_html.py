@@ -11,6 +11,12 @@
 # the License.
 
 """Google Cloud Platform library - IPython HTML display Functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
 
 import time
 
@@ -67,9 +73,9 @@ class Html(object):
     if len(self._script) != 0:
       parts.append('<script>')
       parts.append('require([')
-      parts.append(','.join(map(lambda d: '"%s"' % d[0], self._dependencies)))
+      parts.append(','.join(['"%s"' % d[0] for d in self._dependencies]))
       parts.append('], function(')
-      parts.append(','.join(map(lambda d: d[1], self._dependencies)))
+      parts.append(','.join([d[1] for d in self._dependencies]))
       parts.append(') {')
       parts.append(self._script)
       parts.append('});')
@@ -118,7 +124,7 @@ class HtmlBuilder(object):
       if first:
         first = False
         if datatype == 'dict' and not attributes:
-          attributes = o.keys()
+          attributes = list(o.keys())
 
         if attributes is not None:
           self._segments.append('<tr>')

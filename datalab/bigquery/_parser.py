@@ -11,6 +11,12 @@
 # the License.
 
 """Implements BigQuery related data parsing helpers."""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from builtins import zip
+from builtins import str
+from builtins import object
 
 import datetime
 
@@ -52,7 +58,7 @@ class Parser(object):
           value = datetime.datetime.utcfromtimestamp(float(value))
         elif data_type == 'BOOLEAN':
           value = value == 'true'
-        elif (type(value) != str) and (type(value) != unicode):
+        elif (type(value) != str):
           # TODO(gram): Handle nested JSON records
           value = str(value)
       return value

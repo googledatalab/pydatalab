@@ -11,6 +11,10 @@
 # the License.
 
 """Implements BigQuery HTTP API wrapper."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from past.builtins import basestring
+from builtins import object
 
 import datalab.utils
 
@@ -88,32 +92,32 @@ class Api(object):
     if append:
       write_disposition = 'WRITE_APPEND'
     data = {
-      'kind': 'bigquery#job',
-      'configuration': {
-        'load': {
-          'sourceUris': source,
-          'destinationTable': {
-            'projectId': table_name.project_id,
-            'datasetId': table_name.dataset_id,
-            'tableId': table_name.table_id
-          },
-          'createDisposition': 'CREATE_IF_NEEDED' if create else 'CREATE_NEVER',
-          'writeDisposition': write_disposition,
-          'sourceFormat': source_format,
-          'ignoreUnknownValues': ignore_unknown_values,
-          'maxBadRecords': max_bad_records,
+        'kind': 'bigquery#job',
+        'configuration': {
+            'load': {
+                'sourceUris': source,
+                'destinationTable': {
+                    'projectId': table_name.project_id,
+                    'datasetId': table_name.dataset_id,
+                    'tableId': table_name.table_id
+                },
+                'createDisposition': 'CREATE_IF_NEEDED' if create else 'CREATE_NEVER',
+                'writeDisposition': write_disposition,
+                'sourceFormat': source_format,
+                'ignoreUnknownValues': ignore_unknown_values,
+                'maxBadRecords': max_bad_records,
+            }
         }
-      }
     }
     if source_format == 'CSV':
       load_config = data['configuration']['load']
       load_config.update({
-        'fieldDelimiter': field_delimiter,
-        'allowJaggedRows': allow_jagged_rows,
-        'allowQuotedNewlines': allow_quoted_newlines,
-        'quote': quote,
-        'encoding': encoding,
-        'skipLeadingRows': skip_leading_rows
+          'fieldDelimiter': field_delimiter,
+          'allowJaggedRows': allow_jagged_rows,
+          'allowQuotedNewlines': allow_quoted_newlines,
+          'quote': quote,
+          'encoding': encoding,
+          'skipLeadingRows': skip_leading_rows
       })
 
     return datalab.utils.Http.request(url, data=data, credentials=self._credentials)
@@ -148,16 +152,16 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, ''))
     data = {
-      'kind': 'bigquery#job',
-      'configuration': {
-        'query': {
-          'query': sql,
-          'useQueryCache': use_cache,
-          'allowLargeResults': allow_large_results
+        'kind': 'bigquery#job',
+        'configuration': {
+            'query': {
+                'query': sql,
+                'useQueryCache': use_cache,
+                'allowLargeResults': allow_large_results
+            },
+            'dryRun': dry_run,
+            'priority': 'BATCH' if batch else 'INTERACTIVE',
         },
-        'dryRun': dry_run,
-        'priority': 'BATCH' if batch else 'INTERACTIVE',
-      },
     }
 
     query_config = data['configuration']['query']
@@ -176,9 +180,9 @@ class Api(object):
 
     if table_name:
       query_config['destinationTable'] = {
-        'projectId': table_name.project_id,
-        'datasetId': table_name.dataset_id,
-        'tableId': table_name.table_id
+          'projectId': table_name.project_id,
+          'datasetId': table_name.dataset_id,
+          'tableId': table_name.table_id
       }
       if append:
         query_config['writeDisposition'] = "WRITE_APPEND"
@@ -211,7 +215,7 @@ class Api(object):
         'maxResults': page_size,
         'timeoutMs': timeout,
         'startIndex': start_index
-      }
+    }
     url = Api._ENDPOINT + (Api._QUERIES_PATH % (project_id, job_id))
     return datalab.utils.Http.request(url, args=args, credentials=self._credentials)
 
@@ -245,11 +249,11 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._DATASETS_PATH % (dataset_name.project_id, ''))
     data = {
-      'kind': 'bigquery#dataset',
-      'datasetReference': {
-        'projectId': dataset_name.project_id,
-        'datasetId': dataset_name.dataset_id,
-      },
+        'kind': 'bigquery#dataset',
+        'datasetReference': {
+            'projectId': dataset_name.project_id,
+            'datasetId': dataset_name.dataset_id
+        },
     }
     if friendly_name:
       data['friendlyName'] = friendly_name
@@ -380,12 +384,12 @@ class Api(object):
         (Api._TABLES_PATH % (table_name.project_id, table_name.dataset_id, '', ''))
 
     data = {
-      'kind': 'bigquery#table',
-      'tableReference': {
-        'projectId': table_name.project_id,
-        'datasetId': table_name.dataset_id,
-        'tableId': table_name.table_id
-      }
+        'kind': 'bigquery#table',
+        'tableReference': {
+            'projectId': table_name.project_id,
+            'datasetId': table_name.dataset_id,
+            'tableId': table_name.table_id
+        }
     }
     if schema:
       data['schema'] = {'fields': schema}
@@ -479,21 +483,21 @@ class Api(object):
     data = {
       # 'projectId': table_name.project_id, # Code sample shows this but it is not in job
       # reference spec. Filed as b/19235843
-      'kind': 'bigquery#job',
-      'configuration': {
-        'extract': {
-          'sourceTable': {
-            'projectId': table_name.project_id,
-            'datasetId': table_name.dataset_id,
-            'tableId': table_name.table_id,
-          },
-          'compression': 'GZIP' if compress else 'NONE',
-          'fieldDelimiter': field_delimiter,
-          'printHeader': print_header,
-          'destinationUris': destination,
-          'destinationFormat': format,
+        'kind': 'bigquery#job',
+        'configuration': {
+            'extract': {
+                'sourceTable': {
+                    'projectId': table_name.project_id,
+                    'datasetId': table_name.dataset_id,
+                    'tableId': table_name.table_id,
+                },
+                'compression': 'GZIP' if compress else 'NONE',
+                'fieldDelimiter': field_delimiter,
+                'printHeader': print_header,
+                'destinationUris': destination,
+                'destinationFormat': format,
+            }
         }
-      }
     }
     return datalab.utils.Http.request(url, data=data, credentials=self._credentials)
 

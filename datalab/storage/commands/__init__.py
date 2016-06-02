@@ -11,5 +11,7 @@
 # the License.
 
 
-import _storage
+from __future__ import absolute_import
+
+from . import _storage
 

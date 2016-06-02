@@ -14,6 +14,8 @@
 
 """ Support for getting gcloud credentials. """
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import oauth2client.client
 import json
 import os

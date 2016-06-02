@@ -11,8 +11,12 @@
 # the License.
 
 """Implements BigQuery query job functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
 
-import _job
+from . import _job
+from . import _query_results_table
 
 
 class QueryJob(_job.Job):
@@ -106,4 +110,3 @@ class QueryJob(_job.Job):
       raise Exception('Query failed: %s' % str(self.errors))
     return self._table
 
-import _query_results_table

@@ -10,15 +10,18 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 # Support functions for magics and display help.
-from _commands import CommandParser
-from _html import Html, HtmlBuilder
-from _utils import *
+from ._commands import CommandParser
+from ._html import Html, HtmlBuilder
+from ._utils import *
 
 # Magics
-import _chart
-import _chart_data
-import _csv
-import _extension
-import _job
-import _modules
+from . import _chart
+from . import _chart_data
+from . import _csv
+from . import _extension
+from . import _job
+from . import _modules

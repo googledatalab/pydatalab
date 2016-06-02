@@ -10,10 +10,14 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+
 """Implements representation of BigQuery query job dry run results."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
 
-class QueryStats:
+class QueryStats(object):
   """A wrapper for statistics returned by a dry run query. Useful so we can get an HTML
   representation in a notebook.
   """

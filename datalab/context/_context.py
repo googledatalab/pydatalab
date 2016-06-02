@@ -13,9 +13,12 @@
 # limitations under the License.
 
 """Implements Context functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
-import _project
-import _utils
+from . import _project
+from . import _utils
 
 
 class Context(object):

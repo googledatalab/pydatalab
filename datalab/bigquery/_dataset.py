@@ -11,14 +11,17 @@
 # the License.
 
 """Implements Dataset, and related Dataset BigQuery APIs."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
 import datalab.context
 import datalab.utils
 
-import _api
-import _table
-import _utils
-import _view
+from . import _api
+from . import _table
+from . import _utils
+from . import _view
 
 
 class Dataset(object):

@@ -11,9 +11,17 @@
 # the License.
 
 """Helper functions for %%sql modules."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 
 import shlex
 import types
+
+from . import _sql_statement
+from . import _utils
 
 
 # It would be nice to be able to inherit from Python module but AFAICT that is not possible.
@@ -21,13 +29,6 @@ import types
 
 class SqlModule(object):
   """ A container for SqlStatements defined together and able to reference each other. """
-
-  # Names used for the arg parser, unnamed (main) query and last query in the module.
-  # Note that every module has a last query, but not every module has a main query.
-
-  _SQL_MODULE_ARGPARSE = '_sql_module_arg_parser'
-  _SQL_MODULE_MAIN = '_sql_module_main'
-  _SQL_MODULE_LAST = '_sql_module_last'
 
   @staticmethod
   def _get_sql_args(parser, args=None):
@@ -59,7 +60,7 @@ class SqlModule(object):
       args.update(overrides)
 
     # Don't return any args that are None as we don't want to expand to 'None'
-    return {arg: value for arg, value in args.iteritems() if value is not None}
+    return {arg: value for arg, value in args.items() if value is not None}
 
   @staticmethod
   def get_default_query_from_module(module):
@@ -71,9 +72,7 @@ class SqlModule(object):
     Returns:
       The default query associated with this module.
     """
-    if isinstance(module, types.ModuleType):
-      return module.__dict__.get(SqlModule._SQL_MODULE_LAST, None)
-    return None
+    return _utils.get_default_query_from_module(module)
 
   @staticmethod
   def get_sql_statement_with_environment(item, args=None):
@@ -97,7 +96,7 @@ class SqlModule(object):
     env = {}
     if item.module:
       env.update(item.module.__dict__)
-      parser = env.get(SqlModule._SQL_MODULE_ARGPARSE, None)
+      parser = env.get(_utils._SQL_MODULE_ARGPARSE, None)
       if parser:
         args = SqlModule._get_sql_args(parser, args=args)
       else:
@@ -126,4 +125,3 @@ class SqlModule(object):
     return _sql_statement.SqlStatement.format(sql._sql, args)
 
 
-import _sql_statement

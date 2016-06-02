@@ -11,12 +11,17 @@
 # the License.
 
 """Implements usefule CSV utilities."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import next
+from builtins import str
+from builtins import range
+from builtins import object
 
 
 import csv
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
-import yaml
 
 import datalab.storage
 
@@ -47,7 +52,7 @@ class Csv(object):
   @staticmethod
   def _read_local_lines(path, max_lines=None):
     lines = []
-    for line in open(path).xreadlines():
+    for line in open(path):
       if max_lines is not None and len(lines) >= max_lines:
         break
       lines.append(line)
@@ -93,7 +98,7 @@ class Csv(object):
 
     if len(lines) == 0:
       return []
-    columns_size = len(csv.reader([lines[0]]).next())
+    columns_size = len(next(csv.reader([lines[0]])))
     if headers is None:
       headers = ['col' + str(e) for e in range(columns_size)]
     if len(headers) != columns_size:

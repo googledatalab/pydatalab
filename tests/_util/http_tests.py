@@ -10,6 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import mock
 import unittest
 
@@ -52,8 +54,10 @@ class TestCases(unittest.TestCase):
     TestCases._setup_mocks(mock_request, mock_response, '{}')
 
     Http.request('http://www.example.org', args={'a': 1, 'b': 'a b c'})
-    self.assertEqual(mock_request.call_args[0][0],
-                     'http://www.example.org?a=1&b=a+b+c')
+    parts = mock_request.call_args[0][0].replace('?', '&').split('&')
+    self.assertEqual(parts[0], 'http://www.example.org')
+    self.assertTrue('a=1' in parts[1:])
+    self.assertTrue('b=a+b+c' in parts[1:])
 
   @mock.patch('httplib2.Response')
   @mock.patch('httplib2.Http.request')

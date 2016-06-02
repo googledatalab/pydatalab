@@ -11,6 +11,12 @@
 # the License.
 
 """Implements Table and View Schema APIs."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
 
 import datetime
 import pandas
@@ -167,7 +173,7 @@ class Schema(list):
       A list of dictionaries containing field 'name' and 'type' entries, suitable for use in a
           BigQuery Tables resource schema.
     """
-    return [Schema._get_field_entry(name, value) for name, value in data.items()]
+    return [Schema._get_field_entry(name, value) for name, value in list(data.items())]
 
   @staticmethod
   def _from_list_record(data):
@@ -291,6 +297,7 @@ class Schema(list):
     """
     if isinstance(key, basestring):
       return self._map.get(key, None)
+    # noinspection PyCallByClass
     return list.__getitem__(self, key)
 
   def _add_field(self, name, data_type, mode='NULLABLE', description=''):
@@ -333,7 +340,7 @@ class Schema(list):
     other_map = other._map
     if len(self._map) != len(other_map):
       return False
-    for name in self._map.iterkeys():
+    for name in self._map.keys():
       if name not in other_map:
         return False
       if not self._map[name] == other_map[name]:

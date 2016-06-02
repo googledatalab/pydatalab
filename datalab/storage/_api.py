@@ -11,8 +11,13 @@
 # the License.
 
 """Implements Storage HTTP API wrapper."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import datalab.utils
 
 
@@ -256,4 +261,4 @@ class Api(object):
   @staticmethod
   def _escape_key(key):
     # Disable the behavior to leave '/' alone by explicitly specifying the safe parameter.
-    return urllib.quote(key, safe='')
+    return urllib.parse.quote(key, safe='')

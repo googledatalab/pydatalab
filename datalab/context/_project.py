@@ -11,13 +11,16 @@
 # the License.
 
 """Implements Projects functionality."""
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from builtins import object
 
 import os
 
 import datalab.utils
 
-import _api
-import _utils
+from . import _api
+from . import _utils
 
 
 # We could do this with the gcloud SDK. However, installing that while locked on oauth2.5

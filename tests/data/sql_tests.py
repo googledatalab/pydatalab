@@ -10,17 +10,19 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import imp
 import unittest
 
-from datalab.data import SqlModule, SqlStatement, tokenize
+import datalab.data
 
 
 class TestCases(unittest.TestCase):
 
   def test_sql_tokenizer(self):
     query = "SELECT * FROM function(SELECT * FROM [table])  -- a comment\nWHERE x>0 AND y == 'cat'/*\nmulti-line comment */LIMIT 10"
-    tokens = tokenize(query)
+    tokens = datalab.data.tokenize(query)
     # Make sure we get all the content
     self.assertEquals(''.join(tokens), query)
 
@@ -72,14 +74,14 @@ class TestCases(unittest.TestCase):
                ' SELECT time FROM [logs.today] ']
 
     for query in queries:
-      formatted_query = SqlStatement.format(query, None)
+      formatted_query = datalab.data.SqlStatement.format(query, None)
       self.assertEqual(query, formatted_query)
 
   def test_single_placeholder(self):
     query = 'SELECT time FROM [logs.today] WHERE status == $param'
     args = {'param': 200}
 
-    formatted_query = SqlStatement.format(query, args)
+    formatted_query = datalab.data.SqlStatement.format(query, args)
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE status == 200')
 
@@ -88,7 +90,7 @@ class TestCases(unittest.TestCase):
              'WHERE status == $status AND path == $path')
     args = {'status': 200, 'path': '/home'}
 
-    formatted_query = SqlStatement.format(query, args)
+    formatted_query = datalab.data.SqlStatement.format(query, args)
     self.assertEqual(formatted_query,
                      ('SELECT time FROM [logs.today] '
                       'WHERE status == 200 AND path == "/home"'))
@@ -97,7 +99,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE path == "/foo$$bar"'
     args = {'status': 200}
 
-    formatted_query = SqlStatement.format(query, args)
+    formatted_query = datalab.data.SqlStatement.format(query, args)
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE path == "/foo$bar"')
 
@@ -105,7 +107,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE path == $path'
     args = {'path': 'xyz"xyz'}
 
-    formatted_query = SqlStatement.format(query, args)
+    formatted_query = datalab.data.SqlStatement.format(query, args)
     self.assertEqual(formatted_query,
                      'SELECT time FROM [logs.today] WHERE path == "xyz\\"xyz"')
 
@@ -125,7 +127,7 @@ class TestCases(unittest.TestCase):
                       'WHERE success == False AND server == "$master" '
                       'LIMIT 10')
 
-    formatted_query = SqlStatement.format(query, args)
+    formatted_query = datalab.data.SqlStatement.format(query, args)
 
     self.assertEqual(formatted_query, expected_query)
 
@@ -134,87 +136,87 @@ class TestCases(unittest.TestCase):
     args = {'s': 200}
 
     with self.assertRaises(Exception) as error:
-      _ = SqlStatement.format(query, args)
+      _ = datalab.data.SqlStatement.format(query, args)
 
     e = error.exception
-    self.assertEqual(e.message, 'Unsatisfied dependency $status')
+    self.assertEqual('Unsatisfied dependency $status', str(e))
 
   def test_invalid_args(self):
     query = 'SELECT time FROM [logs.today] WHERE status == $0'
 
     with self.assertRaises(Exception) as error:
-      _ = SqlStatement.format(query, {})
+      _ = datalab.data.SqlStatement.format(query, {})
 
     e = error.exception
-    self.assertEqual(e.message,
-        'Invalid sql; $ with no following $ or identifier: ' + query + '.')
+    self.assertEqual(
+        'Invalid sql; $ with no following $ or identifier: ' + query + '.', str(e))
 
   def test_nested_queries(self):
-    query1 = SqlStatement('SELECT 3 as x')
-    query2 = SqlStatement('SELECT x FROM $query1')
+    query1 = datalab.data.SqlStatement('SELECT 3 as x')
+    query2 = datalab.data.SqlStatement('SELECT x FROM $query1')
     query3 = 'SELECT * FROM $query2 WHERE x == $count'
 
     self.assertEquals('SELECT 3 as x', query1.sql)
 
     with self.assertRaises(Exception) as e:
-      _ = SqlStatement.format(query3)[0]
-    self.assertEquals('Unsatisfied dependency $query2', e.exception.message)
+      _ = datalab.data.SqlStatement.format(query3)[0]
+    self.assertEquals('Unsatisfied dependency $query2', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = SqlStatement.format(query3, {'query1': query1})
-    self.assertEquals('Unsatisfied dependency $query2', e.exception.message)
+      _ = datalab.data.SqlStatement.format(query3, {'query1': query1})
+    self.assertEquals('Unsatisfied dependency $query2', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = SqlStatement.format(query3, {'query2': query2})
-    self.assertEquals('Unsatisfied dependency $query1', e.exception.message)
+      _ = datalab.data.SqlStatement.format(query3, {'query2': query2})
+    self.assertEquals('Unsatisfied dependency $query1', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = SqlStatement.format(query3, {'query1': query1, 'query2': query2})
-    self.assertEquals('Unsatisfied dependency $count', e.exception.message)
+      _ = datalab.data.SqlStatement.format(query3, {'query1': query1, 'query2': query2})
+    self.assertEquals('Unsatisfied dependency $count', str(e.exception))
 
     formatted_query =\
-        SqlStatement.format(query3, {'query1': query1, 'query2': query2, 'count': 5})
+        datalab.data.SqlStatement.format(query3, {'query1': query1, 'query2': query2, 'count': 5})
     self.assertEqual('SELECT * FROM (SELECT x FROM (SELECT 3 as x)) WHERE x == 5', formatted_query)
 
   def test_shared_nested_queries(self):
-    query1 = SqlStatement('SELECT 3 as x')
-    query2 = SqlStatement('SELECT x FROM $query1')
+    query1 = datalab.data.SqlStatement('SELECT 3 as x')
+    query2 = datalab.data.SqlStatement('SELECT x FROM $query1')
     query3 = 'SELECT x AS y FROM $query1, x FROM $query2'
-    formatted_query = SqlStatement.format(query3, {'query1': query1, 'query2': query2})
+    formatted_query = datalab.data.SqlStatement.format(query3, {'query1': query1, 'query2': query2})
     self.assertEqual('SELECT x AS y FROM (SELECT 3 as x), x FROM (SELECT x FROM (SELECT 3 as x))',
                      formatted_query)
 
   def test_circular_references(self):
-    query1 = SqlStatement('SELECT * FROM $query3')
-    query2 = SqlStatement('SELECT x FROM $query1')
-    query3 = SqlStatement('SELECT * FROM $query2 WHERE x == $count')
+    query1 = datalab.data.SqlStatement('SELECT * FROM $query3')
+    query2 = datalab.data.SqlStatement('SELECT x FROM $query1')
+    query3 = datalab.data.SqlStatement('SELECT * FROM $query2 WHERE x == $count')
     args = {'query1': query1, 'query2': query2, 'query3': query3}
 
     with self.assertRaises(Exception) as e:
-      _ = SqlStatement.format('SELECT * FROM $query1', args)
-    self.assertEquals('Circular dependency in $query1', e.exception.message)
+      _ = datalab.data.SqlStatement.format('SELECT * FROM $query1', args)
+    self.assertEquals('Circular dependency in $query1', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = SqlStatement.format('SELECT * FROM $query2', args)
-    self.assertEquals('Circular dependency in $query2', e.exception.message)
+      _ = datalab.data.SqlStatement.format('SELECT * FROM $query2', args)
+    self.assertEquals('Circular dependency in $query2', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = SqlStatement.format('SELECT * FROM $query3', args)
-    self.assertEquals('Circular dependency in $query3', e.exception.message)
+      _ = datalab.data.SqlStatement.format('SELECT * FROM $query3', args)
+    self.assertEquals('Circular dependency in $query3', str(e.exception))
 
   def test_module_reference(self):
     m = imp.new_module('m')
-    m.__dict__['q1'] = SqlStatement('SELECT 3 AS x')
-    m.__dict__[SqlModule._SQL_MODULE_LAST] =\
-        m.__dict__[SqlModule._SQL_MODULE_LAST] = SqlStatement('SELECT * FROM $q1 LIMIT 10')
+    m.__dict__['q1'] = datalab.data.SqlStatement('SELECT 3 AS x')
+    m.__dict__[datalab.data._utils._SQL_MODULE_LAST] =\
+        datalab.data.SqlStatement('SELECT * FROM $q1 LIMIT 10')
     with self.assertRaises(Exception) as e:
-      _ = SqlStatement.format('SELECT * FROM $s', {'s': m})
-    self.assertEquals('Unsatisfied dependency $q1', e.exception.message)
+      _ = datalab.data.SqlStatement.format('SELECT * FROM $s', {'s': m})
+    self.assertEquals('Unsatisfied dependency $q1', str(e.exception))
 
-    formatted_query = SqlStatement.format('SELECT * FROM $s', {'s': m, 'q1': m.q1})
+    formatted_query = datalab.data.SqlStatement.format('SELECT * FROM $s', {'s': m, 'q1': m.q1})
     self.assertEqual('SELECT * FROM (SELECT * FROM (SELECT 3 AS x) LIMIT 10)', formatted_query)
 
-    formatted_query = SqlStatement.format('SELECT * FROM $s', {'s': m.q1})
+    formatted_query = datalab.data.SqlStatement.format('SELECT * FROM $s', {'s': m.q1})
     self.assertEqual('SELECT * FROM (SELECT 3 AS x)', formatted_query)
 
   def test_get_sql_statement_with_environment(self):
