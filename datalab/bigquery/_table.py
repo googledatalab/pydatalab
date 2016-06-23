@@ -250,6 +250,8 @@ class Table(object):
     Raises:
       Exception if the sample query could not be executed or query response was malformed.
     """
+    # Do import here to avoid top-level circular dependencies.
+    from . import _query
     sql = self._repr_sql_()
     return _query.Query.sampling_query(sql, context=self._context, count=count, fields=fields,
                                        sampling=sampling).results(use_cache=use_cache)
