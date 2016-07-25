@@ -100,9 +100,22 @@ class Projects(object):
 
   @staticmethod
   def get_default_id(credentials=None):
-    project_id = os.getenv('PROJECT_ID')
+    """ Get default project id.
+
+    Returns: the default project id if there is one, or None.
+    """
+    project_id = _utils.get_project_id()
     if project_id is None:
       projects, _ = Projects(credentials)._retrieve_projects(None, 2)
       if len(projects) == 1:
         project_id = projects[0].id
     return project_id
+
+  @staticmethod
+  def save_default_id(project_id):
+    """ Save default project id to config so it will persist across kernels and Datalab runs.
+
+    Args:
+      project_id: the project_id to save.
+    """
+    _utils.save_project_id(project_id)

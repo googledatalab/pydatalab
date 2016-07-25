@@ -69,3 +69,36 @@ def get_credentials():
         raise Exception('No application credentials found. Perhaps you should sign in.')
 
     raise e
+
+
+def save_project_id(project_id):
+  """ Save project id to config file.
+
+  Args:
+    project_id: the project_id to save.
+  """
+  config_file = os.path.join(get_config_dir(), 'config.json')
+  config = {}
+  if os.path.exists(config_file):
+    with open(config_file) as f:
+      config = json.loads(f.read())
+  config['project_id'] = project_id
+  with open(config_file, 'w') as f:
+    f.write(json.dumps(config))
+
+
+def get_project_id():
+  """ Get default project id from config or environment var.
+
+  Returns: the project id if available, or None.
+  """
+  config_file = os.path.join(get_config_dir(), 'config.json')
+  if os.path.exists(config_file):
+    with open(config_file) as f:
+      config = json.loads(f.read())
+      if 'project_id' in config and config['project_id']:
+        return str(config['project_id'])
+
+  if os.getenv('PROJECT_ID') is not None:
+    return os.getenv('PROJECT_ID')
+  return None
