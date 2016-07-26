@@ -16,7 +16,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import str
 
+import httplib
 import pytz
+import socket
 import traceback
 import types
 
@@ -74,3 +76,33 @@ def compare_datetimes(d1, d2):
   elif d1 > d2:
     return 1
   return 0
+
+
+def pick_unused_port():
+  """ get an unused port on the VM.
+
+  Returns:
+    An unused port.
+  """
+  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  s.bind(('localhost', 0))
+  addr, port = s.getsockname()
+  s.close()
+  return port
+
+
+def is_http_running_on(port):
+  """ Check if an http server runs on a given port.
+
+  Args:
+    The port to check.
+  Returns:
+    True if it is used by an http server. False otherwise.
+  """
+  try:
+    conn = httplib.HTTPConnection('127.0.0.1:' + str(port))
+    conn.connect()
+    conn.close()
+    return True
+  except Exception as e:
+    return False
