@@ -18,6 +18,7 @@ standard_library.install_aliases()
 from builtins import object
 
 import urllib.request, urllib.parse, urllib.error
+import datalab.context
 import datalab.utils
 
 
@@ -262,3 +263,35 @@ class Api(object):
   def _escape_key(key):
     # Disable the behavior to leave '/' alone by explicitly specifying the safe parameter.
     return urllib.parse.quote(key, safe='')
+
+  @staticmethod
+  def verify_permitted_to_read(gs_path):
+    """Check if the user has permissions to read from the given path.
+
+    Args:
+      gs_path: the GCS path to check if user is permitted to read.
+    Raises:
+      Exception if user has no permissions to read.
+    """
+    # TODO(qimingj): Storage APIs need to be modified to allow absence of project
+    #                or credential on Items. When that happens we can move the function
+    #                to Items class.
+    from . import _bucket
+    bucket, prefix = _bucket.parse_name(gs_path)
+    credentials = None
+    if datalab.context.Context.is_signed_in():
+      credentials = datalab.context._utils.get_credentials()
+    args = {
+        'maxResults': Api._MAX_RESULTS,
+        'projection': 'noAcl'
+    }
+    if prefix is not None:
+      args['prefix'] = prefix
+    url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
+    try:
+      datalab.utils.Http.request(url, args=args, credentials=credentials)
+    except datalab.utils.RequestException as e:
+      if e.status == 401:
+        raise Exception('Not permitted to read from specified path. '
+                        'Please sign in and make sure you have read access.')
+      raise e

@@ -66,6 +66,15 @@ class Context(object):
     self._project_id = project_id
 
   @staticmethod
+  def is_signed_in():
+    """ If the user has signed in or it is on GCE VM with default credential."""
+    try:
+      _utils.get_credentials()
+      return True
+    except Exception:
+      return False
+
+  @staticmethod
   def default():
     """Retrieves a default Context object, creating it if necessary.
 

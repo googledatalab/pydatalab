@@ -30,6 +30,8 @@ setup(
     'datalab.data',
     'datalab.data.commands',
     'datalab.kernel',
+    'datalab.ml',
+    'datalab.ml.commands',
     'datalab.notebook',
     'datalab.stackdriver',
     'datalab.stackdriver.commands',
