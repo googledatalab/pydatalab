@@ -21,8 +21,8 @@ In future we should be installable from PyPI.
 
 First:
 
-    git clone https://github.com/googledatalab/datalab.git
-    cd datalab
+    git clone https://github.com/googledatalab/pydatalab.git
+    cd pydatalab
 
 Then do one of the folowing:
 
