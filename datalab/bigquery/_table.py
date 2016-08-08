@@ -27,6 +27,7 @@ import pandas
 import time
 import traceback
 import uuid
+import sys
 
 import datalab.context
 import datalab.utils
@@ -647,6 +648,8 @@ class Table(object):
     fieldnames = []
     for column in self.schema:
       fieldnames.append(column.name)
+    if sys.version_info[0] == 2:
+      csv_delimiter = csv_delimiter.encode('unicode_escape')
     writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=csv_delimiter)
     if csv_header:
       writer.writeheader()
