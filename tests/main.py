@@ -42,6 +42,8 @@ import kernel.storage_tests
 import kernel.utils_tests
 import stackdriver.monitoring.metric_tests
 import stackdriver.monitoring.resource_tests
+import stackdriver.monitoring.timeseries_tests
+import stackdriver.monitoring.utils_tests
 import storage.api_tests
 import storage.bucket_tests
 import storage.item_tests
@@ -75,6 +77,8 @@ _TEST_MODULES = [
     kernel.utils_tests,
     stackdriver.monitoring.metric_tests,
     stackdriver.monitoring.resource_tests,
+    stackdriver.monitoring.timeseries_tests,
+    stackdriver.monitoring.utils_tests,
     storage.api_tests,
     storage.bucket_tests,
     storage.item_tests,
