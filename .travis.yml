@@ -3,7 +3,10 @@ python:
   - "2.7"
 
 before_install:
-  - python setup.py
+  - npm install -g typescript
+  - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
+  - pip install -U pip
+  - pip install .
 
 script: python ./tests/main.py
 
