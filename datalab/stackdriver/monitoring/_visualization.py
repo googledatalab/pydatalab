@@ -10,19 +10,21 @@
 # or implied.  See the License for the specific language governing permissions and limitations under
 # the License.
 
-"""Provides utility methods for the Monitoring API."""
+"""Visualization methods."""
 
 from __future__ import absolute_import
 
-import gcloud.monitoring
 
-import datalab.context
+def table(dataframe, show_index=True):
+  """Visualize a dataframe as an HTML table.
 
+  Args:
+    dataframe: the pandas dataframe to display.
+    show_index: if False, the dataframe index is hidden.
 
-def make_client(project_id=None, context=None):
-  context = context or datalab.context.Context.default()
-  project_id = project_id or context.project_id
-  return gcloud.monitoring.Client(
-      project=project_id,
-      credentials=context.credentials,
-  )
+  Returns:
+    The HTML rendering of the dataframe as a table.
+  """
+  import IPython.core.display
+
+  return IPython.core.display.HTML(dataframe.to_html(index=show_index))

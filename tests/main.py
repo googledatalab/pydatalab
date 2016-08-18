@@ -40,6 +40,8 @@ import kernel.module_tests
 import kernel.sql_tests
 import kernel.storage_tests
 import kernel.utils_tests
+import stackdriver.monitoring.metric_tests
+import stackdriver.monitoring.resource_tests
 import storage.api_tests
 import storage.bucket_tests
 import storage.item_tests
@@ -71,6 +73,8 @@ _TEST_MODULES = [
     kernel.sql_tests,
     kernel.storage_tests,
     kernel.utils_tests,
+    stackdriver.monitoring.metric_tests,
+    stackdriver.monitoring.resource_tests,
     storage.api_tests,
     storage.bucket_tests,
     storage.item_tests,

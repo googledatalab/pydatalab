@@ -15,4 +15,6 @@
 from __future__ import absolute_import
 
 from gcloud.monitoring import Aligner, Reducer
+from ._metric import MetricDescriptors
+from ._resource import ResourceDescriptors
 from ._timeseries import Query
