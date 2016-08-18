@@ -91,4 +91,4 @@ if __name__ == '__main__':
   runner = unittest.TextTestRunner()
   result = runner.run(suite)
 
-  sys.exit(len(result.errors))
+  sys.exit(len(result.errors) + len(result.failures))

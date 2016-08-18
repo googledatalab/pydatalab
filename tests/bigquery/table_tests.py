@@ -101,7 +101,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual('Logs', metadata.friendly_name)
     self.assertEqual(2, metadata.rows)
     self.assertEqual(2, metadata.rows)
-    self.assertEqual(ts, metadata.created_on)
+    self.assertTrue(abs((metadata.created_on - ts).total_seconds()) <= 1)
     self.assertEqual(None, metadata.expires_on)
 
   @mock.patch('datalab.bigquery._api.Api.tables_get')
