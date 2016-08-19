@@ -16,7 +16,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import str
 
-import httplib
+try:
+    import http.client as httplib
+except ImportError:
+    import httplib
+
 import pytz
 import socket
 import traceback

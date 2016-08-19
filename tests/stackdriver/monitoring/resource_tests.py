@@ -123,7 +123,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.columns.tolist(), expected_headers)
     self.assertEqual(dataframe.columns.names, [None])
 
-    self.assertEqual(dataframe.index.tolist(), range(len(RESOURCE_TYPES)))
+    self.assertEqual(dataframe.index.tolist(), list(range(len(RESOURCE_TYPES))))
     self.assertEqual(dataframe.index.names, [None])
 
     expected_labels = 'instance_id, project_id'
