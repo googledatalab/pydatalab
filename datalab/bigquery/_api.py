@@ -124,7 +124,7 @@ class Api(object):
 
   def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False,
                         overwrite=False, dry_run=False, use_cache=True, batch=True,
-                        allow_large_results=False, table_definitions=None):
+                        allow_large_results=False, table_definitions=None, dialect='legacy'):
     """Issues a request to insert a query job.
 
     Args:
@@ -145,6 +145,10 @@ class Api(object):
           can handle big jobs).
       table_definitions: a list of JSON external table definitions for any external tables
           referenced in the query.
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A parsed result object.
     Raises:
@@ -157,7 +161,8 @@ class Api(object):
             'query': {
                 'query': sql,
                 'useQueryCache': use_cache,
-                'allowLargeResults': allow_large_results
+                'allowLargeResults': allow_large_results,
+                'useLegacySql': dialect == 'legacy'
             },
             'dryRun': dry_run,
             'priority': 'BATCH' if batch else 'INTERACTIVE',

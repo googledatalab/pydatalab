@@ -237,7 +237,7 @@ class Table(object):
       return self
     raise Exception("Table %s could not be created as it already exists" % self._full_name)
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True):
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect='legacy'):
     """Retrieves a sampling of data from the table.
 
     Args:
@@ -246,6 +246,10 @@ class Table(object):
           sampling is not specified.
       sampling: an optional sampling strategy to apply to the table.
       use_cache: whether to use cached results or not.
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A QueryResultsTable object containing the resulting data.
     Raises:
@@ -255,7 +259,8 @@ class Table(object):
     from . import _query
     sql = self._repr_sql_()
     return _query.Query.sampling_query(sql, context=self._context, count=count, fields=fields,
-                                       sampling=sampling).results(use_cache=use_cache)
+                                       sampling=sampling).results(use_cache=use_cache,
+                                                                  dialect=dialect)
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):

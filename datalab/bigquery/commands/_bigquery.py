@@ -75,6 +75,8 @@ def _create_sample_subparser(parser):
   group.add_argument('-q', '--query', help='the name of the query to sample')
   group.add_argument('-t', '--table', help='the name of the table to sample')
   group.add_argument('-v', '--view', help='the name of the view to sample')
+  sample_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
+                             choices=['legacy', 'standard'], default='legacy')
   sample_parser.add_argument('-c', '--count', type=int, default=10,
                              help='The number of rows to limit to, if sampling')
   sample_parser.add_argument('-m', '--method', help='The type of sampling to use',
@@ -104,6 +106,8 @@ def _create_dry_run_subparser(parser):
       'Execute a dry run of a BigQuery query and display approximate usage statistics')
   dry_run_parser.add_argument('-q', '--query',
                               help='The name of the query to be dry run')
+  dry_run_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
+                             choices=['legacy', 'standard'], default='legacy')
   dry_run_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
                               action='store_true')
@@ -114,8 +118,10 @@ def _create_execute_subparser(parser):
   execute_parser = parser.subcommand('execute',
       'Execute a BigQuery SQL query and optionally send the results to a named table.\n' +
       'The cell can optionally contain arguments for expanding variables in the query.')
-  execute_parser.add_argument('-nc', '--nocache', help='Don\'t used previously cached results',
+  execute_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                               action='store_true')
+  execute_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
+                             choices=['legacy', 'standard'], default='legacy')
   execute_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                               choices=['create', 'append', 'overwrite'])
   execute_parser.add_argument('-l', '--large', help='Whether to allow large results',
@@ -133,8 +139,10 @@ def _create_pipeline_subparser(parser):
       'Define a deployable pipeline based on a BigQuery query.\n' +
       'The cell can optionally contain arguments for expanding variables in the query.')
   pipeline_parser.add_argument('-n', '--name', help='The pipeline name')
-  pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t used previously cached results',
+  pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                                action='store_true')
+  pipeline_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
+                             choices=['legacy', 'standard'], default='legacy')
   pipeline_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                                choices=['create', 'append', 'overwrite'])
   pipeline_parser.add_argument('-l', '--large', help='Allow large results', action='store_true')
@@ -311,7 +319,7 @@ def _sample_cell(args, cell_body):
     sampling = datalab.bigquery.Sampling.default(count=count)
 
   if query:
-    results = query.sample(sampling=sampling)
+    results = query.sample(sampling=sampling, dialect=args['dialect'])
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -403,7 +411,7 @@ def _dryrun_cell(args, cell_body):
 
   if args['verbose']:
     print(query.sql)
-  result = query.execute_dry_run()
+  result = query.execute_dry_run(dialect=args['dialect'])
   return datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                               is_cached=result['cacheHit'])
 
@@ -492,7 +500,7 @@ def _execute_cell(args, cell_body):
   if args['verbose']:
     print(query.sql)
   return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
-                       allow_large_results=args['large']).results
+                       allow_large_results=args['large'], dialect=args['dialect']).results
 
 
 def _pipeline_cell(args, cell_body):
@@ -526,7 +534,7 @@ def _pipeline_cell(args, cell_body):
                                                 is_cached=result['cacheHit'])
   if args['action'] == 'run':
     return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
-                         allow_large_results=args['large']).results
+                         allow_large_results=args['large'], dialect=args['dialect']).results
 
 
 def _table_line(args):
