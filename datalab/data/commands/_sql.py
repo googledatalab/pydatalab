@@ -77,6 +77,8 @@ arguments similar to datestring(), but unlike datestring() will resolve to a Tab
 with the specified name.
 """)
   sql_parser.add_argument('-m', '--module', help='The name for this SQL module')
+  sql_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
+                             choices=['legacy', 'standard'], default='legacy')
   sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
   return sql_parser
 
@@ -298,19 +300,25 @@ def _split_cell(cell, module):
   define_wild_re = re.compile('^DEFINE\s+.*$', re.IGNORECASE)
   define_re = re.compile('^DEFINE\s+QUERY\s+([A-Z]\w*)\s*?(.*)$', re.IGNORECASE)
   select_re = re.compile('^SELECT\s*.*$', re.IGNORECASE)
+  standard_sql_re = re.compile('^(WITH|INSERT|DELETE|UPDATE)\s*.*$', re.IGNORECASE)
   # TODO(gram): a potential issue with this code is if we have leading Python code followed
   # by a SQL-style comment before we see SELECT/DEFINE. When switching to the tokenizer see
   # if we can address this.
   for i, line in enumerate(lines):
     define_match = define_re.match(line)
     select_match = select_re.match(line)
-    if select_match and i:
-      # Avoid matching if previous token was '('
-      # TODO: handle the possibility of comments immediately preceding SELECT
-      prior_content = ''.join(lines[:i]).strip()
-      select_match = len(prior_content) == 0 or prior_content[-1] != '('
+    standard_sql_match = standard_sql_re.match(line)
 
-    if define_match or select_match:
+    if i:
+      prior_content = ''.join(lines[:i]).strip()
+      if select_match:
+        # Avoid matching if previous token was '(' or if Standard SQL is found
+        # TODO: handle the possibility of comments immediately preceding SELECT
+        select_match = len(prior_content) == 0 or (prior_content[-1] != '(' and not standard_sql_re.match(prior_content))
+      if standard_sql_match:
+        standard_sql_match = len(prior_content) == 0 or not standard_sql_re.match(prior_content)
+
+    if define_match or select_match or standard_sql_match:
       # If this is the first query, get the preceding Python code.
       if code is None:
         code = ('\n'.join(lines[:i])).strip()
@@ -384,7 +392,7 @@ def sql_cell(args, cell):
   if not args['module']:
       # Execute now
       if query:
-        return datalab.bigquery.Query(query, values=ipy.user_ns).execute().results
+        return datalab.bigquery.Query(query, values=ipy.user_ns).execute(dialect=args['dialect']).results
   else:
     # Add it as a module
     sys.modules[name] = module

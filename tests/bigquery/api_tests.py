@@ -114,7 +114,8 @@ class TestCases(unittest.TestCase):
           'query': 'SQL',
           'useQueryCache': True,
           'userDefinedFunctionResources': [],
-          'allowLargeResults': False
+          'allowLargeResults': False,
+          'useLegacySql': True,
         },
         'dryRun': False,
         'priority': 'BATCH',
@@ -125,7 +126,7 @@ class TestCases(unittest.TestCase):
     api.jobs_insert_query('SQL2', ['CODE'],
                           table_name=datalab.bigquery._utils.TableName('p', 'd', 't', ''),
                           append=True, dry_run=True, use_cache=False, batch=False,
-                          allow_large_results=True)
+                          allow_large_results=True, dialect='standard')
     expected_data = {
       'kind': 'bigquery#job',
       'configuration': {
@@ -133,6 +134,7 @@ class TestCases(unittest.TestCase):
           'query': 'SQL2',
           'useQueryCache': False,
           'allowLargeResults': True,
+          'useLegacySql': False,
           'destinationTable': {
             'projectId': 'p',
             'datasetId': 'd',

@@ -109,7 +109,7 @@ class View(object):
       return self
     raise Exception("View %s could not be created as it already exists" % str(self))
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True):
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect='legacy'):
     """Retrieves a sampling of data from the view.
 
     Args:
@@ -118,12 +118,17 @@ class View(object):
           sampling is not specified.
       sampling: an optional sampling strategy to apply to the view.
       use_cache: whether to use cached results or not.
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A QueryResultsTable object containing the resulting data.
     Raises:
       Exception if the sample query could not be executed or the query response was malformed.
     """
-    return self._table.sample(fields=fields, count=count, sampling=sampling, use_cache=use_cache)
+    return self._table.sample(fields=fields, count=count, sampling=sampling, use_cache=use_cache,
+                              dialect=dialect)
 
   @property
   def schema(self):
@@ -153,22 +158,26 @@ class View(object):
       self._table._info['view'] = {'query': query}
     self._table.update(friendly_name=friendly_name, description=description)
 
-  def results(self, use_cache=True):
+  def results(self, use_cache=True, dialect='legacy'):
     """Materialize the view synchronously.
 
     If you require more control over the execution, use execute() or execute_async().
 
     Args:
       use_cache: whether to use cached results or not.
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A QueryResultsTable containing the result set.
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return self._materialization.results(use_cache=use_cache)
+    return self._materialization.results(use_cache=use_cache, dialect=dialect)
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-                    allow_large_results=False):
+                    allow_large_results=False, dialect='legacy'):
     """Materialize the View asynchronously.
 
     Args:
@@ -181,6 +190,10 @@ class View(object):
           better suited to exploratory analysis.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A QueryJob for the materialization
     Raises:
@@ -188,10 +201,11 @@ class View(object):
     """
     return self._materialization.execute_async(table_name=table_name, table_mode=table_mode,
                                                use_cache=use_cache, priority=priority,
-                                               allow_large_results=allow_large_results)
+                                               allow_large_results=allow_large_results,
+                                               dialect=dialect)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-              allow_large_results=False):
+              allow_large_results=False, dialect='legacy'):
     """Materialize the View synchronously.
 
     Args:
@@ -204,6 +218,10 @@ class View(object):
           better suited to exploratory analysis.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A QueryJob for the materialization
     Raises:
@@ -211,7 +229,8 @@ class View(object):
     """
     return self._materialization.execute(table_name=table_name, table_mode=table_mode,
                                          use_cache=use_cache, priority=priority,
-                                         allow_large_results=allow_large_results)
+                                         allow_large_results=allow_large_results,
+                                         dialect=dialect)
 
   def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.

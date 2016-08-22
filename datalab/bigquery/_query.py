@@ -206,22 +206,26 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def results(self, use_cache=True):
+  def results(self, use_cache=True, dialect='legacy'):
     """Retrieves table of results for the query. May block if the query must be executed first.
 
     Args:
       use_cache: whether to use cached results or not. Ignored if append is specified.
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A QueryResultsTable containing the result set.
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
     if not use_cache or (self._results is None):
-      self.execute(use_cache=use_cache)
+      self.execute(use_cache=use_cache, dialect=dialect)
     return self._results.results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
-              compress=False, use_cache=True):
+              compress=False, use_cache=True, dialect='legacy'):
     """Exports the query results to GCS.
 
     Args:
@@ -233,18 +237,23 @@ class Query(object):
       compress: whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
       use_cache: whether to use cached results or not (default True).
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A Job object for the export Job if it was completed successfully; else None.
     Raises:
       An Exception if the query or extract failed.
     """
-    return self.results(use_cache=use_cache).extract(storage_uris, format=format,
-                                                     csv_delimiter=csv_delimiter,
-                                                     csv_header=csv_header, compress=compress)
+    return self.results(use_cache=use_cache,
+                        dialect=dialect).extract(storage_uris, format=format,
+                                                               csv_delimiter=csv_delimiter,
+                                                               csv_header=csv_header, compress=compress)
 
   @datalab.utils.async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
-                    csv_header=True, compress=False, use_cache=True):
+                    csv_header=True, compress=False, use_cache=True, dialect='legacy'):
     """Exports the query results to GCS. Returns a Job immediately.
 
     Note that there are two jobs that may need to be run sequentially, one to run the query,
@@ -264,6 +273,10 @@ class Query(object):
       compress: whether to compress the data on export. Compression is not supported for
           AVRO format (default False).
       use_cache: whether to use cached results or not (default True).
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A Job for the combined (execute, extract) task that will in turn return the Job object for
       the completed extract task when done; else None.
@@ -272,9 +285,9 @@ class Query(object):
     """
     return self.extract(storage_uris, format=format,
                         csv_delimiter=csv_delimiter, csv_header=csv_header,
-                        use_cache=use_cache, compress=compress)
+                        use_cache=use_cache, compress=compress, dialect=dialect)
 
-  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True):
+  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, dialect='legacy'):
     """ Exports the query results to a Pandas dataframe.
 
     Args:
@@ -284,10 +297,11 @@ class Query(object):
     Returns:
       A Pandas dataframe containing the table data.
     """
-    return self.results(use_cache=use_cache) \
+    return self.results(use_cache=use_cache, dialect=dialect) \
         .to_dataframe(start_row=start_row, max_rows=max_rows)
 
-  def to_file(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
+  def to_file(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
+              dialect='legacy'):
     """Save the results to a local file in CSV format.
 
     Args:
@@ -296,17 +310,22 @@ class Query(object):
       csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
       csv_header: for CSV exports, whether to include an initial header line. Default true.
       use_cache: whether to use cached results or not.
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       The path to the local file.
     Raises:
       An Exception if the operation failed.
     """
-    self.results(use_cache=use_cache) \
+    self.results(use_cache=use_cache, dialect=dialect) \
         .to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
     return path
 
   @datalab.utils.async_method
-  def to_file_async(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True):
+  def to_file_async(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
+                    dialect='legacy'):
     """Save the results to a local file in CSV format. Returns a Job immediately.
 
     Args:
@@ -315,15 +334,19 @@ class Query(object):
       csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
       csv_header: for CSV exports, whether to include an initial header line. Default true.
       use_cache: whether to use cached results or not.
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A Job for the save that returns the path to the local file on completion.
     Raises:
       An Exception if the operation failed.
     """
     return self.to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header,
-                        use_cache=use_cache)
+                        use_cache=use_cache, dialect=dialect)
 
-  def sample(self, count=5, fields=None, sampling=None, use_cache=True):
+  def sample(self, count=5, fields=None, sampling=None, use_cache=True, dialect='legacy'):
     """Retrieves a sampling of rows for the query.
 
     Args:
@@ -332,6 +355,10 @@ class Query(object):
       fields: the list of fields to sample (default None implies all).
       sampling: an optional sampling strategy to apply to the table.
       use_cache: whether to use cached results or not (default True).
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A QueryResultsTable containing a sampling of the result set.
     Raises:
@@ -339,11 +366,16 @@ class Query(object):
     """
     return Query.sampling_query(self._sql, self._context, count=count, fields=fields,
                                 sampling=sampling, udfs=self._udfs,
-                                data_sources=self._data_sources).results(use_cache=use_cache)
+                                data_sources=self._data_sources).results(use_cache=use_cache,
+                                                                         dialect=dialect)
 
-  def execute_dry_run(self):
+  def execute_dry_run(self, dialect='legacy'):
     """Dry run a query, to check the validity of the query and return some useful statistics.
-
+    Args:
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A dict with 'cacheHit' and 'totalBytesProcessed' fields.
     Raises:
@@ -351,13 +383,13 @@ class Query(object):
     """
     try:
       query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True,
-                                                 table_definitions=self._external_tables)
+                                                 table_definitions=self._external_tables, dialect=dialect)
     except Exception as e:
       raise e
     return query_result['statistics']['query']
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True,
-                    priority='interactive', allow_large_results=False):
+                    priority='interactive', allow_large_results=False, dialect='legacy'):
     """ Initiate the query and return a QueryJob.
 
     Args:
@@ -372,6 +404,10 @@ class Query(object):
           as three hours but are not rate-limited.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       A QueryJob.
     Raises:
@@ -391,7 +427,8 @@ class Query(object):
                                                  use_cache=use_cache,
                                                  batch=batch,
                                                  allow_large_results=allow_large_results,
-                                                 table_definitions=self._external_tables)
+                                                 table_definitions=self._external_tables,
+                                                 dialect=dialect)
     except Exception as e:
       raise e
     if 'jobReference' not in query_result:
@@ -408,7 +445,7 @@ class Query(object):
     return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
-              allow_large_results=False):
+              allow_large_results=False, dialect='legacy'):
     """ Initiate the query, blocking until complete and then return the results.
 
     Args:
@@ -423,13 +460,18 @@ class Query(object):
           as three hours but are not rate-limited.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
     Returns:
       The QueryResultsTable for the query.
     Raises:
       Exception if query could not be executed.
     """
     job = self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
-                             priority=priority, allow_large_results=allow_large_results)
+                             priority=priority, allow_large_results=allow_large_results,
+                             dialect=dialect)
     self._results = job.wait()
     return self._results
 

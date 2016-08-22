@@ -57,13 +57,6 @@ class TestCases(unittest.TestCase):
     self.assertNotIn(TestCases._SQL_MODULE_MAIN, m.__dict__)
 
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell('SELECT 3 AS x', m)
-    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
-    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
-    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
-    self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
-
-    m = imp.new_module('m')
     query = datalab.data.commands._sql._split_cell('# This is a comment\n\nSELECT 3 AS x', m)
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
@@ -77,6 +70,31 @@ class TestCases(unittest.TestCase):
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
     self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
     self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
+
+    sql_string_list = ['SELECT 3 AS x',
+                       'WITH q1 as (SELECT "1")\nSELECT * FROM q1',
+                       'INSERT DataSet.Table (Id, Description)\n' +
+                           'VALUES(100,"TestDesc")',
+                       'INSERT DataSet.Table (Id, Description)\n' +
+                           'SELECT * FROM UNNEST([(200,"TestDesc2"),(300,"TestDesc3")])'
+                       'INSERT DataSet.Table (Id, Description)\n' +
+                           'WITH w as (SELECT ARRAY<STRUCT<Id int64, Description string>>\n' +
+                           '[(400, "TestDesc4"),(500, "TestDesc5")] col)\n' +
+                           'SELECT Id, Description FROM w, UNNEST(w.col)'
+                       'INSERT DataSet.Table (Id, Description)\n' +
+                           'VALUES (600,\n' +
+                           '(SELECT Description FROM DataSet.Table WHERE Id = 400))',
+                       'DELETE FROM DataSet.Table WHERE DESCRIPTION IS NULL'
+                       'DELETE FROM DataSet.Table\n' +
+                           'WHERE Id NOT IN (100, 200, 300)'
+                       ]
+    for i in range(0, len(sql_string_list)):
+        m = imp.new_module('m')
+        query = datalab.data.commands._sql._split_cell(sql_string_list[i], m)
+        self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
+        self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
+        self.assertEquals(sql_string_list[i], m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
+        self.assertEquals(sql_string_list[i], m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
     m = imp.new_module('m')
     query = datalab.data.commands._sql._split_cell('DEFINE QUERY q1\nSELECT 3 AS x', m)

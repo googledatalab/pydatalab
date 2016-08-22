@@ -91,6 +91,7 @@ class TestCases(unittest.TestCase):
         'priority': 'INTERACTIVE',
         'query': {
           'query': sql,
+          'useLegacySql': True,
           'allowLargeResults': False,
           'tableDefinitions': table_definitions,
           'useQueryCache': True,
