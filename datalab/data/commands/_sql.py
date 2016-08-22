@@ -89,7 +89,7 @@ _sql_parser = _create_sql_parser()
 # Register the line magic as well as the cell magic so we can at least give people help
 # without requiring them to enter cell content first.
 @IPython.core.magic.register_line_cell_magic
-def sql(line, cell):
+def sql(line, cell=None):
   """ Create a SQL module with one or more queries. Use %sql --help for more details.
 
   The supported syntax is:
