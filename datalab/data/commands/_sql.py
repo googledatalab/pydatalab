@@ -79,6 +79,7 @@ with the specified name.
   sql_parser.add_argument('-m', '--module', help='The name for this SQL module')
   sql_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
                              choices=['legacy', 'standard'], default='legacy')
+  sql_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
   return sql_parser
 
@@ -392,7 +393,8 @@ def sql_cell(args, cell):
   if not args['module']:
       # Execute now
       if query:
-        return datalab.bigquery.Query(query, values=ipy.user_ns).execute(dialect=args['dialect']).results
+        return datalab.bigquery.Query(query, values=ipy.user_ns) \
+          .execute(dialect=args['dialect'], billing_tier=args['billing']).results
   else:
     # Add it as a module
     sys.modules[name] = module

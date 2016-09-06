@@ -237,7 +237,8 @@ class Table(object):
       return self
     raise Exception("Table %s could not be created as it already exists" % self._full_name)
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect='legacy'):
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect='legacy',
+             billing_tier=None):
     """Retrieves a sampling of data from the table.
 
     Args:
@@ -250,6 +251,10 @@ class Table(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryResultsTable object containing the resulting data.
     Raises:
@@ -260,7 +265,8 @@ class Table(object):
     sql = self._repr_sql_()
     return _query.Query.sampling_query(sql, context=self._context, count=count, fields=fields,
                                        sampling=sampling).results(use_cache=use_cache,
-                                                                  dialect=dialect)
+                                                                  dialect=dialect,
+                                                                  billing_tier=billing_tier)
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
