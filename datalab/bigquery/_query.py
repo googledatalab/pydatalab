@@ -206,7 +206,7 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def results(self, use_cache=True, dialect='legacy'):
+  def results(self, use_cache=True, dialect='legacy', billing_tier=None):
     """Retrieves table of results for the query. May block if the query must be executed first.
 
     Args:
@@ -215,17 +215,21 @@ class Query(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryResultsTable containing the result set.
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
     if not use_cache or (self._results is None):
-      self.execute(use_cache=use_cache, dialect=dialect)
+      self.execute(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier)
     return self._results.results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
-              compress=False, use_cache=True, dialect='legacy'):
+              compress=False, use_cache=True, dialect='legacy', billing_tier=None):
     """Exports the query results to GCS.
 
     Args:
@@ -241,19 +245,24 @@ class Query(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A Job object for the export Job if it was completed successfully; else None.
     Raises:
       An Exception if the query or extract failed.
     """
-    return self.results(use_cache=use_cache,
-                        dialect=dialect).extract(storage_uris, format=format,
-                                                               csv_delimiter=csv_delimiter,
-                                                               csv_header=csv_header, compress=compress)
+    return self.results(use_cache=use_cache, dialect=dialect,
+                        billing_tier=billing_tier).extract(storage_uris, format=format,
+                                                           csv_delimiter=csv_delimiter,
+                                                           csv_header=csv_header,
+                                                           compress=compress)
 
   @datalab.utils.async_method
-  def extract_async(self, storage_uris, format='csv', csv_delimiter=',',
-                    csv_header=True, compress=False, use_cache=True, dialect='legacy'):
+  def extract_async(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
+                    compress=False, use_cache=True, dialect='legacy', billing_tier=None):
     """Exports the query results to GCS. Returns a Job immediately.
 
     Note that there are two jobs that may need to be run sequentially, one to run the query,
@@ -277,31 +286,44 @@ class Query(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A Job for the combined (execute, extract) task that will in turn return the Job object for
       the completed extract task when done; else None.
     Raises:
       An Exception if the query failed.
     """
-    return self.extract(storage_uris, format=format,
-                        csv_delimiter=csv_delimiter, csv_header=csv_header,
-                        use_cache=use_cache, compress=compress, dialect=dialect)
+    return self.extract(storage_uris, format=format, csv_delimiter=csv_delimiter,
+                        csv_header=csv_header, use_cache=use_cache, compress=compress,
+                        dialect=dialect, billing_tier=billing_tier)
 
-  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, dialect='legacy'):
+  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, dialect='legacy',
+                   billing_tier=None):
     """ Exports the query results to a Pandas dataframe.
 
     Args:
       start_row: the row of the table at which to start the export (default 0).
       max_rows: an upper limit on the number of rows to export (default None).
       use_cache: whether to use cached results or not (default True).
+      dialect : {'legacy', 'standard'}, default 'legacy'
+          'legacy' : Use BigQuery's legacy SQL dialect.
+          'standard' : Use BigQuery's standard SQL (beta), which is
+          compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A Pandas dataframe containing the table data.
     """
-    return self.results(use_cache=use_cache, dialect=dialect) \
+    return self.results(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
         .to_dataframe(start_row=start_row, max_rows=max_rows)
 
   def to_file(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
-              dialect='legacy'):
+              dialect='legacy', billing_tier=None):
     """Save the results to a local file in CSV format.
 
     Args:
@@ -314,18 +336,22 @@ class Query(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       The path to the local file.
     Raises:
       An Exception if the operation failed.
     """
-    self.results(use_cache=use_cache, dialect=dialect) \
+    self.results(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
         .to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
     return path
 
   @datalab.utils.async_method
   def to_file_async(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
-                    dialect='legacy'):
+                    dialect='legacy', billing_tier=None):
     """Save the results to a local file in CSV format. Returns a Job immediately.
 
     Args:
@@ -338,15 +364,20 @@ class Query(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A Job for the save that returns the path to the local file on completion.
     Raises:
       An Exception if the operation failed.
     """
     return self.to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header,
-                        use_cache=use_cache, dialect=dialect)
+                        use_cache=use_cache, dialect=dialect, billing_tier=billing_tier)
 
-  def sample(self, count=5, fields=None, sampling=None, use_cache=True, dialect='legacy'):
+  def sample(self, count=5, fields=None, sampling=None, use_cache=True, dialect='legacy',
+             billing_tier=None):
     """Retrieves a sampling of rows for the query.
 
     Args:
@@ -359,6 +390,10 @@ class Query(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryResultsTable containing a sampling of the result set.
     Raises:
@@ -367,15 +402,20 @@ class Query(object):
     return Query.sampling_query(self._sql, self._context, count=count, fields=fields,
                                 sampling=sampling, udfs=self._udfs,
                                 data_sources=self._data_sources).results(use_cache=use_cache,
-                                                                         dialect=dialect)
+                                                                         dialect=dialect,
+                                                                         billing_tier=billing_tier)
 
-  def execute_dry_run(self, dialect='legacy'):
+  def execute_dry_run(self, dialect='legacy', billing_tier=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
     Args:
       dialect : {'legacy', 'standard'}, default 'legacy'
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A dict with 'cacheHit' and 'totalBytesProcessed' fields.
     Raises:
@@ -383,13 +423,15 @@ class Query(object):
     """
     try:
       query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True,
-                                                 table_definitions=self._external_tables, dialect=dialect)
+                                                 table_definitions=self._external_tables, dialect=dialect,
+                                                 billing_tier=billing_tier)
     except Exception as e:
       raise e
     return query_result['statistics']['query']
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True,
-                    priority='interactive', allow_large_results=False, dialect='legacy'):
+                    priority='interactive', allow_large_results=False, dialect='legacy',
+                    billing_tier=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
@@ -408,6 +450,10 @@ class Query(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryJob.
     Raises:
@@ -428,7 +474,8 @@ class Query(object):
                                                  batch=batch,
                                                  allow_large_results=allow_large_results,
                                                  table_definitions=self._external_tables,
-                                                 dialect=dialect)
+                                                 dialect=dialect,
+                                                 billing_tier=billing_tier)
     except Exception as e:
       raise e
     if 'jobReference' not in query_result:
@@ -445,7 +492,7 @@ class Query(object):
     return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
-              allow_large_results=False, dialect='legacy'):
+              allow_large_results=False, dialect='legacy', billing_tier=None):
     """ Initiate the query, blocking until complete and then return the results.
 
     Args:
@@ -464,6 +511,10 @@ class Query(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       The QueryResultsTable for the query.
     Raises:
@@ -471,7 +522,7 @@ class Query(object):
     """
     job = self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
                              priority=priority, allow_large_results=allow_large_results,
-                             dialect=dialect)
+                             dialect=dialect, billing_tier=billing_tier)
     self._results = job.wait()
     return self._results
 

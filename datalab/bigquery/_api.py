@@ -124,7 +124,8 @@ class Api(object):
 
   def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False,
                         overwrite=False, dry_run=False, use_cache=True, batch=True,
-                        allow_large_results=False, table_definitions=None, dialect='legacy'):
+                        allow_large_results=False, table_definitions=None, dialect='legacy',
+                        billing_tier=None):
     """Issues a request to insert a query job.
 
     Args:
@@ -149,6 +150,10 @@ class Api(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A parsed result object.
     Raises:
@@ -193,6 +198,9 @@ class Api(object):
         query_config['writeDisposition'] = "WRITE_APPEND"
       elif overwrite:
         query_config['writeDisposition'] = "WRITE_TRUNCATE"
+
+    if billing_tier:
+        query_config['maximumBillingTier'] = billing_tier
 
     return datalab.utils.Http.request(url, data=data, credentials=self._credentials)
 

@@ -109,7 +109,8 @@ class View(object):
       return self
     raise Exception("View %s could not be created as it already exists" % str(self))
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect='legacy'):
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect='legacy',
+             billing_tier=None):
     """Retrieves a sampling of data from the view.
 
     Args:
@@ -122,13 +123,17 @@ class View(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryResultsTable object containing the resulting data.
     Raises:
       Exception if the sample query could not be executed or the query response was malformed.
     """
     return self._table.sample(fields=fields, count=count, sampling=sampling, use_cache=use_cache,
-                              dialect=dialect)
+                              dialect=dialect, billing_tier=billing_tier)
 
   @property
   def schema(self):
@@ -158,7 +163,7 @@ class View(object):
       self._table._info['view'] = {'query': query}
     self._table.update(friendly_name=friendly_name, description=description)
 
-  def results(self, use_cache=True, dialect='legacy'):
+  def results(self, use_cache=True, dialect='legacy', billing_tier=None):
     """Materialize the view synchronously.
 
     If you require more control over the execution, use execute() or execute_async().
@@ -169,15 +174,20 @@ class View(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryResultsTable containing the result set.
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return self._materialization.results(use_cache=use_cache, dialect=dialect)
+    return self._materialization.results(use_cache=use_cache, dialect=dialect,
+                                         billing_tier=billing_tier)
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-                    allow_large_results=False, dialect='legacy'):
+                    allow_large_results=False, dialect='legacy', billing_tier=None):
     """Materialize the View asynchronously.
 
     Args:
@@ -194,6 +204,10 @@ class View(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryJob for the materialization
     Raises:
@@ -202,10 +216,10 @@ class View(object):
     return self._materialization.execute_async(table_name=table_name, table_mode=table_mode,
                                                use_cache=use_cache, priority=priority,
                                                allow_large_results=allow_large_results,
-                                               dialect=dialect)
+                                               dialect=dialect, billing_tier=billing_tier)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-              allow_large_results=False, dialect='legacy'):
+              allow_large_results=False, dialect='legacy', billing_tier=None):
     """Materialize the View synchronously.
 
     Args:
@@ -222,6 +236,10 @@ class View(object):
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
           compliant with the SQL 2011 standard.
+      billing_tier: Limits the billing tier for this job. Queries that have resource
+          usage beyond this tier will fail (without incurring a charge). If unspecified, this
+          will be set to your project default. This can also be used to override your
+          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryJob for the materialization
     Raises:
@@ -230,7 +248,7 @@ class View(object):
     return self._materialization.execute(table_name=table_name, table_mode=table_mode,
                                          use_cache=use_cache, priority=priority,
                                          allow_large_results=allow_large_results,
-                                         dialect=dialect)
+                                         dialect=dialect, billing_tier=billing_tier)
 
   def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.

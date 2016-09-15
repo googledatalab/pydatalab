@@ -77,6 +77,7 @@ def _create_sample_subparser(parser):
   group.add_argument('-v', '--view', help='the name of the view to sample')
   sample_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
                              choices=['legacy', 'standard'], default='legacy')
+  sample_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   sample_parser.add_argument('-c', '--count', type=int, default=10,
                              help='The number of rows to limit to, if sampling')
   sample_parser.add_argument('-m', '--method', help='The type of sampling to use',
@@ -108,6 +109,7 @@ def _create_dry_run_subparser(parser):
                               help='The name of the query to be dry run')
   dry_run_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
                              choices=['legacy', 'standard'], default='legacy')
+  dry_run_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   dry_run_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
                               action='store_true')
@@ -122,6 +124,7 @@ def _create_execute_subparser(parser):
                               action='store_true')
   execute_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
                              choices=['legacy', 'standard'], default='legacy')
+  execute_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   execute_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                               choices=['create', 'append', 'overwrite'])
   execute_parser.add_argument('-l', '--large', help='Whether to allow large results',
@@ -143,6 +146,7 @@ def _create_pipeline_subparser(parser):
                                action='store_true')
   pipeline_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
                              choices=['legacy', 'standard'], default='legacy')
+  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   pipeline_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                                choices=['create', 'append', 'overwrite'])
   pipeline_parser.add_argument('-l', '--large', help='Allow large results', action='store_true')
@@ -319,7 +323,8 @@ def _sample_cell(args, cell_body):
     sampling = datalab.bigquery.Sampling.default(count=count)
 
   if query:
-    results = query.sample(sampling=sampling, dialect=args['dialect'])
+    results = query.sample(sampling=sampling, dialect=args['dialect'],
+                           billing_tier=args['billing'])
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -411,7 +416,7 @@ def _dryrun_cell(args, cell_body):
 
   if args['verbose']:
     print(query.sql)
-  result = query.execute_dry_run(dialect=args['dialect'])
+  result = query.execute_dry_run(dialect=args['dialect'], billing_tier=args['billing'])
   return datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                               is_cached=result['cacheHit'])
 
@@ -500,7 +505,8 @@ def _execute_cell(args, cell_body):
   if args['verbose']:
     print(query.sql)
   return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
-                       allow_large_results=args['large'], dialect=args['dialect']).results
+                       allow_large_results=args['large'], dialect=args['dialect'],
+                       billing_tier=args['billing']).results
 
 
 def _pipeline_cell(args, cell_body):
@@ -534,7 +540,8 @@ def _pipeline_cell(args, cell_body):
                                                 is_cached=result['cacheHit'])
   if args['action'] == 'run':
     return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
-                         allow_large_results=args['large'], dialect=args['dialect']).results
+                         allow_large_results=args['large'], dialect=args['dialect'],
+                         billing_tier=args['billing']).results
 
 
 def _table_line(args):
