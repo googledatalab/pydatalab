@@ -14,4 +14,19 @@
 
 from __future__ import absolute_import
 
+from ._local_runner import LocalRunner
+from ._cloud_runner import CloudRunner
+from ._metadata import Metadata
+from ._local_predictor import LocalPredictor
+from ._cloud_predictor import CloudPredictor
+from ._job import Jobs
+from ._summary import Summary
 from ._tensorboard import TensorBoardManager
+from ._dataset import DataSet
+from ._cloud_models import CloudModels, CloudModelVersions
+from ._confusion_matrix import ConfusionMatrix
+
+from plotly.offline import init_notebook_mode
+
+init_notebook_mode()
+
