@@ -21,6 +21,16 @@ import json
 import os
 
 
+# TODO(ojarjur): This limits the APIs against which Datalab can be called
+# (when using a service account with a credentials file) to only being those
+# that are part of the Google Cloud Platform. We should either extend this
+# to all of the API scopes that Google supports, or make it extensible so
+# that the user can define for themselves which scopes they want to use.
+CREDENTIAL_SCOPES = [
+  'https://www.googleapis.com/auth/cloud-platform',
+]
+
+
 def _in_datalab_docker():
   return os.path.exists('/datalab') and os.getenv('DATALAB_ENV')
 
@@ -50,7 +60,9 @@ def get_credentials():
       overriding these the defaults should suffice.
   """
   try:
-    return oauth2client.client.GoogleCredentials.get_application_default()
+    credentials = oauth2client.client.GoogleCredentials.get_application_default()
+    credentials = credentials.create_scoped(CREDENTIAL_SCOPES)
+    return credentials
   except Exception as e:
 
     # Try load user creds from file
