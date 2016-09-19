@@ -53,10 +53,12 @@ class Csv(object):
     return self._path
 
   @staticmethod
+
   def _read_gcs_lines(path, max_lines=None):
     return datalab.storage.Item.from_url(path).read_lines(max_lines)
 
   @staticmethod
+
   def _read_local_lines(path, max_lines=None):
     lines = []
     for line in open(path):
