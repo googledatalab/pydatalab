@@ -24,7 +24,10 @@ import os
 import pandas as pd
 import random
 from sklearn.feature_extraction.text import CountVectorizer
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 import tempfile
 import datalab.storage
 import datalab.utils
