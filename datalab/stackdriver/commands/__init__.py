@@ -23,6 +23,7 @@ from ._job import Jobs
 from ._summary import Summary
 from ._tensorboard import TensorBoardManager
 from ._dataset import DataSet
+from ._package import Packager
 from ._cloud_models import CloudModels, CloudModelVersions
 from ._confusion_matrix import ConfusionMatrix
 
