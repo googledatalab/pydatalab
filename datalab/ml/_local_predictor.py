@@ -15,6 +15,7 @@ import collections
 import json
 from numbers import Number
 import numpy
+import os
 import pandas as pd
 import yaml
 
@@ -27,20 +28,20 @@ class LocalPredictor(object):
   """Preforms local predictions on given data.
   """
 
-  def __init__(self, model_dir, metadata_path=None, label_output=None):
+  def __init__(self, model_dir, label_output=None):
     """Initializes an instance of LocalPredictor.
 
     Args:
       model_dir: a directory that contains model checkpoint and metagraph. Can be local or GCS.
-      metadata_path: metadata that will be used to preprocess the instance data. If None,
-          the instance data has to be preprocessed.
       label_output: the name of the output column where all values should be converted from
           index to labels. Only useful in classification. If specified, metadata_path is required.
     """
     self._model_dir = model_dir
-    self._metadata_path = metadata_path
+    self._metadata_path = None
     self._metadata = None
-    if metadata_path is not None:
+    metadata_path = os.path.join(model_dir, "metadata.yaml")
+    if ml.util._file.file_exists(metadata_path):
+      self._metadata_path = metadata_path
       self._metadata = _metadata.Metadata(metadata_path)
     self._label_output = label_output
 
