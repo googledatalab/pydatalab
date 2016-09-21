@@ -88,6 +88,7 @@ class Item(object):
 
   @staticmethod
   def from_url(url):
+    from . import _bucket
     bucket, item = _bucket.parse_name(url)
     return Item(bucket, item)
 
