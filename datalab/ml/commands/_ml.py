@@ -88,11 +88,6 @@ Execute various ml-related operations. Use "%ml <command> -h" for help on a spec
                               help='Model identifier. In local prediction, it is the path to ' +
                                    'a model directory. In cloud prediction (--cloud), it is ' +
                                    'model.version.', required=True)
-  predict_parser.add_argument('--metadata',
-                              help='The path to the metadata. If provided, the data will be ' +
-                                   'preprocessed before being sent to prediction. If not, ' +
-                                   'the input data has to be preprocessed data. Can be Local ' +
-                                   'or GCS path')
   predict_parser.add_argument('--label',
                               help='In classification scenario, which output in the graph ' +
                                    'is the label index. If provided, the index will be ' +
@@ -560,7 +555,7 @@ def _predict(args, cell):
     instances = []
     lines = cell.split('\n')
     for line in lines:
-      instances.append(json.loads(line))
+      instances.append(line)
   else:
     raise Exception('Expect instance data. Can be provided in input cell, or through '
                     '--data args.')
@@ -569,12 +564,10 @@ def _predict(args, cell):
     if len(parts) != 2:
       raise Exception('Invalid model name for cloud prediction. Use "model.version".')
     lp = datalab.ml.CloudPredictor(parts[0], parts[1],
-                                   metadata_path=args['metadata'],
                                    label_output=args['label'],
                                    project_id=args['project'])
   else:
     lp = datalab.ml.LocalPredictor(args['model'],
-                                   metadata_path=args['metadata'],
                                    label_output=args['label'])
   return datalab.utils.commands.render_text(yaml.safe_dump(lp.predict(instances),
                                                            default_flow_style=False),
