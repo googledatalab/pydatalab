@@ -150,6 +150,18 @@ Execute various ml-related operations. Use "%ml <command> -h" for help on a spec
   dataset_parser.add_argument('--name',
                               help='The name of the dataset to define.', required=True)
   dataset_parser.set_defaults(func=_dataset)
+  module_parser = parser.subcommand('module', 'Define a trainer module.')
+  module_parser.add_argument('--name', help='The name of the module.', required=True)
+  module_parser.add_argument('--main',
+                             help='Whether this module is has main function in the trainer ' +
+                                  'package.',
+                             action='store_true', default=False)
+  module_parser.set_defaults(func=_module)
+  package_parser = parser.subcommand('package','Create a trainer package from all modules ' +
+                                     'defined with %ml module.')
+  package_parser.add_argument('--name', help='The name of the package.', required=True)
+  package_parser.add_argument('--output', help='the output dir of the package.', required=True)
+  package_parser.set_defaults(func=_package)
   namespace = datalab.utils.commands.notebook_environment()
   return datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
 
@@ -201,7 +213,7 @@ args:
 """
   IPython.get_ipython().set_next_input(content)
   parameters = ['package_uris', 'python_module', 'scale_tier', 'region', 'args']
-  required_local = [True, True, False, False, False]
+  required_local = [False, False, False, False, False]
   required_cloud = [True, True, True, True, False]
   description = [
     'A GCS or local (for local run only) path to your python training program package.',
@@ -231,9 +243,9 @@ def _train(args, cell):
 
   env = datalab.utils.commands.notebook_environment()
   config = datalab.utils.commands.parse_config(cell, env)
-  datalab.utils.commands.validate_config_must_have(config, ['package_uris', 'python_module'])
   if args['cloud']:
-    datalab.utils.commands.validate_config_must_have(config, ['scale_tier', 'region'])
+    datalab.utils.commands.validate_config_must_have(config,
+        ['package_uris', 'python_module', 'scale_tier', 'region'])
     runner = datalab.ml.CloudRunner(config)
     job_info = runner.run()
     job_short_name = job_info['jobId']
@@ -249,6 +261,19 @@ def _train(args, cell):
     html += 'Start TensorBoard by running "%tensorboard start --logdir=&lt;YourLogDir&gt;".</p>'
     return IPython.core.display.HTML(html);
   else:
+    # local training
+    package_path = None
+    if 'package_uris' not in config:
+      if '_ml_modules_' not in env:
+        raise Exception('Expect either modules defined with "%%ml module", ' +
+                        'or "package_uris" in cell.')
+      if '_ml_modules_main_' not in env:
+        raise Exception('Expect one ml module defined with "--main flag" as the python ' +
+                        'program entry point.')
+      package_path = datalab.ml.Packager().package(env['_ml_modules_'], 'trainer')
+      config['package_uris'] = package_path
+      config['python_module'] = 'trainer.' + env['_ml_modules_main_']
+
     trainer_uri = config['package_uris']
     module_name = config['python_module']
     masters, workers, parameter_servers = _get_replica_count(config)
@@ -262,6 +287,8 @@ def _train(args, cell):
     program_args = config.get('args', None)
     runner = datalab.ml.LocalRunner(trainer_uri, module_name, log_dir, replica_spec, program_args, config)
     runner.run(_local_train_callback, all_messages, 3)
+    if package_path is not None:
+      os.remove(package_path)
 
 
 def _plot_hyperparams_tuning(training_input, training_output):
@@ -307,12 +334,12 @@ def _plot_hyperparams_tuning(training_input, training_output):
       d3: 'http://d3js.org/d3.v3.min',
       sylvester: '/nbextensions/gcpdatalab/extern/sylvester',
       parcoords: '/nbextensions/gcpdatalab/extern/d3.parcoords',
-    },        
+    },
     shim: {
       parcoords: {
         deps: ['d3', 'sylvester'],
         exports: 'd3'
-      },    
+      },
     }
   });
   require(['parcoords',
@@ -912,3 +939,29 @@ def _dataset(args, cell):
   ds = datalab.ml.DataSet(featureset_class(), config['source'])
   env[args['name']] = ds
 
+
+def _module(args, cell):
+  if not cell:
+    raise Exception('Expect code in cell.')
+    return
+
+  env = datalab.utils.commands.notebook_environment()
+  if '_ml_modules_' not in env:
+    modules = {}
+    env['_ml_modules_'] = modules
+  modules = env['_ml_modules_']
+  modules[args['name']] = cell
+  if args['main']:
+    env['_ml_modules_main_'] = args['name']
+
+
+def _package(args, cell):
+  env = datalab.utils.commands.notebook_environment()
+  if '_ml_modules_' not in env:
+    raise Exception('No ml modules defined. Expect modules defined with "%%ml module"')
+  package_path = datalab.ml.Packager().package(env['_ml_modules_'], args['name'])
+  google.cloud.ml.util._file.create_directory(args['output'])
+  dest = os.path.join(args['output'], os.path.basename(package_path))
+  google.cloud.ml.util._file.copy_file(package_path, dest)
+  os.remove(package_path)
+  print 'Package created at %s.' % dest
