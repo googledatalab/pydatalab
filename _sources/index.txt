@@ -14,6 +14,7 @@ Contents:
    datalab.bigquery
    datalab.context
    datalab.data
+   datalab.stackdriver.monitoring
    datalab.storage
 
 

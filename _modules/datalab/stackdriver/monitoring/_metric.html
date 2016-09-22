@@ -1,0 +1,291 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.stackdriver.monitoring._metric &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      
+    <li>datalab.stackdriver.monitoring._metric</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.stackdriver.monitoring._metric</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied.  See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Provides the MetricDescriptors in the monitoring API.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_utils</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_visualization</span>
+
+
+<div class="viewcode-block" id="MetricDescriptors"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.MetricDescriptors">[docs]</a><span class="k">class</span> <span class="nc">MetricDescriptors</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;MetricDescriptors object for retrieving the metric descriptors.&quot;&quot;&quot;</span>
+
+  <span class="n">_DISPLAY_HEADERS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Metric type&#39;</span><span class="p">,</span> <span class="s1">&#39;Display name&#39;</span><span class="p">,</span> <span class="s1">&#39;Kind&#39;</span><span class="p">,</span> <span class="s1">&#39;Value&#39;</span><span class="p">,</span> <span class="s1">&#39;Unit&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;Labels&#39;</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filter_string</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">type_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">project_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes the MetricDescriptors based on the specified filters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      filter_string: An optional filter expression describing the resource</span>
+<span class="sd">        descriptors to be returned.</span>
+<span class="sd">      type_prefix: An optional prefix constraining the selected metric types.</span>
+<span class="sd">        This adds ``metric.type = starts_with(&quot;&lt;prefix&gt;&quot;)`` to the filter.</span>
+<span class="sd">      project_id: An optional project ID or number to override the one provided</span>
+<span class="sd">          by the context.</span>
+<span class="sd">      context: An optional Context object to use instead of the global default.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">make_client</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_filter_string</span> <span class="o">=</span> <span class="n">filter_string</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_type_prefix</span> <span class="o">=</span> <span class="n">type_prefix</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_descriptors</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MetricDescriptors.list"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.MetricDescriptors.list">[docs]</a>  <span class="k">def</span> <span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a list of metric descriptors that match the filters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      pattern: An optional pattern to further filter the descriptors. This can</span>
+<span class="sd">        include Unix shell-style wildcards. E.g. ``compute*``, ``*cpu/load_??m``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A list of MetricDescriptor objects that match the filters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_descriptors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_descriptors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">list_metric_descriptors</span><span class="p">(</span>
+          <span class="n">filter_string</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_filter_string</span><span class="p">,</span> <span class="n">type_prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_type_prefix</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">metric</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_descriptors</span>
+            <span class="k">if</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">metric</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="MetricDescriptors.as_dataframe"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.MetricDescriptors.as_dataframe">[docs]</a>  <span class="k">def</span> <span class="nf">as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a pandas dataframe from the descriptors that match the filters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      pattern: An optional pattern to further filter the descriptors. This can</span>
+<span class="sd">        include Unix shell-style wildcards. E.g. ``compute*``, ``*/cpu/load_??m``.</span>
+<span class="sd">      max_rows: The maximum number of descriptors to return. If None, return</span>
+<span class="sd">        all.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A pandas dataframe containing matching metric descriptors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">metric</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">pattern</span><span class="p">)):</span>
+      <span class="k">if</span> <span class="n">max_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="n">max_rows</span><span class="p">:</span>
+        <span class="k">break</span>
+      <span class="n">labels</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span> <span class="n">join</span><span class="p">([</span><span class="n">l</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">metric</span><span class="o">.</span><span class="n">labels</span><span class="p">])</span>
+      <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">([</span>
+          <span class="n">metric</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">metric_kind</span><span class="p">,</span>
+          <span class="n">metric</span><span class="o">.</span><span class="n">value_type</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">labels</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_DISPLAY_HEADERS</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MetricDescriptors.table"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.MetricDescriptors.table">[docs]</a>  <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Visualize the matching descriptors as an HTML table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      pattern: An optional pattern to further filter the descriptors. This can</span>
+<span class="sd">        include Unix shell-style wildcards. E.g. &quot;aws*&quot;, &quot;*cluster*&quot;.</span>
+<span class="sd">      max_rows: The maximum number of descriptors to display. If None, display</span>
+<span class="sd">        all.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The HTML rendering for a table of matching metric descriptors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dataframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_dataframe</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">max_rows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_visualization</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">show_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

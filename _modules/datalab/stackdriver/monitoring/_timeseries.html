@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.stackdriver.monitoring._timeseries &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      
+    <li>datalab.stackdriver.monitoring._timeseries</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.stackdriver.monitoring._timeseries</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied.  See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Provides access to metric data as pandas dataframes.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">google.cloud.monitoring</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_utils</span>
+
+
+<div class="viewcode-block" id="Query"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.Query">[docs]</a><span class="k">class</span> <span class="nc">Query</span><span class="p">(</span><span class="n">google</span><span class="o">.</span><span class="n">cloud</span><span class="o">.</span><span class="n">monitoring</span><span class="o">.</span><span class="n">Query</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Query object for retrieving metric data.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+               <span class="n">metric_type</span><span class="o">=</span><span class="n">google</span><span class="o">.</span><span class="n">cloud</span><span class="o">.</span><span class="n">monitoring</span><span class="o">.</span><span class="n">Query</span><span class="o">.</span><span class="n">DEFAULT_METRIC_TYPE</span><span class="p">,</span>
+               <span class="n">end_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">days</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+               <span class="n">project_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes the core query parameters.</span>
+
+<span class="sd">    The start time (exclusive) is determined by combining the</span>
+<span class="sd">    values of &quot;days&quot;, &quot;hours&quot;, and &quot;minutes&quot;, and subtracting</span>
+<span class="sd">    the resulting duration from &quot;end_time&quot;.</span>
+
+<span class="sd">    It is also allowed to omit the end time and duration here,</span>
+<span class="sd">    in which case the select_interval() method must be called</span>
+<span class="sd">    before the query is executed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      metric_type: The metric type name. The default value is</span>
+<span class="sd">          &quot;compute.googleapis.com/instance/cpu/utilization&quot;, but</span>
+<span class="sd">          please note that this default value is provided only for</span>
+<span class="sd">          demonstration purposes and is subject to change.</span>
+<span class="sd">      end_time: The end time (inclusive) of the time interval for which</span>
+<span class="sd">          results should be returned, as a datetime object. The default</span>
+<span class="sd">          is the start of the current minute.</span>
+<span class="sd">      days: The number of days in the time interval.</span>
+<span class="sd">      hours: The number of hours in the time interval.</span>
+<span class="sd">      minutes: The number of minutes in the time interval.</span>
+<span class="sd">      project_id: An optional project ID or number to override the one provided</span>
+<span class="sd">          by the context.</span>
+<span class="sd">      context: An optional Context object to use instead of the global default.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: &quot;end_time&quot; was specified but &quot;days&quot;, &quot;hours&quot;, and &quot;minutes&quot;</span>
+<span class="sd">            are all zero. If you really want to specify a point in time, use</span>
+<span class="sd">            the select_interval() method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">make_client</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+    <span class="nb">super</span><span class="p">(</span><span class="n">Query</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">metric_type</span><span class="p">,</span>
+                                <span class="n">end_time</span><span class="o">=</span><span class="n">end_time</span><span class="p">,</span>
+                                <span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="n">hours</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Query.labels_as_dataframe"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.Query.labels_as_dataframe">[docs]</a>  <span class="k">def</span> <span class="nf">labels_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the resource and metric metadata as a dataframe.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A pandas dataframe containing the resource type and resource and metric</span>
+<span class="sd">      labels. Each row in this dataframe corresponds to the metadata from one</span>
+<span class="sd">      time series.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;resource&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">__dict__</span><span class="p">,</span> <span class="s1">&#39;metric&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">__dict__</span><span class="p">}</span>
+               <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">headers_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">headers</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
+
+    <span class="c1"># Add a 2 level column header.</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">col</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
+
+    <span class="c1"># Re-order the columns.</span>
+    <span class="n">resource_keys</span> <span class="o">=</span> <span class="n">google</span><span class="o">.</span><span class="n">cloud</span><span class="o">.</span><span class="n">monitoring</span><span class="o">.</span><span class="n">_dataframe</span><span class="o">.</span><span class="n">_sorted_resource_labels</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;resource.labels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="n">sorted_columns</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;resource&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">)]</span>
+    <span class="n">sorted_columns</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;resource.labels&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">resource_keys</span><span class="p">]</span>
+    <span class="n">sorted_columns</span> <span class="o">+=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
+                             <span class="k">if</span> <span class="n">col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;metric.labels&#39;</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sorted_columns</span><span class="p">]</span>
+
+    <span class="c1"># Sort the data, and clean up index values, and NaNs.</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">sorted_columns</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
