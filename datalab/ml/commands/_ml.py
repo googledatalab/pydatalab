@@ -511,7 +511,7 @@ def _output_featureset_template(dtypes, target_column, id_column, command):
                       % id_column)
   is_regression = str(dtypes[target_column]).startswith('int') or \
       str(dtypes[target_column]).startswith('float')
-  scenario = 'regression' if is_regression == True else 'classification'
+  scenario = 'continuous' if is_regression == True else 'discrete'
   columns_remaining = dict(dtypes)
   command_lines = command.split('\n')
   # add spaces in the beginning so they are aligned with others.
@@ -646,7 +646,7 @@ options = {
     'temp_location': os.path.join(OUTPUT_DIR, 'tmp'),
     'job_name': '%s' + '-' + datetime.datetime.now().strftime('%%y%%m%%d-%%H%%M%%S'),
     'project': '%s',
-    'extra_packages': ['gs://cloud-ml/sdk/cloudml-0.1.2.latest.tar.gz'],
+    'extra_packages': ['gs://cloud-ml/sdk/cloudml-0.1.4.tar.gz'],
     'teardown_policy': 'TEARDOWN_ALWAYS',
     'no_save_main_session': True
 }
@@ -677,7 +677,6 @@ def _output_preprocess_code_template(command, is_cloud, data_format, train_data_
   content_imports = \
 """import apache_beam as beam
 import google.cloud.ml as ml
-import google.cloud.ml.dataflow.io.tfrecordio as tfrecordio
 import google.cloud.ml.io as io
 import os
 """
@@ -701,44 +700,45 @@ OUTPUT_DIR = '%s'
     coder=%s)
 train = pipeline | beam.Read('ReadTrainingData', training_data)
 """ % (train_data_path, coder)
+
   if eval_data_path is not None:
     content_preprocessing += \
-"""eval_data = beam.io.TextFileSource(
+"""
+eval_data = beam.io.TextFileSource(
     '%s',
     strip_trailing_newlines=True,
     coder=%s)
-eval = pipeline | beam.Read('ReadEvalData', eval_data)
+eval = pipeline  | beam.Read('ReadEvalData', eval_data)
 """ % (eval_data_path, coder)
 
   eval_features = ', eval_features' if eval_data_path is not None else ''
   eval_input = ', eval' if eval_data_path is not None else ''
+
   content_preprocessing += \
-"""(metadata, train_features%s) = ((train%s) |
-    ml.Preprocess('Preprocess', feature_set, input_format='csv',
+"""
+(metadata, train_features%s) = ((train%s) | 'Preprocess'
+    >> ml.Preprocess(feature_set, input_format='csv',
                   format_metadata={'headers': feature_set.csv_columns}))
-train_parameters = tfrecordio.TFRecordParameters(
-    file_path_prefix=os.path.join(OUTPUT_DIR, 'features_train'),
-    file_name_suffix='',
-    shard_file=False,
-    compress_file=True)
 """ % (eval_features, eval_input)
+
+  content_preprocessing += \
+"""
+(metadata        | 'SaveMetadata'
+    >> io.SaveMetadata(os.path.join(OUTPUT_DIR, 'metadata.yaml')))
+"""
+
+  content_preprocessing += \
+"""
+(train_features  | 'SaveTrain'
+    >> io.SaveFeatures(os.path.join(OUTPUT_DIR, 'features_train'), shard_name_template=''))
+"""
+
   if eval_data_path is not None:
     content_preprocessing += \
-"""eval_parameters = tfrecordio.TFRecordParameters(
-    file_path_prefix=os.path.join(OUTPUT_DIR, 'features_eval'),
-    file_name_suffix='',
-    shard_file=False,
-    compress_file=True)
 """
-  eval_output = ', eval_features' if eval_data_path is not None else ''
-  eval_parameters = ', eval_parameters' if eval_data_path is not None else ''
-  content_preprocessing += \
-"""(metadata, train_features%s) | (
-    io.SavePreprocessed('SavingData', OUTPUT_DIR,
-                        file_parameters_list=[
-                            os.path.join(OUTPUT_DIR, 'metadata.yaml'),
-                            train_parameters%s]))
-""" % (eval_output, eval_parameters)
+(eval_features   | 'SaveEval'
+    >> io.SaveFeatures(os.path.join(OUTPUT_DIR, 'features_eval'), shard_name_template=''))
+"""
 
   content_run = """pipeline.run()"""
 
@@ -804,7 +804,6 @@ def _output_evaluate_code_template(command, is_cloud, preprocessed_eval_data_pat
 from apache_beam.io import fileio
 import google.cloud.ml as ml
 import google.cloud.ml.analysis as analysis
-import google.cloud.ml.dataflow.io.tfrecordio as tfrecordio
 import google.cloud.ml.io as io
 import json
 import os

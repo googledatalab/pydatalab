@@ -82,19 +82,18 @@ class DataSet(object):
           transform_info[column.transform] = column.transform_args
           transform_info['max'] = max(concatenated_column)
           transform_info['min'] = min(concatenated_column)
-          transtormer = features._registries.transformation_registry \
+          transformer = features._registries.transformation_registry \
               .get_transformer(transform_info)
+          transformed = [transformer.transform(x)[0] for x in df[column.name]]
           if column.transform == 'discretize':
             # Transformed data contains a one_of_k list so need to convert it back to index.
             # Categories needs to be num_of_buckets+2 to match the transformer behavior,
             # where it creates a smaller-than-min and a greater-than-max buckets.
-            transformed = [transtormer.transform(x).index(1.0) for x in df[column.name]]
             df[column.name] = pd.Series(pd.Categorical(transformed,
-                                                       categories=range(transtormer._buckets+2)))
+                                                       categories=range(transformer._buckets+2)))
           else:
             # TODO(qimingj): It is supposed to work with most transformers but still need to
             #                test them if new transformers become available.
-            transformed = [transtormer.transform(x)[0] for x in df[column.name]]
             df[column.name] = transformed
     return df
 
