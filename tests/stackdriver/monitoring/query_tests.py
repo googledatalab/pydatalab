@@ -16,10 +16,7 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-from google.cloud.monitoring import Resource
-from google.cloud.monitoring import Metric
 from google.cloud.monitoring import Query as BaseQuery
-from google.cloud.monitoring import TimeSeries
 
 import datalab.context
 import datalab.stackdriver.monitoring as gcm
@@ -85,66 +82,7 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(query._cross_series_reducer)
     self.assertEqual(query._group_by_fields, ())
 
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
-  def test_labels_as_dataframe(self, mock_query_iter):
-    mock_query_iter.return_value = self._query_iter_get_result()
-    query = gcm.Query(context=self._create_context(PROJECT))
-    dataframe = query.labels_as_dataframe()
-
-    mock_query_iter.assert_called_once_with(headers_only=True)
-    NUM_INSTANCES = len(INSTANCE_IDS)
-
-    self.assertEqual(dataframe.shape, (NUM_INSTANCES, 5))
-
-    expected_values = [
-        [RESOURCE_TYPE, PROJECT, zone, instance_id, instance_name]
-        for zone, instance_id, instance_name
-        in zip(INSTANCE_ZONES, INSTANCE_IDS, INSTANCE_NAMES)]
-    self.assertEqual(dataframe.values.tolist(), expected_values)
-
-    expected_headers = [
-        ('resource', 'type'),
-        ('resource.labels', 'project_id'),
-        ('resource.labels', 'zone'),
-        ('resource.labels', 'instance_id'),
-        ('metric.labels', 'instance_name')
-    ]
-    self.assertEqual(dataframe.columns.tolist(), expected_headers)
-    self.assertEqual(dataframe.columns.names, [None, None])
-
-    self.assertEqual(dataframe.index.tolist(), list(range(NUM_INSTANCES)))
-    self.assertEqual(dataframe.index.names, [None])
-
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
-  def test_labels_as_dataframe_w_no_data(self, mock_query_iter):
-    mock_query_iter.return_value = []
-    query = gcm.Query(context=self._create_context())
-    dataframe = query.labels_as_dataframe()
-
-    mock_query_iter.assert_called_once_with(headers_only=True)
-    self.assertEqual(dataframe.shape, (0, 0))
-    self.assertIsNone(dataframe.columns.name)
-    self.assertIsNone(dataframe.index.name)
-
   @staticmethod
   def _create_context(project_id='test'):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return datalab.context.Context(project_id, creds)
-
-  @staticmethod
-  def _query_iter_get_result():
-    METRIC_LABELS = list({'instance_name': name} for name in INSTANCE_NAMES)
-    RESOURCE_LABELS = list({
-        'project_id': PROJECT,
-        'zone': zone,
-        'instance_id': instance_id,
-    } for zone, instance_id in zip(INSTANCE_ZONES, INSTANCE_IDS))
-
-    for metric_labels, resource_labels in zip(METRIC_LABELS, RESOURCE_LABELS):
-      yield TimeSeries(
-        metric=Metric(type=METRIC_TYPE, labels=metric_labels),
-        resource=Resource(type=RESOURCE_TYPE, labels=resource_labels),
-        metric_kind='GAUGE',
-        value_type='DOUBLE',
-        points=[],
-      )
