@@ -1,15 +1,15 @@
-gcp.context package
-===================
+datalab.context package
+=======================
 
 Module contents
 ---------------
 
-.. autoclass:: gcp.context.Context
+.. autoclass:: datalab.context.Context
     :members:
 
-.. autoclass:: gcp.context.Project
+.. autoclass:: datalab.context.Project
     :members:
 
-.. autoclass:: gcp.context.Projects
+.. autoclass:: datalab.context.Projects
     :members:
 

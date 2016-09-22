@@ -1,20 +1,20 @@
-gcp.data package
-================
+datalab.data package
+====================
 
 Module contents
 ---------------
 
-.. automodule:: gcp.data
+.. automodule:: datalab.data
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: gcp.data.Csv
+.. autoclass:: datalab.data.Csv
     :members:
 
-.. autoclass:: gcp.data.SqlModule
+.. autoclass:: datalab.data.SqlModule
     :members:
 
-.. autoclass:: gcp.data.SqlStatement
+.. autoclass:: datalab.data.SqlStatement
     :members:
 

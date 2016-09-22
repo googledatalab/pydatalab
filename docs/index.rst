@@ -4,17 +4,17 @@
    contain the root `toctree` directive.
 
 Welcome to Cloud Datalab's documentation!
-===============================
+=========================================
 
 Contents:
 
 .. toctree::
    :maxdepth: 4
 
-   gcp.bigquery
-   gcp.context
-   gcp.data
-   gcp.storage
+   datalab.bigquery
+   datalab.context
+   datalab.data
+   datalab.storage
 
 
 Indices and tables

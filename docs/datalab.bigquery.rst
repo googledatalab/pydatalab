@@ -1,61 +1,61 @@
-gcp.bigquery package
-====================
+datalab.bigquery package
+========================
 
 Module contents
 ---------------
 
-.. automodule:: gcp.bigquery
+.. automodule:: datalab.bigquery
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: gcp.bigquery.CSVOptions
+.. autoclass:: datalab.bigquery.CSVOptions
     :members:
 
-.. autoclass:: gcp.bigquery.DataSet
+.. autoclass:: datalab.bigquery.Dataset
     :members:
 
-.. autoclass:: gcp.bigquery.DataSetName
+.. autoclass:: datalab.bigquery.DatasetName
     :members:
 
-.. autoclass:: gcp.bigquery.DataSets
+.. autoclass:: datalab.bigquery.Datasets
     :members:
 
-.. autoclass:: gcp.bigquery.FederatedTable
+.. autoclass:: datalab.bigquery.FederatedTable
     :members:
 
-.. autoclass:: gcp.bigquery.Job
+.. autoclass:: datalab.bigquery.Job
     :members:
 
-.. autoclass:: gcp.bigquery.Query
+.. autoclass:: datalab.bigquery.Query
     :members:
 
-.. autoclass:: gcp.bigquery.QueryJob
+.. autoclass:: datalab.bigquery.QueryJob
     :members:
 
-.. autoclass:: gcp.bigquery.QueryResultsTable
+.. autoclass:: datalab.bigquery.QueryResultsTable
     :members:
 
-.. autoclass:: gcp.bigquery.QueryStats
+.. autoclass:: datalab.bigquery.QueryStats
     :members:
 
-.. autoclass:: gcp.bigquery.Sampling
+.. autoclass:: datalab.bigquery.Sampling
     :members:
 
-.. autoclass:: gcp.bigquery.Schema
+.. autoclass:: datalab.bigquery.Schema
     :members:
 
-.. autoclass:: gcp.bigquery.Table
+.. autoclass:: datalab.bigquery.Table
     :members:
 
-.. autoclass:: gcp.bigquery.TableMetadata
+.. autoclass:: datalab.bigquery.TableMetadata
     :members:
 
-.. autoclass:: gcp.bigquery.TableName
+.. autoclass:: datalab.bigquery.TableName
     :members:
 
-.. autoclass:: gcp.bigquery.UDF
+.. autoclass:: datalab.bigquery.UDF
     :members:
 
-.. autoclass:: gcp.bigquery.View
+.. autoclass:: datalab.bigquery.View
     :members:

@@ -1,23 +1,23 @@
-gcp.storage package
-===================
+datalab.storage package
+=======================
 
 Module contents
 ---------------
 
-.. automodule:: gcp.storage
+.. automodule:: datalab.storage
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: gcp.storage.Bucket
+.. autoclass:: datalab.storage.Bucket
     :members:
 
-.. autoclass:: gcp.storage.Buckets
+.. autoclass:: datalab.storage.Buckets
     :members:
 
-.. autoclass:: gcp.storage.Item
+.. autoclass:: datalab.storage.Item
     :members:
 
-.. autoclass:: gcp.storage.Items
+.. autoclass:: datalab.storage.Items
     :members:
 
