@@ -14,17 +14,17 @@
 
 from __future__ import absolute_import
 
-import gcloud.monitoring
+import google.cloud.monitoring
 import pandas
 
 from . import _utils
 
 
-class Query(gcloud.monitoring.Query):
+class Query(google.cloud.monitoring.Query):
   """Query object for retrieving metric data."""
 
   def __init__(self,
-               metric_type=gcloud.monitoring.Query.DEFAULT_METRIC_TYPE,
+               metric_type=google.cloud.monitoring.Query.DEFAULT_METRIC_TYPE,
                end_time=None, days=0, hours=0, minutes=0,
                project_id=None, context=None):
     """Initializes the core query parameters.
@@ -81,7 +81,7 @@ class Query(gcloud.monitoring.Query):
         [col.rsplit('.', 1) for col in df.columns])
 
     # Re-order the columns.
-    resource_keys = gcloud.monitoring._dataframe._sorted_resource_labels(
+    resource_keys = google.cloud.monitoring._dataframe._sorted_resource_labels(
         df['resource.labels'].columns)
     sorted_columns = [('resource', 'type')]
     sorted_columns += [('resource.labels', key) for key in resource_keys]

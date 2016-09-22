@@ -16,10 +16,10 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-from gcloud.monitoring import Resource
-from gcloud.monitoring import Metric
-from gcloud.monitoring import Query as BaseQuery
-from gcloud.monitoring import TimeSeries
+from google.cloud.monitoring import Resource
+from google.cloud.monitoring import Metric
+from google.cloud.monitoring import Query as BaseQuery
+from google.cloud.monitoring import TimeSeries
 
 import datalab.context
 import datalab.stackdriver.monitoring as gcm

@@ -70,7 +70,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
   install_requires=[
     'future==0.15.2',
     'futures==3.0.5',
-    'gcloud==0.14.0',
+    'google-cloud==0.19.0',
     'httplib2==0.9.2',
     'oauth2client==2.0.2',
     'pandas>=0.17.1',
