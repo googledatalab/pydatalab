@@ -82,6 +82,15 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(query._cross_series_reducer)
     self.assertEqual(query._group_by_fields, ())
 
+  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  def test_metadata(self, mock_query_iter):
+    query = gcm.Query(METRIC_TYPE, hours=1, context=self._create_context())
+    query_metadata = query.metadata()
+
+    mock_query_iter.assert_called_once_with(headers_only=True)
+    self.assertIsInstance(query_metadata, gcm.QueryMetadata)
+    self.assertEqual(query_metadata.metric_type, METRIC_TYPE)
+
   @staticmethod
   def _create_context(project_id='test'):
     creds = AccessTokenCredentials('test_token', 'test_ua')
