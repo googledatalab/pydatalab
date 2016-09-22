@@ -1,0 +1,588 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.storage package &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="prev" title="datalab.data package" href="datalab.data.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.storage package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-datalab.storage">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>datalab.storage package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/datalab.storage.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="datalab-storage-package">
+<h1>datalab.storage package<a class="headerlink" href="#datalab-storage-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-datalab.storage">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-datalab.storage" title="Permalink to this headline">¶</a></h2>
+<p>Google Cloud Platform library - Cloud Storage Functionality.</p>
+<dl class="class">
+<dt id="datalab.storage.Bucket">
+<em class="property">class </em><code class="descclassname">datalab.storage.</code><code class="descname">Bucket</code><span class="sig-paren">(</span><em>name</em>, <em>info=None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Bucket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Bucket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a Cloud Storage bucket.</p>
+<p>Initializes an instance of a Bucket object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; the name of the bucket.</li>
+<li><strong>info</strong> &#8211; the information about the bucket if available.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.storage.Bucket.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>project_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Bucket.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Bucket.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the bucket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>project_id</strong> &#8211; the project in which to create the bucket.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The bucket.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error creating the bucket.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Bucket.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Bucket.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Bucket.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the bucket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error deleting the bucket.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Bucket.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Bucket.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Bucket.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the bucket exists.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Bucket.item">
+<code class="descname">item</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Bucket.item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Bucket.item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves an Item object for the specified key in this bucket.</p>
+<p>The item need not exist.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; the key of the item within the bucket.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An Item instance representing the specified key.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Bucket.items">
+<code class="descname">items</code><span class="sig-paren">(</span><em>prefix=None</em>, <em>delimiter=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Bucket.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Bucket.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an iterator for the items within this bucket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>prefix</strong> &#8211; an optional prefix to match items.</li>
+<li><strong>delimiter</strong> &#8211; an optional string to simulate directory-like semantics. The returned items
+will be those whose names do not contain the delimiter after the prefix. For
+the remaining items, the names will be returned truncated after the delimiter
+with duplicates removed (i.e. as pseudo-directories).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An iterable list of items within this bucket.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.storage.Bucket.metadata">
+<code class="descname">metadata</code><a class="headerlink" href="#datalab.storage.Bucket.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves metadata about the bucket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A BucketMetadata instance with information about this bucket.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error requesting the bucket&#8217;s metadata.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.storage.Bucket.name">
+<code class="descname">name</code><a class="headerlink" href="#datalab.storage.Bucket.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the bucket.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.storage.Buckets">
+<em class="property">class </em><code class="descclassname">datalab.storage.</code><code class="descname">Buckets</code><span class="sig-paren">(</span><em>project_id=None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Buckets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Buckets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of Cloud Storage buckets for a project.</p>
+<p>Initializes an instance of a BucketList.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>project_id</strong> &#8211; an optional project whose buckets we want to manipulate. If None this
+is obtained from the api object.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.storage.Buckets.contains">
+<code class="descname">contains</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Buckets.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Buckets.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the specified bucket exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the name of the bucket to lookup.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the bucket exists; False otherwise.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error requesting information about the bucket.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Buckets.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_bucket.html#Buckets.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Buckets.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new bucket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; a unique name for the new bucket.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The newly created bucket.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error creating the bucket.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.storage.Item">
+<em class="property">class </em><code class="descclassname">datalab.storage.</code><code class="descname">Item</code><span class="sig-paren">(</span><em>bucket</em>, <em>key</em>, <em>info=None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a Cloud Storage object within a bucket.</p>
+<p>Initializes an instance of an Item.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bucket</strong> &#8211; the name of the bucket containing the item.</li>
+<li><strong>key</strong> &#8211; the key of the item.</li>
+<li><strong>info</strong> &#8211; the information about the item if available.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.storage.Item.copy_to">
+<code class="descname">copy_to</code><span class="sig-paren">(</span><em>new_key</em>, <em>bucket=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Item.copy_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Item.copy_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copies this item to the specified new key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>new_key</strong> &#8211; the new key to copy this item to.</li>
+<li><strong>bucket</strong> &#8211; the bucket of the new item; if None (the default) use the same bucket.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">An Item corresponding to new key.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if there was an error copying the item.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Item.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Item.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Item.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes this item from its bucket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error deleting the item.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Item.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Item.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Item.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the item exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.storage.Item.key">
+<code class="descname">key</code><a class="headerlink" href="#datalab.storage.Item.key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the key of the item.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.storage.Item.metadata">
+<code class="descname">metadata</code><a class="headerlink" href="#datalab.storage.Item.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves metadata about the bucket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A BucketMetadata instance with information about this bucket.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error requesting the bucket&#8217;s metadata.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Item.read_from">
+<code class="descname">read_from</code><span class="sig-paren">(</span><em>start_offset=0</em>, <em>byte_count=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Item.read_from"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Item.read_from" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the content of this item as text.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start_offset</strong> &#8211; the start offset of bytes to read.</li>
+<li><strong>byte_count</strong> &#8211; the number of bytes to read. If None, it reads to the end.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The text content within the item.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if there was an error requesting the item&#8217;s content.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Item.read_lines">
+<code class="descname">read_lines</code><span class="sig-paren">(</span><em>max_lines=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Item.read_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Item.read_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the content of this item as text, and return a list of lines up to some max.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>max_lines</strong> &#8211; max number of lines to return. If None, return all lines.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The text content of the item as a list of lines.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error requesting the item&#8217;s content.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.storage.Item.uri">
+<code class="descname">uri</code><a class="headerlink" href="#datalab.storage.Item.uri" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Returns the gs</em> &#8211; // URI for the item.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.storage.Item.write_to">
+<code class="descname">write_to</code><span class="sig-paren">(</span><em>content</em>, <em>content_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Item.write_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Item.write_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes text content to this item.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>content</strong> &#8211; the text content to be written.</li>
+<li><strong>content_type</strong> &#8211; the type of text content.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if there was an error requesting the item&#8217;s content.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.storage.Items">
+<em class="property">class </em><code class="descclassname">datalab.storage.</code><code class="descname">Items</code><span class="sig-paren">(</span><em>bucket</em>, <em>prefix</em>, <em>delimiter</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of Cloud Storage objects within a bucket.</p>
+<p>Initializes an instance of an ItemList.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bucket</strong> &#8211; the name of the bucket containing the items.</li>
+<li><strong>prefix</strong> &#8211; an optional prefix to match items.</li>
+<li><strong>delimiter</strong> &#8211; an optional string to simulate directory-like semantics. The returned items
+will be those whose names do not contain the delimiter after the prefix. For
+the remaining items, the names will be returned truncated after the delimiter
+with duplicates removed (i.e. as pseudo-directories).</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.storage.Items.contains">
+<code class="descname">contains</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/storage/_item.html#Items.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.storage.Items.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the specified item exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> &#8211; the key of the item to lookup.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the item exists; False otherwise.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error requesting information about the item.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="datalab.data.html" class="btn btn-neutral" title="datalab.data package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

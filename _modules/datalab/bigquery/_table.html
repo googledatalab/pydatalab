@@ -1,0 +1,1114 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.bigquery._table &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="datalab.bigquery" href="../bigquery.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../bigquery.html">datalab.bigquery</a> &raquo;</li>
+      
+    <li>datalab.bigquery._table</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.bigquery._table</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements Table, and related Table BigQuery APIs.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">past.utils</span> <span class="k">import</span> <span class="n">old_div</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="kn">import</span> <span class="nn">calendar</span>
+<span class="kn">import</span> <span class="nn">codecs</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">datalab.context</span>
+<span class="kn">import</span> <span class="nn">datalab.utils</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_api</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_csv_options</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_job</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_parser</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_schema</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_utils</span>
+
+
+<span class="c1"># import of Query is at end of module as we have a circular dependency of</span>
+<span class="c1"># Query.execute().results -&gt; Table and Table.sample() -&gt; Query</span>
+
+<div class="viewcode-block" id="TableMetadata"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.TableMetadata">[docs]</a><span class="k">class</span> <span class="nc">TableMetadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents metadata about a BigQuery table.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes a TableMetadata instance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      table: the Table object this belongs to.</span>
+<span class="sd">      info: The BigQuery information about this table as a Python dictionary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">=</span> <span class="n">table</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="n">info</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">created_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The creation timestamp.&quot;&quot;&quot;</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;creationTime&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_parser</span><span class="o">.</span><span class="n">Parser</span><span class="o">.</span><span class="n">parse_timestamp</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The description of the table if it exists.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">expires_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The timestamp for when the table will expire, or None if unknown.&quot;&quot;&quot;</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;expirationTime&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">_parser</span><span class="o">.</span><span class="n">Parser</span><span class="o">.</span><span class="n">parse_timestamp</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">friendly_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The friendly name of the table if it exists.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;friendlyName&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">modified_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The timestamp for when the table was last modified.&quot;&quot;&quot;</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lastModifiedTime&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_parser</span><span class="o">.</span><span class="n">Parser</span><span class="o">.</span><span class="n">parse_timestamp</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">rows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The number of rows within the table, or -1 if unknown. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;numRows&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s1">&#39;numRows&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The size of the table in bytes, or -1 if unknown. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;numBytes&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s1">&#39;numBytes&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+
+<div class="viewcode-block" id="TableMetadata.refresh"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.TableMetadata.refresh">[docs]</a>  <span class="k">def</span> <span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Refresh the metadata. &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_load_info</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="Table"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table">[docs]</a><span class="k">class</span> <span class="nc">Table</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents a Table object referencing a BigQuery table. &quot;&quot;&quot;</span>
+
+  <span class="c1"># Allowed characters in a BigQuery table column name</span>
+  <span class="n">_VALID_COLUMN_NAME_CHARACTERS</span> <span class="o">=</span> <span class="s1">&#39;_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789&#39;</span>
+
+  <span class="c1"># When fetching table contents, the max number of rows to fetch per HTTP request</span>
+  <span class="n">_DEFAULT_PAGE_SIZE</span> <span class="o">=</span> <span class="mi">1024</span>
+
+  <span class="c1"># Milliseconds per week</span>
+  <span class="n">_MSEC_PER_WEEK</span> <span class="o">=</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">*</span> <span class="mi">1000</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a Table object. The Table need not exist yet.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).</span>
+<span class="sd">        If a string, it must have the form &#39;&lt;project&gt;:&lt;dataset&gt;.&lt;table&gt;&#39; or &#39;&lt;dataset&gt;.&lt;table&gt;&#39;.</span>
+<span class="sd">      context: an optional Context object providing project_id and credentials. If a specific</span>
+<span class="sd">        project id or credentials are unspecified, the default ones configured at the global</span>
+<span class="sd">        level are used.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the name is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">context</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">context</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_api</span> <span class="o">=</span> <span class="n">_api</span><span class="o">.</span><span class="n">Api</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">parse_table_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">project_id</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The TableName named tuple (project_id, dataset_id, table_id, decorator) for the table.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">job</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; For tables resulting from executing queries, the job that created the table.</span>
+
+<span class="sd">    Default is None for a Table object; this is overridden by QueryResultsTable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">is_temporary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Whether this is a short-lived table or not. Always False for non-QueryResultsTables. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+  <span class="k">def</span> <span class="nf">_load_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Loads metadata about this table.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">tables_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">)</span>
+      <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">e</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves metadata about the table.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A TableMetadata object.</span>
+<span class="sd">    Raises</span>
+<span class="sd">      Exception if the request could not be executed or the response was malformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_load_info</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">TableMetadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Table.exists"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.exists">[docs]</a>  <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checks if the table exists.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      True if the table exists; False otherwise.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if there was an error requesting information about the table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">tables_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="n">info</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Table.delete"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.delete">[docs]</a>  <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Delete the table.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      True if the Table no longer exists; False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">table_delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+      <span class="c1"># TODO(gram): May want to check the error reasons here and if it is not</span>
+      <span class="c1"># because the file didn&#39;t exist, return an error.</span>
+      <span class="k">pass</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Table.create"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.create">[docs]</a>  <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Create the table with the specified schema.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      schema: the schema to use to create the table. Should be a list of dictionaries, each</span>
+<span class="sd">          containing at least a pair of entries, &#39;name&#39; and &#39;type&#39;.</span>
+<span class="sd">          See https://cloud.google.com/bigquery/docs/reference/v2/tables#resource</span>
+<span class="sd">      overwrite: if True, delete the table first if it exists. If False and the table exists,</span>
+<span class="sd">          creation will fail and raise an Exception.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      The Table instance.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the table couldn&#39;t be created or already exists and truncate was False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">_schema</span><span class="o">.</span><span class="n">Schema</span><span class="p">):</span>
+      <span class="c1"># Convert to a Schema object</span>
+      <span class="n">schema</span> <span class="o">=</span> <span class="n">_schema</span><span class="o">.</span><span class="n">Schema</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">tables_insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="o">.</span><span class="n">_bq_schema</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">if</span> <span class="s1">&#39;selfLink&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="n">schema</span>
+      <span class="k">return</span> <span class="bp">self</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Table </span><span class="si">%s</span><span class="s2"> could not be created as it already exists&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Table.sample"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span>
+             <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves a sampling of data from the table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      fields: an optional list of field names to retrieve.</span>
+<span class="sd">      count: an optional count of rows to retrieve which is used if a specific</span>
+<span class="sd">          sampling is not specified.</span>
+<span class="sd">      sampling: an optional sampling strategy to apply to the table.</span>
+<span class="sd">      use_cache: whether to use cached results or not.</span>
+<span class="sd">      dialect : {&#39;legacy&#39;, &#39;standard&#39;}, default &#39;legacy&#39;</span>
+<span class="sd">          &#39;legacy&#39; : Use BigQuery&#39;s legacy SQL dialect.</span>
+<span class="sd">          &#39;standard&#39; : Use BigQuery&#39;s standard SQL (beta), which is</span>
+<span class="sd">          compliant with the SQL 2011 standard.</span>
+<span class="sd">      billing_tier: Limits the billing tier for this job. Queries that have resource</span>
+<span class="sd">          usage beyond this tier will fail (without incurring a charge). If unspecified, this</span>
+<span class="sd">          will be set to your project default. This can also be used to override your</span>
+<span class="sd">          project-wide default billing tier on a per-query basis.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A QueryResultsTable object containing the resulting data.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the sample query could not be executed or query response was malformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Do import here to avoid top-level circular dependencies.</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_query</span>
+    <span class="n">sql</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repr_sql_</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_query</span><span class="o">.</span><span class="n">Query</span><span class="o">.</span><span class="n">sampling_query</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">count</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span>
+                                       <span class="n">sampling</span><span class="o">=</span><span class="n">sampling</span><span class="p">)</span><span class="o">.</span><span class="n">results</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span>
+                                                                  <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span>
+                                                                  <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_encode_dict_as_row</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">column_name_map</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Encode a dictionary representing a table row in a form suitable for streaming to BQ.</span>
+
+<span class="sd">      This includes encoding timestamps as ISO-compatible strings and removing invalid</span>
+<span class="sd">      characters from column names.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      record: a Python dictionary representing the table row.</span>
+<span class="sd">      column_name_map: a dictionary mapping dictionary keys to column names. This is initially</span>
+<span class="sd">        empty and built up by this method when it first encounters each column, then used as a</span>
+<span class="sd">        cache subsequently.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      The sanitized dictionary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+      <span class="n">v</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+      <span class="c1"># If the column is a date, convert to ISO string.</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+
+      <span class="c1"># If k has invalid characters clean it up</span>
+      <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">column_name_map</span><span class="p">:</span>
+        <span class="n">column_name_map</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">k</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">Table</span><span class="o">.</span><span class="n">_VALID_COLUMN_NAME_CHARACTERS</span><span class="p">)</span>
+      <span class="n">new_k</span> <span class="o">=</span> <span class="n">column_name_map</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">new_k</span><span class="p">:</span>
+        <span class="n">record</span><span class="p">[</span><span class="n">new_k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">del</span> <span class="n">record</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">record</span>
+
+<div class="viewcode-block" id="Table.insert_data"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.insert_data">[docs]</a>  <span class="k">def</span> <span class="nf">insert_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">include_index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Insert the contents of a Pandas DataFrame or a list of dictionaries into the table.</span>
+
+<span class="sd">    The insertion will be performed using at most 500 rows per POST, and at most 10 POSTs per</span>
+<span class="sd">    second, as BigQuery has some limits on streaming rates.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      data: the DataFrame or list to insert.</span>
+<span class="sd">      include_index: whether to include the DataFrame or list index as a column in the BQ table.</span>
+<span class="sd">      index_name: for a list, if include_index is True, this should be the name for the index.</span>
+<span class="sd">          If not specified, &#39;Index&#39; will be used.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      The table.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the table doesn&#39;t exist, the table&#39;s schema differs from the data&#39;s schema,</span>
+<span class="sd">      or the insert failed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO(gram): we could create the Table here is it doesn&#39;t exist using a schema derived</span>
+    <span class="c1"># from the data. IIRC we decided not to but doing so seems less unwieldy that having to</span>
+    <span class="c1"># create it first and then validate the schema against it itself.</span>
+
+    <span class="c1"># There are BigQuery limits on the streaming API:</span>
+    <span class="c1">#</span>
+    <span class="c1"># max_rows_per_post = 500</span>
+    <span class="c1"># max_bytes_per_row = 20000</span>
+    <span class="c1"># max_rows_per_second = 10000</span>
+    <span class="c1"># max_bytes_per_post = 1000000</span>
+    <span class="c1"># max_bytes_per_second = 10000000</span>
+    <span class="c1">#</span>
+    <span class="c1"># It is non-trivial to enforce these here, and the max bytes per row is not something we</span>
+    <span class="c1"># can really control. As an approximation we enforce the 500 row limit</span>
+    <span class="c1"># with a 0.05 sec POST interval (to enforce the 10,000 rows per sec limit).</span>
+    <span class="n">max_rows_per_post</span> <span class="o">=</span> <span class="mi">500</span>
+    <span class="n">post_interval</span> <span class="o">=</span> <span class="mf">0.05</span>
+
+    <span class="c1"># TODO(gram): add different exception types for each failure case.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Table </span><span class="si">%s</span><span class="s1"> does not exist.&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span><span class="p">)</span>
+
+    <span class="n">data_schema</span> <span class="o">=</span> <span class="n">_schema</span><span class="o">.</span><span class="n">Schema</span><span class="o">.</span><span class="n">from_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+      <span class="k">if</span> <span class="n">include_index</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">index_name</span><span class="p">:</span>
+          <span class="n">index_name</span> <span class="o">=</span> <span class="s1">&#39;Index&#39;</span>
+        <span class="n">data_schema</span><span class="o">.</span><span class="n">_add_field</span><span class="p">(</span><span class="n">index_name</span><span class="p">,</span> <span class="s1">&#39;INTEGER&#39;</span><span class="p">)</span>
+
+    <span class="n">table_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span>
+
+    <span class="c1"># Do some validation of the two schema to make sure they are compatible.</span>
+    <span class="k">for</span> <span class="n">data_field</span> <span class="ow">in</span> <span class="n">data_schema</span><span class="p">:</span>
+      <span class="n">name</span> <span class="o">=</span> <span class="n">data_field</span><span class="o">.</span><span class="n">name</span>
+      <span class="n">table_field</span> <span class="o">=</span> <span class="n">table_schema</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">table_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Table does not contain field </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+      <span class="n">data_type</span> <span class="o">=</span> <span class="n">data_field</span><span class="o">.</span><span class="n">data_type</span>
+      <span class="n">table_type</span> <span class="o">=</span> <span class="n">table_field</span><span class="o">.</span><span class="n">data_type</span>
+      <span class="k">if</span> <span class="n">table_type</span> <span class="o">!=</span> <span class="n">data_type</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Field </span><span class="si">%s</span><span class="s1"> in data has type </span><span class="si">%s</span><span class="s1"> but in table has type </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">table_type</span><span class="p">))</span>
+
+    <span class="n">total_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">total_pushed</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">job_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">column_name_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">is_dataframe</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_dataframe</span><span class="p">:</span>
+      <span class="c1"># reset_index creates a new dataframe so we don&#39;t affect the original. reset_index(drop=True)</span>
+      <span class="c1"># drops the original index and uses an integer range.</span>
+      <span class="n">gen</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="ow">not</span> <span class="n">include_index</span><span class="p">)</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">gen</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">gen</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">is_dataframe</span><span class="p">:</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+      <span class="k">elif</span> <span class="n">include_index</span><span class="p">:</span>
+        <span class="n">row</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+
+      <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+        <span class="s1">&#39;json&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encode_dict_as_row</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">column_name_map</span><span class="p">),</span>
+        <span class="s1">&#39;insertId&#39;</span><span class="p">:</span> <span class="n">job_id</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+      <span class="p">})</span>
+
+      <span class="n">total_pushed</span> <span class="o">+=</span> <span class="mi">1</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="n">total_pushed</span> <span class="o">==</span> <span class="n">total_rows</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">==</span> <span class="n">max_rows_per_post</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">tabledata_insert_all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">,</span> <span class="n">rows</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">if</span> <span class="s1">&#39;insertErrors&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;insertAll failed: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;insertErrors&#39;</span><span class="p">])</span>
+
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">post_interval</span><span class="p">)</span>  <span class="c1"># Streaming API is rate-limited</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Block until data is ready</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">tables_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">)</span>
+      <span class="k">if</span> <span class="s1">&#39;streamingBuffer&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="ow">or</span> \
+              <span class="s1">&#39;estimatedRows&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;streamingBuffer&#39;</span><span class="p">]</span> <span class="ow">or</span> \
+              <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;streamingBuffer&#39;</span><span class="p">][</span><span class="s1">&#39;estimatedRows&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">break</span>
+      <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="bp">self</span></div>
+
+  <span class="k">def</span> <span class="nf">_init_job_from_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Helper function to create a Job instance from a response. &quot;&quot;&quot;</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">response</span> <span class="ow">and</span> <span class="s1">&#39;jobReference&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+      <span class="n">job</span> <span class="o">=</span> <span class="n">_job</span><span class="o">.</span><span class="n">Job</span><span class="p">(</span><span class="n">job_id</span><span class="o">=</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;jobReference&#39;</span><span class="p">][</span><span class="s1">&#39;jobId&#39;</span><span class="p">],</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">job</span>
+
+<div class="viewcode-block" id="Table.extract_async"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.extract_async">[docs]</a>  <span class="k">def</span> <span class="nf">extract_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">compress</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Starts a job to export the table to GCS.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      destination: the destination URI(s). Can be a single URI or a list.</span>
+<span class="sd">      format: the format to use for the exported data; one of &#39;csv&#39;, &#39;json&#39;, or &#39;avro&#39;</span>
+<span class="sd">          (default &#39;csv&#39;).</span>
+<span class="sd">      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to &#39;,&#39;</span>
+<span class="sd">      csv_header: for CSV exports, whether to include an initial header line. Default true.</span>
+<span class="sd">      compress: whether to compress the data on export. Compression is not supported for</span>
+<span class="sd">          AVRO format. Defaults to False.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A Job object for the export Job if it was started successfully; else None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">format</span> <span class="o">=</span> <span class="nb">format</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;JSON&#39;</span><span class="p">:</span>
+      <span class="nb">format</span> <span class="o">=</span> <span class="s1">&#39;NEWLINE_DELIMITED_JSON&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">table_extract</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="nb">format</span><span class="p">,</span> <span class="n">compress</span><span class="p">,</span>
+                                         <span class="n">csv_delimiter</span><span class="p">,</span> <span class="n">csv_header</span><span class="p">)</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_job_from_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">JobError</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">(),</span> <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+                                   <span class="n">reason</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="Table.extract"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.extract">[docs]</a>  <span class="k">def</span> <span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exports the table to GCS; blocks until complete.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      destination: the destination URI(s). Can be a single URI or a list.</span>
+<span class="sd">      format: the format to use for the exported data; one of &#39;csv&#39;, &#39;json&#39;, or &#39;avro&#39;</span>
+<span class="sd">          (default &#39;csv&#39;).</span>
+<span class="sd">      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to &#39;,&#39;</span>
+<span class="sd">      csv_header: for CSV exports, whether to include an initial header line. Default true.</span>
+<span class="sd">      compress: whether to compress the data on export. Compression is not supported for</span>
+<span class="sd">          AVRO format. Defaults to False.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A Job object for the completed export Job if it was started successfully; else None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_async</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="n">csv_delimiter</span><span class="p">,</span>
+                             <span class="n">csv_header</span><span class="o">=</span><span class="n">csv_header</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="n">compress</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">job</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">job</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">job</span></div>
+
+<div class="viewcode-block" id="Table.load_async"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.load_async">[docs]</a>  <span class="k">def</span> <span class="nf">load_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="n">source_format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">ignore_unknown_values</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_bad_records</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Starts importing a table from GCS and return a Future.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      source: the URL of the source objects(s). Can include a wildcard &#39;*&#39; at the end of the item</span>
+<span class="sd">         name. Can be a single source or a list.</span>
+<span class="sd">      mode: one of &#39;create&#39;, &#39;append&#39;, or &#39;overwrite&#39;. &#39;append&#39; or &#39;overwrite&#39; will fail if the</span>
+<span class="sd">          table does not already exist, while &#39;create&#39; will fail if it does. The default is</span>
+<span class="sd">          &#39;create&#39;. If &#39;create&#39; the schema will be inferred if necessary.</span>
+<span class="sd">      source_format: the format of the data, &#39;csv&#39; or &#39;json&#39;; default &#39;csv&#39;.</span>
+<span class="sd">      csv_options: if source format is &#39;csv&#39;, additional options as a CSVOptions object.</span>
+<span class="sd">      ignore_unknown_values: If True, accept rows that contain values that do not match the schema;</span>
+<span class="sd">          the unknown values are ignored (default False).</span>
+<span class="sd">      max_bad_records: the maximum number of bad records that are allowed (and ignored) before</span>
+<span class="sd">          returning an &#39;invalid&#39; error in the Job result (default 0).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A Job object for the import if it was started successfully or None if not.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the load job failed to be started or invalid arguments were supplied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">source_format</span> <span class="o">==</span> <span class="s1">&#39;csv&#39;</span><span class="p">:</span>
+      <span class="n">source_format</span> <span class="o">=</span> <span class="s1">&#39;CSV&#39;</span>
+    <span class="k">elif</span> <span class="n">source_format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+      <span class="n">source_format</span> <span class="o">=</span> <span class="s1">&#39;NEWLINE_DELIMITED_JSON&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid source format </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">source_format</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;create&#39;</span> <span class="ow">or</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;append&#39;</span> <span class="ow">or</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid mode </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">mode</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">csv_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">csv_options</span> <span class="o">=</span> <span class="n">_csv_options</span><span class="o">.</span><span class="n">CSVOptions</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">jobs_insert_load</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">,</span>
+                                            <span class="n">append</span><span class="o">=</span><span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;append&#39;</span><span class="p">),</span>
+                                            <span class="n">overwrite</span><span class="o">=</span><span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">),</span>
+                                            <span class="n">create</span><span class="o">=</span><span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;create&#39;</span><span class="p">),</span>
+                                            <span class="n">source_format</span><span class="o">=</span><span class="n">source_format</span><span class="p">,</span>
+                                            <span class="n">field_delimiter</span><span class="o">=</span><span class="n">csv_options</span><span class="o">.</span><span class="n">delimiter</span><span class="p">,</span>
+                                            <span class="n">allow_jagged_rows</span><span class="o">=</span><span class="n">csv_options</span><span class="o">.</span><span class="n">allow_jagged_rows</span><span class="p">,</span>
+                                            <span class="n">allow_quoted_newlines</span><span class="o">=</span><span class="n">csv_options</span><span class="o">.</span><span class="n">allow_quoted_newlines</span><span class="p">,</span>
+                                            <span class="n">encoding</span><span class="o">=</span><span class="n">csv_options</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span>
+                                            <span class="n">ignore_unknown_values</span><span class="o">=</span><span class="n">ignore_unknown_values</span><span class="p">,</span>
+                                            <span class="n">max_bad_records</span><span class="o">=</span><span class="n">max_bad_records</span><span class="p">,</span>
+                                            <span class="n">quote</span><span class="o">=</span><span class="n">csv_options</span><span class="o">.</span><span class="n">quote</span><span class="p">,</span>
+                                            <span class="n">skip_leading_rows</span><span class="o">=</span><span class="n">csv_options</span><span class="o">.</span><span class="n">skip_leading_rows</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_job_from_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Table.load"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.load">[docs]</a>  <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="n">source_format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+           <span class="n">ignore_unknown_values</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_bad_records</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Load the table from GCS.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      source: the URL of the source objects(s). Can include a wildcard &#39;*&#39; at the end of the item</span>
+<span class="sd">         name. Can be a single source or a list.</span>
+<span class="sd">      mode: one of &#39;create&#39;, &#39;append&#39;, or &#39;overwrite&#39;. &#39;append&#39; or &#39;overwrite&#39; will fail if the</span>
+<span class="sd">          table does not already exist, while &#39;create&#39; will fail if it does. The default is</span>
+<span class="sd">          &#39;create&#39;. If &#39;create&#39; the schema will be inferred if necessary.</span>
+<span class="sd">      source_format: the format of the data, &#39;csv&#39; or &#39;json&#39;; default &#39;csv&#39;.</span>
+<span class="sd">      csv_options: if source format is &#39;csv&#39;, additional options as a CSVOptions object.</span>
+<span class="sd">      ignore_unknown_values: if True, accept rows that contain values that do not match the schema;</span>
+<span class="sd">          the unknown values are ignored (default False).</span>
+<span class="sd">      max_bad_records: the maximum number of bad records that are allowed (and ignored) before</span>
+<span class="sd">          returning an &#39;invalid&#39; error in the Job result (default 0).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A Job object for the completed load Job if it was started successfully; else None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_async</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
+                          <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+                          <span class="n">source_format</span><span class="o">=</span><span class="n">source_format</span><span class="p">,</span>
+                          <span class="n">csv_options</span><span class="o">=</span><span class="n">csv_options</span><span class="p">,</span>
+                          <span class="n">ignore_unknown_values</span><span class="o">=</span><span class="n">ignore_unknown_values</span><span class="p">,</span>
+                          <span class="n">max_bad_records</span><span class="o">=</span><span class="n">max_bad_records</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">job</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">job</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">job</span></div>
+
+  <span class="k">def</span> <span class="nf">_get_row_fetcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="n">_DEFAULT_PAGE_SIZE</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get a function that can retrieve a page of rows.</span>
+
+<span class="sd">    The function returned is a closure so that it can have a signature suitable for use</span>
+<span class="sd">    by Iterator.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      start_row: the row to start fetching from; default 0.</span>
+<span class="sd">      max_rows: the maximum number of rows to fetch (across all calls, not per-call). Default</span>
+<span class="sd">          is None which means no limit.</span>
+<span class="sd">      page_size: the maximum number of results to fetch per page; default 1024.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A function that can be called repeatedly with a page token and running count, and that</span>
+<span class="sd">      will return an array of rows and a next page token; when the returned page token is None</span>
+<span class="sd">      the fetch is complete.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">start_row</span><span class="p">:</span>
+      <span class="n">start_row</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">elif</span> <span class="n">start_row</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># We are measuring from the table end</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">start_row</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot use negative indices for table of unknown length&#39;</span><span class="p">)</span>
+
+    <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">_bq_schema</span>
+    <span class="n">name_parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span>
+
+    <span class="k">def</span> <span class="nf">_retrieve_rows</span><span class="p">(</span><span class="n">page_token</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+
+      <span class="n">page_rows</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="k">if</span> <span class="n">max_rows</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">&gt;=</span> <span class="n">max_rows</span><span class="p">:</span>
+        <span class="n">page_token</span> <span class="o">=</span> <span class="kc">None</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">max_rows</span> <span class="ow">and</span> <span class="n">page_size</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">max_rows</span> <span class="o">-</span> <span class="n">count</span><span class="p">):</span>
+          <span class="n">max_results</span> <span class="o">=</span> <span class="n">max_rows</span> <span class="o">-</span> <span class="n">count</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">max_results</span> <span class="o">=</span> <span class="n">page_size</span>
+
+        <span class="k">try</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">page_token</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">tabledata_list</span><span class="p">(</span><span class="n">name_parts</span><span class="p">,</span> <span class="n">page_token</span><span class="o">=</span><span class="n">page_token</span><span class="p">,</span>
+                                                <span class="n">max_results</span><span class="o">=</span><span class="n">max_results</span><span class="p">)</span>
+          <span class="k">else</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">tabledata_list</span><span class="p">(</span><span class="n">name_parts</span><span class="p">,</span> <span class="n">start_index</span><span class="o">=</span><span class="n">start_row</span><span class="p">,</span>
+                                                <span class="n">max_results</span><span class="o">=</span><span class="n">max_results</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="n">e</span>
+        <span class="n">page_token</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;pageToken&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;pageToken&#39;</span> <span class="ow">in</span> <span class="n">response</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;rows&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+          <span class="n">page_rows</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;rows&#39;</span><span class="p">]</span>
+
+      <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="k">for</span> <span class="n">row_dict</span> <span class="ow">in</span> <span class="n">page_rows</span><span class="p">:</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_parser</span><span class="o">.</span><span class="n">Parser</span><span class="o">.</span><span class="n">parse_row</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">row_dict</span><span class="p">))</span>
+
+      <span class="k">return</span> <span class="n">rows</span><span class="p">,</span> <span class="n">page_token</span>
+
+    <span class="k">return</span> <span class="n">_retrieve_rows</span>
+
+<div class="viewcode-block" id="Table.range"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.range">[docs]</a>  <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get an iterator to iterate through a set of table rows.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      start_row: the row of the table at which to start the iteration (default 0)</span>
+<span class="sd">      max_rows: an upper limit on the number of rows to iterate through (default None)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A row iterator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fetcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_row_fetcher</span><span class="p">(</span><span class="n">start_row</span><span class="o">=</span><span class="n">start_row</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="n">max_rows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">Iterator</span><span class="p">(</span><span class="n">fetcher</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Table.to_dataframe"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.to_dataframe">[docs]</a>  <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Exports the table to a Pandas dataframe.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      start_row: the row of the table at which to start the export (default 0)</span>
+<span class="sd">      max_rows: an upper limit on the number of rows to export (default None)</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A Pandas dataframe containing the table data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fetcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_row_fetcher</span><span class="p">(</span><span class="n">start_row</span><span class="o">=</span><span class="n">start_row</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="n">max_rows</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">page_token</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+      <span class="n">page_rows</span><span class="p">,</span> <span class="n">page_token</span> <span class="o">=</span> <span class="n">fetcher</span><span class="p">(</span><span class="n">page_token</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">page_rows</span><span class="p">):</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">page_rows</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+          <span class="n">df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">page_rows</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">page_rows</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">page_token</span><span class="p">:</span>
+        <span class="k">break</span>
+
+    <span class="c1"># Need to reorder the dataframe to preserve column ordering</span>
+    <span class="n">ordered_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">ordered_fields</span><span class="p">]</span> <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Table.to_file"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.to_file">[docs]</a>  <span class="k">def</span> <span class="nf">to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save the results to a local file in CSV format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      destination: path on the local filesystem for the saved results.</span>
+<span class="sd">      format: the format to use for the exported data; currently only &#39;csv&#39; is supported.</span>
+<span class="sd">      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to &#39;,&#39;</span>
+<span class="sd">      csv_header: for CSV exports, whether to include an initial header line. Default true.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      An Exception if the operation failed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">codecs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">fieldnames</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
+      <span class="n">fieldnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+      <span class="n">csv_delimiter</span> <span class="o">=</span> <span class="n">csv_delimiter</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;unicode_escape&#39;</span><span class="p">)</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">fieldnames</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="n">csv_delimiter</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">csv_header</span><span class="p">:</span>
+      <span class="n">writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+      <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+  <span class="nd">@datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">async_method</span>
+<div class="viewcode-block" id="Table.to_file_async"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.to_file_async">[docs]</a>  <span class="k">def</span> <span class="nf">to_file_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Start saving the results to a local file in CSV format and return a Job for completion.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      destination: path on the local filesystem for the saved results.</span>
+<span class="sd">      format: the format to use for the exported data; currently only &#39;csv&#39; is supported.</span>
+<span class="sd">      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to &#39;,&#39;</span>
+<span class="sd">      csv_header: for CSV exports, whether to include an initial header line. Default true.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A Job for the async save operation.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      An Exception if the operation failed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="n">csv_delimiter</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="n">csv_header</span><span class="p">)</span></div>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves the schema of the table.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A Schema object containing a list of schema fields and associated metadata.</span>
+<span class="sd">    Raises</span>
+<span class="sd">      Exception if the request could not be executed or the response was malformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_info</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="n">_schema</span><span class="o">.</span><span class="n">Schema</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;schema&#39;</span><span class="p">][</span><span class="s1">&#39;fields&#39;</span><span class="p">])</span>
+      <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unexpected table response: missing schema&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span>
+
+<div class="viewcode-block" id="Table.update"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.update">[docs]</a>  <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">friendly_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expiry</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Selectively updates Table information.</span>
+
+<span class="sd">    Any parameters that are omitted or None are not updated.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      friendly_name: if not None, the new friendly name.</span>
+<span class="sd">      description: if not None, the new description.</span>
+<span class="sd">      expiry: if not None, the new expiry time, either as a DateTime or milliseconds since epoch.</span>
+<span class="sd">      schema: if not None, the new schema: either a list of dictionaries or a Schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_load_info</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">friendly_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;friendlyName&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">friendly_name</span>
+    <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">description</span>
+    <span class="k">if</span> <span class="n">expiry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expiry</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+        <span class="n">expiry</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">expiry</span><span class="o">.</span><span class="n">utctimetuple</span><span class="p">())</span> <span class="o">*</span> <span class="mi">1000</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;expirationTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">expiry</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">_schema</span><span class="o">.</span><span class="n">Schema</span><span class="p">):</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">_bq_schema</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;schema&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;fields&#39;</span><span class="p">:</span> <span class="n">schema</span><span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">table_update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_info</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+      <span class="c1"># The cached metadata is out of sync now; abandon it.</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_info</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span></div>
+
+  <span class="k">def</span> <span class="nf">_repr_sql_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a representation of the table for embedding into a SQL statement.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A formatted table name for use within SQL statements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;[&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
+
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a representation for the table for showing in the notebook.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;Table </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span>
+
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a string representation of the table using its specified name.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The string representation of this object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get the length of the table (number of rows). We don&#39;t use __len__ as this may</span>
+<span class="sd">        return -1 for &#39;unknown&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">rows</span>
+
+  <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get an iterator for the table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">start_row</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get an item or a slice of items from the table. This uses a small cache</span>
+<span class="sd">        to reduce the number of calls to tabledata.list.</span>
+
+<span class="sd">        Note: this is a useful function to have, and supports some current usage like</span>
+<span class="sd">        query.results()[0], but should be used with care.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+      <span class="c1"># Just treat this as a set of calls to __getitem__(int)</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="n">i</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">start</span>
+      <span class="n">step</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">step</span> <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">step</span> <span class="k">else</span> <span class="mi">1</span>
+      <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">item</span><span class="o">.</span><span class="n">stop</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="n">step</span>
+      <span class="k">return</span> <span class="n">result</span>
+
+    <span class="c1"># Handle the integer index case.</span>
+    <span class="k">if</span> <span class="n">item</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot use negative indices for table of unknown length&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page</span> \
+        <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page_index</span> <span class="o">&gt;</span> <span class="n">item</span> \
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page_index</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_page</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">item</span><span class="p">:</span>
+      <span class="c1"># cache a new page. To get the start row we round to the nearest multiple of the page</span>
+      <span class="c1"># size.</span>
+      <span class="n">first</span> <span class="o">=</span> <span class="n">old_div</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_PAGE_SIZE</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_PAGE_SIZE</span>
+      <span class="n">count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DEFAULT_PAGE_SIZE</span>
+
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">remaining</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">-</span> <span class="n">first</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="n">remaining</span><span class="p">:</span>
+          <span class="n">count</span> <span class="o">=</span> <span class="n">remaining</span>
+
+      <span class="n">fetcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_row_fetcher</span><span class="p">(</span><span class="n">start_row</span><span class="o">=</span><span class="n">first</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="n">count</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="n">count</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page_index</span> <span class="o">=</span> <span class="n">first</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fetcher</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page</span><span class="p">[</span><span class="n">item</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_page_index</span><span class="p">]</span>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_convert_decorator_time</span><span class="p">(</span><span class="n">when</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">when</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+      <span class="n">value</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="p">(</span><span class="n">when</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">when</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">):</span>
+      <span class="n">value</span> <span class="o">=</span> <span class="n">when</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span>
+      <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid snapshot relative when argument: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">when</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid snapshot when argument type: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">when</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">Table</span><span class="o">.</span><span class="n">_MSEC_PER_WEEK</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid snapshot relative when argument: must be within 7 days: </span><span class="si">%s</span><span class="s2">&quot;</span>
+                      <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">when</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="n">now</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">*</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">-</span>
+                    <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+      <span class="c1"># Check that an abs value is not more than 7 days in the past and is</span>
+      <span class="c1"># not in the future</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="n">now</span> <span class="o">-</span> <span class="n">Table</span><span class="o">.</span><span class="n">_MSEC_PER_WEEK</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="n">now</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid snapshot absolute when argument: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">when</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Table.snapshot"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.snapshot">[docs]</a>  <span class="k">def</span> <span class="nf">snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">at</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return a new Table which is a snapshot of this table at the specified time.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      at: the time of the snapshot. This can be a Python datetime (absolute) or timedelta</span>
+<span class="sd">          (relative to current time). The result must be after the table was created and no more</span>
+<span class="sd">          than seven days in the past. Passing None will get a reference the oldest snapshot.</span>
+
+<span class="sd">          Note that using a datetime will get a snapshot at an absolute point in time, while</span>
+<span class="sd">          a timedelta will provide a varying snapshot; any queries issued against such a Table</span>
+<span class="sd">          will be done against a snapshot that has an age relative to the execution time of the</span>
+<span class="sd">          query.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A new Table object referencing the snapshot.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      An exception if this Table is already decorated, or if the time specified is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="o">.</span><span class="n">decorator</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Cannot use snapshot() on an already decorated table&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">_convert_decorator_time</span><span class="p">(</span><span class="n">at</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">@</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)),</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Table.window"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.window">[docs]</a>  <span class="k">def</span> <span class="nf">window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return a new Table limited to the rows added to this Table during the specified time range.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      begin: the start time of the window. This can be a Python datetime (absolute) or timedelta</span>
+<span class="sd">          (relative to current time). The result must be after the table was created and no more</span>
+<span class="sd">          than seven days in the past.</span>
+
+<span class="sd">          Note that using a relative value will provide a varying snapshot, not a fixed</span>
+<span class="sd">          snapshot; any queries issued against such a Table will be done against a snapshot</span>
+<span class="sd">          that has an age relative to the execution time of the query.</span>
+
+<span class="sd">      end: the end time of the snapshot; if None, then the current time is used. The types and</span>
+<span class="sd">          interpretation of values is as for start.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A new Table object referencing the window.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      An exception if this Table is already decorated, or if the time specified is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_parts</span><span class="o">.</span><span class="n">decorator</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Cannot use window() on an already decorated table&quot;</span><span class="p">)</span>
+
+    <span class="n">start</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">_convert_decorator_time</span><span class="p">(</span><span class="n">begin</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">):</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+    <span class="n">stop</span> <span class="o">=</span> <span class="n">Table</span><span class="o">.</span><span class="n">_convert_decorator_time</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+
+    <span class="c1"># Both values must have the same sign</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">start</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&gt;=</span> <span class="n">stop</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">stop</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&gt;=</span> <span class="n">start</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;window: Between arguments must both be absolute or relative: </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                      <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">begin</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">end</span><span class="p">)))</span>
+
+    <span class="c1"># start must be less than stop</span>
+    <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;</span> <span class="n">stop</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;window: Between arguments: begin must be before end: </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                      <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">begin</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">end</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">@</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">start</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">stop</span><span class="p">)),</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Table.to_query"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.to_query">[docs]</a>  <span class="k">def</span> <span class="nf">to_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return a Query for this Table.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      fields: the fields to return. If None, all fields will be returned. This can be a string</span>
+<span class="sd">          which will be injected into the Query after SELECT, or a list of field names.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A Query object that will return the specified fields from the records in the Table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Do import here to avoid top-level circular dependencies.</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_query</span>
+    <span class="k">if</span> <span class="n">fields</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">fields</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+      <span class="n">fields</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_query</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="s1">&#39;SELECT </span><span class="si">%s</span><span class="s1"> FROM </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repr_sql_</span><span class="p">()),</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span></div></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

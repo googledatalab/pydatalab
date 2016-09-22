@@ -1,0 +1,543 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.bigquery._schema &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="datalab.bigquery" href="../bigquery.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../bigquery.html">datalab.bigquery</a> &raquo;</li>
+      
+    <li>datalab.bigquery._schema</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.bigquery._schema</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements Table and View Schema APIs.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">range</span>
+<span class="kn">from</span> <span class="nn">past.builtins</span> <span class="k">import</span> <span class="n">basestring</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">pandas</span>
+
+
+<div class="viewcode-block" id="Schema"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Schema">[docs]</a><span class="k">class</span> <span class="nc">Schema</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents the schema of a BigQuery table as a flattened list of objects representing fields.</span>
+
+<span class="sd">   Each field object has name, data_type, mode and description properties. Nested fields</span>
+<span class="sd">   get flattened with their full-qualified names. So a Schema that has an object A with nested</span>
+<span class="sd">   field B will be represented as [(name: &#39;A&#39;, ...), (name: &#39;A.b&#39;, ...)].</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Schema.Field"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Schema.Field">[docs]</a>  <span class="k">class</span> <span class="nc">Field</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Represents a single field in a Table schema.</span>
+
+<span class="sd">    This has the properties:</span>
+
+<span class="sd">    - name: the flattened, full-qualified name of the field.</span>
+<span class="sd">    - data_type: the type of the field as a string (&#39;INTEGER&#39;, &#39;BOOLEAN&#39;, &#39;FLOAT&#39;, &#39;STRING&#39;</span>
+<span class="sd">       or &#39;TIMESTAMP&#39;).</span>
+<span class="sd">    - mode: the mode of the field; &#39;NULLABLE&#39; by default.</span>
+<span class="sd">    - description: a description of the field, if known; empty string by default.</span>
+
+<span class="sd">     &quot;&quot;&quot;</span>
+
+    <span class="c1"># TODO(gram): consider renaming data_type member to type. Yes, it shadows top-level</span>
+    <span class="c1"># name but that is what we are using in __str__ and __getitem__ and is what is used in BQ.</span>
+    <span class="c1"># The shadowing is unlikely to cause problems.</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;NULLABLE&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span> <span class="o">=</span> <span class="n">data_type</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
+
+    <span class="k">def</span> <span class="nf">_repr_sql_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="sd">&quot;&quot;&quot;Returns a representation of the field for embedding into a SQL statement.</span>
+
+<span class="sd">      Returns:</span>
+<span class="sd">        A formatted field name for use within SQL statements.</span>
+<span class="sd">      &quot;&quot;&quot;</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+      <span class="sd">&quot;&quot;&quot; Compare two schema field objects for equality (ignoring description). &quot;&quot;&quot;</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">name</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">data_type</span>\
+          <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">mode</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="sd">&quot;&quot;&quot; Returns the schema field as a string form of a dictionary. &quot;&quot;&quot;</span>
+      <span class="k">return</span> <span class="s2">&quot;{ &#39;name&#39;: &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;type&#39;: &#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;mode&#39;:&#39;</span><span class="si">%s</span><span class="s2">&#39;, &#39;description&#39;: &#39;</span><span class="si">%s</span><span class="s2">&#39; }&quot;</span> <span class="o">%</span> \
+             <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="sd">&quot;&quot;&quot; Returns the schema field as a string form of a dictionary. &quot;&quot;&quot;</span>
+      <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+      <span class="c1"># TODO(gram): Currently we need this for a Schema object to work with the Parser object.</span>
+      <span class="c1"># Eventually if we change Parser to only work with Schema (and not also with the</span>
+      <span class="c1"># schema dictionaries in query results) we can remove this.</span>
+
+      <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="s1">&#39;name&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+      <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span>
+      <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="s1">&#39;mode&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span>
+      <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="s1">&#39;description&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span></div>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_from_dataframe</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">default_type</span><span class="o">=</span><span class="s1">&#39;STRING&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don&#39;t explicitly set</span>
+<span class="sd">      the types of the columns in the dataframe, they may be of a type that forces coercion to</span>
+<span class="sd">      STRING, so even though the fields in the dataframe themselves may be numeric, the type in the</span>
+<span class="sd">      derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed</span>
+<span class="sd">      correctly.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      dataframe: The DataFrame.</span>
+<span class="sd">      default_type : The default big query type in case the type of the column does not exist in</span>
+<span class="sd">          the schema. Defaults to &#39;STRING&#39;.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A list of dictionaries containing field &#39;name&#39; and &#39;type&#39; entries, suitable for use in a</span>
+<span class="sd">          BigQuery Tables resource schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">type_mapping</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="s1">&#39;INTEGER&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;BOOLEAN&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="s1">&#39;FLOAT&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="s1">&#39;STRING&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="s1">&#39;STRING&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;STRING&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="s1">&#39;TIMESTAMP&#39;</span>
+    <span class="p">}</span>
+
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">dtypes</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">column_name</span><span class="p">,</span>
+                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">type_mapping</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="n">default_type</span><span class="p">)})</span>
+
+    <span class="k">return</span> <span class="n">fields</span>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Schema.from_dataframe"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Schema.from_dataframe">[docs]</a>  <span class="k">def</span> <span class="nf">from_dataframe</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">default_type</span><span class="o">=</span><span class="s1">&#39;STRING&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">      Infer a BigQuery table schema from a Pandas dataframe. Note that if you don&#39;t explicitly set</span>
+<span class="sd">      the types of the columns in the dataframe, they may be of a type that forces coercion to</span>
+<span class="sd">      STRING, so even though the fields in the dataframe themselves may be numeric, the type in the</span>
+<span class="sd">      derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed</span>
+<span class="sd">      correctly.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      dataframe: The DataFrame.</span>
+<span class="sd">      default_type : The default big query type in case the type of the column does not exist in</span>
+<span class="sd">          the schema. Defaults to &#39;STRING&#39;.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A Schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Schema</span><span class="p">(</span><span class="n">Schema</span><span class="o">.</span><span class="n">_from_dataframe</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">default_type</span><span class="o">=</span><span class="n">default_type</span><span class="p">))</span></div>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_get_field_entry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+      <span class="n">_type</span> <span class="o">=</span> <span class="s1">&#39;TIMESTAMP&#39;</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+      <span class="n">_type</span> <span class="o">=</span> <span class="s1">&#39;BOOLEAN&#39;</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+      <span class="n">_type</span> <span class="o">=</span> <span class="s1">&#39;FLOAT&#39;</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+      <span class="n">_type</span> <span class="o">=</span> <span class="s1">&#39;INTEGER&#39;</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+      <span class="n">_type</span> <span class="o">=</span> <span class="s1">&#39;RECORD&#39;</span>
+      <span class="n">entry</span><span class="p">[</span><span class="s1">&#39;fields&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="n">_from_record</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">_type</span> <span class="o">=</span> <span class="s1">&#39;STRING&#39;</span>
+    <span class="n">entry</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_type</span>
+    <span class="k">return</span> <span class="n">entry</span>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_from_dict_record</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Infer a BigQuery table schema from a dictionary. If the dictionary has entries that</span>
+<span class="sd">    are in turn OrderedDicts these will be turned into RECORD types. Ideally this will</span>
+<span class="sd">    be an OrderedDict but it is not required.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      data: The dict to infer a schema from.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A list of dictionaries containing field &#39;name&#39; and &#39;type&#39; entries, suitable for use in a</span>
+<span class="sd">          BigQuery Tables resource schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">Schema</span><span class="o">.</span><span class="n">_get_field_entry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">())]</span>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_from_list_record</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Infer a BigQuery table schema from a list of values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      data: The list of values.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A list of dictionaries containing field &#39;name&#39; and &#39;type&#39; entries, suitable for use in a</span>
+<span class="sd">          BigQuery Tables resource schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">Schema</span><span class="o">.</span><span class="n">_get_field_entry</span><span class="p">(</span><span class="s1">&#39;Column</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">)]</span>
+
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_from_record</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Infer a BigQuery table schema from a list of fields or a dictionary. The typeof the elements</span>
+<span class="sd">    is used. For a list, the field names are simply &#39;Column1&#39;, &#39;Column2&#39;, etc.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      data: The list of fields or dictionary.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A list of dictionaries containing field &#39;name&#39; and &#39;type&#39; entries, suitable for use in a</span>
+<span class="sd">          BigQuery Tables resource schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+      <span class="k">return</span> <span class="n">Schema</span><span class="o">.</span><span class="n">_from_dict_record</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+      <span class="k">return</span> <span class="n">Schema</span><span class="o">.</span><span class="n">_from_list_record</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot create a schema from record </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Schema.from_record"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Schema.from_record">[docs]</a>  <span class="k">def</span> <span class="nf">from_record</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Infers a table/view schema from a single record that can contain a list of fields or a</span>
+<span class="sd">    dictionary of fields. The type of the elements is used for the types in the schema. For a</span>
+<span class="sd">    dict, key names are used for column names while for a list, the field names are simply named</span>
+<span class="sd">    &#39;Column1&#39;, &#39;Column2&#39;, etc. Note that if using a dict you may want to use an OrderedDict</span>
+<span class="sd">    to ensure column ordering is deterministic.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      source: The list of field values or dictionary of key/values.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A Schema for the data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO(gram): may want to allow an optional second argument which is a list of field</span>
+    <span class="c1"># names; could be useful for the record-containing-list case.</span>
+    <span class="k">return</span> <span class="n">Schema</span><span class="p">(</span><span class="n">Schema</span><span class="o">.</span><span class="n">_from_record</span><span class="p">(</span><span class="n">source</span><span class="p">))</span></div>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Schema.from_data"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Schema.from_data">[docs]</a>  <span class="k">def</span> <span class="nf">from_data</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Infers a table/view schema from its JSON representation, a list of records, or a Pandas</span>
+<span class="sd">       dataframe.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      source: the Pandas Dataframe, a dictionary representing a record, a list of heterogeneous</span>
+<span class="sd">          data (record) or homogeneous data (list of records) from which to infer the schema, or</span>
+<span class="sd">          a definition of the schema as a list of dictionaries with &#39;name&#39; and &#39;type&#39; entries</span>
+<span class="sd">          and possibly &#39;mode&#39; and &#39;description&#39; entries. Only used if no data argument was provided.</span>
+<span class="sd">          &#39;mode&#39; can be &#39;NULLABLE&#39;, &#39;REQUIRED&#39; or &#39;REPEATED&#39;. For the allowed types, see:</span>
+<span class="sd">          https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes</span>
+
+<span class="sd">          Note that there is potential ambiguity when passing a list of lists or a list of</span>
+<span class="sd">          dicts between whether that should be treated as a list of records or a single record</span>
+<span class="sd">          that is a list. The heuristic used is to check the length of the entries in the</span>
+<span class="sd">          list; if they are equal then a list of records is assumed. To avoid this ambiguity</span>
+<span class="sd">          you can instead use the Schema.from_record method which assumes a single record,</span>
+<span class="sd">          in either list of values or dictionary of key-values form.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A Schema for the data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+      <span class="n">bq_schema</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="n">_from_dataframe</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">bq_schema</span> <span class="o">=</span> <span class="n">source</span>
+      <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">source</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="s1">&#39;name&#39;</span> <span class="ow">in</span> <span class="n">d</span> <span class="ow">and</span> <span class="s1">&#39;type&#39;</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">source</span><span class="p">):</span>
+          <span class="c1"># It looks like a bq_schema; use it as-is.</span>
+          <span class="n">bq_schema</span> <span class="o">=</span> <span class="n">source</span>
+        <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">source</span><span class="p">):</span>
+          <span class="n">bq_schema</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="n">_from_dict_record</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="ne">Exception</span><span class="p">((</span><span class="s1">&#39;Cannot create a schema from heterogeneous list </span><span class="si">%s</span><span class="s1">; perhaps you meant &#39;</span> <span class="o">+</span>
+                          <span class="s1">&#39;to use Schema.from_record?&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+      <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> \
+          <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">source</span><span class="p">]):</span>
+        <span class="c1"># A list of lists all of the same length; treat first entry as a list record.</span>
+        <span class="n">bq_schema</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="n">_from_record</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># A heterogeneous list; treat as a record.</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">((</span><span class="s1">&#39;Cannot create a schema from heterogeneous list </span><span class="si">%s</span><span class="s1">; perhaps you meant &#39;</span> <span class="o">+</span>
+                        <span class="s1">&#39;to use Schema.from_record?&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">((</span><span class="s1">&#39;Cannot create a schema from dict </span><span class="si">%s</span><span class="s1">; perhaps you meant to use &#39;</span> <span class="o">+</span>
+                      <span class="s1">&#39;Schema.from_record?&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot create a schema from </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">Schema</span><span class="p">(</span><span class="n">bq_schema</span><span class="p">)</span></div>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">definition</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes a Schema from its raw JSON representation, a Pandas Dataframe, or a list.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      definition: a definition of the schema as a list of dictionaries with &#39;name&#39; and &#39;type&#39;</span>
+<span class="sd">          entries and possibly &#39;mode&#39; and &#39;description&#39; entries. Only used if no data argument was</span>
+<span class="sd">          provided. &#39;mode&#39; can be &#39;NULLABLE&#39;, &#39;REQUIRED&#39; or &#39;REPEATED&#39;. For the allowed types, see:</span>
+<span class="sd">          https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">super</span><span class="p">(</span><span class="n">Schema</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_map</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_bq_schema</span> <span class="o">=</span> <span class="n">definition</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_populate_fields</span><span class="p">(</span><span class="n">definition</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Provides ability to lookup a schema field by position or by name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1"># noinspection PyCallByClass</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">_add_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;NULLABLE&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="n">field</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="n">Field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span>
+
+<div class="viewcode-block" id="Schema.find"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Schema.find">[docs]</a>  <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get the index of a field in the flattened list given its (fully-qualified) name.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      name: the fully-qualified name of the field.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      The index of the field, if found; else -1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)):</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">i</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div>
+
+  <span class="k">def</span> <span class="nf">_populate_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">field_data</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+      <span class="n">name</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">field_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+      <span class="n">data_type</span> <span class="o">=</span> <span class="n">field_data</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_add_field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">,</span> <span class="n">field_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                      <span class="n">field_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+      <span class="k">if</span> <span class="n">data_type</span> <span class="o">==</span> <span class="s1">&#39;RECORD&#39;</span><span class="p">:</span>
+        <span class="c1"># Recurse into the nested fields, using this field&#39;s name as a prefix.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_populate_fields</span><span class="p">(</span><span class="n">field_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fields&#39;</span><span class="p">),</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Returns a string representation of the non-flattened form of the schema. &quot;&quot;&quot;</span>
+    <span class="c1"># TODO(gram): We should probably return the flattened form. There was a reason why this is</span>
+    <span class="c1"># not but I don&#39;t remember what it was. Figure that out and fix this.</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bq_schema</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Compares two schema for equality. &quot;&quot;&quot;</span>
+    <span class="n">other_map</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_map</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_map</span><span class="p">):</span>
+      <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">other_map</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">==</span> <span class="n">other_map</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+  <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Compares two schema for inequality. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="ow">not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

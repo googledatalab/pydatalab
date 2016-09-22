@@ -1,0 +1,407 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.data package &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="datalab.storage package" href="datalab.storage.html"/>
+        <link rel="prev" title="datalab.context package" href="datalab.context.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.data package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-datalab.data">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>datalab.data package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/datalab.data.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="datalab-data-package">
+<h1>datalab.data package<a class="headerlink" href="#datalab-data-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-datalab.data">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-datalab.data" title="Permalink to this headline">¶</a></h2>
+<p>Google Cloud Platform library - Generic SQL Helpers.</p>
+<dl class="class">
+<dt id="datalab.data.Csv">
+<em class="property">class </em><code class="descclassname">datalab.data.</code><code class="descname">Csv</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a CSV file in GCS or locally with same schema.</p>
+<p>Initializes an instance of a Csv instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; path of the Csv file.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.data.Csv.browse">
+<code class="descname">browse</code><span class="sig-paren">(</span><em>max_lines</em>, <em>headers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv.browse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv.browse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try reading specified number of lines from the CSV object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>max_lines</strong> &#8211; max number of lines to read</li>
+<li><strong>headers</strong> &#8211; a list of strings as column names. If None, it will use &#8220;col0, col1...&#8221;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A 2-D array which is the content of the CSV but all values are string type.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li>Exception if the csv object cannot be read or not enough lines to read, or the</li>
+<li>headers size does not match columns size.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.data.Csv.infer_schema">
+<code class="descname">infer_schema</code><span class="sig-paren">(</span><em>num_lines</em>, <em>max_categorical_labels</em>, <em>headers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv.infer_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv.infer_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Infer schema from the CSV object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>num_lines</strong> &#8211; number of lines to read to infer schema from.</li>
+<li><strong>max_categorical_labels</strong> &#8211; if a certain string column includes more unique labels than it, then
+consider it a text column. Otherwise, consider it a categorical column.</li>
+<li><strong>headers</strong> &#8211; a list of strings as column names. If None, it will use &#8220;col0, col1...&#8221;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A list of inferred types and their details for each column</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li>Exception if the csv object cannot be read or not enough lines to read, or the</li>
+<li>headers size does not match columns size.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.data.SqlModule">
+<em class="property">class </em><code class="descclassname">datalab.data.</code><code class="descname">SqlModule</code><a class="reference internal" href="_modules/datalab/data/_sql_module.html#SqlModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.SqlModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>A container for SqlStatements defined together and able to reference each other.</p>
+<dl class="staticmethod">
+<dt id="datalab.data.SqlModule.expand">
+<em class="property">static </em><code class="descname">expand</code><span class="sig-paren">(</span><em>sql</em>, <em>args=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_sql_module.html#SqlModule.expand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.SqlModule.expand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand a SqlStatement, query string or SqlModule with a set of arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; a SqlStatement, %%sql module, or string containing a query.</li>
+<li><strong>args</strong> &#8211; a string of command line arguments or a dictionary of values. If a string, it is
+passed to the argument parser for the SqlModule associated with the SqlStatement or
+SqlModule. If a dictionary, it is used to override any default arguments from the
+argument parser. If the sql argument is a string then args must be None or a dictionary
+as in this case there is no associated argument parser.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The expanded SQL, list of referenced scripts, and list of referenced external tables.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="datalab.data.SqlModule.get_default_query_from_module">
+<em class="property">static </em><code class="descname">get_default_query_from_module</code><span class="sig-paren">(</span><em>module</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_sql_module.html#SqlModule.get_default_query_from_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.SqlModule.get_default_query_from_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a %%sql module return the default (last) query for the module.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>module</strong> &#8211; the %%sql module.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The default query associated with this module.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="datalab.data.SqlModule.get_sql_statement_with_environment">
+<em class="property">static </em><code class="descname">get_sql_statement_with_environment</code><span class="sig-paren">(</span><em>item</em>, <em>args=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_sql_module.html#SqlModule.get_sql_statement_with_environment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.SqlModule.get_sql_statement_with_environment" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Given a SQLStatement, string or module plus command line args or a dictionary,</dt>
+<dd>return a SqlStatement and final dictionary for variable resolution.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> &#8211; a SqlStatement, %%sql module, or string containing a query.</li>
+<li><strong>args</strong> &#8211; a string of command line arguments or a dictionary of values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A SqlStatement for the query or module, plus a dictionary of variable values to use.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.data.SqlStatement">
+<em class="property">class </em><code class="descclassname">datalab.data.</code><code class="descname">SqlStatement</code><span class="sig-paren">(</span><em>sql</em>, <em>module=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_sql_statement.html#SqlStatement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.SqlStatement" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper class for wrapping and manipulating SQL statements.</p>
+<p>Initializes the SqlStatement.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sql</strong> &#8211; a string containing a SQL query with optional variable references.</li>
+<li><strong>module</strong> &#8211; if defined in a %%sql cell, the parent SqlModule object for the SqlStatement.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="datalab.data.SqlStatement.format">
+<em class="property">static </em><code class="descname">format</code><span class="sig-paren">(</span><em>sql</em>, <em>args=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_sql_statement.html#SqlStatement.format"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.SqlStatement.format" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve variable references in a query within an environment.</p>
+<p>This computes and resolves the transitive dependencies in the query and raises an
+exception if that fails due to either undefined or circular references.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; query to format.</li>
+<li><strong>args</strong> &#8211; a dictionary of values to use in variable expansion.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The resolved SQL text with variables expanded.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception on failure.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.data.SqlStatement.module">
+<code class="descname">module</code><a class="headerlink" href="#datalab.data.SqlStatement.module" title="Permalink to this definition">¶</a></dt>
+<dd><p>The parent SqlModule for the SqlStatement, if any.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.data.SqlStatement.sql">
+<code class="descname">sql</code><a class="headerlink" href="#datalab.data.SqlStatement.sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>The (unexpanded) SQL for the SqlStatement.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="datalab.storage.html" class="btn btn-neutral float-right" title="datalab.storage package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="datalab.context.html" class="btn btn-neutral" title="datalab.context package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

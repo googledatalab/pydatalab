@@ -1,0 +1,455 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.bigquery._view &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="datalab.bigquery" href="../bigquery.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../bigquery.html">datalab.bigquery</a> &raquo;</li>
+      
+    <li>datalab.bigquery._view</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.bigquery._view</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements BigQuery Views.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="kn">import</span> <span class="nn">datalab.context</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_query</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_table</span>
+
+<span class="c1"># Query import is at end to avoid issues with circular dependencies.</span>
+
+
+<div class="viewcode-block" id="View"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View">[docs]</a><span class="k">class</span> <span class="nc">View</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; An implementation of a BigQuery View. &quot;&quot;&quot;</span>
+
+  <span class="c1"># Views in BigQuery are virtual tables, but it is useful to have a mixture of both Table and</span>
+  <span class="c1"># Query semantics; our version thus internally has a BaseTable and a Query (for materialization;</span>
+  <span class="c1"># not the same as the view query), and exposes a number of the same APIs as Table and Query</span>
+  <span class="c1"># through wrapper functions around these.</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a View object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      name: the name of the view either as a string or a 3-part tuple</span>
+<span class="sd">          (projectid, datasetid, name). If a string, it must have the form</span>
+<span class="sd">          &#39;&lt;project&gt;:&lt;dataset&gt;.&lt;view&gt;&#39; or &#39;&lt;dataset&gt;.&lt;view&gt;&#39;.</span>
+<span class="sd">      context: an optional Context object providing project_id and credentials. If a specific</span>
+<span class="sd">          project id or credentials are unspecified, the default ones configured at the global</span>
+<span class="sd">          level are used.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the name is invalid.</span>
+<span class="sd">      &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">context</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">context</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">=</span> <span class="n">_table</span><span class="o">.</span><span class="n">Table</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_materialization</span> <span class="o">=</span> <span class="n">_query</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="s1">&#39;SELECT * FROM </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repr_sql_</span><span class="p">(),</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The full name for the view as a string.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">)</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The name for the view as a named tuple.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">name</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The description of the view if it exists.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">description</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">friendly_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The friendly name of the view if it exists.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">friendly_name</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The Query that defines the view.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+      <span class="k">return</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_load_info</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;view&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_info</span> <span class="ow">and</span> <span class="s1">&#39;query&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;view&#39;</span><span class="p">]:</span>
+      <span class="k">return</span> <span class="n">_query</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;view&#39;</span><span class="p">][</span><span class="s1">&#39;query&#39;</span><span class="p">],</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="View.exists"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.exists">[docs]</a>  <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Whether the view&#39;s Query has been executed and the view is available or not.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="View.delete"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.delete">[docs]</a>  <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Removes the view if it exists.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="View.create"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.create">[docs]</a>  <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Creates the view with the specified query.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      query: the query to use to for the View; either a string containing a SQL query or</span>
+<span class="sd">          a Query object.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      The View instance.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the view couldn&#39;t be created or already exists and overwrite was False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">_query</span><span class="o">.</span><span class="n">Query</span><span class="p">):</span>
+      <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">sql</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">tables_insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="n">e</span>
+    <span class="k">if</span> <span class="s1">&#39;selfLink&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">self</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;View </span><span class="si">%s</span><span class="s2"> could not be created as it already exists&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="View.sample"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span>
+             <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves a sampling of data from the view.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      fields: an optional list of field names to retrieve.</span>
+<span class="sd">      count: an optional count of rows to retrieve which is used if a specific</span>
+<span class="sd">          sampling is not specified.</span>
+<span class="sd">      sampling: an optional sampling strategy to apply to the view.</span>
+<span class="sd">      use_cache: whether to use cached results or not.</span>
+<span class="sd">      dialect : {&#39;legacy&#39;, &#39;standard&#39;}, default &#39;legacy&#39;</span>
+<span class="sd">          &#39;legacy&#39; : Use BigQuery&#39;s legacy SQL dialect.</span>
+<span class="sd">          &#39;standard&#39; : Use BigQuery&#39;s standard SQL (beta), which is</span>
+<span class="sd">          compliant with the SQL 2011 standard.</span>
+<span class="sd">      billing_tier: Limits the billing tier for this job. Queries that have resource</span>
+<span class="sd">          usage beyond this tier will fail (without incurring a charge). If unspecified, this</span>
+<span class="sd">          will be set to your project default. This can also be used to override your</span>
+<span class="sd">          project-wide default billing tier on a per-query basis.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A QueryResultsTable object containing the resulting data.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the sample query could not be executed or the query response was malformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">count</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="n">sampling</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span>
+                              <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves the schema of the table.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A Schema object containing a list of schema fields and associated metadata.</span>
+<span class="sd">    Raises</span>
+<span class="sd">      Exception if the request could not be executed or the response was malformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">schema</span>
+
+<div class="viewcode-block" id="View.update"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.update">[docs]</a>  <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">friendly_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Selectively updates View information.</span>
+
+<span class="sd">    Any parameters that are None (the default) are not applied in the update.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      friendly_name: if not None, the new friendly name.</span>
+<span class="sd">      description: if not None, the new description.</span>
+<span class="sd">      query: if not None, a new query string for the View.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_load_info</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">query</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">_query</span><span class="o">.</span><span class="n">Query</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">sql</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;view&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;query&#39;</span><span class="p">:</span> <span class="n">query</span><span class="p">}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">friendly_name</span><span class="o">=</span><span class="n">friendly_name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="View.results"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.results">[docs]</a>  <span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Materialize the view synchronously.</span>
+
+<span class="sd">    If you require more control over the execution, use execute() or execute_async().</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      use_cache: whether to use cached results or not.</span>
+<span class="sd">      dialect : {&#39;legacy&#39;, &#39;standard&#39;}, default &#39;legacy&#39;</span>
+<span class="sd">          &#39;legacy&#39; : Use BigQuery&#39;s legacy SQL dialect.</span>
+<span class="sd">          &#39;standard&#39; : Use BigQuery&#39;s standard SQL (beta), which is</span>
+<span class="sd">          compliant with the SQL 2011 standard.</span>
+<span class="sd">      billing_tier: Limits the billing tier for this job. Queries that have resource</span>
+<span class="sd">          usage beyond this tier will fail (without incurring a charge). If unspecified, this</span>
+<span class="sd">          will be set to your project default. This can also be used to override your</span>
+<span class="sd">          project-wide default billing tier on a per-query basis.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A QueryResultsTable containing the result set.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the query could not be executed or query response was malformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_materialization</span><span class="o">.</span><span class="n">results</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span>
+                                         <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="View.execute_async"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.execute_async">[docs]</a>  <span class="k">def</span> <span class="nf">execute_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_mode</span><span class="o">=</span><span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;high&#39;</span><span class="p">,</span>
+                    <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Materialize the View asynchronously.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      table_name: the result table name; if None, then a temporary table will be used.</span>
+<span class="sd">      table_mode: one of &#39;create&#39;, &#39;overwrite&#39; or &#39;append&#39;. If &#39;create&#39; (the default), the request</span>
+<span class="sd">          will fail if the table exists.</span>
+<span class="sd">      use_cache: whether to use past query results or ignore cache. Has no effect if destination is</span>
+<span class="sd">          specified (default True).</span>
+<span class="sd">      priority:one of &#39;low&#39; or &#39;high&#39; (default). Note that &#39;high&#39; is more expensive, but is</span>
+<span class="sd">          better suited to exploratory analysis.</span>
+<span class="sd">      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is</span>
+<span class="sd">          slower and requires a table_name to be specified) (default False).</span>
+<span class="sd">      dialect : {&#39;legacy&#39;, &#39;standard&#39;}, default &#39;legacy&#39;</span>
+<span class="sd">          &#39;legacy&#39; : Use BigQuery&#39;s legacy SQL dialect.</span>
+<span class="sd">          &#39;standard&#39; : Use BigQuery&#39;s standard SQL (beta), which is</span>
+<span class="sd">          compliant with the SQL 2011 standard.</span>
+<span class="sd">      billing_tier: Limits the billing tier for this job. Queries that have resource</span>
+<span class="sd">          usage beyond this tier will fail (without incurring a charge). If unspecified, this</span>
+<span class="sd">          will be set to your project default. This can also be used to override your</span>
+<span class="sd">          project-wide default billing tier on a per-query basis.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A QueryJob for the materialization</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception (KeyError) if View could not be materialized.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_materialization</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">table_mode</span><span class="o">=</span><span class="n">table_mode</span><span class="p">,</span>
+                                               <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span>
+                                               <span class="n">allow_large_results</span><span class="o">=</span><span class="n">allow_large_results</span><span class="p">,</span>
+                                               <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="View.execute"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.execute">[docs]</a>  <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_mode</span><span class="o">=</span><span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;high&#39;</span><span class="p">,</span>
+              <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Materialize the View synchronously.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      table_name: the result table name; if None, then a temporary table will be used.</span>
+<span class="sd">      table_mode: one of &#39;create&#39;, &#39;overwrite&#39; or &#39;append&#39;. If &#39;create&#39; (the default), the request</span>
+<span class="sd">          will fail if the table exists.</span>
+<span class="sd">      use_cache: whether to use past query results or ignore cache. Has no effect if destination is</span>
+<span class="sd">          specified (default True).</span>
+<span class="sd">      priority:one of &#39;low&#39; or &#39;high&#39; (default). Note that &#39;high&#39; is more expensive, but is</span>
+<span class="sd">          better suited to exploratory analysis.</span>
+<span class="sd">      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is</span>
+<span class="sd">          slower and requires a table_name to be specified) (default False).</span>
+<span class="sd">      dialect : {&#39;legacy&#39;, &#39;standard&#39;}, default &#39;legacy&#39;</span>
+<span class="sd">          &#39;legacy&#39; : Use BigQuery&#39;s legacy SQL dialect.</span>
+<span class="sd">          &#39;standard&#39; : Use BigQuery&#39;s standard SQL (beta), which is</span>
+<span class="sd">          compliant with the SQL 2011 standard.</span>
+<span class="sd">      billing_tier: Limits the billing tier for this job. Queries that have resource</span>
+<span class="sd">          usage beyond this tier will fail (without incurring a charge). If unspecified, this</span>
+<span class="sd">          will be set to your project default. This can also be used to override your</span>
+<span class="sd">          project-wide default billing tier on a per-query basis.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A QueryJob for the materialization</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception (KeyError) if View could not be materialized.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_materialization</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span> <span class="n">table_mode</span><span class="o">=</span><span class="n">table_mode</span><span class="p">,</span>
+                                         <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">priority</span><span class="p">,</span>
+                                         <span class="n">allow_large_results</span><span class="o">=</span><span class="n">allow_large_results</span><span class="p">,</span>
+                                         <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
+
+  <span class="k">def</span> <span class="nf">_repr_sql_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a representation of the view for embedding into a SQL statement.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A formatted table name for use within SQL statements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;[&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
+
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a representation for the view for showing in the notebook.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;View </span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.bigquery._csv_options &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="datalab.bigquery" href="../bigquery.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../bigquery.html">datalab.bigquery</a> &raquo;</li>
+      
+    <li>datalab.bigquery._csv_options</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.bigquery._csv_options</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements CSV options for External Tables and Table loads from GCS.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+
+<div class="viewcode-block" id="CSVOptions"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.CSVOptions">[docs]</a><span class="k">class</span> <span class="nc">CSVOptions</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">skip_leading_rows</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">quote</span><span class="o">=</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span>
+               <span class="n">allow_quoted_newlines</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_jagged_rows</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Initialize an instance of CSV options.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      delimiter: The separator for fields in a CSV file. BigQuery converts the string to</span>
+<span class="sd">          ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data</span>
+<span class="sd">          as raw binary (default &#39;,&#39;).</span>
+<span class="sd">      skip_leading_rows: A number of rows at the top of a CSV file to skip (default 0).</span>
+<span class="sd">      encoding: The character encoding of the data, either &#39;utf-8&#39; (the default) or &#39;iso-8859-1&#39;.</span>
+<span class="sd">      quote: The value used to quote data sections in a CSV file; default &#39;&quot;&#39;. If your data does</span>
+<span class="sd">          not contain quoted sections, set the property value to an empty string. If your data</span>
+<span class="sd">          contains quoted newline characters, you must also enable allow_quoted_newlines.</span>
+<span class="sd">      allow_quoted_newlines: If True, allow quoted data sections in CSV files that contain newline</span>
+<span class="sd">          characters (default False).</span>
+<span class="sd">      allow_jagged_rows: If True, accept rows in CSV files that are missing trailing optional</span>
+<span class="sd">          columns; the missing values are treated as nulls (default False).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">encoding_upper</span> <span class="o">=</span> <span class="n">encoding</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">encoding_upper</span> <span class="o">!=</span> <span class="s1">&#39;UTF-8&#39;</span> <span class="ow">and</span> <span class="n">encoding_upper</span> <span class="o">!=</span> <span class="s1">&#39;ISO-8859-1&#39;</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Invalid source encoding </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">encoding</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span> <span class="o">=</span> <span class="n">delimiter</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_skip_leading_rows</span> <span class="o">=</span> <span class="n">skip_leading_rows</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span> <span class="o">=</span> <span class="n">quote</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_allow_quoted_newlines</span> <span class="o">=</span> <span class="n">allow_quoted_newlines</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_allow_jagged_rows</span> <span class="o">=</span> <span class="n">allow_jagged_rows</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">delimiter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">skip_leading_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_leading_rows</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">quote</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">allow_quoted_newlines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_quoted_newlines</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">allow_jagged_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_jagged_rows</span>
+
+  <span class="k">def</span> <span class="nf">_to_query_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return the options as a dictionary to be used as JSON in a query job. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="s1">&#39;quote&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quote</span><span class="p">,</span>
+      <span class="s1">&#39;fieldDelimiter&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span><span class="p">,</span>
+      <span class="s1">&#39;encoding&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span>
+      <span class="s1">&#39;skipLeadingRows&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_leading_rows</span><span class="p">,</span>
+      <span class="s1">&#39;allowQuotedNewlines&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_quoted_newlines</span><span class="p">,</span>
+      <span class="s1">&#39;allowJaggedRows&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_jagged_rows</span>
+    <span class="p">}</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
