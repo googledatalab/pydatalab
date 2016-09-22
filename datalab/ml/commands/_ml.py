@@ -46,7 +46,7 @@ def ml(line, cell=None):
     The results of executing the cell.
   """
   parser = datalab.utils.commands.CommandParser(prog='ml', description="""
-Execute various ml-related operations. Use "%ml <command> -h" for help on a specific command.
+Execute various ml-related operations. Use "%%ml <command> -h" for help on a specific command.
 """)
   train_parser = parser.subcommand('train', 'Run a training job.')
   train_parser.add_argument('--cloud',
@@ -153,7 +153,7 @@ Execute various ml-related operations. Use "%ml <command> -h" for help on a spec
                              action='store_true', default=False)
   module_parser.set_defaults(func=_module)
   package_parser = parser.subcommand('package','Create a trainer package from all modules ' +
-                                     'defined with %ml module.')
+                                     'defined with %%ml module.')
   package_parser.add_argument('--name', help='The name of the package.', required=True)
   package_parser.add_argument('--output', help='the output dir of the package.', required=True)
   package_parser.set_defaults(func=_package)
