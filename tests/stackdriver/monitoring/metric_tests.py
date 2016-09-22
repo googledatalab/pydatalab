@@ -15,7 +15,7 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import gcloud.monitoring
+import google.cloud.monitoring
 import pandas
 
 import datalab.context
@@ -73,7 +73,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(descriptors._type_prefix, TYPE_PREFIX)
     self.assertIsNone(descriptors._descriptors)
 
-  @mock.patch('gcloud.monitoring.Client.list_metric_descriptors')
+  @mock.patch('google.cloud.monitoring.Client.list_metric_descriptors')
   def test_list(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -86,7 +86,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[0])
     self.assertEqual(metric_descriptor_list[1].type, METRIC_TYPES[1])
 
-  @mock.patch('gcloud.monitoring.Client.list_metric_descriptors')
+  @mock.patch('google.cloud.monitoring.Client.list_metric_descriptors')
   def test_list_w_api_filter(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -102,7 +102,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[0])
     self.assertEqual(metric_descriptor_list[1].type, METRIC_TYPES[1])
 
-  @mock.patch('gcloud.monitoring.Client.list_metric_descriptors')
+  @mock.patch('google.cloud.monitoring.Client.list_metric_descriptors')
   def test_list_w_pattern_match(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -114,7 +114,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(len(metric_descriptor_list), 1)
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[1])
 
-  @mock.patch('gcloud.monitoring.Client.list_metric_descriptors')
+  @mock.patch('google.cloud.monitoring.Client.list_metric_descriptors')
   def test_list_caching(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -178,7 +178,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _list_metrics_get_result(context):
     client = gcm._utils.make_client(context=context)
-    all_labels = [gcloud.monitoring.LabelDescriptor(**labels)
+    all_labels = [google.cloud.monitoring.LabelDescriptor(**labels)
                   for labels in LABELS]
     descriptors = [
         client.metric_descriptor(
