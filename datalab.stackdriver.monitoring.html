@@ -166,7 +166,8 @@ by the context.</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>pattern</strong> &#8211; An optional pattern to further filter the descriptors. This can
-include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">compute*</span></code>, <code class="docutils literal"><span class="pre">*/cpu/load_??m</span></code>.</li>
+include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;compute*&quot;</span></code>,
+<code class="docutils literal"><span class="pre">&quot;*/cpu/load_??m&quot;</span></code>.</li>
 <li><strong>max_rows</strong> &#8211; The maximum number of descriptors to return. If None, return
 all.</li>
 </ul>
@@ -188,7 +189,8 @@ all.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> &#8211; An optional pattern to further filter the descriptors. This can
-include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">compute*</span></code>, <code class="docutils literal"><span class="pre">*cpu/load_??m</span></code>.</td>
+include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;compute*&quot;</span></code>,
+<code class="docutils literal"><span class="pre">&quot;*cpu/load_??m&quot;</span></code>.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of MetricDescriptor objects that match the filters.</td>
 </tr>
@@ -206,7 +208,7 @@ include Unix shell-style wildcards. E.g. <code class="docutils literal"><span cl
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>pattern</strong> &#8211; An optional pattern to further filter the descriptors. This can
-include Unix shell-style wildcards. E.g. &#8220;aws*&#8221;, &#8220;<em>cluster</em>&#8221;.</li>
+include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;aws*&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;*cluster*&quot;</span></code>.</li>
 <li><strong>max_rows</strong> &#8211; The maximum number of descriptors to display. If None, display
 all.</li>
 </ul>
@@ -251,7 +253,7 @@ by the context.</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>pattern</strong> &#8211; An optional pattern to further filter the descriptors. This can
-include Unix shell-style wildcards. E.g. &#8220;aws*&#8221;, &#8220;<em>cluster</em>&#8221;.</li>
+include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;aws*&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;*cluster*&quot;</span></code>.</li>
 <li><strong>max_rows</strong> &#8211; The maximum number of descriptors to return. If None, return
 all.</li>
 </ul>
@@ -273,7 +275,7 @@ all.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> &#8211; An optional pattern to further filter the descriptors. This can
-include Unix shell-style wildcards. E.g. &#8220;aws*&#8221;, &#8220;<em>cluster</em>&#8221;.</td>
+include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;aws*&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;*cluster*&quot;</span></code>.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of ResourceDescriptor objects that match the filters.</td>
 </tr>
@@ -291,7 +293,7 @@ include Unix shell-style wildcards. E.g. &#8220;aws*&#8221;, &#8220;<em>cluster<
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>pattern</strong> &#8211; An optional pattern to further filter the descriptors. This can
-include Unix shell-style wildcards. E.g. &#8220;aws*&#8221;, &#8220;<em>cluster</em>&#8221;.</li>
+include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;aws*&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;*cluster*&quot;</span></code>.</li>
 <li><strong>max_rows</strong> &#8211; The maximum number of descriptors to display. If None, display
 all.</li>
 </ul>
@@ -312,18 +314,18 @@ all.</li>
 <dd><p>Query object for retrieving metric data.</p>
 <p>Initializes the core query parameters.</p>
 <p>The start time (exclusive) is determined by combining the
-values of &#8220;days&#8221;, &#8220;hours&#8221;, and &#8220;minutes&#8221;, and subtracting
-the resulting duration from &#8220;end_time&#8221;.</p>
+values of <code class="docutils literal"><span class="pre">days</span></code>, <code class="docutils literal"><span class="pre">hours</span></code>, and <code class="docutils literal"><span class="pre">minutes</span></code>, and subtracting
+the resulting duration from the end time.</p>
 <p>It is also allowed to omit the end time and duration here,
-in which case the select_interval() method must be called
-before the query is executed.</p>
+in which case <code class="xref py py-meth docutils literal"><span class="pre">select_interval()</span></code>
+must be called before the query is executed.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>metric_type</strong> &#8211; The metric type name. The default value is
-&#8220;compute.googleapis.com/instance/cpu/utilization&#8221;, but
+<code class="xref py py-data docutils literal"><span class="pre">Query.DEFAULT_METRIC_TYPE</span></code>, but
 please note that this default value is provided only for
 demonstration purposes and is subject to change.</li>
 <li><strong>end_time</strong> &#8211; The end time (inclusive) of the time interval for which
@@ -338,9 +340,10 @@ by the context.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> &#8211; &#8220;end_time&#8221; was specified but &#8220;days&#8221;, &#8220;hours&#8221;, and &#8220;minutes&#8221;
-are all zero. If you really want to specify a point in time, use
-the select_interval() method.</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> &#8211; <code class="docutils literal"><span class="pre">end_time</span></code> was specified but <code class="docutils literal"><span class="pre">days</span></code>, <code class="docutils literal"><span class="pre">hours</span></code>, and
+<code class="docutils literal"><span class="pre">minutes</span></code> are all zero. If you really want to specify a point in
+time, use
+<code class="xref py py-meth docutils literal"><span class="pre">select_interval()</span></code>.</p>
 </td>
 </tr>
 </tbody>
@@ -348,7 +351,7 @@ the select_interval() method.</p>
 <dl class="method">
 <dt id="datalab.stackdriver.monitoring.Query.labels_as_dataframe">
 <code class="descname">labels_as_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_timeseries.html#Query.labels_as_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.Query.labels_as_dataframe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the resource and metric metadata as a dataframe.</p>
+<dd><p>Returns the resource and metric metadata as a pandas dataframe.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

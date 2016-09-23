@@ -163,9 +163,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">      filter_string: An optional filter expression describing the resource</span>
-<span class="sd">        descriptors to be returned.</span>
+<span class="sd">          descriptors to be returned.</span>
 <span class="sd">      type_prefix: An optional prefix constraining the selected metric types.</span>
-<span class="sd">        This adds ``metric.type = starts_with(&quot;&lt;prefix&gt;&quot;)`` to the filter.</span>
+<span class="sd">          This adds ``metric.type = starts_with(&quot;&lt;prefix&gt;&quot;)`` to the filter.</span>
 <span class="sd">      project_id: An optional project ID or number to override the one provided</span>
 <span class="sd">          by the context.</span>
 <span class="sd">      context: An optional Context object to use instead of the global default.</span>
@@ -180,7 +180,8 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">      pattern: An optional pattern to further filter the descriptors. This can</span>
-<span class="sd">        include Unix shell-style wildcards. E.g. ``compute*``, ``*cpu/load_??m``.</span>
+<span class="sd">          include Unix shell-style wildcards. E.g. ``&quot;compute*&quot;``,</span>
+<span class="sd">          ``&quot;*cpu/load_??m&quot;``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">      A list of MetricDescriptor objects that match the filters.</span>
@@ -196,9 +197,10 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">      pattern: An optional pattern to further filter the descriptors. This can</span>
-<span class="sd">        include Unix shell-style wildcards. E.g. ``compute*``, ``*/cpu/load_??m``.</span>
+<span class="sd">          include Unix shell-style wildcards. E.g. ``&quot;compute*&quot;``,</span>
+<span class="sd">          ``&quot;*/cpu/load_??m&quot;``.</span>
 <span class="sd">      max_rows: The maximum number of descriptors to return. If None, return</span>
-<span class="sd">        all.</span>
+<span class="sd">          all.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">      A pandas dataframe containing matching metric descriptors.</span>
@@ -219,9 +221,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">      pattern: An optional pattern to further filter the descriptors. This can</span>
-<span class="sd">        include Unix shell-style wildcards. E.g. &quot;aws*&quot;, &quot;*cluster*&quot;.</span>
+<span class="sd">          include Unix shell-style wildcards. E.g. ``&quot;aws*&quot;``, ``&quot;*cluster*&quot;``.</span>
 <span class="sd">      max_rows: The maximum number of descriptors to display. If None, display</span>
-<span class="sd">        all.</span>
+<span class="sd">          all.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">      The HTML rendering for a table of matching metric descriptors.</span>

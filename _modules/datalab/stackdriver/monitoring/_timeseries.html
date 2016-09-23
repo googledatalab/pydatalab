@@ -159,16 +159,17 @@
     <span class="sd">&quot;&quot;&quot;Initializes the core query parameters.</span>
 
 <span class="sd">    The start time (exclusive) is determined by combining the</span>
-<span class="sd">    values of &quot;days&quot;, &quot;hours&quot;, and &quot;minutes&quot;, and subtracting</span>
-<span class="sd">    the resulting duration from &quot;end_time&quot;.</span>
+<span class="sd">    values of ``days``, ``hours``, and ``minutes``, and subtracting</span>
+<span class="sd">    the resulting duration from the end time.</span>
 
 <span class="sd">    It is also allowed to omit the end time and duration here,</span>
-<span class="sd">    in which case the select_interval() method must be called</span>
-<span class="sd">    before the query is executed.</span>
+<span class="sd">    in which case :meth:`~google.cloud.monitoring.query.Query.select_interval`</span>
+<span class="sd">    must be called before the query is executed.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">      metric_type: The metric type name. The default value is</span>
-<span class="sd">          &quot;compute.googleapis.com/instance/cpu/utilization&quot;, but</span>
+<span class="sd">          :data:`Query.DEFAULT_METRIC_TYPE</span>
+<span class="sd">          &lt;google.cloud.monitoring.query.Query.DEFAULT_METRIC_TYPE&gt;`, but</span>
 <span class="sd">          please note that this default value is provided only for</span>
 <span class="sd">          demonstration purposes and is subject to change.</span>
 <span class="sd">      end_time: The end time (inclusive) of the time interval for which</span>
@@ -182,9 +183,10 @@
 <span class="sd">      context: An optional Context object to use instead of the global default.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: &quot;end_time&quot; was specified but &quot;days&quot;, &quot;hours&quot;, and &quot;minutes&quot;</span>
-<span class="sd">            are all zero. If you really want to specify a point in time, use</span>
-<span class="sd">            the select_interval() method.</span>
+<span class="sd">        ValueError: ``end_time`` was specified but ``days``, ``hours``, and</span>
+<span class="sd">            ``minutes`` are all zero. If you really want to specify a point in</span>
+<span class="sd">            time, use</span>
+<span class="sd">            :meth:`~google.cloud.monitoring.query.Query.select_interval`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_utils</span><span class="o">.</span><span class="n">make_client</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
     <span class="nb">super</span><span class="p">(</span><span class="n">Query</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">metric_type</span><span class="p">,</span>
@@ -192,7 +194,7 @@
                                 <span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="n">hours</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Query.labels_as_dataframe"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.Query.labels_as_dataframe">[docs]</a>  <span class="k">def</span> <span class="nf">labels_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the resource and metric metadata as a dataframe.</span>
+    <span class="sd">&quot;&quot;&quot;Returns the resource and metric metadata as a pandas dataframe.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">      A pandas dataframe containing the resource type and resource and metric</span>
