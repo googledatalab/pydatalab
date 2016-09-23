@@ -30,16 +30,17 @@ class Query(google.cloud.monitoring.Query):
     """Initializes the core query parameters.
 
     The start time (exclusive) is determined by combining the
-    values of "days", "hours", and "minutes", and subtracting
-    the resulting duration from "end_time".
+    values of ``days``, ``hours``, and ``minutes``, and subtracting
+    the resulting duration from the end time.
 
     It is also allowed to omit the end time and duration here,
-    in which case the select_interval() method must be called
-    before the query is executed.
+    in which case :meth:`~google.cloud.monitoring.query.Query.select_interval`
+    must be called before the query is executed.
 
     Args:
       metric_type: The metric type name. The default value is
-          "compute.googleapis.com/instance/cpu/utilization", but
+          :data:`Query.DEFAULT_METRIC_TYPE
+          <google.cloud.monitoring.query.Query.DEFAULT_METRIC_TYPE>`, but
           please note that this default value is provided only for
           demonstration purposes and is subject to change.
       end_time: The end time (inclusive) of the time interval for which
@@ -53,9 +54,10 @@ class Query(google.cloud.monitoring.Query):
       context: An optional Context object to use instead of the global default.
 
     Raises:
-        ValueError: "end_time" was specified but "days", "hours", and "minutes"
-            are all zero. If you really want to specify a point in time, use
-            the select_interval() method.
+        ValueError: ``end_time`` was specified but ``days``, ``hours``, and
+            ``minutes`` are all zero. If you really want to specify a point in
+            time, use
+            :meth:`~google.cloud.monitoring.query.Query.select_interval`.
     """
     client = _utils.make_client(project_id, context)
     super(Query, self).__init__(client, metric_type,
@@ -63,7 +65,7 @@ class Query(google.cloud.monitoring.Query):
                                 days=days, hours=hours, minutes=minutes)
 
   def labels_as_dataframe(self):
-    """Returns the resource and metric metadata as a dataframe.
+    """Returns the resource and metric metadata as a pandas dataframe.
 
     Returns:
       A pandas dataframe containing the resource type and resource and metric

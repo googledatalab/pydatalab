@@ -32,7 +32,7 @@ class ResourceDescriptors(object):
 
     Args:
       filter_string: An optional filter expression describing the resource
-        descriptors to be returned.
+          descriptors to be returned.
       project_id: An optional project ID or number to override the one provided
           by the context.
       context: An optional Context object to use instead of the global default.
@@ -46,7 +46,7 @@ class ResourceDescriptors(object):
 
     Args:
       pattern: An optional pattern to further filter the descriptors. This can
-        include Unix shell-style wildcards. E.g. "aws*", "*cluster*".
+          include Unix shell-style wildcards. E.g. ``"aws*"``, ``"*cluster*"``.
 
     Returns:
       A list of ResourceDescriptor objects that match the filters.
@@ -62,9 +62,9 @@ class ResourceDescriptors(object):
 
     Args:
       pattern: An optional pattern to further filter the descriptors. This can
-        include Unix shell-style wildcards. E.g. "aws*", "*cluster*".
+          include Unix shell-style wildcards. E.g. ``"aws*"``, ``"*cluster*"``.
       max_rows: The maximum number of descriptors to return. If None, return
-        all.
+          all.
 
     Returns:
       A pandas dataframe containing matching resource descriptors.
@@ -83,9 +83,9 @@ class ResourceDescriptors(object):
 
     Args:
       pattern: An optional pattern to further filter the descriptors. This can
-        include Unix shell-style wildcards. E.g. "aws*", "*cluster*".
+          include Unix shell-style wildcards. E.g. ``"aws*"``, ``"*cluster*"``.
       max_rows: The maximum number of descriptors to display. If None, display
-        all.
+          all.
 
     Returns:
       The HTML rendering for a table of matching resource descriptors.
