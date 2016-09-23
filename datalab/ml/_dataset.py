@@ -23,7 +23,7 @@ class DataSet(object):
      The data need to be able to fit in memory.
   """
 
-  def __init__(self, feature_set, data_paths):
+  def __init__(self, feature_set, data_paths, format='csv'):
     """Initializes an instance of DataSet.
 
     Args:
@@ -31,11 +31,18 @@ class DataSet(object):
           (for example, csv), column names, schema, data transformers, etc.
           This is the same class used in CloudML preprocessing.
       data_paths: A dictionary with {name: path} pair. All data need to have the same schema.
+      format: the format of the data, currently only 'csv' or 'tsv'.
     """
     self._feature_set = feature_set
     if not isinstance(data_paths, dict):
       raise Exception('Expect "data_paths" to be a dictionary.')
     self._data_paths = data_paths
+    if format == 'csv':
+      self._delimiter = ','
+    elif format=='tsv':
+      self._delimiter = '\t'
+    else:
+      raise Exception('Unsupported format "%s"' % format)
     self._dataframes = {}
     self._raw_dataframes = {}
     self._concatenated_data_frame = None
@@ -117,7 +124,8 @@ class DataSet(object):
         datalab.utils.gcs_copy_file(data_path, local_file)
       self._raw_dataframes[name] = pd.read_csv(local_file,
                                                names=type(self._feature_set).csv_columns,
-                                               dtype=schema)
+                                               dtype=schema,
+                                               delimiter=self._delimiter)
       if data_path.startswith('gs://'):
         os.remove(local_file)
     self._concatenated_raw_data_frame = pd.concat(self._raw_dataframes.values())
@@ -373,11 +381,13 @@ class DataSet(object):
       if columns is not None:
         df_correlation = df_correlation[columns]
       for k in df_correlation.columns:
-        if str(df_correlation[k].dtype) == 'object':
-          df_correlation[k] = df_correlation[k].fillna('')
-        elif str(df_correlation[k].dtype) == 'category':
-          df_correlation[k] = df_correlation[k].fillna(df_correlation[k].cat.categories[0])
+        if k == self._target_name:
+          continue
+        elif str(df_correlation[k].dtype) == 'object' or str(df_correlation[k].dtype) == 'category':
+          # pairplot only works with numeric columns
+          del df_correlation[k]
         else:
+          # pairplot does not deal with missing values well. For now fillna(0).
           df_correlation[k] = df_correlation[k].fillna(0)
       # pairplot doesn't like categories with all numbers
       df_correlation[self._target_name] = map(lambda x: 'target ' + str(x), df_correlation[self._target_name])
