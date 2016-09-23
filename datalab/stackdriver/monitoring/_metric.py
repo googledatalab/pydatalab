@@ -34,9 +34,9 @@ class MetricDescriptors(object):
 
     Args:
       filter_string: An optional filter expression describing the resource
-        descriptors to be returned.
+          descriptors to be returned.
       type_prefix: An optional prefix constraining the selected metric types.
-        This adds ``metric.type = starts_with("<prefix>")`` to the filter.
+          This adds ``metric.type = starts_with("<prefix>")`` to the filter.
       project_id: An optional project ID or number to override the one provided
           by the context.
       context: An optional Context object to use instead of the global default.
@@ -51,7 +51,8 @@ class MetricDescriptors(object):
 
     Args:
       pattern: An optional pattern to further filter the descriptors. This can
-        include Unix shell-style wildcards. E.g. ``compute*``, ``*cpu/load_??m``.
+          include Unix shell-style wildcards. E.g. ``"compute*"``,
+          ``"*cpu/load_??m"``.
 
     Returns:
       A list of MetricDescriptor objects that match the filters.
@@ -67,9 +68,10 @@ class MetricDescriptors(object):
 
     Args:
       pattern: An optional pattern to further filter the descriptors. This can
-        include Unix shell-style wildcards. E.g. ``compute*``, ``*/cpu/load_??m``.
+          include Unix shell-style wildcards. E.g. ``"compute*"``,
+          ``"*/cpu/load_??m"``.
       max_rows: The maximum number of descriptors to return. If None, return
-        all.
+          all.
 
     Returns:
       A pandas dataframe containing matching metric descriptors.
@@ -90,9 +92,9 @@ class MetricDescriptors(object):
 
     Args:
       pattern: An optional pattern to further filter the descriptors. This can
-        include Unix shell-style wildcards. E.g. "aws*", "*cluster*".
+          include Unix shell-style wildcards. E.g. ``"aws*"``, ``"*cluster*"``.
       max_rows: The maximum number of descriptors to display. If None, display
-        all.
+          all.
 
     Returns:
       The HTML rendering for a table of matching metric descriptors.
