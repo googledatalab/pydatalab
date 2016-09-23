@@ -407,6 +407,7 @@ class Query(object):
 
   def execute_dry_run(self, dialect='legacy', billing_tier=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
+
     Args:
       dialect : {'legacy', 'standard'}, default 'legacy'
           'legacy' : Use BigQuery's legacy SQL dialect.

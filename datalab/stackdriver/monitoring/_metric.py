@@ -51,7 +51,7 @@ class MetricDescriptors(object):
 
     Args:
       pattern: An optional pattern to further filter the descriptors. This can
-        include Unix shell-style wildcards. E.g. "compute*", "*cpu/load_??m".
+        include Unix shell-style wildcards. E.g. ``compute*``, ``*cpu/load_??m``.
 
     Returns:
       A list of MetricDescriptor objects that match the filters.
@@ -67,7 +67,7 @@ class MetricDescriptors(object):
 
     Args:
       pattern: An optional pattern to further filter the descriptors. This can
-        include Unix shell-style wildcards. E.g. "compute*", "*/cpu/load_??m".
+        include Unix shell-style wildcards. E.g. ``compute*``, ``*/cpu/load_??m``.
       max_rows: The maximum number of descriptors to return. If None, return
         all.
 
