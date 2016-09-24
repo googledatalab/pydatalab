@@ -468,6 +468,7 @@ path: REQUIRED_Fill_In_Gcs_or_Local_Path
 headers: List_Of_Column_Names_Seperated_By_Comma
 target: REQUIRED_Fill_In_Name_Or_Index_Of_Target_Column
 id: Fill_In_Name_Or_Index_Of_Id_Column
+format: csv_or_tsv
 """
   IPython.get_ipython().set_next_input(content, replace=True)
 
@@ -480,9 +481,13 @@ def _features(args, cell):
 
   env = datalab.utils.commands.notebook_environment()
   config = datalab.utils.commands.parse_config(cell, env)
-  datalab.utils.commands.validate_config(config, ['path', 'target'], optional_keys=['headers', 'id'])
-  # For now, support CSV only.
-  csv = datalab.data.Csv(config['path'])
+  datalab.utils.commands.validate_config(config, ['path', 'target'],
+      optional_keys=['headers', 'id', 'format'])
+  format = config.get('format', 'csv')
+  # For now, support CSV and TSV only.
+  datalab.utils.commands.validate_config_value(format, ['csv', 'tsv'])
+  delimiter = ',' if format == 'csv' else '\t'
+  csv = datalab.data.Csv(config['path'], delimiter=delimiter)
   headers = None
   if 'headers' in config:
     headers = [e.strip() for e in config['headers'].split(',')]
@@ -925,11 +930,13 @@ def _dataset(args, cell):
     return
   env = datalab.utils.commands.notebook_environment()
   config = datalab.utils.commands.parse_config(cell, env)
-  datalab.utils.commands.validate_config(config, ['source', 'featureset'])
+  datalab.utils.commands.validate_config(config, ['source', 'featureset'],
+      optional_keys=['format'])
   if config['featureset'] not in env:
     raise Exception('"%s" is not defined.' % config['featureset'])
   featureset_class = env[config['featureset']]
-  ds = datalab.ml.DataSet(featureset_class(), config['source'])
+  format = config.get('format', 'csv')
+  ds = datalab.ml.DataSet(featureset_class(), config['source'], format=format)
   env[args['name']] = ds
 
 
