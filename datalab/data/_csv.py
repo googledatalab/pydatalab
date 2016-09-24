@@ -39,21 +39,24 @@ _MAX_CSV_BYTES = 10000000
 class Csv(object):
   """Represents a CSV file in GCS or locally with same schema.
   """
-  def __init__(self, path):
+  def __init__(self, path, delimiter=','):
     """Initializes an instance of a Csv instance.
     Args:
       path: path of the Csv file.
+      delimiter: the separator used to parse a Csv line.
     """
     self._path = path
+    self._delimiter = delimiter
+
   @property
   def path(self):
     return self._path
-  @staticmethod
 
+  @staticmethod
   def _read_gcs_lines(path, max_lines=None):
     return datalab.storage.Item.from_url(path).read_lines(max_lines)
-  @staticmethod
 
+  @staticmethod
   def _read_local_lines(path, max_lines=None):
     lines = []
     for line in open(path):
@@ -66,9 +69,9 @@ class Csv(object):
     if str(column.dtype) != 'object':
       # only string types (represented in DataFrame as object) can potentially be categorical
       return False
-    if len(max(column, key=len)) > 40:
+    if len(max(column, key=lambda p: len(str(p)))) > 100:
       return False  # value too long to be a category
-    if len(set(column)) > 20:
+    if len(set(column)) > 100:
       return False  # too many unique values to be a category
     return True
 
@@ -89,17 +92,17 @@ class Csv(object):
       lines = Csv._read_local_lines(self.path, max_lines)
     if len(lines) == 0:
       return pd.DataFrame(columns=headers)
-    columns_size = len(next(csv.reader([lines[0]])))
+    columns_size = len(next(csv.reader([lines[0]], delimiter=self._delimiter)))
     if headers is None:
       headers = ['col' + str(e) for e in range(columns_size)]
     if len(headers) != columns_size:
       raise Exception('Number of columns in CSV do not match number of headers')
-    buf = StringIO.StringIO()
+    buf = StringIO()
     for line in lines:
       buf.write(line)
       buf.write('\n')
     buf.seek(0)
-    df = pd.read_csv(buf, names=headers)
+    df = pd.read_csv(buf, names=headers, delimiter=self._delimiter)
     for key, col in df.iteritems():
       if self._is_probably_categorical(col):
         df[key] = df[key].astype('category')
@@ -158,7 +161,7 @@ class Csv(object):
       skip_count = row_count - count - 1 if skip_header_rows == True else row_count - count
       skip = sorted(random.sample(xrange(start_row, row_count), skip_count))
       header_row = 0 if skip_header_rows == True else None
-      df = pd.read_csv(local_file, skiprows=skip, header=header_row)
+      df = pd.read_csv(local_file, skiprows=skip, header=header_row, delimiter=self._delimiter)
       if self.path.startswith('gs://'):
         os.remove(local_file)
     else:
@@ -171,4 +174,4 @@ class Csv(object):
         datalab.utils.gcs_copy_file(f.name, target)
     else:
       with open(target, 'w') as f:
-        df.to_csv(f, header=False, index=False)
+        df.to_csv(f, header=False, index=False, delimiter=self._delimiter)
