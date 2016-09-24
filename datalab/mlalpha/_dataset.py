@@ -380,13 +380,11 @@ class DataSet(object):
       if columns is not None:
         df_correlation = df_correlation[columns]
       for k in df_correlation.columns:
-        if k == self._target_name:
-          continue
-        elif str(df_correlation[k].dtype) == 'object' or str(df_correlation[k].dtype) == 'category':
-          # pairplot only works with numeric columns
-          del df_correlation[k]
+        if str(df_correlation[k].dtype) == 'object':
+          df_correlation[k] = df_correlation[k].fillna('')
+        elif str(df_correlation[k].dtype) == 'category':
+          df_correlation[k] = df_correlation[k].fillna(df_correlation[k].cat.categories[0])
         else:
-          # pairplot does not deal with missing values well. For now fillna(0).
           df_correlation[k] = df_correlation[k].fillna(0)
       # pairplot doesn't like categories with all numbers
       df_correlation[self._target_name] = map(lambda x: 'target ' + str(x), df_correlation[self._target_name])
