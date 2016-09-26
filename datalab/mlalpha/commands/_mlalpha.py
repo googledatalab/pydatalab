@@ -31,7 +31,7 @@ import yaml
 
 import datalab.context
 import datalab.data
-import datalab.ml
+import datalab.mlalpha
 import datalab.utils.commands
 
 
@@ -45,7 +45,7 @@ def mlalpha(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  parser = datalab.utils.commands.CommandParser(prog='ml', description="""
+  parser = datalab.utils.commands.CommandParser(prog="mlalpha", description="""
 Execute various ml-related operations. Use "%%mlalpha <command> -h" for help on a specific command.
 """)
   train_parser = parser.subcommand('train', 'Run a training job.')

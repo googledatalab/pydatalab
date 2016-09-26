@@ -16,7 +16,7 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import datalab.ml
+import datalab.mlalpha
 import datalab.utils.commands
 
 

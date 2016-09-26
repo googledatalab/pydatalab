@@ -31,7 +31,7 @@ import datalab.context as _context
 import datalab.bigquery.commands
 import datalab.context.commands
 import datalab.data.commands
-import datalab.ml.commands
+import datalab.mlalpha.commands
 import datalab.stackdriver.commands
 import datalab.storage.commands
 import datalab.utils.commands
