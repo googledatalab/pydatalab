@@ -18,7 +18,6 @@ import unittest
 from google.cloud.monitoring import Resource
 from google.cloud.monitoring import Metric
 from google.cloud.monitoring import TimeSeries
-import pandas
 
 import datalab.context
 import datalab.stackdriver.monitoring as gcm

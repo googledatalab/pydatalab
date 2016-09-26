@@ -18,9 +18,6 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import collections
-import fnmatch
-
 import datalab.stackdriver.monitoring as gcm
 import datalab.utils.commands
 
