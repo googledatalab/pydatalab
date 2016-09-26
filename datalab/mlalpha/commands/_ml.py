@@ -36,7 +36,7 @@ import datalab.utils.commands
 
 
 @IPython.core.magic.register_line_cell_magic
-def ml(line, cell=None):
+def mlalpha(line, cell=None):
   """Implements the ml line cell magic.
 
   Args:
@@ -46,7 +46,7 @@ def ml(line, cell=None):
     The results of executing the cell.
   """
   parser = datalab.utils.commands.CommandParser(prog='ml', description="""
-Execute various ml-related operations. Use "%%ml <command> -h" for help on a specific command.
+Execute various ml-related operations. Use "%%mlalpha <command> -h" for help on a specific command.
 """)
   train_parser = parser.subcommand('train', 'Run a training job.')
   train_parser.add_argument('--cloud',
@@ -153,7 +153,7 @@ Execute various ml-related operations. Use "%%ml <command> -h" for help on a spe
                              action='store_true', default=False)
   module_parser.set_defaults(func=_module)
   package_parser = parser.subcommand('package','Create a trainer package from all modules ' +
-                                     'defined with %%ml module.')
+                                     'defined with %%mlalpha module.')
   package_parser.add_argument('--name', help='The name of the package.', required=True)
   package_parser.add_argument('--output', help='the output dir of the package.', required=True)
   package_parser.set_defaults(func=_package)
@@ -194,7 +194,7 @@ def _local_train_callback(replica_spec, new_msgs, done, all_msgs):
 
 
 def _output_train_template():
-  content = """%%ml train [--cloud]
+  content = """%%mlalpha train [--cloud]
 package_uris: gs://your-bucket/my-training-package.tar.gz
 python_module: your_program.your_module
 scale_tier: BASIC
@@ -245,7 +245,7 @@ def _train(args, cell):
     job_info = runner.run()
     job_short_name = job_info['jobId']
     html = '<p>Job "%s" was submitted successfully.<br/>' % job_short_name
-    html += 'Run "%%ml jobs --name %s" to view the status of the job.</p>' % job_short_name
+    html += 'Run "%%mlalpha jobs --name %s" to view the status of the job.</p>' % job_short_name
     log_url_query_strings = {
       'project': datalab.context.Context.default().project_id,
       'resource': 'ml.googleapis.com/job_id/' + job_short_name
@@ -260,7 +260,7 @@ def _train(args, cell):
     package_path = None
     if 'package_uris' not in config:
       if '_ml_modules_' not in env:
-        raise Exception('Expect either modules defined with "%%ml module", ' +
+        raise Exception('Expect either modules defined with "%%mlalpha module", ' +
                         'or "package_uris" in cell.')
       if '_ml_modules_main_' not in env:
         raise Exception('Expect one ml module defined with "--main flag" as the python ' +
@@ -463,7 +463,7 @@ def _summary(args, _):
 
 
 def _output_features_template():
-  content = """%%ml features
+  content = """%%mlalpha features
 path: REQUIRED_Fill_In_Gcs_or_Local_Path
 headers: List_Of_Column_Names_Seperated_By_Comma
 target: REQUIRED_Fill_In_Name_Or_Index_Of_Target_Column
@@ -492,7 +492,7 @@ def _features(args, cell):
   if 'headers' in config:
     headers = [e.strip() for e in config['headers'].split(',')]
   df = csv.browse(max_lines=100, headers=headers)
-  command = '%ml features\n' + cell
+  command = '%%mlalpha features\n' + cell
   _output_featureset_template(df.dtypes, config['target'], config.get('id', None), command)
 
 
@@ -623,7 +623,7 @@ def _delete(args, _):
 
 
 def _output_preprocess_template(is_cloud):
-  content = """%%ml preprocess"""
+  content = """%%mlalpha preprocess"""
   if is_cloud:
     content += ' --cloud'
   content += """
@@ -769,7 +769,7 @@ def _preprocess(args, cell):
      ['train_data_path', 'data_format', 'output_dir', 'feature_set_class_name'],
      optional_keys=['eval_data_path'])
   datalab.utils.commands.validate_config_value(config['data_format'], ['CSV', 'JSON'])
-  command = '%%ml preprocess'
+  command = '%%mlalpha preprocess'
   if args['cloud']:
     command += ' --cloud'
   command += '\n' + cell
@@ -779,7 +779,7 @@ def _preprocess(args, cell):
 
 
 def _output_evaluate_template(is_cloud):
-  content = """%%ml evaluate"""
+  content = """%%mlalpha evaluate"""
   if is_cloud:
     content += ' --cloud'
   content += """
@@ -904,7 +904,7 @@ def _evaluate(args, cell):
   datalab.utils.commands.validate_config(config,
      ['preprocessed_eval_data_path', 'metadata_path', 'model_dir', 'output_dir'],
      optional_keys=['output_prediction_name'])
-  command = '%%ml evaluate'
+  command = '%%mlalpha evaluate'
   if args['cloud']:
     command += ' --cloud'
   command += '\n' + cell
@@ -914,7 +914,7 @@ def _evaluate(args, cell):
 
 
 def _output_dataset_template(name):
-  content = """%%ml dataset --name %s
+  content = """%%mlalpha dataset --name %s
 source:
   data1: data_local_or_gcs_path
   data2: data_local_or_gcs_path
@@ -957,7 +957,7 @@ def _module(args, cell):
 def _package(args, cell):
   env = datalab.utils.commands.notebook_environment()
   if '_ml_modules_' not in env:
-    raise Exception('No ml modules defined. Expect modules defined with "%%ml module"')
+    raise Exception('No ml modules defined. Expect modules defined with "%%mlalpha module"')
   package_path = datalab.ml.Packager().package(env['_ml_modules_'], args['name'])
   google.cloud.ml.util._file.create_directory(args['output'])
   dest = os.path.join(args['output'], os.path.basename(package_path))
