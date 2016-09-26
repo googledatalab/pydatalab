@@ -68,12 +68,8 @@ class Summary(object):
 
     Args:
       event_name: the tag of event to look for.
-
     Returns:
-      A tuple. First is a list of {time_span, event_name}. Second is a list of {step, event_name}.
-
-    Raises:
-      Exception if event start time cannot be found
+      A tuple. First is a list of {time_span, value}. Second is a list of {step, value}.
     """
     events_time = []
     events_step = []
@@ -105,3 +101,5 @@ class Summary(object):
     events_time = sorted(events_time, key=lambda k: k['time'])
     events_step = sorted(events_step, key=lambda k: k['step'])
     return events_time, events_step
+
+

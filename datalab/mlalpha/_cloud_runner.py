@@ -29,7 +29,7 @@ class CloudRunner(object):
      submit it to cloud, and get job response.
   """
 
-  def __init__(self, job_request):
+  def __init__(self, job_request, job_id=None):
     """Initializes an instance of a LocalRunner
 
     Args:
@@ -73,9 +73,6 @@ class CloudRunner(object):
   def run(self, job_id=None):
     """Submit a training job to the CloudML service.
 
-    Args:
-      job_id: id for the training job. If None, a UUID will be generated.
-
     Returns: job info returned from service.
     """
     if job_id is None:
@@ -90,3 +87,4 @@ class CloudRunner(object):
     request = cloudml.projects().jobs().create(body=job,
                                                parent='projects/' + context.project_id)
     return request.execute()
+

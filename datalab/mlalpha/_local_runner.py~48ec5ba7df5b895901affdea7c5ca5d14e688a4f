@@ -43,16 +43,16 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
 
 
 class LocalRunner(object):
-  """Provides "distributed" local run of a CloudML trainer packaged in a tarball.
+  """Provides a "distributed" local run of a CloudML trainer packaged in a tarball.
      It simulates CloudML service by spawning master, worker, and ps processses,
-     but instead of in their own GKE cluster pods it runs all these as local processes.
+     but instead of running in their own GKE cluster pods it runs all these as local processes.
   """
 
   def __init__(self, tar_path, module_to_run, logdir, replica_spec, program_args, all_args):
     """Initializes an instance of a LocalRunner
 
     Args:
-      tar_path: the path of the trainer packaged in tarball. Can be a local path or a GCS path.
+      tar_path: the path of the trainer packaged in a tarball. Can be a local path or a GCS path.
       module_to_run: the module to run in the tarball.
       logdir: the directory to save logs.
       replica_spec: the number of replicas for each job_type.
@@ -68,6 +68,7 @@ class LocalRunner(object):
       all_args: all args that can be submitted to cloud training such as job name, replicas, etc.
           It is aligned to the CloudML training service interface. In the program, it can be
           retrieved by 'TF_CONFIG' env var (json serialized) under 'job' member.
+
     Raises:
       Exception if replica_spec does not contain 'master' or its value is below one.
     """
@@ -223,4 +224,3 @@ class LocalRunner(object):
       time.sleep(interval)
     self._print_task_output(callback, param, True)
     self._clean_up()
-

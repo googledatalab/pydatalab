@@ -34,7 +34,7 @@ class LocalPredictor(object):
     Args:
       model_dir: a directory that contains model checkpoint and metagraph. Can be local or GCS.
       label_output: the name of the output column where all values should be converted from
-          index to labels. Only useful in classification. If specified, metadata_path is required.
+          index to labels. Only useful in classification. If specified, a metadata.yaml file is required.
     """
     self._model_dir = model_dir
     self._metadata_path = None
@@ -54,12 +54,15 @@ class LocalPredictor(object):
           An example:
             [{"sepal_length": 4.9, "sepal_width": 2.5, "petal_length": 4.5, "petal_width": 1.7},
              {"sepal_length": 5.7, "sepal_width": 2.8, "petal_length": 4.1, "petal_width": 1.3}]
+
     Returns:
       A list of prediction results for given instances. Each element is a dictionary representing
           output mapping from the graph.
       An example:
         [{"predictions": 1, "score": [0.00078, 0.71406, 0.28515]},
          {"predictions": 1, "score": [0.00244, 0.99634, 0.00121]}]
+
+    Raises: Exception if the prediction result has incorrect label types
     """
     session, _ = ml.session_bundle.load_session_bundle_from_path(self._model_dir)
     # get the mappings between aliases and tensor names for both inputs and outputs
@@ -75,7 +78,7 @@ class LocalPredictor(object):
     if self._metadata_path is not None:
       transformer = ml.features.FeatureProducer(self._metadata_path)
       for instance in data:
-        preprocessed = transformer.preprocess(ml.features.ExampleProtoFormatter(), instance)
+        preprocessed = transformer.preprocess(instance)
         feed_dict[input_key].append(preprocessed.SerializeToString())
     else:
       for instance in data:
@@ -103,4 +106,3 @@ class LocalPredictor(object):
           prediction_row[name] = value
       predictions.append(prediction_row)
     return predictions
-

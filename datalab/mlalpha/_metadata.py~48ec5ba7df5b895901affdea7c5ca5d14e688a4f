@@ -33,8 +33,10 @@ class Metadata(object):
 
     Args:
       label_index: the index of label.
+
     Returns:
       The classification label, or label_index if the metadata is not for classification.
+
     Raises:
       Exception if metadata is malformed.
     """
@@ -60,8 +62,10 @@ class Metadata(object):
 
   def get_target_name_and_scenario(self):
     """Get name of the target feature and scenario.
+
     Returns:
-      (name of the target feature, scenario)
+      Name of the target feature or scenario
+
     Raises:
       Exception if metadata is malformed.
     """
@@ -80,4 +84,3 @@ class Metadata(object):
       if feature['columns'][0] == target_column_name:
         return feature_name, scenario
     raise Exception('Invalid metadata. No target found in features.')
-

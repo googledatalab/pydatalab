@@ -32,9 +32,6 @@ class DataSet(object):
           This is the same class used in CloudML preprocessing.
       data_paths: A dictionary with {name: path} pair. All data need to have the same schema.
       format: the format of the data, currently only 'csv' or 'tsv'.
-
-    Raises: Exception if data_paths is not a dictionary
-            Exception if the format is not csv or tsv
     """
     self._feature_set = feature_set
     if not isinstance(data_paths, dict):
@@ -315,19 +312,18 @@ class DataSet(object):
   def analyze(self, names=None, columns=None):
     """Analyze the data and report results in IPython output cell. The results are based
            on preprocessed data as described in feature_set.
-
+      columns: The list of column names to plot correlations. If None, all numeric columns
+          will be used.
     Args:
       names: the names of the data to plot. Such as ['train']. If None, all data in the datasets
           will be used.
-      columns: The list of names of columns to analyze. If None, all numeric columns
-          will be used.
-          If one column is provided, displays a scatter plot between the column and target
+      columns: The list of names of columns to analyze.
+          If one column provided, displays a scatter plot between the column and target
           column, and a histogram of the column.
-          If two columns are provided, displays a scatter plot between them,
+          If two columns provided, displays a scatter plot between them,
           colored by target column.
-          If three columns are provided, displays a 3d scatter plot between them,
+          If threecolumns provided, displays a 3d scatter plot between them,
           colored by target column.
-
     Raises:
       Exception if any column names are not found in the data or the columns are text.
       Exception if columns are greater than 3 or less than 1.
@@ -363,7 +359,7 @@ class DataSet(object):
     return self._dataframes
 
   def plot(self, names=None, columns=None):
-    """Plot correlation graphs on the specified columns, in n*n grids.
+    """Plot specified columns correlation graphs, in n*n grids.
 
     Args:
       names: the names of the data to plot. Such as ['train']. If None, all data in the datasets
@@ -384,13 +380,11 @@ class DataSet(object):
       if columns is not None:
         df_correlation = df_correlation[columns]
       for k in df_correlation.columns:
-        if k == self._target_name:
-          continue
-        elif str(df_correlation[k].dtype) == 'object' or str(df_correlation[k].dtype) == 'category':
-          # pairplot only works with numeric columns
-          del df_correlation[k]
+        if str(df_correlation[k].dtype) == 'object':
+          df_correlation[k] = df_correlation[k].fillna('')
+        elif str(df_correlation[k].dtype) == 'category':
+          df_correlation[k] = df_correlation[k].fillna(df_correlation[k].cat.categories[0])
         else:
-          # pairplot does not deal with missing values well. For now fillna(0).
           df_correlation[k] = df_correlation[k].fillna(0)
       # pairplot doesn't like categories with all numbers
       df_correlation[self._target_name] = map(lambda x: 'target ' + str(x), df_correlation[self._target_name])
@@ -401,3 +395,4 @@ class DataSet(object):
         sns.pairplot(df_correlation, dropna=True)
       plt.suptitle(name)
       plt.show()
+

@@ -23,10 +23,10 @@ class Packager(object):
   """Represents a packager."""
 
   def package(self, files, package_name):
-    """Package a list of file contents into a python tarball package.
+    """Package a list of file content into a python tarball package.
 
     Args:
-      files: A dictionary with key as module name and value as module contents. File names
+      files: A dictionary with key as module name and value as module content. File names
              will be key + 'py'.
       package_name: the name of the package.
 
@@ -40,7 +40,7 @@ class Packager(object):
       file_path = os.path.join(trainer_dir, name + '.py')
       with open(file_path, 'w') as file:
         file.write(content)
-
+    
     setup_py = os.path.join(tempdir, 'setup.py')
     content = """from setuptools import setup
 
