@@ -78,7 +78,7 @@ class Csv(object):
   def browse(self, max_lines=None, headers=None):
     """Try reading specified number of lines from the CSV object.
     Args:
-      max_lines: max number of lines to read
+      max_lines: max number of lines to read. If None, the whole file is read
       headers: a list of strings as column names. If None, it will use "col0, col1..."
     Returns:
       A pandas DataFrame with the schema inferred from the data.
