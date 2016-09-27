@@ -521,7 +521,7 @@ def _output_featureset_template(dtypes, target_column, id_column, command):
 class CsvFeatures(object):
   \"\"\"This class is generated from command line:
 %s
-        Please modify it as appropriate!!!
+     Please modify it as appropriate!!!
   \"\"\"
   csv_columns = (%s)
   %s = features.target('%s').%s()
@@ -646,7 +646,7 @@ options = {
     'temp_location': os.path.join(OUTPUT_DIR, 'tmp'),
     'job_name': '%s' + '-' + datetime.datetime.now().strftime('%%y%%m%%d-%%H%%M%%S'),
     'project': '%s',
-    'extra_packages': ['gs://cloud-ml/sdk/cloudml-0.1.4.tar.gz'],
+    'extra_packages': ['gs://cloud-ml/sdk/cloudml-0.1.5-alpha.tar.gz'],
     'teardown_policy': 'TEARDOWN_ALWAYS',
     'no_save_main_session': True
 }
