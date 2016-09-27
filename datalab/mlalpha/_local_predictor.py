@@ -75,7 +75,7 @@ class LocalPredictor(object):
     if self._metadata_path is not None:
       transformer = ml.features.FeatureProducer(self._metadata_path)
       for instance in data:
-        preprocessed = transformer.preprocess(ml.features.ExampleProtoFormatter(), instance)
+        preprocessed = transformer.preprocess(instance)
         feed_dict[input_key].append(preprocessed.SerializeToString())
     else:
       for instance in data:

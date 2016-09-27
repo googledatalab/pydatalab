@@ -646,7 +646,7 @@ options = {
     'temp_location': os.path.join(OUTPUT_DIR, 'tmp'),
     'job_name': '%s' + '-' + datetime.datetime.now().strftime('%%y%%m%%d-%%H%%M%%S'),
     'project': '%s',
-    'extra_packages': ['gs://cloud-ml/sdk/cloudml-0.1.5-alpha.tar.gz'],
+    'extra_packages': ['gs://cloud-ml/sdk/cloudml-0.1.6-alpha.tar.gz'],
     'teardown_policy': 'TEARDOWN_ALWAYS',
     'no_save_main_session': True
 }
