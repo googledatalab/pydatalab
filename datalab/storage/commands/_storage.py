@@ -127,6 +127,7 @@ for help on a specific command.
                             required=True)
   write_parser.add_argument('-o', '--object', required=True,
                             help='The name of the destination GCS object to write')
+  write_parser.add_argument('-c', '--content_type', help='MIME type', default='text/plain')
   write_parser.set_defaults(func=_storage_write)
 
   return datalab.utils.commands.handle_magic_line(line, None, parser)
@@ -380,4 +381,4 @@ def _storage_write(args, _):
   ipy = IPython.get_ipython()
   contents = ipy.user_ns[args['variable']]
   # TODO(gram): would we want to to do any special handling here; e.g. for DataFrames?
-  target.write_to(str(contents), 'text/plain')
+  target.write_to(str(contents), args['content_type'])
