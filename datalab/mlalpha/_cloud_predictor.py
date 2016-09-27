@@ -32,6 +32,8 @@ _CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
 class CloudPredictor(object):
   """Preforms cloud predictions on given data."""
 
+  # TODO: Either remove label_output, or add code to load metadata from model dir and
+  # transform integer to label. Depending on whether online prediction returns label or not.
   def __init__(self, model_name, version_name, label_output=None, 
                project_id=None, credentials=None, api=None):
     """Initializes an instance of a CloudPredictor.
