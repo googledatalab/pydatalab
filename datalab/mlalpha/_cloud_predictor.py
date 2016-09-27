@@ -34,7 +34,7 @@ class CloudPredictor(object):
 
   # TODO: Either remove label_output, or add code to load metadata from model dir and
   # transform integer to label. Depending on whether online prediction returns label or not.
-  def __init__(self, model_name, version_name, label_output=None, 
+  def __init__(self, model_name, version_name, label_output=None,
                project_id=None, credentials=None, api=None):
     """Initializes an instance of a CloudPredictor.
 
@@ -42,8 +42,8 @@ class CloudPredictor(object):
       model_name: the name of the model used for prediction.
       version_name: the name of the version used for prediction.
       label_output: the name of the output column where all values should be converted from
-          index to labels. Only useful in classification.
-      project_id: ptoject_id of the model. If not provided, default project_id will be used.
+          index to labels. Only useful in classification. If specified, metadata_path is required.
+      project_id: project_id of the model. If not provided, default project_id will be used.
       credentials: credentials used to talk to CloudML service. If not provided, default
           credentials will be used.
       api: an optional CloudML API client.
@@ -78,6 +78,9 @@ class CloudPredictor(object):
       An example:
         [{"predictions": 1, "score": [0.00078, 0.71406, 0.28515]},
          {"predictions": 1, "score": [0.00244, 0.99634, 0.00121]}]
+
+    Raises: Exception if bad response is received from the service
+            Exception if the prediction result has incorrect label types
     """
     if isinstance(data, pd.DataFrame):
       data = data.T.to_dict().values()
@@ -89,4 +92,3 @@ class CloudPredictor(object):
       raise Exception('Invalid response from service. Cannot find "predictions" in response.')
 
     return result['predictions']
-
