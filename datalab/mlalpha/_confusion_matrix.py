@@ -25,6 +25,8 @@ class ConfusionMatrix(object):
       predicted_labels: a list of predicted labels.
       true_labels: a list of true labels.
       counts: a list of count for each (predicted, true) combination.
+
+    Raises: Exception if predicted_labels, true_labels, and counts are not of the same size
     """
     if len(predicted_labels) != len(true_labels) or len(true_labels) != len(counts):
       raise Exception('The input predicted_labels, true_labels, counts need to be same size.')
@@ -63,4 +65,3 @@ class ConfusionMatrix(object):
       }
     }
     iplot(figure_data)
-

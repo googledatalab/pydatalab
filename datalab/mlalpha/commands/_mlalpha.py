@@ -42,6 +42,7 @@ def mlalpha(line, cell=None):
   Args:
     line: the contents of the ml line.
     cell: the contents of the ml cell.
+
   Returns:
     The results of executing the cell.
   """
@@ -401,10 +402,16 @@ def _plot(data, x_name, x_title, y_names):
 
 
 def get_dirs(pattern):
-  # given a dir path, find all matching dirs
-  # for example:
-  #  input: gs://mybucket/iris/hp/*/summaries
-  #  output: [gs://mybucket/iris/hp/1/summaries, gs://mybucket/iris/hp/2/summaries]
+  """ Finds all matching dirs given a dir path
+      for example:
+        input: gs://mybucket/iris/hp/*/summaries
+        output: [gs://mybucket/iris/hp/1/summaries, gs://mybucket/iris/hp/2/summaries]
+  Args:
+    pattern: string pattern for the directory path
+
+  Returns:
+    List of all matching directories
+  """
   dirs = set()
   path = pattern.rstrip('/')
   for p in google.cloud.ml.util._file.glob_files(path + '/*'):

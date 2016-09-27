@@ -43,7 +43,7 @@ class CloudPredictor(object):
           the instance data has to be preprocessed.
       label_output: the name of the output column where all values should be converted from
           index to labels. Only useful in classification. If specified, metadata_path is required.
-      project_id: ptoject_id of the model. If not provided, default project_id will be used.
+      project_id: project_id of the model. If not provided, default project_id will be used.
       credentials: credentials used to talk to CloudML service. If not provided, default
           credentials will be used.
       api: an optional CloudML API client.
@@ -83,6 +83,9 @@ class CloudPredictor(object):
       An example:
         [{"predictions": 1, "score": [0.00078, 0.71406, 0.28515]},
          {"predictions": 1, "score": [0.00244, 0.99634, 0.00121]}]
+
+    Raises: Exception if bad response is received from the service
+            Exception if the prediction result has incorrect label types
     """
     if isinstance(data, pd.DataFrame):
       data = data.T.to_dict().values()
