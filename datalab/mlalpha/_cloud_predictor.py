@@ -32,17 +32,15 @@ _CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
 class CloudPredictor(object):
   """Preforms cloud predictions on given data."""
 
-  def __init__(self, model_name, version_name, metadata_path=None, label_output=None,
+  def __init__(self, model_name, version_name, label_output=None, 
                project_id=None, credentials=None, api=None):
     """Initializes an instance of a CloudPredictor.
 
     Args:
       model_name: the name of the model used for prediction.
       version_name: the name of the version used for prediction.
-      metadata_path: metadata that will be used to preprocess the instance data. If None,
-          the instance data has to be preprocessed.
       label_output: the name of the output column where all values should be converted from
-          index to labels. Only useful in classification. If specified, metadata_path is required.
+          index to labels. Only useful in classification.
       project_id: ptoject_id of the model. If not provided, default project_id will be used.
       credentials: credentials used to talk to CloudML service. If not provided, default
           credentials will be used.
@@ -50,11 +48,6 @@ class CloudPredictor(object):
     """
     self._model_name = model_name
     self._version_name = version_name
-    self._metadata_path = metadata_path
-    self._metadata = None
-    if metadata_path is not None:
-      self._metadata = _metadata.Metadata(metadata_path)
-    self._label_output = label_output
     if project_id is None:
       project_id = datalab.context.Context.default().project_id
     self._project_id = project_id
@@ -87,26 +80,11 @@ class CloudPredictor(object):
     if isinstance(data, pd.DataFrame):
       data = data.T.to_dict().values()
 
-    if self._metadata_path is not None:
-      transformer = ml.features.FeatureProducer(self._metadata_path)
-      instances = [transformer.preprocess(i) for i in data]
-    else:
-      instances = [json.dumps(i) for i in data]
-    request = self._api.projects().predict(body={'instances': instances},
+    request = self._api.projects().predict(body={'instances': data},
                                            name=self._full_version_name)
     result = request.execute()
     if 'predictions' not in result:
       raise Exception('Invalid response from service. Cannot find "predictions" in response.')
-    predictions = []
-    for row in result['predictions']:
-      prediction = json.loads(row)
-      if (self._metadata is not None and self._label_output is not None
-          and self._label_output in prediction):
-        if not isinstance(prediction[self._label_output], Number):
-            raise Exception('Cannot get labels because output "%s" is type %s but not number.'
-                % (self._label_output, type(prediction[self._label_output])))
-        label_index = prediction[self._label_output]
-        prediction[self._label_output] = \
-            str(self._metadata.get_classification_label(label_index)) + (' (%d)' % label_index)
-      predictions.append(prediction)
-    return predictions
+
+    return result['predictions']
+

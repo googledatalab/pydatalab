@@ -34,7 +34,7 @@ class LocalPredictor(object):
     Args:
       model_dir: a directory that contains model checkpoint and metagraph. Can be local or GCS.
       label_output: the name of the output column where all values should be converted from
-          index to labels. Only useful in classification. If specified, metadata_path is required.
+          index to labels. Only useful in classification.
     """
     self._model_dir = model_dir
     self._metadata_path = None

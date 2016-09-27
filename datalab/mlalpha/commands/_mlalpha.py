@@ -241,7 +241,7 @@ def _train(args, cell):
   if args['cloud']:
     datalab.utils.commands.validate_config_must_have(config,
         ['package_uris', 'python_module', 'scale_tier', 'region'])
-    runner = datalab.ml.CloudRunner(config)
+    runner = datalab.mlalpha.CloudRunner(config)
     job_info = runner.run()
     job_short_name = job_info['jobId']
     html = '<p>Job "%s" was submitted successfully.<br/>' % job_short_name
@@ -265,7 +265,7 @@ def _train(args, cell):
       if '_ml_modules_main_' not in env:
         raise Exception('Expect one ml module defined with "--main flag" as the python ' +
                         'program entry point.')
-      package_path = datalab.ml.Packager().package(env['_ml_modules_'], 'trainer')
+      package_path = datalab.mlalpha.Packager().package(env['_ml_modules_'], 'trainer')
       config['package_uris'] = package_path
       config['python_module'] = 'trainer.' + env['_ml_modules_main_']
 
@@ -280,7 +280,7 @@ def _train(args, cell):
       if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     program_args = config.get('args', None)
-    runner = datalab.ml.LocalRunner(trainer_uri, module_name, log_dir, replica_spec, program_args, config)
+    runner = datalab.mlalpha.LocalRunner(trainer_uri, module_name, log_dir, replica_spec, program_args, config)
     runner.run(_local_train_callback, all_messages, 3)
     if package_path is not None:
       os.remove(package_path)
@@ -357,7 +357,7 @@ def _plot_hyperparams_tuning(training_input, training_output):
 
 def _jobs(args, _):
   """ List the ML jobs in a project. """
-  jobs = datalab.ml.Jobs(filter=args['filter'])
+  jobs = datalab.mlalpha.Jobs(filter=args['filter'])
   if args['name']:
     job = jobs.get_job_by_name(args['name'])
     if args['trials']:
@@ -431,7 +431,7 @@ def _summary(args, _):
     for dir_pattern in dirs:
       for dir in get_dirs(dir_pattern):
         dir_index += 1
-        summary = datalab.ml.Summary(dir)
+        summary = datalab.mlalpha.Summary(dir)
         trace_events_time = []
         trace_events_step = []
         for event_name in event_names:
@@ -456,7 +456,7 @@ def _summary(args, _):
     event_names = []
     for dir_pattern in dirs:
       for dir in get_dirs(dir_pattern):
-        summary = datalab.ml.Summary(dir)
+        summary = datalab.mlalpha.Summary(dir)
         event_names += summary.list_events()
     event_names = list(set(event_names))  # remove duplicates
     return datalab.utils.commands.render_list(event_names)
@@ -568,11 +568,11 @@ def _predict(args, cell):
     parts = args['model'].split('.')
     if len(parts) != 2:
       raise Exception('Invalid model name for cloud prediction. Use "model.version".')
-    lp = datalab.ml.CloudPredictor(parts[0], parts[1],
+    lp = datalab.mlalpha.CloudPredictor(parts[0], parts[1],
                                    label_output=args['label'],
                                    project_id=args['project'])
   else:
-    lp = datalab.ml.LocalPredictor(args['model'],
+    lp = datalab.mlalpha.LocalPredictor(args['model'],
                                    label_output=args['label'])
   return datalab.utils.commands.render_text(yaml.safe_dump(lp.predict(instances),
                                                            default_flow_style=False),
@@ -581,7 +581,7 @@ def _predict(args, cell):
 
 def _model(args, _):
   if args['name'] is None:
-    data = list(datalab.ml.CloudModels(project_id=args['project']))
+    data = list(datalab.mlalpha.CloudModels(project_id=args['project']))
     if len(data) > 0:
       return datalab.utils.commands.render_dictionary(data, data[0].keys())
     print 'No models found.'
@@ -589,13 +589,13 @@ def _model(args, _):
 
   parts = args['name'].split('.')
   if len(parts) == 1:
-    data = list(datalab.ml.CloudModelVersions(parts[0], project_id=args['project']))
+    data = list(datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project']))
     if len(data) > 0:
       return datalab.utils.commands.render_dictionary(data, data[0].keys())
     print 'No versions found.'
     return
   elif len(parts) == 2:
-    versions = datalab.ml.CloudModelVersions(parts[0], project_id=args['project'])
+    versions = datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
     version_yaml = yaml.safe_dump(versions.get(parts[1]))
     return datalab.utils.commands.render_text(version_yaml, preformatted=True)
   else:
@@ -606,17 +606,17 @@ def _deploy(args, _):
   parts = args['name'].split('.')
   if len(parts) != 2:
     raise Exception('Invalid model name. Use "model.version".')
-  versions = datalab.ml.CloudModelVersions(parts[0], project_id=args['project'])
+  versions = datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
   versions.deploy(parts[1], args['path'])
 
 
 def _delete(args, _):
   parts = args['name'].split('.')
   if len(parts) == 1:
-    models = datalab.ml.CloudModels(project_id=args['project'])
+    models = datalab.mlalpha.CloudModels(project_id=args['project'])
     models.delete(parts[0])
   elif len(parts) == 2:
-    versions = datalab.ml.CloudModelVersions(parts[0], project_id=args['project'])
+    versions = datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
     versions.delete(parts[1])
   else:
     raise Exception('Too many "." in name. Use "model" or "model.version".')
@@ -809,7 +809,7 @@ import json
 import os
 """
 
-  target_name, scenario = datalab.ml.Metadata(metadata_path).get_target_name_and_scenario()
+  target_name, scenario = datalab.mlalpha.Metadata(metadata_path).get_target_name_and_scenario()
   target_type = 'float_list' if scenario == 'continuous' else 'int64_list'
   content_definitions = \
 """def extract_values((example, prediction)):
@@ -883,11 +883,11 @@ confusion_matrix | beam.io.Write('WriteConfusionMatrix', confusion_matrix_sink)
     content += """
 # View Confusion Matrix with the following code:
 #
-# import datalab.ml
+# import datalab.mlalpha
 # import yaml
 # with ml.util._file.open_local_or_gcs(confusion_matrix_file, 'r') as f:
 #   data = [yaml.load(line) for line in f.read().rstrip().split('\\n')]
-# datalab.ml.ConfusionMatrix([d['predicted'] for d in data],
+# datalab.mlalpha.ConfusionMatrix([d['predicted'] for d in data],
 #                            [d['target'] for d in data],
 #                            [d['count'] for d in data]).plot()
 """
@@ -935,7 +935,7 @@ def _dataset(args, cell):
     raise Exception('"%s" is not defined.' % config['featureset'])
   featureset_class = env[config['featureset']]
   format = config.get('format', 'csv')
-  ds = datalab.ml.DataSet(featureset_class(), config['source'], format=format)
+  ds = datalab.mlalpha.DataSet(featureset_class(), config['source'], format=format)
   env[args['name']] = ds
 
 
@@ -958,7 +958,7 @@ def _package(args, cell):
   env = datalab.utils.commands.notebook_environment()
   if '_ml_modules_' not in env:
     raise Exception('No ml modules defined. Expect modules defined with "%%mlalpha module"')
-  package_path = datalab.ml.Packager().package(env['_ml_modules_'], args['name'])
+  package_path = datalab.mlalpha.Packager().package(env['_ml_modules_'], args['name'])
   google.cloud.ml.util._file.create_directory(args['output'])
   dest = os.path.join(args['output'], os.path.basename(package_path))
   google.cloud.ml.util._file.copy_file(package_path, dest)
