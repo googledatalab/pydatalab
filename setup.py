@@ -98,7 +98,6 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/parcoords.js',
         'static/extern/d3.parcoords.js',
         'static/extern/d3.parcoords.css',
-        'static/extern/divgrid.js',
         'static/extern/sylvester.js',
       ]
   }
