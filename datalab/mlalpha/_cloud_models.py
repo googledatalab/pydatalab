@@ -106,7 +106,7 @@ class CloudModelVersions(object):
     Args:
       model_name: the name of the model. It can be a model full name
           ("projects/[project_id]/models/[model_name]") or just [model_name].
-      project_id: ptoject_id of the models. If not provided and model_name is not a full name
+      project_id: project_id of the models. If not provided and model_name is not a full name
           (not including project_id), default project_id will be used.
       credentials: credentials used to talk to CloudML service. If not provided, default
           credentials will be used.
@@ -143,7 +143,7 @@ class CloudModelVersions(object):
 
     Args:
       version: the name of the version in short form, such as "v1".
-    Returns: a dictionary the version details.
+    Returns: a dictionary containing the version details.
     """
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     return self._api.projects().models().versions().get(name=name).execute()
