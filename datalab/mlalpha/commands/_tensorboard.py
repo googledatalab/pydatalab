@@ -52,14 +52,14 @@ Execute tensorboard operations. Use "%tensorboard <command> -h" for help on a sp
 def _list(args, _):
   """ List the running TensorBoard instances. """
   return datalab.utils.commands.render_dictionary(
-             datalab.ml.TensorBoardManager.get_running_list(),
+             datalab.mlalpha.TensorBoardManager.get_running_list(),
              ['pid', 'logdir', 'port'])
 
 
 def _start(args, _):
   """ Start a TensorBoard instance. """
-  pid, port = datalab.ml.TensorBoardManager.start(args['logdir'])
-  url = datalab.ml.TensorBoardManager.get_reverse_proxy_url(port)
+  pid, port = datalab.mlalpha.TensorBoardManager.start(args['logdir'])
+  url = datalab.mlalpha.TensorBoardManager.get_reverse_proxy_url(port)
   html = '<p>TensorBoard was started successfully with pid %d. ' % pid
   html += 'Click <a href="%s" target="_blank">here</a> to access it.</p>' % url
   return IPython.core.display.HTML(html)
@@ -67,5 +67,5 @@ def _start(args, _):
 
 def _stop(args, _):
   """ Stop a TensorBoard instance. """
-  datalab.ml.TensorBoardManager.stop(int(args['pid']))
+  datalab.mlalpha.TensorBoardManager.stop(int(args['pid']))
 
