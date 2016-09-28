@@ -20,8 +20,6 @@ from builtins import object
 import google.cloud.monitoring
 import pandas
 
-from . import _visualization
-
 
 class QueryMetadata(object):
   """QueryMetadata object contains the metadata of a timeseries query."""

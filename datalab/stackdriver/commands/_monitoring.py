@@ -14,6 +14,7 @@
 from __future__ import absolute_import
 
 try:
+  import IPython.core.display
   import IPython.core.magic
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
@@ -66,11 +67,23 @@ def _list_metric_descriptors(args, _):
   """Lists the metric descriptors in the project."""
   project_id = args['project']
   pattern = args['type'] or '*'
-  return gcm.MetricDescriptors(project_id=project_id).table(pattern=pattern)
+  descriptors = gcm.MetricDescriptors(project_id=project_id)
+  dataframe = descriptors.as_dataframe(pattern=pattern)
+  return _render_dataframe(dataframe, show_index=False)
 
 
 def _list_resource_descriptors(args, _):
   """Lists the resource descriptors in the project."""
   project_id = args['project']
   pattern = args['type'] or '*'
-  return gcm.ResourceDescriptors(project_id=project_id).table(pattern=pattern)
+  descriptors = gcm.ResourceDescriptors(project_id=project_id)
+  dataframe = descriptors.as_dataframe(pattern=pattern)
+  return _render_dataframe(dataframe, show_index=False)
+
+
+def _render_dataframe(dataframe):
+  """Helper to render a dataframe as an HTML table."""
+  data = dataframe.to_dict(orient='records')
+  fields = dataframe.columns.tolist()
+  return IPython.core.display.HTML(
+      datalab.utils.commands.HtmlBuilder.render_table(data, fields))
