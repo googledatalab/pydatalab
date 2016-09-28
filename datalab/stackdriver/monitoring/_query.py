@@ -15,8 +15,8 @@
 from __future__ import absolute_import
 
 import google.cloud.monitoring
-import pandas
 
+from . import _query_metadata
 from . import _utils
 
 
@@ -64,34 +64,6 @@ class Query(google.cloud.monitoring.Query):
                                 end_time=end_time,
                                 days=days, hours=hours, minutes=minutes)
 
-  def labels_as_dataframe(self):
-    """Returns the resource and metric metadata as a pandas dataframe.
-
-    Returns:
-      A pandas dataframe containing the resource type and resource and metric
-      labels. Each row in this dataframe corresponds to the metadata from one
-      time series.
-    """
-    headers = [{'resource': ts.resource.__dict__, 'metric': ts.metric.__dict__}
-               for ts in self.iter(headers_only=True)]
-    if not headers:
-      return pandas.DataFrame()
-    df = pandas.io.json.json_normalize(headers)
-
-    # Add a 2 level column header.
-    df.columns = pandas.MultiIndex.from_tuples(
-        [col.rsplit('.', 1) for col in df.columns])
-
-    # Re-order the columns.
-    resource_keys = google.cloud.monitoring._dataframe._sorted_resource_labels(
-        df['resource.labels'].columns)
-    sorted_columns = [('resource', 'type')]
-    sorted_columns += [('resource.labels', key) for key in resource_keys]
-    sorted_columns += sorted(col for col in df.columns
-                             if col[0] == 'metric.labels')
-    df = df[sorted_columns]
-
-    # Sort the data, and clean up index values, and NaNs.
-    df = df.sort_values(sorted_columns).reset_index(drop=True)
-    df = df.fillna('')
-    return df
+  def metadata(self):
+    """Retrieves the metadata for the query."""
+    return _query_metadata.QueryMetadata(self)

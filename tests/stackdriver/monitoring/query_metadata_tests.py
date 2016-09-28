@@ -11,14 +11,12 @@
 # the License.
 
 from __future__ import absolute_import
-import datetime
 import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
 from google.cloud.monitoring import Resource
 from google.cloud.monitoring import Metric
-from google.cloud.monitoring import Query as BaseQuery
 from google.cloud.monitoring import TimeSeries
 
 import datalab.context
@@ -36,62 +34,41 @@ INSTANCE_IDS = ['1234567890123456789', '9876543210987654321']
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.context._context.Context.default')
-  def test_constructor_minimal(self, mock_context_default):
-    default_context = self._create_context()
-    mock_context_default.return_value = default_context
-
-    query = gcm.Query()
-
-    expected_client = gcm._utils.make_client(context=default_context)
-    self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client.connection.credentials,
-                     expected_client.connection.credentials)
-
-    self.assertEqual(query._filter.metric_type, BaseQuery.DEFAULT_METRIC_TYPE)
-
-    self.assertIsNone(query._start_time)
-    self.assertIsNone(query._end_time)
-
-    self.assertIsNone(query._per_series_aligner)
-    self.assertIsNone(query._alignment_period_seconds)
-    self.assertIsNone(query._cross_series_reducer)
-    self.assertEqual(query._group_by_fields, ())
-
-  def test_constructor_maximal(self):
-    UPTIME_METRIC = 'compute.googleapis.com/instance/uptime'
-    T1 = datetime.datetime(2016, 4, 7, 2, 30, 30)
-    DAYS, HOURS, MINUTES = 1, 2, 3
-    T0 = T1 - datetime.timedelta(days=DAYS, hours=HOURS, minutes=MINUTES)
-
-    context = self._create_context(PROJECT)
-    query = gcm.Query(UPTIME_METRIC,
-                      end_time=T1, days=DAYS, hours=HOURS, minutes=MINUTES,
-                      project_id=PROJECT, context=context)
-
-    expected_client = gcm._utils.make_client(
-        context=context, project_id=PROJECT)
-    self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client.connection.credentials,
-                     expected_client.connection.credentials)
-
-    self.assertEqual(query._filter.metric_type, UPTIME_METRIC)
-
-    self.assertEqual(query._start_time, T0)
-    self.assertEqual(query._end_time, T1)
-
-    self.assertIsNone(query._per_series_aligner)
-    self.assertIsNone(query._alignment_period_seconds)
-    self.assertIsNone(query._cross_series_reducer)
-    self.assertEqual(query._group_by_fields, ())
+  def setUp(self):
+    creds = AccessTokenCredentials('test_token', 'test_ua')
+    context = datalab.context.Context(PROJECT, creds)
+    self.query = gcm.Query(METRIC_TYPE, context=context)
 
   @mock.patch('datalab.stackdriver.monitoring.Query.iter')
-  def test_labels_as_dataframe(self, mock_query_iter):
+  def test_constructor(self, mock_query_iter):
+    time_series_iterable = list(self._query_iter_get_result())
     mock_query_iter.return_value = self._query_iter_get_result()
-    query = gcm.Query(context=self._create_context(PROJECT))
-    dataframe = query.labels_as_dataframe()
+
+    query_metadata = gcm.QueryMetadata(self.query)
 
     mock_query_iter.assert_called_once_with(headers_only=True)
+    self.assertEqual(query_metadata.metric_type, METRIC_TYPE)
+    self.assertEqual(query_metadata.resource_types, set([RESOURCE_TYPE]))
+    self.assertEqual(query_metadata._timeseries_list, time_series_iterable)
+
+  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  def test_iteration(self, mock_query_iter):
+    time_series_iterable = list(self._query_iter_get_result())
+    mock_query_iter.return_value = self._query_iter_get_result()
+
+    query_metadata = gcm.QueryMetadata(self.query)
+    response = list(query_metadata)
+
+    self.assertEqual(len(response), len(time_series_iterable))
+    self.assertEqual(response, time_series_iterable)
+
+  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  def test_as_dataframe(self, mock_query_iter):
+    mock_query_iter.return_value = self._query_iter_get_result()
+
+    query_metadata = gcm.QueryMetadata(self.query)
+    dataframe = query_metadata.as_dataframe()
+
     NUM_INSTANCES = len(INSTANCE_IDS)
 
     self.assertEqual(dataframe.shape, (NUM_INSTANCES, 5))
@@ -103,7 +80,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.values.tolist(), expected_values)
 
     expected_headers = [
-        ('resource', 'type'),
+        ('resource.type', ''),
         ('resource.labels', 'project_id'),
         ('resource.labels', 'zone'),
         ('resource.labels', 'instance_id'),
@@ -116,20 +93,42 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.index.names, [None])
 
   @mock.patch('datalab.stackdriver.monitoring.Query.iter')
-  def test_labels_as_dataframe_w_no_data(self, mock_query_iter):
-    mock_query_iter.return_value = []
-    query = gcm.Query(context=self._create_context())
-    dataframe = query.labels_as_dataframe()
+  def test_as_dataframe_w_max_rows(self, mock_query_iter):
+    mock_query_iter.return_value = self._query_iter_get_result()
 
-    mock_query_iter.assert_called_once_with(headers_only=True)
+    MAX_ROWS = 1
+    query_metadata = gcm.QueryMetadata(self.query)
+    dataframe = query_metadata.as_dataframe(max_rows=MAX_ROWS)
+
+    self.assertEqual(dataframe.shape, (MAX_ROWS, 5))
+
+    expected_values = [
+        [RESOURCE_TYPE, PROJECT, INSTANCE_ZONES[0], INSTANCE_IDS[0],
+         INSTANCE_NAMES[0]],
+    ]
+    self.assertEqual(dataframe.values.tolist(), expected_values)
+
+    expected_headers = [
+        ('resource.type', ''),
+        ('resource.labels', 'project_id'),
+        ('resource.labels', 'zone'),
+        ('resource.labels', 'instance_id'),
+        ('metric.labels', 'instance_name')
+    ]
+    self.assertEqual(dataframe.columns.tolist(), expected_headers)
+    self.assertEqual(dataframe.columns.names, [None, None])
+
+    self.assertEqual(dataframe.index.tolist(), list(range(MAX_ROWS)))
+    self.assertEqual(dataframe.index.names, [None])
+
+  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  def test_as_dataframe_w_no_data(self, mock_query_iter):
+    query_metadata = gcm.QueryMetadata(self.query)
+    dataframe = query_metadata.as_dataframe()
+
     self.assertEqual(dataframe.shape, (0, 0))
     self.assertIsNone(dataframe.columns.name)
     self.assertIsNone(dataframe.index.name)
-
-  @staticmethod
-  def _create_context(project_id='test'):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
 
   @staticmethod
   def _query_iter_get_result():
