@@ -794,21 +794,21 @@ preprocessed_eval_data_path: REQUIRED_Fill_In_Eval_Data_Path
 metadata_path: REQUIRED_Fill_In_Metadata_Path
 model_dir: REQUIRED_Fill_In_Model_Path
 output_dir: REQUIRED_Fill_In_Output_Path
-output_prediction_name: Fill_In_prediction_name_from_graph
+output_prediction_name: Fill_In_Prediction_Output
+output_score_name: Fill_In_Score_Output
 """
   IPython.get_ipython().set_next_input(content, replace=True)
 
 
 def _output_evaluate_code_template(command, is_cloud, preprocessed_eval_data_path,
                                    metadata_path, model_dir, output_dir,
-                                   output_prediction_name=None):
+                                   output_prediction_name=None, output_score_name=None):
   # output_prediction_name is only useful for generating results analysis code.
   # It is only used in classification but not regression.
   content_header = _header_code(command)
 
   content_imports = \
 """import apache_beam as beam
-from apache_beam.io import fileio
 import google.cloud.ml as ml
 import google.cloud.ml.analysis as analysis
 import google.cloud.ml.io as io
@@ -833,39 +833,39 @@ OUTPUT_DIR = '%s'
 """ % (target_name, target_type, output_dir, _pipeline_definition_code(is_cloud, 'evaluate'))
 
   content_evaluation = \
-"""eval_parameters = tfrecordio.TFRecordParameters(
-    file_path_prefix='%s',
-    file_name_suffix='',
-    shard_file=False,
-    compress_file=True)
-eval_features = pipeline | io.LoadFeatures('LoadEvalFeatures', eval_parameters)
-trained_model = pipeline | io.LoadModel('LoadModel', '%s')
-evaluations = (eval_features | ml.Evaluate(trained_model, label='Evaluate')
-    | beam.Map('ExtractEvaluationResults', extract_values))
+"""
+eval_features = (pipeline | 'ReadEval' >> io.LoadFeatures('%s'))
+trained_model = pipeline | 'LoadModel' >> io.LoadModel('%s')
+evaluations = (eval_features | 'Evaluate' >> ml.Evaluate(trained_model) |
+    beam.Map('ExtractEvaluationResults', extract_values))
 eval_data_sink = beam.io.TextFileSink(os.path.join(OUTPUT_DIR, 'eval'), shard_name_template='')
-evaluations | beam.Write('WriteEval', eval_data_sink)
+evaluations | beam.io.textio.WriteToText(os.path.join(OUTPUT_DIR, 'eval'), shard_name_template='')
 """ % (preprocessed_eval_data_path, model_dir)
 
   output_analysis = (output_prediction_name is not None and scenario != 'continuous')
   content_analysis = ''
   if output_analysis:
-    # TODO: 'score' is no longer needed when we use latest SDK.
+    if output_score_name is not None:
+      score_value = """values['%s'][values['%s']]""" % (output_score_name, output_prediction_name)
+    else:
+      score_value = '0.0'
+      
     content_analysis = \
 """def make_data_for_analysis(values):
   return {
       'target': values['target'],
       'predicted': values['%s'],
-      'score': 0.0,
+      'score': %s,
   }
 
 metadata = pipeline | io.LoadMetadata('%s')
 analysis_source = evaluations | beam.Map('CreateAnalysisSource', make_data_for_analysis)
 confusion_matrix, precision_recall, logloss = (analysis_source |
-    analysis.AnalyzeModel('Analyze Model', metadata))
+    'Analyze Model' >> analysis.AnalyzeModel(metadata))
 confusion_matrix_file = os.path.join(OUTPUT_DIR, 'analyze_cm.json')
 confusion_matrix_sink = beam.io.TextFileSink(confusion_matrix_file, shard_name_template='')
 confusion_matrix | beam.io.Write('WriteConfusionMatrix', confusion_matrix_sink)
-""" % (output_prediction_name, metadata_path)
+""" % (output_prediction_name, score_value, metadata_path)
 
   content_run = """pipeline.run()"""
 
@@ -910,14 +910,15 @@ def _evaluate(args, cell):
   config = datalab.utils.commands.parse_config(cell, env)
   datalab.utils.commands.validate_config(config,
      ['preprocessed_eval_data_path', 'metadata_path', 'model_dir', 'output_dir'],
-     optional_keys=['output_prediction_name'])
+     optional_keys=['output_prediction_name', 'output_score_name'])
   command = '%%mlalpha evaluate'
   if args['cloud']:
     command += ' --cloud'
   command += '\n' + cell
   _output_evaluate_code_template(command, args['cloud'], config['preprocessed_eval_data_path'],
       config['metadata_path'], config['model_dir'], config['output_dir'],
-      output_prediction_name=config.get('output_prediction_name', None))
+      output_prediction_name=config.get('output_prediction_name', None),
+      output_score_name=config.get('output_score_name', None))
 
 
 def _output_dataset_template(name):
