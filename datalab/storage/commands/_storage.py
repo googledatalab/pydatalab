@@ -51,9 +51,9 @@ def _extract_storage_api_response_error(message):
   return message
 
 
-@IPython.core.magic.register_line_magic
-def storage(line):
-  """Implements the storage line magic for ipython notebooks.
+@IPython.core.magic.register_line_cell_magic
+def storage(line, cell=None):
+  """Implements the storage cell magic for ipython notebooks.
 
   Args:
     line: the contents of the storage line.
@@ -130,7 +130,7 @@ for help on a specific command.
   write_parser.add_argument('-c', '--content_type', help='MIME type', default='text/plain')
   write_parser.set_defaults(func=_storage_write)
 
-  return datalab.utils.commands.handle_magic_line(line, None, parser)
+  return datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
 def _parser_exit(status=0, message=None):
