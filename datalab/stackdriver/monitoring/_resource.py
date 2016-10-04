@@ -19,7 +19,6 @@ import fnmatch
 import pandas
 
 from . import _utils
-from . import _visualization
 
 
 class ResourceDescriptors(object):
@@ -77,18 +76,3 @@ class ResourceDescriptors(object):
       data.append([resource.type, resource.display_name, labels])
 
     return pandas.DataFrame(data, columns=self._DISPLAY_HEADERS)
-
-  def table(self, pattern='*', max_rows=None):
-    """Visualize the matching descriptors as an HTML table.
-
-    Args:
-      pattern: An optional pattern to further filter the descriptors. This can
-          include Unix shell-style wildcards. E.g. ``"aws*"``, ``"*cluster*"``.
-      max_rows: The maximum number of descriptors to display. If None, display
-          all.
-
-    Returns:
-      The HTML rendering for a table of matching resource descriptors.
-    """
-    dataframe = self.as_dataframe(pattern, max_rows)
-    return _visualization.table(dataframe, show_index=False)

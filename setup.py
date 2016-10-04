@@ -30,8 +30,8 @@ setup(
     'datalab.data',
     'datalab.data.commands',
     'datalab.kernel',
-    'datalab.ml',
-    'datalab.ml.commands',
+    'datalab.mlalpha',
+    'datalab.mlalpha.commands',
     'datalab.notebook',
     'datalab.stackdriver',
     'datalab.stackdriver.commands',
@@ -95,6 +95,10 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/style.js',
         'static/visualization.js',
         'static/codemirror/mode/sql.js',
+        'static/parcoords.js',
+        'static/extern/d3.parcoords.js',
+        'static/extern/d3.parcoords.css',
+        'static/extern/sylvester.js',
       ]
   }
 )

@@ -61,7 +61,8 @@ def get_credentials():
   """
   try:
     credentials = oauth2client.client.GoogleCredentials.get_application_default()
-    credentials = credentials.create_scoped(CREDENTIAL_SCOPES)
+    if credentials.create_scoped_required():
+      credentials = credentials.create_scoped(CREDENTIAL_SCOPES)
     return credentials
   except Exception as e:
 

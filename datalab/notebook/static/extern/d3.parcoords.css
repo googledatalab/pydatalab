@@ -1,0 +1,41 @@
+.parcoords > svg, .parcoords > canvas {
+  /*font: 14px sans-serif;*/
+  position: absolute;
+}
+.parcoords > canvas {
+  pointer-events: none;
+}
+.parcoords rect.background {
+  fill: transparent;
+}
+.parcoords rect.background:hover {
+  fill: rgba(120,120,120,0.2);
+}
+.parcoords .resize rect {
+  fill: rgba(0,0,0,0.1);
+}
+.parcoords rect.extent {
+  fill: rgba(255,255,255,0.25);
+  stroke: rgba(0,0,0,0.6);
+}
+.parcoords .axis line, .parcoords .axis path {
+  fill: none;
+  stroke: #222;
+  shape-rendering: crispEdges;
+}
+.parcoords canvas {
+  opacity: 1;
+  -moz-transition: opacity 0.3s;
+  -webkit-transition: opacity 0.3s;
+  -o-transition: opacity 0.3s;
+}
+.parcoords canvas.faded {
+  opacity: 0.25;
+}
+.parcoords_grid { text-align: center; }
+.parcoords_grid .row, .header { clear: left; font-size: 16px; line-height: 18px; height: 18px; }
+.parcoords_grid .row:nth-child(odd) { background: rgba(0,0,0,0.05); }
+.parcoords_grid .row:hover { background: green; }
+.parcoords_grid .header { font-weight: bold; }
+.parcoords_grid .cell { float: left; overflow: hidden; white-space: nowrap; width: 120px; height: 18px; }
+.parcoords_grid .col-0 { width: 110px; }
