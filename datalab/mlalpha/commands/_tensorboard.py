@@ -20,9 +20,9 @@ import datalab.mlalpha
 import datalab.utils.commands
 
 
-@IPython.core.magic.register_line_magic
-def tensorboard(line):
-  """Implements the tensorboard line magic.
+@IPython.core.magic.register_line_cell_magic
+def tensorboard(line, cell=None):
+  """Implements the tensorboard cell magic.
 
   Args:
     line: the contents of the tensorboard line.
@@ -46,7 +46,7 @@ Execute tensorboard operations. Use "%tensorboard <command> -h" for help on a sp
                            required=True)
   stop_parser.set_defaults(func=_stop)
   namespace = datalab.utils.commands.notebook_environment()
-  return datalab.utils.commands.handle_magic_line(line, None, parser, namespace=namespace)
+  return datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
 
 
 def _list(args, _):

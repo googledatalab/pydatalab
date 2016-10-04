@@ -23,9 +23,9 @@ import datalab.stackdriver.monitoring as gcm
 import datalab.utils.commands
 
 
-@IPython.core.magic.register_line_magic
-def monitoring(line):
-  """Implements the monitoring line magic for ipython notebooks.
+@IPython.core.magic.register_line_cell_magic
+def monitoring(line, cell=None):
+  """Implements the monitoring cell magic for ipython notebooks.
 
   Args:
     line: the contents of the storage line.
@@ -70,7 +70,7 @@ def monitoring(line):
       help='The name of the group(s) to list; can include wildchars.')
   list_group_parser.set_defaults(func=_list_groups)
 
-  return datalab.utils.commands.handle_magic_line(line, None, parser)
+  return datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
 def _list_metric_descriptors(args, _):

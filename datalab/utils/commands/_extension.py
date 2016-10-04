@@ -25,8 +25,8 @@ from . import _commands
 from . import _utils
 
 
-@IPython.core.magic.register_line_magic
-def extension(line):
+@IPython.core.magic.register_line_cell_magic
+def extension(line, cell=None):
   """ Load an extension. Use %extension --help for more details. """
   parser = _commands.CommandParser(prog='%extension', description="""
 Load an extension into Datalab. Currently only mathjax is supported.
@@ -34,7 +34,7 @@ Load an extension into Datalab. Currently only mathjax is supported.
   subparser = parser.subcommand('mathjax', 'Enabled MathJaX support in Datalab.')
   subparser.set_defaults(ext='mathjax')
   parser.set_defaults(func=_extension)
-  return _utils.handle_magic_line(line, None, parser)
+  return _utils.handle_magic_line(line, cell, parser)
 
 
 def _extension(args, cell):
