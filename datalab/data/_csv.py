@@ -14,7 +14,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import next
-from builtins import str
+from builtins import str as newstr
 from builtins import range
 from builtins import object
 
@@ -68,10 +68,10 @@ class Csv(object):
     return lines
 
   def _is_probably_categorical(self, column):
-    if str(column.dtype) != 'object':
+    if newstr(column.dtype) != 'object':
       # only string types (represented in DataFrame as object) can potentially be categorical
       return False
-    if len(max(column, key=lambda p: len(str(p)))) > 100:
+    if len(max(column, key=lambda p: len(newstr(p)))) > 100:
       return False  # value too long to be a category
     if len(set(column)) > 100:
       return False  # too many unique values to be a category
@@ -96,7 +96,7 @@ class Csv(object):
       return pd.DataFrame(columns=headers)
     columns_size = len(next(csv.reader([lines[0]], delimiter=self._delimiter)))
     if headers is None:
-      headers = ['col' + str(e) for e in range(columns_size)]
+      headers = ['col' + newstr(e) for e in range(columns_size)]
     if len(headers) != columns_size:
       raise Exception('Number of columns in CSV do not match number of headers')
     buf = StringIO()
@@ -176,4 +176,4 @@ class Csv(object):
         datalab.utils.gcs_copy_file(f.name, target)
     else:
       with open(target, 'w') as f:
-        df.to_csv(f, header=False, index=False, delimiter=self._delimiter)
+        df.to_csv(f, header=False, index=False, sep=str(','))
