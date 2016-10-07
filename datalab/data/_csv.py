@@ -176,4 +176,4 @@ class Csv(object):
         datalab.utils.gcs_copy_file(f.name, target)
     else:
       with open(target, 'w') as f:
-        df.to_csv(f, header=False, index=False, sep=str(','))
+        df.to_csv(f, header=False, index=False, sep=str(self._delimiter))
