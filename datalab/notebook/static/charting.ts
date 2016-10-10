@@ -854,6 +854,8 @@ module Charting {
     handlePageEvent(page:number):void {
       var offset = (page == 0) ? -1 : 1;
       this.firstRow += offset * this.pageSize;
+      this.refreshData.first = this.firstRow;
+      this.refreshData.count = this.pageSize;
       this.refresh(true);
     }
   }
