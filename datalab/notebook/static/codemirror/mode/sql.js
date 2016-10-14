@@ -24,7 +24,7 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
     var keywords = wordRegexp([
       'ALL',
       'AND',
-      'ARRAY'
+      'ARRAY',
       'AS',
       'ASC',
       'BETWEEN',
@@ -33,7 +33,7 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
       'CONTAINS',
       'COUNT',
       'CROSS',
-      'DELETE'
+      'DELETE',
       'DESC',
       'DISTINCT',
       'EACH',
@@ -47,7 +47,7 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
       'IGNORE',
       'IN',
       'INNER',
-      'INSERT'
+      'INSERT',
       'IS',
       'JOIN',
       'LEFT',
@@ -72,11 +72,11 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
       'TRUE',
       'UNION',
       'UNNEST',
-      'UPDATE'
-      'VALUES'
+      'UPDATE',
+      'VALUES',
       'WHEN',
       'WHERE',
-      'WITH'
+      'WITH',
       'WITHIN',
       'XOR',
 
