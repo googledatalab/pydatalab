@@ -28,6 +28,7 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(client.project, project_id)
     self.assertEqual(client.connection.credentials, context.credentials)
+    self.assertEqual(client._connection_class.USER_AGENT, 'pydatalab/v0')
 
   @mock.patch('datalab.context._context.Context.default')
   def test_make_client_w_defaults(self, mock_context_default):
@@ -38,6 +39,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(client.project, default_context.project_id)
     self.assertEqual(
         client.connection.credentials, default_context.credentials)
+    self.assertEqual(client._connection_class.USER_AGENT, 'pydatalab/v0')
 
   @staticmethod
   def _create_context(project_id='test'):
