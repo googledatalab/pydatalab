@@ -22,7 +22,9 @@ import datalab.context
 def make_client(project_id=None, context=None):
   context = context or datalab.context.Context.default()
   project_id = project_id or context.project_id
-  return google.cloud.monitoring.Client(
+  client = google.cloud.monitoring.Client(
       project=project_id,
       credentials=context.credentials,
   )
+  client._connection_class.USER_AGENT = 'pydatalab/v0'
+  return client
