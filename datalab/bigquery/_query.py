@@ -206,7 +206,7 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def results(self, use_cache=True, dialect='legacy', billing_tier=None):
+  def results(self, use_cache=True, dialect=None, billing_tier=None):
     """Retrieves table of results for the query. May block if the query must be executed first.
 
     Args:
@@ -229,7 +229,7 @@ class Query(object):
     return self._results.results
 
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
-              compress=False, use_cache=True, dialect='legacy', billing_tier=None):
+              compress=False, use_cache=True, dialect=None, billing_tier=None):
     """Exports the query results to GCS.
 
     Args:
@@ -262,7 +262,7 @@ class Query(object):
 
   @datalab.utils.async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
-                    compress=False, use_cache=True, dialect='legacy', billing_tier=None):
+                    compress=False, use_cache=True, dialect=None, billing_tier=None):
     """Exports the query results to GCS. Returns a Job immediately.
 
     Note that there are two jobs that may need to be run sequentially, one to run the query,
@@ -300,7 +300,7 @@ class Query(object):
                         csv_header=csv_header, use_cache=use_cache, compress=compress,
                         dialect=dialect, billing_tier=billing_tier)
 
-  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, dialect='legacy',
+  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, dialect=None,
                    billing_tier=None):
     """ Exports the query results to a Pandas dataframe.
 
@@ -323,7 +323,7 @@ class Query(object):
         .to_dataframe(start_row=start_row, max_rows=max_rows)
 
   def to_file(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
-              dialect='legacy', billing_tier=None):
+              dialect=None, billing_tier=None):
     """Save the results to a local file in CSV format.
 
     Args:
@@ -351,7 +351,7 @@ class Query(object):
 
   @datalab.utils.async_method
   def to_file_async(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
-                    dialect='legacy', billing_tier=None):
+                    dialect=None, billing_tier=None):
     """Save the results to a local file in CSV format. Returns a Job immediately.
 
     Args:
@@ -376,7 +376,7 @@ class Query(object):
     return self.to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header,
                         use_cache=use_cache, dialect=dialect, billing_tier=billing_tier)
 
-  def sample(self, count=5, fields=None, sampling=None, use_cache=True, dialect='legacy',
+  def sample(self, count=5, fields=None, sampling=None, use_cache=True, dialect=None,
              billing_tier=None):
     """Retrieves a sampling of rows for the query.
 
@@ -405,7 +405,7 @@ class Query(object):
                                                                          dialect=dialect,
                                                                          billing_tier=billing_tier)
 
-  def execute_dry_run(self, dialect='legacy', billing_tier=None):
+  def execute_dry_run(self, dialect=None, billing_tier=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
 
     Args:
@@ -431,7 +431,7 @@ class Query(object):
     return query_result['statistics']['query']
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True,
-                    priority='interactive', allow_large_results=False, dialect='legacy',
+                    priority='interactive', allow_large_results=False, dialect=None,
                     billing_tier=None):
     """ Initiate the query and return a QueryJob.
 
@@ -493,7 +493,7 @@ class Query(object):
     return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
-              allow_large_results=False, dialect='legacy', billing_tier=None):
+              allow_large_results=False, dialect=None, billing_tier=None):
     """ Initiate the query, blocking until complete and then return the results.
 
     Args:

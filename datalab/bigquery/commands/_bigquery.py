@@ -76,7 +76,7 @@ def _create_sample_subparser(parser):
   group.add_argument('-t', '--table', help='the name of the table to sample')
   group.add_argument('-v', '--view', help='the name of the view to sample')
   sample_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'], default='legacy')
+                             choices=['legacy', 'standard'])
   sample_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   sample_parser.add_argument('-c', '--count', type=int, default=10,
                              help='The number of rows to limit to, if sampling')
@@ -108,7 +108,7 @@ def _create_dry_run_subparser(parser):
   dry_run_parser.add_argument('-q', '--query',
                               help='The name of the query to be dry run')
   dry_run_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'], default='legacy')
+                             choices=['legacy', 'standard'])
   dry_run_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   dry_run_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
@@ -123,7 +123,7 @@ def _create_execute_subparser(parser):
   execute_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                               action='store_true')
   execute_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'], default='legacy')
+                             choices=['legacy', 'standard'])
   execute_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   execute_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                               choices=['create', 'append', 'overwrite'])
@@ -145,7 +145,7 @@ def _create_pipeline_subparser(parser):
   pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                                action='store_true')
   pipeline_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'], default='legacy')
+                             choices=['legacy', 'standard'])
   pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   pipeline_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                                choices=['create', 'append', 'overwrite'])

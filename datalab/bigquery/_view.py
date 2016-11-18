@@ -109,7 +109,7 @@ class View(object):
       return self
     raise Exception("View %s could not be created as it already exists" % str(self))
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect='legacy',
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect=None,
              billing_tier=None):
     """Retrieves a sampling of data from the view.
 
@@ -163,7 +163,7 @@ class View(object):
       self._table._info['view'] = {'query': query}
     self._table.update(friendly_name=friendly_name, description=description)
 
-  def results(self, use_cache=True, dialect='legacy', billing_tier=None):
+  def results(self, use_cache=True, dialect=None, billing_tier=None):
     """Materialize the view synchronously.
 
     If you require more control over the execution, use execute() or execute_async().
@@ -187,7 +187,7 @@ class View(object):
                                          billing_tier=billing_tier)
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-                    allow_large_results=False, dialect='legacy', billing_tier=None):
+                    allow_large_results=False, dialect=None, billing_tier=None):
     """Materialize the View asynchronously.
 
     Args:
@@ -219,7 +219,7 @@ class View(object):
                                                dialect=dialect, billing_tier=billing_tier)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-              allow_large_results=False, dialect='legacy', billing_tier=None):
+              allow_large_results=False, dialect=None, billing_tier=None):
     """Materialize the View synchronously.
 
     Args:

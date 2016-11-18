@@ -237,7 +237,7 @@ class Table(object):
       return self
     raise Exception("Table %s could not be created as it already exists" % self._full_name)
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect='legacy',
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect=None,
              billing_tier=None):
     """Retrieves a sampling of data from the table.
 
