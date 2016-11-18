@@ -140,7 +140,8 @@ class DataSet(object):
       self._raw_dataframes[name] = pd.read_csv(local_file,
                                                names=type(self._feature_set).csv_columns,
                                                dtype=schema,
-                                               delimiter=self._delimiter)
+                                               delimiter=self._delimiter,
+                                               skipinitialspace=True)
       if data_path.startswith('gs://'):
         os.remove(local_file)
     self._concatenated_raw_data_frame = pd.concat(self._raw_dataframes.values())
@@ -385,7 +386,8 @@ class DataSet(object):
           will be used.
     """
     self.to_dataframes()
-    if columns is not None and self._target_name not in columns:
+    is_classification = (str(self._concatenated_data_frame[self._target_name].dtype) == 'category')
+    if columns is not None and self._target_name not in columns and is_classification:
       columns.append(self._target_name)
     if names is None:
       names = self._dataframes.keys()
@@ -397,18 +399,17 @@ class DataSet(object):
       if columns is not None:
         df_correlation = df_correlation[columns]
       for k in df_correlation.columns:
-        if k == self._target_name:
-          continue
-        elif str(df_correlation[k].dtype) == 'object' or str(df_correlation[k].dtype) == 'category':
-          # pairplot only works with numeric columns
-          del df_correlation[k]
+        if str(df_correlation[k].dtype) == 'object' or str(df_correlation[k].dtype) == 'category':
+          if k != self._target_name:
+            # pairplot only works with numeric columns
+            del df_correlation[k]
         else:
           # pairplot does not deal with missing values well. For now fillna(0).
           df_correlation[k] = df_correlation[k].fillna(0)
-      # pairplot doesn't like categories with all numbers
-      df_correlation[self._target_name] = map(lambda x: 'target ' + str(x), df_correlation[self._target_name])
       sns.set(style="ticks", color_codes=True)
-      if str(self._concatenated_data_frame[self._target_name].dtype) == 'category':
+      if is_classification:
+        # pairplot doesn't like categories with all numbers
+        df_correlation[self._target_name] = map(lambda x: 'target ' + str(x), df_correlation[self._target_name])
         sns.pairplot(df_correlation, hue=self._target_name, dropna=True)
       else:
         sns.pairplot(df_correlation, dropna=True)
