@@ -78,7 +78,7 @@ with the specified name.
 """)
   sql_parser.add_argument('-m', '--module', help='The name for this SQL module')
   sql_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'], default='legacy')
+                             choices=['legacy', 'standard'])
   sql_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
   return sql_parser

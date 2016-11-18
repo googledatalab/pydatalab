@@ -17,6 +17,7 @@ from past.builtins import basestring
 from builtins import object
 
 import datalab.utils
+import datalab.bigquery
 
 
 class Api(object):
@@ -124,7 +125,7 @@ class Api(object):
 
   def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False,
                         overwrite=False, dry_run=False, use_cache=True, batch=True,
-                        allow_large_results=False, table_definitions=None, dialect='legacy',
+                        allow_large_results=False, table_definitions=None, dialect=None,
                         billing_tier=None):
     """Issues a request to insert a query job.
 
@@ -160,6 +161,10 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._JOBS_PATH % (self._project_id, ''))
+
+    if dialect is None:
+        dialect = datalab.bigquery.Dialect.default().bq_dialect
+
     data = {
         'kind': 'bigquery#job',
         'configuration': {
