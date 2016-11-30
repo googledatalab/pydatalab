@@ -93,7 +93,7 @@ class Metadata(object):
     """
     with ml.util._file.open_local_or_gcs(self._metadata_path, 'r') as f:
       metadata = yaml.load(f)
-    if 'csv' not in metadata:
+    if 'csv' not in metadata or 'headers' not in metadata['csv']:
       return None
     return metadata['csv']['headers']
   
