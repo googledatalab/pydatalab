@@ -89,6 +89,9 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'pyyaml==3.11',
     'requests==2.9.1',
     'ipykernel==4.4.1',
+    'psutil==4.3.0',
+    'plotly==1.12.5',
+    'seaborn==0.7.0',
   ],
   package_data={
     'datalab.notebook': [
