@@ -12,12 +12,11 @@
 
 
 import google.cloud.ml.features as features
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import pandas_profiling
-from plotly.graph_objs import Bar, Figure, Histogram, Layout, Scatter, Scatter3d
+from plotly.graph_objs import Histogram, Layout, Scatter, Scatter3d
 from plotly.offline import iplot
 from plotly import tools
 import seaborn as sns
@@ -377,6 +376,7 @@ class DataSet(object):
     return self._dataframes
 
   def plot(self, names=None, columns=None):
+    import matplotlib.pyplot as plt
     """Plot correlation graphs on the specified columns, in n*n grids.
 
     Args:

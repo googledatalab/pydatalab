@@ -84,3 +84,26 @@ class Metadata(object):
       if feature['columns'][0] == target_column_name:
         return feature_name, scenario
     raise Exception('Invalid metadata. No target found in features.')
+
+  def get_csv_headers(self):
+    """Get CSV headers from metadata.
+
+    Returns:
+      List of CSV headers if the data format is CSV, else None.
+    """
+    with ml.util._file.open_local_or_gcs(self._metadata_path, 'r') as f:
+      metadata = yaml.load(f)
+    if 'csv' not in metadata:
+      return None
+    return metadata['csv']['headers']
+  
+  def get_numeric_columns(self):
+    """Get names of numeric feature columns.
+
+    Returns:
+      List of numeric feature columns.
+    """
+    with ml.util._file.open_local_or_gcs(self._metadata_path, 'r') as f:
+      metadata = yaml.load(f)
+    numeric_columns = [k for k,v in metadata['columns'].iteritems() if v['type'] == 'numeric']
+    return numeric_columns
