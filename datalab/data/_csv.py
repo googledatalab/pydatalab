@@ -23,7 +23,7 @@ import csv
 import os
 import pandas as pd
 import random
-from sklearn.feature_extraction.text import CountVectorizer
+
 try:
     from StringIO import StringIO
 except ImportError:

@@ -12,9 +12,6 @@
 
 import datetime
 from googleapiclient import discovery
-import json
-import google.cloud.ml as ml
-import os
 
 import datalab.context
 

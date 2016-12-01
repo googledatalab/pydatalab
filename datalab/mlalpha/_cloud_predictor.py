@@ -12,16 +12,10 @@
 
 
 from googleapiclient import discovery
-import json
-from numbers import Number
 import pandas as pd
-
-import google.cloud.ml as ml
 
 import datalab.context
 import datalab.utils
-
-from . import _metadata
 
 
 # TODO(qimingj) Remove once the API is public since it will no longer be needed
