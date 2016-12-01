@@ -15,8 +15,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import os
-
 import datalab.utils
 
 from . import _api

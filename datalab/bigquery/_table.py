@@ -22,7 +22,6 @@ import calendar
 import codecs
 import csv
 import datetime
-import math
 import pandas
 import time
 import traceback

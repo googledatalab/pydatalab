@@ -17,7 +17,7 @@ import numpy as np
 import os
 import pandas as pd
 import pandas_profiling
-from plotly.graph_objs import Bar, Figure, Histogram, Layout, Scatter, Scatter3d
+from plotly.graph_objs import Histogram, Scatter, Scatter3d
 from plotly.offline import iplot
 from plotly import tools
 import seaborn as sns

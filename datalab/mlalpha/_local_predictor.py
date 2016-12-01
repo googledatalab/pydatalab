@@ -17,7 +17,6 @@ from numbers import Number
 import numpy
 import os
 import pandas as pd
-import yaml
 
 import google.cloud.ml as ml
 
