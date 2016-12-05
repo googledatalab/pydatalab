@@ -409,6 +409,7 @@ module Charting {
     hasIPython:boolean;
     cellElement:HTMLElement;
     totalRows:number;
+    outputLocation:string;
 
     constructor(protected driver:ChartLibraryDriver,
                 protected dom:Element,
@@ -420,6 +421,7 @@ module Charting {
       this.totalRows = totalRows || -1; // Total rows in all (server-side) data.
       this.dataCache = {};
       this.optionsCache = {};
+      this.outputLocation = '';
       this.hasIPython = false;
       try {
         if (IPython) {
@@ -761,6 +763,11 @@ module Charting {
             },
             output_type: 'display_data'
           };
+
+          if (this.outputLocation)
+          {
+            datalab.session.execute('%_set_chart_output ' + this.outputLocation + ' ' + encoding);
+          }
           cell.output_area.outputs.push(static_output);
         }
       }
@@ -771,6 +778,17 @@ module Charting {
     private configureRefresh(refreshInterval:number):void {
       if (refreshInterval > 0 && document.getElementById(this.dom.id)) {
         window.setTimeout(this.getRefreshHandler(false), 1000 * refreshInterval);
+      }
+    }
+
+    public setOutputLocation(outputLocation:string):void {
+      if (outputLocation && outputLocation.length > 0)
+      {
+        this.outputLocation = outputLocation;
+      }
+      else
+      {
+        this.outputLocation = '';
       }
     }
 
@@ -895,7 +913,8 @@ module Charting {
                    options:any,
                    refreshData:any,
                    refreshInterval:number,
-                   totalRows:number):void {
+                   totalRows:number,
+                   outputLocation:string):void {
     require(["base/js/namespace"], function(Jupyter: any) {
       var url = "datalab/";
       require(driver.requires(url, chartStyle), function (/* ... */) {
@@ -909,6 +928,7 @@ module Charting {
           chart = new PagedTable(driver, dom, controlIds, options, refreshData, refreshInterval, totalRows);
         } else {
           chart = new Chart(driver, dom, controlIds, options, refreshData, refreshInterval, totalRows);
+          chart.setOutputLocation(outputLocation);
         }
         Chart.convertDates(data);
         chart.draw(data, options);
@@ -926,7 +946,8 @@ module Charting {
                          options:any,
                          refreshData:any,
                          refreshInterval:number,
-                         totalRows:number):void {
+                         totalRows:number,
+                         outputLocation:string):void {
 
     // If this is HTML from nbconvert we can't support paging so add some text making this clear.
     if (chartStyle == 'paged_table' && document.hasOwnProperty('_in_nbconverted')) {
@@ -956,12 +977,12 @@ module Charting {
     // drawing to an event handler for when the kernel is ready.
     if (IPython.notebook.kernel.is_connected()) {
       _render(driver, dom, chartStyle, controlIds, data, options, refreshData, refreshInterval,
-          totalRows)
+          totalRows, outputLocation)
     } else {
       // If the kernel is not connected, wait for the event.
       events.on('kernel_ready.Kernel', function (e:any) {
         _render(driver, dom, chartStyle, controlIds, data, options, refreshData, refreshInterval,
-            totalRows)
+            totalRows, outputLocation)
       });
     }
   }

@@ -21,8 +21,32 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
+import datalab.utils
+
 from . import _commands
 from . import _utils
+
+
+@IPython.core.magic.register_line_magic
+def _set_chart_output(line):
+  """ Magic used to write chart data as either python variable in base64 encoded format or PNG.
+
+  %_set_chart_image <output_location> <encoded_chart>
+  """
+  try:
+    args = line.strip().split()
+    output_location = args[0]
+    encoded_chart = args[1]
+    # if the output location appears to be a path then write the image to a file
+    # otherwise store the encoded chart image in a python variable
+    if '\\' in output_location or '.' in output_location:
+        with open(output_location, 'w') as f:
+            f.write(encoded_chart.decode('base64'))
+    else:
+        if output_location is not None and encoded_chart is not None:
+            IPython.get_ipython().push({output_location: encoded_chart})
+  except Exception as e:
+    datalab.utils.print_exception_with_last_stack(e)
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -44,6 +68,10 @@ using YAML or JSON.
     subparser.add_argument('-d', '--data',
                            help='The name of the variable referencing the Table or Query to chart',
                            required=True)
+    subparser.add_argument('-o', '--output',
+                           help='The path where the chart should be saved in PNG ' +
+                                'format. Alternatively, specify a python variable where the ' +
+                                'base64 encoded chart image should be stored.')
     subparser.set_defaults(chart=chart_type)
 
   parser.set_defaults(func=_chart_cell)
@@ -61,4 +89,5 @@ def _chart_cell(args, cell):
   chart_type = args['chart']
   fields = args['fields'] if args['fields'] else '*'
   return IPython.core.display.HTML(_utils.chart_html('gcharts', chart_type, source=source,
-                                                     chart_options=chart_options, fields=fields))
+                                                     chart_options=chart_options, fields=fields,
+                                                     output_location=args['output']))
