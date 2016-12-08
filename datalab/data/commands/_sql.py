@@ -300,26 +300,47 @@ def _split_cell(cell, module):
   name = None
   define_wild_re = re.compile('^DEFINE\s+.*$', re.IGNORECASE)
   define_re = re.compile('^DEFINE\s+QUERY\s+([A-Z]\w*)\s*?(.*)$', re.IGNORECASE)
-  select_re = re.compile('^SELECT\s*.*$', re.IGNORECASE)
+  create_select_or_with_re = re.compile('^(CREATE|WITH|SELECT)\s*.*$', re.IGNORECASE)
   standard_sql_re = re.compile('^(CREATE|WITH|INSERT|DELETE|UPDATE)\s*.*$', re.IGNORECASE)
   # TODO(gram): a potential issue with this code is if we have leading Python code followed
   # by a SQL-style comment before we see SELECT/DEFINE. When switching to the tokenizer see
   # if we can address this.
   for i, line in enumerate(lines):
     define_match = define_re.match(line)
-    select_match = select_re.match(line)
+    create_select_or_with_match = create_select_or_with_re.match(line)
     standard_sql_match = standard_sql_re.match(line)
 
     if i:
       prior_content = ''.join(lines[:i]).strip()
-      if select_match:
-        # Avoid matching if previous token was '(' or if Standard SQL is found
-        # TODO: handle the possibility of comments immediately preceding SELECT
-        select_match = len(prior_content) == 0 or (prior_content[-1] != '(' and not standard_sql_re.match(prior_content))
-      if standard_sql_match:
-        standard_sql_match = len(prior_content) == 0 or not standard_sql_re.match(prior_content)
 
-    if define_match or select_match or standard_sql_match:
+      if create_select_or_with_match:
+        # The following code is used to determine whether the CREATE|SELECT|WITH statement that
+        # was found should be considered as a match (new query) or ignored because it is actually
+        # part of a previous query. There are 2 signatures below which depend on whether
+        # standard or legacy SQL is found. If a matching signature is found, we will consider
+        # the CREATE|SELECT|WITH statement to be matched (or considered as a new query).
+        # TODO: handle the possibility of comments immediately preceding SELECT
+
+        standard_sql_found = standard_sql_re.match(prior_content)
+
+        first_query = len(prior_content) == 0
+
+        if not first_query:
+          # Signature Type 1: For Legacy SQL. Keep 'CREATE|SELECT|WITH' match if previous
+          # character is not '(' . We have a separate check for Standard SQL below in signature2
+          signature1 = prior_content[-1] != '(' and not standard_sql_found
+
+          # Signature Type 2: For Standard SQL. Keep 'SELECT' match if prior character
+          # is not ')' or '(' . In Standard SQL, the 'SELECT' that follows a 'WITH'
+          # clause should not be considered as a new 'SELECT' statement
+          signature2 = prior_content[-1] != '(' and prior_content[-1] != ')' and standard_sql_found
+
+          create_select_or_with_match = first_query or signature1 or signature2
+
+        if standard_sql_match:
+          standard_sql_match = len(prior_content) == 0 or not standard_sql_found
+
+    if define_match or create_select_or_with_match or standard_sql_match:
       # If this is the first query, get the preceding Python code.
       if code is None:
         code = ('\n'.join(lines[:i])).strip()
@@ -329,8 +350,10 @@ def _split_cell(cell, module):
 
         # This is not the first query, so gather the previous query text.
         query = '\n'.join([line for line in lines[last_def:i] if len(line)]).strip()
-        if select_match and name != datalab.data._utils._SQL_MODULE_MAIN and len(query) == 0:
-          # Avoid DEFINE query name\nSELECT ... being seen as an empty DEFINE followed by SELECT
+        if create_select_or_with_match and name != datalab.data._utils._SQL_MODULE_MAIN \
+              and len(query) == 0:
+          # Avoid DEFINE query name\nCREATE|SELECT|WITH ... being seen as an empty
+          # DEFINE followed by CREATE|SELECT|WITH
           continue
 
         # Save the query

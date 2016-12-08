@@ -99,7 +99,6 @@ class TestCases(unittest.TestCase):
     m = imp.new_module('m')
     query = datalab.data.commands._sql._split_cell('DEFINE QUERY q1\nSELECT 3 AS x', m)
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
-    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
     self.assertEquals('SELECT 3 AS x', m.q1.sql)
     self.assertNotIn(TestCases._SQL_MODULE_MAIN, m.__dict__)
     self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
@@ -110,6 +109,26 @@ class TestCases(unittest.TestCase):
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
     self.assertEquals('SELECT 3 AS x', m.q1.sql)
+    self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
+    self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
+
+    m = imp.new_module('m')
+    query = datalab.data.commands._sql._split_cell('DEFINE QUERY q1\n' +
+                                                   'WITH tableX AS (SELECT 3 AS X)\n' +
+                                                   'SELECT * FROM tableX', m)
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
+    self.assertEquals('WITH tableX AS (SELECT 3 AS X)\nSELECT * FROM tableX', m.q1.sql)
+    self.assertNotIn(TestCases._SQL_MODULE_MAIN, m.__dict__)
+    self.assertEquals('WITH tableX AS (SELECT 3 AS X)\nSELECT * FROM tableX',
+                      m.__dict__[TestCases._SQL_MODULE_LAST].sql)
+
+    m = imp.new_module('m')
+    query = datalab.data.commands._sql._split_cell('DEFINE QUERY q1\n' +
+                                                   'WITH tableX AS (SELECT 3 AS X)\n' +
+                                                   'SELECT * FROM tableX\nSELECT * FROM $q1', m)
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
+    self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
+    self.assertEquals('WITH tableX AS (SELECT 3 AS X)\nSELECT * FROM tableX', m.q1.sql)
     self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
     self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
