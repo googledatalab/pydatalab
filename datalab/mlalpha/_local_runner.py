@@ -15,7 +15,6 @@ import io
 import json
 import os
 import psutil
-import socket
 import subprocess
 import tempfile
 import time

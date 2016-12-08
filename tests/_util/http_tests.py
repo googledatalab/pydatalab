@@ -18,7 +18,6 @@ import unittest
 # The httplib2 import is implicitly used when mocking its functionality.
 # pylint: disable=unused-import
 from datalab.utils._http import Http
-from datalab.utils._http import httplib2
 
 
 class TestCases(unittest.TestCase):

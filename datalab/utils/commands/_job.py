@@ -25,7 +25,6 @@ except ImportError:
 
 import datalab.utils
 
-from . import _commands
 from . import _html
 
 
