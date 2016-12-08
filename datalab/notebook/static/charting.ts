@@ -807,9 +807,9 @@ module Charting {
         this.base_options.showRowNumber = true;
       }
       this.base_options.sort = 'disable';
-      var _this = this;
+      var __this = this;
       this.driver.addPageChangedHandler(function (page:number) {
-        _this.handlePageEvent(page);
+        __this.handlePageEvent(page);
       });
     }
 
