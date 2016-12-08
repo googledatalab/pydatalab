@@ -157,6 +157,18 @@ Execute various ml-related operations. Use "%%mlalpha <command> -h" for help on 
   package_parser.add_argument('--name', help='The name of the package.', required=True)
   package_parser.add_argument('--output', help='the output dir of the package.', required=True)
   package_parser.set_defaults(func=_package)
+
+  package_parser = parser.subcommand('feature-slice-view','View results of a ' +
+                                     'FeatureSlicingPipeline, some eval metrics grouped by ' +
+                                     'specified feature column values')
+  package_parser.add_argument('--file', help='The results file from FeatureSlicingPipeline',
+                              required=True)
+  package_parser.add_argument('--feature',
+                              help='Which feature to view. The feature must be specified ' +
+                                   'in the FeatureSlicingPipeline. If not specified, all ' +
+                                   'features will be listed.')
+  package_parser.set_defaults(func=_feature_slice_view)
+
   namespace = datalab.utils.commands.notebook_environment()
   return datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
 
@@ -971,3 +983,25 @@ def _package(args, cell):
   google.cloud.ml.util._file.copy_file(package_path, dest)
   os.remove(package_path)
   print 'Package created at %s.' % dest
+
+
+def _feature_slice_view(args, cell):
+  HTML_TEMPLATE = """<link rel="import" href="/nbextensions/gcpdatalab/extern/lantern-browser.html" >
+<lantern-browser id="%s"></lantern-browser>
+<script>
+var browser = document.querySelector('#%s');
+browser.metrics = %s;
+browser.data = %s;
+browser.sourceType = 'colab';
+browser.weightedExamplesColumn = 'totalWeightedExamples';
+browser.calibrationPlotUriFn = function(s) { return '/' + s; }
+</script>"""
+  with open(args['file']) as f:
+    data = map(json.loads, f)
+  if args['feature']:
+    data = [e for e in data if e['feature'].split(':')[0] == args['feature']]
+  metrics_str = str(map(str, data[0]['metricValues'].keys()))
+  data_str = str([{str(k): json.dumps(v) for k,v in elem.iteritems()} for elem in data])
+  html_id = 'l' + datalab.utils.commands.Html.next_id()
+  html = HTML_TEMPLATE % (html_id, html_id, metrics_str, data_str)
+  return IPython.core.display.HTML(html)
