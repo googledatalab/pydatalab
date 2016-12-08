@@ -102,6 +102,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/extern/d3.parcoords.js',
         'static/extern/d3.parcoords.css',
         'static/extern/sylvester.js',
+        'static/extern/lantern-browser.html',
       ]
   }
 )
