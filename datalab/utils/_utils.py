@@ -21,7 +21,9 @@ try:
 except ImportError:
     import httplib
 
+from apache_beam.io import gcsio
 import pytz
+import shutil
 import socket
 import traceback
 import types
@@ -110,3 +112,15 @@ def is_http_running_on(port):
     return True
   except Exception as e:
     return False
+
+
+def gcs_copy_file(source, dest):
+  """ Copy file from source to destination. The paths can be GCS or local.
+
+  Args:
+    source: the source file path.
+    dest: the destination file path.
+  """
+  with gcsio.GcsIO().open(source, 'r') if source.startswith('gs://') else open(source, 'r') as s:
+    with gcsio.GcsIO().open(dest, 'w') if dest.startswith('gs://') else open(dest, 'w') as d:
+      shutil.copyfileobj(s, d)
