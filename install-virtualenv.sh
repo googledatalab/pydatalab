@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 # Copyright 2016 Google Inc. All rights reserved.
 #
