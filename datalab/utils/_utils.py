@@ -21,9 +21,9 @@ try:
 except ImportError:
     import httplib
 
-from apache_beam.io import gcsio
 import pytz
 import shutil
+import subprocess
 import socket
 import traceback
 import types
@@ -121,6 +121,4 @@ def gcs_copy_file(source, dest):
     source: the source file path.
     dest: the destination file path.
   """
-  with gcsio.GcsIO().open(source, 'r') if source.startswith('gs://') else open(source, 'r') as s:
-    with gcsio.GcsIO().open(dest, 'w') if dest.startswith('gs://') else open(dest, 'w') as d:
-      shutil.copyfileobj(s, d)
+  subprocess.check_call(['gsutil', '-q', 'cp', source, dest])

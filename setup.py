@@ -82,7 +82,6 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'scikit-learn==0.17.1',
     'scipy==0.18.0',
     'ipykernel==4.4.1',
-    'google-cloud-dataflow>=0.4.2',
   ],
   package_data={
     'datalab.notebook': [
