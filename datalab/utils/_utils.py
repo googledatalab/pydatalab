@@ -22,7 +22,6 @@ except ImportError:
     import httplib
 
 import pytz
-import shutil
 import subprocess
 import socket
 import traceback
