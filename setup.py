@@ -72,7 +72,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'futures==3.0.5',
     'google-cloud==0.19.0',
     'httplib2==0.9.2',
-    'oauth2client==2.0.2',
+    'oauth2client==2.2.0',
     'pandas>=0.17.1',
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
