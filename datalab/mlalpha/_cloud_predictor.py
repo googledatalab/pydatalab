@@ -81,6 +81,7 @@ class CloudPredictor(object):
 
     request = self._api.projects().predict(body={'instances': data},
                                            name=self._full_version_name)
+    request.headers['user-agent'] = 'GoogleCloudDataLab/1.0'
     result = request.execute()
     if 'predictions' not in result:
       raise Exception('Invalid response from service. Cannot find "predictions" in response.')
