@@ -1,0 +1,27 @@
+import subprocess, pkgutil, importlib, sys
+
+# ipython magics cannot be captured to variables, so redirect all stdout to output file
+sys.stdout = open('datalab.magics.rst', 'w')
+IGNORED_MAGICS = ['mlalpha']
+
+# import submodules
+submodules = [s for _,s,_ in pkgutil.iter_modules(['../datalab'])]
+
+for m in submodules:
+  name = 'datalab.' + m + '.commands'
+  try:
+    importlib.import_module(name)
+  except:
+    sys.stderr.write('WARNING, could not find module ' + name + '. Ignoring..\n')
+
+magic_regex = "grep -rPzoh '(?s)^@IPython\.core\.magic\.register_line_cell_magic.def \K([^\(]+)' ../datalab/"
+magics = subprocess.check_output(magic_regex, shell=True)
+
+print 'datalab.magics'
+print '================='
+print
+
+for m in magics.split():
+  print '.. attribute:: ' + m
+  get_ipython().magic(m + ' -h')
+  print
