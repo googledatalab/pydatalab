@@ -60,3 +60,5 @@ You will also need to set the project ID to use; either set a `PROJECT_ID`
 environment variable to the project name, or call `set_datalab_project_id(name)`
 from within your notebook.
 
+## Documentation
+You can read the Sphinx generated docs at: [http://googledatalab.github.io/pydatalab/](http://googledatalab.github.io/pydatalab/)
