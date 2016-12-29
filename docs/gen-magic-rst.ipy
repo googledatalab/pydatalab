@@ -2,7 +2,10 @@ import subprocess, pkgutil, importlib, sys
 
 # ipython magics cannot be captured to variables, so redirect all stdout to output file
 sys.stdout = open('datalab.magics.rst', 'w')
-IGNORED_MAGICS = ['mlalpha']
+
+# ignore mlalpha and tensorboard for now because of their tensorflow dependency
+# until tensorboard is pip installable and can be listed as a pydatalab dependency
+IGNORED_MAGICS = ['mlalpha', 'tensorboard']
 
 # import submodules
 submodules = [s for _,s,_ in pkgutil.iter_modules(['../datalab'])]
@@ -14,7 +17,7 @@ for m in submodules:
   except:
     sys.stderr.write('WARNING, could not find module ' + name + '. Ignoring..\n')
 
-magic_regex = "grep -rPzoh '(?s)^@IPython\.core\.magic\.register_line_cell_magic.def \K([^\(]+)' ../datalab/"
+magic_regex = "find ../datalab -name '*.py' -exec perl -e '$f=join(\"\",<>); print \"$1\n\" if $f=~/register_line_cell_magic\ndef ([^\(]+)/m' {} \;"
 magics = subprocess.check_output(magic_regex, shell=True)
 
 print 'datalab.magics'
@@ -22,6 +25,9 @@ print '================='
 print
 
 for m in magics.split():
-  print '.. attribute:: ' + m
-  get_ipython().magic(m + ' -h')
-  print
+  if m in IGNORED_MAGICS:
+    sys.stderr.write('Ignoring magic ' + m + '\n')
+  else:
+    print '.. attribute:: ' + m
+    get_ipython().magic(m + ' -h')
+    print
