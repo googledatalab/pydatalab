@@ -946,7 +946,8 @@ def _table_viewer(table, rows_per_page=25, fields=None):
             }},
             {{source_index: {source_index}, fields: '{fields}'}},
             0,
-            {total_rows});
+            {total_rows},
+            '');
         }}
       );
     </script>

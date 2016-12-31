@@ -545,7 +545,8 @@ def parse_control_options(controls, variable_defaults=None):
 
 
 def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', refresh_interval=0,
-               refresh_data=None, control_defaults=None, control_ids=None, schema=None):
+               refresh_data=None, control_defaults={}, control_ids=[], schema=None,
+               output_location=''):
   """ Return HTML for a chart.
 
   Args:
@@ -566,6 +567,8 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
         including this one.
     control_ids: the DIV IDs for controls that are shared across charts including this one.
     schema: an optional schema for the data; if not supplied one will be inferred.
+    output_location: optionally output the chart image to either a PNG file or python variable
+        which contains the chart output as a base64 encoded string.
 
   Returns:
     A string containing the HTML for the chart.
@@ -573,10 +576,6 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
   """
   div_id = _html.Html.next_id()
   controls_html = ''
-  if control_defaults is None:
-    control_defaults = {}
-  if control_ids is None:
-    control_ids = []
   if chart_options is not None and 'variables' in chart_options:
     controls = chart_options['variables']
     del chart_options['variables']  # Just to make sure GCharts doesn't see them.
@@ -634,7 +633,8 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
               {options},
               {refresh_data},
               {refresh_interval},
-              {total_rows});
+              {total_rows},
+              '{output_location}');
           }}
         );
     </script>
@@ -661,7 +661,8 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
               refresh_data=json.dumps(refresh_data, cls=datalab.utils.JSONEncoder),
               refresh_interval=refresh_interval,
               control_ids=str(control_ids),
-              total_rows=total_count)
+              total_rows=total_count,
+              output_location=output_location)
 
 
 def profile_df(df):

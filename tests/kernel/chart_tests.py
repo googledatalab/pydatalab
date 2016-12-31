@@ -36,11 +36,13 @@ class TestCases(unittest.TestCase):
 
   def test_chart_cell(self):
     t = [{'country': 'US', 'quantity': 100}, {'country': 'ZA', 'quantity': 50}]
-    chart = datalab.utils.commands._chart._chart_cell({'chart': 'geo', 'data': t, 'fields': None}, '')
+    chart = datalab.utils.commands._chart._chart_cell({'chart': 'geo', 'data': t, 'fields': None,
+                                                       'output': 'chart.png'}, '')
     self.assertTrue(chart.find('charts.render(') > 0)
     self.assertTrue(chart.find('\'geo\'') > 0)
     self.assertTrue(chart.find('"fields": "*"') > 0)
-    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0 or 
+    self.assertTrue(chart.find('chart.png') > 0)
+    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0 or
                     chart.find('{"c": [{"v": 100}, {"v": "US"}]}') > 0)
     self.assertTrue(chart.find('{"c": [{"v": "ZA"}, {"v": 50}]}') > 0 or
                     chart.find('{"c": [{"v": 50}, {"v": "ZA"}]}') > 0)
