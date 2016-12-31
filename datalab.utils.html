@@ -1,0 +1,708 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.utils package &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="datalab.magics" href="datalab.magics.html"/>
+        <link rel="prev" title="datalab.storage package" href="datalab.storage.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.mlalpha.html">datalab.mlalpha package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-datalab.utils">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>datalab.utils package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/datalab.utils.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="datalab-utils-package">
+<h1>datalab.utils package<a class="headerlink" href="#datalab-utils-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-datalab.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-datalab.utils" title="Permalink to this headline">¶</a></h2>
+<p>Google Cloud Platform library - Internal Helpers.</p>
+<dl class="class">
+<dt id="datalab.utils.async">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">async</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_async.html#async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for async_function/async_method. Creates a wrapped function/method that will
+run the original function/method on a thread pool worker thread and return a Job instance
+for monitoring the status of the thread.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.async_method">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">async_method</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_async.html#async_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.async_method" title="Permalink to this definition">¶</a></dt>
+<dd><p>This decorator can be applied to any class instance method that makes blocking calls to create
+a modified version that creates a Job and returns immediately; the original method will be
+called on a thread pool worker thread.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.async_function">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">async_function</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_async.html#async_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.async_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>This decorator can be applied to any static function that makes blocking calls to create
+a modified version that creates a Job and returns immediately; the original
+method will be called on a thread pool worker thread.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.GCPJob">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">GCPJob</code><span class="sig-paren">(</span><em>job_id</em>, <em>context</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_gcp_job.html#GCPJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.GCPJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a BigQuery Job.</p>
+<p>Initializes an instance of a Job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>job_id</strong> &#8211; the BigQuery job ID corresponding to this job.</li>
+<li><strong>context</strong> &#8211; a Context object providing project_id and credentials.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.RequestException">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">RequestException</code><span class="sig-paren">(</span><em>status</em>, <em>content</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_http.html#RequestException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.RequestException" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.Http">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">Http</code><a class="reference internal" href="_modules/datalab/utils/_http.html#Http"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Http" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper class for making HTTP requests.</p>
+<dl class="staticmethod">
+<dt id="datalab.utils.Http.request">
+<em class="property">static </em><code class="descname">request</code><span class="sig-paren">(</span><em>url</em>, <em>args=None</em>, <em>data=None</em>, <em>headers=None</em>, <em>method=None</em>, <em>credentials=None</em>, <em>raw_response=False</em>, <em>stats=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_http.html#Http.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Http.request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Issues HTTP requests.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>url</strong> &#8211; the URL to request.</li>
+<li><strong>args</strong> &#8211; optional query string arguments.</li>
+<li><strong>data</strong> &#8211; optional data to be sent within the request.</li>
+<li><strong>headers</strong> &#8211; optional headers to include in the request.</li>
+<li><strong>method</strong> &#8211; optional HTTP method to use. If unspecified this is inferred
+(GET or POST) based on the existence of request data.</li>
+<li><strong>credentials</strong> &#8211; optional set of credentials to authorize the request.</li>
+<li><strong>raw_response</strong> &#8211; whether the raw response content should be returned as-is.</li>
+<li><strong>stats</strong> &#8211; an optional dictionary that, if provided, will be populated with some
+useful info about the request, like &#8216;duration&#8217; in seconds and &#8216;data_size&#8217; in
+bytes. These may be useful optimizing the access to rate-limited APIs.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The parsed response object.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception when the HTTP request fails or the response cannot be processed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.Iterator">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">Iterator</code><span class="sig-paren">(</span><em>retriever</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_iterator.html#Iterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Iterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>An iterator implementation that handles paging over a cloud list.</p>
+<p>Initializes an instance of an Iterator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>retriever</strong> &#8211; a function that can retrieve the next page of items.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.utils.Iterator.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_iterator.html#Iterator.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Iterator.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the current iteration.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.JobError">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">JobError</code><span class="sig-paren">(</span><em>location</em>, <em>message</em>, <em>reason</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_job.html#JobError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.JobError" title="Permalink to this definition">¶</a></dt>
+<dd><p>A helper class to capture multiple components of Job errors.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.Job">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">Job</code><span class="sig-paren">(</span><em>job_id=None</em>, <em>future=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_job.html#Job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Job" title="Permalink to this definition">¶</a></dt>
+<dd><p>A manager object for async operations.</p>
+<p>A Job can have a Future in which case it will be able to monitor its own completion state
+and result, or it may have no Future in which case it must be a derived class that
+manages this some other way. We do this instead of having an abstract base class in
+order to make wait_one/wait_all more efficient; instead of just sleeping and polling
+we can use more reactive ways of monitoring groups of Jobs.</p>
+<p>Initializes an instance of a Job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>job_id</strong> &#8211; a unique ID for the job. If None, a UUID will be generated.</li>
+<li><strong>future</strong> &#8211; the Future associated with the Job, if any.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="datalab.utils.Job.end_time_utc">
+<code class="descname">end_time_utc</code><a class="headerlink" href="#datalab.utils.Job.end_time_utc" title="Permalink to this definition">¶</a></dt>
+<dd><p>The UTC end time of the job (or None if incomplete) as a Python datetime.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.utils.Job.errors">
+<code class="descname">errors</code><a class="headerlink" href="#datalab.utils.Job.errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the non-fatal errors in the job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None if the job is still running, else the list of errors that occurred.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.utils.Job.failed">
+<code class="descname">failed</code><a class="headerlink" href="#datalab.utils.Job.failed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the success state of the job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the job failed; False if it is still running or succeeded (possibly with partial
+failure).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.utils.Job.fatal_error">
+<code class="descname">fatal_error</code><a class="headerlink" href="#datalab.utils.Job.fatal_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the job error.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None if the job succeeded or is still running, else the error tuple for the failure.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.utils.Job.id">
+<code class="descname">id</code><a class="headerlink" href="#datalab.utils.Job.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Job ID.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The ID of the job.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.utils.Job.is_complete">
+<code class="descname">is_complete</code><a class="headerlink" href="#datalab.utils.Job.is_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the completion state of the job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the job is complete; False if it is still running.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.utils.Job.result">
+<code class="descname">result</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_job.html#Job.result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Job.result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the result for a job. This will block if the job is incomplete.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The result for the Job.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">An exception if the Job resulted in an exception.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.utils.Job.start_time_utc">
+<code class="descname">start_time_utc</code><a class="headerlink" href="#datalab.utils.Job.start_time_utc" title="Permalink to this definition">¶</a></dt>
+<dd><p>The UTC start time of the job as a Python datetime.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.utils.Job.state">
+<code class="descname">state</code><a class="headerlink" href="#datalab.utils.Job.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Describe the state of a Job.</p>
+<p>Returns: A string describing the job&#8217;s state.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.utils.Job.total_time">
+<code class="descname">total_time</code><a class="headerlink" href="#datalab.utils.Job.total_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total time in fractional seconds that the job took, or None if not complete.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.utils.Job.wait">
+<code class="descname">wait</code><span class="sig-paren">(</span><em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_job.html#Job.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Job.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for the job to complete, or a timeout to happen.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> &#8211; how long to wait before giving up (in seconds); default None which means no timeout.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The Job</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="datalab.utils.Job.wait_all">
+<em class="property">static </em><code class="descname">wait_all</code><span class="sig-paren">(</span><em>jobs</em>, <em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_job.html#Job.wait_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Job.wait_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return when at all of the specified jobs have completed or timeout expires.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>jobs</strong> &#8211; a Job or list of Jobs to wait on.</li>
+<li><strong>timeout</strong> &#8211; a timeout in seconds to wait for. None (the default) means no timeout.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of the jobs that have now completed or None if there were no jobs.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="datalab.utils.Job.wait_any">
+<em class="property">static </em><code class="descname">wait_any</code><span class="sig-paren">(</span><em>jobs</em>, <em>timeout=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_job.html#Job.wait_any"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.Job.wait_any" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return when at least one of the specified jobs has completed or timeout expires.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>jobs</strong> &#8211; a Job or list of Jobs to wait on.</li>
+<li><strong>timeout</strong> &#8211; a timeout in seconds to wait for. None (the default) means no timeout.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of the jobs that have now completed or None if there were no jobs.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.JSONEncoder">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">JSONEncoder</code><span class="sig-paren">(</span><em>skipkeys=False</em>, <em>ensure_ascii=True</em>, <em>check_circular=True</em>, <em>allow_nan=True</em>, <em>sort_keys=False</em>, <em>indent=None</em>, <em>separators=None</em>, <em>encoding='utf-8'</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_json_encoder.html#JSONEncoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.JSONEncoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>A JSON encoder that can handle Python datetime objects.</p>
+<p>Constructor for JSONEncoder, with sensible defaults.</p>
+<p>If skipkeys is false, then it is a TypeError to attempt
+encoding of keys that are not str, int, long, float or None.  If
+skipkeys is True, such items are simply skipped.</p>
+<p>If <em>ensure_ascii</em> is true (the default), all non-ASCII
+characters in the output are escaped with uXXXX sequences,
+and the results are str instances consisting of ASCII
+characters only.  If ensure_ascii is False, a result may be a
+unicode instance.  This usually happens if the input contains
+unicode strings or the <em>encoding</em> parameter is used.</p>
+<p>If check_circular is true, then lists, dicts, and custom encoded
+objects will be checked for circular references during encoding to
+prevent an infinite recursion (which would cause an OverflowError).
+Otherwise, no such check takes place.</p>
+<p>If allow_nan is true, then NaN, Infinity, and -Infinity will be
+encoded as such.  This behavior is not JSON specification compliant,
+but is consistent with most JavaScript based encoders and decoders.
+Otherwise, it will be a ValueError to encode such floats.</p>
+<p>If sort_keys is true, then the output of dictionaries will be
+sorted by key; this is useful for regression tests to ensure
+that JSON serializations can be compared on a day-to-day basis.</p>
+<p>If indent is a non-negative integer, then JSON array
+elements and object members will be pretty-printed with that
+indent level.  An indent level of 0 will only insert newlines.
+None is the most compact representation.  Since the default
+item separator is &#8216;, &#8216;,  the output might include trailing
+whitespace when indent is specified.  You can use
+separators=(&#8216;,&#8217;, &#8216;: &#8216;) to avoid this.</p>
+<p>If specified, separators should be a (item_separator, key_separator)
+tuple.  The default is (&#8216;, &#8216;, &#8216;: &#8216;).  To get the most compact JSON
+representation you should specify (&#8216;,&#8217;, &#8216;:&#8217;) to eliminate whitespace.</p>
+<p>If specified, default is a function that gets called for objects
+that can&#8217;t otherwise be serialized.  It should return a JSON encodable
+version of the object or raise a <code class="docutils literal"><span class="pre">TypeError</span></code>.</p>
+<p>If encoding is not None, then all input strings will be
+transformed into unicode using that encoding prior to JSON-encoding.
+The default is UTF-8.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.LRUCache">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">LRUCache</code><span class="sig-paren">(</span><em>cache_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_lru_cache.html#LRUCache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.LRUCache" title="Permalink to this definition">¶</a></dt>
+<dd><p>A simple LRU cache.</p>
+<p>Initialize the cache with the given size.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cache_size</strong> &#8211; the maximum number of items the cache can hold. Attempts to add more
+items than this will result in the least recently used items being displaced to
+make room.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.utils.LambdaJob">
+<em class="property">class </em><code class="descclassname">datalab.utils.</code><code class="descname">LambdaJob</code><span class="sig-paren">(</span><em>fn</em>, <em>job_id</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_lambda_job.html#LambdaJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.LambdaJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents an lambda function as a Job.</p>
+<p>Initializes an instance of a Job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fn</strong> &#8211; the lambda function to execute asyncronously</li>
+<li><strong>job_id</strong> &#8211; an optional ID for the job. If None, a UUID will be generated.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datalab.utils.print_exception_with_last_stack">
+<code class="descclassname">datalab.utils.</code><code class="descname">print_exception_with_last_stack</code><span class="sig-paren">(</span><em>e</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_utils.html#print_exception_with_last_stack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.print_exception_with_last_stack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the call stack of the last exception plu sprint the passed exception.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>e</strong> &#8211; the exception to print.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datalab.utils.get_item">
+<code class="descclassname">datalab.utils.</code><code class="descname">get_item</code><span class="sig-paren">(</span><em>env</em>, <em>name</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_utils.html#get_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.get_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an item from a dictionary, handling nested lookups with dotted notation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>env</strong> &#8211; the environment (dictionary) to use to look up the name.</li>
+<li><strong>name</strong> &#8211; the name to look up, in dotted notation.</li>
+<li><strong>default</strong> &#8211; the value to return if the name if not found.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The result of looking up the name, if found; else the default.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datalab.utils.compare_datetimes">
+<code class="descclassname">datalab.utils.</code><code class="descname">compare_datetimes</code><span class="sig-paren">(</span><em>d1</em>, <em>d2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_utils.html#compare_datetimes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.compare_datetimes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compares two datetimes safely, whether they are timezone-naive or timezone-aware.</p>
+<p>If either datetime is naive it is converted to an aware datetime assuming UTC.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>d1</strong> &#8211; first datetime.</li>
+<li><strong>d2</strong> &#8211; second datetime.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">-1 if d1 &lt; d2, 0 if they are the same, or +1 is d1 &gt; d2.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datalab.utils.pick_unused_port">
+<code class="descclassname">datalab.utils.</code><code class="descname">pick_unused_port</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_utils.html#pick_unused_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.pick_unused_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>get an unused port on the VM.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An unused port.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datalab.utils.is_http_running_on">
+<code class="descclassname">datalab.utils.</code><code class="descname">is_http_running_on</code><span class="sig-paren">(</span><em>port</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_utils.html#is_http_running_on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.is_http_running_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if an http server runs on a given port.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>port to check.</strong> (<em>The</em>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if it is used by an http server. False otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datalab.utils.gcs_copy_file">
+<code class="descclassname">datalab.utils.</code><code class="descname">gcs_copy_file</code><span class="sig-paren">(</span><em>source</em>, <em>dest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/utils/_utils.html#gcs_copy_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.utils.gcs_copy_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy file from source to destination. The paths can be GCS or local.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>source</strong> &#8211; the source file path.</li>
+<li><strong>dest</strong> &#8211; the destination file path.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="datalab.magics.html" class="btn btn-neutral float-right" title="datalab.magics" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="datalab.storage.html" class="btn btn-neutral" title="datalab.storage package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

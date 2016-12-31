@@ -30,8 +30,11 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
-        <link rel="next" title="datalab.stackdriver.monitoring package" href="datalab.stackdriver.monitoring.html"/>
+        <link rel="next" title="datalab.mlalpha package" href="datalab.mlalpha.html"/>
         <link rel="prev" title="datalab.context package" href="datalab.context.html"/> 
 
   
@@ -84,8 +87,11 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-datalab.data">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.mlalpha.html">datalab.mlalpha package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.magics.html">datalab.magics</a></li>
 </ul>
 
             
@@ -120,7 +126,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/datalab.data.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/datalab.data.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -137,35 +143,25 @@
 <p>Google Cloud Platform library - Generic SQL Helpers.</p>
 <dl class="class">
 <dt id="datalab.data.Csv">
-<em class="property">class </em><code class="descclassname">datalab.data.</code><code class="descname">Csv</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">datalab.data.</code><code class="descname">Csv</code><span class="sig-paren">(</span><em>path</em>, <em>delimiter=u'</em>, <em>'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a CSV file in GCS or locally with same schema.</p>
-<p>Initializes an instance of a Csv instance.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; path of the Csv file.</td>
-</tr>
-</tbody>
-</table>
+<p>Initializes an instance of a Csv instance.
+:param path: path of the Csv file.
+:param delimiter: the separator used to parse a Csv line.</p>
 <dl class="method">
 <dt id="datalab.data.Csv.browse">
-<code class="descname">browse</code><span class="sig-paren">(</span><em>max_lines</em>, <em>headers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv.browse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv.browse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Try reading specified number of lines from the CSV object.</p>
+<code class="descname">browse</code><span class="sig-paren">(</span><em>max_lines=None</em>, <em>headers=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv.browse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv.browse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try reading specified number of lines from the CSV object.
+:param max_lines: max number of lines to read. If None, the whole file is read
+:param headers: a list of strings as column names. If None, it will use &#8220;col0, col1...&#8221;</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>max_lines</strong> &#8211; max number of lines to read</li>
-<li><strong>headers</strong> &#8211; a list of strings as column names. If None, it will use &#8220;col0, col1...&#8221;</li>
-</ul>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A pandas DataFrame with the schema inferred from the data.</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A 2-D array which is the content of the CSV but all values are string type.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
 <li>Exception if the csv object cannot be read or not enough lines to read, or the</li>
 <li>headers size does not match columns size.</li>
 </ul>
@@ -176,29 +172,23 @@
 </dd></dl>
 
 <dl class="method">
-<dt id="datalab.data.Csv.infer_schema">
-<code class="descname">infer_schema</code><span class="sig-paren">(</span><em>num_lines</em>, <em>max_categorical_labels</em>, <em>headers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv.infer_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv.infer_schema" title="Permalink to this definition">¶</a></dt>
-<dd><p>Infer schema from the CSV object.</p>
+<dt id="datalab.data.Csv.sample_to">
+<code class="descname">sample_to</code><span class="sig-paren">(</span><em>count</em>, <em>skip_header_rows</em>, <em>strategy</em>, <em>target</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv.sample_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv.sample_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample rows from GCS or local file and save results to target file.
+:param count: number of rows to sample. If strategy is &#8220;BIGQUERY&#8221;, it is used as approximate number.
+:param skip_header_rows: whether to skip first row when reading from source.
+:param strategy: can be &#8220;LOCAL&#8221; or &#8220;BIGQUERY&#8221;. If local, the sampling happens in local memory,</p>
+<blockquote>
+<div>and number of resulting rows matches count. If BigQuery, sampling is done
+with BigQuery in cloud, and the number of resulting rows will be approximated to
+count.</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>num_lines</strong> &#8211; number of lines to read to infer schema from.</li>
-<li><strong>max_categorical_labels</strong> &#8211; if a certain string column includes more unique labels than it, then
-consider it a text column. Otherwise, consider it a categorical column.</li>
-<li><strong>headers</strong> &#8211; a list of strings as column names. If None, it will use &#8220;col0, col1...&#8221;</li>
-</ul>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>target</strong> &#8211; The target file path, can be GCS or local path.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A list of inferred types and their details for each column</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
-<li>Exception if the csv object cannot be read or not enough lines to read, or the</li>
-<li>headers size does not match columns size.</li>
-</ul>
-</td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if strategy is &#8220;BIGQUERY&#8221; but source is not a GCS path.</td>
 </tr>
 </tbody>
 </table>
@@ -334,6 +324,32 @@ exception if that fails due to either undefined or circular references.</p>
 
 </dd></dl>
 
+<dl class="function">
+<dt id="datalab.data.tokenize">
+<code class="descclassname">datalab.data.</code><code class="descname">tokenize</code><span class="sig-paren">(</span><em>sql</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_utils.html#tokenize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.tokenize" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a basic tokenizer for our limited purposes.
+It splits a SQL statement up into a series of segments, where a segment is one of:
+- identifiers
+- left or right parentheses
+- multi-line comments
+- single line comments
+- white-space sequences
+- string literals
+- consecutive strings of characters that are not one of the items above</p>
+<p>The aim is for us to be able to find function calls (identifiers followed by &#8216;(&#8216;), and the
+associated closing &#8216;)&#8217;) so we can augment these if needed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sql</strong> &#8211; a SQL statement as a (possibly multi-line) string.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of strings corresponding to the groups above.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 </div>
 
@@ -344,7 +360,7 @@ exception if that fails due to either undefined or circular references.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="datalab.stackdriver.monitoring.html" class="btn btn-neutral float-right" title="datalab.stackdriver.monitoring package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="datalab.mlalpha.html" class="btn btn-neutral float-right" title="datalab.mlalpha package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="datalab.context.html" class="btn btn-neutral" title="datalab.context package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>

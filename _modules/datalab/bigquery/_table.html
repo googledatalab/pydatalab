@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
         <link rel="up" title="datalab.bigquery" href="../bigquery.html"/> 
 
@@ -80,8 +83,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
 </ul>
 
             
@@ -153,7 +159,6 @@
 <span class="kn">import</span> <span class="nn">codecs</span>
 <span class="kn">import</span> <span class="nn">csv</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
-<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">traceback</span>
@@ -368,7 +373,7 @@
       <span class="k">return</span> <span class="bp">self</span>
     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Table </span><span class="si">%s</span><span class="s2"> could not be created as it already exists&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_name</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Table.sample"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span>
+<div class="viewcode-block" id="Table.sample"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Table.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Retrieves a sampling of data from the table.</span>
 

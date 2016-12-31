@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.mlalpha._cloud_predictor &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>datalab.mlalpha._cloud_predictor</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.mlalpha._cloud_predictor</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+
+<span class="kn">from</span> <span class="nn">googleapiclient</span> <span class="k">import</span> <span class="n">discovery</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">datalab.context</span>
+<span class="kn">import</span> <span class="nn">datalab.utils</span>
+
+
+<span class="c1"># TODO(qimingj) Remove once the API is public since it will no longer be needed</span>
+<span class="n">_CLOUDML_DISCOVERY_URL</span> <span class="o">=</span> <span class="s1">&#39;https://storage.googleapis.com/cloud-ml/discovery/&#39;</span> \
+                         <span class="s1">&#39;ml_v1beta1_discovery.json&#39;</span>
+
+
+<div class="viewcode-block" id="CloudPredictor"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.CloudPredictor">[docs]</a><span class="k">class</span> <span class="nc">CloudPredictor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Preforms cloud predictions on given data.&quot;&quot;&quot;</span>
+
+  <span class="c1"># TODO: Either remove label_output, or add code to load metadata from model dir and</span>
+  <span class="c1"># transform integer to label. Depending on whether online prediction returns label or not.</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">version_name</span><span class="p">,</span> <span class="n">label_output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">project_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a CloudPredictor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      model_name: the name of the model used for prediction.</span>
+<span class="sd">      version_name: the name of the version used for prediction.</span>
+<span class="sd">      label_output: the name of the output column where all values should be converted from</span>
+<span class="sd">          index to labels. Only useful in classification. If specified, metadata_path is required.</span>
+<span class="sd">      project_id: project_id of the model. If not provided, default project_id will be used.</span>
+<span class="sd">      credentials: credentials used to talk to CloudML service. If not provided, default</span>
+<span class="sd">          credentials will be used.</span>
+<span class="sd">      api: an optional CloudML API client.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_model_name</span> <span class="o">=</span> <span class="n">model_name</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_version_name</span> <span class="o">=</span> <span class="n">version_name</span>
+    <span class="k">if</span> <span class="n">project_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">project_id</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span><span class="o">.</span><span class="n">project_id</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span> <span class="o">=</span> <span class="n">project_id</span>
+    <span class="k">if</span> <span class="n">credentials</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">credentials</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span><span class="o">.</span><span class="n">credentials</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_credentials</span> <span class="o">=</span> <span class="n">credentials</span>
+    <span class="k">if</span> <span class="n">api</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">api</span> <span class="o">=</span> <span class="n">discovery</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s1">&#39;ml&#39;</span><span class="p">,</span> <span class="s1">&#39;v1beta1&#39;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_credentials</span><span class="p">,</span>
+                            <span class="n">discoveryServiceUrl</span><span class="o">=</span><span class="n">_CLOUDML_DISCOVERY_URL</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_api</span> <span class="o">=</span> <span class="n">api</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_full_version_name</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;projects/</span><span class="si">%s</span><span class="s1">/models/</span><span class="si">%s</span><span class="s1">/versions/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_version_name</span><span class="p">))</span>
+
+<div class="viewcode-block" id="CloudPredictor.predict"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.CloudPredictor.predict">[docs]</a>  <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make predictions on given data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      data: a list of feature data or a pandas DataFrame. Each element in the list is an instance</span>
+<span class="sd">          which is a dictionary of feature data.</span>
+<span class="sd">          An example:</span>
+<span class="sd">            [{&quot;sepal_length&quot;: 4.9, &quot;sepal_width&quot;: 2.5, &quot;petal_length&quot;: 4.5, &quot;petal_width&quot;: 1.7},</span>
+<span class="sd">             {&quot;sepal_length&quot;: 5.7, &quot;sepal_width&quot;: 2.8, &quot;petal_length&quot;: 4.1, &quot;petal_width&quot;: 1.3}]</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A list of prediction results for given instances. Each element is a dictionary representing</span>
+<span class="sd">          output mapping from the graph.</span>
+<span class="sd">      An example:</span>
+<span class="sd">        [{&quot;predictions&quot;: 1, &quot;score&quot;: [0.00078, 0.71406, 0.28515]},</span>
+<span class="sd">         {&quot;predictions&quot;: 1, &quot;score&quot;: [0.00244, 0.99634, 0.00121]}]</span>
+
+<span class="sd">    Raises: Exception if bad response is received from the service</span>
+<span class="sd">            Exception if the prediction result has incorrect label types</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+
+    <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;instances&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">},</span>
+                                           <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_version_name</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;user-agent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;GoogleCloudDataLab/1.0&#39;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;predictions&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid response from service. Cannot find &quot;predictions&quot; in response.&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;predictions&#39;</span><span class="p">]</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

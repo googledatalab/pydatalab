@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
         <link rel="up" title="Module code" href="../../index.html"/> 
 
@@ -80,8 +83,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
 </ul>
 
             
@@ -143,16 +149,23 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
 <span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">next</span>
-<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span> <span class="k">as</span> <span class="n">newstr</span>
 <span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">range</span>
 <span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
 
 
 <span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">sklearn.feature_extraction.text</span> <span class="k">import</span> <span class="n">CountVectorizer</span>
+<span class="kn">import</span> <span class="nn">random</span>
 
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">StringIO</span> <span class="k">import</span> <span class="n">StringIO</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="n">StringIO</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">datalab.storage</span>
+<span class="kn">import</span> <span class="nn">datalab.utils</span>
 
 
 <span class="n">_MAX_CSV_BYTES</span> <span class="o">=</span> <span class="mi">10000000</span>
@@ -161,24 +174,26 @@
 <div class="viewcode-block" id="Csv"><a class="viewcode-back" href="../../../datalab.data.html#datalab.data.Csv">[docs]</a><span class="k">class</span> <span class="nc">Csv</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Represents a CSV file in GCS or locally with same schema.</span>
 <span class="sd">  &quot;&quot;&quot;</span>
-
-  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Initializes an instance of a Csv instance.</span>
-
 <span class="sd">    Args:</span>
 <span class="sd">      path: path of the Csv file.</span>
+<span class="sd">      delimiter: the separator used to parse a Csv line.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="n">path</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span> <span class="o">=</span> <span class="n">delimiter</span>
 
   <span class="nd">@property</span>
   <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span>
 
   <span class="nd">@staticmethod</span>
+
   <span class="k">def</span> <span class="nf">_read_gcs_lines</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">datalab</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">Item</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">read_lines</span><span class="p">(</span><span class="n">max_lines</span><span class="p">)</span>
 
   <span class="nd">@staticmethod</span>
+
   <span class="k">def</span> <span class="nf">_read_local_lines</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
@@ -187,35 +202,23 @@
       <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">lines</span>
 
-  <span class="nd">@staticmethod</span>
-  <span class="k">def</span> <span class="nf">_isfloat</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-    <span class="k">try</span><span class="p">:</span>
-      <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-      <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+  <span class="k">def</span> <span class="nf">_is_probably_categorical</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">newstr</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;object&#39;</span><span class="p">:</span>
+      <span class="c1"># only string types (represented in DataFrame as object) can potentially be categorical</span>
       <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">newstr</span><span class="p">(</span><span class="n">p</span><span class="p">))))</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+      <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># value too long to be a category</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">column</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+      <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># too many unique values to be a category</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
-  <span class="nd">@staticmethod</span>
-  <span class="k">def</span> <span class="nf">_infertype</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">max_labels</span><span class="p">):</span>
-    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">Csv</span><span class="o">.</span><span class="n">_isfloat</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">values</span><span class="p">):</span>
-      <span class="k">return</span> <span class="s1">&#39;numeric&#39;</span><span class="p">,</span> <span class="kc">None</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">factorize</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">30</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">values</span><span class="p">):</span>
-      <span class="k">return</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">50</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_labels</span><span class="p">:</span>
-      <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">CountVectorizer</span><span class="p">(</span><span class="n">min_df</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">token_pattern</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">b</span><span class="se">\\</span><span class="s1">w+</span><span class="se">\\</span><span class="s1">b&#39;</span><span class="p">)</span>
-      <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-      <span class="k">return</span> <span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;vocabulary&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">vectorizer</span><span class="o">.</span><span class="n">vocabulary_</span><span class="p">)}</span>
-    <span class="k">return</span> <span class="s1">&#39;categorical&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="n">labels</span><span class="o">.</span><span class="n">tolist</span><span class="p">()}</span>
-
-<div class="viewcode-block" id="Csv.browse"><a class="viewcode-back" href="../../../datalab.data.html#datalab.data.Csv.browse">[docs]</a>  <span class="k">def</span> <span class="nf">browse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_lines</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
+<div class="viewcode-block" id="Csv.browse"><a class="viewcode-back" href="../../../datalab.data.html#datalab.data.Csv.browse">[docs]</a>  <span class="k">def</span> <span class="nf">browse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Try reading specified number of lines from the CSV object.</span>
-
 <span class="sd">    Args:</span>
-<span class="sd">      max_lines: max number of lines to read</span>
+<span class="sd">      max_lines: max number of lines to read. If None, the whole file is read</span>
 <span class="sd">      headers: a list of strings as column names. If None, it will use &quot;col0, col1...&quot;</span>
 <span class="sd">    Returns:</span>
-<span class="sd">      A 2-D array which is the content of the CSV but all values are string type.</span>
+<span class="sd">      A pandas DataFrame with the schema inferred from the data.</span>
 <span class="sd">    Raises:</span>
 <span class="sd">      Exception if the csv object cannot be read or not enough lines to read, or the</span>
 <span class="sd">      headers size does not match columns size.</span>
@@ -224,48 +227,91 @@
       <span class="n">lines</span> <span class="o">=</span> <span class="n">Csv</span><span class="o">.</span><span class="n">_read_gcs_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">max_lines</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
       <span class="n">lines</span> <span class="o">=</span> <span class="n">Csv</span><span class="o">.</span><span class="n">_read_local_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">max_lines</span><span class="p">)</span>
-
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-      <span class="k">return</span> <span class="p">[]</span>
-    <span class="n">columns_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">([</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]])))</span>
+      <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+    <span class="n">columns_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">([</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">delimiter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span><span class="p">)))</span>
     <span class="k">if</span> <span class="n">headers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-      <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;col&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">columns_size</span><span class="p">)]</span>
+      <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;col&#39;</span> <span class="o">+</span> <span class="n">newstr</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">columns_size</span><span class="p">)]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span> <span class="o">!=</span> <span class="n">columns_size</span><span class="p">:</span>
       <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Number of columns in CSV do not match number of headers&#39;</span><span class="p">)</span>
+    <span class="n">buf</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+      <span class="n">buf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+      <span class="n">buf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_probably_categorical</span><span class="p">(</span><span class="n">col</span><span class="p">):</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div>
 
-    <span class="n">content</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
-      <span class="n">content</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">content</span></div>
+  <span class="k">def</span> <span class="nf">_create_federated_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">skip_header_rows</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">datalab.bigquery</span> <span class="k">as</span> <span class="nn">bq</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">browse</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="c1"># read each column as STRING because we only want to sample rows.</span>
+    <span class="n">schema_train</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Schema</span><span class="p">([{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;STRING&#39;</span><span class="p">}</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">CSVOptions</span><span class="p">(</span><span class="n">skip_leading_rows</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">skip_header_rows</span> <span class="o">==</span> <span class="kc">True</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">bq</span><span class="o">.</span><span class="n">FederatedTable</span><span class="o">.</span><span class="n">from_storage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                                          <span class="n">csv_options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+                                          <span class="n">schema</span><span class="o">=</span><span class="n">schema_train</span><span class="p">,</span>
+                                          <span class="n">max_bad_records</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Csv.infer_schema"><a class="viewcode-back" href="../../../datalab.data.html#datalab.data.Csv.infer_schema">[docs]</a>  <span class="k">def</span> <span class="nf">infer_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_lines</span><span class="p">,</span> <span class="n">max_categorical_labels</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Infer schema from the CSV object.</span>
+  <span class="k">def</span> <span class="nf">_get_gcs_csv_row_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">federated_table</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">datalab.bigquery</span> <span class="k">as</span> <span class="nn">bq</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="s1">&#39;SELECT count(*) from data&#39;</span><span class="p">,</span>
+                       <span class="n">data_sources</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">federated_table</span><span class="p">})</span><span class="o">.</span><span class="n">results</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
 
+<div class="viewcode-block" id="Csv.sample_to"><a class="viewcode-back" href="../../../datalab.data.html#datalab.data.Csv.sample_to">[docs]</a>  <span class="k">def</span> <span class="nf">sample_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">skip_header_rows</span><span class="p">,</span> <span class="n">strategy</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sample rows from GCS or local file and save results to target file.</span>
 <span class="sd">    Args:</span>
-<span class="sd">      num_lines: number of lines to read to infer schema from.</span>
-<span class="sd">      max_categorical_labels: if a certain string column includes more unique labels than it, then</span>
-<span class="sd">          consider it a text column. Otherwise, consider it a categorical column.</span>
-<span class="sd">      headers: a list of strings as column names. If None, it will use &quot;col0, col1...&quot;</span>
-<span class="sd">    Returns:</span>
-<span class="sd">      A list of inferred types and their details for each column</span>
+<span class="sd">      count: number of rows to sample. If strategy is &quot;BIGQUERY&quot;, it is used as approximate number.</span>
+<span class="sd">      skip_header_rows: whether to skip first row when reading from source.</span>
+<span class="sd">      strategy: can be &quot;LOCAL&quot; or &quot;BIGQUERY&quot;. If local, the sampling happens in local memory,</span>
+<span class="sd">          and number of resulting rows matches count. If BigQuery, sampling is done</span>
+<span class="sd">          with BigQuery in cloud, and the number of resulting rows will be approximated to</span>
+<span class="sd">          count.</span>
+<span class="sd">      target: The target file path, can be GCS or local path.</span>
 <span class="sd">    Raises:</span>
-<span class="sd">      Exception if the csv object cannot be read or not enough lines to read, or the</span>
-<span class="sd">      headers size does not match columns size.</span>
+<span class="sd">      Exception if strategy is &quot;BIGQUERY&quot; but source is not a GCS path.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">columns</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">browse</span><span class="p">(</span><span class="n">num_lines</span><span class="p">,</span> <span class="n">headers</span><span class="p">))</span>
-    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
-      <span class="n">column</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>
-      <span class="n">dtype</span><span class="p">,</span> <span class="n">description</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_infertype</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">max_categorical_labels</span><span class="p">)</span>
-      <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span>
-          <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-          <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">dtype</span>
-      <span class="p">}</span>
-      <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">entry</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
-      <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">columns</span></div></div>
+    <span class="c1"># TODO(qimingj) Add unit test</span>
+    <span class="c1"># Read data from source into DataFrame.</span>
+    <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;BIGQUERY&#39;</span><span class="p">:</span>
+      <span class="kn">import</span> <span class="nn">datalab.bigquery</span> <span class="k">as</span> <span class="nn">bq</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot use BIGQUERY if data is not in GCS&#39;</span><span class="p">)</span>
+      <span class="n">federated_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_federated_table</span><span class="p">(</span><span class="n">skip_header_rows</span><span class="p">)</span>
+      <span class="n">row_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_gcs_csv_row_count</span><span class="p">(</span><span class="n">federated_table</span><span class="p">)</span>
+      <span class="n">query</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="s1">&#39;SELECT * from data&#39;</span><span class="p">,</span> <span class="n">data_sources</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">federated_table</span><span class="p">})</span>
+      <span class="n">sampling</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Sampling</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">count</span><span class="o">*</span><span class="mi">100</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">row_count</span><span class="p">))</span>
+      <span class="n">sample</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sampling</span><span class="o">=</span><span class="n">sampling</span><span class="p">)</span>
+      <span class="n">df</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;LOCAL&#39;</span><span class="p">:</span>
+      <span class="n">local_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+        <span class="n">local_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mktemp</span><span class="p">()</span>
+        <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">gcs_copy_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">local_file</span><span class="p">)</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">row_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span>
+      <span class="n">start_row</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">skip_header_rows</span> <span class="o">==</span> <span class="kc">True</span> <span class="k">else</span> <span class="mi">0</span>
+      <span class="n">skip_count</span> <span class="o">=</span> <span class="n">row_count</span> <span class="o">-</span> <span class="n">count</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">skip_header_rows</span> <span class="o">==</span> <span class="kc">True</span> <span class="k">else</span> <span class="n">row_count</span> <span class="o">-</span> <span class="n">count</span>
+      <span class="n">skip</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">xrange</span><span class="p">(</span><span class="n">start_row</span><span class="p">,</span> <span class="n">row_count</span><span class="p">),</span> <span class="n">skip_count</span><span class="p">))</span>
+      <span class="n">header_row</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">skip_header_rows</span> <span class="o">==</span> <span class="kc">True</span> <span class="k">else</span> <span class="kc">None</span>
+      <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">local_file</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">skip</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header_row</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span><span class="p">)</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">local_file</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;strategy must be BIGQUERY or LOCAL&#39;</span><span class="p">)</span>
+    <span class="c1"># Write to target.</span>
+    <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+      <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">gcs_copy_file</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_delimiter</span><span class="p">))</span></div></div>
 </pre></div>
 
            </div>

@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
         <link rel="next" title="datalab.context package" href="datalab.context.html"/>
         <link rel="prev" title="Welcome to Cloud Datalab’s documentation!" href="index.html"/> 
@@ -84,8 +87,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.mlalpha.html">datalab.mlalpha package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.magics.html">datalab.magics</a></li>
 </ul>
 
             
@@ -120,7 +126,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/datalab.bigquery.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/datalab.bigquery.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -408,6 +414,46 @@ level are used.</li>
 </dd></dl>
 
 <dl class="class">
+<dt id="datalab.bigquery.Dialect">
+<em class="property">class </em><code class="descclassname">datalab.bigquery.</code><code class="descname">Dialect</code><span class="sig-paren">(</span><em>bq_dialect</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_dialect.html#Dialect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Dialect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the default BigQuery SQL dialect</p>
+<dl class="attribute">
+<dt id="datalab.bigquery.Dialect.bq_dialect">
+<code class="descname">bq_dialect</code><a class="headerlink" href="#datalab.bigquery.Dialect.bq_dialect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the value of the bq_dialect property.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The default BigQuery SQL dialect</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="datalab.bigquery.Dialect.default">
+<em class="property">static </em><code class="descname">default</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_dialect.html#Dialect.default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Dialect.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the default BigQuery SQL dialect, creating it if necessary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An initialized and shared instance of a Dialect object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.bigquery.Dialect.set_bq_dialect">
+<code class="descname">set_bq_dialect</code><span class="sig-paren">(</span><em>bq_dialect</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_dialect.html#Dialect.set_bq_dialect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Dialect.set_bq_dialect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the default BigQuery SQL dialect</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="datalab.bigquery.FederatedTable">
 <em class="property">class </em><code class="descclassname">datalab.bigquery.</code><code class="descname">FederatedTable</code><a class="reference internal" href="_modules/datalab/bigquery/_federated_table.html#FederatedTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.FederatedTable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an external table reference. Do not call this directly; use factory method(s).</p>
@@ -499,7 +545,7 @@ or a string with variable references.</li>
 </table>
 <dl class="method">
 <dt id="datalab.bigquery.Query.execute">
-<code class="descname">execute</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode=u'create'</em>, <em>use_cache=True</em>, <em>priority=u'interactive'</em>, <em>allow_large_results=False</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.execute" title="Permalink to this definition">¶</a></dt>
+<code class="descname">execute</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode=u'create'</em>, <em>use_cache=True</em>, <em>priority=u'interactive'</em>, <em>allow_large_results=False</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.execute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initiate the query, blocking until complete and then return the results.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -540,7 +586,7 @@ project-wide default billing tier on a per-query basis.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.Query.execute_async">
-<code class="descname">execute_async</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode=u'create'</em>, <em>use_cache=True</em>, <em>priority=u'interactive'</em>, <em>allow_large_results=False</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.execute_async" title="Permalink to this definition">¶</a></dt>
+<code class="descname">execute_async</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode=u'create'</em>, <em>use_cache=True</em>, <em>priority=u'interactive'</em>, <em>allow_large_results=False</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.execute_async" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initiate the query and return a QueryJob.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -581,7 +627,7 @@ project-wide default billing tier on a per-query basis.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.Query.execute_dry_run">
-<code class="descname">execute_dry_run</code><span class="sig-paren">(</span><em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.execute_dry_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.execute_dry_run" title="Permalink to this definition">¶</a></dt>
+<code class="descname">execute_dry_run</code><span class="sig-paren">(</span><em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.execute_dry_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.execute_dry_run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dry run a query, to check the validity of the query and return some useful statistics.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -611,7 +657,7 @@ project-wide default billing tier on a per-query basis.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.Query.extract">
-<code class="descname">extract</code><span class="sig-paren">(</span><em>storage_uris</em>, <em>format=u'csv'</em>, <em>csv_delimiter=u'</em>, <em>'</em>, <em>csv_header=True</em>, <em>compress=False</em>, <em>use_cache=True</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.extract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.extract" title="Permalink to this definition">¶</a></dt>
+<code class="descname">extract</code><span class="sig-paren">(</span><em>storage_uris</em>, <em>format=u'csv'</em>, <em>csv_delimiter=u'</em>, <em>'</em>, <em>csv_header=True</em>, <em>compress=False</em>, <em>use_cache=True</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.extract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.extract" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exports the query results to GCS.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -694,7 +740,7 @@ the completed extract task when done; else None.</p>
 
 <dl class="method">
 <dt id="datalab.bigquery.Query.results">
-<code class="descname">results</code><span class="sig-paren">(</span><em>use_cache=True</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.results" title="Permalink to this definition">¶</a></dt>
+<code class="descname">results</code><span class="sig-paren">(</span><em>use_cache=True</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves table of results for the query. May block if the query must be executed first.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -725,7 +771,7 @@ project-wide default billing tier on a per-query basis.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.Query.sample">
-<code class="descname">sample</code><span class="sig-paren">(</span><em>count=5</em>, <em>fields=None</em>, <em>sampling=None</em>, <em>use_cache=True</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.sample" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample</code><span class="sig-paren">(</span><em>count=5</em>, <em>fields=None</em>, <em>sampling=None</em>, <em>use_cache=True</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves a sampling of rows for the query.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -799,7 +845,7 @@ sampling is not specified.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.Query.to_dataframe">
-<code class="descname">to_dataframe</code><span class="sig-paren">(</span><em>start_row=0</em>, <em>max_rows=None</em>, <em>use_cache=True</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to_dataframe</code><span class="sig-paren">(</span><em>start_row=0</em>, <em>max_rows=None</em>, <em>use_cache=True</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.to_dataframe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exports the query results to a Pandas dataframe.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -829,7 +875,7 @@ project-wide default billing tier on a per-query basis.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.Query.to_file">
-<code class="descname">to_file</code><span class="sig-paren">(</span><em>path</em>, <em>format=u'csv'</em>, <em>csv_delimiter=u'</em>, <em>'</em>, <em>csv_header=True</em>, <em>use_cache=True</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.to_file" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to_file</code><span class="sig-paren">(</span><em>path</em>, <em>format=u'csv'</em>, <em>csv_delimiter=u'</em>, <em>'</em>, <em>csv_header=True</em>, <em>use_cache=True</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_query.html#Query.to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Query.to_file" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save the results to a local file in CSV format.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1200,19 +1246,15 @@ provided. &#8216;mode&#8217; can be &#8216;NULLABLE&#8217;, &#8216;REQUIRED&#821
 <em class="property">class </em><code class="descname">Field</code><span class="sig-paren">(</span><em>name</em>, <em>data_type</em>, <em>mode=u'NULLABLE'</em>, <em>description=u''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_schema.html#Schema.Field"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Schema.Field" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a single field in a Table schema.</p>
 <p>This has the properties:</p>
-<ul>
-<li><p class="first">name: the flattened, full-qualified name of the field.</p>
-</li>
+<ul class="simple">
+<li>name: the flattened, full-qualified name of the field.</li>
 <li><dl class="first docutils">
 <dt>data_type: the type of the field as a string (&#8216;INTEGER&#8217;, &#8216;BOOLEAN&#8217;, &#8216;FLOAT&#8217;, &#8216;STRING&#8217;</dt>
-<dd><p class="first last">or &#8216;TIMESTAMP&#8217;).</p>
-</dd>
+<dd>or &#8216;TIMESTAMP&#8217;).</dd>
 </dl>
 </li>
-<li><p class="first">mode: the mode of the field; &#8216;NULLABLE&#8217; by default.</p>
-</li>
-<li><p class="first">description: a description of the field, if known; empty string by default.</p>
-</li>
+<li>mode: the mode of the field; &#8216;NULLABLE&#8217; by default.</li>
+<li>description: a description of the field, if known; empty string by default.</li>
 </ul>
 </dd></dl>
 
@@ -1605,7 +1647,7 @@ returning an &#8216;invalid&#8217; error in the Job result (default 0).</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.Table.sample">
-<code class="descname">sample</code><span class="sig-paren">(</span><em>fields=None</em>, <em>count=5</em>, <em>sampling=None</em>, <em>use_cache=True</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_table.html#Table.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Table.sample" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample</code><span class="sig-paren">(</span><em>fields=None</em>, <em>count=5</em>, <em>sampling=None</em>, <em>use_cache=True</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_table.html#Table.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Table.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves a sampling of data from the table.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2016,7 +2058,7 @@ a Query object.</td>
 
 <dl class="method">
 <dt id="datalab.bigquery.View.execute">
-<code class="descname">execute</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode=u'create'</em>, <em>use_cache=True</em>, <em>priority=u'high'</em>, <em>allow_large_results=False</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_view.html#View.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.View.execute" title="Permalink to this definition">¶</a></dt>
+<code class="descname">execute</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode=u'create'</em>, <em>use_cache=True</em>, <em>priority=u'high'</em>, <em>allow_large_results=False</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_view.html#View.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.View.execute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Materialize the View synchronously.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2055,7 +2097,7 @@ project-wide default billing tier on a per-query basis.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.View.execute_async">
-<code class="descname">execute_async</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode=u'create'</em>, <em>use_cache=True</em>, <em>priority=u'high'</em>, <em>allow_large_results=False</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_view.html#View.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.View.execute_async" title="Permalink to this definition">¶</a></dt>
+<code class="descname">execute_async</code><span class="sig-paren">(</span><em>table_name=None</em>, <em>table_mode=u'create'</em>, <em>use_cache=True</em>, <em>priority=u'high'</em>, <em>allow_large_results=False</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_view.html#View.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.View.execute_async" title="Permalink to this definition">¶</a></dt>
 <dd><p>Materialize the View asynchronously.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2118,7 +2160,7 @@ project-wide default billing tier on a per-query basis.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.View.results">
-<code class="descname">results</code><span class="sig-paren">(</span><em>use_cache=True</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_view.html#View.results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.View.results" title="Permalink to this definition">¶</a></dt>
+<code class="descname">results</code><span class="sig-paren">(</span><em>use_cache=True</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_view.html#View.results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.View.results" title="Permalink to this definition">¶</a></dt>
 <dd><p>Materialize the view synchronously.</p>
 <p>If you require more control over the execution, use execute() or execute_async().</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -2150,7 +2192,7 @@ project-wide default billing tier on a per-query basis.</li>
 
 <dl class="method">
 <dt id="datalab.bigquery.View.sample">
-<code class="descname">sample</code><span class="sig-paren">(</span><em>fields=None</em>, <em>count=5</em>, <em>sampling=None</em>, <em>use_cache=True</em>, <em>dialect=u'legacy'</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_view.html#View.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.View.sample" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sample</code><span class="sig-paren">(</span><em>fields=None</em>, <em>count=5</em>, <em>sampling=None</em>, <em>use_cache=True</em>, <em>dialect=None</em>, <em>billing_tier=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_view.html#View.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.View.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves a sampling of data from the view.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />

@@ -1,0 +1,890 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>plotly.offline.offline &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>plotly.offline.offline</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for plotly.offline.offline</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Plotly Offline</span>
+<span class="sd">    A module to use Plotly&#39;s graphing library with Python</span>
+<span class="sd">    without connecting to a public or private plotly enterprise</span>
+<span class="sd">    server.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="k">import</span> <span class="n">resource_string</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">webbrowser</span>
+
+<span class="kn">import</span> <span class="nn">plotly</span>
+<span class="kn">from</span> <span class="nn">plotly</span> <span class="k">import</span> <span class="n">tools</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">plotly.exceptions</span> <span class="k">import</span> <span class="n">PlotlyError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">IPython</span>
+    <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="k">import</span> <span class="n">HTML</span><span class="p">,</span> <span class="n">display</span>
+    <span class="n">_ipython_imported</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_ipython_imported</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">matplotlib</span>
+    <span class="n">_matplotlib_imported</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_matplotlib_imported</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">__PLOTLY_OFFLINE_INITIALIZED</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">__IMAGE_FORMATS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;jpeg&#39;</span><span class="p">,</span> <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;webp&#39;</span><span class="p">,</span> <span class="s1">&#39;svg&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">download_plotlyjs</span><span class="p">(</span><span class="n">download_url</span><span class="p">):</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        `download_plotlyjs` is deprecated and will be removed in the</span>
+<span class="s1">        next release. plotly.js is shipped with this module, it is no</span>
+<span class="s1">        longer necessary to download this bundle separately.</span>
+<span class="s1">    &#39;&#39;&#39;</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">)</span>
+    <span class="k">pass</span>
+
+
+<span class="k">def</span> <span class="nf">get_plotlyjs</span><span class="p">():</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;offline&#39;</span><span class="p">,</span> <span class="s1">&#39;plotly.min.js&#39;</span><span class="p">)</span>
+    <span class="n">plotlyjs</span> <span class="o">=</span> <span class="n">resource_string</span><span class="p">(</span><span class="s1">&#39;plotly&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">plotlyjs</span>
+
+<span class="k">def</span> <span class="nf">get_image_download_script</span><span class="p">(</span><span class="n">caller</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function will return a script that will download an image of a Plotly</span>
+<span class="sd">    plot.</span>
+
+<span class="sd">    Keyword Arguments:</span>
+<span class="sd">    caller (&#39;plot&#39;, &#39;iplot&#39;) -- specifies which function made the call for the</span>
+<span class="sd">        download script. If `iplot`, then an extra condition is added into the</span>
+<span class="sd">        download script to ensure that download prompts aren&#39;t initiated on</span>
+<span class="sd">        page reloads.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">caller</span> <span class="o">==</span> <span class="s1">&#39;iplot&#39;</span><span class="p">:</span>
+        <span class="n">check_start</span> <span class="o">=</span> <span class="s1">&#39;if(document.readyState == </span><span class="se">\&#39;</span><span class="s1">complete</span><span class="se">\&#39;</span><span class="s1">) {{&#39;</span>
+        <span class="n">check_end</span> <span class="o">=</span> <span class="s1">&#39;}}&#39;</span>
+    <span class="k">elif</span> <span class="n">caller</span> <span class="o">==</span> <span class="s1">&#39;plot&#39;</span><span class="p">:</span>
+        <span class="n">check_start</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">check_end</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;caller should only be one of `iplot` or `plot`&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span><span class="p">(</span>
+        <span class="p">(</span><span class="s1">&#39;&lt;script&gt;&#39;</span>
+         <span class="s1">&#39;function downloadimage(format, height, width,&#39;</span>
+         <span class="s1">&#39; filename) {{&#39;</span>
+         <span class="s1">&#39;var p = document.getElementById(</span><span class="se">\&#39;</span><span class="si">{plot_id}</span><span class="se">\&#39;</span><span class="s1">);&#39;</span>
+         <span class="s1">&#39;Plotly.downloadImage(p, {{format: format, height: height, &#39;</span>
+         <span class="s1">&#39;width: width, filename: filename}});}};&#39;</span> <span class="o">+</span>
+         <span class="n">check_start</span> <span class="o">+</span>
+         <span class="s1">&#39;{{downloadimage(</span><span class="se">\&#39;</span><span class="si">{format}</span><span class="se">\&#39;</span><span class="s1">, </span><span class="si">{height}</span><span class="s1">, </span><span class="si">{width}</span><span class="s1">, &#39;</span>
+         <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="si">{filename}</span><span class="se">\&#39;</span><span class="s1">);}}&#39;</span> <span class="o">+</span>
+         <span class="n">check_end</span> <span class="o">+</span>
+         <span class="s1">&#39;&lt;/script&gt;&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="init_notebook_mode"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.init_notebook_mode">[docs]</a><span class="k">def</span> <span class="nf">init_notebook_mode</span><span class="p">(</span><span class="n">connected</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize plotly.js in the browser if it hasn&#39;t been loaded into the DOM</span>
+<span class="sd">    yet. This is an idempotent method and can and should be called from any</span>
+<span class="sd">    offline methods that require plotly.js to be loaded into the notebook dom.</span>
+
+<span class="sd">    Keyword arguments:</span>
+
+<span class="sd">    connected (default=False) -- If True, the plotly.js library will be loaded</span>
+<span class="sd">    from an online CDN. If False, the plotly.js library will be loaded locally</span>
+<span class="sd">    from the plotly python package</span>
+
+<span class="sd">    Use `connected=True` if you want your notebooks to have smaller file sizes.</span>
+<span class="sd">    In the case where `connected=False`, the entirety of the plotly.js library</span>
+<span class="sd">    will be loaded into the notebook, which will result in a file-size increase</span>
+<span class="sd">    of a couple megabytes. Additionally, because the library will be downloaded</span>
+<span class="sd">    from the web, you and your viewers must be connected to the internet to be</span>
+<span class="sd">    able to view charts within this notebook.</span>
+
+<span class="sd">    Use `connected=False` if you want you and your collaborators to be able to</span>
+<span class="sd">    create and view these charts regardless of the availability of an internet</span>
+<span class="sd">    connection. This is the default option since it is the most predictable.</span>
+<span class="sd">    Note that under this setting the library will be included inline inside</span>
+<span class="sd">    your notebook, resulting in much larger notebook sizes compared to the case</span>
+<span class="sd">    where `connected=True`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_ipython_imported</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;`iplot` can only run inside an IPython Notebook.&#39;</span><span class="p">)</span>
+
+    <span class="k">global</span> <span class="n">__PLOTLY_OFFLINE_INITIALIZED</span>
+
+    <span class="k">if</span> <span class="n">connected</span><span class="p">:</span>
+        <span class="c1"># Inject plotly.js into the output cell</span>
+        <span class="n">script_inject</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span>
+            <span class="s1">&#39;&lt;script&gt;&#39;</span>
+            <span class="s1">&#39;requirejs.config({&#39;</span>
+            <span class="s1">&#39;paths: { &#39;</span>
+            <span class="c1"># Note we omit the extension .js because require will include it.</span>
+            <span class="s1">&#39;</span><span class="se">\&#39;</span><span class="s1">plotly</span><span class="se">\&#39;</span><span class="s1">: [</span><span class="se">\&#39;</span><span class="s1">https://cdn.plot.ly/plotly-latest.min</span><span class="se">\&#39;</span><span class="s1">]},&#39;</span>
+            <span class="s1">&#39;});&#39;</span>
+            <span class="s1">&#39;if(!window.Plotly) {{&#39;</span>
+            <span class="s1">&#39;require([</span><span class="se">\&#39;</span><span class="s1">plotly</span><span class="se">\&#39;</span><span class="s1">],&#39;</span>
+            <span class="s1">&#39;function(plotly) {window.Plotly=plotly;});&#39;</span>
+            <span class="s1">&#39;}}&#39;</span>
+            <span class="s1">&#39;&lt;/script&gt;&#39;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Inject plotly.js into the output cell</span>
+        <span class="n">script_inject</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span>
+            <span class="s1">&#39;&lt;script type=</span><span class="se">\&#39;</span><span class="s1">text/javascript</span><span class="se">\&#39;</span><span class="s1">&gt;&#39;</span>
+            <span class="s1">&#39;if(!window.Plotly){{&#39;</span>
+            <span class="s1">&#39;define(</span><span class="se">\&#39;</span><span class="s1">plotly</span><span class="se">\&#39;</span><span class="s1">, function(require, exports, module) {{&#39;</span>
+            <span class="s1">&#39;</span><span class="si">{script}</span><span class="s1">&#39;</span>
+            <span class="s1">&#39;}});&#39;</span>
+            <span class="s1">&#39;require([</span><span class="se">\&#39;</span><span class="s1">plotly</span><span class="se">\&#39;</span><span class="s1">], function(Plotly) {{&#39;</span>
+            <span class="s1">&#39;window.Plotly = Plotly;&#39;</span>
+            <span class="s1">&#39;}});&#39;</span>
+            <span class="s1">&#39;}}&#39;</span>
+            <span class="s1">&#39;&lt;/script&gt;&#39;</span>
+            <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">script</span><span class="o">=</span><span class="n">get_plotlyjs</span><span class="p">())</span>
+
+    <span class="n">display</span><span class="p">(</span><span class="n">HTML</span><span class="p">(</span><span class="n">script_inject</span><span class="p">))</span>
+    <span class="n">__PLOTLY_OFFLINE_INITIALIZED</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<span class="k">def</span> <span class="nf">_plot_html</span><span class="p">(</span><span class="n">figure_or_data</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">validate</span><span class="p">,</span> <span class="n">default_width</span><span class="p">,</span>
+               <span class="n">default_height</span><span class="p">,</span> <span class="n">global_requirejs</span><span class="p">):</span>
+    <span class="c1"># force no validation if frames is in the call</span>
+    <span class="c1"># TODO - add validation for frames in call - #605</span>
+    <span class="k">if</span> <span class="s1">&#39;frames&#39;</span> <span class="ow">in</span> <span class="n">figure_or_data</span><span class="p">:</span>
+        <span class="n">figure</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">return_figure_from_figure_or_data</span><span class="p">(</span>
+            <span class="n">figure_or_data</span><span class="p">,</span> <span class="kc">False</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">figure</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">return_figure_from_figure_or_data</span><span class="p">(</span>
+            <span class="n">figure_or_data</span><span class="p">,</span> <span class="n">validate</span>
+        <span class="p">)</span>
+
+    <span class="n">width</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;layout&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;width&#39;</span><span class="p">,</span> <span class="n">default_width</span><span class="p">)</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;layout&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;height&#39;</span><span class="p">,</span> <span class="n">default_height</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">width</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;px&#39;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">height</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">height</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;px&#39;</span>
+
+    <span class="n">plotdivid</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="n">jdata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">figure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="p">[]),</span> <span class="n">cls</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">PlotlyJSONEncoder</span><span class="p">)</span>
+    <span class="n">jlayout</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">figure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;layout&#39;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">cls</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">PlotlyJSONEncoder</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;frames&#39;</span> <span class="ow">in</span> <span class="n">figure_or_data</span><span class="p">:</span>
+        <span class="n">jframes</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">figure</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;frames&#39;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">cls</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">PlotlyJSONEncoder</span><span class="p">)</span>
+
+    <span class="n">configkeys</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;editable&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;autosizable&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;fillFrame&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;frameMargins&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;scrollZoom&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;doubleClick&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;showTips&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;showLink&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sendData&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;linkText&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;showSources&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;displayModeBar&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;modeBarButtonsToRemove&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;modeBarButtonsToAdd&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;modeBarButtons&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;displaylogo&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;plotGlPixelRatio&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;setBackground&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;topojsonURL&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">config_clean</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">configkeys</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">config</span><span class="p">)</span>
+    <span class="n">jconfig</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">config_clean</span><span class="p">)</span>
+
+    <span class="c1"># TODO: The get_config &#39;source of truth&#39; should</span>
+    <span class="c1"># really be somewhere other than plotly.plotly</span>
+    <span class="n">plotly_platform_url</span> <span class="o">=</span> <span class="n">plotly</span><span class="o">.</span><span class="n">plotly</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;plotly_domain&#39;</span><span class="p">,</span>
+                                                         <span class="s1">&#39;https://plot.ly&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">plotly_platform_url</span> <span class="o">!=</span> <span class="s1">&#39;https://plot.ly&#39;</span> <span class="ow">and</span>
+            <span class="n">config</span><span class="p">[</span><span class="s1">&#39;linkText&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Export to plot.ly&#39;</span><span class="p">):</span>
+
+        <span class="n">link_domain</span> <span class="o">=</span> <span class="n">plotly_platform_url</span>\
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;https://&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">link_text</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;linkText&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;plot.ly&#39;</span><span class="p">,</span> <span class="n">link_domain</span><span class="p">)</span>
+        <span class="n">config</span><span class="p">[</span><span class="s1">&#39;linkText&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">link_text</span>
+        <span class="n">jconfig</span> <span class="o">=</span> <span class="n">jconfig</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;Export to plot.ly&#39;</span><span class="p">,</span> <span class="n">link_text</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;frames&#39;</span> <span class="ow">in</span> <span class="n">figure_or_data</span><span class="p">:</span>
+        <span class="n">script</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        Plotly.plot(</span>
+<span class="s1">            &#39;</span><span class="si">{id}</span><span class="s1">&#39;,</span>
+<span class="s1">            </span><span class="si">{data}</span><span class="s1">,</span>
+<span class="s1">            </span><span class="si">{layout}</span><span class="s1">,</span>
+<span class="s1">            </span><span class="si">{config}</span><span class="s1"></span>
+<span class="s1">        ).then(function () </span><span class="si">{add_frames}</span><span class="s1">).then(function()</span><span class="si">{animate}</span><span class="s1">)</span>
+<span class="s1">        &#39;&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="n">plotdivid</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">jdata</span><span class="p">,</span>
+            <span class="n">layout</span><span class="o">=</span><span class="n">jlayout</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">jconfig</span><span class="p">,</span>
+            <span class="n">add_frames</span><span class="o">=</span><span class="s2">&quot;{&quot;</span> <span class="o">+</span> <span class="s2">&quot;return Plotly.addFrames(&#39;</span><span class="si">{id}</span><span class="s2">&#39;,</span><span class="si">{frames}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">id</span><span class="o">=</span><span class="n">plotdivid</span><span class="p">,</span> <span class="n">frames</span><span class="o">=</span><span class="n">jframes</span>
+            <span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;);}&quot;</span><span class="p">,</span>
+            <span class="n">animate</span><span class="o">=</span><span class="s2">&quot;{&quot;</span> <span class="o">+</span> <span class="s2">&quot;Plotly.animate(&#39;</span><span class="si">{id}</span><span class="s2">&#39;);&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">plotdivid</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">script</span> <span class="o">=</span> <span class="s1">&#39;Plotly.newPlot(&quot;</span><span class="si">{id}</span><span class="s1">&quot;, </span><span class="si">{data}</span><span class="s1">, </span><span class="si">{layout}</span><span class="s1">, </span><span class="si">{config}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="n">plotdivid</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">jdata</span><span class="p">,</span>
+            <span class="n">layout</span><span class="o">=</span><span class="n">jlayout</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">jconfig</span><span class="p">)</span>
+
+    <span class="n">optional_line1</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;require([&quot;plotly&quot;], function(Plotly) {{ &#39;</span>
+                      <span class="k">if</span> <span class="n">global_requirejs</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">optional_line2</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;}});&#39;</span> <span class="k">if</span> <span class="n">global_requirejs</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="n">plotly_html_div</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;&#39;</span>
+        <span class="s1">&#39;&lt;div id=&quot;</span><span class="si">{id}</span><span class="s1">&quot; style=&quot;height: </span><span class="si">{height}</span><span class="s1">; width: </span><span class="si">{width}</span><span class="s1">;&quot; &#39;</span>
+        <span class="s1">&#39;class=&quot;plotly-graph-div&quot;&gt;&#39;</span>
+        <span class="s1">&#39;&lt;/div&gt;&#39;</span>
+        <span class="s1">&#39;&lt;script type=&quot;text/javascript&quot;&gt;&#39;</span> <span class="o">+</span>
+        <span class="n">optional_line1</span> <span class="o">+</span>
+        <span class="s1">&#39;window.PLOTLYENV=window.PLOTLYENV || {{}};&#39;</span>
+        <span class="s1">&#39;window.PLOTLYENV.BASE_URL=&quot;&#39;</span> <span class="o">+</span> <span class="n">plotly_platform_url</span> <span class="o">+</span> <span class="s1">&#39;&quot;;&#39;</span>
+        <span class="s1">&#39;</span><span class="si">{script}</span><span class="s1">&#39;</span> <span class="o">+</span>
+        <span class="n">optional_line2</span> <span class="o">+</span>
+        <span class="s1">&#39;&lt;/script&gt;&#39;</span>
+        <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">plotdivid</span><span class="p">,</span> <span class="n">script</span><span class="o">=</span><span class="n">script</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">plotly_html_div</span><span class="p">,</span> <span class="n">plotdivid</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span>
+
+
+<span class="k">def</span> <span class="nf">iplot</span><span class="p">(</span><span class="n">figure_or_data</span><span class="p">,</span> <span class="n">show_link</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">link_text</span><span class="o">=</span><span class="s1">&#39;Export to plot.ly&#39;</span><span class="p">,</span>
+          <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;plot_image&#39;</span><span class="p">,</span> <span class="n">image_width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span>
+          <span class="n">image_height</span><span class="o">=</span><span class="mi">600</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Draw plotly graphs inside an IPython notebook without</span>
+<span class="sd">    connecting to an external server.</span>
+<span class="sd">    To save the chart to Plotly Cloud or Plotly Enterprise, use</span>
+<span class="sd">    `plotly.plotly.iplot`.</span>
+<span class="sd">    To embed an image of the chart, use `plotly.image.ishow`.</span>
+
+<span class="sd">    figure_or_data -- a plotly.graph_objs.Figure or plotly.graph_objs.Data or</span>
+<span class="sd">                      dict or list that describes a Plotly graph.</span>
+<span class="sd">                      See https://plot.ly/python/ for examples of</span>
+<span class="sd">                      graph descriptions.</span>
+
+<span class="sd">    Keyword arguments:</span>
+<span class="sd">    show_link (default=True) -- display a link in the bottom-right corner of</span>
+<span class="sd">                                of the chart that will export the chart to</span>
+<span class="sd">                                Plotly Cloud or Plotly Enterprise</span>
+<span class="sd">    link_text (default=&#39;Export to plot.ly&#39;) -- the text of export link</span>
+<span class="sd">    validate (default=True) -- validate that all of the keys in the figure</span>
+<span class="sd">                               are valid? omit if your version of plotly.js</span>
+<span class="sd">                               has become outdated with your version of</span>
+<span class="sd">                               graph_reference.json or if you need to include</span>
+<span class="sd">                               extra, unnecessary keys in your figure.</span>
+<span class="sd">    image (default=None |&#39;png&#39; |&#39;jpeg&#39; |&#39;svg&#39; |&#39;webp&#39;) -- This parameter sets</span>
+<span class="sd">        the format of the image to be downloaded, if we choose to download an</span>
+<span class="sd">        image. This parameter has a default value of None indicating that no</span>
+<span class="sd">        image should be downloaded. Please note: for higher resolution images</span>
+<span class="sd">        and more export options, consider making requests to our image servers.</span>
+<span class="sd">        Type: `help(py.image)` for more details.</span>
+<span class="sd">    filename (default=&#39;plot&#39;) -- Sets the name of the file your image</span>
+<span class="sd">        will be saved to. The extension should not be included.</span>
+<span class="sd">    image_height (default=600) -- Specifies the height of the image in `px`.</span>
+<span class="sd">    image_width (default=800) -- Specifies the width of the image in `px`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ```</span>
+<span class="sd">    from plotly.offline import init_notebook_mode, iplot</span>
+<span class="sd">    init_notebook_mode()</span>
+<span class="sd">    iplot([{&#39;x&#39;: [1, 2, 3], &#39;y&#39;: [5, 2, 7]}])</span>
+<span class="sd">    # We can also download an image of the plot by setting the image to the</span>
+<span class="sd">    format you want. e.g. `image=&#39;png&#39;`</span>
+<span class="sd">    iplot([{&#39;x&#39;: [1, 2, 3], &#39;y&#39;: [5, 2, 7]}], image=&#39;png&#39;)</span>
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">__PLOTLY_OFFLINE_INITIALIZED</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">PlotlyError</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+            <span class="s1">&#39;Plotly Offline mode has not been initialized in this notebook. &#39;</span>
+            <span class="s1">&#39;Run: &#39;</span><span class="p">,</span>
+            <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;import plotly&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;plotly.offline.init_notebook_mode() &#39;</span>
+            <span class="s1">&#39;# run at the start of every ipython notebook&#39;</span><span class="p">,</span>
+        <span class="p">]))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tools</span><span class="o">.</span><span class="n">_ipython_imported</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;`iplot` can only run inside an IPython Notebook.&#39;</span><span class="p">)</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">config</span><span class="p">[</span><span class="s1">&#39;showLink&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">show_link</span>
+    <span class="n">config</span><span class="p">[</span><span class="s1">&#39;linkText&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">link_text</span>
+
+    <span class="n">plot_html</span><span class="p">,</span> <span class="n">plotdivid</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">_plot_html</span><span class="p">(</span>
+        <span class="n">figure_or_data</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">validate</span><span class="p">,</span> <span class="s1">&#39;100%&#39;</span><span class="p">,</span> <span class="mi">525</span><span class="p">,</span> <span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="n">display</span><span class="p">(</span><span class="n">HTML</span><span class="p">(</span><span class="n">plot_html</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">image</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">image</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">__IMAGE_FORMATS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The image parameter must be one of the following&#39;</span>
+                             <span class="s1">&#39;: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">__IMAGE_FORMATS</span><span class="p">)</span>
+                             <span class="p">)</span>
+        <span class="c1"># if image is given, and is a valid format, we will download the image</span>
+        <span class="n">script</span> <span class="o">=</span> <span class="n">get_image_download_script</span><span class="p">(</span><span class="s1">&#39;iplot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="n">image</span><span class="p">,</span>
+                                                           <span class="n">width</span><span class="o">=</span><span class="n">image_width</span><span class="p">,</span>
+                                                           <span class="n">height</span><span class="o">=</span><span class="n">image_height</span><span class="p">,</span>
+                                                           <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+                                                           <span class="n">plot_id</span><span class="o">=</span><span class="n">plotdivid</span><span class="p">)</span>
+        <span class="c1"># allow time for the plot to draw</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># inject code to download an image of the plot</span>
+        <span class="n">display</span><span class="p">(</span><span class="n">HTML</span><span class="p">(</span><span class="n">script</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="n">figure_or_data</span><span class="p">,</span> <span class="n">show_link</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">link_text</span><span class="o">=</span><span class="s1">&#39;Export to plot.ly&#39;</span><span class="p">,</span>
+         <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">include_plotlyjs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+         <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;temp-plot.html&#39;</span><span class="p">,</span> <span class="n">auto_open</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+         <span class="n">image_filename</span><span class="o">=</span><span class="s1">&#39;plot_image&#39;</span><span class="p">,</span> <span class="n">image_width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span> <span class="n">image_height</span><span class="o">=</span><span class="mi">600</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Create a plotly graph locally as an HTML document or string.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ```</span>
+<span class="sd">    from plotly.offline import plot</span>
+<span class="sd">    import plotly.graph_objs as go</span>
+
+<span class="sd">    plot([go.Scatter(x=[1, 2, 3], y=[3, 2, 6])], filename=&#39;my-graph.html&#39;)</span>
+<span class="sd">    # We can also download an image of the plot by setting the image parameter</span>
+<span class="sd">    # to the image format we want</span>
+<span class="sd">    plot([go.Scatter(x=[1, 2, 3], y=[3, 2, 6])], filename=&#39;my-graph.html&#39;</span>
+<span class="sd">         image=&#39;jpeg&#39;)</span>
+<span class="sd">    ```</span>
+<span class="sd">    More examples below.</span>
+
+<span class="sd">    figure_or_data -- a plotly.graph_objs.Figure or plotly.graph_objs.Data or</span>
+<span class="sd">                      dict or list that describes a Plotly graph.</span>
+<span class="sd">                      See https://plot.ly/python/ for examples of</span>
+<span class="sd">                      graph descriptions.</span>
+
+<span class="sd">    Keyword arguments:</span>
+<span class="sd">    show_link (default=True) -- display a link in the bottom-right corner of</span>
+<span class="sd">        of the chart that will export the chart to Plotly Cloud or</span>
+<span class="sd">        Plotly Enterprise</span>
+<span class="sd">    link_text (default=&#39;Export to plot.ly&#39;) -- the text of export link</span>
+<span class="sd">    validate (default=True) -- validate that all of the keys in the figure</span>
+<span class="sd">        are valid? omit if your version of plotly.js has become outdated</span>
+<span class="sd">        with your version of graph_reference.json or if you need to include</span>
+<span class="sd">        extra, unnecessary keys in your figure.</span>
+<span class="sd">    output_type (&#39;file&#39; | &#39;div&#39; - default &#39;file&#39;) -- if &#39;file&#39;, then</span>
+<span class="sd">        the graph is saved as a standalone HTML file and `plot`</span>
+<span class="sd">        returns None.</span>
+<span class="sd">        If &#39;div&#39;, then `plot` returns a string that just contains the</span>
+<span class="sd">        HTML &lt;div&gt; that contains the graph and the script to generate the</span>
+<span class="sd">        graph.</span>
+<span class="sd">        Use &#39;file&#39; if you want to save and view a single graph at a time</span>
+<span class="sd">        in a standalone HTML file.</span>
+<span class="sd">        Use &#39;div&#39; if you are embedding these graphs in an HTML file with</span>
+<span class="sd">        other graphs or HTML markup, like a HTML report or an website.</span>
+<span class="sd">    include_plotlyjs (default=True) -- If True, include the plotly.js</span>
+<span class="sd">        source code in the output file or string.</span>
+<span class="sd">        Set as False if your HTML file already contains a copy of the plotly.js</span>
+<span class="sd">        library.</span>
+<span class="sd">    filename (default=&#39;temp-plot.html&#39;) -- The local filename to save the</span>
+<span class="sd">        outputted chart to. If the filename already exists, it will be</span>
+<span class="sd">        overwritten. This argument only applies if `output_type` is &#39;file&#39;.</span>
+<span class="sd">    auto_open (default=True) -- If True, open the saved file in a</span>
+<span class="sd">        web browser after saving.</span>
+<span class="sd">        This argument only applies if `output_type` is &#39;file&#39;.</span>
+<span class="sd">    image (default=None |&#39;png&#39; |&#39;jpeg&#39; |&#39;svg&#39; |&#39;webp&#39;) -- This parameter sets</span>
+<span class="sd">        the format of the image to be downloaded, if we choose to download an</span>
+<span class="sd">        image. This parameter has a default value of None indicating that no</span>
+<span class="sd">        image should be downloaded. Please note: for higher resolution images</span>
+<span class="sd">        and more export options, consider making requests to our image servers.</span>
+<span class="sd">        Type: `help(py.image)` for more details.</span>
+<span class="sd">    image_filename (default=&#39;plot_image&#39;) -- Sets the name of the file your</span>
+<span class="sd">        image will be saved to. The extension should not be included.</span>
+<span class="sd">    image_height (default=600) -- Specifies the height of the image in `px`.</span>
+<span class="sd">    image_width (default=800) -- Specifies the width of the image in `px`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">output_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;div&#39;</span><span class="p">,</span> <span class="s1">&#39;file&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;`output_type` argument must be &#39;div&#39; or &#39;file&#39;. &quot;</span>
+            <span class="s2">&quot;You supplied `&quot;</span> <span class="o">+</span> <span class="n">output_type</span> <span class="o">+</span> <span class="s2">&quot;``&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.html&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">output_type</span> <span class="o">==</span> <span class="s1">&#39;file&#39;</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;Your filename `&quot;</span> <span class="o">+</span> <span class="n">filename</span> <span class="o">+</span> <span class="s2">&quot;` didn&#39;t end with .html. &quot;</span>
+            <span class="s2">&quot;Adding .html to the end of your file.&quot;</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">+=</span> <span class="s1">&#39;.html&#39;</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">config</span><span class="p">[</span><span class="s1">&#39;showLink&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">show_link</span>
+    <span class="n">config</span><span class="p">[</span><span class="s1">&#39;linkText&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">link_text</span>
+
+    <span class="n">plot_html</span><span class="p">,</span> <span class="n">plotdivid</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">_plot_html</span><span class="p">(</span>
+        <span class="n">figure_or_data</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">validate</span><span class="p">,</span>
+        <span class="s1">&#39;100%&#39;</span><span class="p">,</span> <span class="s1">&#39;100%&#39;</span><span class="p">,</span> <span class="n">global_requirejs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">resize_script</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">width</span> <span class="o">==</span> <span class="s1">&#39;100%&#39;</span> <span class="ow">or</span> <span class="n">height</span> <span class="o">==</span> <span class="s1">&#39;100%&#39;</span><span class="p">:</span>
+        <span class="n">resize_script</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;&#39;</span>
+            <span class="s1">&#39;&lt;script type=&quot;text/javascript&quot;&gt;&#39;</span>
+            <span class="s1">&#39;window.removeEventListener(&quot;resize&quot;);&#39;</span>
+            <span class="s1">&#39;window.addEventListener(&quot;resize&quot;, function(){{&#39;</span>
+            <span class="s1">&#39;Plotly.Plots.resize(document.getElementById(&quot;</span><span class="si">{id}</span><span class="s1">&quot;));}});&#39;</span>
+            <span class="s1">&#39;&lt;/script&gt;&#39;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">plotdivid</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_type</span> <span class="o">==</span> <span class="s1">&#39;file&#39;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">include_plotlyjs</span><span class="p">:</span>
+                <span class="n">plotly_js_script</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+                    <span class="s1">&#39;&lt;script type=&quot;text/javascript&quot;&gt;&#39;</span><span class="p">,</span>
+                    <span class="n">get_plotlyjs</span><span class="p">(),</span>
+                    <span class="s1">&#39;&lt;/script&gt;&#39;</span><span class="p">,</span>
+                <span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plotly_js_script</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+            <span class="k">if</span> <span class="n">image</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">image</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">__IMAGE_FORMATS</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The image parameter must be one of the &#39;</span>
+                                     <span class="s1">&#39;following: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">__IMAGE_FORMATS</span><span class="p">)</span>
+                                     <span class="p">)</span>
+                <span class="c1"># if the check passes then download script is injected.</span>
+                <span class="c1"># write the download script:</span>
+                <span class="n">script</span> <span class="o">=</span> <span class="n">get_image_download_script</span><span class="p">(</span><span class="s1">&#39;plot&#39;</span><span class="p">)</span>
+                <span class="n">script</span> <span class="o">=</span> <span class="n">script</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="n">image</span><span class="p">,</span>
+                                       <span class="n">width</span><span class="o">=</span><span class="n">image_width</span><span class="p">,</span>
+                                       <span class="n">height</span><span class="o">=</span><span class="n">image_height</span><span class="p">,</span>
+                                       <span class="n">filename</span><span class="o">=</span><span class="n">image_filename</span><span class="p">,</span>
+                                       <span class="n">plot_id</span><span class="o">=</span><span class="n">plotdivid</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">script</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+                <span class="s1">&#39;&lt;html&gt;&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;/head&gt;&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;&lt;body&gt;&#39;</span><span class="p">,</span>
+                <span class="n">plotly_js_script</span><span class="p">,</span>
+                <span class="n">plot_html</span><span class="p">,</span>
+                <span class="n">resize_script</span><span class="p">,</span>
+                <span class="n">script</span><span class="p">,</span>
+                <span class="s1">&#39;&lt;/body&gt;&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;&lt;/html&gt;&#39;</span><span class="p">]))</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;file://&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">auto_open</span><span class="p">:</span>
+            <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">url</span>
+
+    <span class="k">elif</span> <span class="n">output_type</span> <span class="o">==</span> <span class="s1">&#39;div&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">include_plotlyjs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+                <span class="s1">&#39;&lt;div&gt;&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;&lt;script type=&quot;text/javascript&quot;&gt;&#39;</span><span class="p">,</span>
+                <span class="n">get_plotlyjs</span><span class="p">(),</span>
+                <span class="s1">&#39;&lt;/script&gt;&#39;</span><span class="p">,</span>
+                <span class="n">plot_html</span><span class="p">,</span>
+                <span class="s1">&#39;&lt;/div&gt;&#39;</span>
+            <span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plot_html</span>
+
+
+<span class="k">def</span> <span class="nf">plot_mpl</span><span class="p">(</span><span class="n">mpl_fig</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strip_style</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+             <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_link</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">link_text</span><span class="o">=</span><span class="s1">&#39;Export to plot.ly&#39;</span><span class="p">,</span>
+             <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="n">include_plotlyjs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+             <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;temp-plot.html&#39;</span><span class="p">,</span> <span class="n">auto_open</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+             <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">image_filename</span><span class="o">=</span><span class="s1">&#39;plot_image&#39;</span><span class="p">,</span>
+             <span class="n">image_height</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">image_width</span><span class="o">=</span><span class="mi">800</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a matplotlib figure to a Plotly graph stored locally as HTML.</span>
+
+<span class="sd">    For more information on converting matplotlib visualizations to plotly</span>
+<span class="sd">    graphs, call help(plotly.tools.mpl_to_plotly)</span>
+
+<span class="sd">    For more information on creating plotly charts locally as an HTML document</span>
+<span class="sd">    or string, call help(plotly.offline.plot)</span>
+
+<span class="sd">    mpl_fig -- a matplotlib figure object to convert to a plotly graph</span>
+
+<span class="sd">    Keyword arguments:</span>
+<span class="sd">    resize (default=False) -- allow plotly to choose the figure size.</span>
+<span class="sd">    strip_style (default=False) -- allow plotly to choose style options.</span>
+<span class="sd">    verbose (default=False) -- print message.</span>
+<span class="sd">    show_link (default=True) -- display a link in the bottom-right corner of</span>
+<span class="sd">        of the chart that will export the chart to Plotly Cloud or</span>
+<span class="sd">        Plotly Enterprise</span>
+<span class="sd">    link_text (default=&#39;Export to plot.ly&#39;) -- the text of export link</span>
+<span class="sd">    validate (default=True) -- validate that all of the keys in the figure</span>
+<span class="sd">        are valid? omit if your version of plotly.js has become outdated</span>
+<span class="sd">        with your version of graph_reference.json or if you need to include</span>
+<span class="sd">        extra, unnecessary keys in your figure.</span>
+<span class="sd">    output_type (&#39;file&#39; | &#39;div&#39; - default &#39;file&#39;) -- if &#39;file&#39;, then</span>
+<span class="sd">        the graph is saved as a standalone HTML file and `plot`</span>
+<span class="sd">        returns None.</span>
+<span class="sd">        If &#39;div&#39;, then `plot` returns a string that just contains the</span>
+<span class="sd">        HTML &lt;div&gt; that contains the graph and the script to generate the</span>
+<span class="sd">        graph.</span>
+<span class="sd">        Use &#39;file&#39; if you want to save and view a single graph at a time</span>
+<span class="sd">        in a standalone HTML file.</span>
+<span class="sd">        Use &#39;div&#39; if you are embedding these graphs in an HTML file with</span>
+<span class="sd">        other graphs or HTML markup, like a HTML report or an website.</span>
+<span class="sd">    include_plotlyjs (default=True) -- If True, include the plotly.js</span>
+<span class="sd">        source code in the output file or string.</span>
+<span class="sd">        Set as False if your HTML file already contains a copy of the plotly.js</span>
+<span class="sd">        library.</span>
+<span class="sd">    filename (default=&#39;temp-plot.html&#39;) -- The local filename to save the</span>
+<span class="sd">        outputted chart to. If the filename already exists, it will be</span>
+<span class="sd">        overwritten. This argument only applies if `output_type` is &#39;file&#39;.</span>
+<span class="sd">    auto_open (default=True) -- If True, open the saved file in a</span>
+<span class="sd">        web browser after saving.</span>
+<span class="sd">        This argument only applies if `output_type` is &#39;file&#39;.</span>
+<span class="sd">    image (default=None |&#39;png&#39; |&#39;jpeg&#39; |&#39;svg&#39; |&#39;webp&#39;) -- This parameter sets</span>
+<span class="sd">        the format of the image to be downloaded, if we choose to download an</span>
+<span class="sd">        image. This parameter has a default value of None indicating that no</span>
+<span class="sd">        image should be downloaded.</span>
+<span class="sd">    image_filename (default=&#39;plot_image&#39;) -- Sets the name of the file your</span>
+<span class="sd">        image will be saved to. The extension should not be included.</span>
+<span class="sd">    image_height (default=600) -- Specifies the height of the image in `px`.</span>
+<span class="sd">    image_width (default=800) -- Specifies the width of the image in `px`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ```</span>
+<span class="sd">    from plotly.offline import init_notebook_mode, plot_mpl</span>
+<span class="sd">    import matplotlib.pyplot as plt</span>
+
+<span class="sd">    init_notebook_mode()</span>
+
+<span class="sd">    fig = plt.figure()</span>
+<span class="sd">    x = [10, 15, 20, 25, 30]</span>
+<span class="sd">    y = [100, 250, 200, 150, 300]</span>
+<span class="sd">    plt.plot(x, y, &quot;o&quot;)</span>
+
+<span class="sd">    plot_mpl(fig)</span>
+<span class="sd">    # If you want to to download an image of the figure as well</span>
+<span class="sd">    plot_mpl(fig, image=&#39;png&#39;)</span>
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plotly_plot</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">mpl_to_plotly</span><span class="p">(</span><span class="n">mpl_fig</span><span class="p">,</span> <span class="n">resize</span><span class="p">,</span> <span class="n">strip_style</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">plot</span><span class="p">(</span><span class="n">plotly_plot</span><span class="p">,</span> <span class="n">show_link</span><span class="p">,</span> <span class="n">link_text</span><span class="p">,</span> <span class="n">validate</span><span class="p">,</span> <span class="n">output_type</span><span class="p">,</span>
+                <span class="n">include_plotlyjs</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">auto_open</span><span class="p">,</span>
+                <span class="n">image</span><span class="o">=</span><span class="n">image</span><span class="p">,</span> <span class="n">image_filename</span><span class="o">=</span><span class="n">image_filename</span><span class="p">,</span>
+                <span class="n">image_height</span><span class="o">=</span><span class="n">image_height</span><span class="p">,</span> <span class="n">image_width</span><span class="o">=</span><span class="n">image_width</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">iplot_mpl</span><span class="p">(</span><span class="n">mpl_fig</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strip_style</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+              <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_link</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">link_text</span><span class="o">=</span><span class="s1">&#39;Export to plot.ly&#39;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">image_filename</span><span class="o">=</span><span class="s1">&#39;plot_image&#39;</span><span class="p">,</span>
+              <span class="n">image_height</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">image_width</span><span class="o">=</span><span class="mi">800</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a matplotlib figure to a plotly graph and plot inside an IPython</span>
+<span class="sd">    notebook without connecting to an external server.</span>
+
+<span class="sd">    To save the chart to Plotly Cloud or Plotly Enterprise, use</span>
+<span class="sd">    `plotly.plotly.plot_mpl`.</span>
+
+<span class="sd">    For more information on converting matplotlib visualizations to plotly</span>
+<span class="sd">    graphs call `help(plotly.tools.mpl_to_plotly)`</span>
+
+<span class="sd">    For more information on plotting plotly charts offline in an Ipython</span>
+<span class="sd">    notebook call `help(plotly.offline.iplot)`</span>
+
+<span class="sd">    mpl_fig -- a matplotlib.figure to convert to a plotly graph</span>
+
+<span class="sd">    Keyword arguments:</span>
+<span class="sd">    resize (default=False) -- allow plotly to choose the figure size.</span>
+<span class="sd">    strip_style (default=False) -- allow plotly to choose style options.</span>
+<span class="sd">    verbose (default=False) -- print message.</span>
+<span class="sd">    show_link (default=True) -- display a link in the bottom-right corner of</span>
+<span class="sd">                                of the chart that will export the chart to</span>
+<span class="sd">                                Plotly Cloud or Plotly Enterprise</span>
+<span class="sd">    link_text (default=&#39;Export to plot.ly&#39;) -- the text of export link</span>
+<span class="sd">    validate (default=True) -- validate that all of the keys in the figure</span>
+<span class="sd">                               are valid? omit if your version of plotly.js</span>
+<span class="sd">                               has become outdated with your version of</span>
+<span class="sd">                               graph_reference.json or if you need to include</span>
+<span class="sd">                               extra, unnecessary keys in your figure.</span>
+<span class="sd">    image (default=None |&#39;png&#39; |&#39;jpeg&#39; |&#39;svg&#39; |&#39;webp&#39;) -- This parameter sets</span>
+<span class="sd">        the format of the image to be downloaded, if we choose to download an</span>
+<span class="sd">        image. This parameter has a default value of None indicating that no</span>
+<span class="sd">        image should be downloaded.</span>
+<span class="sd">    image_filename (default=&#39;plot_image&#39;) -- Sets the name of the file your</span>
+<span class="sd">        image will be saved to. The extension should not be included.</span>
+<span class="sd">    image_height (default=600) -- Specifies the height of the image in `px`.</span>
+<span class="sd">    image_width (default=800) -- Specifies the width of the image in `px`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ```</span>
+<span class="sd">    from plotly.offline import init_notebook_mode, iplot_mpl</span>
+<span class="sd">    import matplotlib.pyplot as plt</span>
+
+<span class="sd">    fig = plt.figure()</span>
+<span class="sd">    x = [10, 15, 20, 25, 30]</span>
+<span class="sd">    y = [100, 250, 200, 150, 300]</span>
+<span class="sd">    plt.plot(x, y, &quot;o&quot;)</span>
+
+<span class="sd">    init_notebook_mode()</span>
+<span class="sd">    iplot_mpl(fig)</span>
+<span class="sd">    # and if you want to download an image of the figure as well</span>
+<span class="sd">    iplot_mpl(fig, image=&#39;jpeg&#39;)</span>
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plotly_plot</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">mpl_to_plotly</span><span class="p">(</span><span class="n">mpl_fig</span><span class="p">,</span> <span class="n">resize</span><span class="p">,</span> <span class="n">strip_style</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">iplot</span><span class="p">(</span><span class="n">plotly_plot</span><span class="p">,</span> <span class="n">show_link</span><span class="p">,</span> <span class="n">link_text</span><span class="p">,</span> <span class="n">validate</span><span class="p">,</span>
+                 <span class="n">image</span><span class="o">=</span><span class="n">image</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">image_filename</span><span class="p">,</span>
+                 <span class="n">image_height</span><span class="o">=</span><span class="n">image_height</span><span class="p">,</span> <span class="n">image_width</span><span class="o">=</span><span class="n">image_width</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">enable_mpl_offline</span><span class="p">(</span><span class="n">resize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strip_style</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_link</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">link_text</span><span class="o">=</span><span class="s1">&#39;Export to plot.ly&#39;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert mpl plots to locally hosted HTML documents.</span>
+
+<span class="sd">    This function should be used with the inline matplotlib backend</span>
+<span class="sd">    that ships with IPython that can be enabled with `%pylab inline`</span>
+<span class="sd">    or `%matplotlib inline`. This works by adding an HTML formatter</span>
+<span class="sd">    for Figure objects; the existing SVG/PNG formatters will remain</span>
+<span class="sd">    enabled.</span>
+
+<span class="sd">    (idea taken from `mpld3._display.enable_notebook`)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    ```</span>
+<span class="sd">    from plotly.offline import enable_mpl_offline</span>
+<span class="sd">    import matplotlib.pyplot as plt</span>
+
+<span class="sd">    enable_mpl_offline()</span>
+
+<span class="sd">    fig = plt.figure()</span>
+<span class="sd">    x = [10, 15, 20, 25, 30]</span>
+<span class="sd">    y = [100, 250, 200, 150, 300]</span>
+<span class="sd">    plt.plot(x, y, &quot;o&quot;)</span>
+<span class="sd">    fig</span>
+<span class="sd">    ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">init_notebook_mode</span><span class="p">()</span>
+
+    <span class="n">ip</span> <span class="o">=</span> <span class="n">IPython</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">getipython</span><span class="o">.</span><span class="n">get_ipython</span><span class="p">()</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">ip</span><span class="o">.</span><span class="n">display_formatter</span><span class="o">.</span><span class="n">formatters</span><span class="p">[</span><span class="s1">&#39;text/html&#39;</span><span class="p">]</span>
+    <span class="n">formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span>
+                       <span class="k">lambda</span> <span class="n">fig</span><span class="p">:</span> <span class="n">iplot_mpl</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">resize</span><span class="p">,</span> <span class="n">strip_style</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span>
+                                             <span class="n">show_link</span><span class="p">,</span> <span class="n">link_text</span><span class="p">,</span> <span class="n">validate</span><span class="p">))</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

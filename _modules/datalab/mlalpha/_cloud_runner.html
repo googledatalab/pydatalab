@@ -1,0 +1,286 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.mlalpha._cloud_runner &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>datalab.mlalpha._cloud_runner</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.mlalpha._cloud_runner</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">googleapiclient</span> <span class="k">import</span> <span class="n">discovery</span>
+
+<span class="kn">import</span> <span class="nn">datalab.context</span>
+
+
+<span class="c1"># TODO(qimingj) Remove once the API is public since it will no longer be needed</span>
+<span class="n">_CLOUDML_DISCOVERY_URL</span> <span class="o">=</span> <span class="s1">&#39;https://storage.googleapis.com/cloud-ml/discovery/&#39;</span> \
+                         <span class="s1">&#39;ml_v1beta1_discovery.json&#39;</span>
+
+
+<div class="viewcode-block" id="CloudRunner"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.CloudRunner">[docs]</a><span class="k">class</span> <span class="nc">CloudRunner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;CloudML Trainer API Wrapper that takes a job_request, add authentication information,</span>
+<span class="sd">     submit it to cloud, and get job response.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a LocalRunner</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      job_request: the arguments of the training job in a dict. For example,</span>
+<span class="sd">          {</span>
+<span class="sd">            &#39;package_uris&#39;:  &#39;gs://my-bucket/iris/trainer-0.1.tar.gz&#39;,</span>
+<span class="sd">            &#39;python_module&#39;: &#39;trainer.task&#39;,</span>
+<span class="sd">            &#39;scale_tier&#39;: &#39;BASIC&#39;,</span>
+<span class="sd">            &#39;region&#39;: &#39;us-central1&#39;,</span>
+<span class="sd">            &#39;args&#39;: {</span>
+<span class="sd">              &#39;train_data_paths&#39;: [&#39;gs://mubucket/data/features_train&#39;],</span>
+<span class="sd">              &#39;eval_data_paths&#39;: [&#39;gs://mubucket/data/features_eval&#39;],</span>
+<span class="sd">              &#39;metadata_path&#39;: &#39;gs://mubucket/data/metadata.yaml&#39;,</span>
+<span class="sd">              &#39;output_path&#39;: &#39;gs://mubucket/data/mymodel/&#39;,</span>
+<span class="sd">            }</span>
+<span class="sd">          }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_job_request</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">job_request</span><span class="p">)</span>
+    <span class="c1"># convert job_args from dict to list as service required.</span>
+    <span class="k">if</span> <span class="s1">&#39;args&#39;</span> <span class="ow">in</span> <span class="n">job_request</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">job_request</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+      <span class="n">job_args</span> <span class="o">=</span> <span class="n">job_request</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]</span>
+      <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">job_args</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+          <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">k</span><span class="p">)</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">k</span><span class="p">)</span>
+          <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_job_request</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span>
+
+  <span class="k">def</span> <span class="nf">_create_default_job_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">job_name</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%y%m</span><span class="si">%d</span><span class="s1">_%H%M%S&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;python_module&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_job_request</span><span class="p">:</span>
+      <span class="n">job_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_job_request</span><span class="p">[</span><span class="s1">&#39;python_module&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="o">+</span> \
+          <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">job_name</span>
+    <span class="k">return</span> <span class="n">job_name</span>
+
+<div class="viewcode-block" id="CloudRunner.run"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.CloudRunner.run">[docs]</a>  <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Submit a training job to the CloudML service.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      job_id: id for the training job. If None, a UUID will be generated.</span>
+
+<span class="sd">    Returns: job info returned from service.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">job_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_default_job_name</span><span class="p">()</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="n">job_id</span><span class="p">,</span>
+        <span class="s1">&#39;training_input&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_job_request</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+    <span class="n">cloudml</span> <span class="o">=</span> <span class="n">discovery</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s1">&#39;ml&#39;</span><span class="p">,</span> <span class="s1">&#39;v1beta1&#39;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">credentials</span><span class="p">,</span>
+                              <span class="n">discoveryServiceUrl</span><span class="o">=</span><span class="n">_CLOUDML_DISCOVERY_URL</span><span class="p">)</span>
+    <span class="n">request</span> <span class="o">=</span> <span class="n">cloudml</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">jobs</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">job</span><span class="p">,</span>
+                                               <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;projects/&#39;</span> <span class="o">+</span> <span class="n">context</span><span class="o">.</span><span class="n">project_id</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;user-agent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;GoogleCloudDataLab/1.0&#39;</span>
+    <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

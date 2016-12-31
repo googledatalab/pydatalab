@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>datalab.stackdriver.monitoring._timeseries &mdash; Google Cloud Datalab  documentation</title>
+  <title>datalab.stackdriver.monitoring._query &mdash; Google Cloud Datalab  documentation</title>
   
 
   
@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
         <link rel="up" title="Module code" href="../../../index.html"/> 
 
@@ -80,8 +83,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.magics.html">datalab.magics</a></li>
 </ul>
 
             
@@ -114,7 +120,7 @@
       
           <li><a href="../../../index.html">Module code</a> &raquo;</li>
       
-    <li>datalab.stackdriver.monitoring._timeseries</li>
+    <li>datalab.stackdriver.monitoring._query</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -126,7 +132,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <h1>Source code for datalab.stackdriver.monitoring._timeseries</h1><div class="highlight"><pre>
+  <h1>Source code for datalab.stackdriver.monitoring._query</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
@@ -144,8 +150,8 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
 
 <span class="kn">import</span> <span class="nn">google.cloud.monitoring</span>
-<span class="kn">import</span> <span class="nn">pandas</span>
 
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_query_metadata</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_utils</span>
 
 
@@ -193,37 +199,9 @@
                                 <span class="n">end_time</span><span class="o">=</span><span class="n">end_time</span><span class="p">,</span>
                                 <span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="n">hours</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="n">minutes</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Query.labels_as_dataframe"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.Query.labels_as_dataframe">[docs]</a>  <span class="k">def</span> <span class="nf">labels_as_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the resource and metric metadata as a pandas dataframe.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">      A pandas dataframe containing the resource type and resource and metric</span>
-<span class="sd">      labels. Each row in this dataframe corresponds to the metadata from one</span>
-<span class="sd">      time series.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">headers</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;resource&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="o">.</span><span class="n">resource</span><span class="o">.</span><span class="n">__dict__</span><span class="p">,</span> <span class="s1">&#39;metric&#39;</span><span class="p">:</span> <span class="n">ts</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">__dict__</span><span class="p">}</span>
-               <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">headers_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">headers</span><span class="p">:</span>
-      <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span>
-
-    <span class="c1"># Add a 2 level column header.</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">col</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
-
-    <span class="c1"># Re-order the columns.</span>
-    <span class="n">resource_keys</span> <span class="o">=</span> <span class="n">google</span><span class="o">.</span><span class="n">cloud</span><span class="o">.</span><span class="n">monitoring</span><span class="o">.</span><span class="n">_dataframe</span><span class="o">.</span><span class="n">_sorted_resource_labels</span><span class="p">(</span>
-        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;resource.labels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-    <span class="n">sorted_columns</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;resource&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">)]</span>
-    <span class="n">sorted_columns</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;resource.labels&#39;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">resource_keys</span><span class="p">]</span>
-    <span class="n">sorted_columns</span> <span class="o">+=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
-                             <span class="k">if</span> <span class="n">col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;metric.labels&#39;</span><span class="p">)</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sorted_columns</span><span class="p">]</span>
-
-    <span class="c1"># Sort the data, and clean up index values, and NaNs.</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">sorted_columns</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">df</span></div></div>
+<div class="viewcode-block" id="Query.metadata"><a class="viewcode-back" href="../../../../datalab.stackdriver.monitoring.html#datalab.stackdriver.monitoring.Query.metadata">[docs]</a>  <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves the metadata for the query.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_query_metadata</span><span class="o">.</span><span class="n">QueryMetadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
 </pre></div>
 
            </div>

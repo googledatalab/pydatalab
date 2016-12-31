@@ -21,6 +21,9 @@ Module contents
 .. autoclass:: datalab.bigquery.Datasets
     :members:
 
+.. autoclass:: datalab.bigquery.Dialect
+    :members:
+
 .. autoclass:: datalab.bigquery.FederatedTable
     :members:
 

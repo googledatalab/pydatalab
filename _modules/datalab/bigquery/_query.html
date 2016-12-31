@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
         <link rel="up" title="datalab.bigquery" href="../bigquery.html"/> 
 
@@ -80,8 +83,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
 </ul>
 
             
@@ -337,7 +343,7 @@
     <span class="sd">&quot;&quot;&quot; Get the code for any Javascript UDFs used in the query. &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_code</span>
 
-<div class="viewcode-block" id="Query.results"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.results">[docs]</a>  <span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Query.results"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.results">[docs]</a>  <span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Retrieves table of results for the query. May block if the query must be executed first.</span>
 
 <span class="sd">    Args:</span>
@@ -360,7 +366,7 @@
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">results</span></div>
 
 <div class="viewcode-block" id="Query.extract"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.extract">[docs]</a>  <span class="k">def</span> <span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">storage_uris</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-              <span class="n">compress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+              <span class="n">compress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Exports the query results to GCS.</span>
 
 <span class="sd">    Args:</span>
@@ -393,7 +399,7 @@
 
   <span class="nd">@datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">async_method</span>
 <div class="viewcode-block" id="Query.extract_async"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.extract_async">[docs]</a>  <span class="k">def</span> <span class="nf">extract_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">storage_uris</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">compress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                    <span class="n">compress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Exports the query results to GCS. Returns a Job immediately.</span>
 
 <span class="sd">    Note that there are two jobs that may need to be run sequentially, one to run the query,</span>
@@ -431,7 +437,7 @@
                         <span class="n">csv_header</span><span class="o">=</span><span class="n">csv_header</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="n">compress</span><span class="p">,</span>
                         <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Query.to_dataframe"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.to_dataframe">[docs]</a>  <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span>
+<div class="viewcode-block" id="Query.to_dataframe"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.to_dataframe">[docs]</a>  <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_row</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                    <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Exports the query results to a Pandas dataframe.</span>
 
@@ -454,7 +460,7 @@
         <span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">start_row</span><span class="o">=</span><span class="n">start_row</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="n">max_rows</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Query.to_file"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.to_file">[docs]</a>  <span class="k">def</span> <span class="nf">to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-              <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+              <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Save the results to a local file in CSV format.</span>
 
 <span class="sd">    Args:</span>
@@ -482,7 +488,7 @@
 
   <span class="nd">@datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">async_method</span>
 <div class="viewcode-block" id="Query.to_file_async"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.to_file_async">[docs]</a>  <span class="k">def</span> <span class="nf">to_file_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                    <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Save the results to a local file in CSV format. Returns a Job immediately.</span>
 
 <span class="sd">    Args:</span>
@@ -507,7 +513,7 @@
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span> <span class="n">csv_delimiter</span><span class="o">=</span><span class="n">csv_delimiter</span><span class="p">,</span> <span class="n">csv_header</span><span class="o">=</span><span class="n">csv_header</span><span class="p">,</span>
                         <span class="n">use_cache</span><span class="o">=</span><span class="n">use_cache</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Query.sample"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span>
+<div class="viewcode-block" id="Query.sample"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Retrieves a sampling of rows for the query.</span>
 
@@ -536,7 +542,7 @@
                                                                          <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span>
                                                                          <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Query.execute_dry_run"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.execute_dry_run">[docs]</a>  <span class="k">def</span> <span class="nf">execute_dry_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Query.execute_dry_run"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.execute_dry_run">[docs]</a>  <span class="k">def</span> <span class="nf">execute_dry_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Dry run a query, to check the validity of the query and return some useful statistics.</span>
 
 <span class="sd">    Args:</span>
@@ -562,7 +568,7 @@
     <span class="k">return</span> <span class="n">query_result</span><span class="p">[</span><span class="s1">&#39;statistics&#39;</span><span class="p">][</span><span class="s1">&#39;query&#39;</span><span class="p">]</span></div>
 
 <div class="viewcode-block" id="Query.execute_async"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.execute_async">[docs]</a>  <span class="k">def</span> <span class="nf">execute_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_mode</span><span class="o">=</span><span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;interactive&#39;</span><span class="p">,</span> <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span>
+                    <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;interactive&#39;</span><span class="p">,</span> <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Initiate the query and return a QueryJob.</span>
 
@@ -624,7 +630,7 @@
     <span class="k">return</span> <span class="n">_query_job</span><span class="o">.</span><span class="n">QueryJob</span><span class="p">(</span><span class="n">job_id</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Query.execute"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.Query.execute">[docs]</a>  <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_mode</span><span class="o">=</span><span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;interactive&#39;</span><span class="p">,</span>
-              <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+              <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Initiate the query, blocking until complete and then return the results.</span>
 
 <span class="sd">    Args:</span>

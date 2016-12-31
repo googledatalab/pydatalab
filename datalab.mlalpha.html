@@ -1,0 +1,976 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.mlalpha package &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="datalab.stackdriver.monitoring package" href="datalab.stackdriver.monitoring.html"/>
+        <link rel="prev" title="datalab.data package" href="datalab.data.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.mlalpha package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-datalab.mlalpha">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>datalab.mlalpha package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/datalab.mlalpha.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="datalab-mlalpha-package">
+<h1>datalab.mlalpha package<a class="headerlink" href="#datalab-mlalpha-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-datalab.mlalpha">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-datalab.mlalpha" title="Permalink to this headline">¶</a></h2>
+<p>CloudML Helper Library.</p>
+<dl class="class">
+<dt id="datalab.mlalpha.LocalRunner">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">LocalRunner</code><span class="sig-paren">(</span><em>tar_path</em>, <em>module_to_run</em>, <em>logdir</em>, <em>replica_spec</em>, <em>program_args</em>, <em>all_args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_local_runner.html#LocalRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.LocalRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a &#8220;distributed&#8221; local run of a CloudML trainer packaged in a tarball.
+It simulates CloudML service by spawning master, worker, and ps processses,
+but instead of running in their own GKE cluster pods it runs all these as local processes.</p>
+<p>Initializes an instance of a LocalRunner</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tar_path</strong> &#8211; the path of the trainer packaged in a tarball. Can be a local path or a GCS path.</li>
+<li><strong>module_to_run</strong> &#8211; the module to run in the tarball.</li>
+<li><strong>logdir</strong> &#8211; the directory to save logs.</li>
+<li><strong>replica_spec</strong> &#8211; the number of replicas for each job_type.
+For example, {&#8216;master&#8217;: 1, &#8216;worker&#8217;: 1, &#8216;ps&#8217;: 1}.
+Currently it supports at most one process for each job_type, and &#8216;master&#8217; is required.</li>
+<li><strong>program_args</strong> &#8211; <p>the arguments of the training job program. For example,
+{</p>
+<blockquote>
+<div>&#8216;train_data_paths&#8217;: [&#8216;/content/mydata/features_train&#8217;],
+&#8216;eval_data_paths&#8217;: [&#8216;/content/mydata/features_eval&#8217;],
+&#8216;metadata_path&#8217;: &#8216;/content/mydata/metadata.yaml&#8217;,
+&#8216;output_path&#8217;: &#8216;/content/mymodel/&#8217;,</div></blockquote>
+<p>}</p>
+</li>
+<li><strong>all_args</strong> &#8211; all args that can be submitted to cloud training such as job name, replicas, etc.
+It is aligned to the CloudML training service interface. In the program, it can be
+retrieved by &#8216;TF_CONFIG&#8217; env var (json serialized) under &#8216;job&#8217; member.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if replica_spec does not contain &#8216;master&#8217; or its value is below one.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.LocalRunner.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>callback</em>, <em>param</em>, <em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_local_runner.html#LocalRunner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.LocalRunner.run" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Run a training job locally. Block the caller until it finishes.</dt>
+<dd>Prints out task processes stdout and stderr.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>callback</strong> &#8211; <p>a callback that will be invoked every &#8220;interval&#8221; seconds. The signature is:
+callback(replica_spec, new_msgs, done, param), where:</p>
+<blockquote>
+<div>replica_spec: the replica spec of the runner
+new_msgs: new output messages that are available from all task processes
+done: whether the job is finished
+param: a callback param.</div></blockquote>
+</li>
+<li><strong>param</strong> &#8211; the callback param that will be passed along whenever the callback is invoked.</li>
+<li><strong>interval</strong> &#8211; the interval in seconds controlling the callback frequency.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.CloudRunner">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">CloudRunner</code><span class="sig-paren">(</span><em>job_request</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_runner.html#CloudRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>CloudML Trainer API Wrapper that takes a job_request, add authentication information,
+submit it to cloud, and get job response.</p>
+<p>Initializes an instance of a LocalRunner</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>job_request</strong> &#8211; <p>the arguments of the training job in a dict. For example,
+{</p>
+<blockquote>
+<div>&#8216;package_uris&#8217;:  &#8216;gs://my-bucket/iris/trainer-0.1.tar.gz&#8217;,
+&#8216;python_module&#8217;: &#8216;trainer.task&#8217;,
+&#8216;scale_tier&#8217;: &#8216;BASIC&#8217;,
+&#8216;region&#8217;: &#8216;us-central1&#8217;,
+&#8216;args&#8217;: {<blockquote>
+<div>&#8216;train_data_paths&#8217;: [&#8216;gs://mubucket/data/features_train&#8217;],
+&#8216;eval_data_paths&#8217;: [&#8216;gs://mubucket/data/features_eval&#8217;],
+&#8216;metadata_path&#8217;: &#8216;gs://mubucket/data/metadata.yaml&#8217;,
+&#8216;output_path&#8217;: &#8216;gs://mubucket/data/mymodel/&#8217;,</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.CloudRunner.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>job_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_runner.html#CloudRunner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudRunner.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit a training job to the CloudML service.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>job_id</strong> &#8211; id for the training job. If None, a UUID will be generated.</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: job info returned from service.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.Metadata">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">Metadata</code><span class="sig-paren">(</span><em>metadata_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_metadata.html#Metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper class for parsing and serving feature metadata.</p>
+<p>Initializes an instance of Metadata.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>metadata_path</strong> &#8211; metadata file path. Can be local or GCS path.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.Metadata.get_classification_label">
+<code class="descname">get_classification_label</code><span class="sig-paren">(</span><em>label_index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_metadata.html#Metadata.get_classification_label"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Metadata.get_classification_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get classification label given a label index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>label_index</strong> &#8211; the index of label.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The classification label, or label_index if the metadata is not for classification.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if metadata is malformed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.Metadata.get_target_name_and_scenario">
+<code class="descname">get_target_name_and_scenario</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_metadata.html#Metadata.get_target_name_and_scenario"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Metadata.get_target_name_and_scenario" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get name of the target feature and scenario.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Name of the target feature or scenario</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if metadata is malformed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.LocalPredictor">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">LocalPredictor</code><span class="sig-paren">(</span><em>model_dir</em>, <em>label_output=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_local_predictor.html#LocalPredictor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.LocalPredictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preforms local predictions on given data.</p>
+<p>Initializes an instance of LocalPredictor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model_dir</strong> &#8211; a directory that contains model checkpoint and metagraph. Can be local or GCS.</li>
+<li><strong>label_output</strong> &#8211; the name of the output column where all values should be converted from
+index to labels. Only useful in classification. If specified, a metadata.yaml file is required.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.LocalPredictor.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_local_predictor.html#LocalPredictor.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.LocalPredictor.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make predictions on given data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> &#8211; <p>a list of feature data or a pandas DataFrame. Each element in the list is an instance
+which is a dictionary of feature data.
+An example:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>[{&#8220;sepal_length&#8221;: 4.9, &#8220;sepal_width&#8221;: 2.5, &#8220;petal_length&#8221;: 4.5, &#8220;petal_width&#8221;: 1.7},</dt>
+<dd>{&#8220;sepal_length&#8221;: 5.7, &#8220;sepal_width&#8221;: 2.8, &#8220;petal_length&#8221;: 4.1, &#8220;petal_width&#8221;: 1.3}]</dd>
+</dl>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
+<dt>A list of prediction results for given instances. Each element is a dictionary representing</dt>
+<dd>output mapping from the graph.</dd>
+<dt>An example:</dt>
+<dd><dl class="first last docutils">
+<dt>[{&#8220;predictions&#8221;: 1, &#8220;score&#8221;: [0.00078, 0.71406, 0.28515]},</dt>
+<dd>{&#8220;predictions&#8221;: 1, &#8220;score&#8221;: [0.00244, 0.99634, 0.00121]}]</dd>
+</dl>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Raises: Exception if the prediction result has incorrect label types</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.CloudPredictor">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">CloudPredictor</code><span class="sig-paren">(</span><em>model_name</em>, <em>version_name</em>, <em>label_output=None</em>, <em>project_id=None</em>, <em>credentials=None</em>, <em>api=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_predictor.html#CloudPredictor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudPredictor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preforms cloud predictions on given data.</p>
+<p>Initializes an instance of a CloudPredictor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model_name</strong> &#8211; the name of the model used for prediction.</li>
+<li><strong>version_name</strong> &#8211; the name of the version used for prediction.</li>
+<li><strong>label_output</strong> &#8211; the name of the output column where all values should be converted from
+index to labels. Only useful in classification. If specified, metadata_path is required.</li>
+<li><strong>project_id</strong> &#8211; project_id of the model. If not provided, default project_id will be used.</li>
+<li><strong>credentials</strong> &#8211; credentials used to talk to CloudML service. If not provided, default
+credentials will be used.</li>
+<li><strong>api</strong> &#8211; an optional CloudML API client.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.CloudPredictor.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_predictor.html#CloudPredictor.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudPredictor.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make predictions on given data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> &#8211; <p>a list of feature data or a pandas DataFrame. Each element in the list is an instance
+which is a dictionary of feature data.
+An example:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>[{&#8220;sepal_length&#8221;: 4.9, &#8220;sepal_width&#8221;: 2.5, &#8220;petal_length&#8221;: 4.5, &#8220;petal_width&#8221;: 1.7},</dt>
+<dd>{&#8220;sepal_length&#8221;: 5.7, &#8220;sepal_width&#8221;: 2.8, &#8220;petal_length&#8221;: 4.1, &#8220;petal_width&#8221;: 1.3}]</dd>
+</dl>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
+<dt>A list of prediction results for given instances. Each element is a dictionary representing</dt>
+<dd>output mapping from the graph.</dd>
+<dt>An example:</dt>
+<dd><dl class="first last docutils">
+<dt>[{&#8220;predictions&#8221;: 1, &#8220;score&#8221;: [0.00078, 0.71406, 0.28515]},</dt>
+<dd>{&#8220;predictions&#8221;: 1, &#8220;score&#8221;: [0.00244, 0.99634, 0.00121]}]</dd>
+</dl>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises: Exception if bad response is received from the service</dt>
+<dd>Exception if the prediction result has incorrect label types</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.Jobs">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">Jobs</code><span class="sig-paren">(</span><em>filter=None</em>, <em>context=None</em>, <em>api=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_job.html#Jobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of Cloud ML jobs for a project.</p>
+<p>Initializes an instance of a CloudML Job list that is iteratable (&#8220;for job in jobs()&#8221;).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filter</strong> &#8211; filter string for retrieving jobs. Currently only &#8220;done=true|false&#8221; is supported.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials.</li>
+<li><strong>api</strong> &#8211; an optional CloudML API client.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.Jobs.get_job_by_name">
+<code class="descname">get_job_by_name</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_job.html#Jobs.get_job_by_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Jobs.get_job_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>get a CloudML job by its name.
+:param name: the name of the job. See &#8220;Job&#8221; class constructor.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.Summary">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">Summary</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_summary.html#Summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents TensorFlow summary events from files under a directory.</p>
+<p>Initializes an instance of a Summary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; the path of the directory which holds TensorFlow events files.
+Can be local path or GCS path.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.Summary.get_events">
+<code class="descname">get_events</code><span class="sig-paren">(</span><em>event_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_summary.html#Summary.get_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Summary.get_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all events of a certain tag.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event_name</strong> &#8211; the tag of event to look for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tuple. First is a list of {time_span, event_name}. Second is a list of {step, event_name}.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if event start time cannot be found</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.Summary.list_events">
+<code class="descname">list_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_summary.html#Summary.list_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Summary.list_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all scalar events in the directory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A set of unique event tags.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.TensorBoardManager">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">TensorBoardManager</code><a class="reference internal" href="_modules/datalab/mlalpha/_tensorboard.html#TensorBoardManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.TensorBoardManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start, shutdown, and list TensorBoard instances.</p>
+<dl class="staticmethod">
+<dt id="datalab.mlalpha.TensorBoardManager.get_reverse_proxy_url">
+<em class="property">static </em><code class="descname">get_reverse_proxy_url</code><span class="sig-paren">(</span><em>port</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_tensorboard.html#TensorBoardManager.get_reverse_proxy_url"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.TensorBoardManager.get_reverse_proxy_url" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Get the reverse proxy url. Note that this URL only works with</dt>
+<dd>Datalab web server which supports reverse proxy.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>port</strong> &#8211; the port of the tensorboard instance.</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: the reverse proxy URL.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="datalab.mlalpha.TensorBoardManager.get_running_list">
+<em class="property">static </em><code class="descname">get_running_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_tensorboard.html#TensorBoardManager.get_running_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.TensorBoardManager.get_running_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List running TensorBoard instances.</p>
+<p>Returns: A list of {&#8216;pid&#8217;: pid, &#8216;logdir&#8217;: logdir, &#8216;port&#8217;: port}</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="datalab.mlalpha.TensorBoardManager.start">
+<em class="property">static </em><code class="descname">start</code><span class="sig-paren">(</span><em>logdir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_tensorboard.html#TensorBoardManager.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.TensorBoardManager.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start a TensorBoard instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>logdir</strong> &#8211; the logdir to run TensorBoard on.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A tuple. First is the pid of the instance. Second is the port used.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the instance cannot be started.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="datalab.mlalpha.TensorBoardManager.stop">
+<em class="property">static </em><code class="descname">stop</code><span class="sig-paren">(</span><em>pid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_tensorboard.html#TensorBoardManager.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.TensorBoardManager.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shut down a specific process.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pid</strong> &#8211; the pid of the process to shutdown.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.DataSet">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">DataSet</code><span class="sig-paren">(</span><em>feature_set</em>, <em>data_paths</em>, <em>format='csv'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_dataset.html#DataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.DataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a dataset that can be explored through its &#8216;analyze()&#8217; function.
+The data need to be able to fit in memory.</p>
+<p>Initializes an instance of DataSet.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>feature_set</strong> &#8211; A feature_set describing the data. The feature_set provides data types
+(for example, csv), column names, schema, data transformers, etc.
+This is the same class used in CloudML preprocessing.</li>
+<li><strong>data_paths</strong> &#8211; A dictionary with {name: path} pair. All data need to have the same schema.</li>
+<li><strong>format</strong> &#8211; the format of the data, currently only &#8216;csv&#8217; or &#8216;tsv&#8217;.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises: Exception if data_paths is not a dictionary</dt>
+<dd>Exception if the format is not csv or tsv</dd>
+</dl>
+<dl class="method">
+<dt id="datalab.mlalpha.DataSet.analyze">
+<code class="descname">analyze</code><span class="sig-paren">(</span><em>names=None</em>, <em>columns=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_dataset.html#DataSet.analyze"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.DataSet.analyze" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Analyze the data and report results in IPython output cell. The results are based</dt>
+<dd>on preprocessed data as described in feature_set.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>names</strong> &#8211; the names of the data to plot. Such as [&#8216;train&#8217;]. If None, all data in the datasets
+will be used.</li>
+<li><strong>columns</strong> &#8211; The list of names of columns to analyze. If None, all numeric columns
+will be used.
+If one column is provided, displays a scatter plot between the column and target
+column, and a histogram of the column.
+If two columns are provided, displays a scatter plot between them,
+colored by target column.
+If three columns are provided, displays a 3d scatter plot between them,
+colored by target column.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li>Exception if any column names are not found in the data or the columns are text.</li>
+<li>Exception if columns are greater than 3 or less than 1.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.DataSet.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>names=None</em>, <em>columns=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_dataset.html#DataSet.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.DataSet.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot correlation graphs on the specified columns, in n*n grids.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>names</strong> &#8211; the names of the data to plot. Such as [&#8216;train&#8217;]. If None, all data in the datasets
+will be used.</li>
+<li><strong>columns</strong> &#8211; The list of column names to plot correlations. If None, all numeric columns
+will be used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.DataSet.profile">
+<code class="descname">profile</code><span class="sig-paren">(</span><em>names=None</em>, <em>columns=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_dataset.html#DataSet.profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.DataSet.profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print profiles of the dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>names</strong> &#8211; the names of the data to plot. Such as [&#8216;train&#8217;]. If None, all data in the datasets
+will be used.</li>
+<li><strong>columns</strong> &#8211; The list of column names to plot correlations. If None, all numeric columns
+will be used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.DataSet.to_dataframes">
+<code class="descname">to_dataframes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_dataset.html#DataSet.to_dataframes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.DataSet.to_dataframes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the transformed data as a DataFrames</p>
+<p>Returns: the transformed data in {name: dataframe} dictionary.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.Packager">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">Packager</code><a class="reference internal" href="_modules/datalab/mlalpha/_package.html#Packager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Packager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a packager.</p>
+<dl class="method">
+<dt id="datalab.mlalpha.Packager.package">
+<code class="descname">package</code><span class="sig-paren">(</span><em>files</em>, <em>package_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_package.html#Packager.package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.Packager.package" title="Permalink to this definition">¶</a></dt>
+<dd><p>Package a list of file contents into a python tarball package.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>files</strong> &#8211; A dictionary with key as module name and value as module contents. File names
+will be key + &#8216;py&#8217;.</li>
+<li><strong>package_name</strong> &#8211; the name of the package.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: the path of the created package, in a temp directory.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.CloudModels">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">CloudModels</code><span class="sig-paren">(</span><em>project_id=None</em>, <em>credentials=None</em>, <em>api=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_models.html#CloudModels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudModels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of Cloud ML models for a project.</p>
+<dl class="docutils">
+<dt>Initializes an instance of a CloudML Model list that is iteratable</dt>
+<dd>(&#8220;for model in CloudModels()&#8221;).</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>project_id</strong> &#8211; project_id of the models. If not provided, default project_id will be used.</li>
+<li><strong>credentials</strong> &#8211; credentials used to talk to CloudML service. If not provided, default credentials
+will be used.</li>
+<li><strong>api</strong> &#8211; an optional CloudML API client.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.CloudModels.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_models.html#CloudModels.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudModels.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model_name</strong> &#8211; the short name of the model, such as &#8220;iris&#8221;.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.CloudModels.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_models.html#CloudModels.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudModels.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model_name</strong> &#8211; the name of the model. It can be a model full name
+(&#8220;projects/[project_id]/models/[model_name]&#8221;) or just [model_name].</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.CloudModels.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_models.html#CloudModels.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudModels.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details of a model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model_name</strong> &#8211; the name of the model. It can be a model full name
+(&#8220;projects/[project_id]/models/[model_name]&#8221;) or just [model_name].</li>
+<li><strong>Returns</strong> &#8211; a dictionary of the model details.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.CloudModelVersions">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">CloudModelVersions</code><span class="sig-paren">(</span><em>model_name</em>, <em>project_id=None</em>, <em>credentials=None</em>, <em>api=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_models.html#CloudModelVersions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudModelVersions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of versions for a Cloud ML model.</p>
+<dl class="docutils">
+<dt>Initializes an instance of a CloudML model version list that is iteratable</dt>
+<dd>(&#8220;for version in CloudModelVersions()&#8221;).</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model_name</strong> &#8211; the name of the model. It can be a model full name
+(&#8220;projects/[project_id]/models/[model_name]&#8221;) or just [model_name].</li>
+<li><strong>project_id</strong> &#8211; project_id of the models. If not provided and model_name is not a full name
+(not including project_id), default project_id will be used.</li>
+<li><strong>credentials</strong> &#8211; credentials used to talk to CloudML service. If not provided, default
+credentials will be used.</li>
+<li><strong>api</strong> &#8211; an optional CloudML API client.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.mlalpha.CloudModelVersions.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>version_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_models.html#CloudModelVersions.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudModelVersions.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a version of model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>version_name</strong> &#8211; the name of the version in short form, such as &#8220;v1&#8221;.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.CloudModelVersions.deploy">
+<code class="descname">deploy</code><span class="sig-paren">(</span><em>version_name</em>, <em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_models.html#CloudModelVersions.deploy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudModelVersions.deploy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deploy a model version to the cloud.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>version_name</strong> &#8211; the name of the version in short form, such as &#8220;v1&#8221;.</li>
+<li><strong>path</strong> &#8211; the Google Cloud Storage path (gs://...) which contains the model files.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises: Exception if the path is invalid or does not contain expected files.</dt>
+<dd>Exception if the service returns invalid response.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.mlalpha.CloudModelVersions.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>version_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_cloud_models.html#CloudModelVersions.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.CloudModelVersions.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details of a version.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>version</strong> &#8211; the name of the version in short form, such as &#8220;v1&#8221;.</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: a dictionary containing the version details.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.mlalpha.ConfusionMatrix">
+<em class="property">class </em><code class="descclassname">datalab.mlalpha.</code><code class="descname">ConfusionMatrix</code><span class="sig-paren">(</span><em>predicted_labels</em>, <em>true_labels</em>, <em>counts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_confusion_matrix.html#ConfusionMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.ConfusionMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a confusion matrix.</p>
+<dl class="docutils">
+<dt>Initializes an instance of a ComfusionMatrix. the length of predicted_values,</dt>
+<dd>true_values, count must be the same.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>predicted_labels</strong> &#8211; a list of predicted labels.</li>
+<li><strong>true_labels</strong> &#8211; a list of true labels.</li>
+<li><strong>counts</strong> &#8211; a list of count for each (predicted, true) combination.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Raises: Exception if predicted_labels, true_labels, and counts are not of the same size</p>
+<dl class="method">
+<dt id="datalab.mlalpha.ConfusionMatrix.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/mlalpha/_confusion_matrix.html#ConfusionMatrix.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.ConfusionMatrix.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the confusion matrix.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="datalab.mlalpha.init_notebook_mode">
+<code class="descclassname">datalab.mlalpha.</code><code class="descname">init_notebook_mode</code><span class="sig-paren">(</span><em>connected=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotly/offline/offline.html#init_notebook_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.mlalpha.init_notebook_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize plotly.js in the browser if it hasn&#8217;t been loaded into the DOM
+yet. This is an idempotent method and can and should be called from any
+offline methods that require plotly.js to be loaded into the notebook dom.</p>
+<p>Keyword arguments:</p>
+<p>connected (default=False) &#8211; If True, the plotly.js library will be loaded
+from an online CDN. If False, the plotly.js library will be loaded locally
+from the plotly python package</p>
+<p>Use <cite>connected=True</cite> if you want your notebooks to have smaller file sizes.
+In the case where <cite>connected=False</cite>, the entirety of the plotly.js library
+will be loaded into the notebook, which will result in a file-size increase
+of a couple megabytes. Additionally, because the library will be downloaded
+from the web, you and your viewers must be connected to the internet to be
+able to view charts within this notebook.</p>
+<p>Use <cite>connected=False</cite> if you want you and your collaborators to be able to
+create and view these charts regardless of the availability of an internet
+connection. This is the default option since it is the most predictable.
+Note that under this setting the library will be included inline inside
+your notebook, resulting in much larger notebook sizes compared to the case
+where <cite>connected=True</cite>.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="datalab.stackdriver.monitoring.html" class="btn btn-neutral float-right" title="datalab.stackdriver.monitoring package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="datalab.data.html" class="btn btn-neutral" title="datalab.data package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

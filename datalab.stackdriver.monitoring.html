@@ -30,9 +30,12 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
         <link rel="next" title="datalab.storage package" href="datalab.storage.html"/>
-        <link rel="prev" title="datalab.data package" href="datalab.data.html"/> 
+        <link rel="prev" title="datalab.mlalpha package" href="datalab.mlalpha.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -81,11 +84,14 @@
 <li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.mlalpha.html">datalab.mlalpha package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.stackdriver.monitoring package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-contents">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.magics.html">datalab.magics</a></li>
 </ul>
 
             
@@ -120,7 +126,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/datalab.stackdriver.monitoring.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/datalab.stackdriver.monitoring.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -134,6 +140,67 @@
 <h1>datalab.stackdriver.monitoring package<a class="headerlink" href="#datalab-stackdriver-monitoring-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-contents">
 <h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="datalab.stackdriver.monitoring.Groups">
+<em class="property">class </em><code class="descclassname">datalab.stackdriver.monitoring.</code><code class="descname">Groups</code><span class="sig-paren">(</span><em>project_id=None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_group.html#Groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.Groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of Stackdriver groups for a project.</p>
+<p>Initializes the Groups for a Stackdriver project.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>project_id</strong> &#8211; An optional project ID or number to override the one provided
+by the context.</li>
+<li><strong>context</strong> &#8211; An optional Context object to use instead of the global default.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="datalab.stackdriver.monitoring.Groups.as_dataframe">
+<code class="descname">as_dataframe</code><span class="sig-paren">(</span><em>pattern=u'*'</em>, <em>max_rows=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_group.html#Groups.as_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.Groups.as_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a pandas dataframe from the groups that match the filters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>pattern</strong> &#8211; An optional pattern to further filter the groups. This can
+include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;Production</span> <span class="pre">*&quot;</span></code>,
+<code class="docutils literal"><span class="pre">&quot;*-backend&quot;</span></code>.</li>
+<li><strong>max_rows</strong> &#8211; The maximum number of groups to return. If None, return all.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A pandas dataframe containing matching groups.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datalab.stackdriver.monitoring.Groups.list">
+<code class="descname">list</code><span class="sig-paren">(</span><em>pattern=u'*'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_group.html#Groups.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.Groups.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of groups that match the filters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pattern</strong> &#8211; An optional pattern to filter the groups based on their display
+name. This can include Unix shell-style wildcards. E.g.
+<code class="docutils literal"><span class="pre">&quot;Production*&quot;</span></code>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of Group objects that match the filters.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="class">
 <dt id="datalab.stackdriver.monitoring.MetricDescriptors">
 <em class="property">class </em><code class="descclassname">datalab.stackdriver.monitoring.</code><code class="descname">MetricDescriptors</code><span class="sig-paren">(</span><em>filter_string=None</em>, <em>type_prefix=None</em>, <em>project_id=None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_metric.html#MetricDescriptors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.MetricDescriptors" title="Permalink to this definition">¶</a></dt>
@@ -193,29 +260,6 @@ include Unix shell-style wildcards. E.g. <code class="docutils literal"><span cl
 <code class="docutils literal"><span class="pre">&quot;*cpu/load_??m&quot;</span></code>.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of MetricDescriptor objects that match the filters.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="datalab.stackdriver.monitoring.MetricDescriptors.table">
-<code class="descname">table</code><span class="sig-paren">(</span><em>pattern='*'</em>, <em>max_rows=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_metric.html#MetricDescriptors.table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.MetricDescriptors.table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Visualize the matching descriptors as an HTML table.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>pattern</strong> &#8211; An optional pattern to further filter the descriptors. This can
-include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;aws*&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;*cluster*&quot;</span></code>.</li>
-<li><strong>max_rows</strong> &#8211; The maximum number of descriptors to display. If None, display
-all.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The HTML rendering for a table of matching metric descriptors.</p>
-</td>
 </tr>
 </tbody>
 </table>
@@ -283,34 +327,11 @@ include Unix shell-style wildcards. E.g. <code class="docutils literal"><span cl
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="datalab.stackdriver.monitoring.ResourceDescriptors.table">
-<code class="descname">table</code><span class="sig-paren">(</span><em>pattern='*'</em>, <em>max_rows=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_resource.html#ResourceDescriptors.table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.ResourceDescriptors.table" title="Permalink to this definition">¶</a></dt>
-<dd><p>Visualize the matching descriptors as an HTML table.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>pattern</strong> &#8211; An optional pattern to further filter the descriptors. This can
-include Unix shell-style wildcards. E.g. <code class="docutils literal"><span class="pre">&quot;aws*&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;*cluster*&quot;</span></code>.</li>
-<li><strong>max_rows</strong> &#8211; The maximum number of descriptors to display. If None, display
-all.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The HTML rendering for a table of matching resource descriptors.</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="class">
 <dt id="datalab.stackdriver.monitoring.Query">
-<em class="property">class </em><code class="descclassname">datalab.stackdriver.monitoring.</code><code class="descname">Query</code><span class="sig-paren">(</span><em>metric_type='compute.googleapis.com/instance/cpu/utilization'</em>, <em>end_time=None</em>, <em>days=0</em>, <em>hours=0</em>, <em>minutes=0</em>, <em>project_id=None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_timeseries.html#Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.Query" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">datalab.stackdriver.monitoring.</code><code class="descname">Query</code><span class="sig-paren">(</span><em>metric_type='compute.googleapis.com/instance/cpu/utilization'</em>, <em>end_time=None</em>, <em>days=0</em>, <em>hours=0</em>, <em>minutes=0</em>, <em>project_id=None</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_query.html#Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.Query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Query object for retrieving metric data.</p>
 <p>Initializes the core query parameters.</p>
 <p>The start time (exclusive) is determined by combining the
@@ -349,19 +370,55 @@ time, use
 </tbody>
 </table>
 <dl class="method">
-<dt id="datalab.stackdriver.monitoring.Query.labels_as_dataframe">
-<code class="descname">labels_as_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_timeseries.html#Query.labels_as_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.Query.labels_as_dataframe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the resource and metric metadata as a pandas dataframe.</p>
+<dt id="datalab.stackdriver.monitoring.Query.metadata">
+<code class="descname">metadata</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_query.html#Query.metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.Query.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the metadata for the query.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="datalab.stackdriver.monitoring.QueryMetadata">
+<em class="property">class </em><code class="descclassname">datalab.stackdriver.monitoring.</code><code class="descname">QueryMetadata</code><span class="sig-paren">(</span><em>query</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_query_metadata.html#QueryMetadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.QueryMetadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>QueryMetadata object contains the metadata of a timeseries query.</p>
+<p>Initializes the QueryMetadata given the query object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A pandas dataframe containing the resource type and resource and metric
-labels. Each row in this dataframe corresponds to the metadata from one
-time series.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query</strong> &#8211; A Query object.</td>
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="datalab.stackdriver.monitoring.QueryMetadata.as_dataframe">
+<code class="descname">as_dataframe</code><span class="sig-paren">(</span><em>max_rows=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/stackdriver/monitoring/_query_metadata.html#QueryMetadata.as_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.stackdriver.monitoring.QueryMetadata.as_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a pandas dataframe from the query metadata.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>max_rows</strong> &#8211; The maximum number of timeseries metadata to return. If None,
+return all.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A pandas dataframe containing the resource type, resource labels and
+metric labels. Each row in this dataframe corresponds to the metadata
+from one time series.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.stackdriver.monitoring.QueryMetadata.metric_type">
+<code class="descname">metric_type</code><a class="headerlink" href="#datalab.stackdriver.monitoring.QueryMetadata.metric_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the metric type in the underlying query.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="datalab.stackdriver.monitoring.QueryMetadata.resource_types">
+<code class="descname">resource_types</code><a class="headerlink" href="#datalab.stackdriver.monitoring.QueryMetadata.resource_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a set containing resource types in the query result.</p>
 </dd></dl>
 
 </dd></dl>
@@ -379,7 +436,7 @@ time series.</td>
         <a href="datalab.storage.html" class="btn btn-neutral float-right" title="datalab.storage package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="datalab.data.html" class="btn btn-neutral" title="datalab.data package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="datalab.mlalpha.html" class="btn btn-neutral" title="datalab.mlalpha package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

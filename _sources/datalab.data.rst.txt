@@ -18,3 +18,4 @@ Module contents
 .. autoclass:: datalab.data.SqlStatement
     :members:
 
+.. autofunction:: datalab.data.tokenize

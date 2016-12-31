@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.mlalpha._local_runner &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>datalab.mlalpha._local_runner</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.mlalpha._local_runner</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">psutil</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">google.cloud.ml</span> <span class="k">as</span> <span class="nn">ml</span>
+
+<span class="kn">import</span> <span class="nn">datalab.utils</span>
+
+
+<span class="k">def</span> <span class="nf">_wait_and_kill</span><span class="p">(</span><span class="n">pid_to_wait</span><span class="p">,</span> <span class="n">pids_to_kill</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; Helper function.</span>
+<span class="sd">      Wait for a process to finish if it exists, and then try to kill a list of processes.</span>
+<span class="sd">  Args:</span>
+<span class="sd">    pid_to_wait: the process to wait for.</span>
+<span class="sd">    pids_to_kill: a list of processes to kill after the process of pid_to_wait finishes.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">if</span> <span class="n">psutil</span><span class="o">.</span><span class="n">pid_exists</span><span class="p">(</span><span class="n">pid_to_wait</span><span class="p">):</span>
+    <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="n">pid_to_wait</span><span class="p">)</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+  <span class="k">for</span> <span class="n">pid_to_kill</span> <span class="ow">in</span> <span class="n">pids_to_kill</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">psutil</span><span class="o">.</span><span class="n">pid_exists</span><span class="p">(</span><span class="n">pid_to_kill</span><span class="p">):</span>
+      <span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="n">pid_to_kill</span><span class="p">)</span>
+      <span class="n">p</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+      <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="LocalRunner"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.LocalRunner">[docs]</a><span class="k">class</span> <span class="nc">LocalRunner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Provides a &quot;distributed&quot; local run of a CloudML trainer packaged in a tarball.</span>
+<span class="sd">     It simulates CloudML service by spawning master, worker, and ps processses,</span>
+<span class="sd">     but instead of running in their own GKE cluster pods it runs all these as local processes.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tar_path</span><span class="p">,</span> <span class="n">module_to_run</span><span class="p">,</span> <span class="n">logdir</span><span class="p">,</span> <span class="n">replica_spec</span><span class="p">,</span> <span class="n">program_args</span><span class="p">,</span> <span class="n">all_args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a LocalRunner</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      tar_path: the path of the trainer packaged in a tarball. Can be a local path or a GCS path.</span>
+<span class="sd">      module_to_run: the module to run in the tarball.</span>
+<span class="sd">      logdir: the directory to save logs.</span>
+<span class="sd">      replica_spec: the number of replicas for each job_type.</span>
+<span class="sd">          For example, {&#39;master&#39;: 1, &#39;worker&#39;: 1, &#39;ps&#39;: 1}.</span>
+<span class="sd">          Currently it supports at most one process for each job_type, and &#39;master&#39; is required.</span>
+<span class="sd">      program_args: the arguments of the training job program. For example,</span>
+<span class="sd">          {</span>
+<span class="sd">            &#39;train_data_paths&#39;: [&#39;/content/mydata/features_train&#39;],</span>
+<span class="sd">            &#39;eval_data_paths&#39;: [&#39;/content/mydata/features_eval&#39;],</span>
+<span class="sd">            &#39;metadata_path&#39;: &#39;/content/mydata/metadata.yaml&#39;,</span>
+<span class="sd">            &#39;output_path&#39;: &#39;/content/mymodel/&#39;,</span>
+<span class="sd">          }</span>
+<span class="sd">      all_args: all args that can be submitted to cloud training such as job name, replicas, etc.</span>
+<span class="sd">          It is aligned to the CloudML training service interface. In the program, it can be</span>
+<span class="sd">          retrieved by &#39;TF_CONFIG&#39; env var (json serialized) under &#39;job&#39; member.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if replica_spec does not contain &#39;master&#39; or its value is below one.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_tar_path</span> <span class="o">=</span> <span class="n">tar_path</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_module_to_run</span> <span class="o">=</span> <span class="n">module_to_run</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_logdir</span> <span class="o">=</span> <span class="n">logdir</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_replica_spec</span> <span class="o">=</span> <span class="n">replica_spec</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_program_args</span> <span class="o">=</span> <span class="n">program_args</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_program_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_program_args</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_all_args</span> <span class="o">=</span> <span class="n">all_args</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_all_args</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_cluster_spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_cluster_spec</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_task_processes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_log_writers</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_log_readers</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_monitor_process</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="k">def</span> <span class="nf">_create_cluster_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create cluster spec that will be passed to each task process as command parameter.</span>
+<span class="sd">       This matches CloudML training service behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">job_type</span><span class="p">,</span> <span class="n">replicas</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replica_spec</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">replicas</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">pick_unused_port</span><span class="p">()</span>
+        <span class="n">spec</span><span class="p">[</span><span class="n">job_type</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;localhost:&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="s1">&#39;master&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Need to have at least 1 master replica&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">spec</span>
+
+  <span class="k">def</span> <span class="nf">_create_tf_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a list of arguments that will be passed to task process as command</span>
+<span class="sd">       parameters. This matches CloudML training service behavior.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">task_spec</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">job_type</span><span class="p">,</span> <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span>
+      <span class="s1">&#39;cluster&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster_spec</span><span class="p">,</span>
+      <span class="s1">&#39;task&#39;</span><span class="p">:</span> <span class="n">task_spec</span><span class="p">,</span>
+      <span class="s1">&#39;job&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_all_args</span><span class="p">,</span>
+    <span class="p">}</span>
+
+  <span class="k">def</span> <span class="nf">_create_task_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
+      <span class="s1">&#39;python&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;-m&#39;</span><span class="p">,</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_module_to_run</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_program_args</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+          <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">k</span><span class="p">)</span>
+          <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--&#39;</span> <span class="o">+</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">args</span>
+
+  <span class="k">def</span> <span class="nf">_extract_tar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">extracted_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
+    <span class="n">tar_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tar_path</span>
+    <span class="k">if</span> <span class="n">tar_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+      <span class="n">tar_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">extracted_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">tar_path</span><span class="p">))</span>
+      <span class="n">ml</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">_file</span><span class="o">.</span><span class="n">copy_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tar_path</span><span class="p">,</span> <span class="n">tar_path</span><span class="p">)</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">([</span><span class="s1">&#39;pip&#39;</span><span class="p">,</span> <span class="s1">&#39;install&#39;</span><span class="p">,</span> <span class="n">tar_path</span><span class="p">,</span> <span class="s1">&#39;--target&#39;</span><span class="p">,</span> <span class="n">extracted_dir</span><span class="p">,</span>
+                           <span class="s1">&#39;--upgrade&#39;</span><span class="p">,</span> <span class="s1">&#39;--force-reinstall&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">extracted_dir</span>
+
+  <span class="k">def</span> <span class="nf">_clean_up</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">processes_to_clean</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task_processes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_monitor_process</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">processes_to_clean</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_monitor_process</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">processes_to_clean</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># TODO(qimingj): consider p.kill() if it does not terminate in certain time.</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_readers</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="n">v</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_writers</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="n">v</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+  <span class="k">def</span> <span class="nf">_start_externel_monitor_process</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a process that monitors the current process. If the current process exists,</span>
+<span class="sd">       Clean up a list of target processes.</span>
+<span class="sd">       This is needed to kill all running training processes when the kernel is restarted.</span>
+<span class="sd">       Note that Jupyter does not kill child processes when kernel is restarted. &quot;atexit&quot;</span>
+<span class="sd">       hook doesn&#39;t work either if the kernel is busy such as in time.sleep (seems SIGKILL</span>
+<span class="sd">       is used to restart the kernel).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pids_to_kill</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">pid</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_processes</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s1">&#39;import </span><span class="si">%s</span><span class="s1">; </span><span class="si">%s</span><span class="s1">._wait_and_kill(</span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> \
+        <span class="p">(</span><span class="n">__name__</span><span class="p">,</span> <span class="n">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()),</span> <span class="nb">str</span><span class="p">(</span><span class="n">pids_to_kill</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_monitor_process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="n">script</span><span class="p">])</span>
+
+  <span class="k">def</span> <span class="nf">_start_task_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workdir</span><span class="p">,</span> <span class="n">job_type</span><span class="p">):</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_task_args</span><span class="p">()</span>
+    <span class="n">logfile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_logdir</span><span class="p">,</span> <span class="n">job_type</span><span class="p">)</span>
+    <span class="c1"># We cannot pipe child process&#39;s stdout and stderr directly because</span>
+    <span class="c1"># we need to append &#39;master&#39;, &#39;worker&#39;, &#39;ps&#39; at begining of each</span>
+    <span class="c1"># log entry. A memory stream such as StringIO does not work here because</span>
+    <span class="c1"># Popen expects file descriptor. Therefore physical files are used to back</span>
+    <span class="c1"># up the messages.</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">logfile</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">logfile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">tf_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_tf_config</span><span class="p">(</span><span class="n">job_type</span><span class="p">)</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">env</span><span class="p">[</span><span class="s1">&#39;TF_CONFIG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tf_config</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">env</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">w</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_log_writers</span><span class="p">[</span><span class="n">job_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_log_readers</span><span class="p">[</span><span class="n">job_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_task_processes</span><span class="p">[</span><span class="n">job_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span>
+
+  <span class="k">def</span> <span class="nf">_print_task_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">done</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">callback</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">return</span>
+    <span class="n">new_msgs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">job_type</span><span class="p">,</span> <span class="n">reader</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_readers</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="n">content</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">content</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+          <span class="n">new_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">job_type</span> <span class="o">+</span> <span class="s1">&#39;: &#39;</span><span class="o">+</span> <span class="n">line</span><span class="p">)</span>
+    <span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_replica_spec</span><span class="p">,</span> <span class="n">new_msgs</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LocalRunner.run"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.LocalRunner.run">[docs]</a>  <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run a training job locally. Block the caller until it finishes.</span>
+<span class="sd">       Prints out task processes stdout and stderr.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      callback: a callback that will be invoked every &quot;interval&quot; seconds. The signature is:</span>
+<span class="sd">          callback(replica_spec, new_msgs, done, param), where:</span>
+<span class="sd">              replica_spec: the replica spec of the runner</span>
+<span class="sd">              new_msgs: new output messages that are available from all task processes</span>
+<span class="sd">              done: whether the job is finished</span>
+<span class="sd">              param: a callback param.</span>
+<span class="sd">      param: the callback param that will be passed along whenever the callback is invoked.</span>
+<span class="sd">      interval: the interval in seconds controlling the callback frequency.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">workdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_tar</span><span class="p">()</span>
+    <span class="n">previous_cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">job_type</span><span class="p">,</span> <span class="n">replicas</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replica_spec</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">replicas</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_task_process</span><span class="p">(</span><span class="n">workdir</span><span class="p">,</span> <span class="n">job_type</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">previous_cwd</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_start_externel_monitor_process</span><span class="p">()</span>
+    <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_processes</span><span class="p">[</span><span class="s1">&#39;master&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_print_task_output</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+      <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_print_task_output</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_clean_up</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

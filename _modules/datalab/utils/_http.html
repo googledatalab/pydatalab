@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.utils._http &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>datalab.utils._http</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.utils._http</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2015 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements HTTP client helper functionality.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+<span class="kn">from</span> <span class="nn">future</span> <span class="k">import</span> <span class="n">standard_library</span>
+<span class="n">standard_library</span><span class="o">.</span><span class="n">install_aliases</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">str</span>
+<span class="kn">from</span> <span class="nn">past.builtins</span> <span class="k">import</span> <span class="n">basestring</span>
+<span class="kn">from</span> <span class="nn">builtins</span> <span class="k">import</span> <span class="nb">object</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span><span class="o">,</span> <span class="nn">urllib.parse</span><span class="o">,</span> <span class="nn">urllib.error</span>
+<span class="kn">import</span> <span class="nn">httplib2</span>
+
+
+<span class="c1"># TODO(nikhilko): Start using the requests library instead.</span>
+
+
+<div class="viewcode-block" id="RequestException"><a class="viewcode-back" href="../../../datalab.utils.html#datalab.utils.RequestException">[docs]</a><span class="k">class</span> <span class="nc">RequestException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">content</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;HTTP request failed&#39;</span>
+    <span class="c1"># Try extract a message from the body; swallow possible resulting ValueErrors and KeyErrors.</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">error</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">content</span><span class="p">)[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span>
+      <span class="k">if</span> <span class="s1">&#39;errors&#39;</span> <span class="ow">in</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">error</span><span class="p">[</span><span class="s1">&#39;errors&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+=</span> <span class="s1">&#39;: &#39;</span> <span class="o">+</span> <span class="n">error</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+      <span class="n">lines</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">basestring</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+      <span class="k">if</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+=</span> <span class="s1">&#39;: &#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div>
+
+
+<div class="viewcode-block" id="Http"><a class="viewcode-back" href="../../../datalab.utils.html#datalab.utils.Http">[docs]</a><span class="k">class</span> <span class="nc">Http</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;A helper class for making HTTP requests.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Http.request"><a class="viewcode-back" href="../../../datalab.utils.html#datalab.utils.Http.request">[docs]</a>  <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">credentials</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">raw_response</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stats</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Issues HTTP requests.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      url: the URL to request.</span>
+<span class="sd">      args: optional query string arguments.</span>
+<span class="sd">      data: optional data to be sent within the request.</span>
+<span class="sd">      headers: optional headers to include in the request.</span>
+<span class="sd">      method: optional HTTP method to use. If unspecified this is inferred</span>
+<span class="sd">          (GET or POST) based on the existence of request data.</span>
+<span class="sd">      credentials: optional set of credentials to authorize the request.</span>
+<span class="sd">      raw_response: whether the raw response content should be returned as-is.</span>
+<span class="sd">      stats: an optional dictionary that, if provided, will be populated with some</span>
+<span class="sd">          useful info about the request, like &#39;duration&#39; in seconds and &#39;data_size&#39; in</span>
+<span class="sd">          bytes. These may be useful optimizing the access to rate-limited APIs.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      The parsed response object.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception when the HTTP request fails or the response cannot be processed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">headers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">headers</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;user-agent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;GoogleCloudDataLab/1.0&#39;</span>
+    <span class="c1"># Add querystring to the URL if there are any arguments.</span>
+    <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">qs</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+      <span class="n">url</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;?&#39;</span> <span class="o">+</span> <span class="n">qs</span>
+
+    <span class="c1"># Setup method to POST if unspecified, and appropriate request headers</span>
+    <span class="c1"># if there is data to be sent within the request.</span>
+    <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;POST&#39;</span>
+
+      <span class="k">if</span> <span class="n">data</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="c1"># If there is a content type specified, use it (and the data) as-is.</span>
+        <span class="c1"># Otherwise, assume JSON, and serialize the data object.</span>
+        <span class="k">if</span> <span class="s1">&#39;Content-Type&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+          <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+          <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;application/json&#39;</span>
+      <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+
+    <span class="c1"># If the method is still unset, i.e. it was unspecified, and there</span>
+    <span class="c1"># was no data to be POSTed, then default to GET request.</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;GET&#39;</span>
+
+    <span class="c1"># Create an Http object to issue requests. Associate the credentials</span>
+    <span class="c1"># with it if specified to perform authorization.</span>
+    <span class="c1">#</span>
+    <span class="c1"># TODO(nikhilko):</span>
+    <span class="c1"># SSL cert validation seemingly fails, and workarounds are not amenable</span>
+    <span class="c1"># to implementing in library code. So configure the Http object to skip</span>
+    <span class="c1"># doing so, in the interim.</span>
+    <span class="n">http</span> <span class="o">=</span> <span class="n">httplib2</span><span class="o">.</span><span class="n">Http</span><span class="p">()</span>
+    <span class="n">http</span><span class="o">.</span><span class="n">disable_ssl_certificate_validation</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">credentials</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">http</span> <span class="o">=</span> <span class="n">credentials</span><span class="o">.</span><span class="n">authorize</span><span class="p">(</span><span class="n">http</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">stats</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">response</span><span class="p">,</span> <span class="n">content</span> <span class="o">=</span> <span class="n">http</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span>
+                                       <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                                       <span class="n">body</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                                       <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+      <span class="k">if</span> <span class="mi">200</span> <span class="o">&lt;=</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">&lt;</span> <span class="mi">300</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">raw_response</span><span class="p">:</span>
+          <span class="k">return</span> <span class="n">content</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+          <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">))</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">RequestException</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Failed to process HTTP response.&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">httplib2</span><span class="o">.</span><span class="n">HttpLib2Error</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Failed to send HTTP request.&#39;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">stats</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;data_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">-</span> <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;duration&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

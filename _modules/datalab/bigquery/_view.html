@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
         <link rel="up" title="datalab.bigquery" href="../bigquery.html"/> 
 
@@ -80,8 +83,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
 </ul>
 
             
@@ -240,7 +246,7 @@
       <span class="k">return</span> <span class="bp">self</span>
     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;View </span><span class="si">%s</span><span class="s2"> could not be created as it already exists&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
 
-<div class="viewcode-block" id="View.sample"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span>
+<div class="viewcode-block" id="View.sample"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sampling</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Retrieves a sampling of data from the view.</span>
 
@@ -294,7 +300,7 @@
       <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">_info</span><span class="p">[</span><span class="s1">&#39;view&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;query&#39;</span><span class="p">:</span> <span class="n">query</span><span class="p">}</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_table</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">friendly_name</span><span class="o">=</span><span class="n">friendly_name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="View.results"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.results">[docs]</a>  <span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="View.results"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.results">[docs]</a>  <span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Materialize the view synchronously.</span>
 
 <span class="sd">    If you require more control over the execution, use execute() or execute_async().</span>
@@ -318,7 +324,7 @@
                                          <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="View.execute_async"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.execute_async">[docs]</a>  <span class="k">def</span> <span class="nf">execute_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_mode</span><span class="o">=</span><span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;high&#39;</span><span class="p">,</span>
-                    <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                    <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Materialize the View asynchronously.</span>
 
 <span class="sd">    Args:</span>
@@ -350,7 +356,7 @@
                                                <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="n">billing_tier</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="View.execute"><a class="viewcode-back" href="../../../datalab.bigquery.html#datalab.bigquery.View.execute">[docs]</a>  <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_mode</span><span class="o">=</span><span class="s1">&#39;create&#39;</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="s1">&#39;high&#39;</span><span class="p">,</span>
-              <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="s1">&#39;legacy&#39;</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+              <span class="n">allow_large_results</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dialect</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">billing_tier</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Materialize the View synchronously.</span>
 
 <span class="sd">    Args:</span>

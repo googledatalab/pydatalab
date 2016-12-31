@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.mlalpha._metadata &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>datalab.mlalpha._metadata</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.mlalpha._metadata</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">import</span> <span class="nn">google.cloud.ml</span> <span class="k">as</span> <span class="nn">ml</span>
+
+
+<div class="viewcode-block" id="Metadata"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.Metadata">[docs]</a><span class="k">class</span> <span class="nc">Metadata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Helper class for parsing and serving feature metadata.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata_path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of Metadata.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      metadata_path: metadata file path. Can be local or GCS path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_path</span> <span class="o">=</span> <span class="n">metadata_path</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_labels</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="Metadata.get_classification_label"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.Metadata.get_classification_label">[docs]</a>  <span class="k">def</span> <span class="nf">get_classification_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_index</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get classification label given a label index.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      label_index: the index of label.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      The classification label, or label_index if the metadata is not for classification.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if metadata is malformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="k">with</span> <span class="n">ml</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">_file</span><span class="o">.</span><span class="n">open_local_or_gcs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;columns&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
+          <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid metadata. No columns found.&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+          <span class="n">scenario</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;scenario&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+          <span class="c1"># classification is the old name and now is called discrete.</span>
+          <span class="k">if</span> <span class="n">scenario</span> <span class="o">==</span> <span class="s1">&#39;classification&#39;</span> <span class="ow">or</span> <span class="n">scenario</span> <span class="o">==</span> <span class="s1">&#39;discrete&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;items&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
+              <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid metadata. No &quot;items&quot; found for &quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">column_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">column</span><span class="p">[</span><span class="s1">&#39;items&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">_labels</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="k">break</span>
+          <span class="k">elif</span> <span class="n">scenario</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">label_index</span> <span class="c1"># target column found but not classification</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid metadata. No classification labels found.&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_labels</span><span class="p">[</span><span class="n">label_index</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Metadata.get_target_name_and_scenario"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.Metadata.get_target_name_and_scenario">[docs]</a>  <span class="k">def</span> <span class="nf">get_target_name_and_scenario</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get name of the target feature and scenario.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      Name of the target feature or scenario</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if metadata is malformed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ml</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">_file</span><span class="o">.</span><span class="n">open_local_or_gcs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+      <span class="n">metadata</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;features&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metadata</span> <span class="ow">or</span> <span class="s1">&#39;columns&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid metadata. No features or columns found.&#39;</span><span class="p">)</span>
+    <span class="n">target_column_name</span><span class="p">,</span> <span class="n">scenario</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="k">if</span> <span class="s1">&#39;scenario&#39;</span> <span class="ow">in</span> <span class="n">column</span><span class="p">:</span>
+        <span class="n">target_column_name</span><span class="p">,</span> <span class="n">scenario</span> <span class="o">=</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">column</span><span class="p">[</span><span class="s1">&#39;scenario&#39;</span><span class="p">]</span>
+        <span class="k">break</span>
+    <span class="k">if</span> <span class="n">target_column_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid metadata. No target found in columns.&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">feature_name</span><span class="p">,</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">feature</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">target_column_name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">feature_name</span><span class="p">,</span> <span class="n">scenario</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid metadata. No target found in features.&#39;</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

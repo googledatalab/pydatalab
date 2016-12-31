@@ -14,8 +14,11 @@ Contents:
    datalab.bigquery
    datalab.context
    datalab.data
+   datalab.mlalpha
    datalab.stackdriver.monitoring
    datalab.storage
+   datalab.utils
+   datalab.magics
 
 
 Indices and tables

@@ -1,0 +1,303 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab.mlalpha._summary &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.mlalpha.html">datalab.mlalpha package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.utils.html">datalab.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Google Cloud Datalab</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>datalab.mlalpha._summary</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for datalab.mlalpha._summary</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements Cloud ML Summary wrapper.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">tensorflow.core.util</span> <span class="k">import</span> <span class="n">event_pb2</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.lib.io</span> <span class="k">import</span> <span class="n">tf_record</span>
+
+<span class="kn">import</span> <span class="nn">datalab.storage</span> <span class="k">as</span> <span class="nn">storage</span>
+
+
+<div class="viewcode-block" id="Summary"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.Summary">[docs]</a><span class="k">class</span> <span class="nc">Summary</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents TensorFlow summary events from files under a directory.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a Summary.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      path: the path of the directory which holds TensorFlow events files.</span>
+<span class="sd">            Can be local path or GCS path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="n">path</span>
+
+  <span class="k">def</span> <span class="nf">_get_events_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+      <span class="n">storage</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">Api</span><span class="o">.</span><span class="n">verify_permitted_to_read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">)</span>
+      <span class="n">bucket</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">_bucket</span><span class="o">.</span><span class="n">parse_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">)</span>
+      <span class="n">items</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">Items</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+      <span class="n">filtered_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">uri</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">uri</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;tfevents&#39;</span><span class="p">)]</span>
+      <span class="k">return</span> <span class="n">filtered_list</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">path_pattern</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span> <span class="s1">&#39;*tfevents*&#39;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">path_pattern</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Summary.list_events"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.Summary.list_events">[docs]</a>  <span class="k">def</span> <span class="nf">list_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all scalar events in the directory.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A set of unique event tags.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">event_tags</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">event_file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_events_files</span><span class="p">():</span>
+      <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">tf_record</span><span class="o">.</span><span class="n">tf_record_iterator</span><span class="p">(</span><span class="n">event_file</span><span class="p">):</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">event_pb2</span><span class="o">.</span><span class="n">Event</span><span class="o">.</span><span class="n">FromString</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+          <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">simple_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+          <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">tag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">tag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">event_tags</span><span class="p">:</span>
+            <span class="n">event_tags</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">event_tags</span></div>
+
+<div class="viewcode-block" id="Summary.get_events"><a class="viewcode-back" href="../../../datalab.mlalpha.html#datalab.mlalpha.Summary.get_events">[docs]</a>  <span class="k">def</span> <span class="nf">get_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get all events of a certain tag.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      event_name: the tag of event to look for.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A tuple. First is a list of {time_span, event_name}. Second is a list of {step, event_name}.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if event start time cannot be found</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">events_time</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">events_step</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">event_start_time</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">event_file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_events_files</span><span class="p">():</span>
+      <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">tf_record</span><span class="o">.</span><span class="n">tf_record_iterator</span><span class="p">(</span><span class="n">event_file</span><span class="p">):</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">event_pb2</span><span class="o">.</span><span class="n">Event</span><span class="o">.</span><span class="n">FromString</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">file_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+          <span class="c1"># first event in the file.</span>
+          <span class="n">time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">wall_time</span><span class="p">)</span>
+          <span class="k">if</span> <span class="n">event_start_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">event_start_time</span> <span class="o">&gt;</span> <span class="n">time</span><span class="p">:</span>
+            <span class="n">event_start_time</span> <span class="o">=</span> <span class="n">time</span>
+
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+          <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+          <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">simple_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value</span><span class="o">.</span><span class="n">tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+          <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="n">event_name</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">wall_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+              <span class="n">time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">wall_time</span><span class="p">)</span>
+              <span class="n">events_time</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="n">time</span><span class="p">,</span> <span class="n">event_name</span><span class="p">:</span> <span class="n">value</span><span class="o">.</span><span class="n">simple_value</span><span class="p">})</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+              <span class="n">events_step</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="n">event</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">event_name</span><span class="p">:</span> <span class="n">value</span><span class="o">.</span><span class="n">simple_value</span><span class="p">})</span>
+    <span class="k">if</span> <span class="n">event_start_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Empty or invalid TF events file. Cannot find event start time.&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events_time</span><span class="p">:</span>
+      <span class="n">event</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">event_start_time</span>  <span class="c1"># convert time to timespan</span>
+    <span class="n">events_time</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">events_time</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">k</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span>
+    <span class="n">events_step</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">events_step</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">k</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">events_time</span><span class="p">,</span> <span class="n">events_step</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
