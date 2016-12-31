@@ -27,6 +27,8 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
+IPython.get_ipython = mock.Mock()
+IPython.get_ipython().user_ns = {}
 
 
 import datalab.utils.commands
