@@ -78,7 +78,7 @@ with the specified name.
 """)
   sql_parser.add_argument('-m', '--module', help='The name for this SQL module')
   sql_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'], default='legacy')
+                             choices=['legacy', 'standard'])
   sql_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   sql_parser.set_defaults(func=lambda args, cell: sql_cell(args, cell))
   return sql_parser
@@ -301,7 +301,7 @@ def _split_cell(cell, module):
   define_wild_re = re.compile('^DEFINE\s+.*$', re.IGNORECASE)
   define_re = re.compile('^DEFINE\s+QUERY\s+([A-Z]\w*)\s*?(.*)$', re.IGNORECASE)
   select_re = re.compile('^SELECT\s*.*$', re.IGNORECASE)
-  standard_sql_re = re.compile('^(WITH|INSERT|DELETE|UPDATE)\s*.*$', re.IGNORECASE)
+  standard_sql_re = re.compile('^(CREATE|WITH|INSERT|DELETE|UPDATE)\s*.*$', re.IGNORECASE)
   # TODO(gram): a potential issue with this code is if we have leading Python code followed
   # by a SQL-style comment before we see SELECT/DEFINE. When switching to the tokenizer see
   # if we can address this.

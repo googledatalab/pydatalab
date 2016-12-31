@@ -16,7 +16,6 @@ from oauth2client.client import AccessTokenCredentials
 import unittest
 
 import google.cloud.monitoring
-import pandas
 
 import datalab.context
 import datalab.stackdriver.monitoring as gcm
@@ -158,17 +157,6 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.columns.tolist(), expected_headers)
     self.assertEqual(dataframe.index.tolist(), [0])
     self.assertEqual(dataframe.iloc[0, 0], METRIC_TYPES[0])
-
-  @mock.patch('datalab.stackdriver.monitoring._visualization.table')
-  @mock.patch('datalab.stackdriver.monitoring.MetricDescriptors.as_dataframe')
-  def test_table(self, mock_datalab_as_dataframe, mock_display_table):
-    DATAFRAME = pandas.DataFrame(METRIC_TYPES, columns=['Metric type'])
-    mock_datalab_as_dataframe.return_value = DATAFRAME
-
-    self.descriptors.table(pattern='*cpu*', max_rows=1)
-
-    mock_datalab_as_dataframe.assert_called_once_with('*cpu*', 1)
-    mock_display_table.assert_called_once_with(DATAFRAME, show_index=False)
 
   @staticmethod
   def _create_context(project_id='test'):

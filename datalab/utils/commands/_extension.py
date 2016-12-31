@@ -25,8 +25,8 @@ from . import _commands
 from . import _utils
 
 
-@IPython.core.magic.register_line_magic
-def extension(line):
+@IPython.core.magic.register_line_cell_magic
+def extension(line, cell=None):
   """ Load an extension. Use %extension --help for more details. """
   parser = _commands.CommandParser(prog='%extension', description="""
 Load an extension into Datalab. Currently only mathjax is supported.
@@ -34,28 +34,14 @@ Load an extension into Datalab. Currently only mathjax is supported.
   subparser = parser.subcommand('mathjax', 'Enabled MathJaX support in Datalab.')
   subparser.set_defaults(ext='mathjax')
   parser.set_defaults(func=_extension)
-  return _utils.handle_magic_line(line, None, parser)
+  return _utils.handle_magic_line(line, cell, parser)
 
 
 def _extension(args, cell):
   ext = args['ext']
   if ext == 'mathjax':
-    url = "https://cdn.mathjax.org/mathjax/latest/MathJax.js"
-    config = 'TeX-AMS-MML_HTMLorMML'
-    return IPython.core.display.HTML("""
-      <script>
-        if (!window.mathjax_url) {
-          var script = document.createElement("script");
-          script.type = "text/javascript";
-          script.onload = function() {
-            window.mathjax_url="%s";
-            var mathjaxutils = require('notebook/js/mathjaxutils');
-            mathjaxutils.init();
-          };
-          script.src = "%s?config=%s&delayStartupUntil=configured";
-          document.getElementsByTagName("head")[0].appendChild(script);
-        }
-      </script>
-    """ % (url, url, config))
+    # TODO: remove this with the next version update
+    # MathJax is now loaded by default for all notebooks
+    return
   raise Exception('Unsupported extension %s' % ext)
 

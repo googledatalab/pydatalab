@@ -98,16 +98,23 @@ def _get_cols(fields, schema):
   """ Get column metadata for Google Charts based on field list and schema. """
   typemap = {
     'STRING': 'string',
+    'INT64': 'number',
     'INTEGER': 'number',
     'FLOAT': 'number',
+    'FLOAT64': 'number',
+    'BOOL': 'boolean',
     'BOOLEAN': 'boolean',
+    'DATE': 'date',
+    'TIME': 'timeofday',
+    'DATETIME': 'datetime',
     'TIMESTAMP': 'datetime'
   }
   cols = []
   for col in fields:
     if schema:
       f = schema[col]
-      cols.append({'id': f.name, 'label': f.name, 'type': typemap[f.data_type]})
+      t = 'string' if f.mode == 'REPEATED' else typemap.get(f.data_type, 'string')
+      cols.append({'id': f.name, 'label': f.name, 'type': t})
     else:
       # This will only happen if we had no rows to infer a schema from, so the type
       # is not really important, except that GCharts will choke if we pass such a schema

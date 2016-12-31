@@ -31,7 +31,7 @@ import datalab.context as _context
 import datalab.bigquery.commands
 import datalab.context.commands
 import datalab.data.commands
-import datalab.ml.commands
+import datalab.mlalpha.commands
 import datalab.stackdriver.commands
 import datalab.storage.commands
 import datalab.utils.commands
@@ -110,10 +110,18 @@ def load_ipython_extension(shell):
     context = _context.Context.default()
     context.set_project_id(project_id)
 
+  def _get_bq_dialect():
+    return datalab.bigquery.Dialect.default().bq_dialect
+
+  def _set_bq_dialect(bq_dialect):
+    datalab.bigquery.Dialect.default().set_bq_dialect(bq_dialect)
+
   try:
     if 'datalab_project_id' not in _IPython.get_ipython().user_ns:
       _IPython.get_ipython().user_ns['datalab_project_id'] = _get_project_id
       _IPython.get_ipython().user_ns['set_datalab_project_id'] = _set_project_id
+      _IPython.get_ipython().user_ns['datalab_bq_dialect'] = _get_bq_dialect
+      _IPython.get_ipython().user_ns['set_datalab_bq_dialect'] = _set_bq_dialect
   except TypeError:
     pass
 

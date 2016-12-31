@@ -18,7 +18,6 @@ from past.builtins import basestring
 from builtins import object
 
 import shlex
-import types
 
 from . import _sql_statement
 from . import _utils

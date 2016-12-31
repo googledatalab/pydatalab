@@ -440,10 +440,19 @@ module Charting {
     // Convert any string fields that are date type to JS Dates.
     public static convertDates(data:any):void {
       for (var i = 0; i < data.cols.length; i++) {
-        if (data.cols[i].type == 'datetime') {
+        if (data.cols[i].type == 'date' || data.cols[i].type == 'datetime') {
           var rows = data.rows;
           for (var j = 0; j < rows.length; j++) {
             rows[j].c[i].v = new Date(rows[j].c[i].v);
+          }
+        } else if (data.cols[i].type == 'timeofday') {
+          var rows = data.rows;
+          for (var j = 0; j < rows.length; j++) {
+            var timeInSeconds = rows[j].c[i].v.split('.')[0];
+            rows[j].c[i].v = timeInSeconds.split(':').map(
+              function(n:string) {
+                return parseInt(n, 10);
+              });
           }
         }
       }
@@ -798,9 +807,9 @@ module Charting {
         this.base_options.showRowNumber = true;
       }
       this.base_options.sort = 'disable';
-      var _this = this;
+      var __this = this;
       this.driver.addPageChangedHandler(function (page:number) {
-        _this.handlePageEvent(page);
+        __this.handlePageEvent(page);
       });
     }
 
@@ -845,6 +854,8 @@ module Charting {
     handlePageEvent(page:number):void {
       var offset = (page == 0) ? -1 : 1;
       this.firstRow += offset * this.pageSize;
+      this.refreshData.first = this.firstRow;
+      this.refreshData.count = this.pageSize;
       this.refresh(true);
     }
   }

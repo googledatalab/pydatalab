@@ -30,8 +30,8 @@ setup(
     'datalab.data',
     'datalab.data.commands',
     'datalab.kernel',
-    'datalab.ml',
-    'datalab.ml.commands',
+    'datalab.mlalpha',
+    'datalab.mlalpha.commands',
     'datalab.notebook',
     'datalab.stackdriver',
     'datalab.stackdriver.commands',
@@ -72,7 +72,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'futures==3.0.5',
     'google-cloud==0.19.0',
     'httplib2==0.9.2',
-    'oauth2client==2.0.2',
+    'oauth2client==2.2.0',
     'pandas>=0.17.1',
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
@@ -95,6 +95,10 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/style.js',
         'static/visualization.js',
         'static/codemirror/mode/sql.js',
+        'static/parcoords.js',
+        'static/extern/d3.parcoords.js',
+        'static/extern/d3.parcoords.css',
+        'static/extern/sylvester.js',
       ]
   }
 )

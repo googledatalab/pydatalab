@@ -22,6 +22,7 @@ except ImportError:
     import httplib
 
 import pytz
+import subprocess
 import socket
 import traceback
 import types
@@ -110,3 +111,13 @@ def is_http_running_on(port):
     return True
   except Exception as e:
     return False
+
+
+def gcs_copy_file(source, dest):
+  """ Copy file from source to destination. The paths can be GCS or local.
+
+  Args:
+    source: the source file path.
+    dest: the destination file path.
+  """
+  subprocess.check_call(['gsutil', '-q', 'cp', source, dest])

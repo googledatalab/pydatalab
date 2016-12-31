@@ -16,7 +16,6 @@ from oauth2client.client import AccessTokenCredentials
 import unittest
 
 import google.cloud.monitoring
-import pandas
 
 import datalab.context
 import datalab.stackdriver.monitoring as gcm
@@ -143,17 +142,6 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.columns.tolist(), expected_headers)
     self.assertEqual(dataframe.index.tolist(), [0])
     self.assertEqual(dataframe.iloc[0, 0], RESOURCE_TYPES[0])
-
-  @mock.patch('datalab.stackdriver.monitoring._visualization.table')
-  @mock.patch('datalab.stackdriver.monitoring.ResourceDescriptors.as_dataframe')
-  def test_table(self, mock_datalab_as_dataframe, mock_display_table):
-    DATAFRAME = pandas.DataFrame(RESOURCE_TYPES, columns=['Resource type'])
-    mock_datalab_as_dataframe.return_value = DATAFRAME
-
-    self.descriptors.table(pattern='*instance*', max_rows=1)
-
-    mock_datalab_as_dataframe.assert_called_once_with('*instance*', 1)
-    mock_display_table.assert_called_once_with(DATAFRAME, show_index=False)
 
   @staticmethod
   def _create_context(project_id='test'):
