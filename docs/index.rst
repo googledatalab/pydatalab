@@ -16,6 +16,7 @@ Contents:
    datalab.data
    datalab.stackdriver.monitoring
    datalab.storage
+   datalab.magics
 
 
 Indices and tables

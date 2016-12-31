@@ -1,9 +1,8 @@
-To use, install the prerequisites:
+To use, install the prerequisites and the pydatalab module:
 
   pip install sphinx sphinx_rtd_theme sphinxcontrib-napoleon
+  pip install .. # from docs directory
 
+then in the docs directory, do 'make html' (or epub, or text, etc).
 
-then in the docs directory, do 'make html' (or epub, or pdf, etc).
-
-Output will be in the docs/_build directory.
-
+Output will be in $BUILDDIR, defaulting to ../../datalab-docs.
