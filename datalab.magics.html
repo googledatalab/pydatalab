@@ -271,6 +271,62 @@
 </pre></div>
 </div>
 <dl class="attribute">
+<dt id="mlalpha">
+<code class="descname">mlalpha</code><a class="headerlink" href="#mlalpha" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">mlalpha</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
+               <span class="p">{</span><span class="n">train</span><span class="p">,</span><span class="n">jobs</span><span class="p">,</span><span class="n">summary</span><span class="p">,</span><span class="n">features</span><span class="p">,</span><span class="n">predict</span><span class="p">,</span><span class="n">model</span><span class="p">,</span><span class="n">deploy</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="n">preprocess</span><span class="p">,</span><span class="n">evaluate</span><span class="p">,</span><span class="n">dataset</span><span class="p">,</span><span class="n">module</span><span class="p">,</span><span class="n">package</span><span class="p">}</span>
+               <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">ml</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;</span><span class="si">%%</span><span class="s2">mlalpha &lt;command&gt; -h&quot;</span> <span class="k">for</span> <span class="n">help</span>
+<span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">train</span><span class="p">,</span><span class="n">jobs</span><span class="p">,</span><span class="n">summary</span><span class="p">,</span><span class="n">features</span><span class="p">,</span><span class="n">predict</span><span class="p">,</span><span class="n">model</span><span class="p">,</span><span class="n">deploy</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="n">preprocess</span><span class="p">,</span><span class="n">evaluate</span><span class="p">,</span><span class="n">dataset</span><span class="p">,</span><span class="n">module</span><span class="p">,</span><span class="n">package</span><span class="p">}</span>
+                        <span class="n">commands</span>
+    <span class="n">train</span>               <span class="n">Run</span> <span class="n">a</span> <span class="n">training</span> <span class="n">job</span><span class="o">.</span>
+    <span class="n">jobs</span>                <span class="n">List</span> <span class="n">jobs</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">project</span><span class="o">.</span>
+    <span class="n">summary</span>             <span class="n">List</span> <span class="ow">or</span> <span class="n">view</span> <span class="n">summary</span> <span class="n">events</span><span class="o">.</span>
+    <span class="n">features</span>            <span class="n">Generate</span> <span class="n">featureset</span> <span class="k">class</span> <span class="nc">template</span><span class="o">.</span>
+    <span class="n">predict</span>             <span class="n">Get</span> <span class="n">prediction</span> <span class="n">results</span> <span class="n">given</span> <span class="n">data</span> <span class="n">instances</span><span class="o">.</span>
+    <span class="n">model</span>               <span class="n">List</span> <span class="ow">or</span> <span class="n">view</span> <span class="n">models</span><span class="o">.</span>
+    <span class="n">deploy</span>              <span class="n">Deploy</span> <span class="n">a</span> <span class="n">model</span><span class="o">.</span>
+    <span class="n">delete</span>              <span class="n">Delete</span> <span class="n">a</span> <span class="n">model</span> <span class="ow">or</span> <span class="n">a</span> <span class="n">model</span> <span class="n">version</span><span class="o">.</span>
+    <span class="n">preprocess</span>          <span class="n">Generate</span> <span class="n">preprocess</span> <span class="n">code</span> <span class="n">template</span><span class="o">.</span>
+    <span class="n">evaluate</span>            <span class="n">Generate</span> <span class="n">evaluate</span> <span class="n">code</span> <span class="n">template</span><span class="o">.</span>
+    <span class="n">dataset</span>             <span class="n">Define</span> <span class="n">dataset</span> <span class="n">to</span> <span class="n">explore</span> <span class="n">data</span><span class="o">.</span>
+    <span class="n">module</span>              <span class="n">Define</span> <span class="n">a</span> <span class="n">trainer</span> <span class="n">module</span><span class="o">.</span>
+    <span class="n">package</span>             <span class="n">Create</span> <span class="n">a</span> <span class="n">trainer</span> <span class="n">package</span> <span class="kn">from</span> <span class="nn">all</span> <span class="n">modules</span> <span class="n">defined</span> <span class="k">with</span>
+                        <span class="o">%</span><span class="n">mlalpha</span> <span class="n">module</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="tensorboard">
+<code class="descname">tensorboard</code><a class="headerlink" href="#tensorboard" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">tensorboard</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="nb">list</span><span class="p">,</span><span class="n">start</span><span class="p">,</span><span class="n">stop</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">tensorboard</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;%tensorboard &lt;command&gt; -h&quot;</span> <span class="k">for</span> <span class="n">help</span> <span class="n">on</span> <span class="n">a</span>
+<span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="nb">list</span><span class="p">,</span><span class="n">start</span><span class="p">,</span><span class="n">stop</span><span class="p">}</span>  <span class="n">commands</span>
+    <span class="nb">list</span>             <span class="n">List</span> <span class="n">running</span> <span class="n">TensorBoard</span> <span class="n">instances</span><span class="o">.</span>
+    <span class="n">start</span>            <span class="n">Start</span> <span class="n">a</span> <span class="n">TensorBoard</span> <span class="n">server</span> <span class="k">with</span> <span class="n">the</span> <span class="n">given</span> <span class="n">logdir</span><span class="o">.</span>
+    <span class="n">stop</span>             <span class="n">Stop</span> <span class="n">a</span> <span class="n">TensorBoard</span> <span class="n">server</span> <span class="k">with</span> <span class="n">the</span> <span class="n">given</span> <span class="n">pid</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>         <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
 <dt id="storage">
 <code class="descname">storage</code><a class="headerlink" href="#storage" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>

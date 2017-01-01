@@ -122,6 +122,56 @@ datalab.magics
     -h, --help            show this help message and exit
   None
 
+.. attribute:: mlalpha
+.. parsed-literal::
+
+  usage: mlalpha [-h]
+                 {train,jobs,summary,features,predict,model,deploy,delete,preprocess,evaluate,dataset,module,package}
+                 ...
+  
+  Execute various ml-related operations. Use "%%mlalpha <command> -h" for help
+  on a specific command.
+  
+  positional arguments:
+    {train,jobs,summary,features,predict,model,deploy,delete,preprocess,evaluate,dataset,module,package}
+                          commands
+      train               Run a training job.
+      jobs                List jobs in a project.
+      summary             List or view summary events.
+      features            Generate featureset class template.
+      predict             Get prediction results given data instances.
+      model               List or view models.
+      deploy              Deploy a model.
+      delete              Delete a model or a model version.
+      preprocess          Generate preprocess code template.
+      evaluate            Generate evaluate code template.
+      dataset             Define dataset to explore data.
+      module              Define a trainer module.
+      package             Create a trainer package from all modules defined with
+                          %mlalpha module.
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+  None
+
+.. attribute:: tensorboard
+.. parsed-literal::
+
+  usage: tensorboard [-h] {list,start,stop} ...
+  
+  Execute tensorboard operations. Use "%tensorboard <command> -h" for help on a
+  specific command.
+  
+  positional arguments:
+    {list,start,stop}  commands
+      list             List running TensorBoard instances.
+      start            Start a TensorBoard server with the given logdir.
+      stop             Stop a TensorBoard server with the given pid.
+  
+  optional arguments:
+    -h, --help         show this help message and exit
+  None
+
 .. attribute:: storage
 .. parsed-literal::
 
