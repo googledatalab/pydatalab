@@ -12,7 +12,6 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import mock
 import unittest
 
 # import Python so we can mock the parts we need to here.
@@ -28,9 +27,6 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
-IPython.get_ipython = mock.Mock()
-IPython.get_ipython().user_ns = {}
-
 
 import datalab.utils.commands
 
@@ -39,6 +35,7 @@ class TestCases(unittest.TestCase):
 
   def test_chart_cell(self):
     t = [{'country': 'US', 'quantity': 100}, {'country': 'ZA', 'quantity': 50}]
+    IPython.get_ipython().user_ns = {}
     chart = datalab.utils.commands._chart._chart_cell({'chart': 'geo', 'data': t, 'fields': None}, '')
     self.assertTrue(chart.find('charts.render(') > 0)
     self.assertTrue(chart.find('\'geo\'') > 0)

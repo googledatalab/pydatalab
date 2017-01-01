@@ -28,6 +28,7 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
+
 class TestCases(unittest.TestCase):
 
   def test_create_args(self):

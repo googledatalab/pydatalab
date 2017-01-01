@@ -37,6 +37,7 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('datalab.utils.get_item')
   def test_get_chart_data(self, mock_get_item):
+    IPython.get_ipython().user_ns = {}
     t = [
         {'country': 'US', 'quantity': 100},
         {'country': 'ZA', 'quantity': 50},
