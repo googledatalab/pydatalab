@@ -12,6 +12,7 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import mock
 import unittest
 
 # import Python so we can mock the parts we need to here.
