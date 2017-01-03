@@ -49,7 +49,7 @@ def cloud_preprocess(input_csvs, labels_file, output_dir, project, checkpoint=No
       pipeline_option)
   if (_util.is_in_IPython()):
     import IPython
-    dataflow_url = 'https://pantheon.corp.google.com/dataflow?project=%s' % project
+    dataflow_url = 'https://console.developers.google.com/dataflow?project=%s' % project
     html = 'Job submitted.'
     html += '<p>Click <a href="%s" target="_blank">here</a> to track preprocessing job. <br/>' \
         % dataflow_url
