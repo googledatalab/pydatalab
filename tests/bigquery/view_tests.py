@@ -11,7 +11,6 @@
 # the License.
 
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from builtins import str
 import mock
 from oauth2client.client import AccessTokenCredentials

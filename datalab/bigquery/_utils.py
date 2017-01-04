@@ -12,7 +12,6 @@
 
 """Useful common utility functions."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from builtins import str
 from past.builtins import basestring
 

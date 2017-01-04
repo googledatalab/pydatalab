@@ -12,7 +12,6 @@
 
 """Google Cloud Platform library - Extension cell magic."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 
 try:
   import IPython

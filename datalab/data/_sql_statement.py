@@ -12,7 +12,6 @@
 
 """Implements SQL statement helper functionality."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from builtins import str
 from builtins import object
 from past.builtins import basestring

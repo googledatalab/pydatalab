@@ -13,7 +13,6 @@
 """Implementation of command parsing and handling within magics."""
 from __future__ import absolute_import
 from __future__ import print_function
-from __future__ import unicode_literals
 
 try:
   import IPython

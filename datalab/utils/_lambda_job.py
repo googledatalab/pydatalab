@@ -12,7 +12,6 @@
 
 """Implements OS shell Job functionality."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from . import _async
 from . import _job

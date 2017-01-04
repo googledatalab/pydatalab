@@ -12,7 +12,6 @@
 
 """Implementation of various module magics"""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 
 try:
   import IPython

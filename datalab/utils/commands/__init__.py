@@ -11,7 +11,6 @@
 # the License.
 
 from __future__ import absolute_import
-from __future__ import unicode_literals
 
 # Support functions for magics and display help.
 from ._commands import CommandParser

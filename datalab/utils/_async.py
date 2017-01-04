@@ -12,7 +12,6 @@
 
 """Decorators for async methods and functions to dispatch on threads and support chained calls."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from builtins import object
 
 import abc
