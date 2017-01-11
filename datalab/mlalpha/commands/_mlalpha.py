@@ -255,7 +255,7 @@ def _train(args, cell):
         urllib.urlencode(log_url_query_strings)
     html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
     html += 'Start TensorBoard by running "%tensorboard start --logdir=&lt;YourLogDir&gt;".</p>'
-    return IPython.core.display.HTML(html);
+    return IPython.core.display.HTML(html)
   else:
     # local training
     package_path = None
