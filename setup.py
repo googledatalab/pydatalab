@@ -83,6 +83,9 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'scikit-learn==0.17.1',
     'ipykernel==4.4.1',
   ],
+  dependency_links=[
+     "https://storage.googleapis.com/cloud-ml/sdk/cloudml.latest.tar.gz",
+    ],
   package_data={
     'datalab.notebook': [
         'static/bigquery.css',
