@@ -18,14 +18,13 @@ except ImportError:
 
 
 import collections
-import datetime
 import fnmatch
 import google.cloud.ml
 import json
 import math
 import os
 import plotly.graph_objs as go
-from plotly.offline import init_notebook_mode, iplot
+from plotly.offline import iplot
 import urllib
 import yaml
 
