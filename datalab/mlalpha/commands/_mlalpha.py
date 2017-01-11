@@ -29,6 +29,7 @@ from plotly.offline import init_notebook_mode, iplot
 import urllib
 import yaml
 
+import datalab.bigquery as bq
 import datalab.context
 import datalab.data
 import datalab.mlalpha
@@ -162,8 +163,8 @@ Execute various ml-related operations. Use "%%mlalpha <command> -h" for help on 
   package_parser = parser.subcommand('feature-slice-view','View results of a ' +
                                      'FeatureSlicingPipeline, some eval metrics grouped by ' +
                                      'specified feature column values')
-  package_parser.add_argument('--file', help='The results file from FeatureSlicingPipeline',
-                              required=True)
+  package_parser.add_argument('--file', help='The results file from FeatureSlicingPipeline')
+  package_parser.add_argument('--sql', help='')
   package_parser.add_argument('--feature',
                               help='Which feature to view. The feature must be specified ' +
                                    'in the FeatureSlicingPipeline. If not specified, all ' +
@@ -986,6 +987,20 @@ def _package(args, cell):
   print 'Package created at %s.' % dest
 
 
+def _get_lantern_format(df):
+  if ('count' not in df) or ('feature' not in df):
+    raise Exception('No "count" or "feature" found in data.')
+  metric_names = list(set(df) - set(['feature']))
+  data = []
+  for ii, row in df.iterrows():
+    metric_values = dict(row)
+    metric_values['totalWeightedExamples'] = metric_values['count']
+    del metric_values['feature']
+    del metric_values['count']
+    data.append({'feature': row['feature'], 'metricValues': metric_values})
+  return data
+
+
 def _feature_slice_view(args, cell):
   HTML_TEMPLATE = """<link rel="import" href="/nbextensions/gcpdatalab/extern/lantern-browser.html" >
 <lantern-browser id="%s"></lantern-browser>
@@ -997,10 +1012,17 @@ browser.sourceType = 'colab';
 browser.weightedExamplesColumn = 'totalWeightedExamples';
 browser.calibrationPlotUriFn = function(s) { return '/' + s; }
 </script>"""
-  with open(args['file']) as f:
-    data = map(json.loads, f)
-  if args['feature']:
-    data = [e for e in data if e['feature'].split(':')[0] == args['feature']]
+  if args['sql'] is not None:
+    item = datalab.utils.commands.get_notebook_item(args['sql'])
+    item, _ = datalab.data.SqlModule.get_sql_statement_with_environment(item, {})
+    query = datalab.bigquery.Query(item)
+    df = query.results().to_dataframe()
+    data = _get_lantern_format(df)
+  elif args['dataframe'] is not None:
+    item = datalab.utils.commands.get_notebook_item(args['sql'])
+    data = _get_lantern_format(item)
+  else:
+    raise Exception('either --sql or --dataframe is needed.')
   metrics_str = str(map(str, data[0]['metricValues'].keys()))
   data_str = str([{str(k): json.dumps(v) for k,v in elem.iteritems()} for elem in data])
   html_id = 'l' + datalab.utils.commands.Html.next_id()
