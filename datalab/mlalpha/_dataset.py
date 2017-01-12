@@ -294,7 +294,7 @@ class DataSet(object):
     iplot(fig)
 
   def _plot_x(self, names, x):
-    self._histogram(names, x);
+    self._histogram(names, x)
     if x != self._target_name:
       self._scatter_plot(names, x, self._target_name, self._target_name)
 
