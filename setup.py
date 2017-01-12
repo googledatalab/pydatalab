@@ -13,7 +13,9 @@
 # To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
 
 import datetime
+import platform
 from setuptools import setup
+import pip
 
 minor = datetime.datetime.now().strftime("%y%m%d%H%M")
 version = '0.1.' + minor
@@ -104,3 +106,22 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
       ]
   }
 )
+
+tensorflow_path = None
+if platform.system() == 'Darwin':
+  tensorflow_path = 'https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-0.11.0-py2-none-any.whl'
+elif platform.system() == 'Linux':
+  if platform.linux_distribution()[0] == 'Ubuntu':
+    tensorflow_path = 'https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl'
+  elif platform.linux_distribution()[0] == 'Debian':
+    tensorflow_path = 'https://storage.googleapis.com/tensorflow/linux/cpu/debian/jessie/tensorflow-0.11.0-cp27-none-linux_x86_64.whl'
+
+# install tensorflow
+if not tensorflow_path:
+  print """Warning: could not find tensorflow build for your OS.
+  Please go to https://www.tensorflow.org/get_started/os_setup to see install options"""
+else:
+  pip.main(['install', tensorflow_path])
+
+# install cloud ml sdk
+pip.main(['install', 'https://storage.googleapis.com/cloud-ml/sdk/cloudml.latest.tar.gz'])
