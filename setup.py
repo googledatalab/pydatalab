@@ -118,8 +118,8 @@ elif platform.system() == 'Linux':
 
 # install tensorflow
 if not tensorflow_path:
-  print """Warning: could not find tensorflow build for your OS.
-  Please go to https://www.tensorflow.org/get_started/os_setup to see install options"""
+  print("""Warning: could not find tensorflow build for your OS.
+  Please go to https://www.tensorflow.org/get_started/os_setup to see install options""")
 else:
   pip.main(['install', tensorflow_path])
 
