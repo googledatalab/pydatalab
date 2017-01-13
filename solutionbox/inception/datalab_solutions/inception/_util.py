@@ -36,6 +36,12 @@ def is_in_IPython():
     return False
 
 
+def default_project():
+  import datalab.context
+  context = datalab.context.Context.default()
+  return context.project_id
+
+
 def get_train_eval_files(input_dir):
   latest_file = os.path.join(input_dir, 'latest')
   with ml.util._file.open_local_or_gcs(latest_file, 'r') as f:
