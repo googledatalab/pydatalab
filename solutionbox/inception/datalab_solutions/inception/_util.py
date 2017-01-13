@@ -35,16 +35,11 @@ def is_in_IPython():
   except ImportError:
     return False
 
+
 def default_project():
   import datalab.context
   context = datalab.context.Context.default()
   return context.project_id
-
-
-def default_credentails():
-  import datalab.context
-  context = datalab.context.Context.default()
-  return context.credentails
 
 
 def get_train_eval_files(input_dir):

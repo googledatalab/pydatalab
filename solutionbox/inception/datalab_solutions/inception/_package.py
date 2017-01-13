@@ -195,7 +195,7 @@ def local_batch_predict(model_dir, input_csv, labels_file, output_file, output_b
     output_file: The output csv file containing prediction results.
     output_bq_table: If provided, will also save the results to BigQuery table.
   """
-  return _local.Local().batch_predict(model_dir, input_csv, labels_file, output_file, output_bq_table)
+  _local.Local().batch_predict(model_dir, input_csv, labels_file, output_file, output_bq_table)
 
 
 def cloud_batch_predict(model_dir, image_files, labels_file, show_image=True, output_file=None):

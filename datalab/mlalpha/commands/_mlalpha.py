@@ -160,16 +160,19 @@ Execute various ml-related operations. Use "%%mlalpha <command> -h" for help on 
   package_parser.add_argument('--output', help='the output dir of the package.', required=True)
   package_parser.set_defaults(func=_package)
 
-  package_parser = parser.subcommand('feature-slice-view','View results of a ' +
+  feature_slice_parser = parser.subcommand('feature-slice-view','View results of a ' +
                                      'FeatureSlicingPipeline, some eval metrics grouped by ' +
                                      'specified feature column values')
-  package_parser.add_argument('--file', help='The results file from FeatureSlicingPipeline')
-  package_parser.add_argument('--sql', help='')
-  package_parser.add_argument('--feature',
-                              help='Which feature to view. The feature must be specified ' +
-                                   'in the FeatureSlicingPipeline. If not specified, all ' +
-                                   'features will be listed.')
-  package_parser.set_defaults(func=_feature_slice_view)
+  feature_slice_parser.add_argument('--file', help='The results file from FeatureSlicingPipeline')
+  feature_slice_parser.add_argument('--sql',
+                                    help='The sql module which should return "feature",' +
+                                         '"count" columns, plus at least one metric column ' +
+                                         'with any names')
+  feature_slice_parser.add_argument('--feature',
+                                    help='Which feature to view. The feature must be specified ' +
+                                    'in the FeatureSlicingPipeline. If not specified, all ' +
+                                    'features will be listed.')
+  feature_slice_parser.set_defaults(func=_feature_slice_view)
 
   namespace = datalab.utils.commands.notebook_environment()
   return datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
@@ -1019,7 +1022,7 @@ browser.calibrationPlotUriFn = function(s) { return '/' + s; }
     df = query.results().to_dataframe()
     data = _get_lantern_format(df)
   elif args['dataframe'] is not None:
-    item = datalab.utils.commands.get_notebook_item(args['sql'])
+    item = datalab.utils.commands.get_notebook_item(args['dataframe'])
     data = _get_lantern_format(item)
   else:
     raise Exception('either --sql or --dataframe is needed.')

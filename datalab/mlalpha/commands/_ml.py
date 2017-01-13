@@ -91,14 +91,13 @@ Execute various ml-related operations. Use "%%ml <command> -h" for help on a spe
   return datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
 
 
-def _command_template(package_uri, func_name):
+def _command_template(pr, func_name):
   """Return (args_list, docstring).
      args_list is in the form of:
        arg1:
        arg2:
        arg3: (optional)
   """
-  pr = datalab.mlalpha.PackageRunner(package_uri)
   argspec, docstring = pr.get_func_args_and_docstring(func_name)
   num_defaults = len(argspec.defaults) if argspec.defaults is not None else 0
   # Need to fill in a keyword (here '(NOT_OP)') for non optional args.
@@ -113,12 +112,14 @@ def _command_template(package_uri, func_name):
 def _run_package(args, cell, mode):
   local_func_name = 'local_' + mode
   cloud_func_name = 'cloud_' + mode
-  if args['usage'] is True:
-    command_local = """%%ml %s --package %s""" % (mode, args['package'])
-    args_local, docstring_local = _command_template(args['package'], local_func_name)
-    command_cloud = """%%ml %s --package %s --cloud""" % (mode, args['package'])
-    args_cloud, docstring_cloud = _command_template(args['package'], cloud_func_name)
-    output = """
+  with datalab.mlalpha.PackageRunner(args['package']) as pr:
+    if args['usage'] is True:
+      #TODO Consider calling _command_template once to save one pip installation
+      command_local = """%%ml %s --package %s""" % (mode, args['package'])
+      args_local, docstring_local = _command_template(pr, local_func_name)
+      command_cloud = """%%ml %s --package %s --cloud""" % (mode, args['package'])
+      args_cloud, docstring_cloud = _command_template(pr, cloud_func_name)
+      output = """
 Local Run Command:
 
 %s
@@ -133,15 +134,14 @@ Cloud Run Command:
 [Description]:
 %s
 """ % (command_local, args_local, docstring_local, command_cloud, args_cloud, docstring_cloud)
-    return datalab.utils.commands.render_text(output, preformatted=True)
+      return datalab.utils.commands.render_text(output, preformatted=True)
 
-  pr = datalab.mlalpha.PackageRunner(args['package'])
-  env = datalab.utils.commands.notebook_environment()
-  func_args = datalab.utils.commands.parse_config(cell, env)
-  if args['cloud'] is True:
-    return pr.run_func(cloud_func_name, func_args)
-  else:
-    return pr.run_func(local_func_name, func_args)
+    env = datalab.utils.commands.notebook_environment()
+    func_args = datalab.utils.commands.parse_config(cell, env)
+    if args['cloud'] is True:
+      return pr.run_func(cloud_func_name, func_args)
+    else:
+      return pr.run_func(local_func_name, func_args)
 
 
 def _preprocess(args, cell):

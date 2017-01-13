@@ -21,7 +21,7 @@ import sys
 import tempfile
 
 
-PACKAGE_NAMESPACE = 'datalab_solutions.'
+PACKAGE_NAMESPACE = 'datalab_solutions'
 
 class PackageRunner(object):
   """A Helper class to run Datalab ML solution packages."""
@@ -48,11 +48,17 @@ class PackageRunner(object):
     sys.path.insert(0, install_dir)
     return install_dir
 
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_value, traceback):
+    self._install_to_temp()
+
   def _cleanup_installation(self, install_dir):
     if sys.path[0] == install_dir:
       del sys.path[0]
     shutil.rmtree(install_dir)
-    
+
   def get_func_args_and_docstring(self, func_name):
     """Get function args and docstrings.
     Args:
@@ -61,11 +67,9 @@ class PackageRunner(object):
       A tuple of function argspec, function docstring.
     """
     install_dir = self._install_to_temp()
-    try:
-      func = getattr(__import__(PACKAGE_NAMESPACE + self._name, fromlist=[func_name]), func_name)
-      return inspect.getargspec(func), func.__doc__
-    finally:
-      self._cleanup_installation(install_dir)    
+    func = getattr(__import__(PACKAGE_NAMESPACE + '.' + self._name, fromlist=[func_name]),
+                   func_name)
+    return inspect.getargspec(func), func.__doc__   
 
   def run_func(self, func_name, args):
     """Run a function.
@@ -76,9 +80,6 @@ class PackageRunner(object):
       function return values.
     """
     install_dir = self._install_to_temp()
-    try:
-      func = getattr(__import__(PACKAGE_NAMESPACE + self._name, fromlist=[func_name]), func_name)
-      ret = func(**args)
-      return ret
-    finally:
-      self._cleanup_installation(install_dir)
+    func = getattr(__import__(PACKAGE_NAMESPACE + '.' + self._name, fromlist=[func_name]),
+                   func_name)
+    return func(**args)
