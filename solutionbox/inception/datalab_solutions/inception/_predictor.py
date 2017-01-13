@@ -46,6 +46,8 @@ def _tf_predict(model_dir, image_files):
 
 
 def predict(model_dir, image_files, labels_file):
+  """Local prediction."""
+
   predictions, scores = _tf_predict(model_dir, image_files)
   labels = _util.get_labels(labels_file)
   labels.append('UNKNOWN')
@@ -56,6 +58,7 @@ def predict(model_dir, image_files, labels_file):
 
 def batch_predict(model_dir, input_csv, labels_file, output_file, output_bq_table):
   """Local batch prediction."""
+
   input_csv_f = ml.util._file.read_file_stream(input_csv)
   reader = csv.reader(input_csv_f)
   image_files = [x[0] for x in reader]

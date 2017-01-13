@@ -36,6 +36,7 @@ class PackageRunner(object):
     """
     self._package_uri = package_uri
     self._name = os.path.basename(package_uri).split('-')[0]
+    self._install_dir = None
     
   def _install_to_temp(self):
     install_dir = tempfile.mkdtemp()
@@ -46,18 +47,21 @@ class PackageRunner(object):
     subprocess.check_call(['pip', 'install', tar_path, '--target', install_dir,
                            '--upgrade', '--force-reinstall'])
     sys.path.insert(0, install_dir)
-    return install_dir
+    self._install_dir = install_dir
 
   def __enter__(self):
+    self._install_to_temp()
     return self
 
   def __exit__(self, exc_type, exc_value, traceback):
-    self._install_to_temp()
+    self._cleanup_installation()
 
-  def _cleanup_installation(self, install_dir):
-    if sys.path[0] == install_dir:
+  def _cleanup_installation(self):
+    if self._install_dir is None:
+      return
+    if sys.path[0] == self._install_dir:
       del sys.path[0]
-    shutil.rmtree(install_dir)
+    shutil.rmtree(self._install_dir)
 
   def get_func_args_and_docstring(self, func_name):
     """Get function args and docstrings.
@@ -66,7 +70,6 @@ class PackageRunner(object):
     Returns:
       A tuple of function argspec, function docstring.
     """
-    install_dir = self._install_to_temp()
     func = getattr(__import__(PACKAGE_NAMESPACE + '.' + self._name, fromlist=[func_name]),
                    func_name)
     return inspect.getargspec(func), func.__doc__   
@@ -79,7 +82,6 @@ class PackageRunner(object):
     Returns:
       function return values.
     """
-    install_dir = self._install_to_temp()
     func = getattr(__import__(PACKAGE_NAMESPACE + '.' + self._name, fromlist=[func_name]),
                    func_name)
     return func(**args)
