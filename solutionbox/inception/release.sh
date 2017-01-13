@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright 2016 Google Inc. All rights reserved.
+# Copyright 2017 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -14,6 +14,8 @@
 
 # Build a distribution package
 python setup.py sdist --formats=gztar
+
+# Release to gs
 gsutil cp ./dist/inception-0.1.tar.gz gs://cloud-datalab/packages/inception-0.1.tar.gz
 
 
