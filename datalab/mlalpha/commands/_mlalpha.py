@@ -18,14 +18,13 @@ except ImportError:
 
 
 import collections
-import datetime
 import fnmatch
 import google.cloud.ml
 import json
 import math
 import os
 import plotly.graph_objs as go
-from plotly.offline import init_notebook_mode, iplot
+from plotly.offline import iplot
 import urllib
 import yaml
 
@@ -255,7 +254,7 @@ def _train(args, cell):
         urllib.urlencode(log_url_query_strings)
     html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
     html += 'Start TensorBoard by running "%tensorboard start --logdir=&lt;YourLogDir&gt;".</p>'
-    return IPython.core.display.HTML(html);
+    return IPython.core.display.HTML(html)
   else:
     # local training
     package_path = None
