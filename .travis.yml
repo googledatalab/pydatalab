@@ -1,12 +1,14 @@
 language: python
 python:
-  - "2.7"
-  - "3.5"
+  - 2.7
+  - 3.5
 
 before_install:
+  - sudo apt-get install -y python-setuptools
   - npm install -g typescript
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
   - pip install -U pip
+  - pip install -U setuptools
   - pip install .
 
 script: python ./tests/main.py
