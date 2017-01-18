@@ -79,4 +79,4 @@ class CommandParser(argparse.ArgumentParser):
     """Creates a parser for a sub-command. """
     if self._subcommands is None:
       self._subcommands = self.add_subparsers(help='commands')
-    return self._subcommands.add_parser(name, help=help)
+    return self._subcommands.add_parser(name, description=help, help=help)
