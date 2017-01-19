@@ -33,7 +33,7 @@ def csv_to_dataframe(csv_path, schema_path):
       Loaded pandas dataframe.
   """
   with ml.util._file.open_local_or_gcs(schema_path, mode='r') as f:
-    schema = yaml.load(f)
+    schema = yaml.safe_load(f)
   _MAPPINGS = {
     'FLOAT': np.float64,
     'INTEGER': np.int64,

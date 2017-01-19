@@ -195,43 +195,52 @@ def _plot_confusion_matrix(cm, labels):
   plt.xlabel('Predicted label')
 
 
+def _confusion_matrix_from_csv(input_csv, cell):
+  schema_file = input_csv + '.schema.yaml'
+  headers = None
+  if cell is not None:
+    env = datalab.utils.commands.notebook_environment()
+    config = datalab.utils.commands.parse_config(cell, env)
+    headers_str = config.get('headers', None)
+    if headers_str is not None:
+      headers = [x.strip() for x in headers_str.split(',')]
+  if headers is not None:
+    with cloudml.util._file.open_local_or_gcs(input_csv, mode='r') as f:
+      df = pd.read_csv(f, names=headers)
+  elif cloudml.util._file.file_exists(schema_file):
+    df = datalab.mlalpha.csv_to_dataframe(input_csv, schema_file)
+  else:
+    raise Exception('headers is missing from cell, ' +
+                    'and there is no schema file in the same dir as csv')
+  labels = sorted(set(df['target']) & set(df['predicted']))
+  cm = confusion_matrix(df['target'], df['predicted'], labels=labels)
+  return cm, labels
+
+
+def _confusion_matrix_from_query(sql_module_name, bq_table):
+  if sql_module_name is not None:
+    item = datalab.utils.commands.get_notebook_item(sql_module_name)
+    query, _ = datalab.data.SqlModule.get_sql_statement_with_environment(item, {})
+  else:
+    query = ('select target, predicted, count(*) as count from %s group by target, predicted'
+             % bq_table)
+  dfbq = datalab.bigquery.Query(query).results().to_dataframe()
+  labels = sorted(set(dfbq['target']) & set(dfbq['predicted']))
+  labels_count = len(labels)
+  dfbq['target'] = [labels.index(x) for x in dfbq['target']]
+  dfbq['predicted'] = [labels.index(x) for x in dfbq['predicted']]
+  cm = [[0]*labels_count for i in range(labels_count)]
+  for index, row in dfbq.iterrows():
+    cm[row['target']][row['predicted']] = row['count']
+  return cm, labels
+
+
 def _confusion_matrix(args, cell):
   if args['csv'] is not None:
-    input_csv = args['csv']
-    schema_file = input_csv + '.schema.yaml'
-    headers = None
-    if cell is not None:
-      env = datalab.utils.commands.notebook_environment()
-      config = datalab.utils.commands.parse_config(cell, env)
-      headers_str = config.get('headers', None)
-      if headers_str is not None:
-        headers = [x.strip() for x in headers_str.split(',')]
-    if headers is not None:
-      with cloudml.util._file.open_local_or_gcs(input_csv, mode='r') as f:
-        df = pd.read_csv(f, names=headers)
-    elif cloudml.util._file.file_exists(schema_file):
-      df = datalab.mlalpha.csv_to_dataframe(input_csv, schema_file)
-    else:
-      raise Exception('headers is missing from cell, ' +
-                      'and there is no schema file in the same dir as csv')
-    labels=sorted(set(df['target']))
-    cm = confusion_matrix(df['target'], df['predicted'], labels=labels)
-    _plot_confusion_matrix(cm, labels)
-  elif args['bqtable'] is not None or args['sql'] is not None:
-    if args['sql'] is not None:
-      item = datalab.utils.commands.get_notebook_item(args['sql'])
-      query, _ = datalab.data.SqlModule.get_sql_statement_with_environment(item, {})
-    else:
-      query = ('select target, predicted, count(*) as count from %s group by target, predicted'
-               % args['bqtable'])
-    dfbq = datalab.bigquery.Query(query).results().to_dataframe()
-    labels = sorted(set(dfbq['target']))
-    labels_count = len(labels)
-    dfbq['target'] = [labels.index(x) for x in dfbq['target']]
-    dfbq['predicted'] = [labels.index(x) for x in dfbq['predicted']]
-    cm = [[0]*labels_count for i in range(labels_count)]
-    for index, row in dfbq.iterrows():
-      cm[row['target']][row['predicted']] = row['count']
-    _plot_confusion_matrix(cm, labels)
+    #TODO: Maybe add cloud run for large CSVs with federated table.
+    cm, labels = _confusion_matrix_from_csv(args['csv'], cell)
+  elif args['sql'] is not None or args['bqtable'] is not None:
+    cm, labels = _confusion_matrix_from_query(args['sql'], args['bqtable'])
   else:
     raise Exception('One of "csv", "bqtable", and "sql" param is needed.')
+  _plot_confusion_matrix(cm, labels)
