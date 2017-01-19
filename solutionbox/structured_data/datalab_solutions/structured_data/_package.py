@@ -13,15 +13,20 @@
 # limitations under the License.
 
 
-"""Provides interface for Datalab. It provides:
+"""Provides interface for Datalab.
+
+  Datalab will look for functions with the below names:
      local_preprocess
      local_train
      local_predict
      cloud_preprocess
      cloud_train
      cloud_predict
-   Datalab will look for functions with the above names.
 """
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import datetime
 import logging
@@ -167,9 +172,9 @@ def cloud_preprocess(input_file_path, output_dir, transforms_config_file,
   print('Cloud preprocess, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
 
-  print 'Cloud preprocessing job submitted.'
+  print('Cloud preprocessing job submitted.')
 
-  if (_is_in_IPython()):
+  if _is_in_IPython():
     import IPython
 
     dataflow_url = ('https://console.developers.google.com/dataflow?project=%s'
@@ -195,6 +200,8 @@ def local_train(preprocessed_dir, transforms_config_file, output_dir,
         middle layer will have 3 nodes, and the laster layer will have 2 nodes.
     max_steps: Int. Number of training steps to perform.
   """
+  _check_transforms_config_file(transforms_config_file)
+
   #TODO(brandondutra): allow other flags to be set like batch size/learner rate
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
 
@@ -247,6 +254,8 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
     scale_tier: The CloudML scale tier. CUSTOM tiers are currently not supported
         in this package. See https://cloud.google.com/ml/reference/rest/v1beta1/projects.jobs#ScaleTier
   """
+  _check_transforms_config_file(transforms_config_file)
+
   #TODO(brandondutra): allow other flags to be set like batch size,
   #   learner rate, custom scale tiers, etc
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
@@ -283,7 +292,7 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
   job_name = job_name or ('structured_data_train_' +
                           datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
-  #TODO(brandondutra): remove the cd after b/34221856
+  # TODO(brandondutra): remove the cd after b/34221856
   cmd = ['cd %s &&' % this_folder,
          'gcloud beta ml jobs submit training %s' % job_name,
          '--module-name=trainer.task',
@@ -307,7 +316,7 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
 
   print('CloudML training job submitted.')
 
-  if (_is_in_IPython()):
+  if _is_in_IPython():
     import IPython
 
     dataflow_url = ('https://console.developers.google.com/ml/jobs?project=%s'
@@ -321,20 +330,21 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
 
 
 def local_predict():
-  """Not Implemented Yet"""
-  print 'local_predict'
+  """Not Implemented Yet."""
+  print('local_predict')
 
 
 def cloud_predict():
-  """Not Implemented Yet"""
-  print 'cloud_predict'
+  """Not Implemented Yet."""
+  print('cloud_predict')
 
 
 def local_batch_predict():
-  """Not Implemented Yet"""
-  print 'local_batch_predict'
+  """Not Implemented Yet."""
+  print('local_batch_predict')
+
 
 def cloud_batch_predict():
-  """Not Implemented Yet"""
-  print 'cloud_batch_predict'
+  """Not Implemented Yet."""
+  print('cloud_batch_predict')
 
