@@ -212,7 +212,7 @@ def _confusion_matrix_from_csv(input_csv, cell):
   else:
     raise Exception('headers is missing from cell, ' +
                     'and there is no schema file in the same dir as csv')
-  labels = sorted(set(df['target']) & set(df['predicted']))
+  labels = sorted(set(df['target']) | set(df['predicted']))
   cm = confusion_matrix(df['target'], df['predicted'], labels=labels)
   return cm, labels
 
@@ -225,7 +225,7 @@ def _confusion_matrix_from_query(sql_module_name, bq_table):
     query = ('select target, predicted, count(*) as count from %s group by target, predicted'
              % bq_table)
   dfbq = datalab.bigquery.Query(query).results().to_dataframe()
-  labels = sorted(set(dfbq['target']) & set(dfbq['predicted']))
+  labels = sorted(set(dfbq['target']) | set(dfbq['predicted']))
   labels_count = len(labels)
   dfbq['target'] = [labels.index(x) for x in dfbq['target']]
   dfbq['predicted'] = [labels.index(x) for x in dfbq['predicted']]
