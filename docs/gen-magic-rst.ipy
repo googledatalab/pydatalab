@@ -1,0 +1,39 @@
+import subprocess, pkgutil, importlib, sys
+from cStringIO import StringIO
+
+# ignore mlalpha and tensorboard for now because of their tensorflow dependency
+# until tensorboard is pip installable and can be listed as a pydatalab dependency
+IGNORED_MAGICS = ['mlalpha', 'tensorboard']
+
+# import submodules
+submodules = [s for _,s,_ in pkgutil.iter_modules(['../datalab'])]
+
+for m in submodules:
+  name = 'datalab.' + m + '.commands'
+  try:
+    importlib.import_module(name)
+  except:
+    sys.stderr.write('WARNING, could not find module ' + name + '. Ignoring..\n')
+
+magic_regex = "find ../datalab -name '*.py' -exec perl -e '$f=join(\"\",<>); print \"$1\n\" if $f=~/register_line_cell_magic\ndef ([^\(]+)/m' {} \;"
+magics = subprocess.check_output(magic_regex, shell=True)
+
+reSTfile = open('datalab.magics.rst', 'w')
+indent = '\n  '
+
+reSTfile.write('datalab.magics\n')
+reSTfile.write('=================\n\n')
+
+for m in magics.split():
+  if m in IGNORED_MAGICS:
+    sys.stderr.write('Ignoring magic ' + m + '\n')
+  else:
+    reSTfile.write('.. attribute:: ' + m + '\n')
+    reSTfile.write('.. parsed-literal::\n')
+    # hijack stdout since the ipython kernel call writes to stdout/err directly
+    # and does not return its output
+    tmpStdout, sys.stdout = sys.stdout, StringIO()
+    get_ipython().magic(m + ' -h')
+    resultout = sys.stdout.getvalue().splitlines()
+    sys.stdout = tmpStdout
+    reSTfile.writelines(indent + indent.join(resultout) + '\n\n')
