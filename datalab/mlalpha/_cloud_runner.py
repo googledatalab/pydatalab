@@ -86,4 +86,5 @@ class CloudRunner(object):
                               discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
     request = cloudml.projects().jobs().create(body=job,
                                                parent='projects/' + context.project_id)
+    request.headers['user-agent'] = 'GoogleCloudDataLab/1.0'
     return request.execute()

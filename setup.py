@@ -13,7 +13,12 @@
 # To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
 
 import datetime
+import sys
 from setuptools import setup
+
+if sys.version_info[0] == 2:
+  import platform
+  import pip
 
 minor = datetime.datetime.now().strftime("%y%m%d%H%M")
 version = '0.1.' + minor
@@ -71,16 +76,18 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'future==0.15.2',
     'futures==3.0.5',
     'google-cloud==0.19.0',
+    'google-api-python-client==1.5.1',
+    'seaborn==0.7.0',
+    'plotly==1.12.5',
     'httplib2==0.9.2',
-    'oauth2client==2.0.2',
+    'oauth2client==2.2.0',
+    'psutil==4.3.0',
     'pandas>=0.17.1',
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
     'pytz>=2015.4',
     'pyyaml==3.11',
     'requests==2.9.1',
-    'scikit-learn==0.17.1',
-    'scipy==0.18.0',
     'ipykernel==4.4.1',
     'psutil==4.3.0',
     'plotly==1.12.5',
@@ -106,3 +113,24 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
       ]
   }
 )
+
+# for python2 only, install tensorflow and cloudml
+if sys.version_info[0] == 2:
+  tensorflow_path = None
+  if platform.system() == 'Darwin':
+    tensorflow_path = 'https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-0.11.0-py2-none-any.whl'
+  elif platform.system() == 'Linux':
+    if platform.linux_distribution()[0] == 'Ubuntu':
+      tensorflow_path = 'https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl'
+    elif platform.linux_distribution()[0] == 'Debian':
+      tensorflow_path = 'https://storage.googleapis.com/tensorflow/linux/cpu/debian/jessie/tensorflow-0.11.0-cp27-none-linux_x86_64.whl'
+
+  # install tensorflow
+  if not tensorflow_path:
+    print("""Warning: could not find tensorflow build for your OS.
+    Please go to https://www.tensorflow.org/get_started/os_setup to see install options""")
+  else:
+    pip.main(['install', tensorflow_path])
+
+  # install cloud ml sdk
+  pip.main(['install', 'https://storage.googleapis.com/cloud-ml/sdk/cloudml.latest.tar.gz'])
