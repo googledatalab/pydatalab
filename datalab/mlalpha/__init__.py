@@ -26,8 +26,7 @@ from ._dataset import DataSet
 from ._package import Packager
 from ._cloud_models import CloudModels, CloudModelVersions
 from ._confusion_matrix import ConfusionMatrix
-from ._analysis import CsvEvalResults, CsvEvalSource, EvalResultsCsvCoder, \
-                       AccuracyFn, FeatureSlicingPipeline
+from ._analysis import csv_to_dataframe
 from ._package_runner import PackageRunner
 
 from plotly.offline import init_notebook_mode

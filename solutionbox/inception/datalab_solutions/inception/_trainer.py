@@ -41,7 +41,10 @@ class Evaluator(object):
   """Loads variables from latest checkpoint and performs model evaluation."""
 
   def __init__(self, model, data_paths, batch_size, output_path, dataset='eval'):
-    self.num_eval_batches = self._data_size(data_paths) // batch_size
+    data_size = self._data_size(data_paths)
+    if data_size <= batch_size:
+      raise Exception('Data size is smaller than batch size.')
+    self.num_eval_batches = data_size // batch_size
     self.batch_of_examples = []
     self.checkpoint_path = os.path.join(output_path, 'train')
     self.output_path = os.path.join(output_path, dataset)
