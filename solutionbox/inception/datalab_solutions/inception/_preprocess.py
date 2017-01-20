@@ -232,6 +232,10 @@ class TFExampleFromImageDoFn(beam.DoFn):
       with self.graph.as_default():
         self.preprocess_graph = EmbeddingsGraph(self.tf_session, self._checkpoint_path)
 
+  def finish_bundle(self, context):
+    if self.tf_session is not None:
+      self.tf_session.close()
+
   def process(self, context):
 
     def _bytes_feature(value):
