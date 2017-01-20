@@ -41,6 +41,7 @@ class TestTrainer(unittest.TestCase):
 
     
   def tearDown(self):
+    print('Removing temp dir ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
 

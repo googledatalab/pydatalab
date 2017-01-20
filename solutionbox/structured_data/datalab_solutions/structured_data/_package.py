@@ -340,11 +340,11 @@ def cloud_predict():
 
 
 def local_batch_predict():
-  """Not Implemented Yet."""
+  """Not Implemented Yet. nees my code starting from tf.example"""
   print('local_batch_predict')
 
 
 def cloud_batch_predict():
-  """Not Implemented Yet."""
+  """Not Implemented Yet. gcloud beta ml jobs submit prediction XXX"""
   print('cloud_batch_predict')
 

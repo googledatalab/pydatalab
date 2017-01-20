@@ -19,6 +19,7 @@ import sys
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
+import google.cloud.ml as ml
 
 
 def _copy_all(src_files, dest_dir):
@@ -201,39 +202,45 @@ def produce_feature_columns(metadata, config):
 
 
 def parse_example_tensor(examples, mode, metadata, transform_config):
+  if mode == 'training':
+    raw_tensor = ml.features.FeatureMetadata.parse_features(metadata, examples,
+                                                            keep_target=True)
+  elif mode == 'prediction':
+    raw_tensor = ml.features.FeatureMetadata.parse_features(metadata, examples,
+                                                            keep_target=False)
+  return raw_tensor
+  # dtype_mapping = {
+  #     'bytes': tf.string,
+  #     'float': tf.float32,
+  #     'int64': tf.int64
+  # }
 
-    dtype_mapping = {
-        'bytes': tf.string,
-        'float': tf.float32,
-        'int64': tf.int64
-    }
+  # example_schema = {}
+  # if 'numerical' in transform_config:
+  #   for name, _ in transform_config['numerical'].iteritems():
+  #     size = 1 #metadata.features[name]['size']
+  #     dtype = dtype_mapping[metadata.features[name]['dtype']]
+  #     example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
 
-    example_schema = {}
-    if 'numerical' in transform_config:
-      for name, _ in transform_config['numerical'].iteritems():
-        size = 1 #metadata.features[name]['size']
-        dtype = dtype_mapping[metadata.features[name]['dtype']]
-        example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
-
-    if 'categorical' in transform_config:
-      for name, _ in transform_config['categorical'].iteritems():
-        size = 1 #metadata.features[name]['size']
-        dtype = dtype_mapping[metadata.features[name]['dtype']]
-        example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+  # if 'categorical' in transform_config:
+  #   for name, _ in transform_config['categorical'].iteritems():
+  #     size = 1 #metadata.features[name]['size']
+  #     dtype = dtype_mapping[metadata.features[name]['dtype']]
+  #     example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
 
 
-    if mode == 'training':
-      target_name = transform_config['target_column']
-      size = 1 #metadata.features[target_name]['size']
-      dtype = dtype_mapping[metadata.features[target_name]['dtype']]
-      example_schema[target_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
-    elif mode == 'prediction':
-      key_name = transform_config['key_column']
-      size = 1 #metadata.features[key_name]['size']
-      dtype = dtype_mapping[metadata.features[key_name]['dtype']]
-      example_schema[key_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
-    else:
-      print('ERROR: unknown mode type')
-      sys.exit(1)
+  # if mode == 'training':
+  #   target_name = transform_config['target_column']
+  #   size = 1 #metadata.features[target_name]['size']
+  #   dtype = dtype_mapping[metadata.features[target_name]['dtype']]
+  #   example_schema[target_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+  # elif mode == 'prediction':
+  #   key_name = transform_config['key_column']
+  #   size = 1 #metadata.features[key_name]['size']
+  #   dtype = dtype_mapping[metadata.features[key_name]['dtype']]
+  #   example_schema[key_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+  # else:
+  #   print('ERROR: unknown mode type')
+  #   sys.exit(1)
 
-    return tf.parse_example(examples, example_schema)
+  # return tf.parse_example(examples, example_schema)

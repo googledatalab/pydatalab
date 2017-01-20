@@ -89,7 +89,7 @@ def run_preprocess(output_dir, csv_filename, config_filename,
   subprocess.check_call(cmd, stderr=open(os.devnull, 'wb'))
 
 def run_training(output_dir, input_dir, config_filename, extra_args=[]):
-  """Runs Training via gcloud alpha ml local train.
+  """Runs Training via gcloud beta ml local train.
 
   Args:
     output_dir: the trainer's output folder
@@ -101,7 +101,7 @@ def run_training(output_dir, input_dir, config_filename, extra_args=[]):
   train_filename = os.path.join(input_dir, 'features_train*')
   eval_filename = os.path.join(input_dir, 'features_eval*')
   metadata_filename = os.path.join(input_dir, 'metadata.json')
-  cmd = ['gcloud alpha ml local train',
+  cmd = ['gcloud beta ml local train',
          '--module-name=trainer.task',
          '--package-path=trainer',
          '--',

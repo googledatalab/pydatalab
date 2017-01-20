@@ -123,32 +123,22 @@ def preprocessing_features(args):
   # Extract numeric features
   if 'numerical' in config:
     for name, transform_config in config['numerical'].iteritems():
-      transform = transform_config['transform']
+      # apply identity to all numerical features. The transformations will
+      # happen at training time. 
       default = transform_config.get('default', None)
-      if transform == 'scale':
-        feature_set[name] = features.numeric(name, default=default).scale()
-      elif transform == 'max_abs_scale':
-        feature_set[name] = features.numeric(name, default=default).max_abs_scale(transform_config['value'])
-      elif transform == 'identity':
-        feature_set[name] = features.numeric(name, default=default).identity()
-      else:
-        print('Error: unkown numerical transform name %s in %s' % (transform, str(transform_config)))
-        sys.exit(1)
+      feature_set[name] = features.numeric(name, default=default).identity()
 
   # Extract categorical features
   if 'categorical' in config:
     for name, transform_config in config['categorical'].iteritems():
-      transform = transform_config['transform']
+      # apply sparse transform to all categorical features. The transformations 
+      # will happen at training time. 
       default = transform_config.get('default', None)
       frequency_threshold = transform_config.get('frequency_threshold', 5)
-      if transform == 'one_hot' or transform == 'embedding':
-        feature_set[name] = features.categorical(
-            name, 
-            default=default,
-            frequency_threshold=frequency_threshold)
-      else:
-        print('Error: unkown categorical transform name %s in %s' % (transform, str(transform_config)))
-        sys.exit(1)
+      feature_set[name] = features.categorical(
+          name, 
+          default=default,
+          frequency_threshold=frequency_threshold).sparse(use_counts=True)
 
   return feature_set, column_names
 
