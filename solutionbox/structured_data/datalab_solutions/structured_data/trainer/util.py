@@ -21,7 +21,6 @@ import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 import google.cloud.ml as ml
 
-
 def _copy_all(src_files, dest_dir):
   # file_io.copy does not copy files into folders directly.
   for src_file in src_files:
@@ -195,52 +194,125 @@ def produce_feature_columns(metadata, config):
         feature_columns.append(
             tf.contrib.layers.embedding_column(sparse_column, dim))
       else:
-        print('ERROR: unkown categorical transform name %s in %s' % (transform, str(transform_config)))
+        print('ERROR: unkown categorical transform name %s in %s' % 
+            (transform, str(transform_config)))
         sys.exit(1)
 
   return feature_columns
 
+def _scale_tensor(tensor, range_min, range_max, scale_min, scale_max):
+  if range_min == range_max:
+    return tensor
+
+  float_tensor = tf.to_float(tensor)
+  scaled_tensor = tf.div(
+    tf.sub(float_tensor, range_min) * tf.constant(float(scale_max - scale_min)),
+    tf.constant(float(range_max - range_min)))
+  shifted_tensor = scaled_tensor + tf.constant(float(scale_min))
+
+  return shifted_tensor
+
+
+def produce_feature_engineering_fn(metadata, config):
+  """Makes a feature_engineering_fn for transforming the numerical types. 
+
+  This is called with the output of the 'input_fn' function, and the output of
+  this function is given to tf.learn to further process. This function extracts
+  the ids tensors from ml.features.FeatureMetadata.parse_features and throws
+  away the values tensor.
+  """
+
+  def _feature_engineering_fn(features, target):
+    with tf.name_scope('numerical_feature_engineering') as scope:
+      new_features = {}
+      if 'numerical' in config:
+        for name, transform_dict in config['numerical'].iteritems():
+          trans_name = transform_dict['transform']
+          if trans_name == 'scale':
+            range_min = metadata.columns[name]['min']
+            range_max = metadata.columns[name]['max']
+            new_features[name] = _scale_tensor(features[name], 
+                                              range_min=range_min, 
+                                              range_max=range_max, 
+                                              scale_min=-1, 
+                                              scale_max=1)
+          elif trans_name == 'max_abs_scale':
+            value = transform_dict['value']
+            range_min = metadata.columns[name]['min']
+            range_max = metadata.columns[name]['max']
+            new_features[name] = _scale_tensor(features[name], 
+                                              range_min=range_min, 
+                                              range_max=range_max, 
+                                              scale_min=-value, 
+                                              scale_max=value)
+
+          elif trans_name == 'identity':
+            # Don't need to do anything
+            pass
+          else:
+            print('ERROR: Unknown numerical transform %s for feature %s' % 
+                (trans_name, name))
+            sys.exit(1)
+      features.update(new_features)
+    return features, target
+
+  return _feature_engineering_fn
+
 
 def parse_example_tensor(examples, mode, metadata, transform_config):
   if mode == 'training':
-    raw_tensor = ml.features.FeatureMetadata.parse_features(metadata, examples,
-                                                            keep_target=True)
+    features = ml.features.FeatureMetadata.parse_features(metadata, examples,
+                                                          keep_target=True) 
   elif mode == 'prediction':
-    raw_tensor = ml.features.FeatureMetadata.parse_features(metadata, examples,
-                                                            keep_target=False)
-  return raw_tensor
-  # dtype_mapping = {
-  #     'bytes': tf.string,
-  #     'float': tf.float32,
-  #     'int64': tf.int64
-  # }
+    features = ml.features.FeatureMetadata.parse_features(metadata, examples,
+                                                          keep_target=False) 
+  
+  new_features = {}
+  if 'categorical' in transform_config:
+    for name, _ in transform_config['categorical'].iteritems():
+      new_features[name] = features[name]['ids']
 
-  # example_schema = {}
-  # if 'numerical' in transform_config:
-  #   for name, _ in transform_config['numerical'].iteritems():
-  #     size = 1 #metadata.features[name]['size']
-  #     dtype = dtype_mapping[metadata.features[name]['dtype']]
-  #     example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+  print('old feat', features)
+  features.update(new_features)
+  print('new feat', features)
 
-  # if 'categorical' in transform_config:
-  #   for name, _ in transform_config['categorical'].iteritems():
-  #     size = 1 #metadata.features[name]['size']
-  #     dtype = dtype_mapping[metadata.features[name]['dtype']]
-  #     example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+  return features
 
 
-  # if mode == 'training':
-  #   target_name = transform_config['target_column']
-  #   size = 1 #metadata.features[target_name]['size']
-  #   dtype = dtype_mapping[metadata.features[target_name]['dtype']]
-  #   example_schema[target_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
-  # elif mode == 'prediction':
-  #   key_name = transform_config['key_column']
-  #   size = 1 #metadata.features[key_name]['size']
-  #   dtype = dtype_mapping[metadata.features[key_name]['dtype']]
-  #   example_schema[key_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
-  # else:
-  #   print('ERROR: unknown mode type')
-  #   sys.exit(1)
+# def parse_example_tensorxxxx(examples, mode, metadata, transform_config):
 
-  # return tf.parse_example(examples, example_schema)
+#     dtype_mapping = {
+#         'bytes': tf.string,
+#         'float': tf.float32,
+#         'int64': tf.int64
+#     }
+
+#     example_schema = {}
+#     if 'numerical' in transform_config:
+#       for name, _ in transform_config['numerical'].iteritems():
+#         size = 1 #metadata.features[name]['size']
+#         dtype = dtype_mapping[metadata.features[name]['dtype']]
+#         example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+
+#     if 'categorical' in transform_config:
+#       for name, _ in transform_config['categorical'].iteritems():
+#         size = 1 #metadata.features[name]['size']
+#         dtype = dtype_mapping[metadata.features[name]['dtype']]
+#         example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+
+
+#     if mode == 'training':
+#       target_name = transform_config['target_column']
+#       size = 1 #metadata.features[target_name]['size']
+#       dtype = dtype_mapping[metadata.features[target_name]['dtype']]
+#       example_schema[target_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+#     elif mode == 'prediction':
+#       key_name = transform_config['key_column']
+#       size = 1 #metadata.features[key_name]['size']
+#       dtype = dtype_mapping[metadata.features[key_name]['dtype']]
+#       example_schema[key_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+#     else:
+#       print('ERROR: unknown mode type')
+#       sys.exit(1)
+
+#     return tf.parse_example(examples, example_schema)

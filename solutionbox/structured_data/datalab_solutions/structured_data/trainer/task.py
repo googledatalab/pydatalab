@@ -158,8 +158,7 @@ def get_export_signature_fn(metadata, transform_config):
   return get_export_signature
 
 
-def get_estimator(output_dir, feature_columns, metadata, transform_config,
-                  args):
+def get_estimator(output_dir, metadata, transform_config, args):
   """Returns a tf learn estimator.
 
   We only support {DNN, Linear}Regressor and {DNN, Linear}Classifier. This is
@@ -186,18 +185,27 @@ def get_estimator(output_dir, feature_columns, metadata, transform_config,
     print('ERROR: model_type from the transform file should be dnn or linear')
     sys.exit(1)
 
+  # Build tf.learn features
+  feature_columns = util.produce_feature_columns(metadata, transform_config)
+  feature_engineering_fn = util.produce_feature_engineering_fn(metadata, 
+      transform_config)
+
+
   # Set how often to run checkpointing in terms of time.
   config = tf.contrib.learn.RunConfig(
       save_checkpoints_secs=args.save_checkpoints_secs)
 
   # TODO(brandondutra) check layer_sizes pass in if needed.
-
+  print('prblem_type', problem_type, 'model_type', model_type)
+  sys.stdout.flush()
   if problem_type == 'regression' and model_type == 'dnn':
+    assert args.layer_sizes
     estimator = tf.contrib.learn.DNNRegressor(
         feature_columns=feature_columns,
         hidden_units=args.layer_sizes,
         config=config,
         model_dir=train_dir,
+        feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   elif problem_type == 'regression' and model_type == 'linear':
@@ -205,15 +213,18 @@ def get_estimator(output_dir, feature_columns, metadata, transform_config,
         feature_columns=feature_columns,
         config=config,
         model_dir=train_dir,
+        feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   elif problem_type == 'classification' and model_type == 'dnn':
+    assert args.layer_sizes
     estimator = tf.contrib.learn.DNNClassifier(
         feature_columns=feature_columns,
         hidden_units=args.layer_sizes,
         n_classes=metadata.stats['labels'],
         config=config,
         model_dir=train_dir,
+        feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   elif problem_type == 'classification' and model_type == 'linear':
@@ -222,8 +233,12 @@ def get_estimator(output_dir, feature_columns, metadata, transform_config,
         n_classes=metadata.stats['labels'],
         config=config,
         model_dir=train_dir,
+        feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
+  else:
+    print('ERROR: bad problem_type or model_type')
+    sys.exit(1)
 
   return estimator
 
@@ -241,12 +256,8 @@ def get_experiment_fn(args):
     transform_config = json.loads(
         ml.util._file.load_file(args.transforms_config_file))
 
-    # Build tf.learn features
-    feature_columns = util.produce_feature_columns(metadata, transform_config)
-
     # Get the model to train.
-    estimator = get_estimator(output_dir, feature_columns, metadata, 
-                              transform_config, args)
+    estimator = get_estimator(output_dir, metadata, transform_config, args)
 
     input_placeholder_for_prediction = get_placeholder_input_fn(metadata, 
         transform_config)
