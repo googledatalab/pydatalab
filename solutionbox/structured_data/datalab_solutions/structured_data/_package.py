@@ -330,17 +330,39 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
 
 
 def local_predict():
-  """Not Implemented Yet."""
+  """Not Implemented Yet. gcloud beta ml local predict is broken. Use my code"""
   print('local_predict')
 
 
-def cloud_predict():
-  """Not Implemented Yet."""
-  print('cloud_predict')
+def cloud_predict(input_file_path, file_type, model_name, version_name=None):
+  """Use Online prediction.
+
+  Args:
+    input_file_path: file containing data to run prediction on.
+    file_type: 'text' or 'json'. The file format of the input_file.
+    model_name: the model name.
+    version_name: optional version name of the model. 
+
+  Before using this, the model must be created. This can be done by running 
+  two gcloud commands:
+  1) gcloud beta ml models create NAME
+  2) gcloud beta ml models versions create VERSION --model NAME \
+      --origin gs://BUCKET/training_output_dir/model
+     Note that the model must be on GCS.
+  """
+  cmd = ['gcloud beta ml predict',
+         '--model=%s' % model,
+         '--%s-instances=%s' % (file_type, input_file_path)]
+  if version_name:
+    cmd += ['--version=%s' % version_name]
+
+  print('CloudML cloud online prediction, running command: %s' % ' '.join(cmd))
+  _run_cmd(' '.join(cmd))
+  print('Online prediction done.')
 
 
 def local_batch_predict():
-  """Not Implemented Yet. nees my code starting from tf.example"""
+  """Not Implemented Yet. needs my own code starting from tf.example"""
   print('local_batch_predict')
 
 

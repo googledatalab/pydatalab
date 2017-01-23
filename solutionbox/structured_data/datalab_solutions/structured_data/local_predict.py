@@ -1,66 +1,114 @@
+# Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Utilities for running predictions locally.
+
+This module will always be run within a subprocess, and therefore normal
+conventions of Cloud SDK do not apply here.
+"""
+
+from __future__ import print_function
 
 import argparse
-import collections
 import json
-import os
-import subprocess
-import tensorflow as tf
-
-from tensorflow.python.lib.io import tf_record
-from google.cloud.ml import session_bundle
+import sys
 
 
-def local_predict(args):
-  """Runs prediction locally."""
-  print(args)
-  session, _ = session_bundle.load_session_bundle_from_path(args.model_dir)
-  # get the mappings between aliases and tensor names
-  # for both inputs and outputs
-  print(session.graph.get_collection('inputs'))
-  print(session.graph.get_collection('outputs'))
-  print('io collections')
-
-  input_alias_map = json.loads(session.graph.get_collection('inputs')[0])
-  output_alias_map = json.loads(session.graph.get_collection('outputs')[0])
-  aliases, tensor_names = zip(*output_alias_map.items())
-
-  for input_file in args.input:
-    feed_dict = collections.defaultdict(list)
-    print('reading ', input_file)
-    for line in tf_record.tf_record_iterator(input_file):
-      ex = tf.train.Example()
-      ex.ParseFromString(line)
-      print(ex)
-      feed_dict = collections.defaultdict(list)
-      feed_dict[input_alias_map['input_example']].append(line)
-      #print(tensor_names, feed_dict)
-      result = session.run(fetches=tensor_names, feed_dict=feed_dict)
-      for row in zip(*result):
-        print json.dumps(
-          {name: (value.tolist() if getattr(value, 'tolist', None) else value)
-          for name, value in zip(aliases, row)})
+def eprint(*args, **kwargs):
+  """Print to stderr."""
+  print(*args, file=sys.stderr, **kwargs)
 
 
-def parse_args():
-  """Parses arguments specified on the command-line."""
+VERIFY_TENSORFLOW_VERSION = ('Please verify the installed tensorflow version '
+                             'with: "python -c \'import tensorflow; '
+                             'print tensorflow.__version__\'".')
 
-  argparser = argparse.ArgumentParser('Predict locally')
+VERIFY_CLOUDML_VERSION = ('Please verify the installed cloudml sdk version with'
+                          ': "python -c \'import google.cloud.ml as cloudml; '
+                          'print cloudml.__version__\'".')
 
-  argparser.add_argument(
-      'input',
-      nargs='+',
-      help=('The input data file/file patterns. Multiple '
-            'files can be specified if more than one file patterns is needed.'))
 
-  argparser.add_argument(
-      '--model_dir',
-      dest='model_dir',
-      help=('The path to the model where the tensorflow meta graph '
-            'proto and checkpoint files are saved.'))
+def _has_required_package():
+  """Check whether required packages with correct version are installed.
 
-  return argparser.parse_args()
+  Returns:
+    Whether the required packages are installed.
+  """
+
+  packages_ok = True
+
+  # Check tensorflow with a recent version is installed.
+  try:
+    # pylint: disable=g-import-not-at-top
+    import tensorflow as tf
+    # pylint: enable=g-import-not-at-top
+  except ImportError:
+    eprint('Cannot import Tensorflow. Please verify '
+           '"python -c \'import tensorflow\'" works.')
+    packages_ok = False
+  try:
+    if tf.__version__ < '0.10.0':
+      eprint('Tensorflow version must be at least 0.10.0. ',
+             VERIFY_TENSORFLOW_VERSION)
+      packages_ok = False
+  except (NameError, AttributeError) as e:
+    eprint('Error while getting the installed TensorFlow version: ', e,
+           '\n', VERIFY_TENSORFLOW_VERSION)
+    packages_ok = False
+
+  # Check cloud ml sdk with a recent version is installed.
+  try:
+    # pylint: disable=g-import-not-at-top
+    import google.cloud.ml as cloudml
+    # pylint: enable=g-import-not-at-top
+  except ImportError:
+    eprint('Cannot import google.cloud.ml. Please verify '
+           '"python -c \'import google.cloud.ml\'" works.')
+    packages_ok = False
+  try:
+    if cloudml.__version__ < '0.1.7':
+      eprint('Cloudml SDK version must be at least 0.1.7 '
+             'to run local prediction. ', VERIFY_CLOUDML_VERSION)
+      packages_ok = False
+  except (NameError, AttributeError) as e:
+    eprint('Error while getting the installed Cloudml SDK version: ', e,
+           '\n', VERIFY_CLOUDML_VERSION)
+    packages_ok = False
+
+  return packages_ok
+
+
+def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--model-dir', required=True, help='Path of the model.')
+  args, _ = parser.parse_known_args()
+  if not _has_required_package():
+    sys.exit(-1)
+
+  instances = []
+  for line in sys.stdin:
+    instance = json.loads(line.rstrip('\n'))
+    instances.append(instance)
+
+  # pylint: disable=g-import-not-at-top
+  from google.cloud.ml import prediction
+  # pylint: enable=g-import-not-at-top
+  print('gong to call prediction with ')
+  print(instances)
+  predictions = prediction.local_predict(model_dir=args.model_dir,
+                                         instances=instances)
+  print(json.dumps(predictions))
 
 
 if __name__ == '__main__':
-  arguments = parse_args()
-  local_predict(arguments)
+  main()
