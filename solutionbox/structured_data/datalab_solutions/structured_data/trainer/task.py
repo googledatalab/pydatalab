@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO(brnaondutra): raise some excpetion vs print/sys.exit.
 
 from __future__ import absolute_import
 from __future__ import division
@@ -45,7 +46,7 @@ INPUT_COLLECTION_NAME = 'inputs'
 OUTPUT_COLLECTION_NAME = 'outputs'
 
 
-def get_placeholder_input_fn(metadata, transform_config):
+def get_placeholder_input_fn(metadata, schema_config):
   """Input layer for the exported graph."""
 
   def get_input_features():
@@ -61,7 +62,7 @@ def get_placeholder_input_fn(metadata, transform_config):
     features = util.parse_example_tensor(examples=examples,
                                          mode='prediction', 
                                          metadata=metadata, 
-                                         transform_config=transform_config)
+                                         schema_config=schema_config)
 
     if FEATURES_EXAMPLE_DICT_KEY in features:
       print('ERROR: %s is a reserved feature name, please use a different'
@@ -78,7 +79,7 @@ def get_placeholder_input_fn(metadata, transform_config):
   return get_input_features
 
 
-def get_reader_input_fn(metadata, transform_config, data_paths, batch_size,
+def get_reader_input_fn(metadata, schema_config, data_paths, batch_size,
                         shuffle):
   """Builds input layer for training."""
 
@@ -88,10 +89,10 @@ def get_reader_input_fn(metadata, transform_config, data_paths, batch_size,
     features = util.parse_example_tensor(examples=examples,
                                          mode='training', 
                                          metadata=metadata, 
-                                         transform_config=transform_config)
+                                         schema_config=schema_config)
 
     # Retrieve the target feature column.
-    target_name = transform_config['target_column']
+    target_name = schema_config['target_column']
     target = features.pop(target_name)
     return features, target
 
@@ -114,7 +115,7 @@ def get_vocabulary(class_index_dict):
           in sorted(class_index_dict.iteritems(),
                     key=lambda (class_name, class_index): class_index)]
 
-def get_export_signature_fn(metadata, transform_config):
+def get_export_signature_fn(metadata, schema_config, args):
   """Builds the output layer in the exported graph.
 
   Also sets up the tensor names when calling session.run
@@ -122,12 +123,12 @@ def get_export_signature_fn(metadata, transform_config):
 
   def get_export_signature(examples, features, predictions):
     """Create an export signature with named input and output signatures."""
-    target_name = transform_config['target_column']
-    key_name = transform_config['key_column']    
+    target_name = schema_config['target_column']
+    key_name = schema_config['key_column']    
     outputs = {TARGET_SCORE_TENSOR_NAME: predictions.name,
                key_name: tf.squeeze(features[key_name]).name}
 
-    if transform_config['problem_type'] == 'classification':
+    if args.problem_type == 'classification':
       target_labels = get_vocabulary(metadata.columns[target_name]['vocab'])
       prediction = tf.argmax(predictions, 1)
       labels = tf.contrib.lookup.index_to_string(
@@ -158,48 +159,50 @@ def get_export_signature_fn(metadata, transform_config):
   return get_export_signature
 
 
-def get_estimator(output_dir, metadata, transform_config, args):
+def get_estimator(output_dir, metadata, transform_config, schema_config, args):
   """Returns a tf learn estimator.
 
   We only support {DNN, Linear}Regressor and {DNN, Linear}Classifier. This is
-  controlled by the values of problem_type and model_type in the config file.
+  controlled by the values of problem_type and model_type in args.
 
   Args:
     output_dir: Modes are saved into outputdir/train
-    feature_columns: dict of tf layers feature columns
-    metadata: metadata.json object
-    transform_config: transforms config object
     args: parseargs object
   """
-  train_dir = os.path.join(output_dir, 'train')
 
-  problem_type = transform_config['problem_type']
-  if problem_type != 'regression' and problem_type != 'classification':
-    print('ERROR: problem_type from the transform file should be regression'
-          ' or classification.')
+  # Check the requested mode fits the preprocessed data.
+  target_name = schema_config['target_column']
+  if (args.problem_type == 'classification' and 
+      target_name not in schema_config.get('categorical_columns', [])):
+    print('ERROR: when --problem_type=classification, the target must be a '
+          'categorical variable.')
+    sys.exit(1)
+  if (args.problem_type == 'regression' and 
+      target_name not in schema_config.get('numerical_columns', [])):
+    print('ERROR: when --problem_type=regression, the target must be a '
+          'numerical variable.')       
     sys.exit(1)
 
-  model_type = transform_config['model_type']
-
-  if model_type != 'dnn' and model_type != 'linear':
-    print('ERROR: model_type from the transform file should be dnn or linear')
+  # Check layers used for dnn models.
+  if args.model_type == 'dnn' and not args.layer_sizes:
+    print('ERROR: --layer_sizes must be used with --model_type=dnn')
+    sys.exit(1)
+  elif args.model_type == 'linear' and args.layer_sizes:
+    print('ERROR: --layer_sizes must be used with --model_type=dnn')
     sys.exit(1)
 
   # Build tf.learn features
-  feature_columns = util.produce_feature_columns(metadata, transform_config)
+  feature_columns = util.produce_feature_columns(metadata, transform_config,
+                                                 schema_config, args.model_type)
   feature_engineering_fn = util.produce_feature_engineering_fn(metadata, 
-      transform_config)
-
+      transform_config, schema_config)
 
   # Set how often to run checkpointing in terms of time.
   config = tf.contrib.learn.RunConfig(
       save_checkpoints_secs=args.save_checkpoints_secs)
 
-  # TODO(brandondutra) check layer_sizes pass in if needed.
-  print('prblem_type', problem_type, 'model_type', model_type)
-  sys.stdout.flush()
-  if problem_type == 'regression' and model_type == 'dnn':
-    assert args.layer_sizes
+  train_dir = os.path.join(output_dir, 'train')  
+  if args.problem_type == 'regression' and args.model_type == 'dnn':
     estimator = tf.contrib.learn.DNNRegressor(
         feature_columns=feature_columns,
         hidden_units=args.layer_sizes,
@@ -208,7 +211,7 @@ def get_estimator(output_dir, metadata, transform_config, args):
         feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
-  elif problem_type == 'regression' and model_type == 'linear':
+  elif args.problem_type == 'regression' and args.model_type == 'linear':
     estimator = tf.contrib.learn.LinearRegressor(
         feature_columns=feature_columns,
         config=config,
@@ -216,28 +219,29 @@ def get_estimator(output_dir, metadata, transform_config, args):
         feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
-  elif problem_type == 'classification' and model_type == 'dnn':
-    assert args.layer_sizes
+  elif args.problem_type == 'classification' and args.model_type == 'dnn':
+    n_classes = max(metadata.columns[target_name]['vocab'].values()) + 1
     estimator = tf.contrib.learn.DNNClassifier(
         feature_columns=feature_columns,
         hidden_units=args.layer_sizes,
-        n_classes=metadata.stats['labels'],
+        n_classes=n_classes,
         config=config,
         model_dir=train_dir,
         feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
-  elif problem_type == 'classification' and model_type == 'linear':
+  elif args.problem_type == 'classification' and args.model_type == 'linear':
+    n_classes = max(metadata.columns[target_name]['vocab'].values()) + 1
     estimator = tf.contrib.learn.LinearClassifier(
         feature_columns=feature_columns,
-        n_classes=metadata.stats['labels'],
+        n_classes=n_classes,
         config=config,
         model_dir=train_dir,
         feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   else:
-    print('ERROR: bad problem_type or model_type')
+    print('ERROR: bad --problem_type or --model_type values')
     sys.exit(1)
 
   return estimator
@@ -247,39 +251,34 @@ def get_experiment_fn(args):
   """Builds the experiment function for learn_runner.run"""
 
   def get_experiment(output_dir):
-
-    # Load the metadata.
-    metadata = ml.features.FeatureMetadata.get_metadata(
-        args.metadata_path)
-
-    # Load the config file.
-    transform_config = json.loads(
-        ml.util._file.load_file(args.transforms_config_file))
+    # Load the metadata file, transforms file, and schema file.
+    metadata = ml.features.FeatureMetadata.get_metadata(args.metadata_path)
+    transform_config = json.loads(ml.util._file.load_file(args.transforms_file))
+    schema_config = json.loads(ml.util._file.load_file(args.schema_file))
 
     # Get the model to train.
-    estimator = get_estimator(output_dir, metadata, transform_config, args)
+    estimator = get_estimator(output_dir, metadata, transform_config, schema_config, args)
 
     input_placeholder_for_prediction = get_placeholder_input_fn(metadata, 
-        transform_config)
+        schema_config)
 
     # Save the finished model to output_dir/model
     export_monitor = util.ExportLastModelMonitor(
         output_dir=output_dir,
         final_model_location='model',  # Relative to the output_dir.
-        additional_assets=[args.metadata_path],
+        additional_assets=[args.metadata_path, args.schema_file, args.transforms_file],
         input_fn=input_placeholder_for_prediction,
         input_feature_key=FEATURES_EXAMPLE_DICT_KEY,
-        signature_fn=get_export_signature_fn(metadata, transform_config))
+        signature_fn=get_export_signature_fn(metadata, schema_config, args))
 
-    target_name = transform_config['target_column']
     input_reader_for_train = get_reader_input_fn(
-        metadata, transform_config, args.train_data_paths, args.batch_size, shuffle=True)
+        metadata, schema_config, args.train_data_paths, args.batch_size, shuffle=True)
     input_reader_for_eval = get_reader_input_fn(
-        metadata, transform_config, args.eval_data_paths, args.eval_batch_size, shuffle=False)
+        metadata, schema_config, args.eval_data_paths, args.eval_batch_size, shuffle=False)
 
     # Set the eval metrics.
     # todo(brandondutra): make this work with HP tuning.
-    if transform_config['problem_type'] == 'classification':
+    if args.problem_type == 'classification':
       streaming_accuracy = metrics_lib.streaming_accuracy
       eval_metrics =  {
             ('accuracy', 'classes'): streaming_accuracy,
@@ -313,16 +312,29 @@ def parse_arguments(argv):
                       required=True)
   parser.add_argument('--metadata_path', type=str, required=True)
   parser.add_argument('--output_path', type=str, required=True)
-  parser.add_argument('--transforms_config_file',
+  parser.add_argument('--schema_file',
+                      type=str,    
+                      required=True,
+                      help=('File describing the schema of each column used '
+                            'during preprocessing.'))  
+  parser.add_argument('--transforms_file',
                       type=str,
                       required=True,
-                      help=('File describing the schema and transforms of '
-                            'each column in the csv data files.'))
+                      help=('File describing the the transforms to apply on '
+                            'each column'))
 
   # HP parameters
   parser.add_argument('--learning_rate', type=float, default=0.01)
   parser.add_argument('--epsilon', type=float, default=0.0005)
   
+  # Model problems
+  parser.add_argument('--model_type', 
+                      choices=['linear', 'dnn'],
+                      required=True)
+  parser.add_argument('--problem_type', 
+                      choices=['classification', 'regression'],
+                      required=True)  
+
   # Training input parameters
   parser.add_argument('--layer_sizes', type=int, nargs='*')
   parser.add_argument('--max_steps', type=int, default=5000,

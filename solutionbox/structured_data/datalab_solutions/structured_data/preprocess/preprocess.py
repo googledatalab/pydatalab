@@ -66,11 +66,11 @@ def parse_arguments(argv):
                       required=True,
                       help=('Google Cloud Storage or Local directory in which '
                             'to place outputs.'))
-  parser.add_argument('--transforms_config_file',
+  parser.add_argument('--schema_file',
                       type=str,    
                       required=True,
-                      help=('File describing the schema and transforms of '
-                            'each column in the csv data files.'))
+                      help=('File describing the schema of each column in the '
+                            'csv data files.'))
   parser.add_argument('--job_name',
                       type=str,
                       help=('If using --cloud, the job name as listed in'
@@ -99,11 +99,41 @@ def parse_arguments(argv):
   return args
 
 
+def load_and_check_config(schema_file_path):
+  """Checks the sschema file is well formatted."""
+
+  try:
+    json_str = ml.util._file.load_file(schema_file_path)
+    config = json.loads(json_str) 
+  except:
+    print('ERROR reading schema file.')
+    sys.exit(1)
+
+  model_columns = (config.get('numerical_columns', []) 
+                   + config.get('categorical_columns', []))
+  if config['target_column'] not in model_columns:
+    print('ERROR: target not listed as a numerical or categorial column.')
+    sys.exit(1)
+
+  if set(config['column_names']) != set(model_columns + [config['key_column']]):
+    print('ERROR: column_names do not match what was listed other fields')
+    sys.exit(1)
+
+  if set(config['numerical_columns']) & set(config['categorical_columns']):
+    print('ERROR: numerical_columns and categorical_columns must be disjoint.')
+    sys.exit(1)
+
+  if config['key_column'] in model_columns:
+    print('ERROR: kye_column should not be listed in numerical_columns or categorical_columns')
+    sys.exit(1)
+
+  return config
+
+
 def preprocessing_features(args):
 
   # Read the config file.
-  json_str = ml.util._file.load_file(args.transforms_config_file)
-  config = json.loads(json_str)
+  config = load_and_check_config(args.schema_file)
 
   column_names = config['column_names']
 
@@ -114,34 +144,33 @@ def preprocessing_features(args):
 
   # Extract target feature
   target_name = config['target_column']
-  if config['problem_type'] == 'regression':
+  key_name = config['key_column']
+  if target_name in config.get('numerical_columns', []):
     feature_set[target_name] = features.target(target_name).continuous()
   else:
     feature_set[target_name] = features.target(target_name).discrete()
 
 
   # Extract numeric features
-  if 'numerical' in config:
-    for name, transform_config in config['numerical'].iteritems():
-      # apply identity to all numerical features. The transformations will
-      # happen at training time. 
-      default = transform_config.get('default', None)
-      feature_set[name] = features.numeric(name, default=default).identity()
+  for name in config.get('numerical_columns', []):
+    if name == target_name or name == key_name:
+      continue
+    # apply identity to all numerical features.
+    default = config.get('defaults', {}).get(name, None)
+    feature_set[name] = features.numeric(name, default=default).identity()
 
   # Extract categorical features
-  if 'categorical' in config:
-    for name, transform_config in config['categorical'].iteritems():
-      # apply sparse transform to all categorical features. The transformations 
-      # will happen at training time. 
-      default = transform_config.get('default', None)
-      frequency_threshold = transform_config.get('frequency_threshold', 5)
-      feature_set[name] = features.categorical(
+  for name in config.get('categorical_columns', []):
+    if name == target_name or name == key_name:
+      continue    
+    # apply sparse transform to all categorical features.
+    default = config.get('defaults', {}).get(name, None)
+    feature_set[name] = features.categorical(
           name, 
           default=default,
-          frequency_threshold=frequency_threshold).sparse(use_counts=True)
+          frequency_threshold=1).sparse(use_counts=True)
 
   return feature_set, column_names
-
 
 
 def preprocess(pipeline, feature_set, column_names, input_file_path,

@@ -13,14 +13,15 @@
 # limitations under the License.
 # ==============================================================================
 
-import unittest
-import tempfile
-import os
-import sys
-import json
 import glob
-import subprocess
+import json
+import os
 import shutil
+import subprocess
+import tempfile
+import unittest
+
+import tensorflow as tf
 
 import google.cloud.ml as ml
 
@@ -28,59 +29,85 @@ import e2e_functions
 
 
 class TestPreprocess(unittest.TestCase):
+
   def setUp(self):
     self._test_dir = tempfile.mkdtemp()
 
     self._csv_filename = os.path.join(self._test_dir, 'raw_csv_data.csv')
-    self._config_filename = os.path.join(self._test_dir, 'config.json')
+    self._schema_filename = os.path.join(self._test_dir, 'schema.json')
 
   def tearDown(self):
+    print('Removing test dir: ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
   def testRegression(self):
-    config = e2e_functions.make_csv_data(self._csv_filename, 100, 'regression')
-    config['categorical']['str1']['transform'] = 'embedding'
-    config['categorical']['str1']['dimension'] = '3'
+    (schema, _) = e2e_functions.make_csv_data(self._csv_filename, 100,
+                                              'regression')
 
-    with open(self._config_filename, 'w') as f:
-      f.write(json.dumps(config, indent=2, separators=(',', ': ')))
-    
-    e2e_functions.run_preprocess(self._test_dir, self._csv_filename, self._config_filename)
+    with open(self._schema_filename, 'w') as f:
+      f.write(json.dumps(schema, indent=2, separators=(',', ': ')))
+
+    e2e_functions.run_preprocess(output_dir=self._test_dir,
+                                 csv_filename=self._csv_filename,
+                                 schema_filename=self._schema_filename)
 
     metadata_path = os.path.join(self._test_dir, 'metadata.json')
     metadata = ml.features.FeatureMetadata.get_metadata(metadata_path)
 
     expected_features = {
-        'num1': {'dtype': 'float', 'type': 'dense', 'name': 'num1', 
-                'columns': ['num1'], 'size': 1}, 
-        'num2': {'dtype': 'float', 'type': 'dense', 'name': 'num2', 
-                 'columns': ['num2'], 'size': 1}, 
-        'num3': {'dtype': 'float', 'type': 'dense', 'name': 'num3', 
-                 'columns': ['num3'], 'size': 1}, 
-        'str3': {'dtype': 'int64', 'type': 'sparse', 'name': 'str3', 
-                'columns': ['str3'], 'size': 7}, 
-        'str2': {'dtype': 'int64', 'type': 'sparse', 'name': 'str2', 
-                 'columns': ['str2'], 'size': 7}, 
-        'str1': {'dtype': 'int64', 'type': 'sparse', 'name': 'str1', 
-                 'columns': ['str1'], 'size': 8}, 
-        'key': {'dtype': 'bytes', 'type': 'dense', 'name': 'key', 
-                'columns': ['key'], 'size': 1}, 
-        'target': {'dtype': 'float', 'type': 'dense', 'name': 'target', 
+        'num1': {'dtype': 'float', 'type': 'dense', 'name': 'num1',
+                 'columns': ['num1'], 'size': 1},
+        'num2': {'dtype': 'float', 'type': 'dense', 'name': 'num2',
+                 'columns': ['num2'], 'size': 1},
+        'num3': {'dtype': 'float', 'type': 'dense', 'name': 'num3',
+                 'columns': ['num3'], 'size': 1},
+        'str3': {'dtype': 'int64', 'type': 'sparse', 'name': 'str3',
+                 'columns': ['str3'], 'size': 7},
+        'str2': {'dtype': 'int64', 'type': 'sparse', 'name': 'str2',
+                 'columns': ['str2'], 'size': 7},
+        'str1': {'dtype': 'int64', 'type': 'sparse', 'name': 'str1',
+                 'columns': ['str1'], 'size': 8},
+        'key': {'dtype': 'bytes', 'type': 'dense', 'name': 'key',
+                'columns': ['key'], 'size': 1},
+        'target': {'dtype': 'float', 'type': 'dense', 'name': 'target',
                    'columns': ['target'], 'size': 1}}
 
     self.assertEqual(metadata.features, expected_features)
     self.assertEqual(metadata.columns['target']['scenario'], 'continuous')
-    self.assertTrue(glob.glob(os.path.join(self._test_dir, 'features_train*')))
+    train_files = glob.glob(os.path.join(self._test_dir, 'features_train*'))
+    self.assertTrue(train_files)
 
+    # Inspect the first TF record.
+    for line in tf.python_io.tf_record_iterator(train_files[0],
+        options=tf.python_io.TFRecordOptions(
+            tf.python_io.TFRecordCompressionType.GZIP)):
+      ex = tf.train.Example()
+      ex.ParseFromString(line)
+      self.assertTrue('num1' in ex.features.feature)
+      self.assertTrue('num2' in ex.features.feature)
+      self.assertTrue('num3' in ex.features.feature)
+      self.assertTrue('key' in ex.features.feature)
+      self.assertTrue('target' in ex.features.feature)
+      self.assertTrue('str1@0' in ex.features.feature)
+      self.assertTrue('str1@1' in ex.features.feature)
+      self.assertTrue('str2@0' in ex.features.feature)
+      self.assertTrue('str2@1' in ex.features.feature)
+      self.assertTrue('str3@0' in ex.features.feature)
+      self.assertTrue('str3@1' in ex.features.feature)
+      break
 
   def testClassification(self):
-    config = e2e_functions.make_csv_data(self._csv_filename, 100, 'classification')
+    (schema, _) = e2e_functions.make_csv_data(self._csv_filename, 100,
+                                              'classification')
+    with open(self._schema_filename, 'w') as f:
+      f.write(json.dumps(schema, indent=2, separators=(',', ': ')))
 
-    with open(self._config_filename, 'w') as f:
-      f.write(json.dumps(config, indent=2, separators=(',', ': ')))
-    
-    e2e_functions.run_preprocess(self._test_dir, self._csv_filename, self._config_filename,
-      '90', '10', '0')
+    e2e_functions.run_preprocess(output_dir=self._test_dir,
+                                 csv_filename=self._csv_filename,
+                                 schema_filename=self._schema_filename,
+                                 train_percent='90',
+                                 eval_percent='10',
+                                 test_percent='0')
 
     metadata_path = os.path.join(self._test_dir, 'metadata.json')
     metadata = ml.features.FeatureMetadata.get_metadata(metadata_path)

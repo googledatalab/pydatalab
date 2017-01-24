@@ -13,21 +13,17 @@
 # limitations under the License.
 # ==============================================================================
 
-import unittest
-import tempfile
-import os
-import sys
 import json
-import glob
-import subprocess
+import os
 import shutil
-
-import google.cloud.ml as ml
+import tempfile
+import unittest
 
 import e2e_functions
 
 
 class TestTrainer(unittest.TestCase):
+
   def setUp(self):
     self._test_dir = tempfile.mkdtemp()
     self._preprocess_dir = os.path.join(self._test_dir, 'pre')
@@ -36,21 +32,30 @@ class TestTrainer(unittest.TestCase):
     os.mkdir(self._preprocess_dir)
     os.mkdir(self._train_dir)
 
-    self._config_filename = os.path.join(self._preprocess_dir, 'config.json')
     self._csv_filename = os.path.join(self._preprocess_dir, 'raw_csv_data.csv')
+    self._schema_filename = os.path.join(self._test_dir, 'schema.json')
+    self._transforms_filename = os.path.join(self._test_dir, 'transforms.json')
 
-    
   def tearDown(self):
     print('Removing temp dir ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
+  def _run_training(self, schema, transforms, extra_args):
+    with open(self._schema_filename, 'w') as f:
+      f.write(json.dumps(schema, indent=2, separators=(',', ': ')))
 
-  def _run_training(self, config):
-    with open(self._config_filename, 'w') as f:
-      f.write(json.dumps(config, indent=2, separators=(',', ': ')))
-    
-    e2e_functions.run_preprocess(self._preprocess_dir, self._csv_filename, self._config_filename)
-    e2e_functions.run_training(self._train_dir, self._preprocess_dir, self._config_filename, ['--layer_sizes 20 10 5'])
+    with open(self._transforms_filename, 'w') as f:
+      f.write(json.dumps(transforms, indent=2, separators=(',', ': ')))
+
+
+    e2e_functions.run_preprocess(output_dir=self._preprocess_dir,
+                                 csv_filename=self._csv_filename,
+                                 schema_filename=self._schema_filename)
+    e2e_functions.run_training(output_dir=self._train_dir,
+                               input_dir=self._preprocess_dir,
+                               schema_filename=self._schema_filename,
+                               transforms_filename=self._transforms_filename,
+                               extra_args=extra_args)
 
   def _check_train_files(self):
     model_folder = os.path.join(self._train_dir, 'model')
@@ -58,45 +63,53 @@ class TestTrainer(unittest.TestCase):
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'export')))
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'export.meta')))
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'metadata.json')))
-
+    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'schema.json')))
+    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'transforms.json')))
 
   def testRegressionDnn(self):
     print('\n\nTesting Regression DNN')
-    config = e2e_functions.make_csv_data(self._csv_filename, 5000, 'regression')
-    config['categorical']['str1']['transform'] = 'embedding'
-    config['categorical']['str1']['dimension'] = '3'
-    config['model_type'] = 'dnn'
+    (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
+                                                       'regression')
+    transforms['str1']['transform'] = 'embedding'
+    transforms['str1']['dimension'] = '3'
 
-    self._run_training(config)
+    flags = ['--layer_sizes 10 10 5',
+             '--model_type=dnn',
+             '--problem_type=regression']
+
+    self._run_training(schema, transforms, flags)
     self._check_train_files()
-
 
   def testRegressionLinear(self):
     print('\n\nTesting Regression Linear')
-    config = e2e_functions.make_csv_data(self._csv_filename, 5000, 'regression')
-    config['model_type'] = 'linear'
+    (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
+                                                       'regression')
+    flags = ['--model_type=linear',
+             '--problem_type=regression']
 
-    self._run_training(config)
+    self._run_training(schema, transforms, flags)
     self._check_train_files()
-
 
   def testClassificationDnn(self):
     print('\n\nTesting classification DNN')
-    config = e2e_functions.make_csv_data(self._csv_filename, 5000,
-                                         'classification')
-    config['categorical']['str1']['transform'] = 'embedding'
-    config['categorical']['str1']['dimension'] = '3'
-    config['model_type'] = 'dnn'
+    (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
+                                                       'classification')
+    transforms['str1']['transform'] = 'embedding'
+    transforms['str1']['dimension'] = '3'
 
-    self._run_training(config)
+    flags = ['--layer_sizes 10 10 5',
+             '--model_type=dnn',
+             '--problem_type=classification']
+
+    self._run_training(schema, transforms, flags)
     self._check_train_files()
-
 
   def testClassificationLinear(self):
     print('\n\nTesting classification Linear')
-    config = e2e_functions.make_csv_data(self._csv_filename, 5000,
-                                         'classification')      
-    config['model_type'] = 'linear'
+    (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
+                                                       'classification')
+    flags = ['--model_type=linear',
+             '--problem_type=classification']
 
-    self._run_training(config)
+    self._run_training(schema, transforms, flags)
     self._check_train_files()
