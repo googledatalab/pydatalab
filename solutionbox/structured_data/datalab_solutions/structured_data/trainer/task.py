@@ -46,6 +46,18 @@ INPUT_COLLECTION_NAME = 'inputs'
 OUTPUT_COLLECTION_NAME = 'outputs'
 
 
+def is_linear_model(model_type):
+  return model_type.startswith('linear_')
+
+def is_dnn_model(model_type):
+  return model_type.startswith('dnn_')
+
+def is_regression_model(model_type):
+  return model_type.endswith('_regression')
+
+def is_classification_model(model_type):
+  return model_type.endswith('_classification')
+
 def get_placeholder_input_fn(metadata, schema_config):
   """Input layer for the exported graph."""
 
@@ -128,7 +140,7 @@ def get_export_signature_fn(metadata, schema_config, args):
     outputs = {TARGET_SCORE_TENSOR_NAME: predictions.name,
                key_name: tf.squeeze(features[key_name]).name}
 
-    if args.problem_type == 'classification':
+    if is_classification_model(args.model_type):
       target_labels = get_vocabulary(metadata.columns[target_name]['vocab'])
       prediction = tf.argmax(predictions, 1)
       labels = tf.contrib.lookup.index_to_string(
@@ -163,7 +175,7 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
   """Returns a tf learn estimator.
 
   We only support {DNN, Linear}Regressor and {DNN, Linear}Classifier. This is
-  controlled by the values of problem_type and model_type in args.
+  controlled by the values of model_type in the args.
 
   Args:
     output_dir: Modes are saved into outputdir/train
@@ -172,28 +184,29 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
 
   # Check the requested mode fits the preprocessed data.
   target_name = schema_config['target_column']
-  if (args.problem_type == 'classification' and 
-      target_name not in schema_config.get('categorical_columns', [])):
-    print('ERROR: when --problem_type=classification, the target must be a '
+  if (is_classification_model(args.model_type) 
+      and target_name not in schema_config.get('categorical_columns', [])):
+    print('ERROR: when using a classification model, the target must be a '
           'categorical variable.')
     sys.exit(1)
-  if (args.problem_type == 'regression' and 
-      target_name not in schema_config.get('numerical_columns', [])):
-    print('ERROR: when --problem_type=regression, the target must be a '
+  if (is_regression_model(args.model_type)
+      and target_name not in schema_config.get('numerical_columns', [])):
+    print('ERROR: when using a regression model, the target must be a '
           'numerical variable.')       
     sys.exit(1)
 
   # Check layers used for dnn models.
-  if args.model_type == 'dnn' and not args.layer_sizes:
-    print('ERROR: --layer_sizes must be used with --model_type=dnn')
+  if is_dnn_model(args.model_type)  and not args.layer_sizes:
+    print('ERROR: --layer_sizes must be used with DNN models')
     sys.exit(1)
-  elif args.model_type == 'linear' and args.layer_sizes:
-    print('ERROR: --layer_sizes must be used with --model_type=dnn')
+  elif is_linear_model(args.model_type) and args.layer_sizes:
+    print('ERROR: --layer_sizes cannot be used with linear models')
     sys.exit(1)
 
   # Build tf.learn features
-  feature_columns = util.produce_feature_columns(metadata, transform_config,
-                                                 schema_config, args.model_type)
+  feature_columns = util.produce_feature_columns(
+      metadata, transform_config, schema_config, 
+      is_linear_model(args.model_type))
   feature_engineering_fn = util.produce_feature_engineering_fn(metadata, 
       transform_config, schema_config)
 
@@ -202,7 +215,7 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
       save_checkpoints_secs=args.save_checkpoints_secs)
 
   train_dir = os.path.join(output_dir, 'train')  
-  if args.problem_type == 'regression' and args.model_type == 'dnn':
+  if args.model_type == 'dnn_regression':
     estimator = tf.contrib.learn.DNNRegressor(
         feature_columns=feature_columns,
         hidden_units=args.layer_sizes,
@@ -211,7 +224,7 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
         feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
-  elif args.problem_type == 'regression' and args.model_type == 'linear':
+  elif args.model_type == 'linear_regression':
     estimator = tf.contrib.learn.LinearRegressor(
         feature_columns=feature_columns,
         config=config,
@@ -219,7 +232,7 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
         feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
-  elif args.problem_type == 'classification' and args.model_type == 'dnn':
+  elif args.model_type == 'dnn_classification':
     n_classes = max(metadata.columns[target_name]['vocab'].values()) + 1
     estimator = tf.contrib.learn.DNNClassifier(
         feature_columns=feature_columns,
@@ -230,7 +243,7 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
         feature_engineering_fn=feature_engineering_fn,
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
-  elif args.problem_type == 'classification' and args.model_type == 'linear':
+  elif args.model_type == 'linear_classification':
     n_classes = max(metadata.columns[target_name]['vocab'].values()) + 1
     estimator = tf.contrib.learn.LinearClassifier(
         feature_columns=feature_columns,
@@ -241,7 +254,7 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   else:
-    print('ERROR: bad --problem_type or --model_type values')
+    print('ERROR: bad --model_type value')
     sys.exit(1)
 
   return estimator
@@ -278,7 +291,7 @@ def get_experiment_fn(args):
 
     # Set the eval metrics.
     # todo(brandondutra): make this work with HP tuning.
-    if args.problem_type == 'classification':
+    if is_classification_model(args.model_type):
       streaming_accuracy = metrics_lib.streaming_accuracy
       eval_metrics =  {
             ('accuracy', 'classes'): streaming_accuracy,
@@ -329,11 +342,9 @@ def parse_arguments(argv):
   
   # Model problems
   parser.add_argument('--model_type', 
-                      choices=['linear', 'dnn'],
+                      choices=['linear_classification', 'linear_regression',
+                               'dnn_classification', 'dnn_regression'],
                       required=True)
-  parser.add_argument('--problem_type', 
-                      choices=['classification', 'regression'],
-                      required=True)  
 
   # Training input parameters
   parser.add_argument('--layer_sizes', type=int, nargs='*')

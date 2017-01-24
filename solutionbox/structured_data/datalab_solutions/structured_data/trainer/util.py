@@ -142,7 +142,7 @@ def read_examples(input_files, batch_size, shuffle, num_epochs=None):
 
 
 
-def produce_feature_columns(metadata, transform_config, schema_config, model_type):
+def produce_feature_columns(metadata, transform_config, schema_config, is_linear_model):
   """Produces a list of Tensorflow columns.
 
   Args:
@@ -174,10 +174,6 @@ def produce_feature_columns(metadata, transform_config, schema_config, model_typ
       continue 
     transform_dict = transform_config.get(name, {})
     transform_type = transform_dict.get('transform', 'one_hot')
-    
-    #if config['model_type'] == 'linear' and transform != 'one_hot':
-    #    print('ERROR: only one_hot transfroms are supported in linear models')
-    #    sys.exit(1)
 
     if transform_type == 'one_hot':
       # Preprocessing built a vocab using 0, 1, ..., N as the new classes. N 
@@ -186,7 +182,7 @@ def produce_feature_columns(metadata, transform_config, schema_config, model_typ
       sparse_column = tf.contrib.layers.sparse_column_with_integerized_feature(
           column_name=name,
           bucket_size=N+1)
-      if model_type == 'linear':
+      if is_linear_model:
         feature_columns.append(sparse_column)
       else:
         feature_columns.append(tf.contrib.layers.one_hot_column(sparse_column))

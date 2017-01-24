@@ -123,7 +123,7 @@ def local_preprocess(input_file_path, output_dir, schema_file,
   print('Local preprocessing done.')
 
 
-def cloud_preprocess(input_file_path, output_dir, transforms_config_file,
+def cloud_preprocess(input_file_path, output_dir, schema_file,
                      train_percent=None, eval_percent=None, test_percent=None,
                      project_id=None, job_name=None):
   """Preprocess data in the cloud with Dataflow.
@@ -137,7 +137,7 @@ def cloud_preprocess(input_file_path, output_dir, transforms_config_file,
         files. Preprocessing will automatically slip the data into three sets
         for training, evaluation, and testing. Can be local or GCS path.
     output_dir: The output directory to use; should be GCS path.
-    transforms_config_file: File path to the config file.
+    schema_file: File path to the schema file.
     train_percent: Int in range [0, 100].
     eval_percent: Int in range [0, 100].
     train_percent: Int in range [0, 100].
@@ -146,7 +146,6 @@ def cloud_preprocess(input_file_path, output_dir, transforms_config_file,
     job_name: String. Job name as listed on the Dataflow service. If None, a
         default job name is selected.
   """
-  _check_transforms_config_file(transforms_config_file)
 
   percent_flags = _percent_flags(train_percent, eval_percent, test_percent)
   this_folder = os.path.dirname(os.path.abspath(__file__))
@@ -161,7 +160,7 @@ def cloud_preprocess(input_file_path, output_dir, transforms_config_file,
          '--job_name=%s' % job_name,
          '--input_file_path=%s' % input_file_path,
          '--output_dir=%s' % output_dir,
-         '--transforms_config_file=%s' % transforms_config_file] + percent_flags
+         '--schema_file=%s' % schema_file] + percent_flags
 
   print('Cloud preprocess, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
@@ -180,7 +179,7 @@ def cloud_preprocess(input_file_path, output_dir, transforms_config_file,
 
 
 def local_train(preprocessed_dir, schema_file, transforms_file, output_dir,
-                problem_type, model_type,
+                model_type,
                 layer_sizes=None, max_steps=None):
   """Train model locally.
   Args:
@@ -218,7 +217,6 @@ def local_train(preprocessed_dir, schema_file, transforms_file, output_dir,
          '--output_path=%s' % output_dir,
          '--schema_file=%s' % schema_file,
          '--transforms_file=%s' % transforms_file,
-         '--problem_type=%s' % problem_type,
          '--model_type=%s' % model_type,
          '--max_steps=%s' % str(max_steps)]
   if layer_sizes:
@@ -229,8 +227,8 @@ def local_train(preprocessed_dir, schema_file, transforms_file, output_dir,
   print('Local training done.')
 
 
-def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
-                staging_bucket,
+def cloud_train(preprocessed_dir, schema_file, transforms_file, output_dir,
+                model_type, staging_bucket,
                 layer_sizes=None, max_steps=None, project_id=None,
                 job_name=None, scale_tier='BASIC'):
   """Train model using CloudML.
@@ -238,7 +236,8 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
     preprocessed_dir: The output directory from preprocessing. Must contain
         files named features_train*.tfrecord.gz, features_eval*.tfrecord.gz,
         and metadata.json.
-    transforms_config_file: File path to the config file.
+    schema_file: File path to the schema file.
+    transforms_file: File path to the transforms file.
     output_dir: Output directory of training.
     staging_bucket: GCS bucket.
     layer_sizes: String. Represents the layers in the connected DNN.
@@ -253,17 +252,17 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
     scale_tier: The CloudML scale tier. CUSTOM tiers are currently not supported
         in this package. See https://cloud.google.com/ml/reference/rest/v1beta1/projects.jobs#ScaleTier
   """
-  _check_transforms_config_file(transforms_config_file)
 
   #TODO(brandondutra): allow other flags to be set like batch size,
   #   learner rate, custom scale tiers, etc
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
 
   if (not preprocessed_dir.startswith('gs://')
-      or not transforms_config_file.startswith('gs://')
+      or not transforms_file.startswith('gs://')
+      or not schema_file.startswith('gs://')
       or not output_dir.startswith('gs://')):
-    print('ERROR: preprocessed_dir, transforms_config_file, and output_dir '
-          'must all be in GCS.')
+    print('ERROR: preprocessed_dir, transforms_file, output_dir, '
+          'and schema_file must all be in GCS.')
     return
 
   # Training will fail if there are files in the output folder. Check now and
@@ -277,7 +276,7 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
   subprocess.check_call(['gsutil', 'cp', _TF_GS_URL, temp_dir])
   tf_local_package = os.path.join(temp_dir, os.path.basename(_TF_GS_URL))
 
-  # Buld the training config file.
+  # Bulid the training config file.
   training_config_file_path = tempfile.mkstemp(dir=temp_dir)[1]
   training_config = {'trainingInput': {'scaleTier': scale_tier}}
   with open(training_config_file_path, 'w') as f:
@@ -305,7 +304,9 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
          '--eval_data_paths=%s' % eval_filename,
          '--metadata_path=%s' % metadata_filename,
          '--output_path=%s' % output_dir,
-         '--transforms_config_file=%s' % transforms_config_file,
+         '--transforms_file=%s' % transforms_file,
+         '--schema_file=%s' % schema_file,
+         '--model_type=%s' % model_type,
          '--max_steps=%s' % str(max_steps)]
   if layer_sizes:
     cmd += ['--layer_sizes %s' % layer_sizes]
@@ -328,30 +329,66 @@ def cloud_train(preprocessed_dir, transforms_config_file, output_dir,
   shutil.rmtree(temp_dir)
 
 
-def local_predict():
-  """Not Implemented Yet. gcloud beta ml local predict is broken. Use my code"""
-  print('local_predict')
+def local_predict(model_dir, prediction_input_file):
+  """Runs local prediction.
 
-
-def cloud_predict(input_file_path, file_type, model_name, version_name=None):
-  """Use Online prediction.
+  Runs local prediction in memory and prints the results to the screen. For 
+  running prediction on a large dataset or saving the results, run 
+  local_batch_prediction or batch_prediction.
 
   Args:
-    input_file_path: file containing data to run prediction on.
-    file_type: 'text' or 'json'. The file format of the input_file.
-    model_name: the model name.
-    version_name: optional version name of the model. 
+    model_dir: Path to folder that contains the model. This is usully OUT/model
+        where OUT is the value of output_dir when local_training was ran.
+    prediction_input_file: csv file that has the same schem as the input
+        files used during local_preprocess, except that the target column is
+        removed. 
+  """
+  
+  #TODO(brandondutra): remove this hack once cloudml 1.8 is released.
+  # Check that the model folder has a metadata.yaml file. If not, copy it.
+  if not os.path.isfile(os.path.join(model_dir, 'metadata.yaml')):
+    shutil.copy2(os.path.join(model_dir, 'metadata.json'),
+                 os.path.join(model_dir, 'metadata.yaml'))
+
+
+  cmd = ['gcloud beta ml local predict',
+         '--model-dir=%s' % model_dir,
+         '--text-instances=%s' % prediction_input_file]
+
+  _run_cmd(' '.join(cmd))
+  print('Local prediction done.')
+
+
+def cloud_predict(model_name, prediction_input_file, version_name=None):
+  """Use Online prediction.
+
+  Runs online prediction in the cloud and prints the results to the screen. For 
+  running prediction on a large dataset or saving the results, run 
+  local_batch_prediction or batch_prediction.
+
+  Args:
+    model_dir: Path to folder that contains the model. This is usully OUT/model
+        where OUT is the value of output_dir when local_training was ran.
+    prediction_input_file: csv file that has the same schem as the input
+        files used during local_preprocess, except that the target column is
+        removed. 
+    vsersion_name: Optional version of the model to use. If None, the default
+        version is used.
 
   Before using this, the model must be created. This can be done by running 
   two gcloud commands:
   1) gcloud beta ml models create NAME
   2) gcloud beta ml models versions create VERSION --model NAME \
       --origin gs://BUCKET/training_output_dir/model
-     Note that the model must be on GCS.
+  or one datalab magic:
+  1) %mlalpha deploy --name=NAME.VERSION \
+      --path=gs://BUCKET/training_output_dir/model \
+      --project=PROJECT
+  Note that the model must be on GCS.
   """
   cmd = ['gcloud beta ml predict',
-         '--model=%s' % model,
-         '--%s-instances=%s' % (file_type, input_file_path)]
+         '--model=%s' % model_name,
+         '--text-instances=%s' % prediction_input_file]
   if version_name:
     cmd += ['--version=%s' % version_name]
 

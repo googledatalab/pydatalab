@@ -74,8 +74,7 @@ class TestTrainer(unittest.TestCase):
     transforms['str1']['dimension'] = '3'
 
     flags = ['--layer_sizes 10 10 5',
-             '--model_type=dnn',
-             '--problem_type=regression']
+             '--model_type=dnn_regression']
 
     self._run_training(schema, transforms, flags)
     self._check_train_files()
@@ -84,8 +83,7 @@ class TestTrainer(unittest.TestCase):
     print('\n\nTesting Regression Linear')
     (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
                                                        'regression')
-    flags = ['--model_type=linear',
-             '--problem_type=regression']
+    flags = ['--model_type=linear_regression']
 
     self._run_training(schema, transforms, flags)
     self._check_train_files()
@@ -98,8 +96,7 @@ class TestTrainer(unittest.TestCase):
     transforms['str1']['dimension'] = '3'
 
     flags = ['--layer_sizes 10 10 5',
-             '--model_type=dnn',
-             '--problem_type=classification']
+             '--model_type=dnn_classification']
 
     self._run_training(schema, transforms, flags)
     self._check_train_files()
@@ -108,8 +105,7 @@ class TestTrainer(unittest.TestCase):
     print('\n\nTesting classification Linear')
     (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
                                                        'classification')
-    flags = ['--model_type=linear',
-             '--problem_type=classification']
+    flags = ['--model_type=linear_classification']
 
     self._run_training(schema, transforms, flags)
     self._check_train_files()
