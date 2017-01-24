@@ -80,11 +80,6 @@ def _is_in_IPython():
   except ImportError:
     return False
 
-def _check_transforms_config_file(transforms_config_file):
-  """Check that the transforms file has expected values."""
-  pass
-
-
 def _run_cmd(cmd):
   output = subprocess.Popen(cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -94,7 +89,7 @@ def _run_cmd(cmd):
     if line == '' and output.poll() != None:
       break
 
-def local_preprocess(input_file_path, output_dir, transforms_config_file,
+def local_preprocess(input_file_path, output_dir, schema_file,
                      train_percent=None, eval_percent=None, test_percent=None):
   """Preprocess data locally with Beam.
 
@@ -107,12 +102,11 @@ def local_preprocess(input_file_path, output_dir, transforms_config_file,
         files. Preprocessing will automatically slip the data into three sets
         for training, evaluation, and testing. Can be local or GCS path.
     output_dir: The output directory to use; can be local or GCS path.
-    transforms_config_file: File path to the config file.
+    schema_file: File path to the schema file.
     train_percent: Int in range [0, 100].
     eval_percent: Int in range [0, 100].
     train_percent: Int in range [0, 100].
   """
-  _check_transforms_config_file(transforms_config_file)
 
   percent_flags = _percent_flags(train_percent, eval_percent, test_percent)
   this_folder = os.path.dirname(os.path.abspath(__file__))
@@ -121,7 +115,7 @@ def local_preprocess(input_file_path, output_dir, transforms_config_file,
          os.path.join(this_folder, 'preprocess/preprocess.py'),
          '--input_file_path=%s' % input_file_path,
          '--output_dir=%s' % output_dir,
-         '--transforms_config_file=%s' % transforms_config_file] + percent_flags
+         '--schema_file=%s' % schema_file] + percent_flags
 
   print('Local preprocess, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
@@ -142,7 +136,7 @@ def cloud_preprocess(input_file_path, output_dir, transforms_config_file,
     input_file_path: String. File pattern what will expand into a list of csv
         files. Preprocessing will automatically slip the data into three sets
         for training, evaluation, and testing. Can be local or GCS path.
-    output_dir: The output directory to use; can be local or GCS path.
+    output_dir: The output directory to use; should be GCS path.
     transforms_config_file: File path to the config file.
     train_percent: Int in range [0, 100].
     eval_percent: Int in range [0, 100].
@@ -185,14 +179,16 @@ def cloud_preprocess(input_file_path, output_dir, transforms_config_file,
 
 
 
-def local_train(preprocessed_dir, transforms_config_file, output_dir,
+def local_train(preprocessed_dir, schema_file, transforms_file, output_dir,
+                problem_type, model_type,
                 layer_sizes=None, max_steps=None):
   """Train model locally.
   Args:
     preprocessed_dir: The output directory from preprocessing. Must contain
         files named features_train*.tfrecord.gz, features_eval*.tfrecord.gz,
         and metadata.json. Can be local or GCS path.
-    transforms_config_file: File path to the config file.
+    schema_file: Same file used for preprocessing
+    transforms_file: File describing transforms to perform on the data.
     output_dir: Output directory of training.
     layer_sizes: String. Represents the layers in the connected DNN.
         If the model type is DNN, this must be set. Example "10 3 2", this will
@@ -200,7 +196,7 @@ def local_train(preprocessed_dir, transforms_config_file, output_dir,
         middle layer will have 3 nodes, and the laster layer will have 2 nodes.
     max_steps: Int. Number of training steps to perform.
   """
-  _check_transforms_config_file(transforms_config_file)
+  #_check_transforms_config_file(transforms_config_file)
 
   #TODO(brandondutra): allow other flags to be set like batch size/learner rate
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
@@ -220,7 +216,10 @@ def local_train(preprocessed_dir, transforms_config_file, output_dir,
          '--eval_data_paths=%s' % eval_filename,
          '--metadata_path=%s' % metadata_filename,
          '--output_path=%s' % output_dir,
-         '--transforms_config_file=%s' % transforms_config_file,
+         '--schema_file=%s' % schema_file,
+         '--transforms_file=%s' % transforms_file,
+         '--problem_type=%s' % problem_type,
+         '--model_type=%s' % model_type,
          '--max_steps=%s' % str(max_steps)]
   if layer_sizes:
     cmd += ['--layer_sizes %s' % layer_sizes]
