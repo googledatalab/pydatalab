@@ -64,7 +64,7 @@ class QueryMetadata(object):
       """
       max_rows = len(self._timeseries_list) if max_rows is None else max_rows
       headers = [{
-          'resource': ts.resource.__dict__, 'metric': ts.metric.__dict__}
+          'resource': ts.resource._asdict(), 'metric': ts.metric._asdict()}
           for ts in self._timeseries_list[:max_rows]]
 
       if not headers:

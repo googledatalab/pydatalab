@@ -80,6 +80,7 @@ def _is_in_IPython():
   except ImportError:
     return False
 
+
 def _run_cmd(cmd):
   output = subprocess.Popen(cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -88,6 +89,7 @@ def _run_cmd(cmd):
     print(line)
     if line == '' and output.poll() != None:
       break
+
 
 def local_preprocess(input_file_path, output_dir, schema_file,
                      train_percent=None, eval_percent=None, test_percent=None):
@@ -107,6 +109,7 @@ def local_preprocess(input_file_path, output_dir, schema_file,
     eval_percent: Int in range [0, 100].
     train_percent: Int in range [0, 100].
   """
+
 
   percent_flags = _percent_flags(train_percent, eval_percent, test_percent)
   this_folder = os.path.dirname(os.path.abspath(__file__))
@@ -328,7 +331,6 @@ def cloud_train(preprocessed_dir, schema_file, transforms_file, output_dir,
   # Delete the temp files made
   shutil.rmtree(temp_dir)
 
-
 def local_predict(model_dir, prediction_input_file):
   """Runs local prediction.
 
@@ -474,4 +476,5 @@ def cloud_batch_predict(model_name, prediction_input_file, output_dir, region,
     html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
             'the prediction job %s.</p><br/>' % (dataflow_url, job_name))
     IPython.display.display_html(html, raw=True)
+
 

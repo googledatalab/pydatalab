@@ -126,7 +126,6 @@ def get_vocabulary(class_index_dict):
   return [class_name for (class_name, class_index)
           in sorted(class_index_dict.iteritems(),
                     key=lambda (class_name, class_index): class_index)]
-
 def get_export_signature_fn(metadata, schema_config, args):
   """Builds the output layer in the exported graph.
 
@@ -345,7 +344,6 @@ def parse_arguments(argv):
                       choices=['linear_classification', 'linear_regression',
                                'dnn_classification', 'dnn_regression'],
                       required=True)
-
   # Training input parameters
   parser.add_argument('--layer_sizes', type=int, nargs='*')
   parser.add_argument('--max_steps', type=int, default=5000,

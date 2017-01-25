@@ -1009,6 +1009,14 @@ def _repr_html_table_schema(schema):
   _HTML_TEMPLATE = """
     <div class="bqsv" id="%s"></div>
     <script>
+      require.config({
+        map: {
+          '*': {
+            datalab: 'nbextensions/gcpdatalab'
+          }
+        },
+      });
+
       require(['datalab/bigquery', 'datalab/element!%s',
           'datalab/style!/nbextensions/gcpdatalab/bigquery.css'],
         function(bq, dom) {

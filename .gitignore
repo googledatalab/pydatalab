@@ -7,3 +7,4 @@ MANIFEST
 build
 .coverage
 dist
+datalab.magics.rst

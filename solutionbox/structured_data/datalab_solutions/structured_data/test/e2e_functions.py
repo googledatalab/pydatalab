@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+
 import os
 import random
 import subprocess
@@ -32,7 +33,7 @@ def make_csv_data(filename, num_rows, problem_type):
 
       map1 = {'red': 2, 'blue': 6, 'green': 4, 'pink': -5, 'yellow': -6, 'brown': -1, 'black': 7}
       map2 = {'abc': 10, 'def': 1, 'ghi': 1, 'jkl': 1, 'mno': 1, 'pqr': 1}
-      map3 = {'car': 5, 'truck': 10, 'van': 15, 'bike': 20, 'train': 25, 'drone':  30}
+      map3 = {'car': 5, 'truck': 10, 'van': 15, 'bike': 20, 'train': 25, 'drone': 30}
 
       # Build some model.
       t = 0.5 + 0.5*num1 -2.5*num2 + num3
@@ -110,6 +111,7 @@ def run_training(output_dir, input_dir, schema_filename, transforms_filename,
   train_filename = os.path.join(input_dir, 'features_train*')
   eval_filename = os.path.join(input_dir, 'features_eval*')
   metadata_filename = os.path.join(input_dir, 'metadata.json')
+
   cmd = ['gcloud beta ml local train',
          '--module-name=trainer.task',
          '--package-path=trainer',

@@ -207,10 +207,11 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
     Exception if the request could not be fulfilled.
   """
 
+  ipy = IPython.get_ipython()
   if env is None:
     env = {}
+  env.update(ipy.user_ns)
   if isinstance(source, basestring):
-    ipy = IPython.get_ipython()
     source = datalab.utils.get_item(ipy.user_ns, source, source)
     if isinstance(source, basestring):
       source = datalab.bigquery.Table(source)

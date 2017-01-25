@@ -140,8 +140,6 @@ def read_examples(input_files, batch_size, shuffle, num_epochs=None):
         num_threads=thread_count)
 
 
-
-
 def produce_feature_columns(metadata, transform_config, schema_config, is_linear_model):
   """Produces a list of Tensorflow columns.
 
@@ -267,51 +265,6 @@ def produce_feature_engineering_fn(metadata, transform_config, schema_config):
 
   return _feature_engineering_fn
 
-def produce_feature_engineering_fnXXXXX(metadata, config):
-  """Makes a feature_engineering_fn for transforming the numerical types. 
-
-  This is called with the output of the 'input_fn' function, and the output of
-  this function is given to tf.learn to further process. This function extracts
-  the ids tensors from ml.features.FeatureMetadata.parse_features and throws
-  away the values tensor.
-  """
-
-  def _feature_engineering_fn(features, target):
-    with tf.name_scope('numerical_feature_engineering') as scope:
-      new_features = {}
-      if 'numerical' in config:
-        for name, transform_dict in config['numerical'].iteritems():
-          trans_name = transform_dict['transform']
-          if trans_name == 'scale':
-            range_min = metadata.columns[name]['min']
-            range_max = metadata.columns[name]['max']
-            new_features[name] = _scale_tensor(features[name], 
-                                              range_min=range_min, 
-                                              range_max=range_max, 
-                                              scale_min=-1, 
-                                              scale_max=1)
-          elif trans_name == 'max_abs_scale':
-            value = transform_dict['value']
-            range_min = metadata.columns[name]['min']
-            range_max = metadata.columns[name]['max']
-            new_features[name] = _scale_tensor(features[name], 
-                                              range_min=range_min, 
-                                              range_max=range_max, 
-                                              scale_min=-value, 
-                                              scale_max=value)
-
-          elif trans_name == 'identity':
-            # Don't need to do anything
-            pass
-          else:
-            print('ERROR: Unknown numerical transform %s for feature %s' % 
-                (trans_name, name))
-            sys.exit(1)
-      features.update(new_features)
-    return features, target
-
-  return _feature_engineering_fn
-
 
 def parse_example_tensor(examples, mode, metadata, schema_config):
   if mode == 'training':
@@ -324,6 +277,8 @@ def parse_example_tensor(examples, mode, metadata, schema_config):
     print('ERROR: unknown mode')
     sys.exit(1)
   
+  # FeatureMetadata.parse_features splits categorical columns into two.
+  # undo that here.
   new_features = {}
   for name in schema_config.get('categorical_columns', []):
     if name == schema_config['key_column'] or name == schema_config['target_column']:
@@ -333,4 +288,3 @@ def parse_example_tensor(examples, mode, metadata, schema_config):
   features.update(new_features)
 
   return features
-

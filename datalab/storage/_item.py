@@ -196,7 +196,6 @@ class Item(object):
 
     max_to_read = self.metadata.size
     bytes_to_read = min(100 * max_lines, self.metadata.size)
-    lines = []
     while True:
       content = self.read_from(byte_count=bytes_to_read)
 
