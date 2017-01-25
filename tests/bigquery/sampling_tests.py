@@ -13,7 +13,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
-from datalab.bigquery import Sampling
+from google.datalab.bigquery import Sampling
 
 
 class TestCases(unittest.TestCase):
