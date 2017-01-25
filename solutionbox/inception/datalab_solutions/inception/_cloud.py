@@ -42,7 +42,7 @@ class Cloud(object):
     if self._checkpoint is None:
       self._checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
 
-  def preprocess(self, input_csvs, labels_file, output_dir, pipeline_option=None):
+  def preprocess(self, input_csvs, output_dir, pipeline_option=None):
     """Cloud preprocessing with Cloud DataFlow."""
 
     job_name = 'preprocess-inception-' + datetime.datetime.now().strftime('%y%m%d-%H%M%S')
@@ -60,22 +60,21 @@ class Cloud(object):
 
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     p = beam.Pipeline('DataflowPipelineRunner', options=opts)
-    _preprocess.configure_pipeline(
-        p, self._checkpoint, input_csvs, labels_file, output_dir, job_name)
+    _preprocess.configure_pipeline(p, self._checkpoint, input_csvs, output_dir, job_name)
     p.run()
 
-  def train(self, labels_file, input_dir, batch_size, max_steps, output_path,
+  def train(self, input_dir, batch_size, max_steps, output_path,
             region, scale_tier):
     """Cloud training with CloudML trainer service."""
 
     import datalab.mlalpha as mlalpha
-    num_classes = len(_util.get_labels(labels_file))
+    labels = _util.get_labels(input_dir)
     job_args = {
       'input_dir': input_dir,
       'output_path': output_path,
       'max_steps': max_steps,
       'batch_size': batch_size,
-      'num_classes': num_classes,
+      'labels': labels,
       'checkpoint': self._checkpoint
     }
     job_request = {
@@ -89,7 +88,7 @@ class Cloud(object):
     job_id = 'inception_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
     return cloud_runner.run(job_id)
 
-  def predict(self, model_id, image_files, labels_file):
+  def predict(self, model_id, image_files):
     """Cloud prediction with CloudML prediction service."""
 
     import datalab.mlalpha as mlalpha
@@ -97,8 +96,6 @@ class Cloud(object):
     if len(parts) != 2:
       raise Exception('Invalid model name for cloud prediction. Use "model.version".')
 
-    labels = _util.get_labels(labels_file)
-    labels.append('UNKNOWN')
     data = []
     for ii, img_file in enumerate(image_files):
       with ml.util._file.open_local_or_gcs(img_file, 'rb') as f:
@@ -110,6 +107,9 @@ class Cloud(object):
 
     cloud_predictor = mlalpha.CloudPredictor(parts[0], parts[1])
     predictions = cloud_predictor.predict(data)
-    labels_and_scores = [(labels[x['prediction']], x['scores'][x['prediction']])
+    # Although prediction results contains a labels list in each instance, they are all the same
+    # so taking the first one.
+    labels = predictions[0]['labels']
+    labels_and_scores = [(x['prediction'], x['scores'][labels.index(x['prediction'])])
                          for x in predictions]
     return labels_and_scores

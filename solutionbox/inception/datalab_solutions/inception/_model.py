@@ -59,8 +59,8 @@ class GraphReferences(object):
 class Model(object):
   """TensorFlow model for the flowers problem."""
 
-  def __init__(self, label_count, dropout, inception_checkpoint_file):
-    self.label_count = label_count
+  def __init__(self, labels, dropout, inception_checkpoint_file):
+    self.labels = labels
     self.dropout = dropout
     self.inception_checkpoint_file = inception_checkpoint_file
 
@@ -203,7 +203,7 @@ class Model(object):
             'label':
                 tf.FixedLenFeature(
                     shape=[1], dtype=tf.int64,
-                    default_value=[self.label_count]),
+                    default_value=[len(self.labels)]),
             'embedding':
                 tf.FixedLenFeature(
                     shape=[BOTTLENECK_TENSOR_SIZE], dtype=tf.float32)
@@ -215,7 +215,7 @@ class Model(object):
 
     # We assume a default label, so the total number of labels is equal to
     # label_count+1.
-    all_labels_count = self.label_count + 1
+    all_labels_count = len(self.labels) + 1
     with tf.name_scope('final_ops'):
       softmax, logits = self.add_final_training_ops(
           embeddings,
@@ -316,12 +316,26 @@ class Model(object):
 
     # To extract the id, we need to add the identity function.
     keys = tf.identity(keys_placeholder)
+    labels = self.labels + ['UNKNOWN']
+    predicted_label = tf.contrib.lookup.index_to_string(tensors.predictions[0],
+                                                        mapping=labels)
+    # Need to duplicate the labels by num_of_instances so the output is one batch
+    # (all output members share the same outer dimension).
+    # The labels are needed for client to match class scores list.
+    labels_tensor = tf.expand_dims(tf.constant(labels), 0)
+    num_instance = tf.shape(keys)
+    labels_tensors_n = tf.tile(labels_tensor, tf.concat(0, [num_instance, [1]]))
+
     outputs = {
         'key': keys.name,
-        'prediction': tensors.predictions[0].name,
-        'scores': tensors.predictions[1].name
+        'prediction': predicted_label.name,
+        'labels': labels_tensors_n.name,
+        'scores': tensors.predictions[1].name,
     }
     tf.add_to_collection('outputs', json.dumps(outputs))
+    # Add table init op to collection so online prediction will load the model and run it.
+    init_tables_op = tf.initialize_all_tables()
+    tf.add_to_collection(tf.contrib.session_bundle.constants.INIT_OP_KEY, init_tables_op)
 
   def export(self, last_checkpoint, output_dir):
     """Builds a prediction graph and xports the model.
@@ -340,8 +354,7 @@ class Model(object):
                                    last_checkpoint)
       saver = tf.train.Saver()
       saver.export_meta_graph(filename=os.path.join(output_dir, 'export.meta'))
-      saver.save(
-          sess, os.path.join(output_dir, 'export'), write_meta_graph=False)
+      saver.save(sess, os.path.join(output_dir, 'export'), write_meta_graph=False)
 
   def format_metric_values(self, metric_values):
     """Formats metric values - used for logging purpose."""

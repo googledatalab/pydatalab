@@ -32,6 +32,8 @@ def _tf_predict(model_dir, image_files):
   with tf.Session() as sess:
     new_saver = tf.train.import_meta_graph(os.path.join(model_dir, 'export.meta'))
     new_saver.restore(sess, os.path.join(model_dir, 'export'))
+    init_op = tf.get_collection(tf.contrib.session_bundle.constants.INIT_OP_KEY)[0]
+    sess.run(init_op)
     inputs = json.loads(tf.get_collection('inputs')[0])
     outputs = json.loads(tf.get_collection('outputs')[0])
     feed_dict = collections.defaultdict(list)
@@ -40,42 +42,40 @@ def _tf_predict(model_dir, image_files):
         image_bytes = ff.read()
         feed_dict[inputs['image_bytes']].append(image_bytes)
         feed_dict[inputs['key']].append(str(ii))
-    predictions, scores = sess.run([outputs['prediction'], outputs['scores']],
-                                   feed_dict=feed_dict)
-  return predictions, scores
+    predictions, labels, scores = sess.run(
+        [outputs['prediction'], outputs['labels'], outputs['scores']], feed_dict=feed_dict)
+  return predictions, labels[0], scores
 
 
-def predict(model_dir, image_files, labels_file):
+def predict(model_dir, image_files):
   """Local prediction."""
 
-  predictions, scores = _tf_predict(model_dir, image_files)
-  labels = _util.get_labels(labels_file)
-  labels.append('UNKNOWN')
-  labels_and_scores = [(labels[predicted_index], class_scores[predicted_index])
-                       for predicted_index, class_scores in zip(predictions, scores)]
-  return labels_and_scores
+  predictions, labels, scores = _tf_predict(model_dir, image_files)
+  labels = list(labels)
+  results = [(predicted, label_scores[labels.index(predicted)])
+             for predicted, label_scores in zip(predictions, scores)]
+  return results
 
 
-def batch_predict(model_dir, input_csv, labels_file, output_file, output_bq_table):
+def batch_predict(model_dir, input_csv, output_file, output_bq_table):
   """Local batch prediction."""
 
   input_csv_f = ml.util._file.read_file_stream(input_csv)
   reader = csv.reader(input_csv_f)
   image_files = [x[0] for x in reader]
-  predictions, scores = _tf_predict(model_dir, image_files)
-
-  labels = _util.get_labels(labels_file)
-  labels.append('UNKNOWN')
+  predictions, labels, scores = _tf_predict(model_dir, image_files)
+  labels = list(labels)
   input_csv_f = ml.util._file.read_file_stream(input_csv)
   reader = csv.reader(input_csv_f)
   with ml.util._file.open_local_or_gcs(output_file, mode='w') as f_out:
     writer = csv.writer(f_out)
-    for input, predicted_index, class_scores in zip(reader, predictions, scores):
+    for input, predicted, class_scores in zip(reader, predictions, scores):
       target_index = labels.index(input[1])
       target_prob = class_scores[target_index]
+      predicted_index = labels.index(predicted)
       predicted_prob = class_scores[predicted_index]
-      writer.writerow(input + [labels[predicted_index]] + [str(target_prob)] +
-                      [str(predicted_prob)] + map(str, class_scores))
+      writer.writerow(input + [predicted] + [str(target_prob)] + [str(predicted_prob)] + 
+                      map(str, class_scores))
   schema = [
       {'name': 'image_url', 'type': 'STRING'},
       {'name': 'target', 'type': 'STRING'},

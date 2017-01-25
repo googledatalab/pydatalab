@@ -43,6 +43,7 @@ def default_project():
 
 
 def get_train_eval_files(input_dir):
+  """Get preprocessed training and eval files."""
   latest_file = os.path.join(input_dir, 'latest')
   with ml.util._file.open_local_or_gcs(latest_file, 'r') as f:
     dir_name = f.read().rstrip()
@@ -54,9 +55,14 @@ def get_train_eval_files(input_dir):
   return train_files, eval_files
 
 
-def get_labels(input_labels_file):
-  """Get a list of labels from labels file."""
-  with ml.util._file.open_local_or_gcs(input_labels_file, mode='r') as f:
+def get_labels(input_dir):
+  """Get a list of labels from preprocessed output dir."""
+  latest_file = os.path.join(input_dir, 'latest')
+  with ml.util._file.open_local_or_gcs(latest_file, 'r') as f:
+    dir_name = f.read().rstrip()
+  data_dir = os.path.join(input_dir, dir_name)
+  labels_file = os.path.join(data_dir, 'labels')
+  with ml.util._file.open_local_or_gcs(labels_file, mode='r') as f:
     labels = f.read().rstrip().split('\n')
   return labels
 

@@ -33,11 +33,10 @@ from . import _util
 def main(_):
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--train_data_paths',
+      '--labels',
       type=str,
       action='append',
-      help='The paths to the training data files. '
-      'Can be comma separated list of files or glob pattern.')
+      help='Classification classes.')
   parser.add_argument(
       '--input_dir',
       type=str,
@@ -56,17 +55,13 @@ def main(_):
       type=int,
       help='Number of examples to be processed per mini-batch.')
   parser.add_argument(
-      '--num_classes',
-      type=int,
-      help='Number of classification classes.')
-  parser.add_argument(
       '--checkpoint',
       type=str,
       default=_util._DEFAULT_CHECKPOINT_GSURL,
       help='Pretrained inception checkpoint path.')
 
   args, _ = parser.parse_known_args()
-  model = _model.Model(args.num_classes, 0.5, args.checkpoint)
+  model = _model.Model(args.labels, 0.5, args.checkpoint)
 
   env = json.loads(os.environ.get('TF_CONFIG', '{}'))
   # Print the job data as provided by the service.

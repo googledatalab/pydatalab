@@ -42,32 +42,31 @@ class Local(object):
     if self._checkpoint is None:
       self._checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
 
-  def preprocess(self, input_csvs, labels_file, output_dir):
+  def preprocess(self, input_csvs, output_dir):
     """Local preprocessing with local DataFlow."""
 
     job_id = 'inception_preprocessed_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
     p = beam.Pipeline('DirectPipelineRunner')
-    _preprocess.configure_pipeline(p, self._checkpoint, input_csvs, labels_file,
-                                   output_dir, job_id)
+    _preprocess.configure_pipeline(p, self._checkpoint, input_csvs, output_dir, job_id)
     p.run()
 
-  def train(self, labels_file, input_dir, batch_size, max_steps, output_dir):
+  def train(self, input_dir, batch_size, max_steps, output_dir):
     """Local training."""
 
-    num_classes = len(_util.get_labels(labels_file))
-    model = _model.Model(num_classes, 0.5, self._checkpoint)
+    labels = _util.get_labels(input_dir)
+    model = _model.Model(labels, 0.5, self._checkpoint)
     task_data = {'type': 'master', 'index': 0}
     task = type('TaskSpec', (object,), task_data)
     _trainer.Trainer(input_dir, batch_size, max_steps, output_dir,
                      model, None, task).run_training()
 
-  def predict(self, model_dir, image_files, labels_file):
+  def predict(self, model_dir, image_files):
     """Local prediction."""
 
-    return _predictor.predict(model_dir, image_files, labels_file)
+    return _predictor.predict(model_dir, image_files)
 
 
-  def batch_predict(self, model_dir, input_csv, labels_file, output_file, output_bq_table):
+  def batch_predict(self, model_dir, input_csv, output_file, output_bq_table):
     """Local batch prediction."""
 
-    return _predictor.batch_predict(model_dir, input_csv, labels_file, output_file, output_bq_table)
+    return _predictor.batch_predict(model_dir, input_csv, output_file, output_bq_table)

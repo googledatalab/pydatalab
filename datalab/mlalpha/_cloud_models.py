@@ -151,13 +151,16 @@ class CloudModelVersions(object):
   def _wait_for_long_running_operation(self, response):
     if 'name' not in response:
       raise Exception('Invaid response from service. Cannot find "name" field.')
+    print('Waiting for job "%s"' % response['name'])
     while True:
       response = self._api.projects().operations().get(name=response['name']).execute()
       if 'done' not in response or response['done'] != True:
         time.sleep(3)
       else:
         if 'error' in response:
-          print response['error']
+          print(response['error'])
+        else:
+          print('Done.')
         break
 
   def deploy(self, version_name, path):
@@ -173,7 +176,10 @@ class CloudModelVersions(object):
     if not path.startswith('gs://'):
       raise Exception('Invalid path. Only Google Cloud Storage path (gs://...) is accepted.')
     if not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists():
-      raise Exception('Cannot find export.meta from given path.')
+      # try appending '/model' sub dir.
+      path = os.path.join(path, 'model')
+      if not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists():
+        raise Exception('Cannot find export.meta from given path.')
 
     body = {'name': self._model_name}
     parent = 'projects/' + self._project_id

@@ -277,32 +277,36 @@ class TrainEvalSplitPartitionFn(beam.PartitionFn):
     return 1 if random.random() > 0.7 else 0
 
 
-def configure_pipeline(p, checkpoint_path, input_paths, labels_file, output_dir, job_id):
+def configure_pipeline(p, checkpoint_path, input_paths, output_dir, job_id):
   """Specify PCollection and transformations in pipeline."""
   output_latest_file = os.path.join(output_dir, 'latest')
-  label_source = beam.io.TextFileSource(labels_file, strip_trailing_newlines=True)
-  labels = (p | 'Read dictionary %s' >> beam.Read(label_source))
   source_list = []
   for ii, input_path in enumerate(input_paths):
-    input_source = beam.io.TextFileSource(
-        input_path, strip_trailing_newlines=True)
+    input_source = beam.io.TextFileSource(input_path, strip_trailing_newlines=True)
     source_list.append(p | 'Read input %d' % ii >> beam.Read(input_source))
-  all_preprocessed = (source_list | 'Flatten Sources' >> beam.Flatten()
-       | 'Parse input' >> beam.Map(lambda line: csv.reader([line]).next())
-       | 'Extract label ids' >> beam.ParDo(ExtractLabelIdsDoFn(),
-                                           beam.pvalue.AsIter(labels))
-       | 'Read and convert to JPEG' >> beam.ParDo(ReadImageAndConvertToJpegDoFn())
-       | 'Embed and make TFExample' >> beam.ParDo(TFExampleFromImageDoFn(checkpoint_path)))
+  all_sources = source_list | 'Flatten Sources' >> beam.Flatten()
+  labels = (all_sources
+      | 'Parse input for labels' >> beam.Map(lambda line: csv.reader([line]).next()[1])
+      | 'Combine labels' >> beam.transforms.combiners.Count.PerElement()
+      | 'Get labels' >> beam.Map(lambda label_count: label_count[0]))
+  all_preprocessed = (all_sources
+      | 'Parse input' >> beam.Map(lambda line: csv.reader([line]).next())
+      | 'Extract label ids' >> beam.ParDo(ExtractLabelIdsDoFn(),
+                                          beam.pvalue.AsIter(labels))
+      | 'Read and convert to JPEG' >> beam.ParDo(ReadImageAndConvertToJpegDoFn())
+      | 'Embed and make TFExample' >> beam.ParDo(TFExampleFromImageDoFn(checkpoint_path)))
   train_eval = (all_preprocessed |
        'Random Partition' >> beam.Partition(TrainEvalSplitPartitionFn(), 2))
   preprocessed_train = os.path.join(output_dir, job_id, 'train')
   preprocessed_eval = os.path.join(output_dir, job_id, 'eval')
+  labels_file = os.path.join(output_dir, job_id, 'labels')
+  labels_save = (labels 
+      | 'Write labels' >> beam.io.textio.WriteToText(labels_file, shard_name_template=''))
   eval_save = train_eval[1] | 'Save eval to disk' >> SaveFeatures(preprocessed_eval)
   train_save = train_eval[0] | 'Save train to disk' >> SaveFeatures(preprocessed_train)
   # Make sure we write "latest" file after train and eval data are successfully written.
-  ([eval_save, train_save] | 'Wait for train eval saving' >> beam.Flatten() |
+  ([eval_save, train_save, labels_save] | 'Wait for train eval saving' >> beam.Flatten() |
       beam.transforms.combiners.Sample.FixedSizeGlobally('Fixed One', 1) |
       beam.Map(lambda path: job_id) |
       'WriteLatest' >> beam.io.textio.WriteToText(output_latest_file, shard_name_template=''))
-
 
