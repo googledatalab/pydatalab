@@ -18,8 +18,8 @@ import unittest
 
 from google.cloud.monitoring import Query as BaseQuery
 
-import datalab.context
-import datalab.stackdriver.monitoring as gcm
+import google.datalab.context
+import google.datalab.stackdriver.monitoring as gcm
 
 
 PROJECT = 'my-project'
@@ -33,7 +33,7 @@ INSTANCE_IDS = ['1234567890123456789', '9876543210987654321']
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.context._context.Context.default')
+  @mock.patch('google.datalab.context._context.Context.default')
   def test_constructor_minimal(self, mock_context_default):
     default_context = self._create_context()
     mock_context_default.return_value = default_context
@@ -82,7 +82,7 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(query._cross_series_reducer)
     self.assertEqual(query._group_by_fields, ())
 
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')
   def test_metadata(self, mock_query_iter):
     query = gcm.Query(METRIC_TYPE, hours=1, context=self._create_context())
     query_metadata = query.metadata()
@@ -94,4 +94,4 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context(project_id='test'):
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)

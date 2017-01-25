@@ -17,9 +17,9 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.bigquery
-import datalab.context
-import datalab.utils
+import google.datalab.bigquery
+import google.datalab.context
+import google.datalab.utils
 
 
 class TestCases(unittest.TestCase):
@@ -101,19 +101,19 @@ class TestCases(unittest.TestCase):
       }
     }
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_external_table_query(self, mock_http_request):
     mock_http_request.return_value = self._request_result()
 
     data = self._get_data()
-    schema = datalab.bigquery.Schema.from_data(data)
+    schema = google.datalab.bigquery.Schema.from_data(data)
 
-    table_uri = 'gs://datalab/weight.csv'
-    options = datalab.bigquery.CSVOptions(skip_leading_rows=1)
+    table_uri = 'gs://google.datalab/weight.csv'
+    options = google.datalab.bigquery.CSVOptions(skip_leading_rows=1)
     sql = 'SELECT * FROM weight'
 
-    weight = datalab.bigquery.FederatedTable.from_storage(table_uri, schema=schema, csv_options=options)
-    q = datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
+    weight = google.datalab.bigquery.FederatedTable.from_storage(table_uri, schema=schema, csv_options=options)
+    q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
     q.execute_async()
 
     table_definition = self._get_table_definition(table_uri, skip_rows=1)
@@ -123,18 +123,18 @@ class TestCases(unittest.TestCase):
     mock_http_request.assert_called_with(request_url, credentials=mock.ANY, data=expected_data)
 
   # Test with multiple URLs and no non-default options
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_external_table_query2(self, mock_http_request):
     mock_http_request.return_value = self._request_result()
 
     data = self._get_data()
-    schema = datalab.bigquery.Schema.from_data(data)
+    schema = google.datalab.bigquery.Schema.from_data(data)
 
-    table_uris = ['gs://datalab/weight1.csv', 'gs://datalab/weight2.csv']
+    table_uris = ['gs://google.datalab/weight1.csv', 'gs://google.datalab/weight2.csv']
     sql = 'SELECT * FROM weight'
 
-    weight = datalab.bigquery.FederatedTable.from_storage(table_uris, schema=schema)
-    q = datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
+    weight = google.datalab.bigquery.FederatedTable.from_storage(table_uris, schema=schema)
+    q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
     q.execute_async()
 
     table_definition = self._get_table_definition(table_uris)
@@ -144,22 +144,22 @@ class TestCases(unittest.TestCase):
     mock_http_request.assert_called_with(request_url, credentials=mock.ANY, data=expected_data)
 
   # Test with multiple tables and using keyword args
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_external_tables_query(self, mock_http_request):
     mock_http_request.return_value = self._request_result()
 
     data = self._get_data()
-    schema = datalab.bigquery.Schema.from_data(data)
+    schema = google.datalab.bigquery.Schema.from_data(data)
 
-    table_uri1 = 'gs://datalab/weight1.csv'
-    table_uri2 = 'gs://datalab/weight2.csv'
+    table_uri1 = 'gs://google.datalab/weight1.csv'
+    table_uri2 = 'gs://google.datalab/weight2.csv'
     sql = 'SELECT * FROM weight1 JOIN weight2 ON day'
 
-    options = datalab.bigquery.CSVOptions(skip_leading_rows=1)
-    weight1 = datalab.bigquery.FederatedTable.from_storage(table_uri1, schema=schema,
+    options = google.datalab.bigquery.CSVOptions(skip_leading_rows=1)
+    weight1 = google.datalab.bigquery.FederatedTable.from_storage(table_uri1, schema=schema,
                                                        csv_options=options)
-    weight2 = datalab.bigquery.FederatedTable.from_storage(table_uri2, schema=schema)
-    q = datalab.bigquery.Query(sql, weight1=weight1, weight2=weight2, context=self._create_context())
+    weight2 = google.datalab.bigquery.FederatedTable.from_storage(table_uri2, schema=schema)
+    q = google.datalab.bigquery.Query(sql, weight1=weight1, weight2=weight2, context=self._create_context())
     q.execute_async()
 
     table_definition1 = self._get_table_definition(table_uri1, skip_rows=1)
@@ -174,4 +174,4 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)

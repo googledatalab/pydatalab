@@ -23,7 +23,7 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import datalab.utils
+import google.datalab.utils
 
 from . import _html
 
@@ -45,8 +45,8 @@ def html_job_status(job_name, job_type, refresh_interval, html_on_running, html_
     <div class="jobstatus" id="%s">
     </div>
     <script>
-      require(['datalab/job', 'datalab/element!%s', 'base/js/events',
-          'datalab/style!/nbextensions/datalab/job.css'],
+      require(['google.datalab/job', 'google.datalab/element!%s', 'base/js/events',
+          'google.datalab/style!/nbextensions/google.datalab/job.css'],
         function(job, dom, events) {
           job.render(dom, events, '%s', '%s', %s, '%s', '%s');
         }
@@ -83,7 +83,7 @@ def _get_job_status(line):
       data = {'exists': False}
 
   except Exception as e:
-    datalab.utils.print_exception_with_last_stack(e)
+    google.datalab.utils.print_exception_with_last_stack(e)
     data = {'done': True, 'error': str(e)}
 
   return IPython.core.display.JSON(data)

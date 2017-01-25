@@ -21,7 +21,7 @@ import time
 
 import google.cloud.ml as ml
 
-import datalab.utils
+import google.datalab.utils
 
 
 def _wait_and_kill(pid_to_wait, pids_to_kill):
@@ -94,7 +94,7 @@ class LocalRunner(object):
     spec = {}
     for job_type, replicas in self._replica_spec.iteritems():
       if replicas > 0:
-        port = datalab.utils.pick_unused_port()
+        port = google.datalab.utils.pick_unused_port()
         spec[job_type] = ['localhost:' + str(port)]
     if 'master' not in spec:
       raise Exception('Need to have at least 1 master replica')

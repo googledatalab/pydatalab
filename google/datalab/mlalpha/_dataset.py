@@ -23,7 +23,7 @@ from plotly import tools
 import seaborn as sns
 import tempfile
 
-import datalab.utils
+import google.datalab.utils
 
 try:
   import IPython.core.display
@@ -136,7 +136,7 @@ class DataSet(object):
       local_file = data_path
       if data_path.startswith('gs://'):
         local_file = tempfile.mktemp()
-        datalab.utils.gcs_copy_file(data_path, local_file)
+        google.datalab.utils.gcs_copy_file(data_path, local_file)
       self._raw_dataframes[name] = pd.read_csv(local_file,
                                                names=type(self._feature_set).csv_columns,
                                                dtype=schema,

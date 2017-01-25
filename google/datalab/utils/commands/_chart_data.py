@@ -24,8 +24,8 @@ except ImportError:
 
 import json
 
-import datalab.data
-import datalab.utils
+import google.datalab.data
+import google.datalab.utils
 
 from . import _utils
 
@@ -53,7 +53,7 @@ def _get_chart_data(line, cell_body=''):
     controls = metadata['controls'] if 'controls' in metadata else {}
     data, _ = _utils.get_data(source, fields, controls, first_row, count, schema)
   except Exception as e:
-    datalab.utils.print_exception_with_last_stack(e)
+    google.datalab.utils.print_exception_with_last_stack(e)
     print('Failed with exception %s' % e)
     data = {}
 
@@ -61,4 +61,4 @@ def _get_chart_data(line, cell_body=''):
   # for datetimes, but it is strictly wrong. The correct way below may have issues if the
   # chart has datetimes though so test this.
   return IPython.core.display.JSON({'data': data, 'refresh_interval': refresh, 'options': options})
-  # return IPython.core.display.JSON(json.dumps({'data': data}, cls=datalab.utils.JSONEncoder))
+  # return IPython.core.display.JSON(json.dumps({'data': data}, cls=google.datalab.utils.JSONEncoder))

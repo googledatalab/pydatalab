@@ -16,8 +16,8 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import datalab.mlalpha
-import datalab.utils.commands
+import google.datalab.mlalpha
+import google.datalab.utils.commands
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -29,7 +29,7 @@ def tensorboard(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  parser = datalab.utils.commands.CommandParser(prog='tensorboard', description="""
+  parser = google.datalab.utils.commands.CommandParser(prog='tensorboard', description="""
 Execute tensorboard operations. Use "%tensorboard <command> -h" for help on a specific command.
 """)
   list_parser = parser.subcommand('list', 'List running TensorBoard instances.')
@@ -45,21 +45,21 @@ Execute tensorboard operations. Use "%tensorboard <command> -h" for help on a sp
                            help='The pid of the TensorBoard instance to stop.',
                            required=True)
   stop_parser.set_defaults(func=_stop)
-  namespace = datalab.utils.commands.notebook_environment()
-  return datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
+  namespace = google.datalab.utils.commands.notebook_environment()
+  return google.datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
 
 
 def _list(args, _):
   """ List the running TensorBoard instances. """
-  return datalab.utils.commands.render_dictionary(
-             datalab.mlalpha.TensorBoardManager.get_running_list(),
+  return google.datalab.utils.commands.render_dictionary(
+             google.datalab.mlalpha.TensorBoardManager.get_running_list(),
              ['pid', 'logdir', 'port'])
 
 
 def _start(args, _):
   """ Start a TensorBoard instance. """
-  pid, port = datalab.mlalpha.TensorBoardManager.start(args['logdir'])
-  url = datalab.mlalpha.TensorBoardManager.get_reverse_proxy_url(port)
+  pid, port = google.datalab.mlalpha.TensorBoardManager.start(args['logdir'])
+  url = google.datalab.mlalpha.TensorBoardManager.get_reverse_proxy_url(port)
   html = '<p>TensorBoard was started successfully with pid %d. ' % pid
   html += 'Click <a href="%s" target="_blank">here</a> to access it.</p>' % url
   return IPython.core.display.HTML(html)
@@ -67,5 +67,5 @@ def _start(args, _):
 
 def _stop(args, _):
   """ Stop a TensorBoard instance. """
-  datalab.mlalpha.TensorBoardManager.stop(int(args['pid']))
+  google.datalab.mlalpha.TensorBoardManager.stop(int(args['pid']))
 

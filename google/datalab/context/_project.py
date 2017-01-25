@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import datalab.utils
+import google.datalab.utils
 
 from . import _api
 from . import _utils
@@ -94,7 +94,7 @@ class Projects(object):
   def __iter__(self):
     """ Returns an iterator for iterating through the Datasets in the project.
     """
-    return iter(datalab.utils.Iterator(self._retrieve_projects))
+    return iter(google.datalab.utils.Iterator(self._retrieve_projects))
 
   @staticmethod
   def get_default_id(credentials=None):

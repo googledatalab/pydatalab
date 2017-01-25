@@ -28,8 +28,8 @@ import traceback
 import uuid
 import sys
 
-import datalab.context
-import datalab.utils
+import google.datalab.context
+import google.datalab.utils
 
 from . import _api
 from . import _csv_options
@@ -125,7 +125,7 @@ class Table(object):
       Exception if the name is invalid.
     """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_table_name(name, self._api.project_id)
@@ -183,7 +183,7 @@ class Table(object):
     """
     try:
       info = self._api.tables_get(self._name_parts)
-    except datalab.utils.RequestException as e:
+    except google.datalab.utils.RequestException as e:
       if e.status == 404:
         return False
       raise e
@@ -200,7 +200,7 @@ class Table(object):
     """
     try:
       self._api.table_delete(self._name_parts)
-    except datalab.utils.RequestException:
+    except google.datalab.utils.RequestException:
       # TODO(gram): May want to check the error reasons here and if it is not
       # because the file didn't exist, return an error.
       pass
@@ -437,7 +437,7 @@ class Table(object):
                                          csv_delimiter, csv_header)
       return self._init_job_from_response(response)
     except Exception as e:
-      raise datalab.utils.JobError(location=traceback.format_exc(), message=str(e),
+      raise google.datalab.utils.JobError(location=traceback.format_exc(), message=str(e),
                                    reason=str(type(e)))
 
   def extract(self, destination, format='csv', csv_delimiter=',', csv_header=True, compress=False):
@@ -613,7 +613,7 @@ class Table(object):
       A row iterator.
     """
     fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
-    return iter(datalab.utils.Iterator(fetcher))
+    return iter(google.datalab.utils.Iterator(fetcher))
 
   def to_dataframe(self, start_row=0, max_rows=None):
     """ Exports the table to a Pandas dataframe.
@@ -667,7 +667,7 @@ class Table(object):
       writer.writerow(row)
     f.close()
 
-  @datalab.utils.async_method
+  @google.datalab.utils.async_method
   def to_file_async(self, destination, format='csv', csv_delimiter=',', csv_header=True):
     """Start saving the results to a local file in CSV format and return a Job for completion.
 
@@ -726,7 +726,7 @@ class Table(object):
       self._info['schema'] = {'fields': schema}
     try:
       self._api.table_update(self._name_parts, self._info)
-    except datalab.utils.RequestException:
+    except google.datalab.utils.RequestException:
       # The cached metadata is out of sync now; abandon it.
       self._info = None
     except Exception as e:

@@ -29,8 +29,8 @@ try:
 except ImportError:
     from io import StringIO
 import tempfile
-import datalab.storage
-import datalab.utils
+import google.datalab.storage
+import google.datalab.utils
 
 
 _MAX_CSV_BYTES = 10000000
@@ -55,7 +55,7 @@ class Csv(object):
   @staticmethod
 
   def _read_gcs_lines(path, max_lines=None):
-    return datalab.storage.Item.from_url(path).read_lines(max_lines)
+    return google.datalab.storage.Item.from_url(path).read_lines(max_lines)
 
   @staticmethod
 
@@ -111,7 +111,7 @@ class Csv(object):
     return df
 
   def _create_federated_table(self, skip_header_rows):
-    import datalab.bigquery as bq
+    import google.datalab.bigquery as bq
     df = self.browse(1, None)
     # read each column as STRING because we only want to sample rows.
     schema_train = bq.Schema([{'name': name, 'type': 'STRING'} for name in df.keys()])
@@ -122,7 +122,7 @@ class Csv(object):
                                           max_bad_records=0)
 
   def _get_gcs_csv_row_count(self, federated_table):
-    import datalab.bigquery as bq
+    import google.datalab.bigquery as bq
     results = bq.Query('SELECT count(*) from data',
                        data_sources={'data': federated_table}).results()
     return results[0].values()[0]
@@ -143,7 +143,7 @@ class Csv(object):
     # TODO(qimingj) Add unit test
     # Read data from source into DataFrame.
     if strategy == 'BIGQUERY':
-      import datalab.bigquery as bq
+      import google.datalab.bigquery as bq
       if not self.path.startswith('gs://'):
         raise Exception('Cannot use BIGQUERY if data is not in GCS')
       federated_table = self._create_federated_table(skip_header_rows)
@@ -156,7 +156,7 @@ class Csv(object):
       local_file = self.path
       if self.path.startswith('gs://'):
         local_file = tempfile.mktemp()
-        datalab.utils.gcs_copy_file(self.path, local_file)
+        google.datalab.utils.gcs_copy_file(self.path, local_file)
       with open(local_file) as f:
         row_count = sum(1 for line in f)
       start_row = 1 if skip_header_rows == True else 0
@@ -173,7 +173,7 @@ class Csv(object):
       with tempfile.NamedTemporaryFile() as f:
         df.to_csv(f, header=False, index=False)
         f.flush()
-        datalab.utils.gcs_copy_file(f.name, target)
+        google.datalab.utils.gcs_copy_file(f.name, target)
     else:
       with open(target, 'w') as f:
         df.to_csv(f, header=False, index=False, sep=str(self._delimiter))

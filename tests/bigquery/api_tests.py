@@ -16,10 +16,10 @@ import unittest
 import mock
 from oauth2client.client import AccessTokenCredentials
 
-import datalab.bigquery
-import datalab.context
-import datalab.utils
-from datalab.bigquery._api import Api
+import google.datalab.bigquery
+import google.datalab.context
+import google.datalab.utils
+from google.datalab.bigquery._api import Api
 
 
 class TestCases(unittest.TestCase):
@@ -46,10 +46,10 @@ class TestCases(unittest.TestCase):
     else:
       self.assertNotIn('method', kwargs)
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_jobs_insert_load(self, mock_http_request):
     api = TestCases._create_api()
-    api.jobs_insert_load('SOURCE', datalab.bigquery._utils.TableName('p', 'd', 't', ''))
+    api.jobs_insert_load('SOURCE', google.datalab.bigquery._utils.TableName('p', 'd', 't', ''))
     self.maxDiff = None
     expected_data = {
       'kind': 'bigquery#job',
@@ -78,7 +78,7 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/jobs/',
                   expected_data=expected_data)
 
-    api.jobs_insert_load('SOURCE2', datalab.bigquery._utils.TableName('p2', 'd2', 't2', ''),
+    api.jobs_insert_load('SOURCE2', google.datalab.bigquery._utils.TableName('p2', 'd2', 't2', ''),
                          append=True, create=True, allow_jagged_rows=True,
                          allow_quoted_newlines=True, ignore_unknown_values=True,
                          source_format='JSON', max_bad_records=1)
@@ -103,7 +103,7 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p2/jobs/',
                   expected_data=expected_data)
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_jobs_insert_query(self, mock_http_request):
     api = TestCases._create_api()
     api.jobs_insert_query('SQL')
@@ -124,7 +124,7 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/test/jobs/',
                   expected_data=expected_data)
     api.jobs_insert_query('SQL2', ['CODE'],
-                          table_name=datalab.bigquery._utils.TableName('p', 'd', 't', ''),
+                          table_name=google.datalab.bigquery._utils.TableName('p', 'd', 't', ''),
                           append=True, dry_run=True, use_cache=False, batch=False,
                           allow_large_results=True, dialect='standard', billing_tier=1)
     expected_data = {
@@ -156,7 +156,7 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/test/jobs/',
                   expected_data=expected_data)
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_jobs_query_results(self, mock_http_request):
     api = TestCases._create_api()
     api.jobs_query_results('JOB', 'PROJECT', 10, 20, 30)
@@ -164,17 +164,17 @@ class TestCases(unittest.TestCase):
                   'https://www.googleapis.com/bigquery/v2/projects/PROJECT/queries/JOB',
                   expected_args={'maxResults': 10, 'timeoutMs': 20, 'startIndex': 30})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_jobs_get(self, mock_http_request):
     api = TestCases._create_api()
     api.jobs_get('JOB', 'PROJECT')
     self.validate(mock_http_request,
                   'https://www.googleapis.com/bigquery/v2/projects/PROJECT/jobs/JOB')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_datasets_insert(self, mock_http_request):
     api = TestCases._create_api()
-    api.datasets_insert(datalab.bigquery._utils.DatasetName('p', 'd'))
+    api.datasets_insert(google.datalab.bigquery._utils.DatasetName('p', 'd'))
     expected_data = {
       'kind': 'bigquery#dataset',
       'datasetReference': {
@@ -184,7 +184,7 @@ class TestCases(unittest.TestCase):
     }
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/datasets/',
                   expected_data=expected_data)
-    api.datasets_insert(datalab.bigquery._utils.DatasetName('p', 'd'), 'FRIENDLY', 'DESCRIPTION')
+    api.datasets_insert(google.datalab.bigquery._utils.DatasetName('p', 'd'), 'FRIENDLY', 'DESCRIPTION')
     expected_data = {
       'kind': 'bigquery#dataset',
       'datasetReference': {
@@ -197,32 +197,32 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/datasets/',
                   expected_data=expected_data)
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_datasets_delete(self, mock_http_request):
     api = TestCases._create_api()
-    api.datasets_delete(datalab.bigquery._utils.DatasetName('p', 'd'), False)
+    api.datasets_delete(google.datalab.bigquery._utils.DatasetName('p', 'd'), False)
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d',
                   expected_args={},
                   expected_method='DELETE')
-    api.datasets_delete(datalab.bigquery._utils.DatasetName('p', 'd'), True)
+    api.datasets_delete(google.datalab.bigquery._utils.DatasetName('p', 'd'), True)
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d',
                   expected_args={'deleteContents': True},
                   expected_method='DELETE')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_datasets_update(self, mock_http_request):
     api = TestCases._create_api()
-    api.datasets_update(datalab.bigquery._utils.DatasetName('p', 'd'), 'INFO')
+    api.datasets_update(google.datalab.bigquery._utils.DatasetName('p', 'd'), 'INFO')
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d',
                   expected_method='PUT', expected_data='INFO')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_datasets_get(self, mock_http_request):
     api = TestCases._create_api()
-    api.datasets_get(datalab.bigquery._utils.DatasetName('p', 'd'))
+    api.datasets_get(google.datalab.bigquery._utils.DatasetName('p', 'd'))
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_datasets_list(self, mock_http_request):
     api = TestCases._create_api()
     api.datasets_list()
@@ -235,30 +235,30 @@ class TestCases(unittest.TestCase):
                   'https://www.googleapis.com/bigquery/v2/projects/PROJECT/datasets/',
                   expected_args={'maxResults': 10, 'pageToken': 'TOKEN'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_tables_get(self, mock_http_request):
     api = TestCases._create_api()
-    api.tables_get(datalab.bigquery._utils.TableName('p', 'd', 't', ''))
+    api.tables_get(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''))
     self.validate(mock_http_request,
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/t')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_tables_list(self, mock_http_request):
     api = TestCases._create_api()
-    api.tables_list(datalab.bigquery._utils.DatasetName('p', 'd'))
+    api.tables_list(google.datalab.bigquery._utils.DatasetName('p', 'd'))
     self.validate(mock_http_request,
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/',
                   expected_args={})
 
-    api.tables_list(datalab.bigquery._utils.DatasetName('p', 'd'), 10, 'TOKEN')
+    api.tables_list(google.datalab.bigquery._utils.DatasetName('p', 'd'), 10, 'TOKEN')
     self.validate(mock_http_request,
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/',
                   expected_args={'maxResults': 10, 'pageToken': 'TOKEN'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_tables_insert(self, mock_http_request):
     api = TestCases._create_api()
-    api.tables_insert(datalab.bigquery._utils.TableName('p', 'd', 't', ''))
+    api.tables_insert(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''))
     expected_data = {
       'kind': 'bigquery#table',
       'tableReference': {
@@ -271,7 +271,7 @@ class TestCases(unittest.TestCase):
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/',
                   expected_data=expected_data)
 
-    api.tables_insert(datalab.bigquery._utils.TableName('p', 'd', 't', ''),
+    api.tables_insert(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''),
                       'SCHEMA', 'QUERY', 'FRIENDLY', 'DESCRIPTION')
     expected_data = {
       'kind': 'bigquery#table',
@@ -291,10 +291,10 @@ class TestCases(unittest.TestCase):
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/',
                   expected_data=expected_data)
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_tabledata_insertAll(self, mock_http_request):
     api = TestCases._create_api()
-    api.tabledata_insert_all(datalab.bigquery._utils.TableName('p', 'd', 't', ''), 'ROWS')
+    api.tabledata_insert_all(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''), 'ROWS')
     expected_data = {
       'kind': 'bigquery#tableDataInsertAllRequest',
       'rows': 'ROWS'
@@ -303,15 +303,15 @@ class TestCases(unittest.TestCase):
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/t/insertAll',
                   expected_data=expected_data)
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_tabledata_list(self, mock_http_request):
     api = TestCases._create_api()
-    api.tabledata_list(datalab.bigquery._utils.TableName('p', 'd', 't', ''))
+    api.tabledata_list(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''))
     self.validate(mock_http_request,
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/t/data',
                   expected_args={})
 
-    api.tabledata_list(datalab.bigquery._utils.TableName('p', 'd', 't', ''), 10, 20, 'TOKEN')
+    api.tabledata_list(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''), 10, 20, 'TOKEN')
     self.validate(mock_http_request,
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/t/data',
                   expected_args={
@@ -320,18 +320,18 @@ class TestCases(unittest.TestCase):
                     'pageToken': 'TOKEN'
                   })
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_table_delete(self, mock_http_request):
     api = TestCases._create_api()
-    api.table_delete(datalab.bigquery._utils.TableName('p', 'd', 't', ''))
+    api.table_delete(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''))
     self.validate(mock_http_request,
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/t',
                   expected_method='DELETE')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_table_extract(self, mock_http_request):
     api = TestCases._create_api()
-    api.table_extract(datalab.bigquery._utils.TableName('p', 'd', 't', ''), 'DEST')
+    api.table_extract(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''), 'DEST')
     expected_data = {
       'kind': 'bigquery#job',
       'configuration': {
@@ -353,7 +353,7 @@ class TestCases(unittest.TestCase):
                   'https://www.googleapis.com/bigquery/v2/projects/p/jobs/',
                   expected_data=expected_data)
 
-    api.table_extract(datalab.bigquery._utils.TableName('p', 'd', 't', ''),
+    api.table_extract(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''),
                       ['DEST'], format='JSON', compress=False, field_delimiter=':',
                       print_header=False)
     expected_data = {
@@ -376,10 +376,10 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/jobs/',
                   expected_data=expected_data)
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_table_update(self, mock_http_request):
     api = TestCases._create_api()
-    api.table_update(datalab.bigquery._utils.TableName('p', 'd', 't', ''), 'INFO')
+    api.table_update(google.datalab.bigquery._utils.TableName('p', 'd', 't', ''), 'INFO')
     self.validate(mock_http_request,
                   'https://www.googleapis.com/bigquery/v2/projects/p/datasets/d/tables/t',
                   expected_method='PUT', expected_data='INFO')
@@ -393,4 +393,4 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)
