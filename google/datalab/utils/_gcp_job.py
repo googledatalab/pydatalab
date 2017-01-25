@@ -14,7 +14,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import datalab.context
+import google.datalab.context
 from . import _job
 
 
@@ -31,7 +31,7 @@ class GCPJob(_job.Job):
     """
     super(GCPJob, self).__init__(job_id)
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = self._create_api(context)
 

@@ -25,16 +25,16 @@ try:
 except ImportError:
   raise Exception('This package requires an IPython notebook installation')
 
-import datalab.context as _context
+import google.datalab.context as _context
 
 # Import the modules that do cell magics.
-import datalab.bigquery.commands
-import datalab.context.commands
-import datalab.data.commands
-import datalab.mlalpha.commands
-import datalab.stackdriver.commands
-import datalab.storage.commands
-import datalab.utils.commands
+import google.datalab.bigquery.commands
+import google.datalab.context.commands
+import google.datalab.data.commands
+import google.datalab.mlalpha.commands
+import google.datalab.stackdriver.commands
+import google.datalab.storage.commands
+import google.datalab.utils.commands
 
 
 _orig_request = _httplib2.Http.request
@@ -111,10 +111,10 @@ def load_ipython_extension(shell):
     context.set_project_id(project_id)
 
   def _get_bq_dialect():
-    return datalab.bigquery.Dialect.default().bq_dialect
+    return google.datalab.bigquery.Dialect.default().bq_dialect
 
   def _set_bq_dialect(bq_dialect):
-    datalab.bigquery.Dialect.default().set_bq_dialect(bq_dialect)
+    google.datalab.bigquery.Dialect.default().set_bq_dialect(bq_dialect)
 
   try:
     if 'datalab_project_id' not in _IPython.get_ipython().user_ns:

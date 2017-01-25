@@ -29,10 +29,10 @@ import fnmatch
 import json
 import re
 
-import datalab.bigquery
-import datalab.data
-import datalab.utils
-import datalab.utils.commands
+import google.datalab.bigquery
+import google.datalab.data
+import google.datalab.utils
+import google.datalab.utils.commands
 
 
 def _create_create_subparser(parser):
@@ -264,18 +264,18 @@ def _get_query_argument(args, cell, env):
     # Assume we have inline SQL in the cell
     if not isinstance(cell, basestring):
       raise Exception('Expected a --query argument or inline SQL')
-    return datalab.bigquery.Query(cell, values=env)
+    return google.datalab.bigquery.Query(cell, values=env)
 
-  item = datalab.utils.commands.get_notebook_item(sql_arg)
-  if isinstance(item, datalab.bigquery.Query):  # Queries are already expanded.
+  item = google.datalab.utils.commands.get_notebook_item(sql_arg)
+  if isinstance(item, google.datalab.bigquery.Query):  # Queries are already expanded.
     return item
 
   # Create an expanded BQ Query.
-  config = datalab.utils.commands.parse_config(cell, env)
-  item, env = datalab.data.SqlModule.get_sql_statement_with_environment(item, config)
+  config = google.datalab.utils.commands.parse_config(cell, env)
+  item, env = google.datalab.data.SqlModule.get_sql_statement_with_environment(item, config)
   if cell:
     env.update(config)  # config is both a fallback and an override.
-  return datalab.bigquery.Query(item, values=env)
+  return google.datalab.bigquery.Query(item, values=env)
 
 
 def _sample_cell(args, cell_body):
@@ -288,7 +288,7 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
-  env = datalab.utils.commands.notebook_environment()
+  env = google.datalab.utils.commands.notebook_environment()
   query = None
   table = None
   view = None
@@ -298,29 +298,29 @@ def _sample_cell(args, cell_body):
   elif args['table']:
     table = _get_table(args['table'])
   elif args['view']:
-    view = datalab.utils.commands.get_notebook_item(args['view'])
-    if not isinstance(view, datalab.bigquery.View):
+    view = google.datalab.utils.commands.get_notebook_item(args['view'])
+    if not isinstance(view, google.datalab.bigquery.View):
       raise Exception('%s is not a view' % args['view'])
   else:
-    query = datalab.bigquery.Query(cell_body, values=env)
+    query = google.datalab.bigquery.Query(cell_body, values=env)
 
   count = args['count']
   method = args['method']
   if method == 'random':
-    sampling = datalab.bigquery.Sampling.random(percent=args['percent'], count=count)
+    sampling = google.datalab.bigquery.Sampling.random(percent=args['percent'], count=count)
   elif method == 'hashed':
-    sampling = datalab.bigquery.Sampling.hashed(field_name=args['field'],
+    sampling = google.datalab.bigquery.Sampling.hashed(field_name=args['field'],
                                             percent=args['percent'],
                                             count=count)
   elif method == 'sorted':
     ascending = args['order'] == 'ascending'
-    sampling = datalab.bigquery.Sampling.sorted(args['field'],
+    sampling = google.datalab.bigquery.Sampling.sorted(args['field'],
                                             ascending=ascending,
                                             count=count)
   elif method == 'limit':
-    sampling = datalab.bigquery.Sampling.default(count=count)
+    sampling = google.datalab.bigquery.Sampling.default(count=count)
   else:
-    sampling = datalab.bigquery.Sampling.default(count=count)
+    sampling = google.datalab.bigquery.Sampling.default(count=count)
 
   if query:
     results = query.sample(sampling=sampling, dialect=args['dialect'],
@@ -332,7 +332,7 @@ def _sample_cell(args, cell_body):
   if args['verbose']:
     print(results.sql)
   if args['profile']:
-    return datalab.utils.commands.profile_df(results.to_dataframe())
+    return google.datalab.utils.commands.profile_df(results.to_dataframe())
   else:
     return results
 
@@ -355,7 +355,7 @@ def _create_cell(args, cell_body):
   """
   if args['command'] == 'dataset':
     try:
-      datalab.bigquery.Dataset(args['name']).create(friendly_name=args['friendly'],
+      google.datalab.bigquery.Dataset(args['name']).create(friendly_name=args['friendly'],
                                                     description=cell_body)
     except Exception as e:
       print('Failed to create dataset %s: %s' % (args['name'], e))
@@ -364,9 +364,9 @@ def _create_cell(args, cell_body):
       print('Failed to create %s: no schema specified' % args['name'])
     else:
       try:
-        record = datalab.utils.commands.parse_config(cell_body, datalab.utils.commands.notebook_environment(), as_dict=False)
-        schema = datalab.bigquery.Schema(record)
-        datalab.bigquery.Table(args['name']).create(schema=schema, overwrite=args['overwrite'])
+        record = google.datalab.utils.commands.parse_config(cell_body, google.datalab.utils.commands.notebook_environment(), as_dict=False)
+        schema = google.datalab.bigquery.Schema(record)
+        google.datalab.bigquery.Table(args['name']).create(schema=schema, overwrite=args['overwrite'])
       except Exception as e:
         print('Failed to create table %s: %s' % (args['name'], e))
 
@@ -389,12 +389,12 @@ def _delete_cell(args, _):
   # easy, the former a bit more tricky if non-default projects are involved.
   if args['command'] == 'dataset':
     try:
-      datalab.bigquery.Dataset(args['name']).delete()
+      google.datalab.bigquery.Dataset(args['name']).delete()
     except Exception as e:
       print('Failed to delete dataset %s: %s' % (args['name'], e))
   else:
     try:
-      datalab.bigquery.Table(args['name']).delete()
+      google.datalab.bigquery.Table(args['name']).delete()
     except Exception as e:
       print('Failed to delete table %s: %s' % (args['name'], e))
 
@@ -412,12 +412,12 @@ def _dryrun_cell(args, cell_body):
   Returns:
     The response wrapped in a DryRunStats object
   """
-  query = _get_query_argument(args, cell_body, datalab.utils.commands.notebook_environment())
+  query = _get_query_argument(args, cell_body, google.datalab.utils.commands.notebook_environment())
 
   if args['verbose']:
     print(query.sql)
   result = query.execute_dry_run(dialect=args['dialect'], billing_tier=args['billing'])
-  return datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
+  return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                               is_cached=result['cacheHit'])
 
 
@@ -484,8 +484,8 @@ def _udf_cell(args, js):
       js = parts.group(2)
 
   # Finally build the UDF object
-  udf = datalab.bigquery.UDF(inputs, outputs, variable_name, js, support_code, imports)
-  datalab.utils.commands.notebook_environment()[variable_name] = udf
+  udf = google.datalab.bigquery.UDF(inputs, outputs, variable_name, js, support_code, imports)
+  google.datalab.utils.commands.notebook_environment()[variable_name] = udf
 
 
 def _execute_cell(args, cell_body):
@@ -501,7 +501,7 @@ def _execute_cell(args, cell_body):
   Returns:
     The QueryResultsTable
   """
-  query = _get_query_argument(args, cell_body, datalab.utils.commands.notebook_environment())
+  query = _get_query_argument(args, cell_body, google.datalab.utils.commands.notebook_environment())
   if args['verbose']:
     print(query.sql)
   return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
@@ -526,8 +526,8 @@ def _pipeline_cell(args, cell_body):
     raise Exception('Deploying a pipeline is not yet supported')
 
   env = {}
-  for key, value in datalab.utils.commands.notebook_environment().items():
-    if isinstance(value, datalab.bigquery._udf.UDF):
+  for key, value in google.datalab.utils.commands.notebook_environment().items():
+    if isinstance(value, google.datalab.bigquery._udf.UDF):
       env[key] = value
 
   query = _get_query_argument(args, cell_body, env)
@@ -536,7 +536,7 @@ def _pipeline_cell(args, cell_body):
   if args['action'] == 'dryrun':
     print(query.sql)
     result = query.execute_dry_run()
-    return datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
+    return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                 is_cached=result['cacheHit'])
   if args['action'] == 'run':
     return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
@@ -569,20 +569,20 @@ def _table_line(args):
 
 def _get_schema(name):
   """ Given a variable or table name, get the Schema if it exists. """
-  item = datalab.utils.commands.get_notebook_item(name)
+  item = google.datalab.utils.commands.get_notebook_item(name)
   if not item:
     item = _get_table(name)
 
-  if isinstance(item, datalab.bigquery.Schema):
+  if isinstance(item, google.datalab.bigquery.Schema):
     return item
-  if hasattr(item, 'schema') and isinstance(item.schema, datalab.bigquery._schema.Schema):
+  if hasattr(item, 'schema') and isinstance(item.schema, google.datalab.bigquery._schema.Schema):
     return item.schema
   return None
 
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
-_table_cache = datalab.utils.LRUCache(10)
+_table_cache = google.datalab.utils.LRUCache(10)
 
 
 def _get_table(name):
@@ -594,14 +594,14 @@ def _get_table(name):
     The Table, if found.
   """
   # If name is a variable referencing a table, use that.
-  item = datalab.utils.commands.get_notebook_item(name)
-  if isinstance(item, datalab.bigquery.Table):
+  item = google.datalab.utils.commands.get_notebook_item(name)
+  if isinstance(item, google.datalab.bigquery.Table):
     return item
   # Else treat this as a BQ table name and return the (cached) table if it exists.
   try:
     return _table_cache[name]
   except KeyError:
-    table = datalab.bigquery.Table(name)
+    table = google.datalab.bigquery.Table(name)
     if table.exists():
       _table_cache[name] = table
       return table
@@ -631,12 +631,12 @@ def _schema_line(args):
 
 def _render_table(data, fields=None):
   """ Helper to render a list of dictionaries as an HTML display object. """
-  return IPython.core.display.HTML(datalab.utils.commands.HtmlBuilder.render_table(data, fields))
+  return IPython.core.display.HTML(google.datalab.utils.commands.HtmlBuilder.render_table(data, fields))
 
 
 def _render_list(data):
   """ Helper to render a list of objects as an HTML list object. """
-  return IPython.core.display.HTML(datalab.utils.commands.HtmlBuilder.render_list(data))
+  return IPython.core.display.HTML(google.datalab.utils.commands.HtmlBuilder.render_list(data))
 
 
 def _datasets_line(args):
@@ -652,7 +652,7 @@ def _datasets_line(args):
     The HTML rendering for the table of datasets.
   """
   filter_ = args['filter'] if args['filter'] else '*'
-  return _render_list([str(dataset) for dataset in datalab.bigquery.Datasets(args['project'])
+  return _render_list([str(dataset) for dataset in google.datalab.bigquery.Datasets(args['project'])
                        if fnmatch.fnmatch(str(dataset), filter_)])
 
 
@@ -671,11 +671,11 @@ def _tables_line(args):
   filter_ = args['filter'] if args['filter'] else '*'
   if args['dataset']:
     if args['project'] is None:
-      datasets = [datalab.bigquery.Dataset(args['dataset'])]
+      datasets = [google.datalab.bigquery.Dataset(args['dataset'])]
     else:
-      datasets = [datalab.bigquery.Dataset((args['project'], args['dataset']))]
+      datasets = [google.datalab.bigquery.Dataset((args['project'], args['dataset']))]
   else:
-    datasets = datalab.bigquery.Datasets(args['project'])
+    datasets = google.datalab.bigquery.Datasets(args['project'])
 
   tables = []
   for dataset in datasets:
@@ -697,13 +697,13 @@ def _extract_line(args):
     A message about whether the extract succeeded or failed.
   """
   name = args['source']
-  source = datalab.utils.commands.get_notebook_item(name)
+  source = google.datalab.utils.commands.get_notebook_item(name)
   if not source:
     source = _get_table(name)
 
   if not source:
     raise Exception('No source named %s found' % name)
-  elif isinstance(source, datalab.bigquery.Table) and not source.exists():
+  elif isinstance(source, google.datalab.bigquery.Table) and not source.exists():
     raise Exception('Table %s does not exist' % name)
   else:
 
@@ -734,7 +734,7 @@ def _load_cell(args, schema):
   name = args['destination']
   table = _get_table(name)
   if not table:
-    table = datalab.bigquery.Table(name)
+    table = google.datalab.bigquery.Table(name)
 
   if table.exists():
     if args['mode'] == 'create':
@@ -748,7 +748,7 @@ def _load_cell(args, schema):
   # TODO(gram): we should probably try do the schema infer ourselves as BQ doesn't really seem
   # to be able to do it. Alternatively we can drop the --infer argument and force the user
   # to use a pre-existing table or supply a JSON schema.
-  csv_options = datalab.bigquery.CSVOptions(delimiter=args['delimiter'],
+  csv_options = google.datalab.bigquery.CSVOptions(delimiter=args['delimiter'],
                                         skip_leading_rows=args['skip'],
                                         allow_jagged_rows=not args['strict'],
                                         quote=args['quote'])
@@ -778,7 +778,7 @@ def _create_bigquery_parser():
   for the handlers that bind the cell contents and thus must recreate this parser for each
   cell upon execution.
   """
-  parser = datalab.utils.commands.CommandParser(prog='bigquery', description="""
+  parser = google.datalab.utils.commands.CommandParser(prog='bigquery', description="""
 Execute various BigQuery-related operations. Use "%bigquery <command> -h"
 for help on a specific command.
   """)
@@ -851,9 +851,9 @@ def bigquery(line, cell=None):
   namespace = {}
   if line.find('$') >= 0:
     # We likely have variables to expand; get the appropriate context.
-    namespace = datalab.utils.commands.notebook_environment()
+    namespace = google.datalab.utils.commands.notebook_environment()
 
-  return datalab.utils.commands.handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
+  return google.datalab.utils.commands.handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
 
 
 def _dispatch_handler(args, cell, parser, handler, cell_required=False, cell_prohibited=False):
@@ -898,7 +898,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     A string containing the HTML for the table viewer.
   """
 
-  # TODO(gram): rework this to use datalab.utils.commands.chart_html
+  # TODO(gram): rework this to use google.datalab.utils.commands.chart_html
 
   if not table.exists():
     raise Exception('Table %s does not exist' % str(table))
@@ -916,7 +916,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
         }},
         map: {{
           '*': {{
-            datalab: 'nbextensions/gcpdatalab'
+            google.datalab: 'nbextensions/gcpdatalab'
           }}
         }},
         shim: {{
@@ -927,8 +927,8 @@ def _table_viewer(table, rows_per_page=25, fields=None):
         }}
       }});
 
-      require(['datalab/charting', 'datalab/element!{div_id}', 'base/js/events',
-          'datalab/style!/nbextensions/gcpdatalab/charting.css'],
+      require(['google.datalab/charting', 'google.datalab/element!{div_id}', 'base/js/events',
+          'google.datalab/style!/nbextensions/gcpdatalab/charting.css'],
         function(charts, dom, events) {{
           charts.render('gcharts', dom, events, '{chart_style}', [], {data},
             {{
@@ -953,22 +953,22 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   """
 
   if fields is None:
-    fields = datalab.utils.commands.get_field_list(fields, table.schema)
-  div_id = datalab.utils.commands.Html.next_id()
+    fields = google.datalab.utils.commands.get_field_list(fields, table.schema)
+  div_id = google.datalab.utils.commands.Html.next_id()
   meta_count = ('rows: %d' % table.length) if table.length >= 0 else ''
   meta_name = str(table) if table.job is None else ('job: %s' % table.job.id)
   if table.job:
     if table.job.cache_hit:
       meta_cost = 'cached'
     else:
-      bytes = datalab.bigquery._query_stats.QueryStats._size_formatter(table.job.bytes_processed)
+      bytes = google.datalab.bigquery._query_stats.QueryStats._size_formatter(table.job.bytes_processed)
       meta_cost = '%s processed' % bytes
     meta_time = 'time: %.1fs' % table.job.total_time
   else:
     meta_cost = ''
     meta_time = ''
 
-  data, total_count = datalab.utils.commands.get_data(table, fields, first_row=0, count=rows_per_page)
+  data, total_count = google.datalab.utils.commands.get_data(table, fields, first_row=0, count=rows_per_page)
 
   if total_count < 0:
     # The table doesn't have a length metadata property but may still be small if we fetched less
@@ -982,19 +982,19 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   meta_data = '(%s)' % (', '.join([entry for entry in meta_entries if len(entry)]))
 
   return _HTML_TEMPLATE.format(div_id=div_id,
-                               static_table=datalab.utils.commands.HtmlBuilder.render_chart_data(data),
+                               static_table=google.datalab.utils.commands.HtmlBuilder.render_chart_data(data),
                                meta_data=meta_data,
                                chart_style=chart,
-                               source_index=datalab.utils.commands.get_data_source_index(str(table)),
+                               source_index=google.datalab.utils.commands.get_data_source_index(str(table)),
                                fields=','.join(fields),
                                total_rows=total_count,
                                rows_per_page=rows_per_page,
-                               data=json.dumps(data, cls=datalab.utils.JSONEncoder))
+                               data=json.dumps(data, cls=google.datalab.utils.JSONEncoder))
 
 
 def _repr_html_query(query):
   # TODO(nikhilko): Pretty print the SQL
-  return datalab.utils.commands.HtmlBuilder.render_text(query.sql, preformatted=True)
+  return google.datalab.utils.commands.HtmlBuilder.render_text(query.sql, preformatted=True)
 
 
 def _repr_html_query_results_table(results):
@@ -1012,20 +1012,20 @@ def _repr_html_table_schema(schema):
       require.config({
         map: {
           '*': {
-            datalab: 'nbextensions/gcpdatalab'
+            google.datalab: 'nbextensions/gcpdatalab'
           }
         },
       });
 
-      require(['datalab/bigquery', 'datalab/element!%s',
-          'datalab/style!/nbextensions/gcpdatalab/bigquery.css'],
+      require(['google.datalab/bigquery', 'google.datalab/element!%s',
+          'google.datalab/style!/nbextensions/gcpdatalab/bigquery.css'],
         function(bq, dom) {
           bq.renderSchema(dom, %s);
         }
       );
     </script>
     """
-  id = datalab.utils.commands.Html.next_id()
+  id = google.datalab.utils.commands.Html.next_id()
   return _HTML_TEMPLATE % (id, id, json.dumps(schema._bq_schema))
 
 
@@ -1034,11 +1034,11 @@ def _register_html_formatters():
     ipy = IPython.get_ipython()
     html_formatter = ipy.display_formatter.formatters['text/html']
 
-    html_formatter.for_type_by_name('datalab.bigquery._query', 'Query', _repr_html_query)
-    html_formatter.for_type_by_name('datalab.bigquery._query_results_table', 'QueryResultsTable',
+    html_formatter.for_type_by_name('google.datalab.bigquery._query', 'Query', _repr_html_query)
+    html_formatter.for_type_by_name('google.datalab.bigquery._query_results_table', 'QueryResultsTable',
                                     _repr_html_query_results_table)
-    html_formatter.for_type_by_name('datalab.bigquery._table', 'Table', _repr_html_table)
-    html_formatter.for_type_by_name('datalab.bigquery._schema', 'Schema', _repr_html_table_schema)
+    html_formatter.for_type_by_name('google.datalab.bigquery._table', 'Table', _repr_html_table)
+    html_formatter.for_type_by_name('google.datalab.bigquery._schema', 'Schema', _repr_html_table_schema)
   except TypeError:
     # For when running unit tests
     pass

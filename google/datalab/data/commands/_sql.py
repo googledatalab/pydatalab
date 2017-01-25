@@ -30,9 +30,9 @@ import re
 import sys
 import time
 
-import datalab.bigquery
-import datalab.data
-from datalab.utils.commands import CommandParser, handle_magic_line
+import google.datalab.bigquery
+import google.datalab.data
+from google.datalab.utils.commands import CommandParser, handle_magic_line
 
 
 def _create_sql_parser():
@@ -46,7 +46,7 @@ values for the variables, if any, using Python code, followed by one or more
 queries.
 
 Queries should start with 'DEFINE QUERY <name>' in order to bind them to
-<module name>.<query name> in the notebook (as datalab.data.SqlStament instances).
+<module name>.<query name> in the notebook (as google.datalab.data.SqlStament instances).
 The final query can optionally omit 'DEFINE QUERY <name>', as using the module
 name in places where a SqlStatement is expected will resolve to the final query
 in the module.
@@ -183,7 +183,7 @@ def _resolve_table(v, format, delta):
     v = time.strftime(format, when.timetuple())
   except Exception:
     pass
-  return datalab.bigquery.Table(v)
+  return google.datalab.bigquery.Table(v)
 
 
 def _make_string_formatter(f, offset=None):
@@ -201,7 +201,7 @@ def _make_table_formatter(f, offset=None):
 
 
 def _make_table(v):
-  return datalab.bigquery.Table(v)
+  return google.datalab.bigquery.Table(v)
 
 
 def _datestring(format, offset=''):
@@ -329,22 +329,22 @@ def _split_cell(cell, module):
 
         # This is not the first query, so gather the previous query text.
         query = '\n'.join([line for line in lines[last_def:i] if len(line)]).strip()
-        if select_match and name != datalab.data._utils._SQL_MODULE_MAIN and len(query) == 0:
+        if select_match and name != google.datalab.data._utils._SQL_MODULE_MAIN and len(query) == 0:
           # Avoid DEFINE query name\nSELECT ... being seen as an empty DEFINE followed by SELECT
           continue
 
         # Save the query
-        statement = datalab.data.SqlStatement(query, module)
+        statement = google.datalab.data.SqlStatement(query, module)
         module.__dict__[name] = statement
         # And set the 'last' query to be this too
-        module.__dict__[datalab.data._utils._SQL_MODULE_LAST] = statement
+        module.__dict__[google.datalab.data._utils._SQL_MODULE_LAST] = statement
 
       # Get the query name and strip off our syntactic sugar if appropriate.
       if define_match:
         name = define_match.group(1)
         lines[i] = define_match.group(2)
       else:
-        name = datalab.data._utils._SQL_MODULE_MAIN
+        name = google.datalab.data._utils._SQL_MODULE_MAIN
 
       # Save the starting line index of the new query
       last_def = i
@@ -356,14 +356,14 @@ def _split_cell(cell, module):
   if last_def >= 0:
     # We were in a query so save this tail query.
     query = '\n'.join([line for line in lines[last_def:] if len(line)]).strip()
-    statement = datalab.data.SqlStatement(query, module)
+    statement = google.datalab.data.SqlStatement(query, module)
     module.__dict__[name] = statement
-    module.__dict__[datalab.data._utils._SQL_MODULE_LAST] = statement
+    module.__dict__[google.datalab.data._utils._SQL_MODULE_LAST] = statement
 
   if code is None:
     code = ''
-  module.__dict__[datalab.data._utils._SQL_MODULE_ARGPARSE] = _arguments(code, module)
-  return module.__dict__.get(datalab.data._utils._SQL_MODULE_LAST, None)
+  module.__dict__[google.datalab.data._utils._SQL_MODULE_ARGPARSE] = _arguments(code, module)
+  return module.__dict__.get(google.datalab.data._utils._SQL_MODULE_LAST, None)
 
 
 def sql_cell(args, cell):
@@ -393,7 +393,7 @@ def sql_cell(args, cell):
   if not args['module']:
       # Execute now
       if query:
-        return datalab.bigquery.Query(query, values=ipy.user_ns) \
+        return google.datalab.bigquery.Query(query, values=ipy.user_ns) \
           .execute(dialect=args['dialect'], billing_tier=args['billing']).results
   else:
     # Add it as a module

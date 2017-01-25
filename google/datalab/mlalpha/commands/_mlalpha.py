@@ -28,10 +28,10 @@ from plotly.offline import iplot
 import urllib
 import yaml
 
-import datalab.context
-import datalab.data
-import datalab.mlalpha
-import datalab.utils.commands
+import google.datalab.context
+import google.datalab.data
+import google.datalab.mlalpha
+import google.datalab.utils.commands
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -45,7 +45,7 @@ def mlalpha(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  parser = datalab.utils.commands.CommandParser(prog="mlalpha", description="""
+  parser = google.datalab.utils.commands.CommandParser(prog="mlalpha", description="""
 Execute various ml-related operations. Use "%%mlalpha <command> -h" for help on a specific command.
 """)
   train_parser = parser.subcommand('train', 'Run a training job.')
@@ -157,8 +157,8 @@ Execute various ml-related operations. Use "%%mlalpha <command> -h" for help on 
   package_parser.add_argument('--name', help='The name of the package.', required=True)
   package_parser.add_argument('--output', help='the output dir of the package.', required=True)
   package_parser.set_defaults(func=_package)
-  namespace = datalab.utils.commands.notebook_environment()
-  return datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
+  namespace = google.datalab.utils.commands.notebook_environment()
+  return google.datalab.utils.commands.handle_magic_line(line, cell, parser, namespace=namespace)
 
 
 def _get_replica_count(config):
@@ -181,7 +181,7 @@ def _local_train_callback(replica_spec, new_msgs, done, all_msgs):
     IPython.display.display_html('<p>Job Running...</p>', raw=True)
     log_file_html = ''
     log_url_prefix = ''
-    if datalab.context._utils._in_datalab_docker():
+    if google.datalab.context._utils._in_datalab_docker():
       log_url_prefix = '/_nocachecontent/'
     for job_type, replicas in replica_spec.iteritems():
       if replicas > 0:
@@ -225,7 +225,7 @@ args:
           for x in zip(parameters, required_local, required_cloud, description)]
   html = ('<p>A training input template is created in next cell for you. See cell input ' +
           'instructions below.</p>')
-  html += datalab.utils.commands.HtmlBuilder.render_table(data,
+  html += google.datalab.utils.commands.HtmlBuilder.render_table(data,
       ['Parameters', 'Local Run Required', 'Cloud Run Required', 'Description'])
 
   return IPython.core.display.HTML(html)
@@ -236,18 +236,18 @@ def _train(args, cell):
   if not cell:
     return _output_train_template()
 
-  env = datalab.utils.commands.notebook_environment()
-  config = datalab.utils.commands.parse_config(cell, env)
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell, env)
   if args['cloud']:
-    datalab.utils.commands.validate_config_must_have(config,
+    google.datalab.utils.commands.validate_config_must_have(config,
         ['package_uris', 'python_module', 'scale_tier', 'region'])
-    runner = datalab.mlalpha.CloudRunner(config)
+    runner = google.datalab.mlalpha.CloudRunner(config)
     job_info = runner.run()
     job_short_name = job_info['jobId']
     html = '<p>Job "%s" was submitted successfully.<br/>' % job_short_name
     html += 'Run "%%mlalpha jobs --name %s" to view the status of the job.</p>' % job_short_name
     log_url_query_strings = {
-      'project': datalab.context.Context.default().project_id,
+      'project': google.datalab.context.Context.default().project_id,
       'resource': 'ml.googleapis.com/job_id/' + job_short_name
     }
     log_url = 'https://console.developers.google.com/logs/viewer?' + \
@@ -265,7 +265,7 @@ def _train(args, cell):
       if '_ml_modules_main_' not in env:
         raise Exception('Expect one ml module defined with "--main flag" as the python ' +
                         'program entry point.')
-      package_path = datalab.mlalpha.Packager().package(env['_ml_modules_'], 'trainer')
+      package_path = google.datalab.mlalpha.Packager().package(env['_ml_modules_'], 'trainer')
       config['package_uris'] = package_path
       config['python_module'] = 'trainer.' + env['_ml_modules_main_']
 
@@ -275,12 +275,12 @@ def _train(args, cell):
     replica_spec = {'master': masters, 'worker': workers, 'ps': parameter_servers}
     all_messages = []
     log_dir = os.getcwd()
-    if datalab.context._utils._in_datalab_docker():
-      log_dir = '/datalab/nocachecontent'
+    if google.datalab.context._utils._in_datalab_docker():
+      log_dir = '/google.datalab/nocachecontent'
       if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     program_args = config.get('args', None)
-    runner = datalab.mlalpha.LocalRunner(trainer_uri, module_name, log_dir, replica_spec, program_args, config)
+    runner = google.datalab.mlalpha.LocalRunner(trainer_uri, module_name, log_dir, replica_spec, program_args, config)
     runner.run(_local_train_callback, all_messages, 3)
     if package_path is not None:
       os.remove(package_path)
@@ -346,8 +346,8 @@ def _plot_hyperparams_tuning(training_input, training_output):
           });
 </script>
 """
-  graph_id = 'v' + datalab.utils.commands.Html.next_id()
-  grid_id = 'g' + datalab.utils.commands.Html.next_id()
+  graph_id = 'v' + google.datalab.utils.commands.Html.next_id()
+  grid_id = 'g' + google.datalab.utils.commands.Html.next_id()
   color_range_string = json.dumps([min(data['Objective']), max(data['Objective'])])
   data_string = json.dumps(data)
   maximize_string = json.dumps(maximize)
@@ -357,7 +357,7 @@ def _plot_hyperparams_tuning(training_input, training_output):
 
 def _jobs(args, _):
   """ List the ML jobs in a project. """
-  jobs = datalab.mlalpha.Jobs(filter=args['filter'])
+  jobs = google.datalab.mlalpha.Jobs(filter=args['filter'])
   if args['name']:
     job = jobs.get_job_by_name(args['name'])
     if args['trials']:
@@ -367,7 +367,7 @@ def _jobs(args, _):
       return _plot_hyperparams_tuning(job.info['trainingInput'], job.info['trainingOutput'])
     else:
       job_yaml = yaml.safe_dump(job.info)
-    return datalab.utils.commands.render_text(job_yaml, preformatted=True)
+    return google.datalab.utils.commands.render_text(job_yaml, preformatted=True)
   else:
     count = int(args['count'] or 10)
     data = []
@@ -376,7 +376,7 @@ def _jobs(args, _):
         break
       count -= 1
       data.append({'Id': job['jobId'], 'State': job.get('state', 'UNKNOWN')})
-    return datalab.utils.commands.render_dictionary(data, ['Id', 'State'])
+    return google.datalab.utils.commands.render_dictionary(data, ['Id', 'State'])
 
 
 def _plot(data, x_name, x_title, y_names):
@@ -437,7 +437,7 @@ def _summary(args, _):
     for dir_pattern in dirs:
       for dir in get_dirs(dir_pattern):
         dir_index += 1
-        summary = datalab.mlalpha.Summary(dir)
+        summary = google.datalab.mlalpha.Summary(dir)
         trace_events_time = []
         trace_events_step = []
         for event_name in event_names:
@@ -462,10 +462,10 @@ def _summary(args, _):
     event_names = []
     for dir_pattern in dirs:
       for dir in get_dirs(dir_pattern):
-        summary = datalab.mlalpha.Summary(dir)
+        summary = google.datalab.mlalpha.Summary(dir)
         event_names += summary.list_events()
     event_names = list(set(event_names))  # remove duplicates
-    return datalab.utils.commands.render_list(event_names)
+    return google.datalab.utils.commands.render_list(event_names)
 
 
 def _output_features_template():
@@ -485,15 +485,15 @@ def _features(args, cell):
     _output_features_template()
     return
 
-  env = datalab.utils.commands.notebook_environment()
-  config = datalab.utils.commands.parse_config(cell, env)
-  datalab.utils.commands.validate_config(config, ['path', 'target'],
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(config, ['path', 'target'],
       optional_keys=['headers', 'id', 'format'])
   format = config.get('format', 'csv')
   # For now, support CSV and TSV only.
-  datalab.utils.commands.validate_config_value(format, ['csv', 'tsv'])
+  google.datalab.utils.commands.validate_config_value(format, ['csv', 'tsv'])
   delimiter = ',' if format == 'csv' else '\t'
-  csv = datalab.data.Csv(config['path'], delimiter=delimiter)
+  csv = google.datalab.data.Csv(config['path'], delimiter=delimiter)
   headers = None
   if 'headers' in config:
     headers = [e.strip() for e in config['headers'].split(',')]
@@ -559,7 +559,7 @@ class CsvFeatures(object):
 
 def _predict(args, cell):
   if args['data'] is not None:
-    instances = datalab.utils.commands.get_notebook_item(args['data'])
+    instances = google.datalab.utils.commands.get_notebook_item(args['data'])
     if instances is None:
       raise Exception('Data "%s" is not defined' % args['data'])
   elif cell is not None:
@@ -574,36 +574,36 @@ def _predict(args, cell):
     parts = args['model'].split('.')
     if len(parts) != 2:
       raise Exception('Invalid model name for cloud prediction. Use "model.version".')
-    lp = datalab.mlalpha.CloudPredictor(parts[0], parts[1],
+    lp = google.datalab.mlalpha.CloudPredictor(parts[0], parts[1],
                                    label_output=args['label'],
                                    project_id=args['project'])
   else:
-    lp = datalab.mlalpha.LocalPredictor(args['model'],
+    lp = google.datalab.mlalpha.LocalPredictor(args['model'],
                                    label_output=args['label'])
-  return datalab.utils.commands.render_text(yaml.safe_dump(lp.predict(instances),
+  return google.datalab.utils.commands.render_text(yaml.safe_dump(lp.predict(instances),
                                                            default_flow_style=False),
                                             preformatted=True)
 
 
 def _model(args, _):
   if args['name'] is None:
-    data = list(datalab.mlalpha.CloudModels(project_id=args['project']))
+    data = list(google.datalab.mlalpha.CloudModels(project_id=args['project']))
     if len(data) > 0:
-      return datalab.utils.commands.render_dictionary(data, data[0].keys())
+      return google.datalab.utils.commands.render_dictionary(data, data[0].keys())
     print 'No models found.'
     return
 
   parts = args['name'].split('.')
   if len(parts) == 1:
-    data = list(datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project']))
+    data = list(google.datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project']))
     if len(data) > 0:
-      return datalab.utils.commands.render_dictionary(data, data[0].keys())
+      return google.datalab.utils.commands.render_dictionary(data, data[0].keys())
     print 'No versions found.'
     return
   elif len(parts) == 2:
-    versions = datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
+    versions = google.datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
     version_yaml = yaml.safe_dump(versions.get(parts[1]))
-    return datalab.utils.commands.render_text(version_yaml, preformatted=True)
+    return google.datalab.utils.commands.render_text(version_yaml, preformatted=True)
   else:
     raise Exception('Too many "." in name. Use "model" or "model.version".')
 
@@ -612,17 +612,17 @@ def _deploy(args, _):
   parts = args['name'].split('.')
   if len(parts) != 2:
     raise Exception('Invalid model name. Use "model.version".')
-  versions = datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
+  versions = google.datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
   versions.deploy(parts[1], args['path'])
 
 
 def _delete(args, _):
   parts = args['name'].split('.')
   if len(parts) == 1:
-    models = datalab.mlalpha.CloudModels(project_id=args['project'])
+    models = google.datalab.mlalpha.CloudModels(project_id=args['project'])
     models.delete(parts[0])
   elif len(parts) == 2:
-    versions = datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
+    versions = google.datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
     versions.delete(parts[1])
   else:
     raise Exception('Too many "." in name. Use "model" or "model.version".')
@@ -658,7 +658,7 @@ options = {
 }
 opts = beam.pipeline.PipelineOptions(flags=[], **options)
 pipeline = beam.Pipeline('DataflowPipelineRunner', options=opts)
-""" % (job_name_prefix, datalab.context.Context.default().project_id)
+""" % (job_name_prefix, google.datalab.context.Context.default().project_id)
   else:
     content_pipeline = """pipeline = beam.Pipeline('DirectPipelineRunner')\n"""
 
@@ -769,12 +769,12 @@ def _preprocess(args, cell):
     _output_preprocess_template(args['cloud'])
     return
 
-  env = datalab.utils.commands.notebook_environment()
-  config = datalab.utils.commands.parse_config(cell, env)
-  datalab.utils.commands.validate_config(config,
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(config,
      ['train_data_path', 'data_format', 'output_dir', 'feature_set_class_name'],
      optional_keys=['eval_data_path'])
-  datalab.utils.commands.validate_config_value(config['data_format'], ['CSV', 'JSON'])
+  google.datalab.utils.commands.validate_config_value(config['data_format'], ['CSV', 'JSON'])
   command = '%%mlalpha preprocess'
   if args['cloud']:
     command += ' --cloud'
@@ -815,7 +815,7 @@ import json
 import os
 """
 
-  target_name, scenario = datalab.mlalpha.Metadata(metadata_path).get_target_name_and_scenario()
+  target_name, scenario = google.datalab.mlalpha.Metadata(metadata_path).get_target_name_and_scenario()
   target_type = 'float_list' if scenario == 'continuous' else 'int64_list'
   content_definitions = \
 """def extract_values((example, prediction)):
@@ -889,11 +889,11 @@ confusion_matrix | beam.io.Write('WriteConfusionMatrix', confusion_matrix_sink)
     content += """
 # View Confusion Matrix with the following code:
 #
-# import datalab.mlalpha
+# import google.datalab.mlalpha
 # import yaml
 # with ml.util._file.open_local_or_gcs(confusion_matrix_file, 'r') as f:
 #   data = [yaml.load(line) for line in f.read().rstrip().split('\\n')]
-# datalab.mlalpha.ConfusionMatrix([d['predicted'] for d in data],
+# google.datalab.mlalpha.ConfusionMatrix([d['predicted'] for d in data],
 #                            [d['target'] for d in data],
 #                            [d['count'] for d in data]).plot()
 """
@@ -905,9 +905,9 @@ def _evaluate(args, cell):
     _output_evaluate_template(args['cloud'])
     return
 
-  env = datalab.utils.commands.notebook_environment()
-  config = datalab.utils.commands.parse_config(cell, env)
-  datalab.utils.commands.validate_config(config,
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(config,
      ['preprocessed_eval_data_path', 'metadata_path', 'model_dir', 'output_dir'],
      optional_keys=['output_prediction_name', 'output_score_name'])
   command = '%%mlalpha evaluate'
@@ -934,15 +934,15 @@ def _dataset(args, cell):
   if not cell:
     _output_dataset_template(args['name'])
     return
-  env = datalab.utils.commands.notebook_environment()
-  config = datalab.utils.commands.parse_config(cell, env)
-  datalab.utils.commands.validate_config(config, ['source', 'featureset'],
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(config, ['source', 'featureset'],
       optional_keys=['format'])
   if config['featureset'] not in env:
     raise Exception('"%s" is not defined.' % config['featureset'])
   featureset_class = env[config['featureset']]
   format = config.get('format', 'csv')
-  ds = datalab.mlalpha.DataSet(featureset_class(), config['source'], format=format)
+  ds = google.datalab.mlalpha.DataSet(featureset_class(), config['source'], format=format)
   env[args['name']] = ds
 
 
@@ -951,7 +951,7 @@ def _module(args, cell):
     raise Exception('Expect code in cell.')
     return
 
-  env = datalab.utils.commands.notebook_environment()
+  env = google.datalab.utils.commands.notebook_environment()
   if '_ml_modules_' not in env:
     modules = {}
     env['_ml_modules_'] = modules
@@ -962,10 +962,10 @@ def _module(args, cell):
 
 
 def _package(args, cell):
-  env = datalab.utils.commands.notebook_environment()
+  env = google.datalab.utils.commands.notebook_environment()
   if '_ml_modules_' not in env:
     raise Exception('No ml modules defined. Expect modules defined with "%%mlalpha module"')
-  package_path = datalab.mlalpha.Packager().package(env['_ml_modules_'], args['name'])
+  package_path = google.datalab.mlalpha.Packager().package(env['_ml_modules_'], args['name'])
   google.cloud.ml.util._file.create_directory(args['output'])
   dest = os.path.join(args['output'], os.path.basename(package_path))
   google.cloud.ml.util._file.copy_file(package_path, dest)

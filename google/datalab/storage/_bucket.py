@@ -18,8 +18,8 @@ from builtins import object
 import dateutil.parser
 import re
 
-import datalab.context
-import datalab.utils
+import google.datalab.context
+import google.datalab.utils
 
 from . import _api
 from . import _item
@@ -98,7 +98,7 @@ class Bucket(object):
           level are used.
     """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name = name
@@ -210,7 +210,7 @@ class Buckets(object):
           level are used.
     """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._project_id = project_id if project_id else self._api.project_id
@@ -227,7 +227,7 @@ class Buckets(object):
     """
     try:
       _ = self._api.buckets_get(name)
-    except datalab.utils.RequestException as e:
+    except google.datalab.utils.RequestException as e:
       if e.status == 404:
         return False
       raise e
@@ -264,4 +264,4 @@ class Buckets(object):
     return buckets, page_token
 
   def __iter__(self):
-    return iter(datalab.utils.Iterator(self._retrieve_buckets))
+    return iter(google.datalab.utils.Iterator(self._retrieve_buckets))

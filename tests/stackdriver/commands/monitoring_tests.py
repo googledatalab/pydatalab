@@ -16,15 +16,15 @@ import unittest
 
 import pandas
 
-import datalab.stackdriver.commands._monitoring as monitoring_commands
+import google.datalab.stackdriver.commands._monitoring as monitoring_commands
 
 PROJECT = 'my-project'
 
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.stackdriver.commands._monitoring._render_dataframe')
-  @mock.patch('datalab.stackdriver.monitoring.MetricDescriptors')
+  @mock.patch('google.datalab.stackdriver.commands._monitoring._render_dataframe')
+  @mock.patch('google.datalab.stackdriver.monitoring.MetricDescriptors')
   def test_list_metric_descriptors(self, mock_metric_descriptors, mock_render_dataframe):
     METRIC_TYPES = ['compute.googleapis.com/instances/cpu/utilization',
                     'compute.googleapis.com/instances/cpu/usage_time']
@@ -41,8 +41,8 @@ class TestCases(unittest.TestCase):
     mock_metric_class.as_dataframe.assert_called_once_with(pattern=PATTERN)
     mock_render_dataframe.assert_called_once_with(DATAFRAME)
 
-  @mock.patch('datalab.stackdriver.commands._monitoring._render_dataframe')
-  @mock.patch('datalab.stackdriver.monitoring.ResourceDescriptors')
+  @mock.patch('google.datalab.stackdriver.commands._monitoring._render_dataframe')
+  @mock.patch('google.datalab.stackdriver.monitoring.ResourceDescriptors')
   def test_list_resource_descriptors(self, mock_resource_descriptors, mock_render_dataframe):
     RESOURCE_TYPES = ['gce_instance', 'aws_ec2_instance']
     DATAFRAME = pandas.DataFrame(RESOURCE_TYPES, columns=['Resource type'])
@@ -58,8 +58,8 @@ class TestCases(unittest.TestCase):
     mock_resource_class.as_dataframe.assert_called_once_with(pattern=PATTERN)
     mock_render_dataframe.assert_called_once_with(DATAFRAME)
 
-  @mock.patch('datalab.stackdriver.commands._monitoring._render_dataframe')
-  @mock.patch('datalab.stackdriver.monitoring.Groups')
+  @mock.patch('google.datalab.stackdriver.commands._monitoring._render_dataframe')
+  @mock.patch('google.datalab.stackdriver.monitoring.Groups')
   def test_list_groups(self, mock_groups, mock_render_dataframe):
     GROUP_IDS = ['GROUP-205', 'GROUP-101']
     DATAFRAME = pandas.DataFrame(GROUP_IDS, columns=['Group ID'])

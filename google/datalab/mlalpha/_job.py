@@ -12,8 +12,8 @@
 
 """Implements Cloud ML Operation wrapper."""
 
-import datalab.utils
-import datalab.context
+import google.datalab.utils
+import google.datalab.context
 from googleapiclient import discovery
 
 
@@ -35,7 +35,7 @@ class Job(object):
       api: optional CloudML API client.
     """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     if api is None:
       api = discovery.build('ml', 'v1beta1', credentials=self._context.credentials,
@@ -68,7 +68,7 @@ class Jobs(object):
     """
     self._filter = filter
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     if api is None:
       api = discovery.build('ml', 'v1beta1', credentials=self._context.credentials,
@@ -84,7 +84,7 @@ class Jobs(object):
     return jobs, page_token
 
   def __iter__(self):
-    return iter(datalab.utils.Iterator(self._retrieve_jobs))
+    return iter(google.datalab.utils.Iterator(self._retrieve_jobs))
 
   def get_job_by_name(self, name):
     """ get a CloudML job by its name.

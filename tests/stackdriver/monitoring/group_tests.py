@@ -15,8 +15,8 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.context
-import datalab.stackdriver.monitoring as gcm
+import google.datalab.context
+import google.datalab.stackdriver.monitoring as gcm
 
 PROJECT = 'my-project'
 GROUP_IDS = ['GROUP-205', 'GROUP-101']
@@ -34,7 +34,7 @@ class TestCases(unittest.TestCase):
     self.context = self._create_context()
     self.groups = gcm.Groups(context=self.context)
 
-  @mock.patch('datalab.context._context.Context.default')
+  @mock.patch('google.datalab.context._context.Context.default')
   def test_constructor(self, mock_context_default):
     mock_context_default.return_value = self.context
 
@@ -117,7 +117,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context(project_id='test'):
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)
 
   @staticmethod
   def _list_groups_get_result(context):

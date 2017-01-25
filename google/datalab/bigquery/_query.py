@@ -15,9 +15,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import datalab.context
-import datalab.data
-import datalab.utils
+import google.datalab.context
+import google.datalab.data
+import google.datalab.utils
 
 from . import _api
 from . import _federated_table
@@ -79,7 +79,7 @@ class Query(object):
       Exception if expansion of any variables failed.
       """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._data_sources = data_sources
@@ -94,7 +94,7 @@ class Query(object):
     if values is None:
       values = kwargs
 
-    self._sql = datalab.data.SqlModule.expand(sql, values)
+    self._sql = google.datalab.data.SqlModule.expand(sql, values)
 
     # We need to take care not to include the same UDF code twice so we use sets.
     udfs = set(udfs if udfs else [])
@@ -260,7 +260,7 @@ class Query(object):
                                                            csv_header=csv_header,
                                                            compress=compress)
 
-  @datalab.utils.async_method
+  @google.datalab.utils.async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
                     compress=False, use_cache=True, dialect=None, billing_tier=None):
     """Exports the query results to GCS. Returns a Job immediately.
@@ -349,7 +349,7 @@ class Query(object):
         .to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
     return path
 
-  @datalab.utils.async_method
+  @google.datalab.utils.async_method
   def to_file_async(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
                     dialect=None, billing_tier=None):
     """Save the results to a local file in CSV format. Returns a Job immediately.
