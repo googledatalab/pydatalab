@@ -332,8 +332,8 @@ def cloud_train(preprocessed_dir, schema_file, transforms_file, output_dir,
 def local_predict(model_dir, prediction_input_file):
   """Runs local prediction.
 
-  Runs local prediction in memory and prints the results to the screen. For 
-  running prediction on a large dataset or saving the results, run 
+  Runs local prediction in memory and prints the results to the screen. For
+  running prediction on a large dataset or saving the results, run
   local_batch_prediction or batch_prediction.
 
   Args:
@@ -341,9 +341,8 @@ def local_predict(model_dir, prediction_input_file):
         where OUT is the value of output_dir when local_training was ran.
     prediction_input_file: csv file that has the same schem as the input
         files used during local_preprocess, except that the target column is
-        removed. 
+        removed.
   """
-  
   #TODO(brandondutra): remove this hack once cloudml 1.8 is released.
   # Check that the model folder has a metadata.yaml file. If not, copy it.
   if not os.path.isfile(os.path.join(model_dir, 'metadata.yaml')):
@@ -362,8 +361,8 @@ def local_predict(model_dir, prediction_input_file):
 def cloud_predict(model_name, prediction_input_file, version_name=None):
   """Use Online prediction.
 
-  Runs online prediction in the cloud and prints the results to the screen. For 
-  running prediction on a large dataset or saving the results, run 
+  Runs online prediction in the cloud and prints the results to the screen. For
+  running prediction on a large dataset or saving the results, run
   local_batch_prediction or batch_prediction.
 
   Args:
@@ -371,11 +370,11 @@ def cloud_predict(model_name, prediction_input_file, version_name=None):
         where OUT is the value of output_dir when local_training was ran.
     prediction_input_file: csv file that has the same schem as the input
         files used during local_preprocess, except that the target column is
-        removed. 
+        removed.
     vsersion_name: Optional version of the model to use. If None, the default
         version is used.
 
-  Before using this, the model must be created. This can be done by running 
+  Before using this, the model must be created. This can be done by running
   two gcloud commands:
   1) gcloud beta ml models create NAME
   2) gcloud beta ml models versions create VERSION --model NAME \
@@ -394,15 +393,52 @@ def cloud_predict(model_name, prediction_input_file, version_name=None):
 
   print('CloudML cloud online prediction, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
-  print('Online prediction done.')
+  print('CloudML online prediction done.')
 
 
-def local_batch_predict():
-  """Not Implemented Yet. needs my own code starting from tf.example"""
-  print('local_batch_predict')
+def local_batch_predict(model_dir, prediction_input_file, output_dir):
+  """Local batch prediction."""
+
+  cmd = ['python -m google.cloud.ml.dataflow.batch_prediction_main'
+         '--input_file_format=text',
+         '--input_file_patterns=%s' % prediction_input_file,
+         '--output_location=%s' % output_dir,
+         '--model_dir=%s' % model_dir]
+
+  _run_cmd(' '.join(cmd))
+  print('Local batch prediction done.')
 
 
-def cloud_batch_predict():
-  """Not Implemented Yet. gcloud beta ml jobs submit prediction XXX"""
-  print('cloud_batch_predict')
+def cloud_batch_predict(model_name, csv_input_paths, output_dir, region,
+                        job_name=None, version_name=None):
+  """Cloud batch prediction."""
+
+  job_name = job_name or ('structured_data_batch_predict_' +
+                          datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+
+  if (not csv_input_paths.startswith('gs://') or
+      not output_dir.startswith('gs://')):
+    print('ERROR: csv_input_paths and output_dir must point to a location on '
+          'GCS.')
+    return
+
+  cmd = ['gcloud beta ml jobs submit prediction %s' % job_name,
+         '--model=%s' % model_name,
+         '--region=%s' % region,
+         '--data-format=TEXT',
+         '--input-paths=%s' % csv_input_paths
+         '--output-path=%s' % output_dir]
+  if version_name:
+    cmd += ['--version=%s' % version_name]
+
+  print('CloudML batch prediction job submitted.')
+
+  if _is_in_IPython():
+    import IPython
+
+    dataflow_url = ('https://console.developers.google.com/ml/jobs?project=%s'
+                    % project_id)
+    html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
+            'the prediction job %s.</p><br/>' % (dataflow_url, job_name))
+    IPython.display.display_html(html, raw=True)
 
