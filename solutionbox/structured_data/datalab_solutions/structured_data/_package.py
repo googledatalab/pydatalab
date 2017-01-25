@@ -109,8 +109,6 @@ def local_preprocess(input_file_path, output_dir, schema_file,
     eval_percent: Int in range [0, 100].
     train_percent: Int in range [0, 100].
   """
-
-
   percent_flags = _percent_flags(train_percent, eval_percent, test_percent)
   this_folder = os.path.dirname(os.path.abspath(__file__))
 
@@ -122,7 +120,6 @@ def local_preprocess(input_file_path, output_dir, schema_file,
 
   print('Local preprocess, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
-
   print('Local preprocessing done.')
 
 
@@ -149,7 +146,6 @@ def cloud_preprocess(input_file_path, output_dir, schema_file,
     job_name: String. Job name as listed on the Dataflow service. If None, a
         default job name is selected.
   """
-
   percent_flags = _percent_flags(train_percent, eval_percent, test_percent)
   this_folder = os.path.dirname(os.path.abspath(__file__))
   project_id = project_id or _default_project()
@@ -167,7 +163,6 @@ def cloud_preprocess(input_file_path, output_dir, schema_file,
 
   print('Cloud preprocess, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
-
   print('Cloud preprocessing job submitted.')
 
   if _is_in_IPython():
@@ -178,7 +173,6 @@ def cloud_preprocess(input_file_path, output_dir, schema_file,
     html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
             'preprocessing job %s.</p><br/>' % (dataflow_url, job_name))
     IPython.display.display_html(html, raw=True)
-
 
 
 def local_train(preprocessed_dir, schema_file, transforms_file, output_dir,
@@ -198,8 +192,6 @@ def local_train(preprocessed_dir, schema_file, transforms_file, output_dir,
         middle layer will have 3 nodes, and the laster layer will have 2 nodes.
     max_steps: Int. Number of training steps to perform.
   """
-  #_check_transforms_config_file(transforms_config_file)
-
   #TODO(brandondutra): allow other flags to be set like batch size/learner rate
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
 
@@ -255,7 +247,6 @@ def cloud_train(preprocessed_dir, schema_file, transforms_file, output_dir,
     scale_tier: The CloudML scale tier. CUSTOM tiers are currently not supported
         in this package. See https://cloud.google.com/ml/reference/rest/v1beta1/projects.jobs#ScaleTier
   """
-
   #TODO(brandondutra): allow other flags to be set like batch size,
   #   learner rate, custom scale tiers, etc
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
@@ -316,12 +307,10 @@ def cloud_train(preprocessed_dir, schema_file, transforms_file, output_dir,
 
   print('CloudML training, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
-
   print('CloudML training job submitted.')
 
   if _is_in_IPython():
     import IPython
-
     dataflow_url = ('https://console.developers.google.com/ml/jobs?project=%s'
                     % project_id)
     html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
@@ -351,11 +340,10 @@ def local_predict(model_dir, prediction_input_file):
     shutil.copy2(os.path.join(model_dir, 'metadata.json'),
                  os.path.join(model_dir, 'metadata.yaml'))
 
-
   cmd = ['gcloud beta ml local predict',
          '--model-dir=%s' % model_dir,
          '--text-instances=%s' % prediction_input_file]
-
+  print('Local prediction, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
   print('Local prediction done.')
 
@@ -408,13 +396,11 @@ def local_batch_predict(model_dir, prediction_input_file, output_dir):
         in preprocessing except that the target column is removed.
     output_dir: folder to save results to.
   """
-
   #TODO(brandondutra): remove this hack once cloudml 1.8 is released.
   # Check that the model folder has a metadata.yaml file. If not, copy it.
   if not os.path.isfile(os.path.join(model_dir, 'metadata.yaml')):
     shutil.copy2(os.path.join(model_dir, 'metadata.json'),
                  os.path.join(model_dir, 'metadata.yaml'))
-
 
   cmd = ['python -m google.cloud.ml.dataflow.batch_prediction_main',
          '--input_file_format=text',
@@ -445,7 +431,6 @@ def cloud_batch_predict(model_name, prediction_input_file, output_dir, region,
     version_name: model version to use. If node, the default version of the
         model is used.
     """
-
   job_name = job_name or ('structured_data_batch_predict_' +
                           datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
@@ -476,5 +461,3 @@ def cloud_batch_predict(model_name, prediction_input_file, output_dir, region,
     html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
             'the prediction job %s.</p><br/>' % (dataflow_url, job_name))
     IPython.display.display_html(html, raw=True)
-
-
