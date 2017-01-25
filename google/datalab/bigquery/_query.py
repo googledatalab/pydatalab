@@ -103,65 +103,6 @@ class Query(object):
         udfs.add(value)
     included_udfs = set([])
 
-    tokens = datalab.data.tokenize(self._sql)
-    udf_dict = {udf.name: udf for udf in udfs}
-
-    for i, token in enumerate(tokens):
-      # Find the preceding and following non-whitespace tokens
-      prior = i - 1
-      while prior >= 0 and tokens[prior].isspace():
-        prior -= 1
-      if prior < 0:
-        continue
-      next = i + 1
-      while next < len(tokens) and tokens[next].isspace():
-        next += 1
-      if next >= len(tokens):
-        continue
-
-      uprior = tokens[prior].upper()
-      if uprior != 'FROM' and uprior != 'JOIN':
-        continue
-
-      # Check for external tables.
-      if tokens[next] not in "[('\"":
-        if token not in data_sources:
-          if values and token in values:
-            if isinstance(values[token], _federated_table.FederatedTable):
-              data_sources[token] = values[token]
-
-      # Now check for UDF calls.
-      if uprior != 'FROM' or tokens[next] != '(':
-        continue
-
-      # We have a 'FROM token (' sequence.
-
-      if token in udf_dict:
-        udf = udf_dict[token]
-        if token not in included_udfs:
-          included_udfs.add(token)
-          if self._code is None:
-            self._code = []
-          self._code.append(udf.code)
-          if udf.imports:
-            self._imports.extend(udf.imports)
-
-        fields = ', '.join([f[0] for f in udf._outputs])
-        tokens[i] = '(SELECT %s FROM %s' % (fields, token)
-
-        # Find the closing parenthesis and add the additional one now needed.
-        num_paren = 0
-        j = i + 1
-        while j < len(tokens):
-          if tokens[j] == '(':
-            num_paren += 1
-          elif tokens[j] == ')':
-            num_paren -= 1
-            if num_paren == 0:
-              tokens[j] = '))'
-              break
-          j += 1
-
     self._external_tables = None
     if len(data_sources):
       self._external_tables = {}
@@ -169,8 +110,6 @@ class Query(object):
         if table.schema is None:
           raise Exception('Referenced external table %s has no known schema' % name)
         self._external_tables[name] = table._to_query_json()
-
-    self._sql = ''.join(tokens)
 
   def _repr_sql_(self):
     """Creates a SQL representation of this object.

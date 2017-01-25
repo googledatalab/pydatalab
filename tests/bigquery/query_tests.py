@@ -17,17 +17,17 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.bigquery
-import datalab.context
+import google.datalab.bigquery
+import google.datalab.context
 
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.bigquery._api.Api.tabledata_list')
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
-  @mock.patch('datalab.bigquery._api.Api.jobs_query_results')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_single_result_query(self, mock_api_tables_get, mock_api_jobs_get,
                                mock_api_jobs_query_results, mock_api_insert_query,
                                mock_api_tabledata_list):
@@ -48,10 +48,10 @@ class TestCases(unittest.TestCase):
     first_result = results[0]
     self.assertEqual('value1', first_result['field1'])
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
-  @mock.patch('datalab.bigquery._api.Api.jobs_query_results')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_empty_result_query(self, mock_api_tables_get, mock_api_jobs_get,
                               mock_api_jobs_query_results, mock_api_insert_query):
     mock_api_tables_get.return_value = TestCases._create_tables_get_result(0)
@@ -64,10 +64,10 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(0, results.length)
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
-  @mock.patch('datalab.bigquery._api.Api.jobs_query_results')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_incomplete_result_query(self,
                                    mock_api_tables_get,
                                    mock_api_jobs_get,
@@ -84,7 +84,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(1, results.length)
     self.assertEqual('test_job', results.job_id)
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
   def test_malformed_response_raises_exception(self, mock_api_insert_query):
     mock_api_insert_query.return_value = {}
 
@@ -94,28 +94,17 @@ class TestCases(unittest.TestCase):
       _ = q.results()
     self.assertEqual('Unexpected response from server', str(error.exception))
 
-  def test_udf_expansion(self):
-    sql = 'SELECT * FROM udf(source)'
-    udf = datalab.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf', 'code')
-    context = TestCases._create_context()
-    query = datalab.bigquery.Query(sql, udf=udf, context=context)
-    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
-
-    # Alternate form
-    query = datalab.bigquery.Query(sql, udfs=[udf], context=context)
-    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
-
   @staticmethod
   def _create_query(sql=None):
     if sql is None:
       sql = 'SELECT * ...'
-    return datalab.bigquery.Query(sql, context=TestCases._create_context())
+    return google.datalab.bigquery.Query(sql, context=TestCases._create_context())
 
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)
 
   @staticmethod
   def _create_insert_done_result():
