@@ -391,53 +391,86 @@ def cloud_predict(model_name, prediction_input_file, version_name=None):
   if version_name:
     cmd += ['--version=%s' % version_name]
 
-  print('CloudML cloud online prediction, running command: %s' % ' '.join(cmd))
+  print('CloudML online prediction, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
   print('CloudML online prediction done.')
 
 
 def local_batch_predict(model_dir, prediction_input_file, output_dir):
-  """Local batch prediction."""
+  """Local batch prediction.
 
-  cmd = ['python -m google.cloud.ml.dataflow.batch_prediction_main'
+  Args:
+    model_dir: local path to trained model.
+    prediction_input_file: File path to input files. May contain a file pattern.
+        Only csv files are supported, and the scema must match what was used
+        in preprocessing except that the target column is removed.
+    output_dir: folder to save results to.
+  """
+
+  #TODO(brandondutra): remove this hack once cloudml 1.8 is released.
+  # Check that the model folder has a metadata.yaml file. If not, copy it.
+  if not os.path.isfile(os.path.join(model_dir, 'metadata.yaml')):
+    shutil.copy2(os.path.join(model_dir, 'metadata.json'),
+                 os.path.join(model_dir, 'metadata.yaml'))
+
+
+  cmd = ['python -m google.cloud.ml.dataflow.batch_prediction_main',
          '--input_file_format=text',
          '--input_file_patterns=%s' % prediction_input_file,
          '--output_location=%s' % output_dir,
          '--model_dir=%s' % model_dir]
 
+  print('Local batch prediction, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
   print('Local batch prediction done.')
 
 
-def cloud_batch_predict(model_name, csv_input_paths, output_dir, region,
+def cloud_batch_predict(model_name, prediction_input_file, output_dir, region,
                         job_name=None, version_name=None):
-  """Cloud batch prediction."""
+  """Cloud batch prediction.
+
+  Args:
+    model_name: name of the model. The model must already exist.
+    prediction_input_file: File path to input files. May contain a file pattern.
+        Only csv files are supported, and the scema must match what was used
+        in preprocessing except that the target column is removed. Files must
+        be on GCS
+    output_dir: GCS folder to safe results to.
+    region: GCP compute region to run the batch job. Try using your default
+        region first, as this cloud batch prediction is not avaliable in all
+        regions.
+    job_name: job name used for the cloud job.
+    version_name: model version to use. If node, the default version of the
+        model is used.
+    """
 
   job_name = job_name or ('structured_data_batch_predict_' +
                           datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
-  if (not csv_input_paths.startswith('gs://') or
+  if (not prediction_input_file.startswith('gs://') or
       not output_dir.startswith('gs://')):
-    print('ERROR: csv_input_paths and output_dir must point to a location on '
-          'GCS.')
+    print('ERROR: prediction_input_file and output_dir must point to a '
+          'location on GCS.')
     return
 
   cmd = ['gcloud beta ml jobs submit prediction %s' % job_name,
          '--model=%s' % model_name,
          '--region=%s' % region,
          '--data-format=TEXT',
-         '--input-paths=%s' % csv_input_paths
+         '--input-paths=%s' % prediction_input_file,
          '--output-path=%s' % output_dir]
   if version_name:
     cmd += ['--version=%s' % version_name]
 
+  print('CloudML batch prediction, running command: %s' % ' '.join(cmd))
+  _run_cmd(' '.join(cmd))
   print('CloudML batch prediction job submitted.')
 
   if _is_in_IPython():
     import IPython
 
     dataflow_url = ('https://console.developers.google.com/ml/jobs?project=%s'
-                    % project_id)
+                    % _default_project())
     html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
             'the prediction job %s.</p><br/>' % (dataflow_url, job_name))
     IPython.display.display_html(html, raw=True)
