@@ -18,7 +18,7 @@ import os
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record
 
-import datalab.storage as storage
+import google.datalab.storage as storage
 
 
 class Summary(object):

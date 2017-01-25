@@ -23,13 +23,13 @@ except ImportError:
 
 import fnmatch
 
-import datalab.utils.commands
-import datalab.context
+import google.datalab.utils.commands
+import google.datalab.context
 
 
 @IPython.core.magic.register_line_cell_magic
 def projects(line, cell=None):
-  parser = datalab.utils.commands.CommandParser.create('projects')
+  parser = google.datalab.utils.commands.CommandParser.create('projects')
 
   list_parser = parser.subcommand('list', 'List available projects.')
   list_parser.add_argument('-f', '--filter',
@@ -40,19 +40,19 @@ def projects(line, cell=None):
   set_parser.add_argument('id', help='The ID of the project to use')
   set_parser.set_defaults(func=_set_line, cell_prohibited=True)
 
-  return datalab.utils.commands.handle_magic_line(line, cell, parser)
+  return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
 def _list_line(args, _):
   # TODO(gram): should we use a paginated table?
   filter_ = args['filter'] if args['filter'] else '*'
-  data = [{'id': project.id, 'name': project.name} for project in datalab.context.Projects()
+  data = [{'id': project.id, 'name': project.name} for project in google.datalab.context.Projects()
                        if fnmatch.fnmatch(project.id, filter_)]
-  return IPython.core.display.HTML(datalab.utils.commands.HtmlBuilder.render_table(data, ['id', 'name']))
+  return IPython.core.display.HTML(google.datalab.utils.commands.HtmlBuilder.render_table(data, ['id', 'name']))
 
 
 def _set_line(args, _):
   id_ = args['id'] if args['id'] else ''
-  context = datalab.context.Context.default()
+  context = google.datalab.context.Context.default()
   context.set_project_id(id_)
-  datalab.context.Projects.save_default_id(id_)
+  google.datalab.context.Projects.save_default_id(id_)

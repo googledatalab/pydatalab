@@ -29,16 +29,16 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import datalab.bigquery
-import datalab.bigquery.commands
-import datalab.context
-import datalab.utils.commands
+import google.datalab.bigquery
+import google.datalab.bigquery.commands
+import google.datalab.context
+import google.datalab.utils.commands
 
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.utils.commands.notebook_environment')
-  @mock.patch('datalab.context._context.Context.default')
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.context._context.Context.default')
   def test_udf_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
     cell_body = \
@@ -56,7 +56,7 @@ function(r, emitFn) {
 """
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
-    datalab.bigquery.commands._bigquery._udf_cell({'module': 'word_filter'}, cell_body)
+    google.datalab.bigquery.commands._bigquery._udf_cell({'module': 'word_filter'}, cell_body)
     udf = env['word_filter']
     self.assertIsNotNone(udf)
     self.assertEquals('word_filter', udf._name)
@@ -68,7 +68,7 @@ function(r, emitFn) {
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)
 
   def test_sample_cell(self):
     # TODO(gram): complete this test

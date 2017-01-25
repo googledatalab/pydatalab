@@ -17,8 +17,8 @@ from builtins import object
 
 import dateutil.parser
 
-import datalab.utils
-import datalab.context
+import google.datalab.utils
+import google.datalab.context
 
 from . import _api
 
@@ -79,7 +79,7 @@ class Item(object):
           level are used.
     """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._bucket = bucket
@@ -131,7 +131,7 @@ class Item(object):
     """ Checks if the item exists. """
     try:
       return self.metadata is not None
-    except datalab.utils.RequestException:
+    except google.datalab.utils.RequestException:
       return False
     except Exception as e:
       raise e
@@ -242,7 +242,7 @@ class Items(object):
           level are used.
     """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._bucket = bucket
@@ -261,7 +261,7 @@ class Items(object):
     """
     try:
       _ = self._api.objects_get(self._bucket, key)
-    except datalab.utils.RequestException as e:
+    except google.datalab.utils.RequestException as e:
       if e.status == 404:
         return False
       raise e
@@ -288,5 +288,5 @@ class Items(object):
     return items, page_token
 
   def __iter__(self):
-    return iter(datalab.utils.Iterator(self._retrieve_items))
+    return iter(google.datalab.utils.Iterator(self._retrieve_items))
 

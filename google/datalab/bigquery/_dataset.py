@@ -15,8 +15,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import datalab.context
-import datalab.utils
+import google.datalab.context
+import google.datalab.utils
 
 from . import _api
 from . import _table
@@ -39,7 +39,7 @@ class Dataset(object):
       Exception if the name is invalid.
       """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_dataset_name(name, self._api.project_id)
@@ -47,7 +47,7 @@ class Dataset(object):
     self._info = None
     try:
       self._info = self._get_info()
-    except datalab.utils.RequestException:
+    except google.datalab.utils.RequestException:
       pass
 
   @property
@@ -80,7 +80,7 @@ class Dataset(object):
       if self._info is None:
         self._info = self._api.datasets_get(self._name_parts)
       return self._info
-    except datalab.utils.RequestException as e:
+    except google.datalab.utils.RequestException as e:
       if e.status == 404:
         return None
       raise e
@@ -199,11 +199,11 @@ class Dataset(object):
 
   def tables(self):
     """ Returns an iterator for iterating through the Tables in the dataset. """
-    return iter(datalab.utils.Iterator(self._retrieve_tables))
+    return iter(google.datalab.utils.Iterator(self._retrieve_tables))
 
   def views(self):
     """ Returns an iterator for iterating through the Views in the dataset. """
-    return iter(datalab.utils.Iterator(self._retrieve_views))
+    return iter(google.datalab.utils.Iterator(self._retrieve_views))
 
   def __iter__(self):
     """ Returns an iterator for iterating through the Tables in the dataset. """
@@ -237,7 +237,7 @@ class Datasets(object):
           level are used.
     """
     if context is None:
-      context = datalab.context.Context.default()
+      context = google.datalab.context.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._project_id = project_id if project_id else self._api.project_id
@@ -264,4 +264,4 @@ class Datasets(object):
   def __iter__(self):
     """ Returns an iterator for iterating through the Datasets in the project.
     """
-    return iter(datalab.utils.Iterator(self._retrieve_datasets))
+    return iter(google.datalab.utils.Iterator(self._retrieve_datasets))

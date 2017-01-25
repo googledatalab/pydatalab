@@ -18,8 +18,8 @@ standard_library.install_aliases()
 from builtins import object
 
 import urllib.request, urllib.parse, urllib.error
-import datalab.context
-import datalab.utils
+import google.datalab.context
+import google.datalab.utils
 
 
 class Api(object):
@@ -64,7 +64,7 @@ class Api(object):
     data = {'name': bucket}
 
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
-    return datalab.utils.Http.request(url, args=args, data=data, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, args=args, data=data, credentials=self._credentials)
 
   def buckets_delete(self, bucket):
     """Issues a request to delete a bucket.
@@ -75,7 +75,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
-    datalab.utils.Http.request(url, method='DELETE', credentials=self._credentials,
+    google.datalab.utils.Http.request(url, method='DELETE', credentials=self._credentials,
                                raw_response=True)
 
   def buckets_get(self, bucket, projection='noAcl'):
@@ -91,7 +91,7 @@ class Api(object):
     """
     args = {'projection': projection}
     url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
-    return datalab.utils.Http.request(url, credentials=self._credentials, args=args)
+    return google.datalab.utils.Http.request(url, credentials=self._credentials, args=args)
 
   def buckets_list(self, projection='noAcl', max_results=0, page_token=None, project_id=None):
     """Issues a request to retrieve the list of buckets.
@@ -116,7 +116,7 @@ class Api(object):
       args['pageToken'] = page_token
 
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
-    return datalab.utils.Http.request(url, args=args, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, args=args, credentials=self._credentials)
 
   def object_download(self, bucket, key, start_offset=0, byte_count=None):
     """Reads the contents of an object as text.
@@ -139,7 +139,7 @@ class Api(object):
         header += '%d' % byte_count
       headers['Range'] = header
     url = Api._DOWNLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return datalab.utils.Http.request(url, args=args, headers=headers,
+    return google.datalab.utils.Http.request(url, args=args, headers=headers,
                                       credentials=self._credentials, raw_response=True)
 
   def object_upload(self, bucket, key, content, content_type):
@@ -157,7 +157,7 @@ class Api(object):
     headers = {'Content-Type': content_type}
 
     url = Api._UPLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
-    return datalab.utils.Http.request(url, args=args, data=content, headers=headers,
+    return google.datalab.utils.Http.request(url, args=args, data=content, headers=headers,
                                       credentials=self._credentials, raw_response=True)
 
   def objects_copy(self, source_bucket, source_key, target_bucket, target_key):
@@ -175,7 +175,7 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._OBJECT_COPY_PATH % (source_bucket, Api._escape_key(source_key),
                                                     target_bucket, Api._escape_key(target_key)))
-    return datalab.utils.Http.request(url, method='POST', credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, method='POST', credentials=self._credentials)
 
   def objects_delete(self, bucket, key):
     """Deletes the specified object.
@@ -187,7 +187,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    datalab.utils.Http.request(url, method='DELETE', credentials=self._credentials,
+    google.datalab.utils.Http.request(url, method='DELETE', credentials=self._credentials,
                                raw_response=True)
 
   def objects_get(self, bucket, key, projection='noAcl'):
@@ -207,7 +207,7 @@ class Api(object):
       args['projection'] = projection
 
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return datalab.utils.Http.request(url, args=args, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, args=args, credentials=self._credentials)
 
   def objects_list(self, bucket, prefix=None, delimiter=None, projection='noAcl', versions=False,
                    max_results=0, page_token=None):
@@ -242,7 +242,7 @@ class Api(object):
       args['pageToken'] = page_token
 
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
-    return datalab.utils.Http.request(url, args=args, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, args=args, credentials=self._credentials)
 
   def objects_patch(self, bucket, key, info):
     """Updates the metadata associated with an object.
@@ -257,7 +257,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return datalab.utils.Http.request(url, method='PATCH', data=info, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, method='PATCH', data=info, credentials=self._credentials)
 
   @staticmethod
   def _escape_key(key):
@@ -279,8 +279,8 @@ class Api(object):
     from . import _bucket
     bucket, prefix = _bucket.parse_name(gs_path)
     credentials = None
-    if datalab.context.Context.is_signed_in():
-      credentials = datalab.context._utils.get_credentials()
+    if google.datalab.context.Context.is_signed_in():
+      credentials = google.datalab.context._utils.get_credentials()
     args = {
         'maxResults': Api._MAX_RESULTS,
         'projection': 'noAcl'
@@ -289,8 +289,8 @@ class Api(object):
       args['prefix'] = prefix
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
     try:
-      datalab.utils.Http.request(url, args=args, credentials=credentials)
-    except datalab.utils.RequestException as e:
+      google.datalab.utils.Http.request(url, args=args, credentials=credentials)
+    except google.datalab.utils.RequestException as e:
       if e.status == 401:
         raise Exception('Not permitted to read from specified path. '
                         'Please sign in and make sure you have read access.')

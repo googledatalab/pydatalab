@@ -16,15 +16,15 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.context
-import datalab.storage
-import datalab.utils
+import google.datalab.context
+import google.datalab.storage
+import google.datalab.utils
 
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.storage._api.Api.objects_list')
-  @mock.patch('datalab.storage._api.Api.objects_get')
+  @mock.patch('google.datalab.storage._api.Api.objects_list')
+  @mock.patch('google.datalab.storage._api.Api.objects_get')
   def test_item_existence(self, mock_api_objects_get, mock_api_objects_list):
     mock_api_objects_list.return_value = TestCases._create_enumeration_single_result()
     mock_api_objects_get.return_value = TestCases._create_objects_get_result()
@@ -32,10 +32,10 @@ class TestCases(unittest.TestCase):
     b = TestCases._create_bucket()
     self.assertTrue(b.items().contains('test_item1'))
 
-    mock_api_objects_get.side_effect = datalab.utils.RequestException(404, 'failed')
+    mock_api_objects_get.side_effect = google.datalab.utils.RequestException(404, 'failed')
     self.assertFalse('test_item2' in list(b.items()))
 
-  @mock.patch('datalab.storage._api.Api.objects_get')
+  @mock.patch('google.datalab.storage._api.Api.objects_get')
   def test_item_metadata(self, mock_api_objects):
     mock_api_objects.return_value = TestCases._create_objects_get_result()
 
@@ -46,7 +46,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(m.name, 'test_item1')
     self.assertEqual(m.content_type, 'text/plain')
 
-  @mock.patch('datalab.storage._api.Api.objects_list')
+  @mock.patch('google.datalab.storage._api.Api.objects_list')
   def test_enumerate_items_empty(self, mock_api_objects):
     mock_api_objects.return_value = TestCases._create_enumeration_empty_result()
 
@@ -55,7 +55,7 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(len(items), 0)
 
-  @mock.patch('datalab.storage._api.Api.objects_list')
+  @mock.patch('google.datalab.storage._api.Api.objects_list')
   def test_enumerate_items_single(self, mock_api_objects):
     mock_api_objects.return_value = TestCases._create_enumeration_single_result()
 
@@ -65,7 +65,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(len(items), 1)
     self.assertEqual(items[0].key, 'test_item1')
 
-  @mock.patch('datalab.storage._api.Api.objects_list')
+  @mock.patch('google.datalab.storage._api.Api.objects_list')
   def test_enumerate_items_multi_page(self, mock_api_objects):
     mock_api_objects.side_effect = [
       TestCases._create_enumeration_multipage_result1(),
@@ -81,13 +81,13 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_bucket(name='test_bucket'):
-    return datalab.storage.Bucket(name, context=TestCases._create_context())
+    return google.datalab.storage.Bucket(name, context=TestCases._create_context())
 
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)
 
   @staticmethod
   def _create_objects_get_result():

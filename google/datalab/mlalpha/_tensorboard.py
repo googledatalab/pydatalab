@@ -16,8 +16,8 @@ import psutil
 import subprocess
 import time
 
-import datalab.utils
-import datalab.storage
+import google.datalab.utils
+import google.datalab.storage
 
 
 class TensorBoardManager(object):
@@ -69,14 +69,14 @@ class TensorBoardManager(object):
       # Check user does have access. TensorBoard will start successfully regardless
       # the user has read permissions or not so we check permissions here to
       # give user alerts if needed.
-      datalab.storage._api.Api.verify_permitted_to_read(logdir)
+      google.datalab.storage._api.Api.verify_permitted_to_read(logdir)
 
-    port = datalab.utils.pick_unused_port()
+    port = google.datalab.utils.pick_unused_port()
     args = ['tensorboard', '--logdir=' + logdir, '--port=' + str(port)]
     p = subprocess.Popen(args)
     retry = 5
     while (retry > 0):
-      if datalab.utils.is_http_running_on(port):
+      if google.datalab.utils.is_http_running_on(port):
         return p.pid, port
       time.sleep(1)
       retry -= 1

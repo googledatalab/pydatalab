@@ -16,9 +16,9 @@ from googleapiclient import discovery
 import os
 import time
 
-import datalab.context
-import datalab.storage
-import datalab.utils
+import google.datalab.context
+import google.datalab.storage
+import google.datalab.utils
 
 
 # TODO(qimingj) Remove once the API is public since it will no longer be needed
@@ -40,10 +40,10 @@ class CloudModels(object):
       api: an optional CloudML API client.
     """
     if project_id is None:
-      project_id = datalab.context.Context.default().project_id
+      project_id = google.datalab.context.Context.default().project_id
     self._project_id = project_id
     if credentials is None:
-      credentials = datalab.context.Context.default().credentials
+      credentials = google.datalab.context.Context.default().credentials
     self._credentials = credentials
     if api is None:
       api = discovery.build('ml', 'v1beta1', credentials=self._credentials,
@@ -58,7 +58,7 @@ class CloudModels(object):
     return models, page_token
 
   def __iter__(self):
-    return iter(datalab.utils.Iterator(self._retrieve_models))
+    return iter(google.datalab.utils.Iterator(self._retrieve_models))
 
   def get(self, model_name):
     """Get details of a model.
@@ -113,10 +113,10 @@ class CloudModelVersions(object):
       api: an optional CloudML API client.
     """
     if project_id is None:
-      project_id = datalab.context.Context.default().project_id
+      project_id = google.datalab.context.Context.default().project_id
     self._project_id = project_id
     if credentials is None:
-      credentials = datalab.context.Context.default().credentials
+      credentials = google.datalab.context.Context.default().credentials
     self._credentials = credentials
     if api is None:
       api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,
@@ -136,7 +136,7 @@ class CloudModelVersions(object):
     return versions, page_token
 
   def __iter__(self):
-    return iter(datalab.utils.Iterator(self._retrieve_versions))
+    return iter(google.datalab.utils.Iterator(self._retrieve_versions))
 
   def get(self, version_name):
     """Get details of a version.
@@ -172,7 +172,7 @@ class CloudModelVersions(object):
     """
     if not path.startswith('gs://'):
       raise Exception('Invalid path. Only Google Cloud Storage path (gs://...) is accepted.')
-    if not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists():
+    if not google.datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists():
       raise Exception('Cannot find export.meta from given path.')
 
     body = {'name': self._model_name}

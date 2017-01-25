@@ -34,10 +34,10 @@ import sys
 import types
 import yaml
 
-import datalab.data
-import datalab.bigquery
-import datalab.storage
-import datalab.utils
+import google.datalab.data
+import google.datalab.bigquery
+import google.datalab.storage
+import google.datalab.utils
 
 from . import _html
 
@@ -51,7 +51,7 @@ def notebook_environment():
 def get_notebook_item(name):
   """ Get an item from the IPython environment. """
   env = notebook_environment()
-  return datalab.utils.get_item(env, name)
+  return google.datalab.utils.get_item(env, name)
 
 
 def render_list(data):
@@ -132,7 +132,7 @@ def _get_data_from_empty_list(source, fields='*', first_row=0, count=-1, schema=
 def _get_data_from_list_of_dicts(source, fields='*', first_row=0, count=-1, schema=None):
   """ Helper function for _get_data that handles lists of dicts. """
   if schema is None:
-    schema = datalab.bigquery.Schema.from_data(source)
+    schema = google.datalab.bigquery.Schema.from_data(source)
   fields = get_field_list(fields, schema)
   gen = source[first_row:first_row + count] if count >= 0 else source
   rows = [{'c': [{'v': row[c]} if c in row else {} for c in fields]} for row in gen]
@@ -142,7 +142,7 @@ def _get_data_from_list_of_dicts(source, fields='*', first_row=0, count=-1, sche
 def _get_data_from_list_of_lists(source, fields='*', first_row=0, count=-1, schema=None):
   """ Helper function for _get_data that handles lists of lists. """
   if schema is None:
-    schema = datalab.bigquery.Schema.from_data(source)
+    schema = google.datalab.bigquery.Schema.from_data(source)
   fields = get_field_list(fields, schema)
   gen = source[first_row:first_row + count] if count >= 0 else source
   cols = [schema.find(name) for name in fields]
@@ -153,7 +153,7 @@ def _get_data_from_list_of_lists(source, fields='*', first_row=0, count=-1, sche
 def _get_data_from_dataframe(source, fields='*', first_row=0, count=-1, schema=None):
   """ Helper function for _get_data that handles Pandas DataFrames. """
   if schema is None:
-    schema = datalab.bigquery.Schema.from_data(source)
+    schema = google.datalab.bigquery.Schema.from_data(source)
   fields = get_field_list(fields, schema)
   rows = []
   if count < 0:
@@ -212,12 +212,12 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
     env = {}
   env.update(ipy.user_ns)
   if isinstance(source, basestring):
-    source = datalab.utils.get_item(ipy.user_ns, source, source)
+    source = google.datalab.utils.get_item(ipy.user_ns, source, source)
     if isinstance(source, basestring):
-      source = datalab.bigquery.Table(source)
+      source = google.datalab.bigquery.Table(source)
 
-  if isinstance(source, types.ModuleType) or isinstance(source, datalab.data.SqlStatement):
-    source = datalab.bigquery.Query(source, values=env)
+  if isinstance(source, types.ModuleType) or isinstance(source, google.datalab.data.SqlStatement):
+    source = google.datalab.bigquery.Query(source, values=env)
 
   if isinstance(source, list):
     if len(source) == 0:
@@ -230,9 +230,9 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
       raise Exception("To get tabular data from a list it must contain dictionaries or lists.")
   elif isinstance(source, pandas.DataFrame):
     return _get_data_from_dataframe(source, fields, first_row, count, schema)
-  elif isinstance(source, datalab.bigquery.Query):
+  elif isinstance(source, google.datalab.bigquery.Query):
     return _get_data_from_table(source.results(), fields, first_row, count, schema)
-  elif isinstance(source, datalab.bigquery.Table):
+  elif isinstance(source, google.datalab.bigquery.Table):
     return _get_data_from_table(source, fields, first_row, count, schema)
   else:
     raise Exception("Cannot chart %s; unsupported object type" % source)
@@ -423,7 +423,7 @@ def validate_gcs_path(path, require_object):
   Raises:
     Exception if the path is invalid
   """
-  bucket, key = datalab.storage._bucket.parse_name(path)
+  bucket, key = google.datalab.storage._bucket.parse_name(path)
   if bucket is None:
     raise Exception('Invalid GCS path "%s"' % path)
   if require_object and key is None:
@@ -583,7 +583,7 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
     del chart_options['variables']  # Just to make sure GCharts doesn't see them.
     try:
       item = get_notebook_item(source)
-      _, variable_defaults = datalab.data.SqlModule.get_sql_statement_with_environment(item, '')
+      _, variable_defaults = google.datalab.data.SqlModule.get_sql_statement_with_environment(item, '')
     except Exception:
       variable_defaults = {}
     controls_html, defaults, ids = parse_control_options(controls, variable_defaults)
@@ -608,7 +608,7 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
         }},
         map: {{
           '*': {{
-            datalab: 'nbextensions/gcpdatalab'
+            google.datalab: 'nbextensions/gcpdatalab'
           }}
         }},
         shim: {{
@@ -619,10 +619,10 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
         }}
       }});
 
-      require(['datalab/charting',
-               'datalab/element!{id}',
+      require(['google.datalab/charting',
+               'google.datalab/element!{id}',
                'base/js/events',
-               'datalab/style!/nbextensions/gcpdatalab/charting.css'
+               'google.datalab/style!/nbextensions/gcpdatalab/charting.css'
               ],
         function(charts, dom, events) {{
           charts.render(
@@ -657,9 +657,9 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
               id=div_id,
               chart_type=chart_type,
               extra_class=" bqgc-controlled" if len(controls_html) else '',
-              data=json.dumps(data, cls=datalab.utils.JSONEncoder),
-              options=json.dumps(chart_options, cls=datalab.utils.JSONEncoder),
-              refresh_data=json.dumps(refresh_data, cls=datalab.utils.JSONEncoder),
+              data=json.dumps(data, cls=google.datalab.utils.JSONEncoder),
+              options=json.dumps(chart_options, cls=google.datalab.utils.JSONEncoder),
+              refresh_data=json.dumps(refresh_data, cls=google.datalab.utils.JSONEncoder),
               refresh_interval=refresh_interval,
               control_ids=str(control_ids),
               total_rows=total_count)

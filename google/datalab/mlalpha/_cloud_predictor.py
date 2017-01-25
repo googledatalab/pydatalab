@@ -14,8 +14,8 @@
 from googleapiclient import discovery
 import pandas as pd
 
-import datalab.context
-import datalab.utils
+import google.datalab.context
+import google.datalab.utils
 
 
 # TODO(qimingj) Remove once the API is public since it will no longer be needed
@@ -45,10 +45,10 @@ class CloudPredictor(object):
     self._model_name = model_name
     self._version_name = version_name
     if project_id is None:
-      project_id = datalab.context.Context.default().project_id
+      project_id = google.datalab.context.Context.default().project_id
     self._project_id = project_id
     if credentials is None:
-      credentials = datalab.context.Context.default().credentials
+      credentials = google.datalab.context.Context.default().credentials
     self._credentials = credentials
     if api is None:
       api = discovery.build('ml', 'v1beta1', credentials=self._credentials,

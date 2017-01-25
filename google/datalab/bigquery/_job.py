@@ -17,12 +17,12 @@ from __future__ import division
 
 import datetime
 
-import datalab.utils
+import google.datalab.utils
 
 from . import _api
 
 
-class Job(datalab.utils.GCPJob):
+class Job(google.datalab.utils.GCPJob):
   """Represents a BigQuery Job.
   """
 
@@ -73,11 +73,11 @@ class Job(datalab.utils.GCPJob):
       location = error_result.get('location', None)
       message = error_result.get('message', None)
       reason = error_result.get('reason', None)
-      self._fatal_error = datalab.utils.JobError(location, message, reason)
+      self._fatal_error = google.datalab.utils.JobError(location, message, reason)
     if 'errors' in status:
       self._errors = []
       for error in status['errors']:
         location = error.get('location', None)
         message = error.get('message', None)
         reason = error.get('reason', None)
-        self._errors.append(datalab.utils.JobError(location, message, reason))
+        self._errors.append(google.datalab.utils.JobError(location, message, reason))
