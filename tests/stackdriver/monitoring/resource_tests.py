@@ -17,8 +17,8 @@ import unittest
 
 import google.cloud.monitoring
 
-import datalab.context
-import datalab.stackdriver.monitoring as gcm
+import google.datalab.context
+import google.datalab.stackdriver.monitoring as gcm
 
 PROJECT = 'my-project'
 RESOURCE_TYPES = ['gce_instance', 'aws_ec2_instance']
@@ -37,7 +37,7 @@ class TestCases(unittest.TestCase):
     self.context = self._create_context()
     self.descriptors = gcm.ResourceDescriptors(context=self.context)
 
-  @mock.patch('datalab.context._context.Context.default')
+  @mock.patch('google.datalab.context._context.Context.default')
   def test_constructor_minimal(self, mock_context_default):
     mock_context_default.return_value = self.context
 
@@ -111,7 +111,7 @@ class TestCases(unittest.TestCase):
     mock_gcloud_list_descriptors.assert_called_once_with(filter_string=None)
     self.assertEqual(actual_list1, actual_list2)
 
-  @mock.patch('datalab.stackdriver.monitoring.ResourceDescriptors.list')
+  @mock.patch('google.datalab.stackdriver.monitoring.ResourceDescriptors.list')
   def test_as_dataframe(self, mock_datalab_list_descriptors):
     mock_datalab_list_descriptors.return_value = (
         self._list_resources_get_result())
@@ -131,7 +131,7 @@ class TestCases(unittest.TestCase):
         for resource_type, display_name in zip(RESOURCE_TYPES, DISPLAY_NAMES)]
     self.assertEqual(dataframe.values.tolist(), expected_values)
 
-  @mock.patch('datalab.stackdriver.monitoring.ResourceDescriptors.list')
+  @mock.patch('google.datalab.stackdriver.monitoring.ResourceDescriptors.list')
   def test_as_dataframe_w_all_args(self, mock_datalab_list_descriptors):
     mock_datalab_list_descriptors.return_value = (
         self._list_resources_get_result())
@@ -146,7 +146,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context(project_id='test'):
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)
 
   @staticmethod
   def _list_resources_get_result():

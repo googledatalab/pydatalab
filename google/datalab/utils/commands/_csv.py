@@ -24,7 +24,7 @@ except ImportError:
 
 import pandas as pd
 
-import datalab.data
+import google.datalab.data
 
 from . import _commands
 from . import _utils
@@ -49,7 +49,7 @@ def csv(line, cell=None):
 
 
 def _view(args, cell):
-  csv = datalab.data.Csv(args['input'])
+  csv = google.datalab.data.Csv(args['input'])
   num_lines = int(args['count'] or 5)
   headers = None
   if cell:

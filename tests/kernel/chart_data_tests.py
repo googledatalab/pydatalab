@@ -30,12 +30,12 @@ IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
 
-import datalab.utils.commands
+import google.datalab.utils.commands
 
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.utils.get_item')
+  @mock.patch('google.datalab.utils.get_item')
   def test_get_chart_data(self, mock_get_item):
     IPython.get_ipython().user_ns = {}
     t = [
@@ -45,8 +45,8 @@ class TestCases(unittest.TestCase):
         {'country': 'AU', 'quantity': 25}
     ]
     mock_get_item.return_value = t
-    ds = datalab.utils.commands.get_data_source_index('t')
-    data = datalab.utils.commands._chart_data._get_chart_data('', json.dumps({
+    ds = google.datalab.utils.commands.get_data_source_index('t')
+    data = google.datalab.utils.commands._chart_data._get_chart_data('', json.dumps({
       'source_index': ds,
       'fields': 'country',
       'first': 1,
@@ -56,7 +56,7 @@ class TestCases(unittest.TestCase):
                       "cols": [{"type": "string", "id": "country", "label": "country"}]},
                       "refresh_interval": 0, "options": {}}, data)
 
-    data = datalab.utils.commands._chart_data._get_chart_data('', json.dumps({
+    data = google.datalab.utils.commands._chart_data._get_chart_data('', json.dumps({
       'source_index': ds,
       'fields': 'country',
       'first': 6,
@@ -66,7 +66,7 @@ class TestCases(unittest.TestCase):
                       "cols": [{"type": "string", "id": "country", "label": "country"}]},
                       "refresh_interval": 0, "options": {}}, data)
 
-    data = datalab.utils.commands._chart_data._get_chart_data('', json.dumps({
+    data = google.datalab.utils.commands._chart_data._get_chart_data('', json.dumps({
       'source_index': ds,
       'fields': 'country',
       'first': 2,

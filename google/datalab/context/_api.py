@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import datalab.utils
+import google.datalab.utils
 
 
 class Api(object):
@@ -36,9 +36,9 @@ class Api(object):
     if page_token is not None:
       args['pageToken'] = page_token
 
-    return datalab.utils.Http.request(url, args=args, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, args=args, credentials=self._credentials)
 
   def project_get(self, projectId):
     url = Api._ENDPOINT + (Api._PROJECT_PATH % projectId)
-    return datalab.utils.Http.request(url, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, credentials=self._credentials)
 

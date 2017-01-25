@@ -13,7 +13,7 @@
 import datetime
 from googleapiclient import discovery
 
-import datalab.context
+import google.datalab.context
 
 
 # TODO(qimingj) Remove once the API is public since it will no longer be needed
@@ -81,7 +81,7 @@ class CloudRunner(object):
         'job_id': job_id,
         'training_input': self._job_request,
     }
-    context = datalab.context.Context.default()
+    context = google.datalab.context.Context.default()
     cloudml = discovery.build('ml', 'v1beta1', credentials=context.credentials,
                               discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
     request = cloudml.projects().jobs().create(body=job,

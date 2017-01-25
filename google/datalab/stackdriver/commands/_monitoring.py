@@ -19,8 +19,8 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
-import datalab.stackdriver.monitoring as gcm
-import datalab.utils.commands
+import google.datalab.stackdriver.monitoring as gcm
+import google.datalab.utils.commands
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -32,7 +32,7 @@ def monitoring(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  parser = datalab.utils.commands.CommandParser(prog='monitoring', description=(
+  parser = google.datalab.utils.commands.CommandParser(prog='monitoring', description=(
       'Execute various Monitoring-related operations. Use "%monitoring '
       '<command> -h" for help on a specific command.'))
 
@@ -70,7 +70,7 @@ def monitoring(line, cell=None):
       help='The name of the group(s) to list; can include wildchars.')
   list_group_parser.set_defaults(func=_list_groups)
 
-  return datalab.utils.commands.handle_magic_line(line, cell, parser)
+  return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
 def _list_metric_descriptors(args, _):
@@ -105,4 +105,4 @@ def _render_dataframe(dataframe):
   data = dataframe.to_dict(orient='records')
   fields = dataframe.columns.tolist()
   return IPython.core.display.HTML(
-      datalab.utils.commands.HtmlBuilder.render_table(data, fields))
+      google.datalab.utils.commands.HtmlBuilder.render_table(data, fields))

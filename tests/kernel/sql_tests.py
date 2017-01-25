@@ -30,41 +30,41 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import datalab.bigquery
-import datalab.context
-import datalab.data
-import datalab.data.commands
-import datalab.utils.commands
+import google.datalab.bigquery
+import google.datalab.context
+import google.datalab.data
+import google.datalab.data.commands
+import google.datalab.utils.commands
 
 
 class TestCases(unittest.TestCase):
 
-  _SQL_MODULE_MAIN = datalab.data._utils._SQL_MODULE_MAIN
-  _SQL_MODULE_LAST = datalab.data._utils._SQL_MODULE_LAST
+  _SQL_MODULE_MAIN = google.datalab.data._utils._SQL_MODULE_MAIN
+  _SQL_MODULE_LAST = google.datalab.data._utils._SQL_MODULE_LAST
 
   def test_split_cell(self):
     # TODO(gram): add tests for argument parser.
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell('', m)
+    query = google.datalab.data.commands._sql._split_cell('', m)
     self.assertIsNone(query)
     self.assertNotIn(TestCases._SQL_MODULE_LAST, m.__dict__)
     self.assertNotIn(TestCases._SQL_MODULE_MAIN, m.__dict__)
 
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell('\n\n', m)
+    query = google.datalab.data.commands._sql._split_cell('\n\n', m)
     self.assertIsNone(query)
     self.assertNotIn(TestCases._SQL_MODULE_LAST, m.__dict__)
     self.assertNotIn(TestCases._SQL_MODULE_MAIN, m.__dict__)
 
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell('# This is a comment\n\nSELECT 3 AS x', m)
+    query = google.datalab.data.commands._sql._split_cell('# This is a comment\n\nSELECT 3 AS x', m)
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
     self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
     self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell(
+    query = google.datalab.data.commands._sql._split_cell(
         '# This is a comment\n\nfoo="bar"\nSELECT 3 AS x', m)
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
@@ -90,14 +90,14 @@ class TestCases(unittest.TestCase):
                        ]
     for i in range(0, len(sql_string_list)):
         m = imp.new_module('m')
-        query = datalab.data.commands._sql._split_cell(sql_string_list[i], m)
+        query = google.datalab.data.commands._sql._split_cell(sql_string_list[i], m)
         self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
         self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
         self.assertEquals(sql_string_list[i], m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
         self.assertEquals(sql_string_list[i], m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell('DEFINE QUERY q1\nSELECT 3 AS x', m)
+    query = google.datalab.data.commands._sql._split_cell('DEFINE QUERY q1\nSELECT 3 AS x', m)
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
     self.assertEquals('SELECT 3 AS x', m.q1.sql)
@@ -105,7 +105,7 @@ class TestCases(unittest.TestCase):
     self.assertEquals('SELECT 3 AS x', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell(
+    query = google.datalab.data.commands._sql._split_cell(
         'DEFINE QUERY q1\nSELECT 3 AS x\nSELECT * FROM $q1', m)
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_MAIN])
     self.assertEquals(query, m.__dict__[TestCases._SQL_MODULE_LAST])
@@ -113,11 +113,11 @@ class TestCases(unittest.TestCase):
     self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
     self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
-  @mock.patch('datalab.context._context.Context.default')
+  @mock.patch('google.datalab.context._context.Context.default')
   def test_arguments(self, mock_default_context):
     mock_default_context.return_value = TestCases._create_context()
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell("""
+    query = google.datalab.data.commands._sql._split_cell("""
 words = ('thus', 'forsooth')
 limit = 10
 
@@ -125,20 +125,20 @@ SELECT * FROM [publicdata:samples.shakespeare]
 WHERE word IN $words
 LIMIT $limit
 """, m)
-    sql = datalab.bigquery.Query(query, values={}).sql
+    sql = google.datalab.bigquery.Query(query, values={}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("thus", "forsooth")\nLIMIT 10', sql)
     # As above but with overrides, using list
-    sql = datalab.bigquery.Query(query, words=['eyeball'], limit=5).sql
+    sql = google.datalab.bigquery.Query(query, words=['eyeball'], limit=5).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("eyeball")\nLIMIT 5', sql)
     # As above but with overrides, using tuple and values dict
-    sql = datalab.bigquery.Query(query, values={'limit': 3, 'words': ('thus',)}).sql
+    sql = google.datalab.bigquery.Query(query, values={'limit': 3, 'words': ('thus',)}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("thus")\nLIMIT 3', sql)
     # As above but with list argument
     m = imp.new_module('m')
-    query = datalab.data.commands._sql._split_cell("""
+    query = google.datalab.data.commands._sql._split_cell("""
 words = ['thus', 'forsooth']
 limit = 10
 
@@ -146,15 +146,15 @@ SELECT * FROM [publicdata:samples.shakespeare]
 WHERE word IN $words
 LIMIT $limit
 """, m)
-    sql = datalab.bigquery.Query(query, values={}).sql
+    sql = google.datalab.bigquery.Query(query, values={}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("thus", "forsooth")\nLIMIT 10', sql)
     # As above but with overrides, using list
-    sql = datalab.bigquery.Query(query, values={'limit': 2, 'words': ['forsooth']}).sql
+    sql = google.datalab.bigquery.Query(query, values={'limit': 2, 'words': ['forsooth']}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("forsooth")\nLIMIT 2', sql)
     # As above but with overrides, using tuple
-    sql = datalab.bigquery.Query(query, words=('eyeball',)).sql
+    sql = google.datalab.bigquery.Query(query, words=('eyeball',)).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("eyeball")\nLIMIT 10', sql)
     # TODO(gram): add some tests for source and datestring variables
@@ -171,4 +171,4 @@ LIMIT $limit
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)

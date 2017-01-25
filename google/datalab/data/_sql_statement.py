@@ -94,7 +94,7 @@ class SqlStatement(object):
       if dependency in resolved_vars:
         continue
       # Look it up in our resolution namespace dictionary.
-      dep = datalab.utils.get_item(values, dependency)
+      dep = google.datalab.utils.get_item(values, dependency)
       # If it is a SQL module, get the main/last query from the module, so users can refer
       # to $module. Useful especially if final query in module has no DEFINE QUERY <name> part.
       if isinstance(dep, types.ModuleType):
