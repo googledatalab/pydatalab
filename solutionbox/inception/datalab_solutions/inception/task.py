@@ -33,11 +33,6 @@ from . import _util
 def main(_):
   parser = argparse.ArgumentParser()
   parser.add_argument(
-      '--labels',
-      type=str,
-      action='append',
-      help='Classification classes.')
-  parser.add_argument(
       '--input_dir',
       type=str,
       help='The input dir path for training and evaluation data.')
@@ -61,7 +56,8 @@ def main(_):
       help='Pretrained inception checkpoint path.')
 
   args, _ = parser.parse_known_args()
-  model = _model.Model(args.labels, 0.5, args.checkpoint)
+  labels = _util.get_labels(args.input_dir)
+  model = _model.Model(labels, 0.5, args.checkpoint)
 
   env = json.loads(os.environ.get('TF_CONFIG', '{}'))
   # Print the job data as provided by the service.

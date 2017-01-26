@@ -61,6 +61,7 @@ class Model(object):
 
   def __init__(self, labels, dropout, inception_checkpoint_file):
     self.labels = labels
+    self.labels.sort()
     self.dropout = dropout
     self.inception_checkpoint_file = inception_checkpoint_file
 
@@ -334,6 +335,8 @@ class Model(object):
     }
     tf.add_to_collection('outputs', json.dumps(outputs))
     # Add table init op to collection so online prediction will load the model and run it.
+    # TODO: initialize_all_tables is going to be deprecated but the replacement
+    #       tf.tables_initializer does not exist in 0.12 yet.
     init_tables_op = tf.initialize_all_tables()
     tf.add_to_collection(tf.contrib.session_bundle.constants.INIT_OP_KEY, init_tables_op)
 

@@ -68,13 +68,11 @@ class Cloud(object):
     """Cloud training with CloudML trainer service."""
 
     import datalab.mlalpha as mlalpha
-    labels = _util.get_labels(input_dir)
     job_args = {
       'input_dir': input_dir,
       'output_path': output_path,
       'max_steps': max_steps,
       'batch_size': batch_size,
-      'labels': labels,
       'checkpoint': self._checkpoint
     }
     job_request = {
@@ -107,6 +105,8 @@ class Cloud(object):
 
     cloud_predictor = mlalpha.CloudPredictor(parts[0], parts[1])
     predictions = cloud_predictor.predict(data)
+    if len(predictions) == 0:
+      raise Exception('Prediction results are empty.')
     # Although prediction results contains a labels list in each instance, they are all the same
     # so taking the first one.
     labels = predictions[0]['labels']

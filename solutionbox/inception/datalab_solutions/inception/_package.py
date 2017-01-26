@@ -158,6 +158,7 @@ def local_predict(model_dir, image_files, show_image=True):
   labels_and_scores = _local.Local().predict(model_dir, image_files)
   results = zip(image_files, labels_and_scores)
   _display_predict_results(results, show_image)
+  print('Done')
 
 
 def cloud_predict(model_id, image_files, show_image=True):
@@ -182,8 +183,9 @@ def local_batch_predict(model_dir, input_csv, output_file, output_bq_table=None)
     output_file: The output csv file containing prediction results.
     output_bq_table: If provided, will also save the results to BigQuery table.
   """
+  print('Predicting...')
   _local.Local().batch_predict(model_dir, input_csv, output_file, output_bq_table)
-
+  print('Done')
 
 def cloud_batch_predict(model_dir, image_files, show_image=True, output_file=None):
   """Not Implemented Yet"""

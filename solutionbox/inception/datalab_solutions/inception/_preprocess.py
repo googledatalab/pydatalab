@@ -53,6 +53,12 @@ class ExtractLabelIdsDoFn(beam.DoFn):
     self.label_to_id_map = {}
 
   def process(self, context, all_labels):
+    all_labels = list(all_labels)
+    # DataFlow cannot garuantee the order of the labels when materializing it.
+    # The labels materialized and consumed by training may not be with the same order
+    # as the one used in preprocessing. So we need to sort it in both preprocessing
+    # and training so the order matches.
+    all_labels.sort()
     if not self.label_to_id_map:
       for i, label in enumerate(all_labels):
         label = label.strip()
