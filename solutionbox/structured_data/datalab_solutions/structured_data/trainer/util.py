@@ -19,7 +19,7 @@ import sys
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
-
+import google.cloud.ml as ml
 
 def _copy_all(src_files, dest_dir):
   # file_io.copy does not copy files into folders directly.
@@ -140,9 +140,7 @@ def read_examples(input_files, batch_size, shuffle, num_epochs=None):
         num_threads=thread_count)
 
 
-
-
-def produce_feature_columns(metadata, config):
+def produce_feature_columns(metadata, transform_config, schema_config, is_linear_model):
   """Produces a list of Tensorflow columns.
 
   Args:
@@ -154,86 +152,139 @@ def produce_feature_columns(metadata, config):
   """
   
   feature_columns = []
+  target_column = schema_config['target_column']
+  key_column = schema_config['key_column']
   # Extract the numerical features. 
-  if 'numerical' in config:
-    for name, transform_config in config['numerical'].iteritems():
-      # There is no other TF transfroms for numerical columns.
-      feature_columns.append(
-          tf.contrib.layers.real_valued_column(
-              name,
-              dimension=metadata.features[name]['size']))
-      # TODO(brandondutra) allow real_valued vectors? For now force only scalars.
-      assert 1 == metadata.features[name]['size']
+  for name in schema_config.get('numerical_columns', []):
+    if name == key_column or name == target_column:
+      continue 
+    # Numerical transforms happen in produce_feature_engineering_fn
+    feature_columns.append(
+        tf.contrib.layers.real_valued_column(
+            name,
+            dimension=metadata.features[name]['size']))
+    # TODO(brandondutra) allow real_valued vectors? For now force only scalars.
+    assert 1 == metadata.features[name]['size']
 
-  # Extrace the categorical features
-  if 'categorical' in config:
-    for name, transform_config in config['categorical'].iteritems():
-      transform = transform_config['transform']
-      if config['model_type'] == 'linear' and transform != 'one_hot':
-        print('ERROR: only one_hot transfroms are supported in linear models')
-        sys.exit(1)
+  # Extract the categorical features
+  for name in schema_config.get('categorical_columns', []):
+    if name == key_column or name == target_column:
+      continue 
+    transform_dict = transform_config.get(name, {})
+    transform_type = transform_dict.get('transform', 'one_hot')
 
-      if transform == 'one_hot':
-        # Preprocessing built a vocab using 0, 1, ..., N as the new classes.
-        N = metadata.features[name]['size']
-        sparse_column = tf.contrib.layers.sparse_column_with_integerized_feature(
-            column_name=name,
-            bucket_size=N+1)
-        if config['model_type'] == 'linear':
-          feature_columns.append(sparse_column)
-        else:
-          feature_columns.append(
-              tf.contrib.layers.one_hot_column(sparse_column))
-      elif transform == 'embedding':
-        # Preprocessing built a vocab using 0, 1, ..., N as the new classes.
-        N = metadata.features[name]['size']
-        dim = transform_config['dimension']
-        sparse_column = tf.contrib.layers.sparse_column_with_integerized_feature(
-            column_name=name,
-            bucket_size=N+1)
-        feature_columns.append(
-            tf.contrib.layers.embedding_column(sparse_column, dim))
+    if transform_type == 'one_hot':
+      # Preprocessing built a vocab using 0, 1, ..., N as the new classes. N 
+      # means 'unknown/missing'.
+      N = metadata.features[name]['size']
+      sparse_column = tf.contrib.layers.sparse_column_with_integerized_feature(
+          column_name=name,
+          bucket_size=N+1)
+      if is_linear_model:
+        feature_columns.append(sparse_column)
       else:
-        print('ERROR: unkown categorical transform name %s in %s' % (transform, str(transform_config)))
-        sys.exit(1)
+        feature_columns.append(tf.contrib.layers.one_hot_column(sparse_column))
+
+    elif transform_type == 'embedding':
+      # Preprocessing built a vocab using 0, 1, ..., N as the new classes.
+      N = metadata.features[name]['size']
+      dim = transform_dict['dimension']
+      sparse_column = tf.contrib.layers.sparse_column_with_integerized_feature(
+            column_name=name,
+            bucket_size=N+1)
+      feature_columns.append(tf.contrib.layers.embedding_column(sparse_column, 
+                                                                dim))
+      # TODO(brandon): check model type is dnn.
+    else:
+      print('ERROR: unkown categorical transform name %s in %s' % 
+          (name, str(transform_type)))
+      sys.exit(1)
 
   return feature_columns
 
+def _scale_tensor(tensor, range_min, range_max, scale_min, scale_max):
+  if range_min == range_max:
+    return tensor
 
-def parse_example_tensor(examples, mode, metadata, transform_config):
+  float_tensor = tf.to_float(tensor)
+  scaled_tensor = tf.div(
+    tf.sub(float_tensor, range_min) * tf.constant(float(scale_max - scale_min)),
+    tf.constant(float(range_max - range_min)))
+  shifted_tensor = scaled_tensor + tf.constant(float(scale_min))
 
-    dtype_mapping = {
-        'bytes': tf.string,
-        'float': tf.float32,
-        'int64': tf.int64
-    }
-
-    example_schema = {}
-    if 'numerical' in transform_config:
-      for name, _ in transform_config['numerical'].iteritems():
-        size = 1 #metadata.features[name]['size']
-        dtype = dtype_mapping[metadata.features[name]['dtype']]
-        example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
-
-    if 'categorical' in transform_config:
-      for name, _ in transform_config['categorical'].iteritems():
-        size = 1 #metadata.features[name]['size']
-        dtype = dtype_mapping[metadata.features[name]['dtype']]
-        example_schema[name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
+  return shifted_tensor
 
 
-    if mode == 'training':
-      target_name = transform_config['target_column']
-      size = 1 #metadata.features[target_name]['size']
-      dtype = dtype_mapping[metadata.features[target_name]['dtype']]
-      example_schema[target_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
-    elif mode == 'prediction':
-      key_name = transform_config['key_column']
-      size = 1 #metadata.features[key_name]['size']
-      dtype = dtype_mapping[metadata.features[key_name]['dtype']]
-      example_schema[key_name] = tf.FixedLenFeature(shape=[size], dtype=dtype)
-    else:
-      print('ERROR: unknown mode type')
-      sys.exit(1)
+def produce_feature_engineering_fn(metadata, transform_config, schema_config):
+  """Makes a feature_engineering_fn for transforming the numerical types. 
 
-    return tf.parse_example(examples, example_schema)
+  This is called with the output of the 'input_fn' function, and the output of
+  this function is given to tf.learn to further process. This function extracts
+  the ids tensors from ml.features.FeatureMetadata.parse_features and throws
+  away the values tensor.
+  """
+
+  def _feature_engineering_fn(features, target):
+    target_column = schema_config['target_column']
+    key_column = schema_config['key_column']
+
+    with tf.name_scope('numerical_feature_engineering') as scope:
+      new_features = {}
+      for name in schema_config.get('numerical_columns', []):
+        if name == key_column or name == target_column:
+          continue 
+        transform_dict = transform_config.get(name, {})
+        transform_type = transform_dict.get('transform', 'identity')
+        if transform_type == 'scale':
+          range_min = metadata.columns[name]['min']
+          range_max = metadata.columns[name]['max']
+          new_features[name] = _scale_tensor(features[name], 
+                                            range_min=range_min, 
+                                            range_max=range_max, 
+                                            scale_min=-1, 
+                                            scale_max=1)
+        elif transform_type == 'max_abs_scale':
+          value = transform_dict['value']
+          range_min = metadata.columns[name]['min']
+          range_max = metadata.columns[name]['max']
+          new_features[name] = _scale_tensor(features[name], 
+                                            range_min=range_min, 
+                                            range_max=range_max, 
+                                            scale_min=-value, 
+                                            scale_max=value)
+
+        elif transform_type == 'identity':
+          # Don't need to do anything
+          pass
+        else:
+          print('ERROR: Unknown numerical transform %s for feature %s' % 
+              (transform_type, name))
+          sys.exit(1)
+      features.update(new_features)
+    return features, target
+
+  return _feature_engineering_fn
+
+
+def parse_example_tensor(examples, mode, metadata, schema_config):
+  if mode == 'training':
+    features = ml.features.FeatureMetadata.parse_features(metadata, examples,
+                                                          keep_target=True) 
+  elif mode == 'prediction':
+    features = ml.features.FeatureMetadata.parse_features(metadata, examples,
+                                                          keep_target=False) 
+  else:
+    print('ERROR: unknown mode')
+    sys.exit(1)
+  
+  # FeatureMetadata.parse_features splits categorical columns into two.
+  # undo that here.
+  new_features = {}
+  for name in schema_config.get('categorical_columns', []):
+    if name == schema_config['key_column'] or name == schema_config['target_column']:
+      continue
+    new_features[name] = features[name]['ids']
+
+  features.update(new_features)
+
+  return features

@@ -62,15 +62,15 @@ def parse_arguments(argv):
                       type=int,
                       help='Percent of input data for test dataset.')
   parser.add_argument('--output_dir',
-                      type=str,    
+                      type=str,
                       required=True,
                       help=('Google Cloud Storage or Local directory in which '
                             'to place outputs.'))
-  parser.add_argument('--transforms_config_file',
-                      type=str,    
+  parser.add_argument('--schema_file',
+                      type=str,
                       required=True,
-                      help=('File describing the schema and transforms of '
-                            'each column in the csv data files.'))
+                      help=('File describing the schema of each column in the '
+                            'csv data files.'))
   parser.add_argument('--job_name',
                       type=str,
                       help=('If using --cloud, the job name as listed in'
@@ -93,17 +93,47 @@ def parse_arguments(argv):
 
   # args.job_name will not be used unless --cloud is used.
   if not args.job_name:
-    args.job_name = ('structured-data-' + 
+    args.job_name = ('structured-data-' +
                      datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
   return args
 
 
+def load_and_check_config(schema_file_path):
+  """Checks the sschema file is well formatted."""
+
+  try:
+    json_str = ml.util._file.load_file(schema_file_path)
+    config = json.loads(json_str)
+  except:
+    print('ERROR reading schema file.')
+    sys.exit(1)
+
+  model_columns = (config.get('numerical_columns', [])
+                   + config.get('categorical_columns', []))
+  if config['target_column'] not in model_columns:
+    print('ERROR: target not listed as a numerical or categorial column.')
+    sys.exit(1)
+
+  if set(config['column_names']) != set(model_columns + [config['key_column']]):
+    print('ERROR: column_names do not match what was listed other fields')
+    sys.exit(1)
+
+  if set(config['numerical_columns']) & set(config['categorical_columns']):
+    print('ERROR: numerical_columns and categorical_columns must be disjoint.')
+    sys.exit(1)
+
+  if config['key_column'] in model_columns:
+    print('ERROR: kye_column should not be listed in numerical_columns or categorical_columns')
+    sys.exit(1)
+
+  return config
+
+
 def preprocessing_features(args):
 
   # Read the config file.
-  json_str = ml.util._file.load_file(args.transforms_config_file)
-  config = json.loads(json_str)
+  config = load_and_check_config(args.schema_file)
 
   column_names = config['column_names']
 
@@ -114,48 +144,38 @@ def preprocessing_features(args):
 
   # Extract target feature
   target_name = config['target_column']
-  if config['problem_type'] == 'regression':
+  key_name = config['key_column']
+  if target_name in config.get('numerical_columns', []):
     feature_set[target_name] = features.target(target_name).continuous()
   else:
     feature_set[target_name] = features.target(target_name).discrete()
 
 
   # Extract numeric features
-  if 'numerical' in config:
-    for name, transform_config in config['numerical'].iteritems():
-      transform = transform_config['transform']
-      default = transform_config.get('default', None)
-      if transform == 'scale':
-        feature_set[name] = features.numeric(name, default=default).scale()
-      elif transform == 'max_abs_scale':
-        feature_set[name] = features.numeric(name, default=default).max_abs_scale(transform_config['value'])
-      elif transform == 'identity':
-        feature_set[name] = features.numeric(name, default=default).identity()
-      else:
-        print('Error: unkown numerical transform name %s in %s' % (transform, str(transform_config)))
-        sys.exit(1)
+  for name in config.get('numerical_columns', []):
+    if name == target_name or name == key_name:
+      continue
+    # apply identity to all numerical features.
+    default = config.get('defaults', {}).get(name, None)
+    feature_set[name] = features.numeric(name, default=default).identity()
 
   # Extract categorical features
-  if 'categorical' in config:
-    for name, transform_config in config['categorical'].iteritems():
-      transform = transform_config['transform']
-      default = transform_config.get('default', None)
-      frequency_threshold = transform_config.get('frequency_threshold', 5)
-      if transform == 'one_hot' or transform == 'embedding':
-        feature_set[name] = features.categorical(
-            name, 
-            default=default,
-            frequency_threshold=frequency_threshold)
-      else:
-        print('Error: unkown categorical transform name %s in %s' % (transform, str(transform_config)))
-        sys.exit(1)
+  for name in config.get('categorical_columns', []):
+    if name == target_name or name == key_name:
+      continue
+    # apply sparse transform to all categorical features.
+    default = config.get('defaults', {}).get(name, None)
+    feature_set[name] = features.categorical(
+          name,
+          default=default,
+          frequency_threshold=1).sparse(use_counts=True)
 
   return feature_set, column_names
 
 
-
 def preprocess(pipeline, feature_set, column_names, input_file_path,
-               train_percent, eval_percent, test_percent, output_dir):
+               schema_file, train_percent, eval_percent, test_percent,
+               output_dir):
   """Builds the preprocessing Dataflow pipeline.
 
   The input files are split into a training, eval and test sets, and the SDK
@@ -206,11 +226,14 @@ def preprocess(pipeline, feature_set, column_names, input_file_path,
                       >> io.SaveFeatures(
                           os.path.join(output_dir, 'features_test')))
   # pylint: enable=expression-not-assigned
+  # Put a copy of the schema file in the output folder. Datalab will look for 
+  # it there.
+  ml.util._file.copy_file(schema_file, os.path.join(output_dir, 'schema.json'))
 
 
-def run_dataflow(feature_set, column_names, input_file_path, train_percent,
-                 eval_percent, test_percent, output_dir, cloud, project_id,
-                 job_name):
+def run_dataflow(feature_set, column_names, input_file_path, schema_file,
+                 train_percent, eval_percent, test_percent, output_dir, cloud,
+                 project_id, job_name):
   """Run Preprocessing as a Dataflow pipeline."""
 
   # Configure the pipeline.
@@ -233,6 +256,7 @@ def run_dataflow(feature_set, column_names, input_file_path, train_percent,
       feature_set=feature_set,
       column_names=column_names,
       input_file_path=input_file_path,
+      schema_file=schema_file,
       train_percent=train_percent,
       eval_percent=eval_percent,
       test_percent=test_percent,
@@ -251,6 +275,7 @@ def main(argv=None):
       feature_set=feature_set,
       column_names=column_names,
       input_file_path=args.input_file_path,
+      schema_file=args.schema_file,
       train_percent=args.train_percent,
       eval_percent=args.eval_percent,
       test_percent=args.test_percent,
