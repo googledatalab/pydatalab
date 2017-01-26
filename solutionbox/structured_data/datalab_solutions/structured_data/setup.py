@@ -24,4 +24,6 @@ if __name__ == '__main__':
       version=VERSION,
       packages=['trainer', 'preprocess'],
       author='Google',
-      author_email='cloudml-feedback@google.com',)
+      author_email='cloudml-feedback@google.com',
+      test_suite='nose.collector',
+      tests_require=['nose'])

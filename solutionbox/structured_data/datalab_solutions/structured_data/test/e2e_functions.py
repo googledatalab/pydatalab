@@ -83,7 +83,9 @@ def make_csv_data(filename, num_rows, problem_type):
 
 def run_preprocess(output_dir, csv_filename, schema_filename,
                    train_percent='80', eval_percent='10', test_percent='10'):
-  cmd = ['python', './preprocess/preprocess.py',
+  preprocess_script = os.path.abspath(
+      os.path.join(os.path.dirname(__file__), '../preprocess/preprocess.py'))
+  cmd = ['python', preprocess_script,
          '--output_dir', output_dir,
          '--input_file_path', csv_filename,
          '--schema_file', schema_filename,
@@ -91,13 +93,12 @@ def run_preprocess(output_dir, csv_filename, schema_filename,
          '--eval_percent', eval_percent,
          '--test_percent', test_percent,
   ]
-  print('Current working directoyr: %s' % os.getcwd())
   print('Going to run command: %s' % ' '.join(cmd))
   subprocess.check_call(cmd, stderr=open(os.devnull, 'wb'))
 
 
 def run_training(output_dir, input_dir, schema_filename, transforms_filename,
-                 extra_args=[]):
+                 max_steps, extra_args=[]):
   """Runs Training via gcloud beta ml local train.
 
   Args:
@@ -106,13 +107,23 @@ def run_training(output_dir, input_dir, schema_filename, transforms_filename,
         mmetadata.json.
     schema_filename: path to the schema file
     transforms_filename: path to the transforms file.
+    max_steps: int. max training steps.
     extra_args: array of strings, passed to the trainer.
+
+  Returns:
+    The stderr of training as one string. TF writes to stderr, so basically, the
+    output of training.
   """
   train_filename = os.path.join(input_dir, 'features_train*')
   eval_filename = os.path.join(input_dir, 'features_eval*')
   metadata_filename = os.path.join(input_dir, 'metadata.json')
 
-  cmd = ['gcloud beta ml local train',
+  # Gcloud has the fun bug that you have to be in the parent folder of task.py
+  # when you call it. So cd there first.
+  task_parent_folder = os.path.abspath(
+      os.path.join(os.path.dirname(__file__), '..'))
+  cmd = ['cd %s &&' % task_parent_folder,
+         'gcloud beta ml local train',
          '--module-name=trainer.task',
          '--package-path=trainer',
          '--',
@@ -122,12 +133,8 @@ def run_training(output_dir, input_dir, schema_filename, transforms_filename,
          '--output_path=%s' % output_dir,
          '--schema_file=%s' % schema_filename,
          '--transforms_file=%s' % transforms_filename,
-         '--max_steps=2500'] + extra_args
-  print('Current working directoyr: %s' % os.getcwd())
+         '--max_steps=%s' % max_steps] + extra_args
   print('Going to run command: %s' % ' '.join(cmd))
-  # Don't print all the training output, just the last line that has loss value.
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
   _, err = sp.communicate()
-  err = err.splitlines()
-  print 'last line'
-  print err[len(err)-1]
+  return err

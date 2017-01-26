@@ -14,6 +14,7 @@
 # ==============================================================================
 import json
 import os
+import re
 import shutil
 import tempfile
 import unittest
@@ -36,7 +37,7 @@ class TestTrainer(unittest.TestCase):
     self._transforms_filename = os.path.join(self._test_dir, 'transforms.json')
 
   def tearDown(self):
-    print('Removing temp dir ' + self._test_dir)
+    print('TestTrainer: removing test dir ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
   def _run_training(self, schema, transforms, extra_args):
@@ -50,11 +51,66 @@ class TestTrainer(unittest.TestCase):
     e2e_functions.run_preprocess(output_dir=self._preprocess_dir,
                                  csv_filename=self._csv_filename,
                                  schema_filename=self._schema_filename)
-    e2e_functions.run_training(output_dir=self._train_dir,
+    output = e2e_functions.run_training(output_dir=self._train_dir,
                                input_dir=self._preprocess_dir,
                                schema_filename=self._schema_filename,
                                transforms_filename=self._transforms_filename,
+                               max_steps=2500,
                                extra_args=extra_args)
+    self._training_screen_output = output
+
+  def _check_training_screen_output(self, accuracy=None, loss=None):
+    """Should be called after _run_training.
+
+    Inspects self._training_screen_output for correct output.
+
+    Args:
+      eval_metrics: dict in the form {key: expected_number}. Will inspect the
+          last line of the training output for the line "KEY = NUMBER" and
+          check that NUMBER < expected_number.
+    """
+    # Print the last line of training output which has the loss value.
+    lines = self._training_screen_output.splitlines()
+    last_line = lines[len(lines)-1]
+    print(last_line)
+
+    # supports positive numbers (int, real) with exponential form support.
+    positive_number_re = re.compile('[+]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?')
+
+    # Check it made it to step 2500
+    saving_num_re = re.compile('Saving evaluation summary for step \d+')
+    saving_num = saving_num_re.findall(last_line)
+    # saving_num == ['Saving evaluation summary for step NUM']
+    self.assertEqual(len(saving_num), 1)
+    step_num = positive_number_re.findall(saving_num[0])
+    # step_num == ['2500']
+    self.assertEqual(len(step_num), 1)
+    self.assertEqual(int(step_num[0]), 2500)
+
+
+    # Check the accuracy
+    if accuracy is not None:
+      accuracy_eq_num_re = re.compile('accuracy = [+]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?')
+      accuracy_eq_num = accuracy_eq_num_re.findall(last_line)
+      # accuracy_eq_num == ['accuracy = NUM']
+      self.assertEqual(len(accuracy_eq_num), 1)
+      accuracy_num = positive_number_re.findall(accuracy_eq_num[0])
+      # accuracy_num == ['X.XXX']
+      self.assertEqual(len(accuracy_num), 1)
+      self.assertGreater(float(accuracy_num[0]), accuracy)
+
+    if loss is not None:
+      loss_eq_num_re = re.compile('loss = [+]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?')
+      loss_eq_num = loss_eq_num_re.findall(last_line)
+      # loss_eq_num == ['loss = NUM']
+      self.assertEqual(len(loss_eq_num), 1)
+      loss_num = positive_number_re.findall(loss_eq_num[0])
+      # loss_num == ['X.XXX']
+      self.assertEqual(len(loss_num), 1)
+      self.assertLess(float(loss_num[0]), loss)
+
+
+
 
   def _check_train_files(self):
     model_folder = os.path.join(self._train_dir, 'model')
@@ -76,6 +132,7 @@ class TestTrainer(unittest.TestCase):
              '--model_type=dnn_regression']
 
     self._run_training(schema, transforms, flags)
+    self._check_training_screen_output(loss=10)
     self._check_train_files()
 
   def testRegressionLinear(self):
@@ -85,6 +142,7 @@ class TestTrainer(unittest.TestCase):
     flags = ['--model_type=linear_regression']
 
     self._run_training(schema, transforms, flags)
+    self._check_training_screen_output(loss=1)
     self._check_train_files()
 
   def testClassificationDnn(self):
@@ -98,6 +156,7 @@ class TestTrainer(unittest.TestCase):
              '--model_type=dnn_classification']
 
     self._run_training(schema, transforms, flags)
+    self._check_training_screen_output(accuracy=0.95, loss=0.09)
     self._check_train_files()
 
   def testClassificationLinear(self):
@@ -107,4 +166,5 @@ class TestTrainer(unittest.TestCase):
     flags = ['--model_type=linear_classification']
 
     self._run_training(schema, transforms, flags)
+    self._check_training_screen_output(accuracy=0.95, loss=0.15)
     self._check_train_files()

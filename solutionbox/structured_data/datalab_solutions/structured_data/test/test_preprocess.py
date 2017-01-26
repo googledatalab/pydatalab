@@ -37,7 +37,7 @@ class TestPreprocess(unittest.TestCase):
     self._schema_filename = os.path.join(self._test_dir, 'schema.json')
 
   def tearDown(self):
-    print('Removing test dir: ' + self._test_dir)
+    print('TestPreprocess: removing test dir: ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
   def testRegression(self):
@@ -117,3 +117,6 @@ class TestPreprocess(unittest.TestCase):
     self.assertTrue(glob.glob(os.path.join(self._test_dir, 'features_train*')))
     self.assertTrue(glob.glob(os.path.join(self._test_dir, 'features_eval*')))
     self.assertFalse(glob.glob(os.path.join(self._test_dir, 'features_test*')))
+
+if __name__ == '__main__':
+    unittest.main()
