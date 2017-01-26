@@ -72,8 +72,8 @@ def get_placeholder_input_fn(metadata, schema_config):
     #                                                      keep_target=False)
 
     features = util.parse_example_tensor(examples=examples,
-                                         mode='prediction', 
-                                         metadata=metadata, 
+                                         mode='prediction',
+                                         metadata=metadata,
                                          schema_config=schema_config)
 
     if FEATURES_EXAMPLE_DICT_KEY in features:
@@ -99,8 +99,8 @@ def get_reader_input_fn(metadata, schema_config, data_paths, batch_size,
     """Read the input features from the given data paths."""
     _, examples = util.read_examples(data_paths, batch_size, shuffle)
     features = util.parse_example_tensor(examples=examples,
-                                         mode='training', 
-                                         metadata=metadata, 
+                                         mode='training',
+                                         metadata=metadata,
                                          schema_config=schema_config)
 
     # Retrieve the target feature column.
@@ -113,7 +113,7 @@ def get_reader_input_fn(metadata, schema_config, data_paths, batch_size,
 
 def get_vocabulary(class_index_dict):
   """Get vocab from metadata file.
-  
+
   THe dict's keys are sorted by the values.
 
   Example:
@@ -135,7 +135,7 @@ def get_export_signature_fn(metadata, schema_config, args):
   def get_export_signature(examples, features, predictions):
     """Create an export signature with named input and output signatures."""
     target_name = schema_config['target_column']
-    key_name = schema_config['key_column']    
+    key_name = schema_config['key_column']
     outputs = {TARGET_SCORE_TENSOR_NAME: predictions.name,
                key_name: tf.squeeze(features[key_name]).name}
 
@@ -183,7 +183,7 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
 
   # Check the requested mode fits the preprocessed data.
   target_name = schema_config['target_column']
-  if (is_classification_model(args.model_type) 
+  if (is_classification_model(args.model_type)
       and target_name not in schema_config.get('categorical_columns', [])):
     print('ERROR: when using a classification model, the target must be a '
           'categorical variable.')
@@ -191,7 +191,7 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
   if (is_regression_model(args.model_type)
       and target_name not in schema_config.get('numerical_columns', [])):
     print('ERROR: when using a regression model, the target must be a '
-          'numerical variable.')       
+          'numerical variable.')
     sys.exit(1)
 
   # Check layers used for dnn models.
@@ -204,16 +204,16 @@ def get_estimator(output_dir, metadata, transform_config, schema_config, args):
 
   # Build tf.learn features
   feature_columns = util.produce_feature_columns(
-      metadata, transform_config, schema_config, 
+      metadata, transform_config, schema_config,
       is_linear_model(args.model_type))
-  feature_engineering_fn = util.produce_feature_engineering_fn(metadata, 
+  feature_engineering_fn = util.produce_feature_engineering_fn(metadata,
       transform_config, schema_config)
 
   # Set how often to run checkpointing in terms of time.
   config = tf.contrib.learn.RunConfig(
       save_checkpoints_secs=args.save_checkpoints_secs)
 
-  train_dir = os.path.join(output_dir, 'train')  
+  train_dir = os.path.join(output_dir, 'train')
   if args.model_type == 'dnn_regression':
     estimator = tf.contrib.learn.DNNRegressor(
         feature_columns=feature_columns,
@@ -271,7 +271,7 @@ def get_experiment_fn(args):
     # Get the model to train.
     estimator = get_estimator(output_dir, metadata, transform_config, schema_config, args)
 
-    input_placeholder_for_prediction = get_placeholder_input_fn(metadata, 
+    input_placeholder_for_prediction = get_placeholder_input_fn(metadata,
         schema_config)
 
     # Save the finished model to output_dir/model
@@ -325,10 +325,10 @@ def parse_arguments(argv):
   parser.add_argument('--metadata_path', type=str, required=True)
   parser.add_argument('--output_path', type=str, required=True)
   parser.add_argument('--schema_file',
-                      type=str,    
+                      type=str,
                       required=True,
                       help=('File describing the schema of each column used '
-                            'during preprocessing.'))  
+                            'during preprocessing.'))
   parser.add_argument('--transforms_file',
                       type=str,
                       required=True,
@@ -338,9 +338,9 @@ def parse_arguments(argv):
   # HP parameters
   parser.add_argument('--learning_rate', type=float, default=0.01)
   parser.add_argument('--epsilon', type=float, default=0.0005)
-  
+
   # Model problems
-  parser.add_argument('--model_type', 
+  parser.add_argument('--model_type',
                       choices=['linear_classification', 'linear_regression',
                                'dnn_classification', 'dnn_regression'],
                       required=True)

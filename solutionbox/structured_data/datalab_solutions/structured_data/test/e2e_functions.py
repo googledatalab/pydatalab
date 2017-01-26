@@ -58,7 +58,7 @@ def make_csv_data(filename, num_rows, problem_type):
           str3=str3)
       f1.write(csv_line)
 
-  schema = {'column_names': ['key', 'target', 'num1', 'num2', 'num3', 
+  schema = {'column_names': ['key', 'target', 'num1', 'num2', 'num3',
                              'str1', 'str2', 'str3'],
             'key_column': 'key',
             'target_column': 'target',
@@ -81,11 +81,11 @@ def make_csv_data(filename, num_rows, problem_type):
   return schema, transforms
 
 
-def run_preprocess(output_dir, csv_filename, schema_filename, 
+def run_preprocess(output_dir, csv_filename, schema_filename,
                    train_percent='80', eval_percent='10', test_percent='10'):
-  cmd = ['python', './preprocess/preprocess.py', 
+  cmd = ['python', './preprocess/preprocess.py',
          '--output_dir', output_dir,
-         '--input_file_path', csv_filename, 
+         '--input_file_path', csv_filename,
          '--schema_file', schema_filename,
          '--train_percent', train_percent,
          '--eval_percent', eval_percent,
@@ -125,7 +125,8 @@ def run_training(output_dir, input_dir, schema_filename, transforms_filename,
          '--max_steps=2500'] + extra_args
   print('Current working directoyr: %s' % os.getcwd())
   print('Going to run command: %s' % ' '.join(cmd))
-  sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE) 
+  # Don't print all the training output, just the last line that has loss value.
+  sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
   _, err = sp.communicate()
   err = err.splitlines()
   print 'last line'

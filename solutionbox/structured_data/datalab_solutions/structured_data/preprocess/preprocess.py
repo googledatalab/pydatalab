@@ -62,12 +62,12 @@ def parse_arguments(argv):
                       type=int,
                       help='Percent of input data for test dataset.')
   parser.add_argument('--output_dir',
-                      type=str,    
+                      type=str,
                       required=True,
                       help=('Google Cloud Storage or Local directory in which '
                             'to place outputs.'))
   parser.add_argument('--schema_file',
-                      type=str,    
+                      type=str,
                       required=True,
                       help=('File describing the schema of each column in the '
                             'csv data files.'))
@@ -93,7 +93,7 @@ def parse_arguments(argv):
 
   # args.job_name will not be used unless --cloud is used.
   if not args.job_name:
-    args.job_name = ('structured-data-' + 
+    args.job_name = ('structured-data-' +
                      datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
   return args
@@ -104,12 +104,12 @@ def load_and_check_config(schema_file_path):
 
   try:
     json_str = ml.util._file.load_file(schema_file_path)
-    config = json.loads(json_str) 
+    config = json.loads(json_str)
   except:
     print('ERROR reading schema file.')
     sys.exit(1)
 
-  model_columns = (config.get('numerical_columns', []) 
+  model_columns = (config.get('numerical_columns', [])
                    + config.get('categorical_columns', []))
   if config['target_column'] not in model_columns:
     print('ERROR: target not listed as a numerical or categorial column.')
@@ -162,11 +162,11 @@ def preprocessing_features(args):
   # Extract categorical features
   for name in config.get('categorical_columns', []):
     if name == target_name or name == key_name:
-      continue    
+      continue
     # apply sparse transform to all categorical features.
     default = config.get('defaults', {}).get(name, None)
     feature_set[name] = features.categorical(
-          name, 
+          name,
           default=default,
           frequency_threshold=1).sparse(use_counts=True)
 
@@ -174,7 +174,8 @@ def preprocessing_features(args):
 
 
 def preprocess(pipeline, feature_set, column_names, input_file_path,
-               train_percent, eval_percent, test_percent, output_dir):
+               schema_file, train_percent, eval_percent, test_percent,
+               output_dir):
   """Builds the preprocessing Dataflow pipeline.
 
   The input files are split into a training, eval and test sets, and the SDK
@@ -225,11 +226,14 @@ def preprocess(pipeline, feature_set, column_names, input_file_path,
                       >> io.SaveFeatures(
                           os.path.join(output_dir, 'features_test')))
   # pylint: enable=expression-not-assigned
+  # Put a copy of the schema file in the output folder. Datalab will look for 
+  # it there.
+  ml.util._file.copy_file(schema_file, os.path.join(output_dir, 'schema.json'))
 
 
-def run_dataflow(feature_set, column_names, input_file_path, train_percent,
-                 eval_percent, test_percent, output_dir, cloud, project_id,
-                 job_name):
+def run_dataflow(feature_set, column_names, input_file_path, schema_file,
+                 train_percent, eval_percent, test_percent, output_dir, cloud,
+                 project_id, job_name):
   """Run Preprocessing as a Dataflow pipeline."""
 
   # Configure the pipeline.
@@ -252,6 +256,7 @@ def run_dataflow(feature_set, column_names, input_file_path, train_percent,
       feature_set=feature_set,
       column_names=column_names,
       input_file_path=input_file_path,
+      schema_file=schema_file,
       train_percent=train_percent,
       eval_percent=eval_percent,
       test_percent=test_percent,
@@ -270,6 +275,7 @@ def main(argv=None):
       feature_set=feature_set,
       column_names=column_names,
       input_file_path=args.input_file_path,
+      schema_file=args.schema_file,
       train_percent=args.train_percent,
       eval_percent=args.eval_percent,
       test_percent=args.test_percent,

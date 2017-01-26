@@ -76,6 +76,7 @@ class TestPreprocess(unittest.TestCase):
     self.assertEqual(metadata.columns['target']['scenario'], 'continuous')
     train_files = glob.glob(os.path.join(self._test_dir, 'features_train*'))
     self.assertTrue(train_files)
+    self.assertTrue(os.path.isfile(os.path.join(self._test_dir, 'schema.json')))
 
     # Inspect the first TF record.
     for line in tf.python_io.tf_record_iterator(train_files[0],
