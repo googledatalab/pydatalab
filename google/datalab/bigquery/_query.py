@@ -88,7 +88,6 @@ class Query(object):
     if data_sources is None:
       data_sources = {}
 
-    self._results = None
     self._code = None
     self._imports = []
     if values is None:
@@ -145,28 +144,6 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def results(self, use_cache=True, dialect=None, billing_tier=None):
-    """Retrieves table of results for the query. May block if the query must be executed first.
-
-    Args:
-      use_cache: whether to use cached results or not. Ignored if append is specified.
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
-    Returns:
-      A QueryResultsTable containing the result set.
-    Raises:
-      Exception if the query could not be executed or query response was malformed.
-    """
-    if not use_cache or (self._results is None):
-      self.execute(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier)
-    return self._results.results
-
   def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
               compress=False, use_cache=True, dialect=None, billing_tier=None):
     """Exports the query results to GCS.
@@ -193,11 +170,10 @@ class Query(object):
     Raises:
       An Exception if the query or extract failed.
     """
-    return self.results(use_cache=use_cache, dialect=dialect,
-                        billing_tier=billing_tier).extract(storage_uris, format=format,
-                                                           csv_delimiter=csv_delimiter,
-                                                           csv_header=csv_header,
-                                                           compress=compress)
+    return self.execute(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
+               .results \
+               .extract(storage_uris, format=format, csv_delimiter=csv_delimiter,
+                        csv_header=csv_header, compress=compress)
 
   @google.datalab.utils.async_method
   def extract_async(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
@@ -210,7 +186,7 @@ class Query(object):
     If the query has already been executed and you would prefer to get a Job just for the
     extract, you can can call extract_async on the QueryResultsTable instead; i.e.:
 
-        query.results().extract_async(...)
+        query.execute().results.extract_async(...)
 
     Args:
       storage_uris: the destination URI(s). Can be a single URI or a list.
@@ -258,8 +234,9 @@ class Query(object):
     Returns:
       A Pandas dataframe containing the table data.
     """
-    return self.results(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
-        .to_dataframe(start_row=start_row, max_rows=max_rows)
+    return self.execute(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
+               .results \
+               .to_dataframe(start_row=start_row, max_rows=max_rows)
 
   def to_file(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
               dialect=None, billing_tier=None):
@@ -284,7 +261,8 @@ class Query(object):
     Raises:
       An Exception if the operation failed.
     """
-    self.results(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
+    self.execute(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
+        .results \
         .to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
     return path
 
@@ -340,9 +318,11 @@ class Query(object):
     """
     return Query.sampling_query(self._sql, self._context, count=count, fields=fields,
                                 sampling=sampling, udfs=self._udfs,
-                                data_sources=self._data_sources).results(use_cache=use_cache,
-                                                                         dialect=dialect,
-                                                                         billing_tier=billing_tier)
+                                data_sources=self._data_sources) \
+                .execute(use_cache=use_cache,
+                         dialect=dialect,
+                         billing_tier=billing_tier) \
+                .results
 
   def execute_dry_run(self, dialect=None, billing_tier=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
@@ -460,11 +440,10 @@ class Query(object):
     Raises:
       Exception if query could not be executed.
     """
-    job = self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
+    return self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
                              priority=priority, allow_large_results=allow_large_results,
-                             dialect=dialect, billing_tier=billing_tier)
-    self._results = job.wait()
-    return self._results
+                             dialect=dialect, billing_tier=billing_tier) \
+                             .wait()
 
   def to_view(self, view_name):
     """ Create a View from this Query.

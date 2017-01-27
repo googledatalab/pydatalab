@@ -279,10 +279,10 @@ def _get_query_argument(args, cell, env):
 
 
 def _sample_cell(args, cell_body):
-  """Implements the bigquery sample cell magic for ipython notebooks.
+  """Implements the bq sample cell magic for ipython notebooks.
 
   Args:
-    args: the optional arguments following '%%bigquery sample'.
+    args: the optional arguments following '%%bq sample'.
     cell_body: optional contents of the cell interpreted as SQL, YAML or JSON.
   Returns:
     The results of executing the sampling query, or a profile of the sample data.
@@ -342,16 +342,16 @@ def _create_cell(args, cell_body):
 
    The supported syntax is:
 
-     %%bigquery create dataset -n|--name <name> [-f|--friendly <friendlyname>]
+     %%bq create dataset -n|--name <name> [-f|--friendly <friendlyname>]
      [<description>]
 
    or:
 
-     %%bigquery create table -n|--name <tablename> [--overwrite]
+     %%bq create table -n|--name <tablename> [--overwrite]
      [<YAML or JSON cell_body defining schema to use for tables>]
 
   Args:
-    args: the argument following '%bigquery create <command>'.
+    args: the argument following '%bq create <command>'.
   """
   if args['command'] == 'dataset':
     try:
@@ -376,14 +376,14 @@ def _delete_cell(args, _):
 
    The supported syntax is:
 
-     %%bigquery delete dataset -n|--name <name>
+     %%bq delete dataset -n|--name <name>
 
    or:
 
-     %%bigquery delete table -n|--name <name>
+     %%bq delete table -n|--name <name>
 
   Args:
-    args: the argument following '%bigquery delete <command>'.
+    args: the argument following '%bq delete <command>'.
   """
   # TODO(gram): add support for wildchars and multiple arguments at some point. The latter is
   # easy, the former a bit more tricky if non-default projects are involved.
@@ -403,11 +403,11 @@ def _dryrun_cell(args, cell_body):
   """Implements the BigQuery cell magic used to dry run BQ queries.
 
    The supported syntax is:
-   %%bigquery dryrun [-q|--sql <query identifier>]
+   %%bq dryrun [-q|--sql <query identifier>]
    [<YAML or JSON cell_body or inline SQL>]
 
   Args:
-    args: the argument following '%bigquery dryrun'.
+    args: the argument following '%bq dryrun'.
     cell_body: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     The response wrapped in a DryRunStats object
@@ -422,14 +422,14 @@ def _dryrun_cell(args, cell_body):
 
 
 def _udf_cell(args, js):
-  """Implements the bigquery_udf cell magic for ipython notebooks.
+  """Implements the Bigquery udf cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%bigquery udf --module <var>
+  %%bq udf --module <var>
   <js function>
 
   Args:
-    args: the optional arguments following '%%bigquery udf'.
+    args: the optional arguments following '%%bq udf'.
     js: the UDF declaration (inputs and outputs) and implementation in javascript.
   Returns:
     The results of executing the UDF converted to a dataframe if no variable
@@ -437,7 +437,7 @@ def _udf_cell(args, js):
   """
   variable_name = args['module']
   if not variable_name:
-    raise Exception('Declaration must be of the form %%bigquery udf --module <variable name>')
+    raise Exception('Declaration must be of the form %%bq udf --module <variable name>')
 
   # Parse out the input and output specification
   spec_pattern = r'\{\{([^}]+)\}\}'
@@ -492,11 +492,11 @@ def _execute_cell(args, cell_body):
   """Implements the BigQuery cell magic used to execute BQ queries.
 
    The supported syntax is:
-   %%bigquery execute [-q|--sql <query identifier>] <other args>
+   %%bq execute [-q|--sql <query identifier>] <other args>
    [<YAML or JSON cell_body or inline SQL>]
 
   Args:
-    args: the arguments following '%bigquery execute'.
+    args: the arguments following '%bq execute'.
     cell_body: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     The QueryResultsTable
@@ -513,11 +513,11 @@ def _pipeline_cell(args, cell_body):
   """Implements the BigQuery cell magic used to validate, execute or deploy BQ pipelines.
 
    The supported syntax is:
-   %%bigquery pipeline [-q|--sql <query identifier>] <other args> <action>
+   %%bq pipeline [-q|--sql <query identifier>] <other args> <action>
    [<YAML or JSON cell_body or inline SQL>]
 
   Args:
-    args: the arguments following '%bigquery pipeline'.
+    args: the arguments following '%bq pipeline'.
     cell_body: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     The QueryResultsTable
@@ -548,10 +548,10 @@ def _table_line(args):
   """Implements the BigQuery table magic used to display tables.
 
    The supported syntax is:
-   %bigquery table -t|--table <name> <other args>
+   %bq table -t|--table <name> <other args>
 
   Args:
-    args: the arguments following '%bigquery table'.
+    args: the arguments following '%bq table'.
   Returns:
     The HTML rendering for the table.
   """
@@ -612,7 +612,7 @@ def _schema_line(args):
   """Implements the BigQuery schema magic used to display table/view schemas.
 
   Args:
-    args: the arguments following '%bigquery schema'.
+    args: the arguments following '%bq schema'.
   Returns:
     The HTML rendering for the schema.
   """
@@ -644,10 +644,10 @@ def _datasets_line(args):
 
    The supported syntax is:
 
-       %bigquery datasets [-f <filter>] [-p|--project <project_id>]
+       %bq datasets [-f <filter>] [-p|--project <project_id>]
 
   Args:
-    args: the arguments following '%bigquery datasets'.
+    args: the arguments following '%bq datasets'.
   Returns:
     The HTML rendering for the table of datasets.
   """
@@ -661,10 +661,10 @@ def _tables_line(args):
 
    The supported syntax is:
 
-       %bigquery tables -p|--project <project_id>  -d|--dataset <dataset_id>
+       %bq tables -p|--project <project_id>  -d|--dataset <dataset_id>
 
   Args:
-    args: the arguments following '%bigquery tables'.
+    args: the arguments following '%bq tables'.
   Returns:
     The HTML rendering for the list of tables.
   """
@@ -689,10 +689,10 @@ def _extract_line(args):
 
    The supported syntax is:
 
-       %bigquery extract -S|--source <table> -D|--destination <url> <other_args>
+       %bq extract -S|--source <table> -D|--destination <url> <other_args>
 
   Args:
-    args: the arguments following '%bigquery extract'.
+    args: the arguments following '%bq extract'.
   Returns:
     A message about whether the extract succeeded or failed.
   """
@@ -723,10 +723,10 @@ def _load_cell(args, schema):
 
    The supported syntax is:
 
-       %bigquery load -S|--source <source> -D|--destination <table>  <other_args>
+       %bq load -S|--source <source> -D|--destination <table>  <other_args>
 
   Args:
-    args: the arguments following '%bigquery load'.
+    args: the arguments following '%bq load'.
     schema: a JSON schema for the destination table.
   Returns:
     A message about whether the load succeeded or failed.
@@ -771,58 +771,58 @@ def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohib
 
 
 def _create_bigquery_parser():
-  """ Create the parser for the %bigquery magics.
+  """ Create the parser for the %bq magics.
 
   Note that because we use the func default handler dispatch mechanism of argparse,
   our handlers can take only one argument which is the parsed args. So we must create closures
   for the handlers that bind the cell contents and thus must recreate this parser for each
   cell upon execution.
   """
-  parser = google.datalab.utils.commands.CommandParser(prog='bigquery', description="""
-Execute various BigQuery-related operations. Use "%bigquery <command> -h"
+  parser = google.datalab.utils.commands.CommandParser(prog='bq', description="""
+Execute various BigQuery-related operations. Use "%bq <command> -h"
 for help on a specific command.
   """)
 
   # This is a bit kludgy because we want to handle some line magics and some cell magics
-  # with the bigquery command.
+  # with the bq command.
 
-  # %%bigquery sample
+  # %%bq sample
   _add_command(parser, _create_sample_subparser, _sample_cell)
 
-  # %%bigquery create
+  # %%bq create
   _add_command(parser, _create_create_subparser, _create_cell)
 
-  # %%bigquery delete
+  # %%bq delete
   _add_command(parser, _create_delete_subparser, _delete_cell)
 
-  # %%bigquery dryrun
+  # %%bq dryrun
   _add_command(parser, _create_dry_run_subparser, _dryrun_cell)
 
-  # %%bigquery udf
+  # %%bq udf
   _add_command(parser, _create_udf_subparser, _udf_cell, cell_required=True)
 
-  # %%bigquery execute
+  # %%bq execute
   _add_command(parser, _create_execute_subparser, _execute_cell)
 
-  # %%bigquery pipeline
+  # %%bq pipeline
   _add_command(parser, _create_pipeline_subparser, _pipeline_cell)
 
-  # %bigquery table
+  # %bq table
   _add_command(parser, _create_table_subparser, _table_line, cell_prohibited=True)
 
-  # %bigquery schema
+  # %bq schema
   _add_command(parser, _create_schema_subparser, _schema_line, cell_prohibited=True)
 
-  # %bigquery datasets
+  # %bq datasets
   _add_command(parser, _create_datasets_subparser, _datasets_line, cell_prohibited=True)
 
-  # %bigquery tables
+  # %bq tables
   _add_command(parser, _create_tables_subparser, _tables_line, cell_prohibited=True)
 
-  # % bigquery extract
+  # %bq extract
   _add_command(parser, _create_extract_subparser, _extract_line, cell_prohibited=True)
 
-  # %bigquery load
+  # %bq load
   # TODO(gram): need some additional help, esp. around the option of specifying schema in
   # cell body and how schema infer may fail.
   _add_command(parser, _create_load_subparser, _load_cell)
@@ -833,19 +833,19 @@ _bigquery_parser = _create_bigquery_parser()
 
 
 @IPython.core.magic.register_line_cell_magic
-def bigquery(line, cell=None):
-  """Implements the bigquery cell magic for ipython notebooks.
+def bq(line, cell=None):
+  """Implements the bq cell magic for ipython notebooks.
 
   The supported syntax is:
 
-    %%bigquery <command> [<args>]
+    %%bq <command> [<args>]
     <cell>
 
   or:
 
-    %bigquery <command> [<args>]
+    %bq <command> [<args>]
 
-  Use %bigquery --help for a list of commands, or %bigquery <command> --help for help
+  Use %bq --help for a list of commands, or %bq <command> --help for help
   on a specific command.
   """
   namespace = {}
