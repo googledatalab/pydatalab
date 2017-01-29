@@ -19,6 +19,7 @@ import google.datalab.context
 import google.datalab.data
 import google.datalab.utils
 
+from . import _query_output
 from . import _api
 from . import _federated_table
 from . import _query_job
@@ -349,23 +350,11 @@ class Query(object):
       raise e
     return query_result['statistics']['query']
 
-  def execute_async(self, table_name=None, table_mode='create', use_cache=True,
-                    priority='interactive', allow_large_results=False, dialect=None,
-                    billing_tier=None):
+  def execute_async(self, output_options, dialect=None, billing_tier=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
-      table_name: the result table name as a string or TableName; if None (the default), then a
-          temporary table will be used.
-      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
-          will fail if the table exists.
-      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
-          specified (default True).
-      priority:one of 'batch' or 'interactive' (default). 'interactive' jobs should be scheduled
-          to run quickly but are subject to rate limits; 'batch' jobs could be delayed by as much
-          as three hours but are not rate-limited.
-      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
-          slower and requires a table_name to be specified) (default False).
+      output_options: a QueryOutput object describing how to execute the query
       dialect : {'legacy', 'standard'}, default 'legacy'
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
@@ -379,37 +368,38 @@ class Query(object):
     Raises:
       Exception if query could not be executed.
     """
-    batch = priority == 'low'
-    append = table_mode == 'append'
-    overwrite = table_mode == 'overwrite'
-    if table_name is not None:
-      table_name = _utils.parse_table_name(table_name, self._api.project_id)
+    if output_options.type == 'table':
+      batch = output_options.priority == 'low'
+      append = output_options.table_mode == 'append'
+      overwrite = output_options.table_mode == 'overwrite'
+      if output_options.table_name is not None:
+        output_options.table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
-    try:
-      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports,
-                                                 table_name=table_name,
-                                                 append=append,
-                                                 overwrite=overwrite,
-                                                 use_cache=use_cache,
-                                                 batch=batch,
-                                                 allow_large_results=allow_large_results,
-                                                 table_definitions=self._external_tables,
-                                                 dialect=dialect,
-                                                 billing_tier=billing_tier)
-    except Exception as e:
-      raise e
-    if 'jobReference' not in query_result:
-      raise Exception('Unexpected response from server')
-
-    job_id = query_result['jobReference']['jobId']
-    if not table_name:
       try:
-        destination = query_result['configuration']['query']['destinationTable']
-        table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
-      except KeyError:
-        # The query was in error
-        raise Exception(_utils.format_query_errors(query_result['status']['errors']))
-    return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
+        query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports,
+                                                   table_name=output_options.table_name,
+                                                   append=append,
+                                                   overwrite=overwrite,
+                                                   use_cache=output_options.use_cache,
+                                                   batch=batch,
+                                                   allow_large_results=output_options.allow_large_results,
+                                                   table_definitions=self._external_tables,
+                                                   dialect=dialect,
+                                                   billing_tier=billing_tier)
+      except Exception as e:
+        raise e
+      if 'jobReference' not in query_result:
+        raise Exception('Unexpected response from server')
+
+      job_id = query_result['jobReference']['jobId']
+      if not table_name:
+        try:
+          destination = query_result['configuration']['query']['destinationTable']
+          table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
+        except KeyError:
+          # The query was in error
+          raise Exception(_utils.format_query_errors(query_result['status']['errors']))
+      return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
               allow_large_results=False, dialect=None, billing_tier=None):
