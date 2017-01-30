@@ -231,7 +231,7 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
   elif isinstance(source, pandas.DataFrame):
     return _get_data_from_dataframe(source, fields, first_row, count, schema)
   elif isinstance(source, google.datalab.bigquery.Query):
-    return _get_data_from_table(source.results(), fields, first_row, count, schema)
+    return _get_data_from_table(source.execute().results, fields, first_row, count, schema)
   elif isinstance(source, google.datalab.bigquery.Table):
     return _get_data_from_table(source, fields, first_row, count, schema)
   else:

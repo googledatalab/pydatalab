@@ -17,5 +17,3 @@ from __future__ import unicode_literals
 from ._csv import Csv
 from ._sql_module import SqlModule
 from ._sql_statement import SqlStatement
-
-from ._utils import tokenize

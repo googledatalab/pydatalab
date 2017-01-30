@@ -15,18 +15,18 @@ from __future__ import unicode_literals
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.bigquery
-import datalab.context
+import google.datalab.bigquery
+import google.datalab.context
 
 
 class TestCases(unittest.TestCase):
 
   def test_sql_building(self):
     context = self._create_context()
-    table = datalab.bigquery.Table('test:requestlogs.today', context=context)
+    table = google.datalab.bigquery.Table('test:requestlogs.today', context=context)
 
     udf = self._create_udf()
-    query = datalab.bigquery.Query('SELECT * FROM foo($t)', t=table, udfs=[udf], context=context)
+    query = google.datalab.bigquery.Query('SELECT * FROM foo($t)', t=table, udfs=[udf], context=context)
 
     expected_js = '\nfoo=function(r,emit) { emit({output1: r.field2, output2: r.field1 }); };\n' +\
                   'bigquery.defineFunction(\'foo\', ["field1", "field2"], ' +\
@@ -35,16 +35,27 @@ class TestCases(unittest.TestCase):
     self.assertEqual(query.sql, 'SELECT * FROM (SELECT output1, output2 FROM foo([test:requestlogs.today]))')
     self.assertEqual(udf._code, expected_js)
 
+  def test_udf_expansion(self):
+    sql = 'SELECT * FROM udf(source)'
+    udf = datalab.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf', 'code')
+    context = TestCases._create_context()
+    query = datalab.bigquery.Query(sql, udf=udf, context=context)
+    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
+
+    # Alternate form
+    query = datalab.bigquery.Query(sql, udfs=[udf], context=context)
+    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
+
   @staticmethod
   def _create_udf():
     inputs = [('field1', 'string'), ('field2', 'integer')]
     outputs = [('output1', 'integer'), ('output2', 'string')]
     impl = 'function(r,emit) { emit({output1: r.field2, output2: r.field1 }); }'
-    udf = datalab.bigquery.UDF(inputs, outputs, 'foo', impl)
+    udf = google.datalab.bigquery.UDF(inputs, outputs, 'foo', impl)
     return udf
 
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)

@@ -20,55 +20,6 @@ import google.datalab.data
 
 class TestCases(unittest.TestCase):
 
-  def test_sql_tokenizer(self):
-    query = "SELECT * FROM function(SELECT * FROM [table])  -- a comment\nWHERE x>0 AND y == 'cat'/*\nmulti-line comment */LIMIT 10"
-    tokens = google.datalab.data.tokenize(query)
-    # Make sure we get all the content
-    self.assertEquals(''.join(tokens), query)
-
-    # Then check the tokens
-    expected = [
-      'SELECT',
-      ' ',
-      '*',
-      ' ',
-      'FROM',
-      ' ',
-      'function',
-      '(',
-      'SELECT',
-      ' ',
-      '*',
-      ' ',
-      'FROM',
-      ' ',
-      '[',
-      'table',
-      ']',
-      ')',
-      '  ',
-      '-- a comment\n',
-      'WHERE',
-      ' ',
-      'x',
-      '>',
-      '0',
-      ' ',
-      'AND',
-      ' ',
-      'y',
-      ' ',
-      '=',
-      '=',
-      ' ',
-      '\'cat\'',
-      '/*\nmulti-line comment */',
-      'LIMIT',
-      ' ',
-      '10'
-    ]
-    self.assertEquals(expected, tokens)
-
   def test_zero_placeholders(self):
     queries = ['SELECT * FROM [logs.today]',
                ' SELECT time FROM [logs.today] ']
