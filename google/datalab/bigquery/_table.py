@@ -263,9 +263,11 @@ class Table(object):
     from . import _query
     sql = self._repr_sql_()
     return _query.Query.sampling_query(sql, context=self._context, count=count, fields=fields,
-                                       sampling=sampling).results(use_cache=use_cache,
-                                                                  dialect=dialect,
-                                                                  billing_tier=billing_tier)
+                                       sampling=sampling) \
+                        .execute(use_cache=use_cache,
+                                 dialect=dialect,
+                                 billing_tier=billing_tier) \
+                        .results
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
@@ -770,7 +772,7 @@ class Table(object):
         to reduce the number of calls to tabledata.list.
 
         Note: this is a useful function to have, and supports some current usage like
-        query.results()[0], but should be used with care.
+        query.execute().results[0], but should be used with care.
     """
     if isinstance(item, slice):
       # Just treat this as a set of calls to __getitem__(int)

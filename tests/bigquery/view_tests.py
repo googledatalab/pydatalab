@@ -17,21 +17,21 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.bigquery
-import datalab.context
+import google.datalab.bigquery
+import google.datalab.context
 
 
 class TestCases(unittest.TestCase):
 
   def test_view_repr_sql(self):
     name = 'test:testds.testView0'
-    view = datalab.bigquery.View(name, TestCases._create_context())
+    view = google.datalab.bigquery.View(name, TestCases._create_context())
     self.assertEqual('[%s]' % name, view._repr_sql_())
 
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
   def test_view_create(self,
                        mock_api_datasets_get,
                        mock_api_tables_list,
@@ -44,19 +44,19 @@ class TestCases(unittest.TestCase):
 
     name = 'test:testds.testView0'
     sql = 'select * from test:testds.testTable0'
-    view = datalab.bigquery.View(name, TestCases._create_context())
+    view = google.datalab.bigquery.View(name, TestCases._create_context())
     result = view.create(sql)
     self.assertTrue(view.exists())
     self.assertEqual(name, str(view))
     self.assertEqual('[%s]' % name, view._repr_sql_())
     self.assertIsNotNone(result, 'Expected a view')
 
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tabledata_list')
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
-  @mock.patch('datalab.bigquery._api.Api.jobs_query_results')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_view_result(self, mock_api_tables_get, mock_api_jobs_get, mock_api_jobs_query_results,
                        mock_api_insert_query, mock_api_tabledata_list, mock_api_tables_insert):
 
@@ -69,7 +69,7 @@ class TestCases(unittest.TestCase):
 
     name = 'test:testds.testView0'
     sql = 'select * from test:testds.testTable0'
-    view = datalab.bigquery.View(name, TestCases._create_context())
+    view = google.datalab.bigquery.View(name, TestCases._create_context())
     view.create(sql)
     results = view.results()
 
@@ -77,10 +77,10 @@ class TestCases(unittest.TestCase):
     first_result = results[0]
     self.assertEqual('value1', first_result['field1'])
 
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.table_update')
-  @mock.patch('datalab.context.Context.default')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.table_update')
+  @mock.patch('google.datalab.context.Context.default')
   def test_view_update(self, mock_context_default, mock_api_table_update,
                        mock_api_tables_get, mock_api_tables_insert):
     mock_api_tables_insert.return_value = TestCases._create_tables_insert_success_result()
@@ -94,7 +94,7 @@ class TestCases(unittest.TestCase):
             'view': {'query': sql}}
     mock_api_tables_get.return_value = info
     name = 'test:testds.testView0'
-    view = datalab.bigquery.View(name, TestCases._create_context())
+    view = google.datalab.bigquery.View(name, TestCases._create_context())
     view.create(sql)
     self.assertEqual(friendly_name, view.friendly_name)
     self.assertEqual(description, view.description)
@@ -157,4 +157,4 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.context.Context(project_id, creds)

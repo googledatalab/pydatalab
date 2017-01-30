@@ -183,8 +183,9 @@ class View(object):
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return self._materialization.results(use_cache=use_cache, dialect=dialect,
-                                         billing_tier=billing_tier)
+    return self._materialization.execute(use_cache=use_cache, dialect=dialect,
+                                         billing_tier=billing_tier) \
+                                .results
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
                     allow_large_results=False, dialect=None, billing_tier=None):
