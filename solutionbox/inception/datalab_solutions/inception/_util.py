@@ -42,11 +42,19 @@ def default_project():
   return context.project_id
 
 
-def get_train_eval_files(input_dir):
+def _get_latest_data_dir(input_dir):
   latest_file = os.path.join(input_dir, 'latest')
+  if not ml.util._file.file_exists(latest_file):
+    raise Exception(('Cannot find "latest" file in "%s". ' +
+                    'Please use a preprocessing output dir.') % input_dir)
   with ml.util._file.open_local_or_gcs(latest_file, 'r') as f:
     dir_name = f.read().rstrip()
-  data_dir = os.path.join(input_dir, dir_name)
+  return os.path.join(input_dir, dir_name)
+
+
+def get_train_eval_files(input_dir):
+  """Get preprocessed training and eval files."""
+  data_dir = _get_latest_data_dir(input_dir)
   train_pattern = os.path.join(data_dir, 'train*.tfrecord.gz')
   eval_pattern = os.path.join(data_dir, 'eval*.tfrecord.gz')
   train_files = ml.util._file.glob_files(train_pattern)
@@ -54,9 +62,11 @@ def get_train_eval_files(input_dir):
   return train_files, eval_files
 
 
-def get_labels(input_labels_file):
-  """Get a list of labels from labels file."""
-  with ml.util._file.open_local_or_gcs(input_labels_file, mode='r') as f:
+def get_labels(input_dir):
+  """Get a list of labels from preprocessed output dir."""
+  data_dir = _get_latest_data_dir(input_dir)
+  labels_file = os.path.join(data_dir, 'labels')
+  with ml.util._file.open_local_or_gcs(labels_file, mode='r') as f:
     labels = f.read().rstrip().split('\n')
   return labels
 

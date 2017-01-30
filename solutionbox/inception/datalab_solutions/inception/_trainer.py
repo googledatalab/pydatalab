@@ -219,11 +219,14 @@ class Trainer(object):
             # Take the final checkpoint and compute the final accuracy.
             # self.saver.save(session, self.sv.save_path, self.tensors.global_step)
             self.eval(session)
-            # Export the model for inference.
-            self.model.export(tf.train.latest_checkpoint(self.train_path), self.model_path)
 
       except tf.errors.AbortedError:
+        print('Hitting an AbortedError. Trying it again.')
         should_retry = True
+
+    # Export the model for inference.
+    if self.is_master:
+      self.model.export(tf.train.latest_checkpoint(self.train_path), self.model_path)
 
     # Ask for all the services to stop.
     self.sv.stop()
