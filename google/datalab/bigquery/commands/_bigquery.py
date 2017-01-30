@@ -279,7 +279,7 @@ def _get_query_argument(args, cell, env):
 
 
 def _sample_cell(args, cell_body):
-  """Implements the bq sample cell magic for ipython notebooks.
+  """Implements the BigQuery sample cell magic for ipython notebooks.
 
   Args:
     args: the optional arguments following '%%bq sample'.
