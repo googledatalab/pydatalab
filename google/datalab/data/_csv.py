@@ -124,7 +124,7 @@ class Csv(object):
   def _get_gcs_csv_row_count(self, federated_table):
     import google.datalab.bigquery as bq
     results = bq.Query('SELECT count(*) from data',
-                       data_sources={'data': federated_table}).results()
+                       data_sources={'data': federated_table}).execute().results
     return results[0].values()[0]
 
   def sample_to(self, count, skip_header_rows, strategy, target):
