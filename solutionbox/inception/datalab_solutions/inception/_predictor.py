@@ -27,11 +27,18 @@ import yaml
 
 
 def _make_batches(iterable, batch_size):
+  """Given an iterable, it creates another iterable with each element an iterable
+     of a batch. In the last batch, since there are likely not enough elements for
+     a whole batch, None is padded.
+  """
   args = [iter(iterable)] * batch_size
   return itertools.izip_longest(fillvalue=None, *args)
 
 
 def _expand_batches(results):
+  """Given an iterable of batches (each batch is an iterable), create a "merged"
+     iterable that each element is a single element in a batch.
+  """
   for result_batch in results:
     for elem in result_batch:
       yield elem
