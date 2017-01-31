@@ -14,13 +14,13 @@
 
 class QueryOutput(object):
 
-  @classmethod
-  def table(output, name=None, mode='create', use_cache=True, priority='interactive',
+  @staticmethod
+  def table(name=None, mode='create', use_cache=True, priority='interactive',
             allow_large_results=False):
     """ Construct a query output object where the result is a table
 
     Args:
-      table_name: the result table name as a string or TableName; if None (the default), then a
+      name: the result table name as a string or TableName; if None (the default), then a
           temporary table will be used.
       table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
           will fail if the table exists.
@@ -30,18 +30,19 @@ class QueryOutput(object):
           to run quickly but are subject to rate limits; 'batch' jobs could be delayed by as much
           as three hours but are not rate-limited.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
-          slower and requires a table_name to be specified) (default False).
+          slower and requires a name to be specified) (default False).
     """
+    output = QueryOutput()
     output._output_type = 'table'
     output._table_name = name
     output._table_mode = mode
     output._use_cache = use_cache
     output._priority = priority
     output._allow_large_results = allow_large_results
-    return result
+    return output
 
-  @classmethod
-  def file(output, path, format='csv', csv_delimiter=',', csv_header=True, compress=False,
+  @staticmethod
+  def file(path, format='csv', csv_delimiter=',', csv_header=True, compress=False,
            use_cache=True):
     """ Construct a query output object where the result is either a local file or a GCS path
 
@@ -49,9 +50,7 @@ class QueryOutput(object):
     and the second to extract the resulting table. These are wrapped by a single outer Job.
 
     If the query has already been executed and you would prefer to get a Job just for the
-    extract, you can can call extract_async on the QueryResultsTable instead; i.e.:
-
-        query.execute().results.extract_async(...)
+    extract, you can can call extract[_async] on the QueryResultsTable returned by the query
 
     Args:
       path: the destination path. Can either be a local or GCS URI (starting with gs://)
@@ -63,16 +62,17 @@ class QueryOutput(object):
           AVRO format (default False). Applies only to GCS URIs.
       use_cache: whether to use cached results or not (default True).
     """
+    output = QueryOutput()
     output._output_type = 'file'
     output._file_path = path
     output._file_format = format
     output._csv_delimiter = csv_delimiter
     output._csv_header = csv_header
     output._compress_file = compress
-    return result
+    return output
 
-  @classmethod
-  def dataframe(output, start_row=0, max_rows=None, use_cache=True):
+  @staticmethod
+  def dataframe(start_row=0, max_rows=None, use_cache=True):
     """ Construct a query output object where the result is a dataframe
 
     Args:
@@ -80,11 +80,12 @@ class QueryOutput(object):
       max_rows: an upper limit on the number of rows to export (default None).
       use_cache: whether to use cached results or not (default True).
     """
+    output = QueryOutput()
     output._output_type = 'dataframe'
     output._dataframe_start_row = start_row
     output._dataframe_max_rows = max_rows
-    output._dataframe_use_cache = use_cache
-    return result
+    output._use_cache = use_cache
+    return output
 
   def __init__(self):
     """ Create a BigQuery output type object. Do not call this directly; use factory methods. """
@@ -101,7 +102,6 @@ class QueryOutput(object):
     self._compress_file = None
     self._dataframe_start_row = None
     self._dataframe_max_rows = None
-    self._dataframe_use_cache = None
 
   @property
   def type(self):
@@ -155,6 +155,3 @@ class QueryOutput(object):
   def dataframe_max_rows(self):
     return self._dataframe_max_rows
 
-  @property
-  def dataframe_use_cache(self):
-    return self._dataframe_use_cache

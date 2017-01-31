@@ -608,7 +608,7 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
         }},
         map: {{
           '*': {{
-            google.datalab: 'nbextensions/gcpdatalab'
+            datalab: 'nbextensions/gcpdatalab'
           }}
         }},
         shim: {{
@@ -619,10 +619,10 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
         }}
       }});
 
-      require(['google.datalab/charting',
-               'google.datalab/element!{id}',
+      require(['datalab/charting',
+               'datalab/element!{id}',
                'base/js/events',
-               'google.datalab/style!/nbextensions/gcpdatalab/charting.css'
+               'datalab/style!/nbextensions/gcpdatalab/charting.css'
               ],
         function(charts, dom, events) {{
           charts.render(

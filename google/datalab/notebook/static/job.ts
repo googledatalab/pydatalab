@@ -14,7 +14,7 @@
 
 /// <reference path="../../../externs/ts/require/require.d.ts" />
 
-declare var google.datalab: any;
+declare var datalab: any;
 declare var IPython: any;
 
 module Job {
@@ -22,7 +22,7 @@ module Job {
   function refresh(dom: any, job_name: any, job_type: any, interval: any,
       html_on_running: string, html_on_success: string): any {
     var code = '%_get_job_status ' + job_name + ' ' + job_type;
-    google.datalab.session.execute(code, function (error: any, newData: any) {
+    datalab.session.execute(code, function (error: any, newData: any) {
       error = error || newData.error;
       if (error) {
         dom.innerHTML = '<p class="jobfail">Job failed with error: ' + error

@@ -45,8 +45,8 @@ def html_job_status(job_name, job_type, refresh_interval, html_on_running, html_
     <div class="jobstatus" id="%s">
     </div>
     <script>
-      require(['google.datalab/job', 'google.datalab/element!%s', 'base/js/events',
-          'google.datalab/style!/nbextensions/google.datalab/job.css'],
+      require(['datalab/job', 'datalab/element!%s', 'base/js/events',
+          'datalab/style!/nbextensions/datalab/job.css'],
         function(job, dom, events) {
           job.render(dom, events, '%s', '%s', %s, '%s', '%s');
         }
