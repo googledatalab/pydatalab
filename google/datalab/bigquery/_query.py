@@ -350,7 +350,7 @@ class Query(object):
       raise e
     return query_result['statistics']['query']
 
-  def execute_async(self, output_options, dialect=None, billing_tier=None):
+  def execute_async(self, output_options=None, dialect=None, billing_tier=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
@@ -364,59 +364,94 @@ class Query(object):
           will be set to your project default. This can also be used to override your
           project-wide default billing tier on a per-query basis.
     Returns:
-      A QueryJob.
+      A Job object that can wait on creating a table or exporting to a file
+      If the output is a table, the Job object additionally has run statistics.
     Raises:
       Exception if query could not be executed.
     """
-    if output_options.type == 'table':
-      batch = output_options.priority == 'low'
-      append = output_options.table_mode == 'append'
-      overwrite = output_options.table_mode == 'overwrite'
-      if output_options.table_name is not None:
-        output_options.table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
+    # Default behavior is to execute to a table
+    if output_options == None:
+      output_options = QueryOutput.table()
+
+    # First, execute the query into a table, using a temporary one if no name is specified
+    batch = output_options.priority == 'low'
+    append = output_options.mode == 'append'
+    overwrite = output_options.mode == 'overwrite'
+    table_name = output_options.name
+    if table_name is not None:
+      table_name = _utils.parse_table_name(table_name, self._api.project_id)
+
+    try:
+      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports,
+                                                 table_name=table_name,
+                                                 append=append,
+                                                 overwrite=overwrite,
+                                                 use_cache=output_options.use_cache,
+                                                 batch=batch,
+                                                 allow_large_results=output_options.allow_large_results,
+                                                 table_definitions=self._external_tables,
+                                                 dialect=dialect,
+                                                 billing_tier=billing_tier)
+    except Exception as e:
+      raise e
+    if 'jobReference' not in query_result:
+      raise Exception('Unexpected response from server')
+
+    job_id = query_result['jobReference']['jobId']
+    if not table_name:
       try:
-        query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports,
-                                                   table_name=output_options.table_name,
-                                                   append=append,
-                                                   overwrite=overwrite,
-                                                   use_cache=output_options.use_cache,
-                                                   batch=batch,
-                                                   allow_large_results=output_options.allow_large_results,
-                                                   table_definitions=self._external_tables,
-                                                   dialect=dialect,
-                                                   billing_tier=billing_tier)
-      except Exception as e:
-        raise e
-      if 'jobReference' not in query_result:
-        raise Exception('Unexpected response from server')
+        destination = query_result['configuration']['query']['destinationTable']
+        table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
+      except KeyError:
+        # The query was in error
+        raise Exception(_utils.format_query_errors(query_result['status']['errors']))
 
-      job_id = query_result['jobReference']['jobId']
-      if not table_name:
-        try:
-          destination = query_result['configuration']['query']['destinationTable']
-          table_name = (destination['projectId'], destination['datasetId'], destination['tableId'])
-        except KeyError:
-          # The query was in error
-          raise Exception(_utils.format_query_errors(query_result['status']['errors']))
-      return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
+    execute_job = _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
+
+    # If all we need is to execute the query to a table, we're done
+    if output_options.type == 'table':
+      return execute_job
+    # Otherwise, build an async Job that waits on the query execution then carries out
+    # the specific export operation
+    else:
+      export_job = export_args = export_kwargs = None
+      if output_options.type == 'file':
+        if output_options.path.startswith('gs://'):
+          export_func = execute_job.results.extract_async
+          export_args = [output_options.path]
+          export_kwargs = {
+                            format: output_options.file_format,
+                            csv_delimiter: output_options.csv_delimiter,
+                            csv_header: output_options.csv_header,
+                            compress: output_options.compress
+                          }
+        else:
+          export_func = execute_job.results.to_file_async
+          export_args = [output_options.path]
+          export_kwargs = {
+                            format: output_options.file_format,
+                            csv_delimiter: output_options.csv_delimiter.
+                            csv_header: output_options.csv_header
+                          }
+      elif output_options.type == 'dataframe':
+        export_func = execute_job.results.to_dataframe
+        export_args = []
+        export_kwargs = {
+                          start_row: output_options.start_row,
+                          max_rows: output_options.max_rows,
+                          use_cache: output_options.use_cache
+                        }
+
+      # Perform the export operation with the specified parameters
+      return google.datalab.utils.async(export_args, export_kwargs)(export_func)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
               allow_large_results=False, dialect=None, billing_tier=None):
-    """ Initiate the query, blocking until complete and then return the results.
+    """ Initiate the query and return a QueryJob.
 
     Args:
-      table_name: the result table name as a string or TableName; if None (the default), then a
-          temporary table will be used.
-      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
-          will fail if the table exists.
-      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
-          specified (default True).
-      priority:one of 'batch' or 'interactive' (default). 'interactive' jobs should be scheduled
-          to run quickly but are subject to rate limits; 'batch' jobs could be delayed by as much
-          as three hours but are not rate-limited.
-      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
-          slower and requires a table_name to be specified) (default False).
+      output_options: a QueryOutput object describing how to execute the query
       dialect : {'legacy', 'standard'}, default 'legacy'
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
@@ -426,7 +461,7 @@ class Query(object):
           will be set to your project default. This can also be used to override your
           project-wide default billing tier on a per-query basis.
     Returns:
-      The QueryResultsTable for the query.
+      A Job object that can wait on creating a table or exporting to a file
     Raises:
       Exception if query could not be executed.
     """
