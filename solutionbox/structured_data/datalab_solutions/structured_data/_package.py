@@ -42,30 +42,9 @@ import yaml
 
 import google.cloud.ml as ml
 
+from . import preprocess
+
 _TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl'
-
-
-def _percent_flags(train_percent=None, eval_percent=None, test_percent=None):
-  """Convert train/eval/test percents into command line flags.
-
-  Args:
-    train_percent: Int in range [0, 100].
-    eval_percent: Int in range [0, 100].
-    train_percent: Int in range [0, 100].
-
-  Returns:
-    Array of strings encoding the command line flags.
-  """
-  train_percent = train_percent or 0
-  eval_percent = eval_percent or 0
-  test_percent = test_percent or 0
-  if train_percent == 0 and eval_percent == 0 and test_percent == 0:
-    percent_flags = []
-  else:
-    percent_flags = ['--train_percent=%s' % str(train_percent),
-                     '--eval_percent=%s' % str(eval_percent),
-                     '--test_percent=%s' % str(test_percent)]
-  return percent_flags
 
 
 def _default_project():
@@ -91,88 +70,51 @@ def _run_cmd(cmd):
       break
 
 
-def local_preprocess(input_file_path, output_dir, schema_file,
-                     train_percent=None, eval_percent=None, test_percent=None):
-  """Preprocess data locally with Beam.
+def local_preprocess(input_file_path, output_dir, schema_file, input_feature_file,):
+  """Preprocess data locally with Pandas
 
-  Produce output that can be used by training efficiently. Will also split
-  data into three sets (training, eval, and test). {train, eval, test}_percent
-  should be nonnegative integers that sum to 100.
+  Produce analysis used by training.
 
   Args:
     input_file_path: String. File pattern what will expand into a list of csv
-        files. Preprocessing will automatically slip the data into three sets
-        for training, evaluation, and testing. Can be local or GCS path.
-    output_dir: The output directory to use; can be local or GCS path.
+        files.
+    output_dir: The output directory to use.
     schema_file: File path to the schema file.
-    train_percent: Int in range [0, 100].
-    eval_percent: Int in range [0, 100].
-    test_percent: Int in range [0, 100].
+    input_feature_file: Describes defaults and column types.
   """
-  percent_flags = _percent_flags(train_percent, eval_percent, test_percent)
-  this_folder = os.path.dirname(os.path.abspath(__file__))
+  args = ['local_preprocess',
+          '--input_file_pattern=%s' % input_file_path,
+          '--output_dir=%s' % output_dir,
+          '--schema_file=%s' % schema_file,
+          '--input_feature_types=%s' % input_feature_file]
 
-  cmd = ['python',
-         os.path.join(this_folder, 'preprocess/preprocess.py'),
-         '--input_file_path=%s' % input_file_path,
-         '--output_dir=%s' % output_dir,
-         '--schema_file=%s' % schema_file] + percent_flags
-
-  print('Local preprocess, running command: %s' % ' '.join(cmd))
-  _run_cmd(' '.join(cmd))
+  print('Starting local preprocessing.')
+  preprocess.local_preprocess.main(args)
   print('Local preprocessing done.')
 
+def cloud_preprocess(input_file_path, output_dir, schema_file, input_feature_file, bigquery_tmp_table):
+  """Preprocess data in the cloud with BigQuery.
 
-def cloud_preprocess(input_file_path, output_dir, schema_file,
-                     train_percent=None, eval_percent=None, test_percent=None,
-                     project_id=None, job_name=None):
-  """Preprocess data in the cloud with Dataflow.
-
-  Produce output that can be used by training efficiently. Will also split
-  data into three sets (training, eval, and test). {train, eval, test}_percent
-  should be nonnegative integers that sum to 100.
+  Produce analysis used by training.
 
   Args:
     input_file_path: String. File pattern what will expand into a list of csv
-        files. Preprocessing will automatically slip the data into three sets
-        for training, evaluation, and testing. Can be local or GCS path.
+        files on GCS.
     output_dir: The output directory to use; should be GCS path.
     schema_file: File path to the schema file.
-    train_percent: Int in range [0, 100].
-    eval_percent: Int in range [0, 100].
-    train_percent: Int in range [0, 100].
-    project_id: String. The GCE project to use. Defaults to the notebook's
-        default project id.
-    job_name: String. Job name as listed on the Dataflow service. If None, a
-        default job name is selected.
+    input_feature_file: Describes defaults and column types.
   """
-  percent_flags = _percent_flags(train_percent, eval_percent, test_percent)
-  this_folder = os.path.dirname(os.path.abspath(__file__))
-  project_id = project_id or _default_project()
-  job_name = job_name or ('structured-data-' +
-                          datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
-  cmd = ['python',
-         os.path.join(this_folder, 'preprocess/preprocess.py'),
-         '--cloud',
-         '--project_id=%s' % project_id,
-         '--job_name=%s' % job_name,
-         '--input_file_path=%s' % input_file_path,
-         '--output_dir=%s' % output_dir,
-         '--schema_file=%s' % schema_file] + percent_flags
+  args = ['cloud_preprocess',
+          '--input_file_pattern=%s' % input_file_path,
+          '--output_dir=%s' % output_dir,
+          '--schema_file=%s' % schema_file,
+          '--input_feature_types=%s' % input_feature_file,
+          '--bigquery_tmp_table=%s' % bigquery_tmp_table]
 
-  print('Cloud preprocess, running command: %s' % ' '.join(cmd))
-  _run_cmd(' '.join(cmd))
-  print('Cloud preprocessing job submitted.')
-
-  if _is_in_IPython():
-    import IPython
-
-    dataflow_url = ('https://console.developers.google.com/dataflow?project=%s'
-                    % project_id)
-    html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
-            'preprocessing job %s.</p><br/>' % (dataflow_url, job_name))
-    IPython.display.display_html(html, raw=True)
+  print('Starting cloud preprocessing.')
+  preprocess.cloud_preprocess.main(args)
+  print('Cloud preprocessing done.')
 
 
 def local_train(preprocessed_dir, transforms_file, output_dir,

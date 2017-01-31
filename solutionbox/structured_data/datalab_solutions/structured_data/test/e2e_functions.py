@@ -19,7 +19,7 @@ import random
 import subprocess
 
 
-def make_csv_data(filename, num_rows, problem_type):
+def make_csv_data(filename, num_rows, problem_type, keep_target=True):
   random.seed(12321)
   with open(filename, 'w') as f1:
     for i in range(num_rows):
@@ -41,21 +41,31 @@ def make_csv_data(filename, num_rows, problem_type):
 
       if problem_type == 'classification':
         if t < 0:
-          t = 1
+          t = 100
         elif t < 20:
-          t = 2
+          t = 101
         else:
-          t = 3
+          t = 102
 
-      csv_line = "{id},{target},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
-          id=i,
-          target=t,
-          num1=num1,
-          num2=num2,
-          num3=num3,
-          str1=str1,
-          str2=str2,
-          str3=str3)
+      if keep_target:
+          csv_line = "{id},{target},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
+            id=i,
+            target=t,
+            num1=num1,
+            num2=num2,
+            num3=num3,
+            str1=str1,
+            str2=str2,
+            str3=str3)
+      else:
+          csv_line = "{id},,{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
+            id=i,
+            num1=num1,
+            num2=num2,
+            num3=num3,
+            str1=str1,
+            str2=str2,
+            str3=str3)
       f1.write(csv_line)
 
   schema = {'column_names': ['key', 'target', 'num1', 'num2', 'num3',
@@ -138,3 +148,8 @@ def run_training(output_dir, input_dir, schema_filename, transforms_filename,
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
   _, err = sp.communicate()
   return err
+
+if __name__ == '__main__':
+  make_csv_data('raw_train_classification.csv', 5000, 'classification', True)
+  make_csv_data('raw_eval_classification.csv', 1000, 'classification', True)
+  make_csv_data('raw_predict_classification.csv', 100, 'classification', False)
