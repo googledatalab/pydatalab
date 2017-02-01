@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 import oauth2client.client
 import json
 import os
+import subprocess
 
 
 # TODO(ojarjur): This limits the APIs against which Datalab can be called
@@ -90,14 +91,19 @@ def save_project_id(project_id):
   Args:
     project_id: the project_id to save.
   """
-  config_file = os.path.join(get_config_dir(), 'config.json')
-  config = {}
-  if os.path.exists(config_file):
-    with open(config_file) as f:
-      config = json.loads(f.read())
-  config['project_id'] = project_id
-  with open(config_file, 'w') as f:
-    f.write(json.dumps(config))
+  # Try gcloud first. If gcloud fails (probably because it does not exist), then
+  # write to a config file.
+  try:
+    subprocess.call(['gcloud', 'config', 'set', 'project', project_id])
+  except:
+    config_file = os.path.join(get_config_dir(), 'config.json')
+    config = {}
+    if os.path.exists(config_file):
+      with open(config_file) as f:
+        config = json.loads(f.read())
+    config['project_id'] = project_id
+    with open(config_file, 'w') as f:
+      f.write(json.dumps(config))
 
 
 def get_project_id():
@@ -105,6 +111,17 @@ def get_project_id():
 
   Returns: the project id if available, or None.
   """
+  # Try getting default project id from gcloud. If it fails try config.json.
+  try:
+    proc = subprocess.Popen(['gcloud', 'config', 'list', '--format', 'value(core.project)'],
+                            stdout=subprocess.PIPE)
+    stdout, _ = proc.communicate()
+    value = stdout.strip()
+    if proc.poll() == 0 and value:
+      return value
+  except:
+    pass
+
   config_file = os.path.join(get_config_dir(), 'config.json')
   if os.path.exists(config_file):
     with open(config_file) as f:
