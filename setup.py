@@ -89,7 +89,6 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'pyyaml==3.11',
     'requests==2.9.1',
     'ipykernel==4.4.1',
-    'tensorflow==0.12.1',
   ],
   package_data={
     'datalab.notebook': [
@@ -110,8 +109,3 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
       ]
   }
 )
-
-# for python2 only, install cloudml
-if sys.version_info[0] == 2:
-  # install cloud ml sdk
-  pip.main(['install', 'https://storage.googleapis.com/cloud-ml/sdk/cloudml.latest.tar.gz'])
