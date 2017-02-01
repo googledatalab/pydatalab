@@ -113,8 +113,8 @@ def run_categorical_analysis(args, feature_types):
       # BQ does not have a distinct function, or a row number that starts at 0.
       sql = """
           SELECT
-            rn -1 AS index
-            {name},
+            rn -1 AS index,
+            {name}
           FROM (
             SELECT
               {name},

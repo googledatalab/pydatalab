@@ -32,33 +32,22 @@ from tensorflow.contrib import metrics as metrics_lib
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.session_bundle import manifest_pb2
 
-
 UNKNOWN_LABEL = 'ERROR_UNKNOWN_LABEL'
 FEATURES_EXAMPLE_DICT_KEY = 'features_example_dict_key'
-EXAMPLES_PLACEHOLDER_TENSOR_NAME = 'input_example'
+EXAMPLES_PLACEHOLDER_TENSOR_NAME = 'input_csv_string'
 
 # Constants for prediction graph fetch tensors.
-TARGET_SCORE_TENSOR_NAME = 'target_scores_prediction'
+TARGET_SCORE_TENSOR_NAME = 'target_score_prediction'
 TARGET_CLASS_TENSOR_NAME = 'target_class_prediction'
+TARGET_INPUT_TENSOR_NAME = 'target_from_input'
 
 # Constants for the exported input and output collections.
 INPUT_COLLECTION_NAME = 'inputs'
 OUTPUT_COLLECTION_NAME = 'outputs'
 
 
-def is_linear_model(model_type):
-  return model_type.startswith('linear_')
 
-def is_dnn_model(model_type):
-  return model_type.startswith('dnn_')
-
-def is_regression_model(model_type):
-  return model_type.endswith('_regression')
-
-def is_classification_model(model_type):
-  return model_type.endswith('_classification')
-
-def get_placeholder_input_fn(metadata, schema_config):
+def get_placeholder_input_fn(train_config):
   """Input layer for the exported graph."""
 
   def get_input_features():
@@ -68,13 +57,8 @@ def get_placeholder_input_fn(metadata, schema_config):
         shape=(None,),
         name=EXAMPLES_PLACEHOLDER_TENSOR_NAME)
 
-    #features = ml.features.FeatureMetadata.parse_features(metadata, examples,
-    #                                                      keep_target=False)
-
     features = util.parse_example_tensor(examples=examples,
-                                         mode='prediction',
-                                         metadata=metadata,
-                                         schema_config=schema_config)
+                                         train_config=train_config)
 
     if FEATURES_EXAMPLE_DICT_KEY in features:
       print('ERROR: %s is a reserved feature name, please use a different'
@@ -83,7 +67,7 @@ def get_placeholder_input_fn(metadata, schema_config):
 
     features[FEATURES_EXAMPLE_DICT_KEY] = examples
 
-
+    target = features.pop(train_config['target_column'])
     # The target feature column is not used for prediction so return None.
     return features, None
 
@@ -91,7 +75,7 @@ def get_placeholder_input_fn(metadata, schema_config):
   return get_input_features
 
 
-def get_reader_input_fn(metadata, schema_config, data_paths, batch_size,
+def get_reader_input_fn(train_config, data_paths, batch_size,
                         shuffle):
   """Builds input layer for training."""
 
@@ -99,34 +83,19 @@ def get_reader_input_fn(metadata, schema_config, data_paths, batch_size,
     """Read the input features from the given data paths."""
     _, examples = util.read_examples(data_paths, batch_size, shuffle)
     features = util.parse_example_tensor(examples=examples,
-                                         mode='training',
-                                         metadata=metadata,
-                                         schema_config=schema_config)
+                                         train_config=train_config)
 
-    # Retrieve the target feature column.
-    target_name = schema_config['target_column']
+    target_name = train_config['target_column']
     target = features.pop(target_name)
+
+
     return features, target
 
   # Return a function to input the feaures into the model from a data path.
   return get_input_features
 
-def get_vocabulary(class_index_dict):
-  """Get vocab from metadata file.
 
-  THe dict's keys are sorted by the values.
-
-  Example:
-  If class_index_dict is the dict
-     'pizza': 2
-     'empanada': 0
-     'water': 1
-  then ['empanada', 'water', 'pizza'] is returned.
-  """
-  return [class_name for (class_name, class_index)
-          in sorted(class_index_dict.iteritems(),
-                    key=lambda (class_name, class_index): class_index)]
-def get_export_signature_fn(metadata, schema_config, args):
+def get_export_signature_fn(train_config, args):
   """Builds the output layer in the exported graph.
 
   Also sets up the tensor names when calling session.run
@@ -134,18 +103,21 @@ def get_export_signature_fn(metadata, schema_config, args):
 
   def get_export_signature(examples, features, predictions):
     """Create an export signature with named input and output signatures."""
-    target_name = schema_config['target_column']
-    key_name = schema_config['key_column']
+    target_name = train_config['target_column']
+    key_name = train_config['key_column']
     outputs = {TARGET_SCORE_TENSOR_NAME: predictions.name,
-               key_name: tf.squeeze(features[key_name]).name}
+               key_name: tf.squeeze(features[key_name]).name,
+               #TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name
+               }
 
-    if is_classification_model(args.model_type):
-      target_labels = get_vocabulary(metadata.columns[target_name]['vocab'])
+    predictions = tf.Print(predictions, [predictions])
+    if util.is_classification_model(args.model_type):
+      _, string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
       prediction = tf.argmax(predictions, 1)
       labels = tf.contrib.lookup.index_to_string(
           prediction,
-          mapping=target_labels,
-          default_value=UNKNOWN_LABEL)
+          mapping=string_value,
+          default_value=train_config['csv_defaults'][target_name])
       outputs.update({TARGET_CLASS_TENSOR_NAME: labels.name})
 
     inputs = {EXAMPLES_PLACEHOLDER_TENSOR_NAME: examples.name}
@@ -170,127 +142,39 @@ def get_export_signature_fn(metadata, schema_config, args):
   return get_export_signature
 
 
-def get_estimator(output_dir, metadata, transform_config, schema_config, args):
-  """Returns a tf learn estimator.
-
-  We only support {DNN, Linear}Regressor and {DNN, Linear}Classifier. This is
-  controlled by the values of model_type in the args.
-
-  Args:
-    output_dir: Modes are saved into outputdir/train
-    args: parseargs object
-  """
-
-  # Check the requested mode fits the preprocessed data.
-  target_name = schema_config['target_column']
-  if (is_classification_model(args.model_type)
-      and target_name not in schema_config.get('categorical_columns', [])):
-    print('ERROR: when using a classification model, the target must be a '
-          'categorical variable.')
-    sys.exit(1)
-  if (is_regression_model(args.model_type)
-      and target_name not in schema_config.get('numerical_columns', [])):
-    print('ERROR: when using a regression model, the target must be a '
-          'numerical variable.')
-    sys.exit(1)
-
-  # Check layers used for dnn models.
-  if is_dnn_model(args.model_type)  and not args.layer_sizes:
-    print('ERROR: --layer_sizes must be used with DNN models')
-    sys.exit(1)
-  elif is_linear_model(args.model_type) and args.layer_sizes:
-    print('ERROR: --layer_sizes cannot be used with linear models')
-    sys.exit(1)
-
-  # Build tf.learn features
-  feature_columns = util.produce_feature_columns(
-      metadata, transform_config, schema_config,
-      is_linear_model(args.model_type))
-  feature_engineering_fn = util.produce_feature_engineering_fn(metadata,
-      transform_config, schema_config)
-
-  # Set how often to run checkpointing in terms of time.
-  config = tf.contrib.learn.RunConfig(
-      save_checkpoints_secs=args.save_checkpoints_secs)
-
-  train_dir = os.path.join(output_dir, 'train')
-  if args.model_type == 'dnn_regression':
-    estimator = tf.contrib.learn.DNNRegressor(
-        feature_columns=feature_columns,
-        hidden_units=args.layer_sizes,
-        config=config,
-        model_dir=train_dir,
-        feature_engineering_fn=feature_engineering_fn,
-        optimizer=tf.train.AdamOptimizer(
-          args.learning_rate, epsilon=args.epsilon))
-  elif args.model_type == 'linear_regression':
-    estimator = tf.contrib.learn.LinearRegressor(
-        feature_columns=feature_columns,
-        config=config,
-        model_dir=train_dir,
-        feature_engineering_fn=feature_engineering_fn,
-        optimizer=tf.train.AdamOptimizer(
-          args.learning_rate, epsilon=args.epsilon))
-  elif args.model_type == 'dnn_classification':
-    n_classes = max(metadata.columns[target_name]['vocab'].values()) + 1
-    estimator = tf.contrib.learn.DNNClassifier(
-        feature_columns=feature_columns,
-        hidden_units=args.layer_sizes,
-        n_classes=n_classes,
-        config=config,
-        model_dir=train_dir,
-        feature_engineering_fn=feature_engineering_fn,
-        optimizer=tf.train.AdamOptimizer(
-          args.learning_rate, epsilon=args.epsilon))
-  elif args.model_type == 'linear_classification':
-    n_classes = max(metadata.columns[target_name]['vocab'].values()) + 1
-    estimator = tf.contrib.learn.LinearClassifier(
-        feature_columns=feature_columns,
-        n_classes=n_classes,
-        config=config,
-        model_dir=train_dir,
-        feature_engineering_fn=feature_engineering_fn,
-        optimizer=tf.train.AdamOptimizer(
-          args.learning_rate, epsilon=args.epsilon))
-  else:
-    print('ERROR: bad --model_type value')
-    sys.exit(1)
-
-  return estimator
-
-
 def get_experiment_fn(args):
   """Builds the experiment function for learn_runner.run"""
 
   def get_experiment(output_dir):
-    # Load the metadata file, transforms file, and schema file.
-    metadata = ml.features.FeatureMetadata.get_metadata(args.metadata_path)
-    transform_config = json.loads(ml.util._file.load_file(args.transforms_file))
-    schema_config = json.loads(ml.util._file.load_file(args.schema_file))
+    # Merge schema, input features, and transforms.
+    train_config = util.merge_metadata(args.preprocess_output_dir, args.transforms_file)
+
+    #metadata = ml.features.FeatureMetadata.get_metadata(args.metadata_path)
+    #transform_config = json.loads(ml.util._file.load_file(args.transforms_file))
+    #schema_config = json.loads(ml.util._file.load_file(args.schema_file))
 
     # Get the model to train.
-    estimator = get_estimator(output_dir, metadata, transform_config, schema_config, args)
+    estimator = util.get_estimator(output_dir, train_config, args)
 
-    input_placeholder_for_prediction = get_placeholder_input_fn(metadata,
-        schema_config)
+    input_placeholder_for_prediction = get_placeholder_input_fn(train_config)
 
     # Save the finished model to output_dir/model
     export_monitor = util.ExportLastModelMonitor(
         output_dir=output_dir,
         final_model_location='model',  # Relative to the output_dir.
-        additional_assets=[args.metadata_path, args.schema_file, args.transforms_file],
+        additional_assets=[args.transforms_file],
         input_fn=input_placeholder_for_prediction,
         input_feature_key=FEATURES_EXAMPLE_DICT_KEY,
-        signature_fn=get_export_signature_fn(metadata, schema_config, args))
+        signature_fn=get_export_signature_fn(train_config, args))
 
     input_reader_for_train = get_reader_input_fn(
-        metadata, schema_config, args.train_data_paths, args.batch_size, shuffle=True)
+        train_config, args.train_data_paths, args.batch_size, shuffle=True)
     input_reader_for_eval = get_reader_input_fn(
-        metadata, schema_config, args.eval_data_paths, args.eval_batch_size, shuffle=False)
+        train_config, args.eval_data_paths, args.eval_batch_size, shuffle=False)
 
     # Set the eval metrics.
     # todo(brandondutra): make this work with HP tuning.
-    if is_classification_model(args.model_type):
+    if util.is_classification_model(args.model_type):
       streaming_accuracy = metrics_lib.streaming_accuracy
       eval_metrics =  {
             ('accuracy', 'classes'): streaming_accuracy,
@@ -322,13 +206,15 @@ def parse_arguments(argv):
                       required=True)
   parser.add_argument('--eval_data_paths', type=str, action='append',
                       required=True)
-  parser.add_argument('--metadata_path', type=str, required=True)
   parser.add_argument('--output_path', type=str, required=True)
-  parser.add_argument('--schema_file',
+  parser.add_argument('--preprocess_output_dir',
                       type=str,
                       required=True,
-                      help=('File describing the schema of each column used '
-                            'during preprocessing.'))
+                      help=('Output folder of preprocessing. Should contain the'
+                            ' files input_features.json, schema.json, and the'
+                            ' optional files numerical_analysis.json and'
+                            ' vocab_str1.csv. Path must be on GCS if running'
+                            ' cloud training.'))
   parser.add_argument('--transforms_file',
                       type=str,
                       required=True,

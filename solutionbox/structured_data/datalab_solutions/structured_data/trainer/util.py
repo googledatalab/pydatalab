@@ -16,10 +16,24 @@
 import multiprocessing
 import os
 import sys
+import json
+import google.cloud.ml as ml
+import pandas as pd
+from StringIO import StringIO
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 import google.cloud.ml as ml
+
+INPUT_FEATURES_FILE = 'input_features.json'
+SCHEMA_FILE = 'schema.json'
+NUMERICAL_ANALYSIS = 'numerical_analysis.json'
+CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
+
+
+# ==============================================================================
+# Exporting the last trained model to a final location
+# ==============================================================================
 
 def _copy_all(src_files, dest_dir):
   # file_io.copy does not copy files into folders directly.
@@ -91,6 +105,24 @@ class ExportLastModelMonitor(tf.contrib.learn.monitors.ExportMonitor):
       _copy_all(self._additional_assets, assets_dir)
 
 
+# ==============================================================================
+# Reading the input csv files and parsing its output into tensors.
+# ==============================================================================
+
+def parse_example_tensor(examples, train_config):
+
+  record_defaults = [[train_config['csv_defaults'][name]] 
+                     for name in train_config['csv_header']]
+  print('record_defaults', record_defaults)
+  print('*'*10)
+  sys.stdout.flush()
+  tensors = tf.decode_csv(examples, record_defaults, name='csv_to_tensors')
+
+  tensor_dict = dict(zip(train_config['csv_header'], tensors))
+
+  return tensor_dict
+
+
 def read_examples(input_files, batch_size, shuffle, num_epochs=None):
   """Creates readers and queues for reading example protos."""
   files = []
@@ -115,9 +147,12 @@ def read_examples(input_files, batch_size, shuffle, num_epochs=None):
   # Build a queue of the filenames to be read.
   filename_queue = tf.train.string_input_producer(files, num_epochs, shuffle)
 
-  options = tf.python_io.TFRecordOptions(
-      compression_type=tf.python_io.TFRecordCompressionType.GZIP)
-  example_id, encoded_example = tf.TFRecordReader(options=options).read_up_to(
+  #options = tf.python_io.TFRecordOptions(
+  #    compression_type=tf.python_io.TFRecordCompressionType.GZIP)
+  #example_id, encoded_example = tf.TFRecordReader(options=options).read_up_to(
+  #    filename_queue, batch_size)
+
+  example_id, encoded_example = tf.TextLineReader().read_up_to(
       filename_queue, batch_size)
 
   if shuffle:
@@ -140,151 +175,284 @@ def read_examples(input_files, batch_size, shuffle, num_epochs=None):
         num_threads=thread_count)
 
 
-def produce_feature_columns(metadata, transform_config, schema_config, is_linear_model):
-  """Produces a list of Tensorflow columns.
+# ==============================================================================
+# Building the TF learn estimators
+# ==============================================================================
+
+
+def get_estimator(output_dir, train_config, args):
+  """Returns a tf learn estimator.
+
+  We only support {DNN, Linear}Regressor and {DNN, Linear}Classifier. This is
+  controlled by the values of model_type in the args.
 
   Args:
-    metadata: dict from the preprocessing metadata.
-    config: dict from the transforms file.
-
-  Returns:
-    List of Tensorflow feature columns.
+    output_dir: Modes are saved into outputdir/train
+    args: parseargs object
   """
-  
+
+  # Check the requested mode fits the preprocessed data.
+  target_name = train_config['target_column']
+  if (is_classification_model(args.model_type) and
+     target_name not in train_config['categorical_columns']):
+    raise ValueError('When using a classification model, the target must be a '
+                     'categorical variable.')
+  if (is_regression_model(args.model_type) and
+      target_name not in train_config['numerical_columns']):
+    raise ValueError('When using a regression model, the target must be a '
+                     'numerical variable.')
+
+  # Check layers used for dnn models.
+  if is_dnn_model(args.model_type)  and not args.layer_sizes:
+    raise ValueError('--layer_sizes must be used with DNN models')
+  if is_linear_model(args.model_type) and args.layer_sizes:
+    raise ValueError('--layer_sizes cannot be used with linear models')
+
+  # Build tf.learn features
+  #feature_columns = util.produce_feature_columns(
+  #    schema_plus, args, is_linear_model(args.model_type))
+  #feature_engineering_fn = util.produce_feature_engineering_fn(schema_plus, args)
+  estimator_parameters = get_estimator_parameters(train_config, args)
+
+  # Set how often to run checkpointing in terms of time.
+  config = tf.contrib.learn.RunConfig(
+      save_checkpoints_secs=args.save_checkpoints_secs)
+
+  train_dir = os.path.join(output_dir, 'train')
+  if args.model_type == 'dnn_regression':
+    estimator = tf.contrib.learn.DNNRegressor(
+        feature_columns=estimator_parameters['features'],
+        hidden_units=args.layer_sizes,
+        config=config,
+        model_dir=train_dir,
+        feature_engineering_fn=estimator_parameters['feature_engineering_fn'],
+        optimizer=tf.train.AdamOptimizer(
+          args.learning_rate, epsilon=args.epsilon))
+  elif args.model_type == 'linear_regression':
+    estimator = tf.contrib.learn.LinearRegressor(
+        feature_columns=estimator_parameters['features'],
+        config=config,
+        model_dir=train_dir,
+        feature_engineering_fn=estimator_parameters['feature_engineering_fn'],
+        optimizer=tf.train.AdamOptimizer(
+          args.learning_rate, epsilon=args.epsilon))
+  elif args.model_type == 'dnn_classification':
+    estimator = tf.contrib.learn.DNNClassifier(
+        feature_columns=estimator_parameters['features'],
+        hidden_units=args.layer_sizes,
+        n_classes=estimator_parameters['n_classes'],
+        config=config,
+        model_dir=train_dir,
+        feature_engineering_fn=estimator_parameters['feature_engineering_fn'],
+        optimizer=tf.train.AdamOptimizer(
+          args.learning_rate, epsilon=args.epsilon))
+  elif args.model_type == 'linear_classification':
+    estimator = tf.contrib.learn.LinearClassifier(
+        feature_columns=estimator_parameters['features'],
+        n_classes=estimator_parameters['n_classes'],
+        config=config,
+        model_dir=train_dir,
+        feature_engineering_fn=estimator_parameters['feature_engineering_fn'],
+        optimizer=tf.train.AdamOptimizer(
+          args.learning_rate, epsilon=args.epsilon))
+  else:
+    print('ERROR: bad --model_type value')
+    sys.exit(1)
+
+  return estimator
+
+
+def get_estimator_parameters(train_config, args):
   feature_columns = []
-  target_column = schema_config['target_column']
-  key_column = schema_config['key_column']
-  # Extract the numerical features. 
-  for name in schema_config.get('numerical_columns', []):
-    if name == key_column or name == target_column:
-      continue 
-    # Numerical transforms happen in produce_feature_engineering_fn
-    feature_columns.append(
-        tf.contrib.layers.real_valued_column(
+  target_name = train_config['target_column']
+  key_name = train_config['key_column']
+
+  with tf.name_scope('tflearn_features') as scope:
+    for name in train_config['numerical_columns']:
+      if name != target_name and name != key_name:
+        feature_columns.append(tf.contrib.layers.real_valued_column(
             name,
-            dimension=metadata.features[name]['size']))
-    # TODO(brandondutra) allow real_valued vectors? For now force only scalars.
-    assert 1 == metadata.features[name]['size']
+            dimension=1))
 
-  # Extract the categorical features
-  for name in schema_config.get('categorical_columns', []):
-    if name == key_column or name == target_column:
-      continue 
-    transform_dict = transform_config.get(name, {})
-    transform_type = transform_dict.get('transform', 'one_hot')
-
-    if transform_type == 'one_hot':
-      # Preprocessing built a vocab using 0, 1, ..., N as the new classes. N 
-      # means 'unknown/missing'.
-      N = metadata.features[name]['size']
-      sparse_column = tf.contrib.layers.sparse_column_with_integerized_feature(
-          column_name=name,
-          bucket_size=N+1)
-      if is_linear_model:
-        feature_columns.append(sparse_column)
-      else:
-        feature_columns.append(tf.contrib.layers.one_hot_column(sparse_column))
-
-    elif transform_type == 'embedding':
-      # Preprocessing built a vocab using 0, 1, ..., N as the new classes.
-      N = metadata.features[name]['size']
-      dim = transform_dict['dimension']
-      sparse_column = tf.contrib.layers.sparse_column_with_integerized_feature(
-            column_name=name,
-            bucket_size=N+1)
-      feature_columns.append(tf.contrib.layers.embedding_column(sparse_column, 
-                                                                dim))
-      # TODO(brandon): check model type is dnn.
-    else:
-      print('ERROR: unkown categorical transform name %s in %s' % 
-          (name, str(transform_type)))
-      sys.exit(1)
-
-  return feature_columns
-
-def _scale_tensor(tensor, range_min, range_max, scale_min, scale_max):
-  if range_min == range_max:
-    return tensor
-
-  float_tensor = tf.to_float(tensor)
-  scaled_tensor = tf.div(
-    tf.sub(float_tensor, range_min) * tf.constant(float(scale_max - scale_min)),
-    tf.constant(float(range_max - range_min)))
-  shifted_tensor = scaled_tensor + tf.constant(float(scale_min))
-
-  return shifted_tensor
+    for name in train_config['categorical_columns']:
+      if name != target_name and name != key_name:
+        sparse = tf.contrib.layers.sparse_column_with_hash_bucket(
+            name,
+            hash_bucket_size=3)
+        feature_columns.append(tf.contrib.layers.one_hot_column(sparse))
 
 
-def produce_feature_engineering_fn(metadata, transform_config, schema_config):
-  """Makes a feature_engineering_fn for transforming the numerical types. 
+  if target_name in train_config['categorical_columns']:
+    target_index_values, target_label_values = get_vocabulary(args.preprocess_output_dir, target_name)
+    n_classes = len(target_label_values)
 
-  This is called with the output of the 'input_fn' function, and the output of
-  this function is given to tf.learn to further process. This function extracts
-  the ids tensors from ml.features.FeatureMetadata.parse_features and throws
-  away the values tensor.
-  """
+    print('target_index_values', target_index_values)
+    print('target_label_values', target_label_values)
 
   def _feature_engineering_fn(features, target):
-    target_column = schema_config['target_column']
-    key_column = schema_config['key_column']
+    #with tf.name_scope('categorical_feature_engineering') as scope:
+    #  if target_name in train_config['categorical_columns']:
+    #    #target = tf.Print(target, [target])
+    #    new_target = tf.contrib.lookup.string_to_index(target, target_label_values)
+    #    #new_target = tf.Print(new_target, [new_target])
+    #  else:
+    new_target = target
+    return features, new_target
 
-    with tf.name_scope('numerical_feature_engineering') as scope:
-      new_features = {}
-      for name in schema_config.get('numerical_columns', []):
-        if name == key_column or name == target_column:
-          continue 
-        transform_dict = transform_config.get(name, {})
-        transform_type = transform_dict.get('transform', 'identity')
-        if transform_type == 'scale':
-          range_min = metadata.columns[name]['min']
-          range_max = metadata.columns[name]['max']
-          new_features[name] = _scale_tensor(features[name], 
-                                            range_min=range_min, 
-                                            range_max=range_max, 
-                                            scale_min=-1, 
-                                            scale_max=1)
-        elif transform_type == 'max_abs_scale':
-          value = transform_dict['value']
-          range_min = metadata.columns[name]['min']
-          range_max = metadata.columns[name]['max']
-          new_features[name] = _scale_tensor(features[name], 
-                                            range_min=range_min, 
-                                            range_max=range_max, 
-                                            scale_min=-value, 
-                                            scale_max=value)
+  estimator_parameters = {'features': feature_columns,
+          'feature_engineering_fn': _feature_engineering_fn}
+  if target_name in train_config['categorical_columns']:
+    estimator_parameters.update({'n_classes': n_classes})
 
-        elif transform_type == 'identity':
-          # Don't need to do anything
-          pass
-        else:
-          print('ERROR: Unknown numerical transform %s for feature %s' % 
-              (transform_type, name))
-          sys.exit(1)
-      features.update(new_features)
-    return features, target
+  return estimator_parameters
 
-  return _feature_engineering_fn
+# ==============================================================================
+# Building the TF learn estimators
+# ==============================================================================
 
 
-def parse_example_tensor(examples, mode, metadata, schema_config):
-  if mode == 'training':
-    features = ml.features.FeatureMetadata.parse_features(metadata, examples,
-                                                          keep_target=True) 
-  elif mode == 'prediction':
-    features = ml.features.FeatureMetadata.parse_features(metadata, examples,
-                                                          keep_target=False) 
-  else:
-    print('ERROR: unknown mode')
-    sys.exit(1)
-  
-  # FeatureMetadata.parse_features splits categorical columns into two.
-  # undo that here.
-  new_features = {}
-  for name in schema_config.get('categorical_columns', []):
-    if name == schema_config['key_column'] or name == schema_config['target_column']:
-      continue
-    new_features[name] = features[name]['ids']
+def get_vocabulary(preprocess_output_dir, name):
+  vocab_file = os.path.join(preprocess_output_dir, CATEGORICAL_ANALYSIS % name)
+  if not ml.util._file.file_exists(vocab_file):
+    raise ValueError('File %s not found in %s' % (CATEGORICAL_ANALYSIS % name, preprocess_output_dir))
 
-  features.update(new_features)
+  df = pd.read_csv(StringIO(ml.util._file.load_file(vocab_file)),
+                   header=0)
+  index_values = df['index'].values.tolist()
+  label_values = df[name].values.tolist()
 
-  return features
+  if index_values != range(len(index_values)):
+    raise ValueError('Labels should be sorted by index in file %s' % vocab_file)
+  return index_values, [str(value) for value in label_values]
+
+
+
+def merge_metadata(preprocess_output_dir, transforms_file):
+  """Merge schema, input features, and transforms file into one python object.
+
+
+  Returns:
+    A dict in the form
+    {
+      csv_header: [name1, name2, ...],
+      csv_defaults: {name1: value, name2: value},
+      key_column: name,
+      target_column: name,
+      categorical_columns: []
+      numerical_columns: []
+      transforms: { name1: {transform: scale, value: 2},
+                    name2: {transform: embedding, dim: 50}, ...
+                  }
+
+    }
+  """
+
+  schema_file = os.path.join(preprocess_output_dir, SCHEMA_FILE)
+  input_features_file = os.path.join(preprocess_output_dir, INPUT_FEATURES_FILE)
+
+
+  schema = json.loads(ml.util._file.load_file(schema_file))
+  input_features = json.loads(ml.util._file.load_file(input_features_file))
+  transforms = json.loads(ml.util._file.load_file(transforms_file))
+
+  result_dict = {}
+  result_dict['csv_header'] = [schema_dict['name'] for schema_dict in schema]
+  result_dict['csv_defaults'] = {}
+  result_dict['key_column'] =  None
+  result_dict['target_column'] =  None
+  result_dict['categorical_columns'] = []
+  result_dict['numerical_columns'] = []
+  result_dict['transforms'] = {}
+
+  # get key column
+  for name, input_type in input_features.iteritems():
+    if input_type['type'] == 'key':
+      result_dict['key_column'] = name
+      break
+  if result_dict['key_column'] is None:
+    raise ValueError('Key column missing from input features file.')
+
+  # get target column
+  for name, transform in transforms.iteritems():
+    if transform.get('transform', None) == 'target':
+      result_dict['target_column'] = name
+      break
+  if result_dict['target_column'] is None:
+    raise ValueError('Target transform missing form transfroms file.')
+
+  # Get the numerical/categorical columns.
+  for schema_dict in schema:
+    name = schema_dict['name']
+    col_type = input_features.get(name, {}).get('type', None)
+
+    if col_type is None:
+        raise ValueError('Missing type from %s in file %s' % (
+            name, input_features_file))
+
+    if col_type == 'numerical':
+      result_dict['numerical_columns'].append(name)
+    elif col_type == 'categorical':
+      result_dict['categorical_columns'].append(name)
+    elif col_type == 'key':
+      pass
+    else:
+      raise ValueError('unknown type %s in input featrues file.' % col_type)
+      result_dict['key_column'] = name
+
+  # Get the defaults
+  for schema_dict in schema:
+    name = schema_dict['name']
+    default = input_features.get(name, {}).get('default', None)
+
+    if default is None:
+        raise ValueError('Missing default from %s in file %s' % (
+            name, input_features_file))
+
+    # make all numerical types floats. This means when tf.decode_csv is called,
+    # float tensors and string tensors will be made.
+    if name in result_dict['categorical_columns']:
+      default = str(default)
+    elif name in result_dict['numerical_columns']:
+      default = float(default)
+    else:
+      default = str(default)  # key column
+
+    result_dict['csv_defaults'].update({name: default})
+
+  # Get the transforms
+  for name, transform in transforms.iteritems():
+    if transform['transform'] != 'target':
+      result_dict['transforms'].update({name: transform})
+
+  validate_metadata(result_dict)
+  return result_dict
+
+def validate_metadata(train_config):
+  # Check there are no missing columns
+  sorted_columns = sorted(train_config['csv_header']
+                          + [train_config['target_column']])
+  sorted_columns2 = sorted(train_config['categorical_columns']
+                           + train_config['numerical_columns']
+                           + [train_config['key_column']]
+                           + [train_config['target_column']])
+  if sorted_columns2 != sorted_columns:
+    raise ValueError('Each csv header must be a numerical/categorical type, a '
+                     ' key, or a target.')
+
+  # Make sure we have a default for every column
+  if len(train_config['csv_header']) != len(train_config['csv_defaults']):
+    raise ValueError('Unequal number of columns in input features file and '
+                     'schema file.')
+
+
+def is_linear_model(model_type):
+  return model_type.startswith('linear_')
+
+def is_dnn_model(model_type):
+  return model_type.startswith('dnn_')
+
+def is_regression_model(model_type):
+  return model_type.endswith('_regression')
+
+def is_classification_model(model_type):
+  return model_type.endswith('_classification')

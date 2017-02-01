@@ -150,6 +150,6 @@ def run_training(output_dir, input_dir, schema_filename, transforms_filename,
   return err
 
 if __name__ == '__main__':
-  make_csv_data('raw_train_classification.csv', 5000, 'classification', True)
-  make_csv_data('raw_eval_classification.csv', 1000, 'classification', True)
-  make_csv_data('raw_predict_classification.csv', 100, 'classification', False)
+  make_csv_data('raw_train_regression.csv', 5000, 'regression', True)
+  make_csv_data('raw_eval_regression.csv', 1000, 'regression', True)
+  make_csv_data('raw_predict_regression.csv', 100, 'regression', False)
