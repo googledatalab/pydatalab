@@ -34,26 +34,6 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  @staticmethod
-  def sampling_query(sql, context, fields=None, count=5, sampling=None, udfs=None,
-                     data_sources=None):
-    """Returns a sampling Query for the SQL object.
-
-    Args:
-      sql: the SQL statement (string) or Query object to sample.
-      context: a Context object providing project_id and credentials.
-      fields: an optional list of field names to retrieve.
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      sampling: an optional sampling strategy to apply to the table.
-      udfs: array of UDFs referenced in the SQL.
-      data_sources: dictionary of federated (external) tables referenced in the SQL.
-    Returns:
-      A Query object for sampling the table.
-    """
-    return Query(_sampling.Sampling.sampling_query(sql, fields, count, sampling), context=context,
-                 udfs=udfs, data_sources=data_sources)
-
   def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None, **kwargs):
     """Initializes an instance of a Query object.
        Note that either values or kwargs may be used, but not both.
@@ -145,37 +125,6 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def sample(self, count=5, fields=None, sampling=None, use_cache=True, dialect=None,
-             billing_tier=None):
-    """Retrieves a sampling of rows for the query.
-
-    Args:
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified (default 5).
-      fields: the list of fields to sample (default None implies all).
-      sampling: an optional sampling strategy to apply to the table.
-      use_cache: whether to use cached results or not (default True).
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
-    Returns:
-      A QueryResultsTable containing a sampling of the result set.
-    Raises:
-      Exception if the query could not be executed or query response was malformed.
-    """
-    return Query.sampling_query(self._sql, self._context, count=count, fields=fields,
-                                sampling=sampling, udfs=self._udfs,
-                                data_sources=self._data_sources) \
-                .execute(use_cache=use_cache,
-                         dialect=dialect,
-                         billing_tier=billing_tier) \
-                .results
-
   def execute_dry_run(self, dialect=None, billing_tier=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
 
@@ -201,11 +150,12 @@ class Query(object):
       raise e
     return query_result['statistics']['query']
 
-  def execute_async(self, output_options=None, dialect=None, billing_tier=None):
+  def execute_async(self, output_options=None, sampling=None, dialect=None, billing_tier=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
       output_options: a QueryOutput object describing how to execute the query
+      sampling: sampling function to use. No sampling is done if None. See bigquery.Sampling
       dialect : {'legacy', 'standard'}, default 'legacy'
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
@@ -234,8 +184,10 @@ class Query(object):
     if table_name is not None:
       table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
+    sql = self._sql if sampling is None else sampling(self._sql)
+
     try:
-      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports,
+      query_result = self._api.jobs_insert_query(sql, self._code, self._imports,
                                                  table_name=table_name,
                                                  append=append,
                                                  overwrite=overwrite,
@@ -259,7 +211,7 @@ class Query(object):
         # The query was in error
         raise Exception(_utils.format_query_errors(query_result['status']['errors']))
 
-    execute_job = _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
+    execute_job = _query_job.QueryJob(job_id, table_name, sql, context=self._context)
 
     # If all we need is to execute the query to a table, we're done
     if output_options.type == 'table':
@@ -298,11 +250,12 @@ class Query(object):
       export_func = google.datalab.utils.async_function(export_func)
       return export_func(*export_args, **export_kwargs)
 
-  def execute(self, output_options=None, dialect=None, billing_tier=None):
+  def execute(self, output_options=None, sampling=None, dialect=None, billing_tier=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
       output_options: a QueryOutput object describing how to execute the query
+      sampling: sampling function to use. No sampling is done if None. See bigquery.Sampling
       dialect : {'legacy', 'standard'}, default 'legacy'
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
@@ -316,7 +269,8 @@ class Query(object):
     Raises:
       Exception if query could not be executed.
     """
-    return self.execute_async(output_options, dialect=dialect, billing_tier=billing_tier).wait()
+    return self.execute_async(output_options, sampling=sampling,
+                              dialect=dialect, billing_tier=billing_tier).wait()
 
   def to_view(self, view_name):
     """ Create a View from this Query.
