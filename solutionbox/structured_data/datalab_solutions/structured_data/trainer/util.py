@@ -290,13 +290,13 @@ def get_estimator_parameters(train_config, args):
     print('target_label_values', target_label_values)
 
   def _feature_engineering_fn(features, target):
-    #with tf.name_scope('categorical_feature_engineering') as scope:
-    #  if target_name in train_config['categorical_columns']:
-    #    #target = tf.Print(target, [target])
-    #    new_target = tf.contrib.lookup.string_to_index(target, target_label_values)
-    #    #new_target = tf.Print(new_target, [new_target])
-    #  else:
-    new_target = target
+    with tf.name_scope('categorical_feature_engineering') as scope:
+      if target_name in train_config['categorical_columns']:
+        #target = tf.Print(target, [target])
+        new_target = tf.contrib.lookup.string_to_index(target, target_label_values)
+        #new_target = tf.Print(new_target, [new_target])
+      else:
+        new_target = target
     return features, new_target
 
   estimator_parameters = {'features': feature_columns,
