@@ -64,6 +64,8 @@ class CsvDataSet(object):
       n: number of sampled counts.
     Returns:
       A dataframe containing sampled data.
+    Raises:
+      Exception if n is larger than number of rows.
     """
     row_total_count = 0
     row_counts = []
@@ -87,6 +89,7 @@ class CsvDataSet(object):
     
     skip_count = row_total_count - n
     # Get all skipped indexes. These will be distributed into each file.
+    # Note that random.sample will raise Exception if skip_count is greater than rows count.
     skip_all = sorted(random.sample(xrange(0, row_total_count), skip_count))
     dfs = []
     for file, row_count in zip(self._files, row_counts):
@@ -122,8 +125,12 @@ class BigQueryDataSet(object):
       n: number of sampled counts. Note that the number of counts returned is approximated.
     Returns:
       A dataframe containing sampled data.
+    Raises:
+      Exception if n is larger than number of rows.
     """
     total = bq.Query('select count(*) from (%s)' % self._sql).results()[0].values()[0]
+    if n > total:
+      raise ValueError('sample larger than population')
     sampling = bq.Sampling.random(n*100.0/float(total))
     sample = bq.Query(self._sql).sample(sampling=sampling)
     df = sample.to_dataframe()
