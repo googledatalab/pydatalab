@@ -39,7 +39,7 @@ _MAX_CSV_BYTES = 10000000
 class Csv(object):
   """Represents a CSV file in GCS or locally with same schema.
   """
-  def __init__(self, path, delimiter=','):
+  def __init__(self, path, delimiter=b','):
     """Initializes an instance of a Csv instance.
     Args:
       path: path of the Csv file.
