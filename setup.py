@@ -89,6 +89,7 @@ Support package for Google Cloud Datalab. This provides cell magics and Python A
 for accessing Google's Cloud Platform services such as Google BigQuery.
   """,
   install_requires=[
+    'mock==2.0.0',
     'future==0.16.0',
     'futures==3.0.5',
     'google-cloud==0.19.0',
