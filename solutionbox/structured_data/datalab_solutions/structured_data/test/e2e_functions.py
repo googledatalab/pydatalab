@@ -16,10 +16,20 @@
 
 import os
 import random
+import json
 import subprocess
 
 
 def make_csv_data(filename, num_rows, problem_type, keep_target=True):
+  """Writes csv data for preprocessing and training.
+
+  Args:
+    filename: writes data to csv file.
+    num_rows: how many rows of data will be generated.
+    problem_type: 'classification' or 'regression'. Changes the target value.
+    keep_target: if false, the csv file will have an empty column ',,' for the 
+        target.
+  """
   random.seed(12321)
   with open(filename, 'w') as f1:
     for i in range(num_rows):
@@ -68,40 +78,95 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
             str3=str3)
       f1.write(csv_line)
 
-  schema = {'column_names': ['key', 'target', 'num1', 'num2', 'num3',
-                             'str1', 'str2', 'str3'],
-            'key_column': 'key',
-            'target_column': 'target',
-            'numerical_columns': ['num1', 'num2', 'num3'],
-            'categorical_columns': ['str1', 'str2', 'str3']
+
+def make_preprocess_schema(filename):
+  """Makes a schema file compatable with the output of make_csv_data.
+
+  Writes a json file.
+  """
+  schema = [
+      {
+          "mode": "NULLABLE",
+          "name": "key",
+          "type": "STRING"
+      },
+      {
+          "mode": "REQUIRED",
+          "name": "target",
+          "type": "INTEGER"
+      },
+      {
+          "mode": "NULLABLE",
+          "name": "num1",
+          "type": "FLOAT"
+      },
+      {
+          "mode": "NULLABLE",
+          "name": "num2",
+          "type": "INTEGER"
+      },
+      {
+          "mode": "NULLABLE",
+          "name": "num3",
+          "type": "FLOAT"
+      },
+      {
+          "mode": "NULLABLE",
+          "name": "str1",
+          "type": "STRING"
+      },
+      {
+          "mode": "NULLABLE",
+          "name": "str2",
+          "type": "STRING"
+      },
+      {
+          "mode": "NULLABLE",
+          "name": "str3",
+          "type": "STRING"
+      }  
+  ]
+  with open(filename, 'w') as f:
+    f.write(json.dumps(schema))
+
+
+def make_preprocess_input_features(filename, problem_type):
+  """Makes an input features file compatable with the output of make_csv_data.
+
+  Args:
+    filename: filename: writes data to csv file.
+    problem_type: 'classification' or 'regression'. Changes the target value.
+  """
+
+  feature_types = {
+      "key": {"default": -1, "type": "key"},
+      "target": {"type": "categorical"},
+      "num1": {"default": 0.0, "type": "numerical"},
+      "num2": {"default": 0, "type": "numerical"},
+      "num3": {"default": 0.0, "type": "numerical"},
+      "str1": {"default": "black", "type": "categorical"},
+      "str2": {"default": "abc", "type": "categorical"},
+      "str3": {"default": "car", "type": "categorical"}
   }
-  if problem_type == 'classification':
-    schema['categorical_columns'] += ['target']
-  else:
-    schema['numerical_columns'] += ['target']
 
-  # use defaults for num3 and str3
-  transforms = {'num1': {'transform': 'identity'},
-                'num2': {'transform': 'identity'},
-  #              'num3': {'transform': 'identity'},
-                'str1': {'transform': 'one_hot'},
-                'str2': {'transform': 'one_hot'},
-  #              'str3': {'transform': 'one_hot'}
-  }
-  return schema, transforms
+  if problem_type == 'regression':
+    feature_types['target']['type'] = 'numerical'
+    
+  with open(filename, 'w') as f:
+    f.write(json.dumps(feature_types))
 
 
-def run_preprocess(output_dir, csv_filename, schema_filename,
-                   train_percent='80', eval_percent='10', test_percent='10'):
+def run_preprocess(output_dir, csv_filename, schema_filename, 
+                   input_features_filename):
   preprocess_script = os.path.abspath(
-      os.path.join(os.path.dirname(__file__), '../preprocess/preprocess.py'))
+      os.path.join(os.path.dirname(__file__), 
+                   '../preprocess/local_preprocess.py'))
+
   cmd = ['python', preprocess_script,
          '--output_dir', output_dir,
-         '--input_file_path', csv_filename,
+         '--input_file_pattern', csv_filename,
          '--schema_file', schema_filename,
-         '--train_percent', train_percent,
-         '--eval_percent', eval_percent,
-         '--test_percent', test_percent,
+         '--input_feature_types', input_features_filename,
   ]
   print('Going to run command: %s' % ' '.join(cmd))
   subprocess.check_call(cmd, stderr=open(os.devnull, 'wb'))

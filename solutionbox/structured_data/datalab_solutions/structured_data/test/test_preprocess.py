@@ -18,6 +18,7 @@ import json
 import os
 import shutil
 import subprocess
+import filecmp
 import tempfile
 import unittest
 
@@ -35,88 +36,76 @@ class TestPreprocess(unittest.TestCase):
 
     self._csv_filename = os.path.join(self._test_dir, 'raw_csv_data.csv')
     self._schema_filename = os.path.join(self._test_dir, 'schema.json')
+    self._input_features_filename = os.path.join(self._test_dir, 
+                                                 'input_features_file.json')
+
+    self._preprocess_output = os.path.join(self._test_dir, 'pout')
 
   def tearDown(self):
     print('TestPreprocess: removing test dir: ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
+  
+  def _make_test_data(self, problem_type):
+    """Makes input files to run preprocessing on.
+
+    Args:
+      problem_type: 'regression' or 'classification'
+    """
+    e2e_functions.make_csv_data(self._csv_filename, 100, problem_type, True)
+    e2e_functions.make_preprocess_schema(self._schema_filename)
+    e2e_functions.make_preprocess_input_features(self._input_features_filename, 
+                                                 problem_type)
+
+  def _test_preprocess(self, problem_type):
+    self._make_test_data(problem_type)
+
+    e2e_functions.run_preprocess(
+        output_dir=self._preprocess_output,
+        csv_filename=self._csv_filename,
+        schema_filename=self._schema_filename,
+        input_features_filename=self._input_features_filename)
+
+
+    schema_file = os.path.join(self._preprocess_output, 'schema.json')
+    features_file = os.path.join(self._preprocess_output, 'input_features.json')
+    numerical_analysis_file = os.path.join(self._preprocess_output, 'numerical_analysis.json')
+
+    # test schema and features were copied
+    self.assertTrue(filecmp.cmp(schema_file, self._schema_filename))
+    self.assertTrue(filecmp.cmp(features_file, self._input_features_filename))
+
+    expected_numerical_keys = ['num1', 'num2', 'num3']
+    if problem_type == 'regression':
+      expected_numerical_keys.append('target')
+
+    # Load the numerical analysis file and check it has the right keys
+    with open(numerical_analysis_file, 'r') as f:
+      analysis = json.load(f)
+    self.assertEqual(sorted(expected_numerical_keys), sorted(analysis.keys()))
+
+    # Check that the vocab files are made
+    expected_vocab_files = ['vocab_str1.csv', 'vocab_str2.csv', 'vocab_str3.csv']
+    if problem_type == 'classification':
+      expected_vocab_files.append('vocab_target.csv')
+
+    for name in expected_vocab_files:
+      vocab_file = os.path.join(self._preprocess_output, name)
+      self.assertTrue(os.path.exists(vocab_file))
+      self.assertGreater(os.path.getsize(vocab_file), 0)
+
+    all_expected_files = (expected_vocab_files + ['input_features.json',
+                          'numerical_analysis.json', 'schema.json'])
+    all_file_paths = glob.glob(os.path.join(self._preprocess_output, '*'))
+    all_files = [os.path.basename(path) for path in all_file_paths]
+    self.assertEqual(sorted(all_expected_files), sorted(all_files))
+
+
   def testRegression(self):
-    (schema, _) = e2e_functions.make_csv_data(self._csv_filename, 100,
-                                              'regression')
-
-    with open(self._schema_filename, 'w') as f:
-      f.write(json.dumps(schema, indent=2, separators=(',', ': ')))
-
-    e2e_functions.run_preprocess(output_dir=self._test_dir,
-                                 csv_filename=self._csv_filename,
-                                 schema_filename=self._schema_filename)
-
-    metadata_path = os.path.join(self._test_dir, 'metadata.json')
-    metadata = ml.features.FeatureMetadata.get_metadata(metadata_path)
-
-    expected_features = {
-        'num1': {'dtype': 'float', 'type': 'dense', 'name': 'num1',
-                 'columns': ['num1'], 'size': 1},
-        'num2': {'dtype': 'float', 'type': 'dense', 'name': 'num2',
-                 'columns': ['num2'], 'size': 1},
-        'num3': {'dtype': 'float', 'type': 'dense', 'name': 'num3',
-                 'columns': ['num3'], 'size': 1},
-        'str3': {'dtype': 'int64', 'type': 'sparse', 'name': 'str3',
-                 'columns': ['str3'], 'size': 7},
-        'str2': {'dtype': 'int64', 'type': 'sparse', 'name': 'str2',
-                 'columns': ['str2'], 'size': 7},
-        'str1': {'dtype': 'int64', 'type': 'sparse', 'name': 'str1',
-                 'columns': ['str1'], 'size': 8},
-        'key': {'dtype': 'bytes', 'type': 'dense', 'name': 'key',
-                'columns': ['key'], 'size': 1},
-        'target': {'dtype': 'float', 'type': 'dense', 'name': 'target',
-                   'columns': ['target'], 'size': 1}}
-
-    self.assertEqual(metadata.features, expected_features)
-    self.assertEqual(metadata.columns['target']['scenario'], 'continuous')
-    train_files = glob.glob(os.path.join(self._test_dir, 'features_train*'))
-    self.assertTrue(train_files)
-    self.assertTrue(os.path.isfile(os.path.join(self._test_dir, 'schema.json')))
-
-    # Inspect the first TF record.
-    for line in tf.python_io.tf_record_iterator(train_files[0],
-        options=tf.python_io.TFRecordOptions(
-            tf.python_io.TFRecordCompressionType.GZIP)):
-      ex = tf.train.Example()
-      ex.ParseFromString(line)
-      self.assertTrue('num1' in ex.features.feature)
-      self.assertTrue('num2' in ex.features.feature)
-      self.assertTrue('num3' in ex.features.feature)
-      self.assertTrue('key' in ex.features.feature)
-      self.assertTrue('target' in ex.features.feature)
-      self.assertTrue('str1@0' in ex.features.feature)
-      self.assertTrue('str1@1' in ex.features.feature)
-      self.assertTrue('str2@0' in ex.features.feature)
-      self.assertTrue('str2@1' in ex.features.feature)
-      self.assertTrue('str3@0' in ex.features.feature)
-      self.assertTrue('str3@1' in ex.features.feature)
-      break
+    self._test_preprocess('regression')
 
   def testClassification(self):
-    (schema, _) = e2e_functions.make_csv_data(self._csv_filename, 100,
-                                              'classification')
-    with open(self._schema_filename, 'w') as f:
-      f.write(json.dumps(schema, indent=2, separators=(',', ': ')))
-
-    e2e_functions.run_preprocess(output_dir=self._test_dir,
-                                 csv_filename=self._csv_filename,
-                                 schema_filename=self._schema_filename,
-                                 train_percent='90',
-                                 eval_percent='10',
-                                 test_percent='0')
-
-    metadata_path = os.path.join(self._test_dir, 'metadata.json')
-    metadata = ml.features.FeatureMetadata.get_metadata(metadata_path)
-
-    self.assertEqual(metadata.columns['target']['scenario'], 'discrete')
-    self.assertTrue(glob.glob(os.path.join(self._test_dir, 'features_train*')))
-    self.assertTrue(glob.glob(os.path.join(self._test_dir, 'features_eval*')))
-    self.assertFalse(glob.glob(os.path.join(self._test_dir, 'features_test*')))
+    self._test_preprocess('classification')
 
 if __name__ == '__main__':
     unittest.main()
