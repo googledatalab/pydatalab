@@ -19,7 +19,7 @@ from google.cloud.monitoring import Resource
 from google.cloud.monitoring import Metric
 from google.cloud.monitoring import TimeSeries
 
-import google.datalab.context
+import google.datalab
 import google.datalab.stackdriver.monitoring as gcm
 
 
@@ -36,7 +36,7 @@ class TestCases(unittest.TestCase):
 
   def setUp(self):
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    context = google.datalab.context.Context(PROJECT, creds)
+    context = google.datalab.Context(PROJECT, creds)
     self.query = gcm.Query(METRIC_TYPE, context=context)
 
   @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')

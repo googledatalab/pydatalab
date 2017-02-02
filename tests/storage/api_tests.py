@@ -16,7 +16,7 @@ import unittest
 import mock
 from oauth2client.client import AccessTokenCredentials
 
-import google.datalab.context
+import google.datalab
 from google.datalab.storage._api import Api
 
 
@@ -147,4 +147,4 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)

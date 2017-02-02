@@ -31,8 +31,6 @@ setup(
     'google.datalab',
     'google.datalab.bigquery',
     'google.datalab.bigquery.commands',
-    'google.datalab.context',
-    'google.datalab.context.commands',
     'google.datalab.data',
     'google.datalab.data.commands',
     'google.datalab.kernel',

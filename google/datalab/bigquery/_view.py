@@ -16,7 +16,7 @@ from __future__ import unicode_literals
 from builtins import str
 from builtins import object
 
-import google.datalab.context
+import google.datalab
 
 from . import _query
 from . import _table
@@ -47,7 +47,7 @@ class View(object):
       Exception if the name is invalid.
       """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._table = _table.Table(name, context=context)
     self._materialization = _query.Query('SELECT * FROM %s' % self._repr_sql_(), context=context)

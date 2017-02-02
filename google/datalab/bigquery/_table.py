@@ -28,7 +28,7 @@ import traceback
 import uuid
 import sys
 
-import google.datalab.context
+import google.datalab
 import google.datalab.utils
 
 from . import _api
@@ -127,7 +127,7 @@ class Table(object):
       Exception if the name is invalid.
     """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_table_name(name, self._api.project_id)

@@ -29,16 +29,16 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
+import google.datalab
 import google.datalab.bigquery
 import google.datalab.bigquery.commands
-import google.datalab.context
 import google.datalab.utils.commands
 
 
 class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_udf_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
     cell_body = \
@@ -68,7 +68,7 @@ function(r, emitFn) {
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)
 
   def test_sample_cell(self):
     # TODO(gram): complete this test

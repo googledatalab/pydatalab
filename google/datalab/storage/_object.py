@@ -17,8 +17,8 @@ from builtins import object
 
 import dateutil.parser
 
+import google.datalab
 import google.datalab.utils
-import google.datalab.context
 
 from . import _api
 
@@ -79,7 +79,7 @@ class Object(object):
           level are used.
     """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._bucket = bucket
@@ -242,7 +242,7 @@ class Objects(object):
           level are used.
     """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._bucket = bucket
