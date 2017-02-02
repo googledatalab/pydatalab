@@ -37,8 +37,8 @@ class Summary(object):
     if self._path.startswith('gs://'):
       storage._api.Api.verify_permitted_to_read(self._path)
       bucket, prefix = storage._bucket.parse_name(self._path)
-      items = storage.Items(bucket, prefix, None)
-      filtered_list = [item.uri for item in items if os.path.basename(item.uri).find('tfevents')]
+      objects = storage.Objects(bucket, prefix, None)
+      filtered_list = [obj.uri for obj in objects if os.path.basename(obj.uri).find('tfevents')]
       return filtered_list
     else:
       path_pattern = os.path.join(self._path, '*tfevents*')

@@ -49,7 +49,7 @@ import stackdriver.monitoring.query_tests
 import stackdriver.monitoring.utils_tests
 import storage.api_tests
 import storage.bucket_tests
-import storage.item_tests
+import storage.object_tests
 import _util.http_tests
 import _util.lru_cache_tests
 import _util.util_tests
@@ -87,7 +87,7 @@ _TEST_MODULES = [
     stackdriver.monitoring.utils_tests,
     storage.api_tests,
     storage.bucket_tests,
-    storage.item_tests,
+    storage.object_tests,
     _util.http_tests,
     _util.lru_cache_tests,
     _util.util_tests

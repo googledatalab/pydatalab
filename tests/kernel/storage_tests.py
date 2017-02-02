@@ -36,83 +36,83 @@ import google.datalab.storage.commands
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('google.datalab.storage._item.Item.exists', autospec=True)
-  @mock.patch('google.datalab.storage._bucket.Bucket.items', autospec=True)
+  @mock.patch('google.datalab.storage._object.Object.exists', autospec=True)
+  @mock.patch('google.datalab.storage._bucket.Bucket.objects', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_get', autospec=True)
   @mock.patch('google.datalab.context._context.Context.default')
-  def test_expand_list(self, mock_context_default, mock_api_objects_get, mock_bucket_items,
-                       mock_item_exists):
+  def test_expand_list(self, mock_context_default, mock_api_objects_get, mock_bucket_objects,
+                       mock_object_exists):
     context = TestCases._create_context()
     mock_context_default.return_value = context
 
-    # Mock API for testing for item existence. Fail if called with name that includes wild char.
-    def item_exists_side_effect(*args, **kwargs):
+    # Mock API for testing for object existence. Fail if called with name that includes wild char.
+    def object_exists_side_effect(*args, **kwargs):
       return args[0].key.find('*') < 0
 
-    mock_item_exists.side_effect = item_exists_side_effect
+    mock_object_exists.side_effect = object_exists_side_effect
 
-    # Mock API for getting items in a bucket.
-    mock_bucket_items.side_effect = TestCases._mock_bucket_items_return(context)
+    # Mock API for getting objects in a bucket.
+    mock_bucket_objects.side_effect = TestCases._mock_bucket_objects_return(context)
 
-    # Mock API for getting item metadata.
+    # Mock API for getting object metadata.
     mock_api_objects_get.side_effect = TestCases._mock_api_objects_get()
 
-    items = google.datalab.storage.commands._storage._expand_list(None)
-    self.assertEqual([], items)
+    objects = google.datalab.storage.commands._storage._expand_list(None)
+    self.assertEqual([], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list([])
-    self.assertEqual([], items)
+    objects = google.datalab.storage.commands._storage._expand_list([])
+    self.assertEqual([], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list('gs://bar/o*')
-    self.assertEqual(['gs://bar/object1', 'gs://bar/object3'], items)
+    objects = google.datalab.storage.commands._storage._expand_list('gs://bar/o*')
+    self.assertEqual(['gs://bar/object1', 'gs://bar/object3'], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list(['gs://foo', 'gs://bar'])
-    self.assertEqual(['gs://foo', 'gs://bar'], items)
+    objects = google.datalab.storage.commands._storage._expand_list(['gs://foo', 'gs://bar'])
+    self.assertEqual(['gs://foo', 'gs://bar'], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list(['gs://foo/*', 'gs://bar'])
-    self.assertEqual(['gs://foo/item1', 'gs://foo/item2', 'gs://foo/item3', 'gs://bar'], items)
+    objects = google.datalab.storage.commands._storage._expand_list(['gs://foo/*', 'gs://bar'])
+    self.assertEqual(['gs://foo/object1', 'gs://foo/object2', 'gs://foo/object3', 'gs://bar'], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list(['gs://bar/o*'])
-    self.assertEqual(['gs://bar/object1', 'gs://bar/object3'], items)
+    objects = google.datalab.storage.commands._storage._expand_list(['gs://bar/o*'])
+    self.assertEqual(['gs://bar/object1', 'gs://bar/object3'], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list(['gs://bar/i*'])
+    objects = google.datalab.storage.commands._storage._expand_list(['gs://bar/i*'])
     # Note - if no match we return the pattern.
-    self.assertEqual(['gs://bar/i*'], items)
+    self.assertEqual(['gs://bar/i*'], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list(['gs://baz'])
-    self.assertEqual(['gs://baz'], items)
+    objects = google.datalab.storage.commands._storage._expand_list(['gs://baz'])
+    self.assertEqual(['gs://baz'], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list(['gs://baz/*'])
-    self.assertEqual(['gs://baz/*'], items)
+    objects = google.datalab.storage.commands._storage._expand_list(['gs://baz/*'])
+    self.assertEqual(['gs://baz/*'], objects)
 
-    items = google.datalab.storage.commands._storage._expand_list(['gs://foo/i*3'])
-    self.assertEqual(['gs://foo/item3'], items)
+    objects = google.datalab.storage.commands._storage._expand_list(['gs://foo/o*3'])
+    self.assertEqual(['gs://foo/object3'], objects)
 
-  @mock.patch('google.datalab.storage._item.Item.copy_to', autospec=True)
-  @mock.patch('google.datalab.storage._bucket.Bucket.items', autospec=True)
+  @mock.patch('google.datalab.storage._object.Object.copy_to', autospec=True)
+  @mock.patch('google.datalab.storage._bucket.Bucket.objects', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_get', autospec=True)
   @mock.patch('google.datalab.context._context.Context.default')
-  def test_storage_copy(self, mock_context_default, mock_api_objects_get, mock_bucket_items,
-                        mock_storage_item_copy_to):
+  def test_storage_copy(self, mock_context_default, mock_api_objects_get, mock_bucket_objects,
+                        mock_storage_object_copy_to):
     context = TestCases._create_context()
     mock_context_default.return_value = context
-    # Mock API for getting items in a bucket.
-    mock_bucket_items.side_effect = TestCases._mock_bucket_items_return(context)
-    # Mock API for getting item metadata.
+    # Mock API for getting objects in a bucket.
+    mock_bucket_objects.side_effect = TestCases._mock_bucket_objects_return(context)
+    # Mock API for getting object metadata.
     mock_api_objects_get.side_effect = TestCases._mock_api_objects_get()
 
     google.datalab.storage.commands._storage._storage_copy({
-      'source': ['gs://foo/item1'],
+      'source': ['gs://foo/object1'],
       'destination': 'gs://foo/bar1'
     }, None)
 
-    mock_storage_item_copy_to.assert_called_with(mock.ANY, 'bar1', bucket='foo')
-    self.assertEquals('item1', mock_storage_item_copy_to.call_args[0][0].key)
-    self.assertEquals('foo', mock_storage_item_copy_to.call_args[0][0]._bucket)
+    mock_storage_object_copy_to.assert_called_with(mock.ANY, 'bar1', bucket='foo')
+    self.assertEquals('object1', mock_storage_object_copy_to.call_args[0][0].key)
+    self.assertEquals('foo', mock_storage_object_copy_to.call_args[0][0]._bucket)
 
     with self.assertRaises(Exception) as error:
       google.datalab.storage.commands._storage._storage_copy({
-        'source': ['gs://foo/item*'],
+        'source': ['gs://foo/object*'],
         'destination': 'gs://foo/bar1'
       }, None)
     self.assertEqual('More than one source but target gs://foo/bar1 is not a bucket',
@@ -120,9 +120,9 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.storage.commands._storage._storage_copy', autospec=True)
   def test_storage_copy_magic(self, mock_storage_copy):
-    google.datalab.storage.commands._storage.storage('copy --source gs://foo/item1 --destination gs://foo/bar1')
+    google.datalab.storage.commands._storage.storage('copy --source gs://foo/object1 --destination gs://foo/bar1')
     mock_storage_copy.assert_called_with({
-        'source': ['gs://foo/item1'],
+        'source': ['gs://foo/object1'],
         'destination': 'gs://foo/bar1',
         'func': google.datalab.storage.commands._storage._storage_copy
       }, None)
@@ -154,18 +154,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.storage._api.Api.buckets_get', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_get', autospec=True)
-  @mock.patch('google.datalab.storage._bucket.Bucket.items', autospec=True)
+  @mock.patch('google.datalab.storage._bucket.Bucket.objects', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_delete', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.buckets_delete', autospec=True)
   @mock.patch('google.datalab.context._context.Context.default')
   def test_storage_delete(self, mock_context_default, mock_api_bucket_delete,
-                          mock_api_objects_delete, mock_bucket_items, mock_api_objects_get,
+                          mock_api_objects_delete, mock_bucket_objects, mock_api_objects_get,
                           mock_api_buckets_get):
     context = TestCases._create_context()
     mock_context_default.return_value = context
-    # Mock API for getting items in a bucket.
-    mock_bucket_items.side_effect = TestCases._mock_bucket_items_return(context)
-    # Mock API for getting item metadata.
+    # Mock API for getting objects in a bucket.
+    mock_bucket_objects.side_effect = TestCases._mock_bucket_objects_return(context)
+    # Mock API for getting object metadata.
     mock_api_objects_get.side_effect = TestCases._mock_api_objects_get()
     mock_api_buckets_get.side_effect = TestCases._mock_api_buckets_get()
 
@@ -176,14 +176,14 @@ class TestCases(unittest.TestCase):
           'gs://baz'
         ],
         'object': [
-          'gs://foo/item1',
-          'gs://baz/item1',
+          'gs://foo/object1',
+          'gs://baz/object1',
         ]
       }, None)
-    self.assertEqual('gs://baz does not exist\ngs://baz/item1 does not exist',
+    self.assertEqual('gs://baz does not exist\ngs://baz/object1 does not exist',
                      str(error.exception))
     mock_api_bucket_delete.assert_called_with(mock.ANY, 'bar')
-    mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'item1')
+    mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'object1')
 
   @mock.patch('google.datalab.context._context.Context.default')
   def test_storage_view(self, mock_context_default):
@@ -204,28 +204,28 @@ class TestCases(unittest.TestCase):
     return google.datalab.context.Context(project_id, creds)
 
   @staticmethod
-  def _mock_bucket_items_return(context):
-    # Mock API for getting items in a bucket.
-    def bucket_items_side_effect(*args, **kwargs):
+  def _mock_bucket_objects_return(context):
+    # Mock API for getting objects in a bucket.
+    def bucket_objects_side_effect(*args, **kwargs):
       bucket = args[0].name  # self
       if bucket == 'foo':
         return [
-          google.datalab.storage._item.Item(bucket, 'item1', context=context),
-          google.datalab.storage._item.Item(bucket, 'item2', context=context),
-          google.datalab.storage._item.Item(bucket, 'item3', context=context),
+          google.datalab.storage._object.Object(bucket, 'object1', context=context),
+          google.datalab.storage._object.Object(bucket, 'object2', context=context),
+          google.datalab.storage._object.Object(bucket, 'object3', context=context),
         ]
       elif bucket == 'bar':
         return [
-          google.datalab.storage._item.Item(bucket, 'object1', context=context),
-          google.datalab.storage._item.Item(bucket, 'object3', context=context),
+          google.datalab.storage._object.Object(bucket, 'object1', context=context),
+          google.datalab.storage._object.Object(bucket, 'object3', context=context),
         ]
       else:
         return []
-    return bucket_items_side_effect
+    return bucket_objects_side_effect
 
   @staticmethod
   def _mock_api_objects_get():
-    # Mock API for getting item metadata.
+    # Mock API for getting object metadata.
     def api_objects_get_side_effect(*args, **kwargs):
       if args[1].find('baz') >= 0:
         return None

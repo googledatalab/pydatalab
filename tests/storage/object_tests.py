@@ -25,59 +25,59 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.storage._api.Api.objects_list')
   @mock.patch('google.datalab.storage._api.Api.objects_get')
-  def test_item_existence(self, mock_api_objects_get, mock_api_objects_list):
+  def test_object_existence(self, mock_api_objects_get, mock_api_objects_list):
     mock_api_objects_list.return_value = TestCases._create_enumeration_single_result()
     mock_api_objects_get.return_value = TestCases._create_objects_get_result()
 
     b = TestCases._create_bucket()
-    self.assertTrue(b.items().contains('test_item1'))
+    self.assertTrue(b.objects().contains('test_object1'))
 
     mock_api_objects_get.side_effect = google.datalab.utils.RequestException(404, 'failed')
-    self.assertFalse('test_item2' in list(b.items()))
+    self.assertFalse('test_object2' in list(b.objects()))
 
   @mock.patch('google.datalab.storage._api.Api.objects_get')
-  def test_item_metadata(self, mock_api_objects):
+  def test_object_metadata(self, mock_api_objects):
     mock_api_objects.return_value = TestCases._create_objects_get_result()
 
     b = TestCases._create_bucket()
-    i = b.item('test_item1')
+    i = b.object('test_object1')
     m = i.metadata
 
-    self.assertEqual(m.name, 'test_item1')
+    self.assertEqual(m.name, 'test_object1')
     self.assertEqual(m.content_type, 'text/plain')
 
   @mock.patch('google.datalab.storage._api.Api.objects_list')
-  def test_enumerate_items_empty(self, mock_api_objects):
+  def test_enumerate_objects_empty(self, mock_api_objects):
     mock_api_objects.return_value = TestCases._create_enumeration_empty_result()
 
     b = self._create_bucket()
-    items = list(b.items())
+    objects = list(b.objects())
 
-    self.assertEqual(len(items), 0)
+    self.assertEqual(len(objects), 0)
 
   @mock.patch('google.datalab.storage._api.Api.objects_list')
-  def test_enumerate_items_single(self, mock_api_objects):
+  def test_enumerate_objects_single(self, mock_api_objects):
     mock_api_objects.return_value = TestCases._create_enumeration_single_result()
 
     b = TestCases._create_bucket()
-    items = list(b.items())
+    objects = list(b.objects())
 
-    self.assertEqual(len(items), 1)
-    self.assertEqual(items[0].key, 'test_item1')
+    self.assertEqual(len(objects), 1)
+    self.assertEqual(objects[0].key, 'test_object1')
 
   @mock.patch('google.datalab.storage._api.Api.objects_list')
-  def test_enumerate_items_multi_page(self, mock_api_objects):
+  def test_enumerate_objects_multi_page(self, mock_api_objects):
     mock_api_objects.side_effect = [
       TestCases._create_enumeration_multipage_result1(),
       TestCases._create_enumeration_multipage_result2()
     ]
 
     b = TestCases._create_bucket()
-    items = list(b.items())
+    objects = list(b.objects())
 
-    self.assertEqual(len(items), 2)
-    self.assertEqual(items[0].key, 'test_item1')
-    self.assertEqual(items[1].key, 'test_item2')
+    self.assertEqual(len(objects), 2)
+    self.assertEqual(objects[0].key, 'test_object1')
+    self.assertEqual(objects[1].key, 'test_object2')
 
   @staticmethod
   def _create_bucket(name='test_bucket'):
@@ -91,7 +91,7 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_objects_get_result():
-    return {'name': 'test_item1', 'contentType': 'text/plain'}
+    return {'name': 'test_object1', 'contentType': 'text/plain'}
 
   @staticmethod
   def _create_enumeration_empty_result():
@@ -100,16 +100,16 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_enumeration_single_result():
     return {
-      'items': [
-        {'name': 'test_item1'}
+      'objects': [
+        {'name': 'test_object1'}
       ]
     }
 
   @staticmethod
   def _create_enumeration_multipage_result1():
     return {
-      'items': [
-        {'name': 'test_item1'}
+      'objects': [
+        {'name': 'test_object1'}
       ],
       'nextPageToken': 'test_token'
     }
@@ -117,7 +117,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_enumeration_multipage_result2():
     return {
-      'items': [
-        {'name': 'test_item2'}
+      'objects': [
+        {'name': 'test_object2'}
       ]
     }
