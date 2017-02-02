@@ -36,12 +36,11 @@ from . import _trainer
 from . import _util
 
 
-def local_preprocess(input_csvs, output_dir, checkpoint=None):
+def local_preprocess(dataset, output_dir, checkpoint=None):
   """Preprocess data locally. Produce output that can be used by training efficiently.
   Args:
-    input_csvs: A list of CSV files which include two columns only: image_gs_url, label.
-        Preprocessing will concatenate the data inside all files and split them into
-        train/eval dataset. Can be local or GCS path.
+    dataset: data source to preprocess. Can be either datalab.mlalpha.CsvDataset, or
+        datalab.mlalpha.BigQueryDataSet.
     output_dir: The output directory to use. Preprocessing will create a sub directory under
         it for each run, and also update "latest" file which points to the latest preprocessed
         directory. Users are responsible for cleanup. Can be local or GCS path.
@@ -51,17 +50,16 @@ def local_preprocess(input_csvs, output_dir, checkpoint=None):
   print 'Local preprocessing...'
   # TODO: Move this to a new process to avoid pickling issues
   # TODO: Expose train/eval split ratio
-  _local.Local(checkpoint).preprocess(input_csvs, output_dir)
+  _local.Local(checkpoint).preprocess(dataset, output_dir)
   print 'Done'
 
 
-def cloud_preprocess(input_csvs, output_dir, checkpoint=None, pipeline_option=None):
+def cloud_preprocess(dataset, output_dir, checkpoint=None, pipeline_option=None):
   """Preprocess data in Cloud with DataFlow.
      Produce output that can be used by training efficiently.
   Args:
-    input_csvs: A list of CSV files which include two columns only: image_gs_url, label.
-        Preprocessing will concatenate the data inside all files and split them into
-        train/eval dataset. GCS paths only.
+    dataset: data source to preprocess. Can be either datalab.mlalpha.CsvDataset, or
+        datalab.mlalpha.BigQueryDataSet. For CsvDataSet, all files need to be in GCS.
     output_dir: The output directory to use. Preprocessing will create a sub directory under
         it for each run, and also update "latest" file which points to the latest preprocessed
         directory. Users are responsible for cleanup. GCS path only.
@@ -70,14 +68,13 @@ def cloud_preprocess(input_csvs, output_dir, checkpoint=None, pipeline_option=No
 
   # TODO: Move this to a new process to avoid pickling issues
   # TODO: Expose train/eval split ratio
-  # TODO: Consider exposing explicit train/eval datasets
-  _cloud.Cloud(checkpoint=checkpoint).preprocess(input_csvs, output_dir, pipeline_option)
+  job_name = _cloud.Cloud(checkpoint=checkpoint).preprocess(dataset, output_dir, pipeline_option)
   if (_util.is_in_IPython()):
     import IPython
     
     dataflow_url = 'https://console.developers.google.com/dataflow?project=%s' % \
                    _util.default_project()
-    html = 'Job submitted.'
+    html = 'Job "%s" submitted.' % job_name
     html += '<p>Click <a href="%s" target="_blank">here</a> to track preprocessing job. <br/>' \
         % dataflow_url
     IPython.display.display_html(html, raw=True)
@@ -126,7 +123,7 @@ def cloud_train(input_dir, batch_size, max_steps, output_dir,
     }
     log_url = 'https://console.developers.google.com/logs/viewer?' + \
         urllib.urlencode(log_url_query_strings)
-    html = 'Job submitted.'
+    html = 'Job "%s" submitted.' % job_info['jobId']
     html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
     IPython.display.display_html(html, raw=True)
 
