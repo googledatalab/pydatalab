@@ -164,7 +164,7 @@ class Object(object):
         raise e
     return ObjectMetadata(self._info) if self._info else None
 
-  def read_from(self, start_offset=0, byte_count=None):
+  def read_stream(self, start_offset=0, byte_count=None):
     """Reads the content of this object as text.
 
     Args:
@@ -181,6 +181,16 @@ class Object(object):
     except Exception as e:
       raise e
 
+  def download(self):
+    """Reads the content of this object.
+
+    Returns:
+      The content within the object.
+    Raises:
+      Exception if there was an error requesting the object's content.
+    """
+    return self.read_stream()
+
   def read_lines(self, max_lines=None):
     """Reads the content of this object as text, and return a list of lines up to some max.
 
@@ -192,12 +202,12 @@ class Object(object):
       Exception if there was an error requesting the object's content.
     """
     if max_lines is None:
-      return self.read_from().split('\n')
+      return self.read_stream().split('\n')
 
     max_to_read = self.metadata.size
     bytes_to_read = min(100 * max_lines, self.metadata.size)
     while True:
-      content = self.read_from(byte_count=bytes_to_read)
+      content = self.read_stream(byte_count=bytes_to_read)
 
       lines = content.split('\n')
       if len(lines) > max_lines or bytes_to_read >= max_to_read:
@@ -209,7 +219,7 @@ class Object(object):
     del lines[-1]
     return lines[0:max_lines]
 
-  def write_to(self, content, content_type):
+  def write_stream(self, content, content_type):
     """Writes text content to this object.
 
     Args:
@@ -222,6 +232,16 @@ class Object(object):
       self._api.object_upload(self._bucket, self._key, content, content_type)
     except Exception as e:
       raise e
+
+  def upload(self, content):
+    """Uploads content to this object.
+
+    Args:
+      content: the text content to be written.
+    Raises:
+      Exception if there was an error requesting the object's content.
+    """
+    self.write_stream(content, content_type=None)
 
 
 class Objects(object):
