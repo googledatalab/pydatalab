@@ -30,6 +30,7 @@ import json
 import re
 
 import google.datalab.bigquery
+from google.datalab.bigquery._query_output import QueryOutput
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
@@ -504,8 +505,10 @@ def _execute_cell(args, cell_body):
   query = _get_query_argument(args, cell_body, google.datalab.utils.commands.notebook_environment())
   if args['verbose']:
     print(query.sql)
-  return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
-                       allow_large_results=args['large'], dialect=args['dialect'],
+  output_options = QueryOutput.table(args['target'], mode=args['mode'],
+                                     use_cache=not args['nocache'],
+                                     allow_large_results=args['large'])
+  return query.execute(output_options, dialect=args['dialect'],
                        billing_tier=args['billing']).results
 
 
@@ -539,9 +542,10 @@ def _pipeline_cell(args, cell_body):
     return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                 is_cached=result['cacheHit'])
   if args['action'] == 'run':
-    return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
-                         allow_large_results=args['large'], dialect=args['dialect'],
-                         billing_tier=args['billing']).results
+    output_options = QueryOutput.table(args['target'], mode=args['mode'],
+                                       use_cache=not args['nocache'],
+                                       allow_large_results=args['large'])
+    query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing']).results
 
 
 def _table_line(args):
@@ -706,12 +710,9 @@ def _extract_line(args):
   elif isinstance(source, google.datalab.bigquery.Table) and not source.exists():
     raise Exception('Table %s does not exist' % name)
   else:
-
-    job = source.extract(args['destination'],
-                         format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
-                         compress=args['compress'],
-                         csv_delimiter=args['delimiter'],
-                         csv_header=args['header'])
+    output_options = QueryOutput.file(args['destination'], compress=args['compress'],
+                                     csv_delimiter=args['delimiter'], csv_header=args['header'])
+    job = source.execute(output_options)
     if job.failed:
       raise Exception('Extract failed: %s' % str(job.fatal_error))
     elif job.errors:
@@ -916,7 +917,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
         }},
         map: {{
           '*': {{
-            google.datalab: 'nbextensions/gcpdatalab'
+            datalab: 'nbextensions/gcpdatalab'
           }}
         }},
         shim: {{
@@ -927,8 +928,8 @@ def _table_viewer(table, rows_per_page=25, fields=None):
         }}
       }});
 
-      require(['google.datalab/charting', 'google.datalab/element!{div_id}', 'base/js/events',
-          'google.datalab/style!/nbextensions/gcpdatalab/charting.css'],
+      require(['datalab/charting', 'datalab/element!{div_id}', 'base/js/events',
+          'datalab/style!/nbextensions/gcpdatalab/charting.css'],
         function(charts, dom, events) {{
           charts.render('gcharts', dom, events, '{chart_style}', [], {data},
             {{
@@ -1012,13 +1013,13 @@ def _repr_html_table_schema(schema):
       require.config({
         map: {
           '*': {
-            google.datalab: 'nbextensions/gcpdatalab'
+            datalab: 'nbextensions/gcpdatalab'
           }
         },
       });
 
-      require(['google.datalab/bigquery', 'google.datalab/element!%s',
-          'google.datalab/style!/nbextensions/gcpdatalab/bigquery.css'],
+      require(['datalab/bigquery', 'datalab/element!%s',
+          'datalab/style!/nbextensions/gcpdatalab/bigquery.css'],
         function(bq, dom) {
           bq.renderSchema(dom, %s);
         }

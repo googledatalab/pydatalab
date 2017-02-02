@@ -109,6 +109,22 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'ipykernel==4.4.1',
   ],
   package_data={
+    'google.datalab.notebook': [
+        'static/bigquery.css',
+        'static/bigquery.js',
+        'static/charting.css',
+        'static/charting.js',
+        'static/job.css',
+        'static/job.js',
+        'static/element.js',
+        'static/style.js',
+        'static/visualization.js',
+        'static/codemirror/mode/sql.js',
+        'static/parcoords.js',
+        'static/extern/d3.parcoords.js',
+        'static/extern/d3.parcoords.css',
+        'static/extern/sylvester.js',
+      ],
     'datalab.notebook': [
         'static/bigquery.css',
         'static/bigquery.js',

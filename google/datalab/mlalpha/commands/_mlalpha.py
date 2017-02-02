@@ -276,7 +276,7 @@ def _train(args, cell):
     all_messages = []
     log_dir = os.getcwd()
     if google.datalab.context._utils._in_datalab_docker():
-      log_dir = '/google.datalab/nocachecontent'
+      log_dir = '/datalab/nocachecontent'
       if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     program_args = config.get('args', None)

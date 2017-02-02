@@ -69,24 +69,6 @@ class Sampling(object):
     projection = Sampling._create_projection(fields)
     return lambda sql: 'SELECT %s FROM (%s) ORDER BY %s%s LIMIT %d' % (projection, sql, field_name,
                                                                        direction, count)
-
-  @staticmethod
-  def sampling_query(sql, fields=None, count=5, sampling=None):
-    """Returns a sampling query for the SQL object.
-
-    Args:
-      sql: the SQL object to sample
-      fields: an optional list of field names to retrieve.
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      sampling: an optional sampling strategy to apply to the table.
-    Returns:
-      A SQL query string for sampling the input sql.
-    """
-    if sampling is None:
-      sampling = Sampling.default(count=count, fields=fields)
-    return sampling(sql)
-
   @staticmethod
   def hashed(field_name, percent, fields=None, count=0):
     """Provides a sampling strategy based on hashing and selecting a percentage of data.
