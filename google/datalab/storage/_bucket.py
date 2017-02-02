@@ -22,7 +22,7 @@ import google.datalab.context
 import google.datalab.utils
 
 from . import _api
-from . import _item
+from . import _object
 
 
 # REs to match bucket names and optionally object names
@@ -32,28 +32,28 @@ _STORAGE_NAME = 'gs://(' + _BUCKET_NAME + ')(/' + _OBJECT_NAME + ')?'
 
 
 def parse_name(name):
-  """ Parse a gs:// URL into the bucket and item names.
+  """ Parse a gs:// URL into the bucket and object names.
 
   Args:
-    name: a GCS URL of the form gs://bucket or gs://bucket/item
+    name: a GCS URL of the form gs://bucket or gs://bucket/object
   Returns:
-    The bucket name (with no gs:// prefix), and the item name if present. If the name
+    The bucket name (with no gs:// prefix), and the object name if present. If the name
     could not be parsed returns None for both.
   """
   bucket = None
-  item = None
+  obj = None
   m = re.match(_STORAGE_NAME, name)
   if m:
     # We want to return the last two groups as first group is the optional 'gs://'
     bucket = m.group(1)
-    item = m.group(2)
-    if item is not None:
-      item = item[1:]  # Strip '/'
+    obj = m.group(2)
+    if obj is not None:
+      obj = obj[1:]  # Strip '/'
   else:
     m = re.match('(' + _OBJECT_NAME + ')', name)
     if m:
-      item = m.group(1)
-  return bucket, item
+      obj = m.group(1)
+  return bucket, obj
 
 
 class BucketMetadata(object):
@@ -63,7 +63,7 @@ class BucketMetadata(object):
     """Initializes an instance of a BucketMetadata object.
 
     Args:
-      info: a dictionary containing information about an Item.
+      info: a dictionary containing information about an Bucket.
     """
     self._info = info
 
@@ -131,31 +131,31 @@ class Bucket(object):
 
     return BucketMetadata(self._info) if self._info else None
 
-  def item(self, key):
-    """Retrieves an Item object for the specified key in this bucket.
+  def object(self, key):
+    """Retrieves a Storage Object for the specified key in this bucket.
 
-    The item need not exist.
+    The object need not exist.
 
     Args:
-      key: the key of the item within the bucket.
+      key: the key of the object within the bucket.
     Returns:
-      An Item instance representing the specified key.
+      An Object instance representing the specified key.
     """
-    return _item.Item(self._name, key, context=self._context)
+    return _object.Object(self._name, key, context=self._context)
 
-  def items(self, prefix=None, delimiter=None):
-    """Get an iterator for the items within this bucket.
+  def objects(self, prefix=None, delimiter=None):
+    """Get an iterator for the objects within this bucket.
 
     Args:
-      prefix: an optional prefix to match items.
-      delimiter: an optional string to simulate directory-like semantics. The returned items
+      prefix: an optional prefix to match objects.
+      delimiter: an optional string to simulate directory-like semantics. The returned objects
            will be those whose names do not contain the delimiter after the prefix. For
-           the remaining items, the names will be returned truncated after the delimiter
+           the remaining objects, the names will be returned truncated after the delimiter
            with duplicates removed (i.e. as pseudo-directories).
     Returns:
-      An iterable list of items within this bucket.
+      An iterable list of objects within this bucket.
     """
-    return _item.Items(self._name, prefix, delimiter, context=self._context)
+    return _object.Objects(self._name, prefix, delimiter, context=self._context)
 
   def exists(self):
     """ Checks if the bucket exists. """
@@ -253,7 +253,7 @@ class Buckets(object):
     except Exception as e:
       raise e
 
-    buckets = list_info.get('items', [])
+    buckets = list_info.get('objects', [])
     if len(buckets):
       try:
         buckets = [Bucket(info['name'], info, context=self._context) for info in buckets]

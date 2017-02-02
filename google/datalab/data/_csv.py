@@ -39,7 +39,7 @@ _MAX_CSV_BYTES = 10000000
 class Csv(object):
   """Represents a CSV file in GCS or locally with same schema.
   """
-  def __init__(self, path, delimiter=','):
+  def __init__(self, path, delimiter=b','):
     """Initializes an instance of a Csv instance.
     Args:
       path: path of the Csv file.
@@ -55,7 +55,7 @@ class Csv(object):
   @staticmethod
 
   def _read_gcs_lines(path, max_lines=None):
-    return google.datalab.storage.Item.from_url(path).read_lines(max_lines)
+    return google.datalab.storage.Object.from_url(path).read_lines(max_lines)
 
   @staticmethod
 
