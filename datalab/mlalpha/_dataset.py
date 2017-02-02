@@ -48,7 +48,8 @@ class CsvDataSet(object):
         self._schema = json.load(f)
     self._files = []
     for file in files:
-      self._files += ml.util._file.glob_files(file)
+      # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
+      self._files += [str(x) for x in ml.util._file.glob_files(file)]
 
   @property
   def files(self):

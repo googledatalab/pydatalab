@@ -42,13 +42,23 @@ class Local(object):
     if self._checkpoint is None:
       self._checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
 
-  def preprocess(self, input_csvs, output_dir):
+  def preprocess(self, dataset, output_dir):
     """Local preprocessing with local DataFlow."""
-
+    
+    import datalab.mlalpha as mlalpha
     job_id = 'inception_preprocessed_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-    p = beam.Pipeline('DirectPipelineRunner')
-    _preprocess.configure_pipeline(p, self._checkpoint, input_csvs, output_dir, job_id)
-    p.run()
+    options = {
+        'project': _util.default_project(),
+    }
+    opts = beam.pipeline.PipelineOptions(flags=[], **options)
+    p = beam.Pipeline('DirectRunner', options=opts)
+    if type(dataset) is mlalpha.CsvDataSet:
+      _preprocess.configure_pipeline_csv(p, self._checkpoint, dataset.files, output_dir, job_id)
+    elif type(dataset) is mlalpha.BigQueryDataSet:
+      _preprocess.configure_pipeline_bigquery(p, self._checkpoint, dataset.sql, output_dir, job_id)
+    else:
+      raise ValueError('preprocess takes CsvDataSet or BigQueryDataset only.')
+    p.run().wait_until_finish()
 
   def train(self, input_dir, batch_size, max_steps, output_dir):
     """Local training."""

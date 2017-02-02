@@ -69,10 +69,10 @@ class Evaluator(object):
     with tf.Graph().as_default() as graph:
       self.tensors = self.model.build_eval_graph(self.eval_data_paths,
                                                  self.batch_size)
-      self.summary = tf.merge_all_summaries()
+      self.summary = tf.summary.merge_all()
       self.saver = tf.train.Saver()
 
-    self.summary_writer = tf.train.SummaryWriter(self.output_path)
+    self.summary_writer = tf.summary.FileWriter(self.output_path)
     self.sv = tf.train.Supervisor(
         graph=graph,
         logdir=self.output_path,
@@ -163,7 +163,7 @@ class Trainer(object):
         self.saver = tf.train.Saver()
 
         # Build the summary operation based on the TF collection of Summaries.
-        self.summary_op = tf.merge_all_summaries()
+        self.summary_op = tf.summary.merge_all()
 
     # Create a "supervisor", which oversees the training process.
     self.sv = tf.train.Supervisor(

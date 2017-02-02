@@ -18,7 +18,7 @@
 
 
 import apache_beam as beam
-from apache_beam.utils.options import PipelineOptions
+from apache_beam.utils.pipeline_options import PipelineOptions
 import cStringIO
 import csv
 import google.cloud.ml as ml
@@ -35,8 +35,7 @@ from . import _util
 slim = tf.contrib.slim
 
 error_count = beam.Aggregator('errorCount')
-csv_rows_count = beam.Aggregator('csvRowsCount')
-labels_count = beam.Aggregator('labelsCount')
+rows_count = beam.Aggregator('RowsCount')
 skipped_empty_line = beam.Aggregator('skippedEmptyLine')
 embedding_good = beam.Aggregator('embedding_good')
 embedding_bad = beam.Aggregator('embedding_bad')
@@ -66,27 +65,23 @@ class ExtractLabelIdsDoFn(beam.DoFn):
           self.label_to_id_map[label] = i
 
     # Row format is:
-    # image_uri(,label_ids)*
-    row = context.element
-    if not row:
+    # image_uri,label_id
+    element = context.element
+    if not element:
       context.aggregate_to(skipped_empty_line, 1)
       return
 
-    context.aggregate_to(csv_rows_count, 1)
-    uri = row[0]
+    context.aggregate_to(rows_count, 1)
+    uri = element['image_url']
     if not uri or not uri.startswith('gs://'):
       context.aggregate_to(invalid_uri, 1)
       return
 
-    # In a real-world system, you may want to provide a default id for labels
-    # that were not in the dictionary.  In this sample, we will throw an error.
-    # This code already supports multi-label problems if you want to use it.
-    label_ids = [self.label_to_id_map[label.strip()] for label in row[1:]]
-    context.aggregate_to(labels_count, len(label_ids))
-
-    if not label_ids:
+    try:
+      label_id = self.label_to_id_map[element['label'].strip()]
+    except KeyError:
       context.aggregate_to(ignored_unlabeled_image, 1)
-    yield row[0], label_ids
+    yield uri, label_id
 
 
 class ReadImageAndConvertToJpegDoFn(beam.DoFn):
@@ -97,7 +92,7 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
   """
 
   def process(self, context):
-    uri, label_ids = context.element
+    uri, label_id = context.element
 
     try:
       with ml.util._file.open_local_or_gcs(uri, mode='r') as f:
@@ -114,7 +109,7 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
     output = cStringIO.StringIO()
     img.save(output, 'jpeg')
     image_bytes = output.getvalue()
-    yield uri, label_ids, image_bytes
+    yield uri, label_id, image_bytes
 
 
 class EmbeddingsGraph(object):
@@ -250,7 +245,7 @@ class TFExampleFromImageDoFn(beam.DoFn):
     def _float_feature(value):
       return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
-    uri, label_ids, image_bytes = context.element
+    uri, label_id, image_bytes = context.element
 
     try:
       embedding = self.preprocess_graph.calculate_embedding(image_bytes)
@@ -265,13 +260,11 @@ class TFExampleFromImageDoFn(beam.DoFn):
       context.aggregate_to(embedding_bad, 1)
 
     example = tf.train.Example(features=tf.train.Features(feature={
-        'image_uri': _bytes_feature([uri]),
+        'image_uri': _bytes_feature([str(uri)]),
         'embedding': _float_feature(embedding.ravel().tolist()),
     }))
 
-    if label_ids:
-      label_ids.sort()
-      example.features.feature['label'].int64_list.value.extend(label_ids)
+    example.features.feature['label'].int64_list.value.append(label_id)
 
     yield example
 
@@ -283,20 +276,31 @@ class TrainEvalSplitPartitionFn(beam.PartitionFn):
     return 1 if random.random() > 0.7 else 0
 
 
-def configure_pipeline(p, checkpoint_path, input_paths, output_dir, job_id):
-  """Specify PCollection and transformations in pipeline."""
-  output_latest_file = os.path.join(output_dir, 'latest')
+def _get_sources_from_csvs(p, input_paths):
   source_list = []
   for ii, input_path in enumerate(input_paths):
-    input_source = beam.io.TextFileSource(input_path, strip_trailing_newlines=True)
-    source_list.append(p | 'Read input %d' % ii >> beam.Read(input_source))
-  all_sources = source_list | 'Flatten Sources' >> beam.Flatten()
-  labels = (all_sources
-      | 'Parse input for labels' >> beam.Map(lambda line: csv.reader([line]).next()[1])
+    source_list.append(p | 'Read from Csv %d' % ii >> 
+        beam.io.ReadFromText(input_path, strip_trailing_newlines=True))
+  all_sources = (source_list | 'Flatten Sources' >> beam.Flatten()
+      | beam.Map(lambda line: csv.DictReader([line], fieldnames=['image_url', 'label']).next()))
+  return all_sources
+
+
+def _get_sources_from_bigquery(p, query):
+  if len(query.split()) == 1:
+    bq_source = beam.io.BigQuerySource(table=query)
+  else:
+    bq_source = beam.io.BigQuerySource(query=query)
+  query_results = p | 'Read from BigQuery' >> beam.io.Read(bq_source)
+  return query_results
+
+
+def _configure_pipeline_from_source(source, checkpoint_path, output_dir, job_id):
+  labels = (source
+      | 'Parse input for labels' >> beam.Map(lambda x: x['label'])
       | 'Combine labels' >> beam.transforms.combiners.Count.PerElement()
       | 'Get labels' >> beam.Map(lambda label_count: label_count[0]))
-  all_preprocessed = (all_sources
-      | 'Parse input' >> beam.Map(lambda line: csv.reader([line]).next())
+  all_preprocessed = (source
       | 'Extract label ids' >> beam.ParDo(ExtractLabelIdsDoFn(),
                                           beam.pvalue.AsIter(labels))
       | 'Read and convert to JPEG' >> beam.ParDo(ReadImageAndConvertToJpegDoFn())
@@ -311,8 +315,19 @@ def configure_pipeline(p, checkpoint_path, input_paths, output_dir, job_id):
   eval_save = train_eval[1] | 'Save eval to disk' >> SaveFeatures(preprocessed_eval)
   train_save = train_eval[0] | 'Save train to disk' >> SaveFeatures(preprocessed_train)
   # Make sure we write "latest" file after train and eval data are successfully written.
+  output_latest_file = os.path.join(output_dir, 'latest')
   ([eval_save, train_save, labels_save] | 'Wait for train eval saving' >> beam.Flatten() |
       beam.transforms.combiners.Sample.FixedSizeGlobally('Fixed One', 1) |
       beam.Map(lambda path: job_id) |
       'WriteLatest' >> beam.io.textio.WriteToText(output_latest_file, shard_name_template=''))
+
+
+def configure_pipeline_csv(p, checkpoint_path, input_paths, output_dir, job_id):
+  all_sources = _get_sources_from_csvs(p, input_paths)
+  _configure_pipeline_from_source(all_sources, checkpoint_path, output_dir, job_id)
+
+
+def configure_pipeline_bigquery(p, checkpoint_path, query, output_dir, job_id):
+  all_sources = _get_sources_from_bigquery(p, query)
+  _configure_pipeline_from_source(all_sources, checkpoint_path, output_dir, job_id)
 

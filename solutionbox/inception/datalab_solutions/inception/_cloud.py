@@ -20,10 +20,10 @@ import apache_beam as beam
 import base64
 import collections
 import datetime
-from googleapiclient import discovery
 import google.cloud.ml as ml
 import logging
 import os
+
 
 from . import _model
 from . import _preprocess
@@ -31,7 +31,7 @@ from . import _trainer
 from . import _util
 
 
-_TF_GS_URL= 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl'
+_TF_GS_URL= 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl'
 
 
 class Cloud(object):
@@ -42,9 +42,10 @@ class Cloud(object):
     if self._checkpoint is None:
       self._checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
 
-  def preprocess(self, input_csvs, output_dir, pipeline_option=None):
+  def preprocess(self, dataset, output_dir, pipeline_option=None):
     """Cloud preprocessing with Cloud DataFlow."""
 
+    import datalab.mlalpha as mlalpha
     job_name = 'preprocess-inception-' + datetime.datetime.now().strftime('%y%m%d-%H%M%S')
     options = {
         'staging_location': os.path.join(output_dir, 'tmp', 'staging'),
@@ -59,9 +60,15 @@ class Cloud(object):
       options.update(pipeline_option)
 
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
-    p = beam.Pipeline('DataflowPipelineRunner', options=opts)
-    _preprocess.configure_pipeline(p, self._checkpoint, input_csvs, output_dir, job_name)
+    p = beam.Pipeline('DataflowRunner', options=opts)
+    if type(dataset) is mlalpha.CsvDataSet:
+      _preprocess.configure_pipeline_csv(p, self._checkpoint, dataset.files, output_dir, job_name)
+    elif type(dataset) is mlalpha.BigQueryDataSet:
+      _preprocess.configure_pipeline_bigquery(p, self._checkpoint, dataset.sql, output_dir, job_name)
+    else:
+      raise ValueError('preprocess takes CsvDataSet or BigQueryDataset only.')
     p.run()
+    return job_name
 
   def train(self, input_dir, batch_size, max_steps, output_path,
             region, scale_tier):
