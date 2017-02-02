@@ -209,10 +209,7 @@ def get_estimator(output_dir, train_config, args):
     raise ValueError('--layer_sizes cannot be used with linear models')
 
   # Build tf.learn features
-  #feature_columns = util.produce_feature_columns(
-  #    schema_plus, args, is_linear_model(args.model_type))
-  #feature_engineering_fn = util.produce_feature_engineering_fn(schema_plus, args)
-  estimator_parameters = get_estimator_parameters(train_config, args)
+  feature_columns = _tflearn_features(train_config, args)
 
   # Set how often to run checkpointing in terms of time.
   config = tf.contrib.learn.RunConfig(
@@ -221,38 +218,34 @@ def get_estimator(output_dir, train_config, args):
   train_dir = os.path.join(output_dir, 'train')
   if args.model_type == 'dnn_regression':
     estimator = tf.contrib.learn.DNNRegressor(
-        feature_columns=estimator_parameters['features'],
+        feature_columns=feature_columns,
         hidden_units=args.layer_sizes,
         config=config,
         model_dir=train_dir,
-        feature_engineering_fn=estimator_parameters['feature_engineering_fn'],
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   elif args.model_type == 'linear_regression':
     estimator = tf.contrib.learn.LinearRegressor(
-        feature_columns=estimator_parameters['features'],
+        feature_columns=feature_columns,
         config=config,
         model_dir=train_dir,
-        feature_engineering_fn=estimator_parameters['feature_engineering_fn'],
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   elif args.model_type == 'dnn_classification':
     estimator = tf.contrib.learn.DNNClassifier(
-        feature_columns=estimator_parameters['features'],
+        feature_columns=feature_columns,
         hidden_units=args.layer_sizes,
-        n_classes=estimator_parameters['n_classes'],
+        n_classes=train_config['vocab_stats'][target_name]['n_classes'],
         config=config,
         model_dir=train_dir,
-        feature_engineering_fn=estimator_parameters['feature_engineering_fn'],
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   elif args.model_type == 'linear_classification':
     estimator = tf.contrib.learn.LinearClassifier(
-        feature_columns=estimator_parameters['features'],
-        n_classes=estimator_parameters['n_classes'],
+        feature_columns=feature_columns,
+        n_classes=train_config['vocab_stats'][target_name]['n_classes'],
         config=config,
         model_dir=train_dir,
-        feature_engineering_fn=estimator_parameters['feature_engineering_fn'],
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   else:
@@ -262,49 +255,103 @@ def get_estimator(output_dir, train_config, args):
   return estimator
 
 
-def get_estimator_parameters(train_config, args):
+def preprocess_input(features, target, train_config, preprocess_output_dir):
+  target_name = train_config['target_column']
+  key_name = train_config['key_column']
+
+  # Do the numerical transforms.
+  with tf.name_scope('numerical_feature_preprocess') as scope:
+    if train_config['numerical_columns'] != []:
+      numerical_analysis_file = os.path.join(preprocess_output_dir,
+                                             NUMERICAL_ANALYSIS)
+      if not ml.util._file.file_exists(numerical_analysis_file):
+        raise ValueError('File %s not found in %s' % 
+                         (NUMERICAL_ANALYSIS, preprocess_output_dir))
+
+      numerical_anlysis = json.loads(
+          ml.util._file.load_file(numerical_analysis_file))
+
+      for name in train_config['numerical_columns']:
+        if name == target_name or name == key_name:
+          continue
+
+        transform_config = train_config['transforms'].get(name, {})
+        transform_name = transform_config.get('transform', None)
+        if transform_name == 'scale':
+          features[name] = _scale_tensor(
+              features[name], 
+              range_min=numerical_anlysis[name]['min'], 
+              range_max=numerical_anlysis[name]['max'], 
+              scale_min=-1, 
+              scale_max=1)
+        elif transform_name == 'max_abs_scale':
+          value = float(transform_config['value'])
+          features[name] = _scale_tensor(
+              features[name], 
+              range_min=numerical_anlysis[name]['min'], 
+              range_max=numerical_anlysis[name]['max'], 
+              scale_min=-value, 
+              scale_max=value)
+        elif transform_name == 'identity' or transform_name is None:
+          pass
+        else:
+          raise ValueError(('For numerical variables, only scale, '
+                            'max_abs_scale, and identity are supported: '
+                            'Error for %s') % name)
+  
+  # Do target transform
+  with tf.name_scope('categorical_feature_preprocess') as scope:
+    if target_name in train_config['categorical_columns']:
+      labels = train_config['vocab_stats'][target_name]['labels']
+      target = tf.contrib.lookup.string_to_index(target, labels)
+
+
+  # Do categorical transforms. Only apply vocab mapping. The real
+  # transforms are done with tf learn column features. 
+  with tf.name_scope('categorical_feature_preprocess') as scope:
+    for name in train_config['categorical_columns']:
+      if name == key_name or name == target_name:
+        continue
+      labels = train_config['vocab_stats'][name]['labels']
+      features[name] = tf.contrib.lookup.string_to_index(features[name], labels)
+
+  return features, target
+
+def _scale_tensor(tensor, range_min, range_max, scale_min, scale_max):
+  if range_min == range_max:
+    return tensor
+
+  float_tensor = tf.to_float(tensor)
+  scaled_tensor = tf.div(
+    tf.sub(float_tensor, range_min) * tf.constant(float(scale_max - scale_min)),
+    tf.constant(float(range_max - range_min)))
+  shifted_tensor = scaled_tensor + tf.constant(float(scale_min))
+
+  return shifted_tensor
+
+def _tflearn_features(train_config, args):
   feature_columns = []
   target_name = train_config['target_column']
   key_name = train_config['key_column']
 
-  with tf.name_scope('tflearn_features') as scope:
-    for name in train_config['numerical_columns']:
-      if name != target_name and name != key_name:
-        feature_columns.append(tf.contrib.layers.real_valued_column(
-            name,
-            dimension=1))
+  for name in train_config['numerical_columns']:
+    if name != target_name and name != key_name:
+      feature_columns.append(tf.contrib.layers.real_valued_column(
+          name,
+          dimension=1))
 
-    for name in train_config['categorical_columns']:
-      if name != target_name and name != key_name:
-        sparse = tf.contrib.layers.sparse_column_with_hash_bucket(
-            name,
-            hash_bucket_size=3)
-        feature_columns.append(tf.contrib.layers.one_hot_column(sparse))
+  for name in train_config['categorical_columns']:
+    if name != target_name and name != key_name:
+      transform_config = train_config['transforms'].get(name, {})
+      
+      sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
+          name,
+          bucket_size=train_config['vocab_stats'][name]['n_classes'])
+      feature_columns.append(tf.contrib.layers.one_hot_column(sparse))
+
+  return feature_columns
 
 
-  if target_name in train_config['categorical_columns']:
-    target_index_values, target_label_values = get_vocabulary(args.preprocess_output_dir, target_name)
-    n_classes = len(target_label_values)
-
-    print('target_index_values', target_index_values)
-    print('target_label_values', target_label_values)
-
-  def _feature_engineering_fn(features, target):
-    with tf.name_scope('categorical_feature_engineering') as scope:
-      if target_name in train_config['categorical_columns']:
-        #target = tf.Print(target, [target])
-        new_target = tf.contrib.lookup.string_to_index(target, target_label_values)
-        #new_target = tf.Print(new_target, [new_target])
-      else:
-        new_target = target
-    return features, new_target
-
-  estimator_parameters = {'features': feature_columns,
-          'feature_engineering_fn': _feature_engineering_fn}
-  if target_name in train_config['categorical_columns']:
-    estimator_parameters.update({'n_classes': n_classes})
-
-  return estimator_parameters
 
 # ==============================================================================
 # Building the TF learn estimators
@@ -343,7 +390,8 @@ def merge_metadata(preprocess_output_dir, transforms_file):
       transforms: { name1: {transform: scale, value: 2},
                     name2: {transform: embedding, dim: 50}, ...
                   }
-
+      vocab_stats: { name3: {n_classes: 23, labels: ['1', '2', ..., '23']},
+                     name4: {n_classes: 102, labels: ['red', 'blue', ...]}}
     }
   """
 
@@ -363,6 +411,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
   result_dict['categorical_columns'] = []
   result_dict['numerical_columns'] = []
   result_dict['transforms'] = {}
+  result_dict['vocab_stats'] = {} 
 
   # get key column
   for name, input_type in input_features.iteritems():
@@ -424,11 +473,24 @@ def merge_metadata(preprocess_output_dir, transforms_file):
     if transform['transform'] != 'target':
       result_dict['transforms'].update({name: transform})
 
+  # Load vocabs
+  for name in result_dict['categorical_columns']:
+    if name != result_dict['key_column']:
+      _, label_values = get_vocabulary(preprocess_output_dir, name)
+      n_classes = len(label_values)
+      result_dict['vocab_stats'][name] = {'n_classes': n_classes, 'labels': label_values}
+
   validate_metadata(result_dict)
   return result_dict
 
 def validate_metadata(train_config):
-  # Check there are no missing columns
+
+  # Make sure we have a default for every column
+  if len(train_config['csv_header']) != len(train_config['csv_defaults']):
+    raise ValueError('Unequal number of columns in input features file and '
+                     'schema file.')
+
+  # Check there are no missing columns. If 
   sorted_columns = sorted(train_config['csv_header']
                           + [train_config['target_column']])
   sorted_columns2 = sorted(train_config['categorical_columns']
@@ -438,11 +500,6 @@ def validate_metadata(train_config):
   if sorted_columns2 != sorted_columns:
     raise ValueError('Each csv header must be a numerical/categorical type, a '
                      ' key, or a target.')
-
-  # Make sure we have a default for every column
-  if len(train_config['csv_header']) != len(train_config['csv_defaults']):
-    raise ValueError('Unequal number of columns in input features file and '
-                     'schema file.')
 
 
 def is_linear_model(model_type):

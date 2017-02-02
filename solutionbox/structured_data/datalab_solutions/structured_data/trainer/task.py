@@ -47,7 +47,7 @@ OUTPUT_COLLECTION_NAME = 'outputs'
 
 
 
-def get_placeholder_input_fn(train_config):
+def get_placeholder_input_fn(train_config, preprocess_output_dir):
   """Input layer for the exported graph."""
 
   def get_input_features():
@@ -68,6 +68,7 @@ def get_placeholder_input_fn(train_config):
     features[FEATURES_EXAMPLE_DICT_KEY] = examples
 
     target = features.pop(train_config['target_column'])
+    features, target = util.preprocess_input(features, target, train_config, preprocess_output_dir)
     # The target feature column is not used for prediction so return None.
     return features, None
 
@@ -75,7 +76,7 @@ def get_placeholder_input_fn(train_config):
   return get_input_features
 
 
-def get_reader_input_fn(train_config, data_paths, batch_size,
+def get_reader_input_fn(train_config, preprocess_output_dir, data_paths, batch_size,
                         shuffle):
   """Builds input layer for training."""
 
@@ -87,6 +88,7 @@ def get_reader_input_fn(train_config, data_paths, batch_size,
 
     target_name = train_config['target_column']
     target = features.pop(target_name)
+    features, target = util.preprocess_input(features, target, train_config, preprocess_output_dir)
 
 
     return features, target
@@ -112,13 +114,14 @@ def get_export_signature_fn(train_config, args):
 
     predictions = tf.Print(predictions, [predictions])
     if util.is_classification_model(args.model_type):
-      _, string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
-      prediction = tf.argmax(predictions, 1)
-      labels = tf.contrib.lookup.index_to_string(
-          prediction,
-          mapping=string_value,
-          default_value=train_config['csv_defaults'][target_name])
-      outputs.update({TARGET_CLASS_TENSOR_NAME: labels.name})
+      #_, string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
+      #prediction = tf.argmax(predictions, 1)
+      #labels = tf.contrib.lookup.index_to_string(
+      #    prediction,
+      #    mapping=string_value,
+      #    default_value=train_config['csv_defaults'][target_name])
+      #outputs.update({TARGET_CLASS_TENSOR_NAME: labels.name})
+      pass
 
     inputs = {EXAMPLES_PLACEHOLDER_TENSOR_NAME: examples.name}
 
@@ -156,7 +159,7 @@ def get_experiment_fn(args):
     # Get the model to train.
     estimator = util.get_estimator(output_dir, train_config, args)
 
-    input_placeholder_for_prediction = get_placeholder_input_fn(train_config)
+    input_placeholder_for_prediction = get_placeholder_input_fn(train_config, args.preprocess_output_dir)
 
     # Save the finished model to output_dir/model
     export_monitor = util.ExportLastModelMonitor(
@@ -168,9 +171,9 @@ def get_experiment_fn(args):
         signature_fn=get_export_signature_fn(train_config, args))
 
     input_reader_for_train = get_reader_input_fn(
-        train_config, args.train_data_paths, args.batch_size, shuffle=True)
+        train_config, args.preprocess_output_dir, args.train_data_paths, args.batch_size, shuffle=True)
     input_reader_for_eval = get_reader_input_fn(
-        train_config, args.eval_data_paths, args.eval_batch_size, shuffle=False)
+        train_config, args.preprocess_output_dir, args.eval_data_paths, args.eval_batch_size, shuffle=False)
 
     # Set the eval metrics.
     # todo(brandondutra): make this work with HP tuning.
