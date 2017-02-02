@@ -47,6 +47,7 @@ class Local(object):
     
     import datalab.mlalpha as mlalpha
     job_id = 'inception_preprocessed_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+    # Project is needed for bigquery data source, even in local run.
     options = {
         'project': _util.default_project(),
     }
