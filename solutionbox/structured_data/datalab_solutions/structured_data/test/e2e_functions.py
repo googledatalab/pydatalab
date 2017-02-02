@@ -140,7 +140,7 @@ def make_preprocess_input_features(filename, problem_type):
 
   feature_types = {
       "key": {"default": -1, "type": "key"},
-      "target": {"type": "categorical"},
+      "target": {"default": "unknown", "type": "categorical"},
       "num1": {"default": 0.0, "type": "numerical"},
       "num2": {"default": 0, "type": "numerical"},
       "num3": {"default": 0.0, "type": "numerical"},
@@ -151,7 +151,8 @@ def make_preprocess_input_features(filename, problem_type):
 
   if problem_type == 'regression':
     feature_types['target']['type'] = 'numerical'
-    
+    feature_types['target']['default'] = 0
+
   with open(filename, 'w') as f:
     f.write(json.dumps(feature_types))
 
@@ -172,26 +173,31 @@ def run_preprocess(output_dir, csv_filename, schema_filename,
   subprocess.check_call(cmd, stderr=open(os.devnull, 'wb'))
 
 
-def run_training(output_dir, input_dir, schema_filename, transforms_filename,
-                 max_steps, extra_args=[]):
+def run_training(
+      train_data_paths,
+      eval_data_paths,
+      output_path,
+      preprocess_output_dir,
+      transforms_file,
+      max_steps,
+      model_type,
+      extra_args=[]):
   """Runs Training via gcloud beta ml local train.
 
   Args:
-    output_dir: the trainer's output folder
-    input_dir: should contain features_train*, features_eval*, and
-        mmetadata.json.
-    schema_filename: path to the schema file
-    transforms_filename: path to the transforms file.
-    max_steps: int. max training steps.
+    train_data_paths: training csv files
+    eval_data_paths: eval csv files
+    output_path: folder to write output to
+    preprocess_output_dir: output location of preprocessing
+    transforms_file: path to transforms file
+    max_steps: max training steps
+    model_type: {dnn,linear}_{regression,classification}
     extra_args: array of strings, passed to the trainer.
 
   Returns:
     The stderr of training as one string. TF writes to stderr, so basically, the
     output of training.
   """
-  train_filename = os.path.join(input_dir, 'features_train*')
-  eval_filename = os.path.join(input_dir, 'features_eval*')
-  metadata_filename = os.path.join(input_dir, 'metadata.json')
 
   # Gcloud has the fun bug that you have to be in the parent folder of task.py
   # when you call it. So cd there first.
@@ -202,12 +208,12 @@ def run_training(output_dir, input_dir, schema_filename, transforms_filename,
          '--module-name=trainer.task',
          '--package-path=trainer',
          '--',
-         '--train_data_paths=%s' % train_filename,
-         '--eval_data_paths=%s' % eval_filename,
-         '--metadata_path=%s' % metadata_filename,
-         '--output_path=%s' % output_dir,
-         '--schema_file=%s' % schema_filename,
-         '--transforms_file=%s' % transforms_filename,
+         '--train_data_paths=%s' % train_data_paths,
+         '--eval_data_paths=%s' % eval_data_paths,
+         '--output_path=%s' % output_path,
+         '--preprocess_output_dir=%s' % preprocess_output_dir,
+         '--transforms_file=%s' % transforms_file,
+         '--model_type=%s' % model_type,
          '--max_steps=%s' % max_steps] + extra_args
   print('Going to run command: %s' % ' '.join(cmd))
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)

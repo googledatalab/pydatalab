@@ -111,15 +111,17 @@ class ExportLastModelMonitor(tf.contrib.learn.monitors.ExportMonitor):
 
 def parse_example_tensor(examples, train_config):
 
+  # record_defaults are used by tf.decode_csv to insert defaults, and to infer
+  # the datatype. 
   record_defaults = [[train_config['csv_defaults'][name]] 
                      for name in train_config['csv_header']]
-  print('record_defaults', record_defaults)
-  print('*'*10)
-  sys.stdout.flush()
   tensors = tf.decode_csv(examples, record_defaults, name='csv_to_tensors')
 
-  tensor_dict = dict(zip(train_config['csv_header'], tensors))
+  # I'm not really sure why expand_dims needs to be called. If using regression
+  # models, it errors without it. 
+  tensors = [tf.expand_dims(x, axis=1) for x in tensors]
 
+  tensor_dict = dict(zip(train_config['csv_header'], tensors))
   return tensor_dict
 
 
@@ -249,13 +251,12 @@ def get_estimator(output_dir, train_config, args):
         optimizer=tf.train.AdamOptimizer(
           args.learning_rate, epsilon=args.epsilon))
   else:
-    print('ERROR: bad --model_type value')
-    sys.exit(1)
+    raise ValueError('bad --model_type value')
 
   return estimator
 
 
-def preprocess_input(features, target, train_config, preprocess_output_dir):
+def preprocess_input(features, target, train_config, preprocess_output_dir, model_type):
   target_name = train_config['target_column']
   key_name = train_config['key_column']
 
@@ -312,8 +313,42 @@ def preprocess_input(features, target, train_config, preprocess_output_dir):
     for name in train_config['categorical_columns']:
       if name == key_name or name == target_name:
         continue
-      labels = train_config['vocab_stats'][name]['labels']
-      features[name] = tf.contrib.lookup.string_to_index(features[name], labels)
+      transform_config = train_config['transforms'].get(name, {})
+      transform_name = transform_config.get('transform', None)
+
+      # Supported transforms:
+      # for DNN
+      # 1) string -> hash -> embedding  (hash_embedding)
+      # 2) string -> make int -> embedding (embedding)
+      # 3) string -> hash -> one_hot (hash_one_hot)
+      # 4) string -> make int -> one_hot (one_hot, default)
+      # for linear
+      # 1) string -> make int -> sparse_column_with_integerized_feature (sparse, default)
+      # 2) string -> sparse_column_with_hash_bucket (hash_sparse)
+      if is_dnn_model(model_type):
+        if (transform_name == 'hash_embedding' or 
+            transform_name == 'hash_one_hot'):
+          map_vocab = False
+        elif (transform_name == 'embedding' or
+              transform_name == 'one_hot' or
+              transform_name == None):
+          map_vocab = True
+        else:
+          raise ValueError('For DNN modles, only hash_embedding, '
+                           'hash_one_hot, embedding, and one_hot transforms '
+                           'are supported.')
+      elif is_linear_model(model_type):
+        if (transform_name == 'sparse' or
+            transform_name == None):
+          map_vocab = True
+        elif transform_name == 'hash_sparse':
+          map_vocab = False
+        else:
+          raise ValueError('For linear models, only sparse and '
+                           'hash_sparse are supported.')
+      if map_vocab:
+        labels = train_config['vocab_stats'][name]['labels']
+        features[name] = tf.contrib.lookup.string_to_index(features[name], labels)
 
   return features, target
 
@@ -330,6 +365,13 @@ def _scale_tensor(tensor, range_min, range_max, scale_min, scale_max):
   return shifted_tensor
 
 def _tflearn_features(train_config, args):
+  """Builds the tf.learn feature list.
+
+  All numerical features are just given real_valued_column because all the 
+  preprocessing transformations are done in preprocess_input. Categoriacl
+  features are processed here depending if the vocab map (from string to int) 
+  was applied in preprocess_input.
+  """
   feature_columns = []
   target_name = train_config['target_column']
   key_name = train_config['key_column']
@@ -343,12 +385,54 @@ def _tflearn_features(train_config, args):
   for name in train_config['categorical_columns']:
     if name != target_name and name != key_name:
       transform_config = train_config['transforms'].get(name, {})
-      
-      sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
-          name,
-          bucket_size=train_config['vocab_stats'][name]['n_classes'])
-      feature_columns.append(tf.contrib.layers.one_hot_column(sparse))
+      transform_name = transform_config.get('transform', None)
 
+      if is_dnn_model(args.model_type):
+        if transform_name == 'hash_embedding':
+          sparse = tf.contrib.layers.sparse_column_with_hash_bucket(
+              name, 
+              hash_bucket_size=transform_config['hash_bucket_size'])
+          learn_feature = tf.contrib.layers.embedding_column(
+              sparse, 
+              dimension=transform_config['embedding_dim'])
+        elif transform_name == 'hash_one_hot':
+          sparse = tf.contrib.layers.sparse_column_with_hash_bucket(
+              name, 
+              hash_bucket_size=transform_config['hash_bucket_size'])
+          learn_feature = tf.contrib.layers.embedding_column(
+              sparse, 
+              dimension=train_config['vocab_stats'][name]['n_classes'])
+        elif transform_name == 'embedding':
+          sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
+              name, 
+              bucket_size=train_config['vocab_stats'][name]['n_classes'])
+          learn_feature = tf.contrib.layers.embedding_column(
+              sparse, 
+              dimension=transform_config['embedding_dim'])
+        elif transform_name == 'one_hot' or transform_name == None:
+          sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
+              name, 
+              bucket_size=train_config['vocab_stats'][name]['n_classes'])
+          learn_feature = tf.contrib.layers.one_hot_column(sparse)
+        else:
+          raise ValueError('For DNN modles, only hash_embedding, '
+                           'hash_one_hot, embedding, and one_hot transforms '
+                           'are supported.')
+      elif is_linear_model(args.model_type):
+        if transform_name == 'sparse' or transform_name == None:
+          learn_feature = tf.contrib.layers.sparse_column_with_integerized_feature(
+              name, 
+              bucket_size=train_config['vocab_stats'][name]['n_classes'])
+        elif transform_name == 'hash_sparse':
+          learn_feature = tf.contrib.layers.sparse_column_with_hash_bucket(
+              name, 
+              hash_bucket_size=transform_config['hash_bucket_size'])
+        else:
+          raise ValueError('For linear models, only sparse and '
+                           'hash_sparse are supported.')
+
+      #Save the feature
+      feature_columns.append(learn_feature)
   return feature_columns
 
 
@@ -454,8 +538,8 @@ def merge_metadata(preprocess_output_dir, transforms_file):
     default = input_features.get(name, {}).get('default', None)
 
     if default is None:
-        raise ValueError('Missing default from %s in file %s' % (
-            name, input_features_file))
+      raise ValueError('Missing default from %s in file %s' % (
+          name, input_features_file))
 
     # make all numerical types floats. This means when tf.decode_csv is called,
     # float tensors and string tensors will be made.

@@ -11,9 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# TODO(brnaondutra): raise some excpetion vs print/sys.exit.
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -47,7 +44,7 @@ OUTPUT_COLLECTION_NAME = 'outputs'
 
 
 
-def get_placeholder_input_fn(train_config, preprocess_output_dir):
+def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
   """Input layer for the exported graph."""
 
   def get_input_features():
@@ -60,15 +57,19 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir):
     features = util.parse_example_tensor(examples=examples,
                                          train_config=train_config)
 
-    if FEATURES_EXAMPLE_DICT_KEY in features:
-      print('ERROR: %s is a reserved feature name, please use a different'
-            'feature name' % FEATURES_EXAMPLE_DICT_KEY)
-      sys.exit(1)
+    global FEATURES_EXAMPLE_DICT_KEY
+    while FEATURES_EXAMPLE_DICT_KEY in features:
+      FEATURES_EXAMPLE_DICT_KEY = '_' + FEATURES_EXAMPLE_DICT_KEY
 
     features[FEATURES_EXAMPLE_DICT_KEY] = examples
 
     target = features.pop(train_config['target_column'])
-    features, target = util.preprocess_input(features, target, train_config, preprocess_output_dir)
+    features, target = util.preprocess_input(
+        features=features,
+        target=target, 
+        train_config=train_config,
+        preprocess_output_dir=preprocess_output_dir,
+        model_type=model_type)
     # The target feature column is not used for prediction so return None.
     return features, None
 
@@ -76,7 +77,7 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir):
   return get_input_features
 
 
-def get_reader_input_fn(train_config, preprocess_output_dir, data_paths, batch_size,
+def get_reader_input_fn(train_config, preprocess_output_dir, model_type, data_paths, batch_size,
                         shuffle):
   """Builds input layer for training."""
 
@@ -88,7 +89,12 @@ def get_reader_input_fn(train_config, preprocess_output_dir, data_paths, batch_s
 
     target_name = train_config['target_column']
     target = features.pop(target_name)
-    features, target = util.preprocess_input(features, target, train_config, preprocess_output_dir)
+    features, target = util.preprocess_input(
+        features=features,
+        target=target, 
+        train_config=train_config,
+        preprocess_output_dir=preprocess_output_dir,
+        model_type=model_type)
 
 
     return features, target
@@ -159,21 +165,25 @@ def get_experiment_fn(args):
     # Get the model to train.
     estimator = util.get_estimator(output_dir, train_config, args)
 
-    input_placeholder_for_prediction = get_placeholder_input_fn(train_config, args.preprocess_output_dir)
+    input_placeholder_for_prediction = get_placeholder_input_fn(train_config, args.preprocess_output_dir, args.model_type)
+
+    # Save a copy of the scehma and input to the model folder.
+    schema_file = os.path.join(args.preprocess_output_dir, util.SCHEMA_FILE)
+    input_features_file = os.path.join(args.preprocess_output_dir, util.INPUT_FEATURES_FILE)
 
     # Save the finished model to output_dir/model
     export_monitor = util.ExportLastModelMonitor(
         output_dir=output_dir,
         final_model_location='model',  # Relative to the output_dir.
-        additional_assets=[args.transforms_file],
+        additional_assets=[args.transforms_file, schema_file, input_features_file],
         input_fn=input_placeholder_for_prediction,
         input_feature_key=FEATURES_EXAMPLE_DICT_KEY,
         signature_fn=get_export_signature_fn(train_config, args))
 
     input_reader_for_train = get_reader_input_fn(
-        train_config, args.preprocess_output_dir, args.train_data_paths, args.batch_size, shuffle=True)
+        train_config, args.preprocess_output_dir, args.model_type, args.train_data_paths, args.batch_size, shuffle=True)
     input_reader_for_eval = get_reader_input_fn(
-        train_config, args.preprocess_output_dir, args.eval_data_paths, args.eval_batch_size, shuffle=False)
+        train_config, args.preprocess_output_dir, args.model_type, args.eval_data_paths, args.eval_batch_size, shuffle=False)
 
     # Set the eval metrics.
     # todo(brandondutra): make this work with HP tuning.
