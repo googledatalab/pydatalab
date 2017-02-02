@@ -17,8 +17,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-from . import _project
-from . import _utils
+from google.datalab.utils._utils import *
 
 
 class Context(object):
@@ -27,15 +26,17 @@ class Context(object):
 
   _global_context = None
 
-  def __init__(self, project_id, credentials):
+  def __init__(self, project_id, credentials, config=None):
     """Initializes an instance of a Context object.
 
     Args:
       project_id: the current cloud project.
       credentials: the credentials to use to authorize requests.
+      config: key/value configurations for cloud operations
     """
     self._project_id = project_id
     self._credentials = credentials
+    self._config = config or Context._get_default_config()
 
   @property
   def credentials(self):
@@ -65,14 +66,36 @@ class Context(object):
     """ Set the project_id for the context. """
     self._project_id = project_id
 
+  @property
+  def config(self):
+    """ Retrieves the value of the config property.
+
+    Returns:
+      The current config object used in cloud operations
+    """
+    return self._config
+
+  def set_config(self, config):
+    """ Set the config property for the context. """
+    self._config = config
+
   @staticmethod
   def is_signed_in():
     """ If the user has signed in or it is on GCE VM with default credential."""
     try:
-      _utils.get_credentials()
+      get_credentials()
       return True
     except Exception:
       return False
+
+  @staticmethod
+  def _get_default_config():
+    """Return a default config object"""
+    return {
+      'bigquery_dialect': 'standard',
+      'bigquery_billing_tier': None
+    }
+
 
   @staticmethod
   def default():
@@ -87,11 +110,9 @@ class Context(object):
     Returns:
       An initialized and shared instance of a Context object.
     """
-    credentials = _utils.get_credentials()
     if Context._global_context is None:
-      project = _project.Projects.get_default_id(credentials)
-      Context._global_context = Context(project, credentials)
-    else:
-      # Always update the credentials in case the access token is revoked or expired
-      Context._global_context.set_credentials(credentials)
+      project = get_default_project_id()
+      credentials = get_credentials()
+      config = Context._get_default_config()
+      Context._global_context = Context(project, credentials, config)
     return Context._global_context

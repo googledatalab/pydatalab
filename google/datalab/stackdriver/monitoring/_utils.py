@@ -16,11 +16,11 @@ from __future__ import absolute_import
 
 import google.cloud.monitoring
 
-import google.datalab.context
+import google.datalab
 
 
 def make_client(project_id=None, context=None):
-  context = context or google.datalab.context.Context.default()
+  context = context or google.datalab.Context.default()
   project_id = project_id or context.project_id
   client = google.cloud.monitoring.Client(
       project=project_id,

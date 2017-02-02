@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import google.datalab.context
+import google.datalab
 import google.datalab.data
 import google.datalab.utils
 
@@ -60,7 +60,7 @@ class Query(object):
       Exception if expansion of any variables failed.
       """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._data_sources = data_sources

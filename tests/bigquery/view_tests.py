@@ -17,8 +17,8 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
+import google.datalab
 import google.datalab.bigquery
-import google.datalab.context
 
 
 class TestCases(unittest.TestCase):
@@ -80,7 +80,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   @mock.patch('google.datalab.bigquery._api.Api.table_update')
-  @mock.patch('google.datalab.context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_view_update(self, mock_context_default, mock_api_table_update,
                        mock_api_tables_get, mock_api_tables_insert):
     mock_api_tables_insert.return_value = TestCases._create_tables_insert_success_result()
@@ -157,4 +157,4 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)

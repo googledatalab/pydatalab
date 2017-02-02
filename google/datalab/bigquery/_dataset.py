@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import google.datalab.context
+import google.datalab
 import google.datalab.utils
 
 from . import _api
@@ -39,7 +39,7 @@ class Dataset(object):
       Exception if the name is invalid.
       """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_dataset_name(name, self._api.project_id)
@@ -237,7 +237,7 @@ class Datasets(object):
           level are used.
     """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._project_id = project_id if project_id else self._api.project_id

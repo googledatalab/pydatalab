@@ -18,7 +18,7 @@ from builtins import object
 import dateutil.parser
 import re
 
-import google.datalab.context
+import google.datalab
 import google.datalab.utils
 
 from . import _api
@@ -98,7 +98,7 @@ class Bucket(object):
           level are used.
     """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name = name
@@ -210,7 +210,7 @@ class Buckets(object):
           level are used.
     """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._project_id = project_id if project_id else self._api.project_id
