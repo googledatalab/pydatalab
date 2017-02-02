@@ -16,7 +16,7 @@
 
 module Charting {
   declare var IPython:any;
-  declare var google.datalab:any;
+  declare var datalab:any;
 
 // Wrappers for Plotly.js and Google Charts
 
@@ -638,7 +638,7 @@ module Charting {
         this.cellElement.classList.remove('completed');
       }
       var _this = this;
-      google.datalab.session.execute(code, function (error:string, response:any) {
+      datalab.session.execute(code, function (error:string, response:any) {
         _this.handleNewData(env, error, response);
       });
     }
@@ -897,7 +897,7 @@ module Charting {
                    refreshInterval:number,
                    totalRows:number):void {
     require(["base/js/namespace"], function(Jupyter: any) {
-      var url = "google.datalab/";
+      var url = "datalab/";
       require(driver.requires(url, chartStyle), function (/* ... */) {
         // chart module should be last dependency in require() call...
         var chartModule = arguments[arguments.length - 1];  // See if it needs to be a member.
@@ -952,7 +952,7 @@ module Charting {
       data = this.convertListToDataTable(data);
     }
 
-    // If we have a google.datalab session, we can go ahead and draw the chart; if not, add code to do the
+    // If we have a datalab session, we can go ahead and draw the chart; if not, add code to do the
     // drawing to an event handler for when the kernel is ready.
     if (IPython.notebook.kernel.is_connected()) {
       _render(driver, dom, chartStyle, controlIds, data, options, refreshData, refreshInterval,

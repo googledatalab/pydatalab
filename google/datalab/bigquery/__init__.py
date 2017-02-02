@@ -19,6 +19,7 @@ from ._dialect import Dialect
 from ._federated_table import FederatedTable
 from ._job import Job
 from ._query import Query
+from ._query_output import QueryOutput
 from ._query_job import QueryJob
 from ._query_results_table import QueryResultsTable
 from ._query_stats import QueryStats

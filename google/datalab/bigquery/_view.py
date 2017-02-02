@@ -20,6 +20,7 @@ import google.datalab.context
 
 from . import _query
 from . import _table
+from ._query_output import QueryOutput
 
 # Query import is at end to avoid issues with circular dependencies.
 
@@ -183,9 +184,9 @@ class View(object):
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
-    return self._materialization.execute(use_cache=use_cache, dialect=dialect,
-                                         billing_tier=billing_tier) \
-                                .results
+    output_options = QueryOutput.table(use_cache=use_cache)
+    return self._materialization.execute(output_options, dialect=dialect,
+                                               billing_tier=billing_tier).results
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
                     allow_large_results=False, dialect=None, billing_tier=None):
@@ -214,10 +215,10 @@ class View(object):
     Raises:
       Exception (KeyError) if View could not be materialized.
     """
-    return self._materialization.execute_async(table_name=table_name, table_mode=table_mode,
-                                               use_cache=use_cache, priority=priority,
-                                               allow_large_results=allow_large_results,
-                                               dialect=dialect, billing_tier=billing_tier)
+    output_options = QueryOutput.table(name=table_name, mode=table_mode,
+                                                     use_cache=use_cache, priority=priority,
+                                                     allow_large_results=allow_large_results)
+    return self._materialization.execute_async(output_options, dialect=dialect, billing_tier=billing_tier)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high',
               allow_large_results=False, dialect=None, billing_tier=None):
@@ -246,10 +247,10 @@ class View(object):
     Raises:
       Exception (KeyError) if View could not be materialized.
     """
-    return self._materialization.execute(table_name=table_name, table_mode=table_mode,
-                                         use_cache=use_cache, priority=priority,
-                                         allow_large_results=allow_large_results,
-                                         dialect=dialect, billing_tier=billing_tier)
+    output_options = QueryOutput.table(name=table_name, mode=table_mode,
+                                                     use_cache=use_cache, priority=priority,
+                                                     allow_large_results=allow_large_results)
+    return self._materialization.execute_async(output_options, dialect=dialect, billing_tier=billing_tier)
 
   def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.
