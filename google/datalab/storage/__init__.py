@@ -14,4 +14,4 @@
 from __future__ import absolute_import
 
 from ._bucket import Bucket, Buckets
-from ._item import Item, Items
+from ._object import Object, Objects

@@ -77,7 +77,7 @@ for help on a specific command.
                                   'Copy one or more GCS objects to a different location.')
   copy_parser.add_argument('-s', '--source', help='The name of the object(s) to copy', nargs='+')
   copy_parser.add_argument('-d', '--destination', required=True,
-      help='The copy destination. For multiple source items this must be a bucket.')
+      help='The copy destination. For multiple source objects this must be a bucket.')
   copy_parser.set_defaults(func=_storage_copy)
 
   create_parser = parser.subcommand('create', 'Create one or more GCS buckets.')
@@ -143,7 +143,7 @@ def _parser_exit(status=0, message=None):
 def _expand_list(names):
   """ Do a wildchar name expansion of object names in a list and return expanded list.
 
-    The items are expected to exist as this is used for copy sources or delete targets.
+    The objects are expected to exist as this is used for copy sources or delete targets.
     Currently we support wildchars in the key name only.
   """
 
@@ -153,7 +153,7 @@ def _expand_list(names):
     names = [names]
 
   results = []  # The expanded list.
-  items = {}  # Cached contents of buckets; used for matching.
+  objects = {}  # Cached contents of buckets; used for matching.
   for name in names:
     bucket, key = google.datalab.storage._bucket.parse_name(name)
     results_len = len(results)  # If we fail to add any we add name and let caller deal with it.
@@ -161,16 +161,16 @@ def _expand_list(names):
       if not key:
         # Just a bucket; add it.
         results.append('gs://%s' % bucket)
-      elif google.datalab.storage.Item(bucket, key).exists():
+      elif google.datalab.storage.Object(bucket, key).exists():
         results.append('gs://%s/%s' % (bucket, key))
       else:
         # Expand possible key values.
-        if bucket not in items and key[:1] == '*':
+        if bucket not in objects and key[:1] == '*':
           # We need the full list; cache a copy for efficiency.
-          items[bucket] = [item.metadata.name for item in list(google.datalab.storage.Bucket(bucket).items())]
+          objects[bucket] = [obj.metadata.name for obj in list(google.datalab.storage.Bucket(bucket).objects())]
         # If we have a cached copy use it
-        if bucket in items:
-          candidates = items[bucket]
+        if bucket in objects:
+          candidates = objects[bucket]
         # else we have no cached copy but can use prefix matching which is more efficient than
         # getting the full contents.
         else:
@@ -180,12 +180,12 @@ def _expand_list(names):
           if match:
             prefix = key[0:match.start()]
 
-          candidates = [item.metadata.name
-                        for item in google.datalab.storage.Bucket(bucket).items(prefix=prefix)]
+          candidates = [obj.metadata.name
+                        for obj in google.datalab.storage.Bucket(bucket).objects(prefix=prefix)]
 
-        for item in candidates:
-          if fnmatch.fnmatch(item, key):
-            results.append('gs://%s/%s' % (bucket, item))
+        for obj in candidates:
+          if fnmatch.fnmatch(obj, key):
+            results.append('gs://%s/%s' % (bucket, obj))
 
     # If we added no matches, add the original name and let caller deal with it.
     if len(results) == results_len:
@@ -215,7 +215,7 @@ def _storage_copy(args, _):
     destination_bucket = target_bucket if target_bucket else source_bucket
     destination_key = target_key if target_key else source_key
     try:
-      google.datalab.storage.Item(source_bucket, source_key).copy_to(destination_key,
+      google.datalab.storage.Object(source_bucket, source_key).copy_to(destination_key,
                                                           bucket=destination_bucket)
     except Exception as e:
       errs.append("Couldn't copy %s to %s: %s" %
@@ -244,29 +244,29 @@ def _storage_create(args, _):
 
 def _storage_delete(args, _):
   """ Delete one or more buckets or objects. """
-  items = _expand_list(args['bucket'])
-  items.extend(_expand_list(args['object']))
+  objects = _expand_list(args['bucket'])
+  objects.extend(_expand_list(args['object']))
   errs = []
-  for item in items:
+  for obj in objects:
     try:
-      bucket, key = google.datalab.storage._bucket.parse_name(item)
+      bucket, key = google.datalab.storage._bucket.parse_name(obj)
       if bucket and key:
-        gcs_item = google.datalab.storage.Item(bucket, key)
-        if gcs_item.exists():
-          google.datalab.storage.Item(bucket, key).delete()
+        gcs_object = google.datalab.storage.Object(bucket, key)
+        if gcs_object.exists():
+          google.datalab.storage.Object(bucket, key).delete()
         else:
-          errs.append("%s does not exist" % item)
+          errs.append("%s does not exist" % obj)
       elif bucket:
         gcs_bucket = google.datalab.storage.Bucket(bucket)
         if gcs_bucket.exists():
           gcs_bucket.delete()
         else:
-          errs.append("%s does not exist" % item)
+          errs.append("%s does not exist" % obj)
       else:
-        raise Exception("Can't delete item with invalid name %s" % item)
+        raise Exception("Can't delete object with invalid name %s" % obj)
     except Exception as e:
       errs.append("Couldn't delete %s: %s" %
-                  (item, _extract_storage_api_response_error(str(e))))
+                  (obj, _extract_storage_api_response_error(str(e))))
   if errs:
     raise Exception('\n'.join(errs))
 
@@ -281,21 +281,21 @@ def _storage_list_buckets(project, pattern):
 
 def _storage_get_keys(bucket, pattern):
   """ Get names of all storage keys in a specified bucket that match a pattern. """
-  return [item for item in list(bucket.items()) if fnmatch.fnmatch(item.metadata.name, pattern)]
+  return [obj for obj in list(bucket.objects()) if fnmatch.fnmatch(obj.metadata.name, pattern)]
 
 
 def _storage_get_key_names(bucket, pattern):
   """ Get names of all storage keys in a specified bucket that match a pattern. """
-  return [item.metadata.name for item in _storage_get_keys(bucket, pattern)]
+  return [obj.metadata.name for obj in _storage_get_keys(bucket, pattern)]
 
 
 def _storage_list_keys(bucket, pattern):
   """ List all storage keys in a specified bucket that match a pattern. """
-  data = [{'Name': item.metadata.name,
-           'Type': item.metadata.content_type,
-           'Size': item.metadata.size,
-           'Updated': item.metadata.updated_on}
-          for item in _storage_get_keys(bucket, pattern)]
+  data = [{'Name': obj.metadata.name,
+           'Type': obj.metadata.content_type,
+           'Size': obj.metadata.size,
+           'Updated': obj.metadata.updated_on}
+          for obj in _storage_get_keys(bucket, pattern)]
   return google.datalab.utils.commands.render_dictionary(data, ['Name', 'Type', 'Size', 'Updated'])
 
 
@@ -339,26 +339,26 @@ def _storage_list(args, _):
     return _storage_list_buckets(project, target[5:])
 
 
-def _get_item_contents(source_name):
+def _get_object_contents(source_name):
   source_bucket, source_key = google.datalab.storage._bucket.parse_name(source_name)
   if source_bucket is None:
     raise Exception('Invalid source object name %s; no bucket specified.' % source_name)
   if source_key is None:
     raise Exception('Invalid source object name %si; source cannot be a bucket.' % source_name)
-  source = google.datalab.storage.Item(source_bucket, source_key)
+  source = google.datalab.storage.Object(source_bucket, source_key)
   if not source.exists():
     raise Exception('Source object %s does not exist' % source_name)
   return source.read_from()
 
 
 def _storage_read(args, _):
-  contents = _get_item_contents(args['object'])
+  contents = _get_object_contents(args['object'])
   ipy = IPython.get_ipython()
   ipy.push({args['variable']: contents})
 
 
 def _storage_view(args, _):
-  contents = _get_item_contents(args['object'])
+  contents = _get_object_contents(args['object'])
   if not isinstance(contents, basestring):
     contents = str(contents)
   lines = contents.split('\n')
@@ -377,7 +377,7 @@ def _storage_write(args, _):
   target_bucket, target_key = google.datalab.storage._bucket.parse_name(target_name)
   if target_bucket is None or target_key is None:
     raise Exception('Invalid target object name %s' % target_name)
-  target = google.datalab.storage.Item(target_bucket, target_key)
+  target = google.datalab.storage.Object(target_bucket, target_key)
   ipy = IPython.get_ipython()
   contents = ipy.user_ns[args['variable']]
   # TODO(gram): would we want to to do any special handling here; e.g. for DataFrames?
