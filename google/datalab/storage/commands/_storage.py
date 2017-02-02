@@ -348,7 +348,7 @@ def _get_object_contents(source_name):
   source = google.datalab.storage.Object(source_bucket, source_key)
   if not source.exists():
     raise Exception('Source object %s does not exist' % source_name)
-  return source.read_from()
+  return source.download()
 
 
 def _storage_read(args, _):
@@ -381,4 +381,4 @@ def _storage_write(args, _):
   ipy = IPython.get_ipython()
   contents = ipy.user_ns[args['variable']]
   # TODO(gram): would we want to to do any special handling here; e.g. for DataFrames?
-  target.write_to(str(contents), args['content_type'])
+  target.write_stream(str(contents), args['content_type'])
