@@ -40,6 +40,7 @@ import urllib
 import tensorflow as tf
 import yaml
 
+import datalab
 import google.cloud.ml as ml
 
 from . import preprocess
@@ -70,17 +71,18 @@ def _run_cmd(cmd):
       break
 
 
-def local_preprocess(input_file_path, output_dir, schema_file, input_feature_file,):
+def local_preprocess(output_dir, input_feature_file, input_file_pattern, schema_file):
   """Preprocess data locally with Pandas
 
   Produce analysis used by training.
 
   Args:
+    output_dir: The output directory to use.
+    input_feature_file: Describes defaults and column types.
     input_file_path: String. File pattern what will expand into a list of csv
         files.
-    output_dir: The output directory to use.
     schema_file: File path to the schema file.
-    input_feature_file: Describes defaults and column types.
+    
   """
   args = ['local_preprocess',
           '--input_file_pattern=%s' % input_file_path,
@@ -92,26 +94,34 @@ def local_preprocess(input_file_path, output_dir, schema_file, input_feature_fil
   preprocess.local_preprocess.main(args)
   print('Local preprocessing done.')
 
-def cloud_preprocess(input_file_path, output_dir, schema_file, input_feature_file, bigquery_tmp_table):
+def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, schema_file=None, bigquery_table=None, project_id=None):
   """Preprocess data in the cloud with BigQuery.
 
   Produce analysis used by training.
 
   Args:
-    input_file_path: String. File pattern what will expand into a list of csv
-        files on GCS.
-    output_dir: The output directory to use; should be GCS path.
-    schema_file: File path to the schema file.
+    output_dir: The output directory to use.
     input_feature_file: Describes defaults and column types.
+    input_file_path: String. File pattern what will expand into a list of csv
+        files.
+    schema_file: File path to the schema file.
+    bigquery_table: bigquery name in the form 'dataset.tabele_name'
+    project_id: project id the table is in. If none, uses the default project.
   """
-
   args = ['cloud_preprocess',
-          '--input_file_pattern=%s' % input_file_path,
           '--output_dir=%s' % output_dir,
-          '--schema_file=%s' % schema_file,
-          '--input_feature_types=%s' % input_feature_file,
-          '--bigquery_tmp_table=%s' % bigquery_tmp_table]
+          '--input_feature_types=%s' % input_feature_file]
 
+  if input_file_pattern:
+    args.append('--input_file_pattern=%s' % input_file_pattern)
+  if schema_file:
+    args.append('--schema_file=%s' % schema_file)
+  if bigquery_table:
+    if not project_id:
+      project_id = datalab.context.Context.default().project_id
+    full_name = project_id + ':' + bigquery_table
+    args.append('--bigquery_table=%s' % full_name)
+  
   print('Starting cloud preprocessing.')
   preprocess.cloud_preprocess.main(args)
   print('Cloud preprocessing done.')

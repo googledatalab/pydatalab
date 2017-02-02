@@ -41,42 +41,72 @@ def parse_arguments(argv):
     An argparse Namespace object.
   """
   parser = argparse.ArgumentParser(
-      description='Runs Preprocessing on structured CSV data.')
-  parser.add_argument('--input_file_pattern',
-                      type=str,
-                      required=True,
-                      help='Input CSV file names. May contain a file pattern')
+      description='Runs Preprocessing on structured data.')
   parser.add_argument('--output_dir',
                       type=str,
                       required=True,
                       help='Google Cloud Storage which to place outputs.')
-  parser.add_argument('--schema_file',
-                      type=str,
-                      required=True,
-                      help=('BigQuery json schema file'))
   parser.add_argument('--input_feature_types',
                       type=str,
                       required=True,
                       help=('Json file containing feature types'))
-  parser.add_argument('--bigquery_tmp_table',
-                      type=str,
-                      required=True,
-                      help=('dataset.table_name. Workspace to save '
-                            'temp tables'))
 
+  # If using csv files.
+  parser.add_argument('--schema_file',
+                      type=str,
+                      required=False,
+                      help=('BigQuery json schema file'))  
+  parser.add_argument('--input_file_pattern',
+                      type=str,
+                      required=False,
+                      help='Input CSV file names. May contain a file pattern') 
+
+  # If using bigquery table
+  parser.add_argument('--bigquery_table',
+                      type=str,
+                      required=False,
+                      help=('project:dataset.table_name'))
 
   args = parser.parse_args(args=argv[1:])
-
-  if not args.input_file_pattern.startswith('gs://'):
-    raise ValueError('--input_file_pattern must point to files on GCS')
+  print(args)
 
   if not args.output_dir.startswith('gs://'):
     raise ValueError('--output_dir must point to a location on GCS')
 
+  if args.bigquery_table:
+    if args.schema_file or args.input_file_pattern :
+      raise ValueError('If using --bigquery_table, then --schema_file and '
+                       '--input_file_pattern, '
+                       'are not needed.')
+  else:
+    if not args.schema_file or not args.input_file_pattern :
+      raise ValueError('If not using --bigquery_table, then --schema_file and '
+                       '--input_file_pattern '
+                       'are required.')
+
+    if not args.input_file_pattern.startswith('gs://'):
+      raise ValueError('--input_file_pattern must point to files on GCS')
+
   return args
 
+def parse_table_name(bigquery_table):
+  """Giving a string a:b.c, returns 'b.c'"""
 
-def run_numerical_analysis(args, feature_types):
+  id_name = bigquery_table.split(':')
+  if len(id_name) != 2:
+    raise ValueError('Bigquery table name should be in the form '
+                     'project_id:dataset.table_name. Got %s' % bigquery_table)
+  return id_name[1]
+
+def run_numerical_analysis(table, args, feature_types):
+  """Find min/max values for the numerical columns and writes a json file.
+
+  Args:
+    table: Reference to FederatedTable if bigquery_table is false.
+    args: the parseargs
+    feature_types: python object of the feature types file.
+  """
+  # Get list of numerical columns.
   numerical_columns = []
   for name, config in feature_types.iteritems():
     if config['type'] == 'numerical':
@@ -84,11 +114,18 @@ def run_numerical_analysis(args, feature_types):
 
   # Run the numerical analysis
   if numerical_columns:
+    sys.stdout.write('Running numerical analysis...')
     max_min = [
         "max({name}) as max_{name}, min({name}) as min_{name}".format(name=name)
         for name in numerical_columns]
-    sql = "SELECT  %s from %s" % (', '.join(max_min), args.bigquery_tmp_table)
-    numerical_results = bq.Query(sql).to_dataframe()
+    if args.bigquery_table:
+      sql = "SELECT  %s from %s" % (', '.join(max_min), 
+                                    parse_table_name(args.bigquery_table))
+      numerical_results = bq.Query(sql).to_dataframe()
+    else:
+      sql = "SELECT  %s from csv_table" % ', '.join(max_min)
+      query = bq.Query(sql, data_sources={'csv_table': table})
+      numerical_results = query.to_dataframe()
 
     # Convert the numerical results to a json file.
     results_dict = {}
@@ -100,8 +137,25 @@ def run_numerical_analysis(args, feature_types):
         'w') as f:
       f.write(json.dumps(results_dict, indent=2, separators=(',', ': ')))
 
+    sys.stdout.write('done.\n')
 
-def run_categorical_analysis(args, feature_types):
+
+def run_categorical_analysis(table, args, feature_types):
+  """Find vocab values for the categorical columns and writes a csv file.
+
+  The vocab files are in the from
+  index,categorical_column_name
+  0,'abc'
+  1,'def'
+  2,'ghi'
+  ...
+
+  Args:
+    table: Reference to FederatedTable if bigquery_table is false.
+    args: the parseargs
+    feature_types: python object of the feature types file.
+  """  
+  
   categorical_columns = []
   for name, config in feature_types.iteritems():
     if config['type'] == 'categorical':
@@ -109,7 +163,13 @@ def run_categorical_analysis(args, feature_types):
 
   jobs = []
   if categorical_columns:
+    sys.stdout.write('Running categorical analysis...')
     for name in categorical_columns:
+      if args.bigquery_table:
+        table_name = parse_table_name(args.bigquery_table)
+      else:
+        table_name = 'table_name'
+
       # BQ does not have a distinct function, or a row number that starts at 0.
       sql = """
           SELECT
@@ -125,12 +185,19 @@ def run_categorical_analysis(args, feature_types):
               {name} IS NOT NULL
             GROUP BY
               {name}
-          )""".format(name=name, table=args.bigquery_tmp_table)
+          )""".format(name=name, table=table_name)
       out_file = os.path.join(args.output_dir, CATEGORICAL_ANALYSIS % name)
-      jobs.append(bq.Query(sql).extract_async(out_file))
 
-  for job in jobs:
-    job.wait()
+      if args.bigquery_table:
+        jobs.append(bq.Query(sql).extract_async(out_file))
+      else:
+        query = bq.Query(sql, data_sources={table_name: table})
+        jobs.append(query.extract_async(out_file))
+
+    for job in jobs:
+      job.wait()
+
+    sys.stdout.write('done.\n')
 
 def run_analysis(args):
   """Builds an analysis file for training.
@@ -138,32 +205,39 @@ def run_analysis(args):
   Uses BiqQuery tables to do the analysis.
   """
 
-  # Read the schema and input feature types
-  with ml.util._file.open_local_or_gcs(args.schema_file, 'r') as f:
-    schema_list = json.loads(f.read())
+  if args.bigquery_table:
+    table = bq.Table(args.bigquery_table)
+  else:
+    with ml.util._file.open_local_or_gcs(args.schema_file, 'r') as f:
+      schema_list = json.loads(f.read())    
+    table = bq.FederatedTable().from_storage(
+       source=args.input_file_pattern, 
+       source_format='csv',
+       ignore_unknown_values=False, 
+       max_bad_records=0, 
+       compressed=False,
+       schema=bq.Schema(schema_list))
+
   with ml.util._file.open_local_or_gcs(args.input_feature_types, 'r') as f:
     feature_types = json.loads(f.read())
+  
+  run_numerical_analysis(table, args, feature_types)
+  run_categorical_analysis(table, args, feature_types)
 
-  # Make a table and load the csv data
-  print('Loading data to bigquery')
-  output_bq_table = 'brandondutra.raw'
-  dataset_name, table_name = args.bigquery_tmp_table.split('.')
-  bq.Dataset(dataset_name).create()
-
-  table = bq.Table(output_bq_table)
-  table.create(schema_list, overwrite=True)
-  table.load(source=args.input_file_pattern, source_format='csv',
-      ignore_unknown_values=False, max_bad_records=0)
-  print('Done loading data to bigquery')
-
-  run_numerical_analysis(args, feature_types)
-  run_categorical_analysis(args, feature_types)
-
-  # Also save a copy of the schema/input types in the output folder.
+  # Save a copy of the input types to the output location.
   ml.util._file.copy_file(args.input_feature_types,
-                          os.path.join(args.output_dir, INPUT_FEATURES_FILE))
-  ml.util._file.copy_file(args.schema_file,
-                          os.path.join(args.output_dir, SCHEMA_FILE))
+                          os.path.join(args.output_dir, INPUT_FEATURES_FILE))  
+
+  # Save a copy of the schema to the output location.
+  if args.schema_file:
+    ml.util._file.copy_file(args.schema_file,
+                           os.path.join(args.output_dir, SCHEMA_FILE))  
+  else:
+    output_schema = os.path.join(args.output_dir, SCHEMA_FILE)
+    with ml.util._file.open_local_or_gcs(output_schema, 'w') as f:
+      f.write(json.dumps(table.schema._bq_schema, indent=2, 
+                         separators=(',', ': ')))
+
 
 
 # def run_analysisxxx(args):
