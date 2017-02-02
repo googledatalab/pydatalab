@@ -17,8 +17,8 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import object
 
+import google.datalab
 import urllib.request, urllib.parse, urllib.error
-import google.datalab.context
 import google.datalab.utils
 
 
@@ -279,7 +279,7 @@ class Api(object):
     from . import _bucket
     bucket, prefix = _bucket.parse_name(gs_path)
     credentials = None
-    if google.datalab.context.Context.is_signed_in():
+    if google.datalab.Context.is_signed_in():
       credentials = google.datalab.context._utils.get_credentials()
     args = {
         'maxResults': Api._MAX_RESULTS,

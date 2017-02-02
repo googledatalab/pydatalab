@@ -16,7 +16,7 @@ from googleapiclient import discovery
 import os
 import time
 
-import google.datalab.context
+import google.datalab
 import google.datalab.storage
 import google.datalab.utils
 
@@ -40,10 +40,10 @@ class CloudModels(object):
       api: an optional CloudML API client.
     """
     if project_id is None:
-      project_id = google.datalab.context.Context.default().project_id
+      project_id = google.datalab.Context.default().project_id
     self._project_id = project_id
     if credentials is None:
-      credentials = google.datalab.context.Context.default().credentials
+      credentials = google.datalab.Context.default().credentials
     self._credentials = credentials
     if api is None:
       api = discovery.build('ml', 'v1beta1', credentials=self._credentials,
@@ -113,10 +113,10 @@ class CloudModelVersions(object):
       api: an optional CloudML API client.
     """
     if project_id is None:
-      project_id = google.datalab.context.Context.default().project_id
+      project_id = google.datalab.Context.default().project_id
     self._project_id = project_id
     if credentials is None:
-      credentials = google.datalab.context.Context.default().credentials
+      credentials = google.datalab.Context.default().credentials
     self._credentials = credentials
     if api is None:
       api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,

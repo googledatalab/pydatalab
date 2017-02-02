@@ -18,7 +18,7 @@ import unittest
 
 from google.cloud.monitoring import Query as BaseQuery
 
-import google.datalab.context
+import google.datalab
 import google.datalab.stackdriver.monitoring as gcm
 
 
@@ -33,7 +33,7 @@ INSTANCE_IDS = ['1234567890123456789', '9876543210987654321']
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_constructor_minimal(self, mock_context_default):
     default_context = self._create_context()
     mock_context_default.return_value = default_context
@@ -94,4 +94,4 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context(project_id='test'):
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)

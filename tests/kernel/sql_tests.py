@@ -30,8 +30,8 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
+import google.datalab
 import google.datalab.bigquery
-import google.datalab.context
 import google.datalab.data
 import google.datalab.data.commands
 import google.datalab.utils.commands
@@ -113,7 +113,7 @@ class TestCases(unittest.TestCase):
     self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_MAIN].sql)
     self.assertEquals('SELECT * FROM $q1', m.__dict__[TestCases._SQL_MODULE_LAST].sql)
 
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_arguments(self, mock_default_context):
     mock_default_context.return_value = TestCases._create_context()
     m = imp.new_module('m')
@@ -171,4 +171,4 @@ LIMIT $limit
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)
