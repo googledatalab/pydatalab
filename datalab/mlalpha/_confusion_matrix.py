@@ -42,6 +42,7 @@ class ConfusionMatrix(object):
       input_csv: Path to a Csv file (with no header). Can be local or GCS path.
       headers: Csv headers. If present, it must include 'target' and 'predicted'.
       schema_file: Path to a JSON file containing BigQuery schema. Used if "headers" is None.
+          If present, it must include 'target' and 'predicted' columns.
     Returns:
       A ConfusionMatrix that can be plotted.
     Raises:
