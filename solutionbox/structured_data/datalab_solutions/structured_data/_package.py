@@ -280,47 +280,6 @@ def cloud_train(train_file_pattern,
     print(job_request)
 
 
-def xxxxxxx():
-  if (not preprocessed_dir.startswith('gs://')
-      or not transforms_file.startswith('gs://')
-      or not output_dir.startswith('gs://')):
-    print('ERROR: preprocessed_dir, transforms_file, and output_dir, '
-          'must all be in GCS.')
-    return
-
-  # Training will fail if there are files in the output folder. Check now and
-  # fail fast.
-  if ml.util._file.glob_files(os.path.join(output_dir, '*')):
-    print('ERROR: output_dir should be empty. Use another folder')
-    return
-
-  #TODO(brandondutra): remove the tf stuff once the cloudml service is past 0.11
-  temp_dir = tempfile.mkdtemp()
-  subprocess.check_call(['gsutil', 'cp', _TF_GS_URL, temp_dir])
-  tf_local_package = os.path.join(temp_dir, os.path.basename(_TF_GS_URL))
-
-  # Bulid the training config file.
-  training_config_file_path = tempfile.mkstemp(dir=temp_dir)[1]
-  training_config = {'trainingInput': {'scaleTier': scale_tier}}
-  with open(training_config_file_path, 'w') as f:
-    f.write(yaml.dump(training_config, default_flow_style=False))
-
-
-  print('CloudML training, running command: %s' % ' '.join(cmd))
-  _run_cmd(' '.join(cmd))
-  print('CloudML training job submitted.')
-
-  if _is_in_IPython():
-    import IPython
-    dataflow_url = ('https://console.developers.google.com/ml/jobs?project=%s'
-                    % project_id)
-    html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
-            'the training job %s.</p><br/>' % (dataflow_url, job_name))
-    IPython.display.display_html(html, raw=True)
-
-  # Delete the temp files made
-  shutil.rmtree(temp_dir)
-
 def local_predict(model_dir, prediction_input_file):
   """Runs local prediction.
 
