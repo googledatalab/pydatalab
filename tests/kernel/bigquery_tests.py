@@ -37,32 +37,32 @@ import google.datalab.utils.commands
 
 class TestCases(unittest.TestCase):
 
-  #@mock.patch('google.datalab.utils.commands.notebook_environment')
-  #@mock.patch('google.datalab.Context.default')
-  #def test_udf_cell(self, mock_default_context, mock_notebook_environment):
-    #env = {}
-    #cell_body = \
-#"""
-#/**
- #* @param {{word: string, corpus: string, word_count: integer}} r
- #* @param function({{word: string, corpus: string, count: integer}}) emitFn
- #*/
-#function(r, emitFn) {
-  #if (r.word.match(/[shakespeare]/) !== null) {
-    #var result = { word: r.word, corpus: r.corpus, count: r.word_count };
-    #emitFn(result);
-  #}
-#}
-#"""
-    #mock_default_context.return_value = TestCases._create_context()
-    #mock_notebook_environment.return_value = env
-    #google.datalab.bigquery.commands._bigquery._udf_cell({'module': 'word_filter'}, cell_body)
-    #udf = env['word_filter']
-    #self.assertIsNotNone(udf)
-    #self.assertEquals('word_filter', udf._name)
-    #self.assertEquals([('word', 'string'), ('corpus', 'string'), ('count', 'integer')],
-                      #udf._outputs)
-    #self.assertEquals(cell_body, udf._implementation)
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.Context.default')
+  def test_udf_cell(self, mock_default_context, mock_notebook_environment):
+    env = {}
+    cell_body = \
+"""
+/**
+ * @param {{word: string, corpus: string, word_count: integer}} r
+ * @param function({{word: string, corpus: string, count: integer}}) emitFn
+ */
+function(r, emitFn) {
+  if (r.word.match(/[shakespeare]/) !== null) {
+    var result = { word: r.word, corpus: r.corpus, count: r.word_count };
+    emitFn(result);
+  }
+}
+"""
+    mock_default_context.return_value = TestCases._create_context()
+    mock_notebook_environment.return_value = env
+    google.datalab.bigquery.commands._bigquery._udf_cell({'module': 'word_filter'}, cell_body)
+    udf = env['word_filter']
+    self.assertIsNotNone(udf)
+    self.assertEquals('word_filter', udf._name)
+    self.assertEquals([('word', 'string'), ('corpus', 'string'), ('count', 'integer')],
+                      udf._outputs)
+    self.assertEquals(cell_body, udf._implementation)
 
   @staticmethod
   def _create_context():
