@@ -22,7 +22,7 @@ import sys
 import json
 
 import google.cloud.ml as ml
-import datalab.bigquery as bq
+
 
 INPUT_FEATURES_FILE = 'input_features.json'
 SCHEMA_FILE = 'schema.json'
@@ -106,6 +106,8 @@ def run_numerical_analysis(table, args, feature_types):
     args: the parseargs
     feature_types: python object of the feature types file.
   """
+  import datalab.bigquery as bq
+
   # Get list of numerical columns.
   numerical_columns = []
   for name, config in feature_types.iteritems():
@@ -155,7 +157,7 @@ def run_categorical_analysis(table, args, feature_types):
     args: the parseargs
     feature_types: python object of the feature types file.
   """  
-  
+  import datalab.bigquery as bq
   categorical_columns = []
   for name, config in feature_types.iteritems():
     if config['type'] == 'categorical':
@@ -204,7 +206,7 @@ def run_analysis(args):
 
   Uses BiqQuery tables to do the analysis.
   """
-
+  import datalab.bigquery as bq
   if args.bigquery_table:
     table = bq.Table(args.bigquery_table)
   else:

@@ -36,17 +36,21 @@ import subprocess
 import sys
 import tempfile
 import urllib
+import json
 
 import tensorflow as tf
 import yaml
 
-import datalab
+
 import google.cloud.ml as ml
 
 from . import preprocess
 from . import trainer
 
 _TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl'
+
+# TODO(brandondutra): move this url someplace else.
+_SD_GS_URL = 'gs://cloud-ml-dev_bdt/structured_data-0.1.tar.gz'
 
 
 def _default_project():
@@ -60,6 +64,19 @@ def _is_in_IPython():
     return True
   except ImportError:
     return False
+
+def _assert_gcs_files(files):
+  """Check files starts wtih gs://.
+
+  Args:
+    files: string to file path, or list of file paths.
+  """
+  if isinstance(files, basestring):
+    files = [files]
+
+  for f in files:
+    if f is not None and not f.startswith('gs://'):
+      raise ValueError('File %s is not a gcs path' % f)
 
 
 def _run_cmd(cmd):
@@ -109,6 +126,8 @@ def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, sc
     bigquery_table: bigquery name in the form 'dataset.tabele_name'
     project_id: project id the table is in. If none, uses the default project.
   """
+  _assert_gcs_files([output_dir, input_file_pattern])
+
   args = ['cloud_preprocess',
           '--output_dir=%s' % output_dir,
           '--input_feature_types=%s' % input_feature_file]
@@ -119,7 +138,7 @@ def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, sc
     args.append('--schema_file=%s' % schema_file)
   if bigquery_table:
     if not project_id:
-      project_id = datalab.context.Context.default().project_id
+      project_id = _default_project()
     full_name = project_id + ':' + bigquery_table
     args.append('--bigquery_table=%s' % full_name)
   
@@ -210,6 +229,9 @@ def cloud_train(train_file_pattern,
   #   learner rate, custom scale tiers, etc
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
 
+  _assert_gcs_files([train_file_pattern, eval_file_pattern, 
+                     preprocess_output_dir, transforms_file])
+
   args = ['--train_data_paths=%s' % train_file_pattern,
           '--eval_data_paths=%s' % eval_file_pattern,
           '--output_path=%s' % output_dir,
@@ -220,13 +242,18 @@ def cloud_train(train_file_pattern,
   if layer_sizes:
     args.extend(['--layer_sizes'] + [str(x) for x in layer_sizes])
 
+  # TODO(brandondutra): move these package uris locally, ask for a staging
+  # and copy them there. This package should work without cloudml having to 
+  # maintain gs files!!!
   job_request = {
-    'package_uris': ['gs://cloud-ml-dev_bdt/tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl', 'gs://cloud-ml-dev_bdt/structured_data-0.1.tar.gz'],
+    'package_uris': [_TF_GS_URL, _SD_GS_URL],
     'python_module': 'datalab_solutions.structured_data.trainer.task',
     'scale_tier': scale_tier,
     'region': region,
     'args': args
   }
+  # Local import because cloudml service does not have datalab
+  import datalab
   cloud_runner = datalab.mlalpha.CloudRunner(job_request)
 
   # TODO(brandondutra) update CloudRunner to not mess with the args, so that
@@ -235,8 +262,22 @@ def cloud_train(train_file_pattern,
 
   if not job_name:
     job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-  return cloud_runner.run(job_name)
+  job_request = cloud_runner.run(job_name)
 
+  
+  if _is_in_IPython():
+    import IPython
+    url = ('https://console.developers.google.com/ml/jobs?project=%s'
+                    % _default_project())
+    nice_json = json.dumps(job_request, indent=2, separators=(',', ': '))
+    html = ('Job Request Sent:<br /><pre>%s</pre>'
+            '<p>Click <a href="%s" target="_blank">here</a> to track '
+            'the training job %s.</p><br/>' % 
+            (nice_json, url, job_name))
+    IPython.display.display_html(html, raw=True)
+  else:
+    print('Job Request Sent:')
+    print(job_request)
 
 
 def xxxxxxx():
@@ -264,35 +305,6 @@ def xxxxxxx():
   with open(training_config_file_path, 'w') as f:
     f.write(yaml.dump(training_config, default_flow_style=False))
 
-  schema_file = os.path.join(preprocessed_dir, 'schema.json')
-  train_filename = os.path.join(preprocessed_dir, 'features_train*')
-  eval_filename = os.path.join(preprocessed_dir, 'features_eval*')
-  metadata_filename = os.path.join(preprocessed_dir, 'metadata.json')
-  this_folder = os.path.dirname(os.path.abspath(__file__))
-  project_id = project_id or _default_project()
-  job_name = job_name or ('structured_data_train_' +
-                          datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
-
-  # TODO(brandondutra): remove the cd after b/34221856
-  cmd = ['cd %s &&' % this_folder,
-         'gcloud beta ml jobs submit training %s' % job_name,
-         '--module-name=trainer.task',
-         '--staging-bucket=%s' % staging_bucket,
-         '--async',
-         '--package-path=%s' % 'trainer', #os.path.join(this_folder, 'trainer'),
-         '--packages=%s' % tf_local_package,
-         '--config=%s' % training_config_file_path,
-         '--',
-         '--train_data_paths=%s' % train_filename,
-         '--eval_data_paths=%s' % eval_filename,
-         '--metadata_path=%s' % metadata_filename,
-         '--output_path=%s' % output_dir,
-         '--transforms_file=%s' % transforms_file,
-         '--schema_file=%s' % schema_file,
-         '--model_type=%s' % model_type,
-         '--max_steps=%s' % str(max_steps)]
-  if layer_sizes:
-    cmd += ['--layer_sizes %s' % layer_sizes]
 
   print('CloudML training, running command: %s' % ' '.join(cmd))
   _run_cmd(' '.join(cmd))
@@ -323,18 +335,19 @@ def local_predict(model_dir, prediction_input_file):
         files used during local_preprocess, except that the target column is
         removed.
   """
+  pass
   #TODO(brandondutra): remove this hack once cloudml 1.8 is released.
   # Check that the model folder has a metadata.yaml file. If not, copy it.
-  if not os.path.isfile(os.path.join(model_dir, 'metadata.yaml')):
-    shutil.copy2(os.path.join(model_dir, 'metadata.json'),
-                 os.path.join(model_dir, 'metadata.yaml'))
+  # if not os.path.isfile(os.path.join(model_dir, 'metadata.yaml')):
+  #   shutil.copy2(os.path.join(model_dir, 'metadata.json'),
+  #                os.path.join(model_dir, 'metadata.yaml'))
 
-  cmd = ['gcloud beta ml local predict',
-         '--model-dir=%s' % model_dir,
-         '--text-instances=%s' % prediction_input_file]
-  print('Local prediction, running command: %s' % ' '.join(cmd))
-  _run_cmd(' '.join(cmd))
-  print('Local prediction done.')
+  # cmd = ['gcloud beta ml local predict',
+  #        '--model-dir=%s' % model_dir,
+  #        '--text-instances=%s' % prediction_input_file]
+  # print('Local prediction, running command: %s' % ' '.join(cmd))
+  # _run_cmd(' '.join(cmd))
+  # print('Local prediction done.')
 
 
 def cloud_predict(model_name, prediction_input_file, version_name=None):
@@ -364,15 +377,16 @@ def cloud_predict(model_name, prediction_input_file, version_name=None):
       --project=PROJECT
   Note that the model must be on GCS.
   """
-  cmd = ['gcloud beta ml predict',
-         '--model=%s' % model_name,
-         '--text-instances=%s' % prediction_input_file]
-  if version_name:
-    cmd += ['--version=%s' % version_name]
+  pass
+  # cmd = ['gcloud beta ml predict',
+  #        '--model=%s' % model_name,
+  #        '--text-instances=%s' % prediction_input_file]
+  # if version_name:
+  #   cmd += ['--version=%s' % version_name]
 
-  print('CloudML online prediction, running command: %s' % ' '.join(cmd))
-  _run_cmd(' '.join(cmd))
-  print('CloudML online prediction done.')
+  # print('CloudML online prediction, running command: %s' % ' '.join(cmd))
+  # _run_cmd(' '.join(cmd))
+  # print('CloudML online prediction done.')
 
 
 def local_batch_predict(model_dir, prediction_input_file, output_dir):
@@ -385,21 +399,22 @@ def local_batch_predict(model_dir, prediction_input_file, output_dir):
         in preprocessing except that the target column is removed.
     output_dir: folder to save results to.
   """
+  pass
   #TODO(brandondutra): remove this hack once cloudml 1.8 is released.
   # Check that the model folder has a metadata.yaml file. If not, copy it.
-  if not os.path.isfile(os.path.join(model_dir, 'metadata.yaml')):
-    shutil.copy2(os.path.join(model_dir, 'metadata.json'),
-                 os.path.join(model_dir, 'metadata.yaml'))
+  # if not os.path.isfile(os.path.join(model_dir, 'metadata.yaml')):
+  #   shutil.copy2(os.path.join(model_dir, 'metadata.json'),
+  #                os.path.join(model_dir, 'metadata.yaml'))
 
-  cmd = ['python -m google.cloud.ml.dataflow.batch_prediction_main',
-         '--input_file_format=text',
-         '--input_file_patterns=%s' % prediction_input_file,
-         '--output_location=%s' % output_dir,
-         '--model_dir=%s' % model_dir]
+  # cmd = ['python -m google.cloud.ml.dataflow.batch_prediction_main',
+  #        '--input_file_format=text',
+  #        '--input_file_patterns=%s' % prediction_input_file,
+  #        '--output_location=%s' % output_dir,
+  #        '--model_dir=%s' % model_dir]
 
-  print('Local batch prediction, running command: %s' % ' '.join(cmd))
-  _run_cmd(' '.join(cmd))
-  print('Local batch prediction done.')
+  # print('Local batch prediction, running command: %s' % ' '.join(cmd))
+  # _run_cmd(' '.join(cmd))
+  # print('Local batch prediction done.')
 
 
 def cloud_batch_predict(model_name, prediction_input_file, output_dir, region,
@@ -419,34 +434,35 @@ def cloud_batch_predict(model_name, prediction_input_file, output_dir, region,
     job_name: job name used for the cloud job.
     version_name: model version to use. If node, the default version of the
         model is used.
-    """
-  job_name = job_name or ('structured_data_batch_predict_' +
-                          datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+  """
+  pass
+  # job_name = job_name or ('structured_data_batch_predict_' +
+  #                         datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
-  if (not prediction_input_file.startswith('gs://') or
-      not output_dir.startswith('gs://')):
-    print('ERROR: prediction_input_file and output_dir must point to a '
-          'location on GCS.')
-    return
+  # if (not prediction_input_file.startswith('gs://') or
+  #     not output_dir.startswith('gs://')):
+  #   print('ERROR: prediction_input_file and output_dir must point to a '
+  #         'location on GCS.')
+  #   return
 
-  cmd = ['gcloud beta ml jobs submit prediction %s' % job_name,
-         '--model=%s' % model_name,
-         '--region=%s' % region,
-         '--data-format=TEXT',
-         '--input-paths=%s' % prediction_input_file,
-         '--output-path=%s' % output_dir]
-  if version_name:
-    cmd += ['--version=%s' % version_name]
+  # cmd = ['gcloud beta ml jobs submit prediction %s' % job_name,
+  #        '--model=%s' % model_name,
+  #        '--region=%s' % region,
+  #        '--data-format=TEXT',
+  #        '--input-paths=%s' % prediction_input_file,
+  #        '--output-path=%s' % output_dir]
+  # if version_name:
+  #   cmd += ['--version=%s' % version_name]
 
-  print('CloudML batch prediction, running command: %s' % ' '.join(cmd))
-  _run_cmd(' '.join(cmd))
-  print('CloudML batch prediction job submitted.')
+  # print('CloudML batch prediction, running command: %s' % ' '.join(cmd))
+  # _run_cmd(' '.join(cmd))
+  # print('CloudML batch prediction job submitted.')
 
-  if _is_in_IPython():
-    import IPython
+  # if _is_in_IPython():
+  #   import IPython
 
-    dataflow_url = ('https://console.developers.google.com/ml/jobs?project=%s'
-                    % _default_project())
-    html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
-            'the prediction job %s.</p><br/>' % (dataflow_url, job_name))
-    IPython.display.display_html(html, raw=True)
+  #   dataflow_url = ('https://console.developers.google.com/ml/jobs?project=%s'
+  #                   % _default_project())
+  #   html = ('<p>Click <a href="%s" target="_blank">here</a> to track '
+  #           'the prediction job %s.</p><br/>' % (dataflow_url, job_name))
+  #   IPython.display.display_html(html, raw=True)
