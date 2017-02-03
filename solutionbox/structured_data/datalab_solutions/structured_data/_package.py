@@ -44,6 +44,7 @@ import datalab
 import google.cloud.ml as ml
 
 from . import preprocess
+from . import trainer
 
 _TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl'
 
@@ -127,73 +128,77 @@ def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, sc
   print('Cloud preprocessing done.')
 
 
-def local_train(preprocessed_dir, transforms_file, output_dir,
+def local_train(train_file_pattern,
+                eval_file_pattern, 
+                preprocess_output_dir, 
+                output_dir,
+                transforms_file,
                 model_type,
-                layer_sizes=None, max_steps=None):
+                max_steps,
+                layer_sizes=None):
   """Train model locally.
   Args:
-    preprocessed_dir: The output directory from preprocessing. Must contain
-        files named features_train*.tfrecord.gz, features_eval*.tfrecord.gz,
-        and metadata.json. Can be local or GCS path.
-    transforms_file: File describing transforms to perform on the data.
-    output_dir: Output directory of training.
-    model_type: String. 'linear_classification', 'linear_regression',
-        'dnn_classification', or 'dnn_regression.
-    layer_sizes: String. Represents the layers in the connected DNN.
-        If the model type is DNN, this must be set. Example "10 3 2", this will
-        create three DNN layers where the first layer will have 10 nodes, the
-        middle layer will have 3 nodes, and the laster layer will have 2 nodes.
+    train_file_pattern: train csv file
+    eval_file_pattern: eval csv file
+    preprocess_output_dir:  The output directory from preprocessing
+    output_dir:  Output directory of training.
+    transforms_file: File path to the transforms file.
+    model_type: model type
     max_steps: Int. Number of training steps to perform.
+    layer_sizes: List. Represents the layers in the connected DNN.
+        If the model type is DNN, this must be set. Example [10, 3, 2], this 
+        will create three DNN layers where the first layer will have 10 nodes, 
+        the middle layer will have 3 nodes, and the laster layer will have 2
+        nodes.
   """
   #TODO(brandondutra): allow other flags to be set like batch size/learner rate
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
 
-  schema_file = os.path.join(preprocessed_dir, 'schema.json')
-  train_filename = os.path.join(preprocessed_dir, 'features_train*')
-  eval_filename = os.path.join(preprocessed_dir, 'features_eval*')
-  metadata_filename = os.path.join(preprocessed_dir, 'metadata.json')
-  this_folder = os.path.dirname(os.path.abspath(__file__))
-
-  #TODO(brandondutra): remove the cd after b/34221856
-  cmd = ['cd %s &&' % this_folder,
-         'gcloud beta ml local train',
-         '--module-name=trainer.task',
-         '--package-path=trainer',
-         '--',
-         '--train_data_paths=%s' % train_filename,
-         '--eval_data_paths=%s' % eval_filename,
-         '--metadata_path=%s' % metadata_filename,
-         '--output_path=%s' % output_dir,
-         '--schema_file=%s' % schema_file,
-         '--transforms_file=%s' % transforms_file,
-         '--model_type=%s' % model_type,
-         '--max_steps=%s' % str(max_steps)]
+  args = ['local_train',
+          '--train_data_paths=%s' % train_file_pattern,
+          '--eval_data_paths=%s' % eval_file_pattern,
+          '--output_path=%s' % output_dir,
+          '--preprocess_output_dir=%s' % preprocess_output_dir,
+          '--transforms_file=%s' % transforms_file,
+          '--model_type=%s' % model_type,
+          '--max_steps=%s' % str(max_steps)]
   if layer_sizes:
-    cmd += ['--layer_sizes %s' % layer_sizes]
+    args.extend(['--layer_sizes'] + [str(x) for x in layer_sizes])
 
-  print('Local training, running command: %s' % ' '.join(cmd))
-  _run_cmd(' '.join(cmd))
+  print('Starting local training.')
+  trainer.task.main(args)
   print('Local training done.')
 
-
-def cloud_train(preprocessed_dir, transforms_file, output_dir, model_type,
-                staging_bucket, layer_sizes=None, max_steps=None,
-                project_id=None, job_name=None, scale_tier='BASIC'):
+def cloud_train(train_file_pattern,
+                eval_file_pattern, 
+                preprocess_output_dir, 
+                output_dir,
+                transforms_file,
+                model_type,
+                max_steps,
+                layer_sizes=None,
+                staging_bucket=None, 
+                project_id=None,
+                job_name=None,
+                scale_tier='STANDARD_1',
+                region=None):
   """Train model using CloudML.
   Args:
-    preprocessed_dir: The output directory from preprocessing. Must contain
-        files named features_train*.tfrecord.gz, features_eval*.tfrecord.gz,
-        and metadata.json.
+
+    train_file_pattern: train csv file
+    eval_file_pattern: eval csv file
+    preprocess_output_dir:  The output directory from preprocessing
+    output_dir:  Output directory of training.
     transforms_file: File path to the transforms file.
-    output_dir: Output directory of training.
-    model_type: String. 'linear_classification', 'linear_regression',
-        'dnn_classification', or 'dnn_regression.
-    staging_bucket: GCS bucket.
-    layer_sizes: String. Represents the layers in the connected DNN.
-        If the model type is DNN, this must be set. Example "10 3 2", this will
-        create three DNN layers where the first layer will have 10 nodes, the
-        middle layer will have 3 nodes, and the laster layer will have 2 nodes.
+    model_type: model type
     max_steps: Int. Number of training steps to perform.
+    layer_sizes: List. Represents the layers in the connected DNN.
+        If the model type is DNN, this must be set. Example [10, 3, 2], this 
+        will create three DNN layers where the first layer will have 10 nodes, 
+        the middle layer will have 3 nodes, and the laster layer will have 2
+        nodes.
+
+    staging_bucket: GCS bucket.
     project_id: String. The GCE project to use. Defaults to the notebook's
         default project id.
     job_name: String. Job name as listed on the Dataflow service. If None, a
@@ -205,6 +210,36 @@ def cloud_train(preprocessed_dir, transforms_file, output_dir, model_type,
   #   learner rate, custom scale tiers, etc
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
 
+  args = ['--train_data_paths=%s' % train_file_pattern,
+          '--eval_data_paths=%s' % eval_file_pattern,
+          '--output_path=%s' % output_dir,
+          '--preprocess_output_dir=%s' % preprocess_output_dir,
+          '--transforms_file=%s' % transforms_file,
+          '--model_type=%s' % model_type,
+          '--max_steps=%s' % str(max_steps)]
+  if layer_sizes:
+    args.extend(['--layer_sizes'] + [str(x) for x in layer_sizes])
+
+  job_request = {
+    'package_uris': ['gs://cloud-ml-dev_bdt/tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl', 'gs://cloud-ml-dev_bdt/structured_data-0.1.tar.gz'],
+    'python_module': 'datalab_solutions.structured_data.trainer.task',
+    'scale_tier': scale_tier,
+    'region': region,
+    'args': args
+  }
+  cloud_runner = datalab.mlalpha.CloudRunner(job_request)
+
+  # TODO(brandondutra) update CloudRunner to not mess with the args, so that
+  # this hack will not be needed.
+  cloud_runner._job_request['args'] = args
+
+  if not job_name:
+    job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+  return cloud_runner.run(job_name)
+
+
+
+def xxxxxxx():
   if (not preprocessed_dir.startswith('gs://')
       or not transforms_file.startswith('gs://')
       or not output_dir.startswith('gs://')):
