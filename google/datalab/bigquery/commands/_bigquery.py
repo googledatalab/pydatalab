@@ -280,63 +280,64 @@ def _get_query_argument(args, cell, env):
   return google.datalab.bigquery.Query(item, values=env)
 
 
-def _sample_cell(args, cell_body):
-  """Implements the BigQuery sample cell magic for ipython notebooks.
+def _query_cell(args, cell_body):
+  """Implements the BigQuery cell magic used to run operations on BQ queries.
+
+   The supported syntax is:
+   %%bq query <command> <args>
+   [<YAML or JSON cell_body or inline SQL>]
+
+  Commands:
+    {execute, extract, dryrun, sample}
 
   Args:
-    args: the optional arguments following '%%bq sample'.
+    args: the optional arguments following '%%bq query command'.
     cell_body: optional contents of the cell interpreted as SQL, YAML or JSON.
   Returns:
-    The results of executing the sampling query, or a profile of the sample data.
+    QueryResultsTable if executing or sampling queries
   """
-
-  env = google.datalab.utils.commands.notebook_environment()
-  query = None
-  table = None
-  view = None
-
-  if args['query']:
-    query = _get_query_argument(args, cell_body, env)
-  elif args['table']:
-    table = _get_table(args['table'])
-  elif args['view']:
-    view = google.datalab.utils.commands.get_notebook_item(args['view'])
-    if not isinstance(view, google.datalab.bigquery.View):
-      raise Exception('%s is not a view' % args['view'])
-  else:
-    query = google.datalab.bigquery.Query(cell_body, values=env)
-
-  count = args['count']
-  method = args['method']
-  if method == 'random':
-    sampling = google.datalab.bigquery.Sampling.random(percent=args['percent'], count=count)
-  elif method == 'hashed':
-    sampling = google.datalab.bigquery.Sampling.hashed(field_name=args['field'],
-                                            percent=args['percent'],
-                                            count=count)
-  elif method == 'sorted':
-    ascending = args['order'] == 'ascending'
-    sampling = google.datalab.bigquery.Sampling.sorted(args['field'],
-                                            ascending=ascending,
-                                            count=count)
-  elif method == 'limit':
-    sampling = google.datalab.bigquery.Sampling.default(count=count)
-  else:
-    sampling = google.datalab.bigquery.Sampling.default(count=count)
-
-  if query:
-    results = query.sample(sampling=sampling, dialect=args['dialect'],
-                           billing_tier=args['billing'])
-  elif view:
-    results = view.sample(sampling=sampling)
-  else:
-    results = table.sample(sampling=sampling)
+  query = _get_query_argument(args, cell_body, google.datalab.utils.commands.notebook_environment())
   if args['verbose']:
-    print(results.sql)
-  if args['profile']:
-    return google.datalab.utils.commands.profile_df(results.to_dataframe())
-  else:
-    return results
+    print(query.sql)
+
+  if args['command'] in ['execute', 'extract']:
+    if args['command'] == 'execute':
+      if args['to_dataframe']:
+        # re-parse the int arguments because they're passed as strings
+        start_row = int(args['dataframe_start_row']) if args['dataframe_start_row'] else None
+        max_rows = int(args['dataframe_max_rows']) if args['dataframe_max_rows'] else None
+        output_options = QueryOutput.dataframe(start_row=start_row, max_rows=max_rows,
+                                               use_cache=not args['nocache'])
+      else:
+        output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
+                                           use_cache=not args['nocache'],
+                                           allow_large_results=args['large'])
+    elif args['command'] == 'extract':
+      output_options = QueryOutput.file(path=args['path'], format=args['format'],
+                                        csv_delimiter=args['delimiter'],
+                                        csv_header=args['header'], compress=args['compress'],
+                                        use_cache=not args['nocache'])
+
+    r = query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing'])
+    # if an execute was performed, a QueryJob is returned, which has a .results property
+    # otherwise, it's a base Job object, .result() should be called
+    return r.results if hasattr(r, 'results') else r.result()
+
+  elif args['command'] == 'sample':
+    # parse comma-separated list of fields
+    fields = args['fields'].split(',') if args['fields'] else None
+    count = int(args['count']) if args['count'] else None
+    sampling=Sampling._auto(method=args['method'], fields=fields, count=count,
+                            percent=int(args['percent']), key_field=args['key_field'],
+                            ascending=args['order']=='ascending')
+    r = query.execute(QueryOutput.table(), sampling=sampling, dialect=args['dialect'],
+                    billing_tier=args['billing'])
+    return r.results
+
+  elif args['command'] == 'dryrun':
+    result = query.execute_dry_run(dialect=args['dialect'], billing_tier=args['billing'])
+    return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
+                                                is_cached=result['cacheHit'])
 
 
 def _create_cell(args, cell_body):
@@ -399,180 +400,6 @@ def _delete_cell(args, _):
       google.datalab.bigquery.Table(args['name']).delete()
     except Exception as e:
       print('Failed to delete table %s: %s' % (args['name'], e))
-
-
-def _dryrun_cell(args, cell_body):
-  """Implements the BigQuery cell magic used to dry run BQ queries.
-
-   The supported syntax is:
-   %%bq dryrun [-q|--sql <query identifier>]
-   [<YAML or JSON cell_body or inline SQL>]
-
-  Args:
-    args: the argument following '%bq dryrun'.
-    cell_body: optional contents of the cell interpreted as YAML or JSON.
-  Returns:
-    The response wrapped in a DryRunStats object
-  """
-  query = _get_query_argument(args, cell_body, google.datalab.utils.commands.notebook_environment())
-
-  if args['verbose']:
-    print(query.sql)
-  result = query.execute_dry_run(dialect=args['dialect'], billing_tier=args['billing'])
-  return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
-                                              is_cached=result['cacheHit'])
-
-
-def _udf_cell(args, js):
-  """Implements the Bigquery udf cell magic for ipython notebooks.
-
-  The supported syntax is:
-  %%bq udf --module <var>
-  <js function>
-
-  Args:
-    args: the optional arguments following '%%bq udf'.
-    js: the UDF declaration (inputs and outputs) and implementation in javascript.
-  Returns:
-    The results of executing the UDF converted to a dataframe if no variable
-    was specified. None otherwise.
-  """
-  variable_name = args['module']
-  if not variable_name:
-    raise Exception('Declaration must be of the form %%bq udf --module <variable name>')
-
-  # Parse out the input and output specification
-  spec_pattern = r'\{\{([^}]+)\}\}'
-  spec_part_pattern = r'[a-z_][a-z0-9_]*'
-
-  specs = re.findall(spec_pattern, js)
-  if len(specs) < 2:
-    raise Exception('The JavaScript must declare the input row and output emitter parameters '
-                    'using valid jsdoc format comments.\n'
-                    'The input row param declaration must be typed as {{field:type, field2:type}} '
-                    'and the output emitter param declaration must be typed as '
-                    'function({{field:type, field2:type}}.')
-
-  inputs = []
-  input_spec_parts = re.findall(spec_part_pattern, specs[0], flags=re.IGNORECASE)
-  if len(input_spec_parts) % 2 != 0:
-    raise Exception('Invalid input row param declaration. The jsdoc type expression must '
-                    'define an object with field and type pairs.')
-  for n, t in zip(input_spec_parts[0::2], input_spec_parts[1::2]):
-    inputs.append((n, t))
-
-  outputs = []
-  output_spec_parts = re.findall(spec_part_pattern, specs[1], flags=re.IGNORECASE)
-  if len(output_spec_parts) % 2 != 0:
-    raise Exception('Invalid output emitter param declaration. The jsdoc type expression must '
-                    'define a function accepting an an object with field and type pairs.')
-  for n, t in zip(output_spec_parts[0::2], output_spec_parts[1::2]):
-    outputs.append((n, t))
-
-  # Look for imports. We use a non-standard @import keyword; we could alternatively use @requires.
-  # Object names can contain any characters except \r and \n.
-  import_pattern = r'@import[\s]+(gs://[a-z\d][a-z\d_\.\-]*[a-z\d]/[^\n\r]+)'
-  imports = re.findall(import_pattern, js)
-
-  # Split the cell if necessary. We look for a 'function(' with no name and a header comment
-  # block with @param and assume this is the primary function, up to a closing '}' at the start
-  # of the line. The remaining cell content is used as support code.
-  split_pattern = r'(.*)(/\*.*?@param.*?@param.*?\*/\w*\n\w*function\w*\(.*?^}\n?)(.*)'
-  parts = re.match(split_pattern, js, re.MULTILINE | re.DOTALL)
-  support_code = ''
-  if parts:
-    support_code = (parts.group(1) + parts.group(3)).strip()
-    if len(support_code):
-      js = parts.group(2)
-
-  # Finally build the UDF object
-  udf = google.datalab.bigquery.UDF(inputs, outputs, variable_name, js, support_code, imports)
-  google.datalab.utils.commands.notebook_environment()[variable_name] = udf
-
-
-def _query_cell(args, cell_body):
-  """Implements the BigQuery cell magic used to run operations on BQ queries.
-
-   The supported syntax is:
-   %%bq query <command> <args>
-   [<YAML or JSON cell_body or inline SQL>]
-
-  Commands:
-    {execute, extract, dryrun, sample}
-
-  Args:
-    args: the arguments following '%bq query command'.
-    cell_body: optional contents of the cell interpreted as YAML or JSON.
-  Returns:
-    The QueryResultsTable if executing/extracting/sampling queries
-  """
-  print('args:',args,'cell_body:',cell_body)
-  query = _get_query_argument(args, cell_body, google.datalab.utils.commands.notebook_environment())
-  if args['verbose']:
-    print(query.sql)
-
-  if args['command'] in ['execute', 'extract', 'sample']:
-    if args['command'] == 'execute':
-      if args['to_dataframe']:
-        output_options = QueryOutput.dataframe(start_row=args['start_row'], max_rows=args['max_rows'],
-                                               use_cache=not args['nocache'])
-      else:
-        output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
-                                           use_cache=not args['nocache'],
-                                           allow_large_results=args['large'])
-    elif args['command'] == 'extract':
-      output_options = QueryOutput.file(path=args['path'], format=args['format'],
-                                        csv_delimiter=args['csv_delimiter'],
-                                        csv_header=args['csv_header'], compress=args['compress'],
-                                        use_cache=not args['nocache'])
-
-    sampling = None
-    if args['command'] == 'sample':
-      sampling=Sampling._auto(method=args['method'], fields=args['fields'], count=args['count'],
-                              percent=args['percent'], key_field=args['key_field'],
-                              ascending=args['order']=='ascending')
-    return query.execute(output_options, sampling=sampling, dialect=args['dialect'],
-                         billing_tier=args['billing']).results
-  elif args['command'] == 'dryrun':
-    result = query.execute_dry_run(dialect=args['dialect'], billing_tier=args['billing'])
-    return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
-                                                is_cached=result['cacheHit'])
-
-
-def _pipeline_cell(args, cell_body):
-  """Implements the BigQuery cell magic used to validate, execute or deploy BQ pipelines.
-
-   The supported syntax is:
-   %%bq pipeline [-q|--sql <query identifier>] <other args> <action>
-   [<YAML or JSON cell_body or inline SQL>]
-
-  Args:
-    args: the arguments following '%bq pipeline'.
-    cell_body: optional contents of the cell interpreted as YAML or JSON.
-  Returns:
-    The QueryResultsTable
-  """
-  if args['action'] == 'deploy':
-    raise Exception('Deploying a pipeline is not yet supported')
-
-  env = {}
-  for key, value in google.datalab.utils.commands.notebook_environment().items():
-    if isinstance(value, google.datalab.bigquery._udf.UDF):
-      env[key] = value
-
-  query = _get_query_argument(args, cell_body, env)
-  if args['verbose']:
-    print(query.sql)
-  if args['action'] == 'dryrun':
-    print(query.sql)
-    result = query.execute_dry_run()
-    return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
-                                                is_cached=result['cacheHit'])
-  if args['action'] == 'run':
-    output_options = QueryOutput.table(args['target'], mode=args['mode'],
-                                       use_cache=not args['nocache'],
-                                       allow_large_results=args['large'])
-    query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing']).results
 
 
 def _table_line(args):
@@ -715,37 +542,6 @@ def _tables_line(args):
   return _render_list(tables)
 
 
-def _extract_line(args):
-  """Implements the BigQuery extract magic used to extract table data to GCS.
-
-   The supported syntax is:
-
-       %bq extract -S|--source <table> -D|--destination <url> <other_args>
-
-  Args:
-    args: the arguments following '%bq extract'.
-  Returns:
-    A message about whether the extract succeeded or failed.
-  """
-  name = args['source']
-  source = google.datalab.utils.commands.get_notebook_item(name)
-  if not source:
-    source = _get_table(name)
-
-  if not source:
-    raise Exception('No source named %s found' % name)
-  elif isinstance(source, google.datalab.bigquery.Table) and not source.exists():
-    raise Exception('Table %s does not exist' % name)
-  else:
-    output_options = QueryOutput.file(args['destination'], compress=args['compress'],
-                                     csv_delimiter=args['delimiter'], csv_header=args['header'])
-    job = source.execute(output_options)
-    if job.failed:
-      raise Exception('Extract failed: %s' % str(job.fatal_error))
-    elif job.errors:
-      raise Exception('Extract completed with errors: %s' % str(job.errors))
-
-
 def _load_cell(args, schema):
   """Implements the BigQuery load magic used to load data from GCS to a table.
 
@@ -816,22 +612,34 @@ def _create_query_parser(parser):
   execute_parser.add_argument('-t', '--table', help='Target table name')
   execute_parser.add_argument('--to-dataframe', help='Convert the result into a dataframe',
                               action='store_true')
+  execute_parser.add_argument('--dataframe-start-row', help='Row of the table to start the ' +
+                              'dataframe export', default=0)
+  execute_parser.add_argument('--dataframe-max-rows', help='Upper limit on number of rows ' +
+                              'to export to the dataframe', default=None)
   execute_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
                               action='store_true')
 
   # %%bq query extract
   extract_parser = sub_commands.add_parser('extract', help='Extract a query into file (local or GCS)')
+  extract_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
+                              action='store_true')
   extract_parser.add_argument('-f', '--format', choices=['csv', 'json'], default='csv',
                               help='The format to use for the export')
+  extract_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
+                             choices=['legacy', 'standard'])
+  extract_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   extract_parser.add_argument('-c', '--compress', action='store_true',
                               help='Whether to compress the data')
   extract_parser.add_argument('-H', '--header', action='store_true',
                               help='Whether to include a header line (CSV only)')
-  extract_parser.add_argument('-d', '--delimiter', default=',',
+  extract_parser.add_argument('--delimiter', default=',',
                               help='The field delimiter to use (CSV only)')
   extract_parser.add_argument('-S', '--source', help='The name of the query or table to extract')
   extract_parser.add_argument('-p', '--path', help='The path of the destination')
+  extract_parser.add_argument('-v', '--verbose',
+                              help='Show the expanded SQL that is being executed',
+                              action='store_true')
 
   # %%bq query sample
   sample_parser = sub_commands.add_parser('sample', help='Display a sample of the results of a ' +
@@ -841,12 +649,14 @@ def _create_query_parser(parser):
   group.add_argument('-q', '--query', help='the name of the query to sample')
   group.add_argument('-t', '--table', help='the name of the table to sample')
   group.add_argument('-v', '--view', help='the name of the view to sample')
+  sample_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
+                              action='store_true')
   sample_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
                              choices=['legacy', 'standard'])
   sample_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   sample_parser.add_argument('-m', '--method', help='The type of sampling to use',
                              choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
-  sample_parser.add_argument('--fields', help='The fields to project in the sample')
+  sample_parser.add_argument('--fields', help='Comma separated field names for projection')
   sample_parser.add_argument('-c', '--count', type=int, default=10,
                              help='The number of rows to limit to, if sampling')
   sample_parser.add_argument('-p', '--percent', type=int, default=1,
@@ -890,26 +700,14 @@ for help on a specific command.
   # This is a bit kludgy because we want to handle some line magics and some cell magics
   # with the bq command.
 
-  # %%bq sample
-  _add_command(parser, _create_sample_subparser, _sample_cell)
-
   # %%bq create
   _add_command(parser, _create_create_subparser, _create_cell)
 
   # %%bq delete
   _add_command(parser, _create_delete_subparser, _delete_cell)
 
-  # %%bq dryrun
-  _add_command(parser, _create_dry_run_subparser, _dryrun_cell)
-
-  # %%bq udf
-  _add_command(parser, _create_udf_subparser, _udf_cell, cell_required=True)
-
   # %%bq query
   _add_command(parser, _create_query_parser, _query_cell)
-
-  # %%bq pipeline
-  _add_command(parser, _create_pipeline_subparser, _pipeline_cell)
 
   # %bq table
   _add_command(parser, _create_table_subparser, _table_line, cell_prohibited=True)
@@ -922,9 +720,6 @@ for help on a specific command.
 
   # %bq tables
   _add_command(parser, _create_tables_subparser, _tables_line, cell_prohibited=True)
-
-  # %bq extract
-  _add_command(parser, _create_extract_subparser, _extract_line, cell_prohibited=True)
 
   # %bq load
   # TODO(gram): need some additional help, esp. around the option of specifying schema in
