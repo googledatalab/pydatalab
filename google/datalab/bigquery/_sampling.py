@@ -111,3 +111,25 @@ class Sampling(object):
         sql = '%s LIMIT %d' % (sql, count)
       return sql
     return _random_sampling
+
+  @staticmethod
+  def _auto(method, fields, count, percent, key_field, ascending):
+    """Construct a Sorting object according to the provided sampling technique, provided all
+    its needed fields are passed as arguments
+
+    Args:
+      method: sampling strategy, one of the method names above in this module
+      fields: an optional list of field names to retrieve.
+      count: maximum number of rows to limit the sampled results to.
+      percent: the percentage of the resulting hashes to select if using hashed sampling
+      key_field: the name of the field to sort the rows by or use for hashing
+      ascending: whether to sort in ascending direction or not.
+    """
+    if method == 'limit':
+      return Sampling.default(fields=fields, count=count)
+    elif method == 'random':
+      return Sampling.random(fields=fields, percent=percent, count=count)
+    elif method == 'hashed':
+      return Sampling.hashed(fields=fields, field_name=key_field, percent=percent, count=count)
+    elif method == 'sorted':
+      return Sampling.sorted(fields=fields, field_name=key_field, ascending=ascending, count=count)
