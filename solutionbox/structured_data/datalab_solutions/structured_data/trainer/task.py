@@ -118,19 +118,25 @@ def get_export_signature_fn(train_config, args):
     key_name = train_config['key_column']
     outputs = {TARGET_SCORE_TENSOR_NAME: predictions.name,
                key_name: tf.squeeze(features[key_name]).name,
-               TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name
                }
 
-    predictions = tf.Print(predictions, [predictions])
     if util.is_classification_model(args.model_type):
       _, string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
       prediction = tf.argmax(predictions, 1)
-      labels = tf.contrib.lookup.index_to_string(
+      predicted_label = tf.contrib.lookup.index_to_string(
           prediction,
           mapping=string_value,
           default_value=train_config['csv_defaults'][target_name])
-      outputs.update({TARGET_CLASS_TENSOR_NAME: labels.name})
-      pass
+      input_target_label = tf.contrib.lookup.index_to_string(
+          features[target_name],
+          mapping=string_value)
+      outputs.update(
+        {TARGET_CLASS_TENSOR_NAME: predicted_label.name,
+         TARGET_INPUT_TENSOR_NAME: input_target_label.name})
+    else:
+      outputs.update(
+        {TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name})
+
 
     inputs = {EXAMPLES_PLACEHOLDER_TENSOR_NAME: examples.name}
 

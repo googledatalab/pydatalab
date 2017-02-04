@@ -170,7 +170,7 @@ def run_preprocess(output_dir, csv_filename, schema_filename,
          '--input_feature_types', input_features_filename,
   ]
   print('Going to run command: %s' % ' '.join(cmd))
-  subprocess.check_call(cmd, stderr=open(os.devnull, 'wb'))
+  subprocess.check_call(cmd) #, stderr=open(os.devnull, 'wb'))
 
 
 def run_training(
