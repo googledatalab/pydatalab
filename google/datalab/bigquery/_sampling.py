@@ -65,6 +65,8 @@ class Sampling(object):
     Returns:
       A sampling function that can be applied to get the initial few rows.
     """
+    if field_name is None:
+      raise Exception('Sort field must be specified')
     direction = '' if ascending else ' DESC'
     projection = Sampling._create_projection(fields)
     return lambda sql: 'SELECT %s FROM (%s) ORDER BY %s%s LIMIT %d' % (projection, sql, field_name,
@@ -81,6 +83,8 @@ class Sampling(object):
     Returns:
       A sampling function that can be applied to get a hash-based sampling.
     """
+    if field_name is None:
+      raise Exception('Hash field must be specified')
     def _hashed_sampling(sql):
       projection = Sampling._create_projection(fields)
       sql = 'SELECT %s FROM (%s) WHERE ABS(HASH(%s)) %% 100 < %d' % \
@@ -111,3 +115,32 @@ class Sampling(object):
         sql = '%s LIMIT %d' % (sql, count)
       return sql
     return _random_sampling
+
+  @staticmethod
+  def _auto(method, fields, count, percent, key_field, ascending):
+    """Construct a sampling function according to the provided sampling technique, provided all
+    its needed fields are passed as arguments
+
+    Args:
+      method: one of the supported sampling methods: {limit,random,hashed,sorted}
+      fields: an optional list of field names to retrieve.
+      count: maximum number of rows to limit the sampled results to.
+      percent: the percentage of the resulting hashes to select if using hashed sampling
+      key_field: the name of the field to sort the rows by or use for hashing
+      ascending: whether to sort in ascending direction or not.
+    Returns:
+      A sampling function using the provided arguments
+    Raises:
+      Exception if an unsupported mathod name is passed
+    """
+    if method == 'limit':
+      return Sampling.default(fields=fields, count=count)
+    elif method == 'random':
+      return Sampling.random(fields=fields, percent=percent, count=count)
+    elif method == 'hashed':
+      return Sampling.hashed(fields=fields, field_name=key_field, percent=percent, count=count)
+    elif method == 'sorted':
+      return Sampling.sorted(fields=fields, field_name=key_field, ascending=ascending, count=count)
+    else:
+      raise Exception('Unsupported sampling method: %s' % method)
+
