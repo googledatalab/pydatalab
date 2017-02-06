@@ -238,7 +238,7 @@ class Table(object):
       return self
     raise Exception("Table %s could not be created as it already exists" % self._full_name)
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True, dialect=None,
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True,
              billing_tier=None):
     """Retrieves a sampling of data from the table.
 
@@ -248,10 +248,6 @@ class Table(object):
           sampling is not specified.
       sampling: an optional sampling strategy to apply to the table.
       use_cache: whether to use cached results or not.
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
       billing_tier: Limits the billing tier for this job. Queries that have resource
           usage beyond this tier will fail (without incurring a charge). If unspecified, this
           will be set to your project default. This can also be used to override your
@@ -268,7 +264,7 @@ class Table(object):
     if sampling is None:
       sampling = Sampling.default(fields=fields, count=count)
     return query.execute(QueryOutput.table(use_cache=use_cache), sampling=sampling,
-                         dialect=dialect, billing_tier=billing_tier) \
+                         billing_tier=billing_tier) \
                         .results
 
   @staticmethod

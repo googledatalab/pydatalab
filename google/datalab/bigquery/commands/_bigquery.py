@@ -250,7 +250,26 @@ def _create_load_subparser(parser):
   return load_parser
 
 
-def _get_query_argument(args, cell, env):
+def _default_context_for_args(args):
+  """Get the default Context for the parsed arguments.
+
+  Args:
+    args: the dictionary of magic arguments.
+  Returns:
+    A Context based on the current default context, but with any explicitly specified
+      arguments overriding the defaults.
+  """
+  context = google.datalab.Context.default()
+  dialect_arg = args.get('dialect', None)
+  billing_tier_arg = args.get('billing', None)
+  if dialect_arg:
+    context.config['bigquery_dialect'] = dialect_arg
+  if billing_tier_arg:
+    context.config['bigquery_billing_tier'] = billing_tier_arg
+  return context
+
+
+def _get_query_argument(args, cell, env, context=None):
   """ Get a query argument to a cell magic.
 
   The query is specified with args['query']. We look that up and if it is a BQ query
@@ -265,15 +284,18 @@ def _get_query_argument(args, cell, env):
     cell: the cell contents which can be variable value overrides (if args has a 'query'
         value) or inline SQL otherwise.
     env: a dictionary that is used for looking up variable values.
+    context: an optional Context object.
   Returns:
     A Query object.
   """
+  if not context:
+    context = _default_context_for_args(args)
   sql_arg = args.get('query', None)
   if sql_arg is None:
     # Assume we have inline SQL in the cell
     if not isinstance(cell, basestring):
       raise Exception('Expected a --query argument or inline SQL')
-    return google.datalab.bigquery.Query(cell, values=env)
+    return google.datalab.bigquery.Query(cell, context=context, values=env)
 
   item = google.datalab.utils.commands.get_notebook_item(sql_arg)
   if isinstance(item, google.datalab.bigquery.Query):  # Queries are already expanded.
@@ -284,8 +306,7 @@ def _get_query_argument(args, cell, env):
   item, env = google.datalab.data.SqlModule.get_sql_statement_with_environment(item, config)
   if cell:
     env.update(config)  # config is both a fallback and an override.
-  return google.datalab.bigquery.Query(item, values=env)
-
+  return google.datalab.bigquery.Query(item, context=context, values=env)
 
 
 def _sample_cell(args, cell_body):
@@ -300,13 +321,14 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
+  context = _default_context_for_args(args)
   env = google.datalab.utils.commands.notebook_environment()
   query = None
   table = None
   view = None
 
   if args['query']:
-    query = _get_query_argument(args, cell_body, env)
+    query = _get_query_argument(args, cell_body, env, context=context)
   elif args['table']:
     table = _get_table(args['table'])
     if not table:
@@ -316,7 +338,7 @@ def _sample_cell(args, cell_body):
     if not isinstance(view, google.datalab.bigquery.View):
       raise Exception('Could not find view %s' % args['view'])
   else:
-    query = google.datalab.bigquery.Query(cell_body, values=env)
+    query = google.datalab.bigquery.Query(cell_body, context=context, values=env)
 
   # parse comma-separated list of fields
   fields = args['fields'].split(',') if args['fields'] else None
@@ -328,10 +350,10 @@ def _sample_cell(args, cell_body):
 
   if query:
     if args['profile']:
-      results = query.execute(QueryOutput.dataframe(), sampling=sampling, dialect=args['dialect'],
+      results = query.execute(QueryOutput.dataframe(), sampling=sampling,
                               billing_tier=args['billing']).result()
     else:
-      results = query.execute(QueryOutput.table(), sampling=sampling, dialect=args['dialect'],
+      results = query.execute(QueryOutput.table(), sampling=sampling,
                               billing_tier=args['billing']).results
   elif view:
     results = view.sample(sampling=sampling)
@@ -365,7 +387,7 @@ def _dryrun_cell(args, cell_body):
   if args['verbose']:
     print(query.sql)
 
-  result = query.execute_dry_run(dialect=args['dialect'], billing_tier=args['billing'])
+  result = query.execute_dry_run(billing_tier=args['billing'])
   return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                          is_cached=result['cacheHit'])
 
@@ -464,7 +486,7 @@ def _execute_cell(args, cell_body):
     output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-  r = query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing'])
+  r = query.execute(output_options, billing_tier=args['billing'])
   # if an execute was performed, a QueryJob is returned, which has a .results property
   # otherwise, it's a base Job object, .result() should be called
   return r.results if hasattr(r, 'results') else r.result()
@@ -503,7 +525,7 @@ def _pipeline_cell(args, cell_body):
     output_options = QueryOutput.table(args['target'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-    query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing']).results
+    query.execute(output_options, billing_tier=args['billing']).results
 
 
 def _get_schema(name):
@@ -679,7 +701,7 @@ def _extract_cell(args, cell_body):
                                       csv_delimiter=args['delimiter'],
                                       csv_header=args['header'], compress=args['compress'],
                                       use_cache=not args['nocache'])
-    job = query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing'])
+    job = query.execute(output_options, billing_tier=args['billing'])
 
   if job.failed:
     raise Exception('Extract failed: %s' % str(job.fatal_error))

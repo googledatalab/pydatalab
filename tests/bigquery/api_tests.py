@@ -115,7 +115,7 @@ class TestCases(unittest.TestCase):
           'useQueryCache': True,
           'userDefinedFunctionResources': [],
           'allowLargeResults': False,
-          'useLegacySql': True,
+          'useLegacySql': False,
         },
         'dryRun': False,
         'priority': 'BATCH',
