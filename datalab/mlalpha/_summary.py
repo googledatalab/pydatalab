@@ -106,22 +106,22 @@ class Summary(object):
 
     return ret_events
 
-  def plot(self, event_names, x='step'):
+  def plot(self, event_names, x_axis='step'):
     """Plots a list of events. Each event (a dir+event_name) is represetented as a line
        in the graph.
 
     Args:
       event_names: A list of events to plot. Each event_name may correspond to multiple events,
           each in a different directory.
-      x: whether to use step or time as x.
+      x_axis: whether to use step or time as x axis.
     """
     event_names = [event_names] if isinstance(event_names, basestring) else event_names
     events_list = self.get_events(event_names)
     for event_name, dir_event_dict in zip(event_names, events_list):
       for dir, df in dir_event_dict.iteritems():
         label = event_name + ':' + dir
-        x_column = df['step'] if x == 'step' else df['time']
+        x_column = df['step'] if x_axis == 'step' else df['time']
         plt.plot(x_column, df['value'], label=label)
-        plt.legend(loc='best')
+    plt.legend(loc='best')
     plt.show()
 
