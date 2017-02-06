@@ -355,8 +355,8 @@ class Table(object):
       table_field = table_schema[name]
       if table_field is None:
         raise Exception('Table does not contain field %s' % name)
-      data_type = data_field.data_type
-      table_type = table_field.data_type
+      data_type = data_field.type
+      table_type = table_field.type
       if table_type != data_type:
         raise Exception('Field %s in data has type %s but in table has type %s' %
                         (name, data_type, table_type))
