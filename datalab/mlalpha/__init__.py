@@ -21,7 +21,7 @@ from ._local_predictor import LocalPredictor
 from ._cloud_predictor import CloudPredictor
 from ._job import Jobs
 from ._summary import Summary
-from ._tensorboard import TensorBoardManager
+from ._tensorboard import TensorBoard
 from ._dataset import CsvDataSet, BigQueryDataSet
 from ._package import Packager
 from ._cloud_models import CloudModels, CloudModelVersions
