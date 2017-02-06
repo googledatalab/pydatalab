@@ -29,7 +29,7 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import google.datalab.context
+import google.datalab
 import google.datalab.storage
 import google.datalab.storage.commands
 
@@ -39,7 +39,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.storage._object.Object.exists', autospec=True)
   @mock.patch('google.datalab.storage._bucket.Bucket.objects', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_get', autospec=True)
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_expand_list(self, mock_context_default, mock_api_objects_get, mock_bucket_objects,
                        mock_object_exists):
     context = TestCases._create_context()
@@ -91,7 +91,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.storage._object.Object.copy_to', autospec=True)
   @mock.patch('google.datalab.storage._bucket.Bucket.objects', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_get', autospec=True)
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_storage_copy(self, mock_context_default, mock_api_objects_get, mock_bucket_objects,
                         mock_storage_object_copy_to):
     context = TestCases._create_context()
@@ -128,7 +128,7 @@ class TestCases(unittest.TestCase):
       }, None)
 
   @mock.patch('google.datalab.storage._api.Api.buckets_insert', autospec=True)
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_storage_create(self, mock_context_default, mock_api_buckets_insert):
     context = TestCases._create_context()
     mock_context_default.return_value = context
@@ -157,7 +157,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.storage._bucket.Bucket.objects', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_delete', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.buckets_delete', autospec=True)
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_storage_delete(self, mock_context_default, mock_api_bucket_delete,
                           mock_api_objects_delete, mock_bucket_objects, mock_api_objects_get,
                           mock_api_buckets_get):
@@ -185,13 +185,13 @@ class TestCases(unittest.TestCase):
     mock_api_bucket_delete.assert_called_with(mock.ANY, 'bar')
     mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'object1')
 
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_storage_view(self, mock_context_default):
     context = TestCases._create_context()
     mock_context_default.return_value = context
     # TODO(gram): complete this test
 
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_storage_write(self, mock_context_default):
     context = TestCases._create_context()
     mock_context_default.return_value = context
@@ -201,7 +201,7 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)
 
   @staticmethod
   def _mock_bucket_objects_return(context):

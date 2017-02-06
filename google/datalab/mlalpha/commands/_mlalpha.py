@@ -28,7 +28,7 @@ from plotly.offline import iplot
 import urllib
 import yaml
 
-import google.datalab.context
+import google.datalab
 import google.datalab.data
 import google.datalab.mlalpha
 import google.datalab.utils.commands
@@ -247,7 +247,7 @@ def _train(args, cell):
     html = '<p>Job "%s" was submitted successfully.<br/>' % job_short_name
     html += 'Run "%%mlalpha jobs --name %s" to view the status of the job.</p>' % job_short_name
     log_url_query_strings = {
-      'project': google.datalab.context.Context.default().project_id,
+      'project': google.datalab.Context.default().project_id,
       'resource': 'ml.googleapis.com/job_id/' + job_short_name
     }
     log_url = 'https://console.developers.google.com/logs/viewer?' + \
@@ -276,7 +276,7 @@ def _train(args, cell):
     all_messages = []
     log_dir = os.getcwd()
     if google.datalab.context._utils._in_datalab_docker():
-      log_dir = '/google.datalab/nocachecontent'
+      log_dir = '/datalab/nocachecontent'
       if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     program_args = config.get('args', None)
@@ -658,7 +658,7 @@ options = {
 }
 opts = beam.pipeline.PipelineOptions(flags=[], **options)
 pipeline = beam.Pipeline('DataflowPipelineRunner', options=opts)
-""" % (job_name_prefix, google.datalab.context.Context.default().project_id)
+""" % (job_name_prefix, google.datalab.Context.default().project_id)
   else:
     content_pipeline = """pipeline = beam.Pipeline('DirectPipelineRunner')\n"""
 

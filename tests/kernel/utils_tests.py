@@ -30,8 +30,8 @@ IPython.core.magic.register_line_magic = mock.Mock()
 IPython.core.magic.register_cell_magic = mock.Mock()
 IPython.get_ipython = mock.Mock()
 
+import google.datalab
 import google.datalab.bigquery
-import google.datalab.context
 import google.datalab.utils.commands
 
 
@@ -162,7 +162,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
   @mock.patch('google.datalab.bigquery._table.Table.exists')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
-  @mock.patch('google.datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_get_data_from_table(self, mock_context_default, mock_api_tables_get,
                                mock_table_exists, mock_api_tabledata_list):
     data = TestCases._get_expected_rows()
@@ -264,4 +264,4 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)

@@ -21,7 +21,7 @@ import fnmatch
 
 import pandas
 
-import google.datalab.context
+import google.datalab
 
 from . import _utils
 
@@ -40,7 +40,7 @@ class Groups(object):
           by the context.
       context: An optional Context object to use instead of the global default.
     """
-    self._context = context or google.datalab.context.Context.default()
+    self._context = context or google.datalab.Context.default()
     self._project_id = project_id or self._context.project_id
     self._client = _utils.make_client(project_id, context)
     self._group_dict = None

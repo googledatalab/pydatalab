@@ -26,6 +26,9 @@ import subprocess
 import socket
 import traceback
 import types
+import os
+import json
+import oauth2client.client
 
 
 def print_exception_with_last_stack(e):
@@ -121,3 +124,117 @@ def gcs_copy_file(source, dest):
     dest: the destination file path.
   """
   subprocess.check_call(['gsutil', '-q', 'cp', source, dest])
+
+
+""" Support for getting gcloud credentials. """
+
+# TODO(ojarjur): This limits the APIs against which Datalab can be called
+# (when using a service account with a credentials file) to only being those
+# that are part of the Google Cloud Platform. We should either extend this
+# to all of the API scopes that Google supports, or make it extensible so
+# that the user can define for themselves which scopes they want to use.
+CREDENTIAL_SCOPES = [
+  'https://www.googleapis.com/auth/cloud-platform',
+]
+
+
+def _in_datalab_docker():
+  return os.path.exists('/datalab') and os.getenv('DATALAB_ENV')
+
+
+def get_config_dir():
+  config_dir = os.getenv('CLOUDSDK_CONFIG')
+  if config_dir is None:
+    if os.name == 'nt':
+      try:
+        config_dir = os.path.join(os.environ['APPDATA'], 'gcloud')
+      except KeyError:
+        # This should never happen unless someone is really messing with things.
+        drive = os.environ.get('SystemDrive', 'C:')
+        config_dir = os.path.join(drive, '\\gcloud')
+    else:
+      config_dir = os.path.join(os.path.expanduser('~'), '.config/gcloud')
+  return config_dir
+
+
+def get_credentials():
+  """ Get the credentials to use. We try application credentials first, followed by
+      user credentials. The path to the application credentials can be overridden
+      by pointing the GOOGLE_APPLICATION_CREDENTIALS environment variable to some file;
+      the path to the user credentials can be overridden by pointing the CLOUDSDK_CONFIG
+      environment variable to some directory (after which we will look for the file
+      $CLOUDSDK_CONFIG/gcloud/credentials). Unless you have specific reasons for
+      overriding these the defaults should suffice.
+  """
+  try:
+    credentials = oauth2client.client.GoogleCredentials.get_application_default()
+    if credentials.create_scoped_required():
+      credentials = credentials.create_scoped(CREDENTIAL_SCOPES)
+    return credentials
+  except Exception as e:
+
+    # Try load user creds from file
+    cred_file = get_config_dir() + '/credentials'
+    if os.path.exists(cred_file):
+      with open(cred_file) as f:
+        creds= json.loads(f.read())
+      # Use the first gcloud one we find
+      for entry in creds['data']:
+        if entry['key']['type'] == 'google-cloud-sdk':
+          return oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+
+    if type(e) == oauth2client.client.ApplicationDefaultCredentialsError:
+      # If we are in Datalab container, change the message to be about signing in.
+      if _in_datalab_docker():
+        raise Exception('No application credentials found. Perhaps you should sign in.')
+
+    raise e
+
+
+def save_project_id(project_id):
+  """ Save project id to config file.
+
+  Args:
+    project_id: the project_id to save.
+  """
+  # Try gcloud first. If gcloud fails (probably because it does not exist), then
+  # write to a config file.
+  try:
+    subprocess.call(['gcloud', 'config', 'set', 'project', project_id])
+  except:
+    config_file = os.path.join(get_config_dir(), 'config.json')
+    config = {}
+    if os.path.exists(config_file):
+      with open(config_file) as f:
+        config = json.loads(f.read())
+    config['project_id'] = project_id
+    with open(config_file, 'w') as f:
+      f.write(json.dumps(config))
+
+
+def get_default_project_id():
+  """ Get default project id from config or environment var.
+
+  Returns: the project id if available, or None.
+  """
+  # Try getting default project id from gcloud. If it fails try config.json.
+  try:
+    proc = subprocess.Popen(['gcloud', 'config', 'list', '--format', 'value(core.project)'],
+                            stdout=subprocess.PIPE)
+    stdout, _ = proc.communicate()
+    value = stdout.strip()
+    if proc.poll() == 0 and value:
+      return value
+  except:
+    pass
+
+  config_file = os.path.join(get_config_dir(), 'config.json')
+  if os.path.exists(config_file):
+    with open(config_file) as f:
+      config = json.loads(f.read())
+      if 'project_id' in config and config['project_id']:
+        return str(config['project_id'])
+
+  if os.getenv('PROJECT_ID') is not None:
+    return os.getenv('PROJECT_ID')
+  return None

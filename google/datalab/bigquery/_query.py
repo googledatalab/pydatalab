@@ -15,10 +15,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import google.datalab.context
+import google.datalab
 import google.datalab.data
 import google.datalab.utils
 
+from ._query_output import QueryOutput
 from . import _api
 from . import _federated_table
 from . import _query_job
@@ -32,26 +33,6 @@ class Query(object):
 
   This object can be used to execute SQL queries and retrieve results.
   """
-
-  @staticmethod
-  def sampling_query(sql, context, fields=None, count=5, sampling=None, udfs=None,
-                     data_sources=None):
-    """Returns a sampling Query for the SQL object.
-
-    Args:
-      sql: the SQL statement (string) or Query object to sample.
-      context: a Context object providing project_id and credentials.
-      fields: an optional list of field names to retrieve.
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      sampling: an optional sampling strategy to apply to the table.
-      udfs: array of UDFs referenced in the SQL.
-      data_sources: dictionary of federated (external) tables referenced in the SQL.
-    Returns:
-      A Query object for sampling the table.
-    """
-    return Query(_sampling.Sampling.sampling_query(sql, fields, count, sampling), context=context,
-                 udfs=udfs, data_sources=data_sources)
 
   def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None, **kwargs):
     """Initializes an instance of a Query object.
@@ -79,7 +60,7 @@ class Query(object):
       Exception if expansion of any variables failed.
       """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._data_sources = data_sources
@@ -144,186 +125,6 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def extract(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
-              compress=False, use_cache=True, dialect=None, billing_tier=None):
-    """Exports the query results to GCS.
-
-    Args:
-      storage_uris: the destination URI(s). Can be a single URI or a list.
-      format: the format to use for the exported data; one of 'csv', 'json', or 'avro'
-          (default 'csv').
-      csv_delimiter: for csv exports, the field delimiter to use (default ',').
-      csv_header: for csv exports, whether to include an initial header line (default True).
-      compress: whether to compress the data on export. Compression is not supported for
-          AVRO format (default False).
-      use_cache: whether to use cached results or not (default True).
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
-    Returns:
-      A Job object for the export Job if it was completed successfully; else None.
-    Raises:
-      An Exception if the query or extract failed.
-    """
-    return self.execute(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
-               .results \
-               .extract(storage_uris, format=format, csv_delimiter=csv_delimiter,
-                        csv_header=csv_header, compress=compress)
-
-  @google.datalab.utils.async_method
-  def extract_async(self, storage_uris, format='csv', csv_delimiter=',', csv_header=True,
-                    compress=False, use_cache=True, dialect=None, billing_tier=None):
-    """Exports the query results to GCS. Returns a Job immediately.
-
-    Note that there are two jobs that may need to be run sequentially, one to run the query,
-    and the second to extract the resulting table. These are wrapped by a single outer Job.
-
-    If the query has already been executed and you would prefer to get a Job just for the
-    extract, you can can call extract_async on the QueryResultsTable instead; i.e.:
-
-        query.execute().results.extract_async(...)
-
-    Args:
-      storage_uris: the destination URI(s). Can be a single URI or a list.
-      format: the format to use for the exported data; one of 'csv', 'json', or 'avro'
-          (default 'csv').
-      csv_delimiter: for CSV exports, the field delimiter to use (default ',').
-      csv_header: for CSV exports, whether to include an initial header line (default True).
-      compress: whether to compress the data on export. Compression is not supported for
-          AVRO format (default False).
-      use_cache: whether to use cached results or not (default True).
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
-    Returns:
-      A Job for the combined (execute, extract) task that will in turn return the Job object for
-      the completed extract task when done; else None.
-    Raises:
-      An Exception if the query failed.
-    """
-    return self.extract(storage_uris, format=format, csv_delimiter=csv_delimiter,
-                        csv_header=csv_header, use_cache=use_cache, compress=compress,
-                        dialect=dialect, billing_tier=billing_tier)
-
-  def to_dataframe(self, start_row=0, max_rows=None, use_cache=True, dialect=None,
-                   billing_tier=None):
-    """ Exports the query results to a Pandas dataframe.
-
-    Args:
-      start_row: the row of the table at which to start the export (default 0).
-      max_rows: an upper limit on the number of rows to export (default None).
-      use_cache: whether to use cached results or not (default True).
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
-    Returns:
-      A Pandas dataframe containing the table data.
-    """
-    return self.execute(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
-               .results \
-               .to_dataframe(start_row=start_row, max_rows=max_rows)
-
-  def to_file(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
-              dialect=None, billing_tier=None):
-    """Save the results to a local file in CSV format.
-
-    Args:
-      path: path on the local filesystem for the saved results.
-      format: the format to use for the exported data; currently only 'csv' is supported.
-      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
-      csv_header: for CSV exports, whether to include an initial header line. Default true.
-      use_cache: whether to use cached results or not.
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
-    Returns:
-      The path to the local file.
-    Raises:
-      An Exception if the operation failed.
-    """
-    self.execute(use_cache=use_cache, dialect=dialect, billing_tier=billing_tier) \
-        .results \
-        .to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
-    return path
-
-  @google.datalab.utils.async_method
-  def to_file_async(self, path, format='csv', csv_delimiter=',', csv_header=True, use_cache=True,
-                    dialect=None, billing_tier=None):
-    """Save the results to a local file in CSV format. Returns a Job immediately.
-
-    Args:
-      path: path on the local filesystem for the saved results.
-      format: the format to use for the exported data; currently only 'csv' is supported.
-      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
-      csv_header: for CSV exports, whether to include an initial header line. Default true.
-      use_cache: whether to use cached results or not.
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
-    Returns:
-      A Job for the save that returns the path to the local file on completion.
-    Raises:
-      An Exception if the operation failed.
-    """
-    return self.to_file(path, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header,
-                        use_cache=use_cache, dialect=dialect, billing_tier=billing_tier)
-
-  def sample(self, count=5, fields=None, sampling=None, use_cache=True, dialect=None,
-             billing_tier=None):
-    """Retrieves a sampling of rows for the query.
-
-    Args:
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified (default 5).
-      fields: the list of fields to sample (default None implies all).
-      sampling: an optional sampling strategy to apply to the table.
-      use_cache: whether to use cached results or not (default True).
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
-    Returns:
-      A QueryResultsTable containing a sampling of the result set.
-    Raises:
-      Exception if the query could not be executed or query response was malformed.
-    """
-    return Query.sampling_query(self._sql, self._context, count=count, fields=fields,
-                                sampling=sampling, udfs=self._udfs,
-                                data_sources=self._data_sources) \
-                .execute(use_cache=use_cache,
-                         dialect=dialect,
-                         billing_tier=billing_tier) \
-                .results
-
   def execute_dry_run(self, dialect=None, billing_tier=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
 
@@ -349,23 +150,12 @@ class Query(object):
       raise e
     return query_result['statistics']['query']
 
-  def execute_async(self, table_name=None, table_mode='create', use_cache=True,
-                    priority='interactive', allow_large_results=False, dialect=None,
-                    billing_tier=None):
+  def execute_async(self, output_options=None, sampling=None, dialect=None, billing_tier=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
-      table_name: the result table name as a string or TableName; if None (the default), then a
-          temporary table will be used.
-      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
-          will fail if the table exists.
-      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
-          specified (default True).
-      priority:one of 'batch' or 'interactive' (default). 'interactive' jobs should be scheduled
-          to run quickly but are subject to rate limits; 'batch' jobs could be delayed by as much
-          as three hours but are not rate-limited.
-      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
-          slower and requires a table_name to be specified) (default False).
+      output_options: a QueryOutput object describing how to execute the query
+      sampling: sampling function to use. No sampling is done if None. See bigquery.Sampling
       dialect : {'legacy', 'standard'}, default 'legacy'
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
@@ -375,24 +165,35 @@ class Query(object):
           will be set to your project default. This can also be used to override your
           project-wide default billing tier on a per-query basis.
     Returns:
-      A QueryJob.
+      A Job object that can wait on creating a table or exporting to a file
+      If the output is a table, the Job object additionally has run statistics
+      and query results
     Raises:
       Exception if query could not be executed.
     """
-    batch = priority == 'low'
-    append = table_mode == 'append'
-    overwrite = table_mode == 'overwrite'
+
+    # Default behavior is to execute to a table
+    if output_options == None:
+      output_options = QueryOutput.table()
+
+    # First, execute the query into a table, using a temporary one if no name is specified
+    batch = output_options.priority == 'low'
+    append = output_options.table_mode == 'append'
+    overwrite = output_options.table_mode == 'overwrite'
+    table_name = output_options.table_name
     if table_name is not None:
       table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
+    sql = self._sql if sampling is None else sampling(self._sql)
+
     try:
-      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports,
+      query_result = self._api.jobs_insert_query(sql, self._code, self._imports,
                                                  table_name=table_name,
                                                  append=append,
                                                  overwrite=overwrite,
-                                                 use_cache=use_cache,
+                                                 use_cache=output_options.use_cache,
                                                  batch=batch,
-                                                 allow_large_results=allow_large_results,
+                                                 allow_large_results=output_options.allow_large_results,
                                                  table_definitions=self._external_tables,
                                                  dialect=dialect,
                                                  billing_tier=billing_tier)
@@ -409,24 +210,52 @@ class Query(object):
       except KeyError:
         # The query was in error
         raise Exception(_utils.format_query_errors(query_result['status']['errors']))
-    return _query_job.QueryJob(job_id, table_name, self._sql, context=self._context)
 
-  def execute(self, table_name=None, table_mode='create', use_cache=True, priority='interactive',
-              allow_large_results=False, dialect=None, billing_tier=None):
-    """ Initiate the query, blocking until complete and then return the results.
+    execute_job = _query_job.QueryJob(job_id, table_name, sql, context=self._context)
+
+    # If all we need is to execute the query to a table, we're done
+    if output_options.type == 'table':
+      return execute_job
+    # Otherwise, build an async Job that waits on the query execution then carries out
+    # the specific export operation
+    else:
+      export_job = export_args = export_kwargs = None
+      if output_options.type == 'file':
+        if output_options.file_path.startswith('gs://'):
+          export_func = execute_job.results.extract
+          export_args = [output_options.file_path]
+          export_kwargs = {
+                            'format': output_options.file_format,
+                            'csv_delimiter': output_options.csv_delimiter,
+                            'csv_header': output_options.csv_header,
+                            'compress': output_options.compress_file
+                          }
+        else:
+          export_func = execute_job.results.to_file
+          export_args = [output_options.file_path]
+          export_kwargs = {
+                            'format': output_options.file_format,
+                            'csv_delimiter': output_options.csv_delimiter,
+                            'csv_header': output_options.csv_header
+                          }
+      elif output_options.type == 'dataframe':
+        export_func = execute_job.results.to_dataframe
+        export_args = []
+        export_kwargs = {
+                          'start_row': output_options.dataframe_start_row,
+                          'max_rows': output_options.dataframe_max_rows
+                        }
+
+      # Perform the export operation with the specified parameters
+      export_func = google.datalab.utils.async_function(export_func)
+      return export_func(*export_args, **export_kwargs)
+
+  def execute(self, output_options=None, sampling=None, dialect=None, billing_tier=None):
+    """ Initiate the query and return a QueryJob.
 
     Args:
-      table_name: the result table name as a string or TableName; if None (the default), then a
-          temporary table will be used.
-      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
-          will fail if the table exists.
-      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
-          specified (default True).
-      priority:one of 'batch' or 'interactive' (default). 'interactive' jobs should be scheduled
-          to run quickly but are subject to rate limits; 'batch' jobs could be delayed by as much
-          as three hours but are not rate-limited.
-      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
-          slower and requires a table_name to be specified) (default False).
+      output_options: a QueryOutput object describing how to execute the query
+      sampling: sampling function to use. No sampling is done if None. See bigquery.Sampling
       dialect : {'legacy', 'standard'}, default 'legacy'
           'legacy' : Use BigQuery's legacy SQL dialect.
           'standard' : Use BigQuery's standard SQL (beta), which is
@@ -436,14 +265,12 @@ class Query(object):
           will be set to your project default. This can also be used to override your
           project-wide default billing tier on a per-query basis.
     Returns:
-      The QueryResultsTable for the query.
+      A Job object that can be used to get the query results, or export to a file or dataframe
     Raises:
       Exception if query could not be executed.
     """
-    return self.execute_async(table_name=table_name, table_mode=table_mode, use_cache=use_cache,
-                             priority=priority, allow_large_results=allow_large_results,
-                             dialect=dialect, billing_tier=billing_tier) \
-                             .wait()
+    return self.execute_async(output_options, sampling=sampling,
+                              dialect=dialect, billing_tier=billing_tier).wait()
 
   def to_view(self, view_name):
     """ Create a View from this Query.

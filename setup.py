@@ -31,8 +31,6 @@ setup(
     'google.datalab',
     'google.datalab.bigquery',
     'google.datalab.bigquery.commands',
-    'google.datalab.context',
-    'google.datalab.context.commands',
     'google.datalab.data',
     'google.datalab.data.commands',
     'google.datalab.kernel',
@@ -91,6 +89,7 @@ Support package for Google Cloud Datalab. This provides cell magics and Python A
 for accessing Google's Cloud Platform services such as Google BigQuery.
   """,
   install_requires=[
+    'mock==2.0.0',
     'future==0.16.0',
     'futures==3.0.5',
     'google-cloud==0.19.0',
@@ -109,6 +108,22 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'ipykernel==4.4.1',
   ],
   package_data={
+    'google.datalab.notebook': [
+        'static/bigquery.css',
+        'static/bigquery.js',
+        'static/charting.css',
+        'static/charting.js',
+        'static/job.css',
+        'static/job.js',
+        'static/element.js',
+        'static/style.js',
+        'static/visualization.js',
+        'static/codemirror/mode/sql.js',
+        'static/parcoords.js',
+        'static/extern/d3.parcoords.js',
+        'static/extern/d3.parcoords.css',
+        'static/extern/sylvester.js',
+      ],
     'datalab.notebook': [
         'static/bigquery.css',
         'static/bigquery.js',

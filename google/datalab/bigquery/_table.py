@@ -28,7 +28,7 @@ import traceback
 import uuid
 import sys
 
-import google.datalab.context
+import google.datalab
 import google.datalab.utils
 
 from . import _api
@@ -37,6 +37,8 @@ from . import _job
 from . import _parser
 from . import _schema
 from . import _utils
+from ._query_output import QueryOutput
+from ._sampling import Sampling
 
 
 # import of Query is at end of module as we have a circular dependency of
@@ -125,7 +127,7 @@ class Table(object):
       Exception if the name is invalid.
     """
     if context is None:
-      context = google.datalab.context.Context.default()
+      context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_table_name(name, self._api.project_id)
@@ -262,11 +264,11 @@ class Table(object):
     # Do import here to avoid top-level circular dependencies.
     from . import _query
     sql = self._repr_sql_()
-    return _query.Query.sampling_query(sql, context=self._context, count=count, fields=fields,
-                                       sampling=sampling) \
-                        .execute(use_cache=use_cache,
-                                 dialect=dialect,
-                                 billing_tier=billing_tier) \
+    query = _query.Query(sql, context=self._context)
+    if sampling is None:
+      sampling = Sampling.default(fields=fields, count=count)
+    return query.execute(QueryOutput.table(use_cache=use_cache), sampling=sampling,
+                         dialect=dialect, billing_tier=billing_tier) \
                         .results
 
   @staticmethod
