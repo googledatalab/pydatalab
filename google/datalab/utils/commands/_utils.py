@@ -113,7 +113,7 @@ def _get_cols(fields, schema):
   for col in fields:
     if schema:
       f = schema[col]
-      t = 'string' if f.mode == 'REPEATED' else typemap.get(f.data_type, 'string')
+      t = 'string' if f.mode == 'REPEATED' else typemap.get(f.type, 'string')
       cols.append({'id': f.name, 'label': f.name, 'type': t})
     else:
       # This will only happen if we had no rows to infer a schema from, so the type
