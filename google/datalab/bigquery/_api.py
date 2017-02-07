@@ -54,7 +54,7 @@ class Api(object):
 
   @property
   def bigquery_dialect(self):
-    """The project_id associated with this API client."""
+    """The BigQuery dialect associated with this API client."""
     return self._context.config.get('bigquery_dialect', 'standard')
 
   @property
