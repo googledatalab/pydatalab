@@ -43,26 +43,22 @@ class TestCases(unittest.TestCase):
     env = {}
     cell_body = \
 """
-/**
- * @param {{word: string, corpus: string, word_count: integer}} r
- * @param function({{word: string, corpus: string, count: integer}}) emitFn
- */
-function(r, emitFn) {
-  if (r.word.match(/[shakespeare]/) !== null) {
-    var result = { word: r.word, corpus: r.corpus, count: r.word_count };
-    emitFn(result);
-  }
-}
+  // @param word STRING
+  // @param corpus STRING
+  // @returns INTEGER
+  re = new RegExp(word, 'g');
+  return corpus.match(re || []).length;
 """
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
-    google.datalab.bigquery.commands._bigquery._udf_cell({'module': 'word_filter'}, cell_body)
-    udf = env['word_filter']
+    google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences', 'language': 'js'}, cell_body)
+    udf = env['count_occurrences']
     self.assertIsNotNone(udf)
-    self.assertEquals('word_filter', udf._name)
-    self.assertEquals([('word', 'string'), ('corpus', 'string'), ('count', 'integer')],
-                      udf._outputs)
-    self.assertEquals(cell_body, udf._implementation)
+    self.assertEquals('count_occurrences', udf._name)
+    self.assertEquals('js', udf._language)
+    self.assertEquals('INTEGER', udf._return_type)
+    self.assertEquals([('word', 'STRING'), ('corpus', 'STRING')], udf._params)
+    self.assertEquals([], udf._imports)
 
   @staticmethod
   def _create_context():

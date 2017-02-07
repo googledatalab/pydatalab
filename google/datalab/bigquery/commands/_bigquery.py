@@ -128,7 +128,8 @@ def _create_sample_subparser(parser):
 
 def _create_udf_subparser(parser):
   udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF')
-  udf_parser.add_argument('-m', '--module', help='The name for this UDF')
+  udf_parser.add_argument('-n', '--name', help='The name for this UDF', required=True)
+  udf_parser.add_argument('-l', '--language', help='The language of the function', required=True)
   return udf_parser
 
 
@@ -370,11 +371,14 @@ def _dryrun_cell(args, cell_body):
                                                          is_cached=result['cacheHit'])
 
 
-def _udf_cell(args, js):
+def _udf_cell(args, cell_body):
   """Implements the Bigquery udf cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%bq udf --module <var>
+  %%bq udf --name <var> --language <lang>
+  // @param <name> <type>
+  // @returns <type>
+  // @import <gcs_path>
   <js function>
 
   Args:
@@ -384,57 +388,29 @@ def _udf_cell(args, js):
     The results of executing the UDF converted to a dataframe if no variable
     was specified. None otherwise.
   """
-  variable_name = args['module']
-  if not variable_name:
-    raise Exception('Declaration must be of the form %%bq udf --module <variable name>')
+  udf_name = args['name']
+  if not udf_name:
+    raise Exception('Declaration must be of the form %%bq udf --name <variable name>')
 
-  # Parse out the input and output specification
-  spec_pattern = r'\{\{([^}]+)\}\}'
-  spec_part_pattern = r'[a-z_][a-z0-9_]*'
+  # Parse out parameters, return type, and imports
+  param_pattern = r'^\s*\/\/\s*@param\s+(\w+)\s+(\w+)\s*$'
+  returns_pattern = r'^\s*\/\/\s*@returns\s+(\w+)\s*$'
+  import_pattern = r'^\s*\/\/\s*@import\s+(\S+)\s*$'
 
-  specs = re.findall(spec_pattern, js)
-  if len(specs) < 2:
-    raise Exception('The JavaScript must declare the input row and output emitter parameters '
-                    'using valid jsdoc format comments.\n'
-                    'The input row param declaration must be typed as {{field:type, field2:type}} '
-                    'and the output emitter param declaration must be typed as '
-                    'function({{field:type, field2:type}}.')
+  params = re.findall(param_pattern, cell_body, re.MULTILINE)
+  return_type = re.findall(returns_pattern, cell_body, re.MULTILINE)
+  imports = re.findall(import_pattern, cell_body, re.MULTILINE)
 
-  inputs = []
-  input_spec_parts = re.findall(spec_part_pattern, specs[0], flags=re.IGNORECASE)
-  if len(input_spec_parts) % 2 != 0:
-    raise Exception('Invalid input row param declaration. The jsdoc type expression must '
-                    'define an object with field and type pairs.')
-  for n, t in zip(input_spec_parts[0::2], input_spec_parts[1::2]):
-    inputs.append((n, t))
+  if len(return_type) < 1:
+    raise Exception('UDF return type must be defined using // @returns <type>')
+  if len(return_type) > 1:
+    raise Exception('Found more than one return type definition')
 
-  outputs = []
-  output_spec_parts = re.findall(spec_part_pattern, specs[1], flags=re.IGNORECASE)
-  if len(output_spec_parts) % 2 != 0:
-    raise Exception('Invalid output emitter param declaration. The jsdoc type expression must '
-                    'define a function accepting an an object with field and type pairs.')
-  for n, t in zip(output_spec_parts[0::2], output_spec_parts[1::2]):
-    outputs.append((n, t))
-
-  # Look for imports. We use a non-standard @import keyword; we could alternatively use @requires.
-  # Object names can contain any characters except \r and \n.
-  import_pattern = r'@import[\s]+(gs://[a-z\d][a-z\d_\.\-]*[a-z\d]/[^\n\r]+)'
-  imports = re.findall(import_pattern, js)
-
-  # Split the cell if necessary. We look for a 'function(' with no name and a header comment
-  # block with @param and assume this is the primary function, up to a closing '}' at the start
-  # of the line. The remaining cell content is used as support code.
-  split_pattern = r'(.*)(/\*.*?@param.*?@param.*?\*/\w*\n\w*function\w*\(.*?^}\n?)(.*)'
-  parts = re.match(split_pattern, js, re.MULTILINE | re.DOTALL)
-  support_code = ''
-  if parts:
-    support_code = (parts.group(1) + parts.group(3)).strip()
-    if len(support_code):
-      js = parts.group(2)
+  return_type = return_type[0]
 
   # Finally build the UDF object
-  udf = google.datalab.bigquery.UDF(inputs, outputs, variable_name, js, support_code, imports)
-  google.datalab.utils.commands.notebook_environment()[variable_name] = udf
+  udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, params, args['language'], imports)
+  google.datalab.utils.commands.notebook_environment()[udf_name] = udf
 
 
 def _execute_cell(args, cell_body):

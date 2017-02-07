@@ -35,54 +35,55 @@ class UDF(object):
   def code(self):
     return self._code
 
-  def __init__(self, inputs, outputs, name, implementation, support_code=None, imports=None):
-    """Initializes a Function object from its pieces.
+  def __init__(self, name, code, return_type, params='', language='js', imports=''):
+    """Initializes a UDF object from its pieces.
 
     Args:
-      inputs: a list of string field names representing the schema of input.
-      outputs: a list of name/type tuples representing the schema of the output.
       name: the name of the javascript function
-      implementation: a javascript function implementing the logic.
-      support_code: additional javascript code that the function can use.
-      imports: a list of GCS URLs or files containing further support code.
-    Raises:
-      Exception if the name is invalid.
+      code: function body implementing the logic.
+      return_type: BigQuery data type of the function return. See supported data types in
+        the BigQuery docs
+      params: dictionary of parameter names and types
+      language: see list of supported languages in the BigQuery docs
+      imports: a list of GCS paths containing further support code.
       """
-    self._outputs = outputs
     self._name = name
-    self._implementation = implementation
-    self._support_code = support_code
+    self._code = code
+    self._return_type = return_type
+    self._params = params
+    self._language = language
     self._imports = imports
-    self._code = UDF._build_js(inputs, outputs, name, implementation, support_code)
+    self._implementation = UDF._build_udf(name, code, return_type, params, language, imports)
 
   @staticmethod
-  def _build_js(inputs, outputs, name, implementation, support_code):
-    """Creates a BigQuery SQL UDF javascript object.
+  def _build_udf(name, code, return_type, params='', language='js', imports=''):
+    """Creates the UDF part of a BigQuery query using its pieces
 
     Args:
-      inputs: a list of (name, type) tuples representing the schema of input.
-      outputs: a list of (name, type) tuples representing the schema of the output.
-      name: the name of the function
-      implementation: a javascript function defining the UDF logic.
-      support_code: additional javascript code that the function can use.
-    """
-    # Construct a comma-separated list of input field names
-    # For example, field1,field2,...
-    input_fields = json.dumps([f[0] for f in inputs])
+      name: the name of the javascript function
+      code: function body implementing the logic.
+      return_type: BigQuery data type of the function return. See supported data types in
+        the BigQuery docs
+      params: dictionary of parameter names and types
+      language: see list of supported languages in the BigQuery docs
+      imports: a list of GCS paths containing further support code.
+      """
 
-    # Construct a json representation of the output schema
-    # For example, [{'name':'field1','type':'string'},...]
-    output_fields = [{'name': f[0], 'type': f[1]} for f in outputs]
-    output_fields = json.dumps(output_fields, sort_keys=True)
+    if imports and language != 'js':
+      raise Exception('Imports are available for Javascript UDFs only')
 
-    # Build the JS from the individual bits with proper escaping of the implementation
-    if support_code is None:
-      support_code = ''
-    return ('{code}\n{name}={implementation};\n' +
-            'bigquery.defineFunction(\'{name}\', {inputs}, {outputs}, {name});')\
-                .format(code=support_code,
-                        name=name,
-                        implementation=implementation,
-                        inputs=str(input_fields),
-                        outputs=str(output_fields))
+    params = ','.join(['%s %s' % named_param for named_param in params])
+    imports = ','.join(['library="%s"' % i for i in imports])
+
+    udf = 'CREATE TEMPORARY FUNCTION {name} ({params})\n' +\
+          'RETURNS {return_type}\n' +\
+          'LANGUAGE {language}\n' +\
+          'AS """\n' +\
+          '{code}\n' +\
+          '"""\n' +\
+          'OPTIONS (\n' +\
+          '{imports}\n' +\
+          ');'
+    return udf.format(name=name, params=params, return_type=return_type,
+                      language=language, code=code, imports=imports)
 
