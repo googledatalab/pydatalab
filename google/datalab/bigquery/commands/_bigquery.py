@@ -250,23 +250,31 @@ def _create_load_subparser(parser):
   return load_parser
 
 
-def _default_context_for_args(args):
-  """Get the default Context for the parsed arguments.
+def _construct_context_for_args(args):
+  """Construct a new Context for the parsed arguments.
 
   Args:
     args: the dictionary of magic arguments.
   Returns:
-    A Context based on the current default context, but with any explicitly specified
-      arguments overriding the defaults.
+    A new Context based on the current default context, but with any explicitly
+      specified arguments overriding the default's config.
   """
-  context = google.datalab.Context.default()
+  global_default_context = google.datalab.Context.default()
+  config = {}
+  for key in global_default_context.config:
+    config[key] = global_default_context.config[key]
+
   dialect_arg = args.get('dialect', None)
   billing_tier_arg = args.get('billing', None)
   if dialect_arg:
-    context.config['bigquery_dialect'] = dialect_arg
+    config['bigquery_dialect'] = dialect_arg
   if billing_tier_arg:
-    context.config['bigquery_billing_tier'] = billing_tier_arg
-  return context
+    config['bigquery_billing_tier'] = billing_tier_arg
+
+  return google.datalab.Context(
+    project_id=global_default_context.project_id,
+    credentials=global_default_context.credentials,
+    config=config)
 
 
 def _get_query_argument(args, cell, env, context=None):
@@ -289,7 +297,7 @@ def _get_query_argument(args, cell, env, context=None):
     A Query object.
   """
   if not context:
-    context = _default_context_for_args(args)
+    context = _construct_context_for_args(args)
   sql_arg = args.get('query', None)
   if sql_arg is None:
     # Assume we have inline SQL in the cell
@@ -321,7 +329,7 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
-  context = _default_context_for_args(args)
+  context = _construct_context_for_args(args)
   env = google.datalab.utils.commands.notebook_environment()
   query = None
   table = None
