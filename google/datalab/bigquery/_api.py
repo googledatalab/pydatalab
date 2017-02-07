@@ -48,6 +48,11 @@ class Api(object):
     return self._context.project_id
 
   @property
+  def credentials(self):
+    """The credentials associated with this API client."""
+    return self._context.credentials
+
+  @property
   def bigquery_dialect(self):
     """The project_id associated with this API client."""
     return self._context.config.get('bigquery_dialect', 'standard')
@@ -130,7 +135,7 @@ class Api(object):
           'skipLeadingRows': skip_leading_rows
       })
 
-    return google.datalab.utils.Http.request(url, data=data, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
   def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False,
                         overwrite=False, dry_run=False, use_cache=True, batch=True,
@@ -160,7 +165,7 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._JOBS_PATH % (self._context.project_id, ''))
+    url = Api._ENDPOINT + (Api._JOBS_PATH % (self.project_id, ''))
 
     data = {
         'kind': 'bigquery#job',
@@ -204,7 +209,7 @@ class Api(object):
     if self.bigquery_billing_tier:
         query_config['maximumBillingTier'] = self.bigquery_billing_tier
 
-    return google.datalab.utils.Http.request(url, data=data, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
   def jobs_query_results(self, job_id, project_id, page_size, timeout, start_index=0):
     """Issues a request to the jobs/getQueryResults method.
@@ -224,7 +229,7 @@ class Api(object):
     if timeout is None:
       timeout = Api._DEFAULT_TIMEOUT
     if project_id is None:
-      project_id = self._context.project_id
+      project_id = self.project_id
 
     args = {
         'maxResults': page_size,
@@ -232,7 +237,7 @@ class Api(object):
         'startIndex': start_index
     }
     url = Api._ENDPOINT + (Api._QUERIES_PATH % (project_id, job_id))
-    return google.datalab.utils.Http.request(url, args=args, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, args=args, credentials=self.credentials)
 
   def jobs_get(self, job_id, project_id=None):
     """Issues a request to retrieve information about a job.
@@ -246,9 +251,9 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     if project_id is None:
-      project_id = self._context.project_id
+      project_id = self.project_id
     url = Api._ENDPOINT + (Api._JOBS_PATH % (project_id, job_id))
-    return google.datalab.utils.Http.request(url, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, credentials=self.credentials)
 
   def datasets_insert(self, dataset_name, friendly_name=None, description=None):
     """Issues a request to create a dataset.
@@ -274,7 +279,7 @@ class Api(object):
       data['friendlyName'] = friendly_name
     if description:
       data['description'] = description
-    return google.datalab.utils.Http.request(url, data=data, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
   def datasets_delete(self, dataset_name, delete_contents):
     """Issues a request to delete a dataset.
@@ -293,7 +298,7 @@ class Api(object):
     if delete_contents:
       args['deleteContents'] = True
     return google.datalab.utils.Http.request(url, method='DELETE', args=args,
-                                      credentials=self._context.credentials, raw_response=True)
+                                      credentials=self.credentials, raw_response=True)
 
   def datasets_update(self, dataset_name, dataset_info):
     """Updates the Dataset info.
@@ -304,7 +309,7 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._DATASETS_PATH % dataset_name)
     return google.datalab.utils.Http.request(url, method='PUT', data=dataset_info,
-                                  credentials=self._context.credentials)
+                                  credentials=self.credentials)
 
   def datasets_get(self, dataset_name):
     """Issues a request to retrieve information about a dataset.
@@ -317,7 +322,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._DATASETS_PATH % dataset_name)
-    return google.datalab.utils.Http.request(url, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, credentials=self.credentials)
 
   def datasets_list(self, project_id=None, max_results=0, page_token=None):
     """Issues a request to list the datasets in the project.
@@ -332,7 +337,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     if project_id is None:
-      project_id = self._context.project_id
+      project_id = self.project_id
     url = Api._ENDPOINT + (Api._DATASETS_PATH % (project_id, ''))
 
     args = {}
@@ -341,7 +346,7 @@ class Api(object):
     if page_token is not None:
       args['pageToken'] = page_token
 
-    return google.datalab.utils.Http.request(url, args=args, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, args=args, credentials=self.credentials)
 
   def tables_get(self, table_name):
     """Issues a request to retrieve information about a table.
@@ -354,7 +359,7 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
-    return google.datalab.utils.Http.request(url, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, credentials=self.credentials)
 
   def tables_list(self, dataset_name, max_results=0, page_token=None):
     """Issues a request to retrieve a list of tables.
@@ -377,7 +382,7 @@ class Api(object):
     if page_token is not None:
       args['pageToken'] = page_token
 
-    return google.datalab.utils.Http.request(url, args=args, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, args=args, credentials=self.credentials)
 
   def tables_insert(self, table_name, schema=None, query=None, friendly_name=None,
                     description=None):
@@ -415,7 +420,7 @@ class Api(object):
     if description:
       data['description'] = description
 
-    return google.datalab.utils.Http.request(url, data=data, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
   def tabledata_insert_all(self, table_name, rows):
     """Issues a request to insert data into a table.
@@ -435,7 +440,7 @@ class Api(object):
       'rows': rows
     }
 
-    return google.datalab.utils.Http.request(url, data=data, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
   def tabledata_list(self, table_name, start_index=None, max_results=None, page_token=None):
     """ Retrieves the contents of a table.
@@ -458,7 +463,7 @@ class Api(object):
       args['maxResults'] = max_results
     if page_token is not None:
       args['pageToken'] = page_token
-    return google.datalab.utils.Http.request(url, args=args, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, args=args, credentials=self.credentials)
 
   def table_delete(self, table_name):
     """Issues a request to delete a table.
@@ -472,7 +477,7 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
     return google.datalab.utils.Http.request(url, method='DELETE',
-                                             credentials=self._context.credentials,
+                                             credentials=self.credentials,
                                              raw_response=True)
 
   def table_extract(self, table_name, destination, format='CSV', compress=True,
@@ -515,7 +520,7 @@ class Api(object):
             }
         }
     }
-    return google.datalab.utils.Http.request(url, data=data, credentials=self._context.credentials)
+    return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
   def table_update(self, table_name, table_info):
     """Updates the Table info.
@@ -526,4 +531,4 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
     return google.datalab.utils.Http.request(url, method='PUT', data=table_info,
-                                      credentials=self._context.credentials)
+                                      credentials=self.credentials)
