@@ -401,7 +401,7 @@ def sql_cell(args, cell):
       if billing_tier_arg:
         context.config['bigquery_billing_tier'] = billing_tier_arg
       return google.datalab.bigquery.Query(query, context=context, values=ipy.user_ns) \
-                                    .execute(billing_tier=args['billing']).results
+                                    .execute().results
   else:
     # Add it as a module
     sys.modules[name] = module

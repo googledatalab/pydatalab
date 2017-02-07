@@ -238,8 +238,7 @@ class Table(object):
       return self
     raise Exception("Table %s could not be created as it already exists" % self._full_name)
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True,
-             billing_tier=None):
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True):
     """Retrieves a sampling of data from the table.
 
     Args:
@@ -248,10 +247,6 @@ class Table(object):
           sampling is not specified.
       sampling: an optional sampling strategy to apply to the table.
       use_cache: whether to use cached results or not.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryResultsTable object containing the resulting data.
     Raises:
@@ -263,9 +258,7 @@ class Table(object):
     query = _query.Query(sql, context=self._context)
     if sampling is None:
       sampling = Sampling.default(fields=fields, count=count)
-    return query.execute(QueryOutput.table(use_cache=use_cache), sampling=sampling,
-                         billing_tier=billing_tier) \
-                        .results
+    return query.execute(QueryOutput.table(use_cache=use_cache), sampling=sampling).results
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):

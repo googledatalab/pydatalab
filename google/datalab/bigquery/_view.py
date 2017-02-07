@@ -110,8 +110,7 @@ class View(object):
       return self
     raise Exception("View %s could not be created as it already exists" % str(self))
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True,
-             billing_tier=None):
+  def sample(self, fields=None, count=5, sampling=None, use_cache=True):
     """Retrieves a sampling of data from the view.
 
     Args:
@@ -120,17 +119,12 @@ class View(object):
           sampling is not specified.
       sampling: an optional sampling strategy to apply to the view.
       use_cache: whether to use cached results or not.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryResultsTable object containing the resulting data.
     Raises:
       Exception if the sample query could not be executed or the query response was malformed.
     """
-    return self._table.sample(fields=fields, count=count, sampling=sampling, use_cache=use_cache,
-                              billing_tier=billing_tier)
+    return self._table.sample(fields=fields, count=count, sampling=sampling, use_cache=use_cache)
 
   @property
   def schema(self):
@@ -160,28 +154,23 @@ class View(object):
       self._table._info['view'] = {'query': query}
     self._table.update(friendly_name=friendly_name, description=description)
 
-  def results(self, use_cache=True, billing_tier=None):
+  def results(self, use_cache=True):
     """Materialize the view synchronously.
 
     If you require more control over the execution, use execute() or execute_async().
 
     Args:
       use_cache: whether to use cached results or not.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryResultsTable containing the result set.
     Raises:
       Exception if the query could not be executed or query response was malformed.
     """
     output_options = QueryOutput.table(use_cache=use_cache)
-    return self._materialization.execute(output_options,
-                                               billing_tier=billing_tier).results
+    return self._materialization.execute(output_options).results
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-                    allow_large_results=False, billing_tier=None):
+                    allow_large_results=False):
     """Materialize the View asynchronously.
 
     Args:
@@ -194,10 +183,6 @@ class View(object):
           better suited to exploratory analysis.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryJob for the materialization
     Raises:
@@ -206,10 +191,10 @@ class View(object):
     output_options = QueryOutput.table(name=table_name, mode=table_mode,
                                                      use_cache=use_cache, priority=priority,
                                                      allow_large_results=allow_large_results)
-    return self._materialization.execute_async(output_options, billing_tier=billing_tier)
+    return self._materialization.execute_async(output_options)
 
   def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-              allow_large_results=False, billing_tier=None):
+              allow_large_results=False):
     """Materialize the View synchronously.
 
     Args:
@@ -222,10 +207,6 @@ class View(object):
           better suited to exploratory analysis.
       allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
           slower and requires a table_name to be specified) (default False).
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
     Returns:
       A QueryJob for the materialization
     Raises:
@@ -234,7 +215,7 @@ class View(object):
     output_options = QueryOutput.table(name=table_name, mode=table_mode,
                                                      use_cache=use_cache, priority=priority,
                                                      allow_large_results=allow_large_results)
-    return self._materialization.execute_async(output_options, billing_tier=billing_tier)
+    return self._materialization.execute_async(output_options)
 
   def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.

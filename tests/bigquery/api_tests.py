@@ -107,6 +107,7 @@ class TestCases(unittest.TestCase):
   def test_jobs_insert_query(self, mock_http_request):
     context = TestCases._create_context()
     context.config['bigquery_dialect'] = 'legacy'
+    context.config['bigquery_billing_tier'] = None
     api = TestCases._create_api(context)
     api.jobs_insert_query('SQL')
     expected_data = {
@@ -127,10 +128,11 @@ class TestCases(unittest.TestCase):
                   expected_data=expected_data)
 
     context.config['bigquery_dialect'] = 'standard'
+    context.config['bigquery_billing_tier'] = 1
     api.jobs_insert_query('SQL2', ['CODE'],
                           table_name=google.datalab.bigquery._utils.TableName('p', 'd', 't', ''),
                           append=True, dry_run=True, use_cache=False, batch=False,
-                          allow_large_results=True, billing_tier=1)
+                          allow_large_results=True)
     expected_data = {
       'kind': 'bigquery#job',
       'configuration': {

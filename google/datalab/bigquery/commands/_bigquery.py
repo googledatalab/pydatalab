@@ -350,11 +350,9 @@ def _sample_cell(args, cell_body):
 
   if query:
     if args['profile']:
-      results = query.execute(QueryOutput.dataframe(), sampling=sampling,
-                              billing_tier=args['billing']).result()
+      results = query.execute(QueryOutput.dataframe(), sampling=sampling).result()
     else:
-      results = query.execute(QueryOutput.table(), sampling=sampling,
-                              billing_tier=args['billing']).results
+      results = query.execute(QueryOutput.table(), sampling=sampling).results
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -387,7 +385,7 @@ def _dryrun_cell(args, cell_body):
   if args['verbose']:
     print(query.sql)
 
-  result = query.execute_dry_run(billing_tier=args['billing'])
+  result = query.execute_dry_run()
   return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                          is_cached=result['cacheHit'])
 
@@ -486,7 +484,7 @@ def _execute_cell(args, cell_body):
     output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-  r = query.execute(output_options, billing_tier=args['billing'])
+  r = query.execute(output_options)
   # if an execute was performed, a QueryJob is returned, which has a .results property
   # otherwise, it's a base Job object, .result() should be called
   return r.results if hasattr(r, 'results') else r.result()
@@ -525,7 +523,7 @@ def _pipeline_cell(args, cell_body):
     output_options = QueryOutput.table(args['target'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-    query.execute(output_options, billing_tier=args['billing']).results
+    query.execute(output_options).results
 
 
 def _get_schema(name):
@@ -701,7 +699,7 @@ def _extract_cell(args, cell_body):
                                       csv_delimiter=args['delimiter'],
                                       csv_header=args['header'], compress=args['compress'],
                                       use_cache=not args['nocache'])
-    job = query.execute(output_options, billing_tier=args['billing'])
+    job = query.execute(output_options)
 
   if job.failed:
     raise Exception('Extract failed: %s' % str(job.fatal_error))
