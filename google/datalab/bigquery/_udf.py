@@ -53,7 +53,19 @@ class UDF(object):
     self._params = params
     self._language = language
     self._imports = imports
-    self._implementation = UDF._build_udf(name, code, return_type, params, language, imports)
+    self._sql = None
+
+  @property
+  def expanded_sql(self):
+    """Get the expanded BigQuery SQL string of this UDF
+
+    Returns
+      The expanded SQL string of this UDF
+    """
+    if not self._sql:
+      self._sql = UDF._build_udf(self._name, self._code, self._return_type, self._params,
+                                 self._language, self._imports)
+    return self._sql
 
   @staticmethod
   def _build_udf(name, code, return_type, params='', language='js', imports=''):
