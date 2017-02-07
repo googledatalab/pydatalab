@@ -149,11 +149,6 @@ def read_examples(input_files, batch_size, shuffle, num_epochs=None):
   # Build a queue of the filenames to be read.
   filename_queue = tf.train.string_input_producer(files, num_epochs, shuffle)
 
-  #options = tf.python_io.TFRecordOptions(
-  #    compression_type=tf.python_io.TFRecordCompressionType.GZIP)
-  #example_id, encoded_example = tf.TFRecordReader(options=options).read_up_to(
-  #    filename_queue, batch_size)
-
   example_id, encoded_example = tf.TextLineReader().read_up_to(
       filename_queue, batch_size)
 
@@ -279,14 +274,7 @@ def preprocess_input(features, target, train_config, preprocess_output_dir, mode
         transform_config = train_config['transforms'].get(name, {})
         transform_name = transform_config.get('transform', None)
         if transform_name == 'scale':
-          features[name] = _scale_tensor(
-              features[name], 
-              range_min=numerical_anlysis[name]['min'], 
-              range_max=numerical_anlysis[name]['max'], 
-              scale_min=-1, 
-              scale_max=1)
-        elif transform_name == 'max_abs_scale':
-          value = float(transform_config['value'])
+          value = float(transform_config.get('value', 1.0))
           features[name] = _scale_tensor(
               features[name], 
               range_min=numerical_anlysis[name]['min'], 
@@ -296,8 +284,8 @@ def preprocess_input(features, target, train_config, preprocess_output_dir, mode
         elif transform_name == 'identity' or transform_name is None:
           pass
         else:
-          raise ValueError(('For numerical variables, only scale, '
-                            'max_abs_scale, and identity are supported: '
+          raise ValueError(('For numerical variables, only scale '
+                            'and identity are supported: '
                             'Error for %s') % name)
   
   # Do target transform
@@ -448,13 +436,10 @@ def get_vocabulary(preprocess_output_dir, name):
     raise ValueError('File %s not found in %s' % (CATEGORICAL_ANALYSIS % name, preprocess_output_dir))
 
   df = pd.read_csv(StringIO(ml.util._file.load_file(vocab_file)),
-                   header=0)
-  index_values = df['index'].values.tolist()
-  label_values = df[name].values.tolist()
+                   header=None, names=['labels'])
+  label_values = df['labels'].values.tolist()
 
-  if index_values != range(len(index_values)):
-    raise ValueError('Labels should be sorted by index in file %s' % vocab_file)
-  return index_values, [str(value) for value in label_values]
+  return [str(value) for value in label_values]
 
 
 
@@ -560,7 +545,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
   # Load vocabs
   for name in result_dict['categorical_columns']:
     if name != result_dict['key_column']:
-      _, label_values = get_vocabulary(preprocess_output_dir, name)
+      label_values = get_vocabulary(preprocess_output_dir, name)
       n_classes = len(label_values)
       result_dict['vocab_stats'][name] = {'n_classes': n_classes, 'labels': label_values}
 

@@ -97,16 +97,16 @@ def local_preprocess(output_dir, input_feature_file, input_file_pattern, schema_
   Args:
     output_dir: The output directory to use.
     input_feature_file: Describes defaults and column types.
-    input_file_path: String. File pattern what will expand into a list of csv
+    input_file_pattern: String. File pattern what will expand into a list of csv
         files.
     schema_file: File path to the schema file.
     
   """
   args = ['local_preprocess',
-          '--input_file_pattern=%s' % input_file_path,
+          '--input_file_pattern=%s' % input_file_pattern,
           '--output_dir=%s' % output_dir,
           '--schema_file=%s' % schema_file,
-          '--input_feature_types=%s' % input_feature_file]
+          '--input_feature_file=%s' % input_feature_file]
 
   print('Starting local preprocessing.')
   preprocess.local_preprocess.main(args)
@@ -130,7 +130,7 @@ def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, sc
 
   args = ['cloud_preprocess',
           '--output_dir=%s' % output_dir,
-          '--input_feature_types=%s' % input_feature_file]
+          '--input_feature_file=%s' % input_feature_file]
 
   if input_file_pattern:
     args.append('--input_file_pattern=%s' % input_file_pattern)

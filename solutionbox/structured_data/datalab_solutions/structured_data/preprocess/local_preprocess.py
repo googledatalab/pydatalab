@@ -23,13 +23,16 @@ import json
 import os
 import sys
 
+
 from tensorflow.python.lib.io import file_io
+
+
 
 INPUT_FEATURES_FILE = 'input_features.json'
 SCHEMA_FILE = 'schema.json'
 
-NUMERICAL_ANALYSIS = 'numerical_analysis.json'
-CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
+NUMERICAL_ANALYSIS_FILE = 'numerical_analysis.json'
+CATEGORICAL_ANALYSIS_FILE = 'vocab_%s.csv'
 
 
 def parse_arguments(argv):
@@ -55,7 +58,7 @@ def parse_arguments(argv):
                       type=str,
                       required=True,
                       help=('BigQuery json schema file'))
-  parser.add_argument('--input_feature_types',
+  parser.add_argument('--input_feature_file',
                       type=str,
                       required=True,
                       help=('Json file containing feature types'))
@@ -69,6 +72,16 @@ def parse_arguments(argv):
 
 
 def run_numerical_categorical_analysis(args, feature_types, schema_list):
+  """Makes the nuermical and categorical analysis files.
+
+  Args:
+    args: the command line args
+    feature_types: python object of the feature types json file
+    schema_list: python object of the schema json file.
+
+  Raises:
+    ValueError: if feature_types contains unknown column types.
+  """
   header = [column['name'] for column in schema_list]
   input_files = file_io.get_matching_files(args.input_file_pattern)
 
@@ -97,7 +110,8 @@ def run_numerical_categorical_analysis(args, feature_types, schema_list):
                                                  float(parsed_line[name]))
           elif config['type'] == 'categorical':
             # Update categorical analsysis
-            categorical_results[name].update(parsed_line[name])
+
+            categorical_results[name].update([parsed_line[name]])
           elif config['type'] == 'key':
             pass
           else:
@@ -106,30 +120,33 @@ def run_numerical_categorical_analysis(args, feature_types, schema_list):
 
   # Write the numerical_results to a json file.
   file_io.write_string_to_file(
-      os.path.join(args.output_dir, NUMERICAL_ANALYSIS),
+      os.path.join(args.output_dir, NUMERICAL_ANALYSIS_FILE),
       json.dumps(numerical_results, indent=2, separators=(',', ': ')))
 
   # Write the vocab files. Each label is on its own line.
   for name, unique_labels in categorical_results.iteritems():
     file_io.write_string_to_file(
-        os.path.join(args.output_dir, CATEGORICAL_ANALYSIS % name),
+        os.path.join(args.output_dir, CATEGORICAL_ANALYSIS_FILE % name),
         '\n'.join(list(unique_labels)))
 
 
 def run_analysis(args):
   """Builds an analysis files for training."""
-  # Read the schema and input feature types
 
+  # Read the schema and input feature types
   schema_list = json.loads(file_io.read_file_to_string(args.schema_file))
   feature_types = json.loads(
-      file_io.read_file_to_string(args.input_feature_types))
+      file_io.read_file_to_string(args.input_feature_file))
 
   run_numerical_categorical_analysis(args, feature_types, schema_list)
 
   # Also save a copy of the schema/input types in the output folder.
-  file_io.copy(args.input_feature_types,
-               os.path.join(args.output_dir, INPUT_FEATURES_FILE))
-  file_io.copy(args.schema_file, os.path.join(args.output_dir, SCHEMA_FILE))
+  file_io.copy(args.input_feature_file,
+               os.path.join(args.output_dir, INPUT_FEATURES_FILE),
+               overwrite=True)
+  file_io.copy(args.schema_file, 
+               os.path.join(args.output_dir, SCHEMA_FILE),
+               overwrite=True)
 
 
 def main(argv=None):

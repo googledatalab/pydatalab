@@ -26,8 +26,8 @@ from tensorflow.python.lib.io import file_io
 INPUT_FEATURES_FILE = 'input_features.json'
 SCHEMA_FILE = 'schema.json'
 
-NUMERICAL_ANALYSIS = 'numerical_analysis.json'
-CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
+NUMERICAL_ANALYSIS_FILE = 'numerical_analysis.json'
+CATEGORICAL_ANALYSIS_FILE = 'vocab_%s.csv'
 
 
 def parse_arguments(argv):
@@ -40,7 +40,7 @@ def parse_arguments(argv):
     An argparse Namespace object.
 
   Raises:
-    ValueError for bad parameters
+    ValueError: for bad parameters
   """
   parser = argparse.ArgumentParser(
       description='Runs Preprocessing on structured data.')
@@ -48,7 +48,7 @@ def parse_arguments(argv):
                       type=str,
                       required=True,
                       help='Google Cloud Storage which to place outputs.')
-  parser.add_argument('--input_feature_types',
+  parser.add_argument('--input_feature_file',
                       type=str,
                       required=True,
                       help=('Json file containing feature types'))
@@ -63,6 +63,8 @@ def parse_arguments(argv):
                       help='Input CSV file names. May contain a file pattern')
 
   # If using bigquery table
+  # TODO(brandondutra): maybe also support an sql input, so the table can be 
+  # ad-hoc.
   parser.add_argument('--bigquery_table',
                       type=str,
                       required=False,
@@ -92,7 +94,17 @@ def parse_arguments(argv):
 
 
 def parse_table_name(bigquery_table):
-  """Giving a string a:b.c, returns b.c"""
+  """Giving a string a:b.c, returns b.c.
+
+  Args:
+    bigquery_table: full table name project_id:dataset:table
+
+  Returns:
+    dataset:table
+
+  Raises:
+    ValueError: if a, b, or c contain the character ':'.
+  """
 
   id_name = bigquery_table.split(':')
   if len(id_name) != 2:
@@ -106,7 +118,7 @@ def run_numerical_analysis(table, args, feature_types):
 
   Args:
     table: Reference to FederatedTable if bigquery_table is false.
-    args: the parseargs
+    args: the command line args
     feature_types: python object of the feature types file.
   """
   import datalab.bigquery as bq
@@ -121,14 +133,14 @@ def run_numerical_analysis(table, args, feature_types):
   if numerical_columns:
     sys.stdout.write('Running numerical analysis...')
     max_min = [
-        "max({name}) as max_{name}, min({name}) as min_{name}".format(name=name)
+        'max({name}) as max_{name}, min({name}) as min_{name}'.format(name=name)
         for name in numerical_columns]
     if args.bigquery_table:
-      sql = "SELECT  %s from %s" % (', '.join(max_min),
+      sql = 'SELECT  %s from %s' % (', '.join(max_min),
                                     parse_table_name(args.bigquery_table))
       numerical_results = bq.Query(sql).to_dataframe()
     else:
-      sql = "SELECT  %s from csv_table" % ', '.join(max_min)
+      sql = 'SELECT  %s from csv_table' % ', '.join(max_min)
       query = bq.Query(sql, data_sources={'csv_table': table})
       numerical_results = query.to_dataframe()
 
@@ -139,7 +151,7 @@ def run_numerical_analysis(table, args, feature_types):
                             'min': numerical_results.iloc[0]['min_%s' % name]}
 
     file_io.write_string_to_file(
-        os.path.join(args.output_dir, NUMERICAL_ANALYSIS),
+        os.path.join(args.output_dir, NUMERICAL_ANALYSIS_FILE),
         json.dumps(results_dict, indent=2, separators=(',', ': ')))
 
     sys.stdout.write('done.\n')
@@ -157,7 +169,7 @@ def run_categorical_analysis(table, args, feature_types):
 
   Args:
     table: Reference to FederatedTable if bigquery_table is false.
-    args: the parseargs
+    args: the command line args
     feature_types: python object of the feature types file.
   """
   import datalab.bigquery as bq
@@ -185,7 +197,8 @@ def run_categorical_analysis(table, args, feature_types):
             GROUP BY
               {name}
       """.format(name=name, table=table_name)
-      out_file = os.path.join(args.output_dir, CATEGORICAL_ANALYSIS % name)
+      out_file = os.path.join(args.output_dir, 
+                              CATEGORICAL_ANALYSIS_FILE % name)
 
       if args.bigquery_table:
         jobs.append(bq.Query(sql).extract_async(out_file, csv_header=False))
@@ -203,6 +216,9 @@ def run_analysis(args):
   """Builds an analysis file for training.
 
   Uses BiqQuery tables to do the analysis.
+
+  Args:
+    args: command line args
   """
   import datalab.bigquery as bq
   if args.bigquery_table:
@@ -217,13 +233,14 @@ def run_analysis(args):
         compressed=False,
         schema=bq.Schema(schema_list))
 
-  feature_types = file_io.read_file_to_string(args.input_feature_types)
-  
+  feature_types = json.loads(
+      file_io.read_file_to_string(args.input_feature_file))
+
   run_numerical_analysis(table, args, feature_types)
   run_categorical_analysis(table, args, feature_types)
 
   # Save a copy of the input types to the output location.
-  file_io.copy(args.input_feature_types,
+  file_io.copy(args.input_feature_file,
                os.path.join(args.output_dir, INPUT_FEATURES_FILE),
                overwrite=True)
 
@@ -235,8 +252,7 @@ def run_analysis(args):
   else:
     file_io.write_string_to_file(
         os.path.join(args.output_dir, SCHEMA_FILE),
-        json.dumps(table.schema._bq_schema, indent=2, separators=(',', ': ')),
-        overwrite=True)
+        json.dumps(table.schema._bq_schema, indent=2, separators=(',', ': ')))
 
 
 def main(argv=None):

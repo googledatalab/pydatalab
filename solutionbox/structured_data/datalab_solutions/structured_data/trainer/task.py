@@ -22,12 +22,10 @@ import sys
 
 from . import util
 import tensorflow as tf
-
-import google.cloud.ml as ml
-
 from tensorflow.contrib import metrics as metrics_lib
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.session_bundle import manifest_pb2
+from tensorflow.python.lib.io import file_io
 
 UNKNOWN_LABEL = 'ERROR_UNKNOWN_LABEL'
 FEATURES_EXAMPLE_DICT_KEY = 'features_example_dict_key'
@@ -41,7 +39,6 @@ TARGET_INPUT_TENSOR_NAME = 'target_from_input'
 # Constants for the exported input and output collections.
 INPUT_COLLECTION_NAME = 'inputs'
 OUTPUT_COLLECTION_NAME = 'outputs'
-
 
 
 def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
@@ -66,7 +63,7 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
     target = features.pop(train_config['target_column'])
     features, target = util.preprocess_input(
         features=features,
-        target=target, 
+        target=target,
         train_config=train_config,
         preprocess_output_dir=preprocess_output_dir,
         model_type=model_type)
@@ -80,8 +77,8 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
   return get_input_features
 
 
-def get_reader_input_fn(train_config, preprocess_output_dir, model_type, data_paths, batch_size,
-                        shuffle):
+def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
+                        data_paths, batch_size, shuffle):
   """Builds input layer for training."""
 
   def get_input_features():
@@ -94,11 +91,10 @@ def get_reader_input_fn(train_config, preprocess_output_dir, model_type, data_pa
     target = features.pop(target_name)
     features, target = util.preprocess_input(
         features=features,
-        target=target, 
+        target=target,
         train_config=train_config,
         preprocess_output_dir=preprocess_output_dir,
         model_type=model_type)
-
 
     return features, target
 
@@ -118,10 +114,10 @@ def get_export_signature_fn(train_config, args):
     key_name = train_config['key_column']
     outputs = {TARGET_SCORE_TENSOR_NAME: predictions.name,
                key_name: tf.squeeze(features[key_name]).name,
-               }
+              }
 
     if util.is_classification_model(args.model_type):
-      _, string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
+      string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
       prediction = tf.argmax(predictions, 1)
       predicted_label = tf.contrib.lookup.index_to_string(
           prediction,
@@ -131,11 +127,11 @@ def get_export_signature_fn(train_config, args):
           features[target_name],
           mapping=string_value)
       outputs.update(
-        {TARGET_CLASS_TENSOR_NAME: predicted_label.name,
-         TARGET_INPUT_TENSOR_NAME: input_target_label.name})
+          {TARGET_CLASS_TENSOR_NAME: predicted_label.name,
+           TARGET_INPUT_TENSOR_NAME: input_target_label.name})
     else:
       outputs.update(
-        {TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name})
+          {TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name})
 
 
     inputs = {EXAMPLES_PLACEHOLDER_TENSOR_NAME: examples.name}
@@ -161,24 +157,30 @@ def get_export_signature_fn(train_config, args):
 
 
 def get_experiment_fn(args):
-  """Builds the experiment function for learn_runner.run"""
+  """Builds the experiment function for learn_runner.run.
+
+  Args:
+    args: the command line args
+
+  Returns:
+    A function that returns a tf.learn experiment object.
+  """
 
   def get_experiment(output_dir):
     # Merge schema, input features, and transforms.
-    train_config = util.merge_metadata(args.preprocess_output_dir, args.transforms_file)
-
-    #metadata = ml.features.FeatureMetadata.get_metadata(args.metadata_path)
-    #transform_config = json.loads(ml.util._file.load_file(args.transforms_file))
-    #schema_config = json.loads(ml.util._file.load_file(args.schema_file))
+    train_config = util.merge_metadata(args.preprocess_output_dir,
+                                       args.transforms_file)
 
     # Get the model to train.
     estimator = util.get_estimator(output_dir, train_config, args)
 
-    input_placeholder_for_prediction = get_placeholder_input_fn(train_config, args.preprocess_output_dir, args.model_type)
+    input_placeholder_for_prediction = get_placeholder_input_fn(
+        train_config, args.preprocess_output_dir, args.model_type)
 
     # Save a copy of the scehma and input to the model folder.
     schema_file = os.path.join(args.preprocess_output_dir, util.SCHEMA_FILE)
-    input_features_file = os.path.join(args.preprocess_output_dir, util.INPUT_FEATURES_FILE)
+    input_features_file = os.path.join(args.preprocess_output_dir,
+                                       util.INPUT_FEATURES_FILE)
 
     # Save the finished model to output_dir/model
     export_monitor = util.ExportLastModelMonitor(
@@ -190,19 +192,21 @@ def get_experiment_fn(args):
         signature_fn=get_export_signature_fn(train_config, args))
 
     input_reader_for_train = get_reader_input_fn(
-        train_config, args.preprocess_output_dir, args.model_type, args.train_data_paths, args.batch_size, shuffle=True)
+        train_config, args.preprocess_output_dir, args.model_type,
+        args.train_data_paths, args.batch_size, shuffle=True)
     input_reader_for_eval = get_reader_input_fn(
-        train_config, args.preprocess_output_dir, args.model_type, args.eval_data_paths, args.eval_batch_size, shuffle=False)
+        train_config, args.preprocess_output_dir, args.model_type,
+        args.eval_data_paths, args.eval_batch_size, shuffle=False)
 
     # Set the eval metrics.
-    # todo(brandondutra): make this work with HP tuning.
+    # TODO(brandondutra): make this work with HP tuning.
     if util.is_classification_model(args.model_type):
       streaming_accuracy = metrics_lib.streaming_accuracy
-      eval_metrics =  {
-            ('accuracy', 'classes'): streaming_accuracy,
-            # Export the accuracy as a metric for hyperparameter tuning.
-            ('training/hptuning/metric', 'classes'): streaming_accuracy
-        }
+      eval_metrics = {
+          ('accuracy', 'classes'): streaming_accuracy,
+          # Export the accuracy as a metric for hyperparameter tuning.
+          ('training/hptuning/metric', 'classes'): streaming_accuracy
+      }
     else:
       eval_metrics = None
 

@@ -49,7 +49,7 @@ class TestTrainer(unittest.TestCase):
 
   def tearDown(self):
     print('TestTrainer: removing test dir ' + self._test_dir)
-    shutil.rmtree(self._test_dir)
+    #shutil.rmtree(self._test_dir)
 
 
   def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
@@ -159,7 +159,7 @@ class TestTrainer(unittest.TestCase):
 
     transforms = {
         "num1": {"transform": "scale"},
-        "num2": {"transform": "max_abs_scale","value": 4},
+        "num2": {"transform": "scale","value": 4},
         "str1": {"transform": "hash_embedding", "embedding_dim": 2, "hash_bucket_size": 4},
         "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"}
@@ -171,7 +171,7 @@ class TestTrainer(unittest.TestCase):
                        transforms=transforms,
                        extra_args=extra_args)
 
-    self._check_training_screen_output(loss=6)
+    self._check_training_screen_output(loss=20)
     self._check_train_files()
 
 
@@ -180,7 +180,7 @@ class TestTrainer(unittest.TestCase):
 
     transforms = {
         "num1": {"transform": "scale"},
-        "num2": {"transform": "max_abs_scale","value": 4},
+        "num2": {"transform": "scale","value": 4},
         "str1": {"transform": "hash_sparse", "hash_bucket_size": 2},
         "str2": {"transform": "hash_sparse", "hash_bucket_size": 2},
         "str3": {"transform": "hash_sparse", "hash_bucket_size": 2},
@@ -200,7 +200,7 @@ class TestTrainer(unittest.TestCase):
 
     transforms = {
         "num1": {"transform": "scale"},
-        "num2": {"transform": "max_abs_scale","value": 4},
+        "num2": {"transform": "scale","value": 4},
         "str1": {"transform": "hash_one_hot", "hash_bucket_size": 4},
         "str2": {"transform": "one_hot"},
         "str3": {"transform": "embedding", "embedding_dim": 3},
@@ -222,7 +222,7 @@ class TestTrainer(unittest.TestCase):
 
     transforms = {
         "num1": {"transform": "scale"},
-        "num2": {"transform": "max_abs_scale","value": 4},
+        "num2": {"transform": "scale","value": 4},
         "str1": {"transform": "hash_sparse", "hash_bucket_size": 4},
         "str2": {"transform": "sparse"},
         "target": {"transform": "target"}

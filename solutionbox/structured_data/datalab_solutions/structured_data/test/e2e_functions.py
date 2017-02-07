@@ -58,7 +58,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
           t = 102
 
       if keep_target:
-          csv_line = "{id},{target},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
+          csv_line = "{target},{id},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
             id=i,
             target=t,
             num1=num1,
@@ -68,7 +68,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
             str2=str2,
             str3=str3)
       else:
-          csv_line = "{id},,{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
+          csv_line = "{id},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
             id=i,
             num1=num1,
             num2=num2,
@@ -86,14 +86,14 @@ def make_preprocess_schema(filename):
   """
   schema = [
       {
-          "mode": "NULLABLE",
-          "name": "key",
-          "type": "STRING"
-      },
-      {
           "mode": "REQUIRED",
           "name": "target",
           "type": "INTEGER"
+      },  
+      {
+          "mode": "NULLABLE",
+          "name": "key",
+          "type": "STRING"
       },
       {
           "mode": "NULLABLE",
@@ -167,7 +167,7 @@ def run_preprocess(output_dir, csv_filename, schema_filename,
          '--output_dir', output_dir,
          '--input_file_pattern', csv_filename,
          '--schema_file', schema_filename,
-         '--input_feature_types', input_features_filename,
+         '--input_feature_file', input_features_filename,
   ]
   print('Going to run command: %s' % ' '.join(cmd))
   subprocess.check_call(cmd) #, stderr=open(os.devnull, 'wb'))
@@ -224,3 +224,7 @@ if __name__ == '__main__':
   make_csv_data('raw_train_regression.csv', 5000, 'regression', True)
   make_csv_data('raw_eval_regression.csv', 1000, 'regression', True)
   make_csv_data('raw_predict_regression.csv', 100, 'regression', False)
+
+  make_csv_data('raw_train_classification.csv', 5000, 'classification', True)
+  make_csv_data('raw_eval_classification.csv', 1000, 'classification', True)
+  make_csv_data('raw_predict_classification.csv', 100, 'classification', False)
