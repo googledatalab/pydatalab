@@ -383,10 +383,7 @@ def _udf_cell(args, cell_body):
 
   Args:
     args: the optional arguments following '%%bq udf'.
-    js: the UDF declaration (inputs and outputs) and implementation in javascript.
-  Returns:
-    The results of executing the UDF converted to a dataframe if no variable
-    was specified. None otherwise.
+    cell_body: the UDF declaration (inputs and outputs) and implementation in javascript.
   """
   udf_name = args['name']
   if not udf_name:
