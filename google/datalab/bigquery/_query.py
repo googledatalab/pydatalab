@@ -34,7 +34,8 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None, **kwargs):
+  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None,
+               subqueries=None, **kwargs):
     """Initializes an instance of a Query object.
        Note that either values or kwargs may be used, but not both.
 
@@ -51,8 +52,9 @@ class Query(object):
           level are used.
       values: a dictionary used to expand variables if passed a SqlStatement or a string with
           variable references.
-      udfs: array of UDFs referenced in the SQL.
+      udfs: list of UDFs referenced in the SQL.
       data_sources: dictionary of federated (external) tables referenced in the SQL.
+      subqueries: list of subqueries referenced in the SQL
       kwargs: arguments to use when expanding the variables if passed a SqlStatement
           or a string with variable references.
 
@@ -65,20 +67,34 @@ class Query(object):
     self._api = _api.Api(context)
     self._data_sources = data_sources
     self._udfs = udfs
+    self._subqueries = subqueries
+    self._values = values
 
     if data_sources is None:
       data_sources = {}
 
     self._code = None
     self._imports = []
-    if values is None:
-      values = kwargs
+    if self._values is None:
+      self._values = kwargs
 
-    self._sql = google.datalab.data.SqlModule.expand(sql, values)
+    self._sql = google.datalab.data.SqlModule.expand(sql, self._values)
+
+    def _validate_object(obj):
+      if not self._values.__contains__(obj):
+        raise Exception('Cannot find object %s.' % obj)
+
+    # Validate subqueries and UDFs when adding them to query
+    if self._subqueries:
+      for subquery in self._subqueries:
+        _validate_object(subquery)
+    if self._udfs:
+      for udf in self._udfs:
+        _validate_object(udf)
 
     # We need to take care not to include the same UDF code twice so we use sets.
     udfs = set(udfs if udfs else [])
-    for value in list(values.values()):
+    for value in list(self._values.values()):
       if isinstance(value, _udf.UDF):
         udfs.add(value)
     included_udfs = set([])
@@ -90,6 +106,41 @@ class Query(object):
         if table.schema is None:
           raise Exception('Referenced external table %s has no known schema' % name)
         self._external_tables[name] = table._to_query_json()
+
+  @property
+  def expanded_sql(self):
+    """Get the expanded SQL of this object, including all subqueries, UDFs, and external datasources
+
+    Returns:
+      The expanded SQL string of this object
+    """
+
+    udfs = set()
+    subqueries = set()
+
+    def _recurse_subqueries(query):
+      """Recursively scan subqueries and add their pieces to global scope udfs and subqueries
+      """
+      if query._subqueries:
+        subqueries.update(query._subqueries)
+      if query._udfs:
+        udfs.update(set(query._udfs))
+      if query._subqueries:
+        for subquery in query._subqueries:
+          subquery = self._values[subquery]
+          _recurse_subqueries(subquery)
+
+    subqueries_sql = udfs_sql = ''
+    _recurse_subqueries(self)
+
+    if udfs:
+      udfs_sql = '\n'.join([self._values[udf].expanded_sql for udf in udfs])
+
+    if subqueries:
+      subqueries_sql = 'WITH ' + \
+                       ',\n'.join(['%s AS (%s)' % (sq, self._values[sq]._sql) for sq in subqueries])
+
+    return '%s\n%s\n%s' % (udfs_sql, subqueries_sql, self._sql)
 
   def _repr_sql_(self):
     """Creates a SQL representation of this object.
