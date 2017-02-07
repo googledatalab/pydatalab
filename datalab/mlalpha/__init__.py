@@ -19,7 +19,7 @@ from ._cloud_runner import CloudRunner
 from ._metadata import Metadata
 from ._local_predictor import LocalPredictor
 from ._cloud_predictor import CloudPredictor
-from ._job import Jobs
+from ._job import Jobs, Job
 from ._summary import Summary
 from ._tensorboard import TensorBoard
 from ._dataset import CsvDataSet, BigQueryDataSet
@@ -28,6 +28,7 @@ from ._cloud_models import CloudModels, CloudModelVersions
 from ._confusion_matrix import ConfusionMatrix
 from ._analysis import csv_to_dataframe
 from ._package_runner import PackageRunner
+from ._feature_slice_view import FeatureSliceView
 
 from plotly.offline import init_notebook_mode
 
