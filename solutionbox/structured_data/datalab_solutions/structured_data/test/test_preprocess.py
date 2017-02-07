@@ -24,8 +24,6 @@ import unittest
 
 import tensorflow as tf
 
-import google.cloud.ml as ml
-
 import e2e_functions
 
 

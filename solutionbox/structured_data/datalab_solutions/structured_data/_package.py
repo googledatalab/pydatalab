@@ -41,9 +41,6 @@ import json
 import tensorflow as tf
 import yaml
 
-
-import google.cloud.ml as ml
-
 from . import preprocess
 from . import trainer
 
