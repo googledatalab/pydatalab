@@ -360,7 +360,7 @@ def _sample_cell(args, cell_body):
     if args['profile']:
       results = query.execute(QueryOutput.dataframe(), sampling=sampling).result()
     else:
-      results = query.execute(QueryOutput.table(), sampling=sampling).results
+      results = query.execute(QueryOutput.table(), sampling=sampling).result()
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -493,9 +493,7 @@ def _execute_cell(args, cell_body):
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
   r = query.execute(output_options)
-  # if an execute was performed, a QueryJob is returned, which has a .results property
-  # otherwise, it's a base Job object, .result() should be called
-  return r.results if hasattr(r, 'results') else r.result()
+  return r.result()
 
 
 def _pipeline_cell(args, cell_body):
@@ -531,7 +529,7 @@ def _pipeline_cell(args, cell_body):
     output_options = QueryOutput.table(args['target'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-    query.execute(output_options).results
+    query.execute(output_options).result()
 
 
 def _get_schema(name):

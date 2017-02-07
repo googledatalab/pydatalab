@@ -167,7 +167,7 @@ class View(object):
       Exception if the query could not be executed or query response was malformed.
     """
     output_options = QueryOutput.table(use_cache=use_cache)
-    return self._materialization.execute(output_options).results
+    return self._materialization.execute(output_options).result()
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
                     allow_large_results=False):

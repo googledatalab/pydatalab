@@ -19,7 +19,7 @@ import abc
 import concurrent.futures
 import functools
 
-from . import _job
+from google.datalab._job import Job
 from future.utils import with_metaclass
 
 
@@ -52,7 +52,7 @@ class async(with_metaclass(abc.ABCMeta, object)):
 
   def __call__(self, *args, **kwargs):
     # Queue the call up in the thread pool.
-    return _job.Job(future=self.executor.submit(self._call, *args, **kwargs))
+    return Job(future=self.executor.submit(self._call, *args, **kwargs))
 
 
 class async_function(async):

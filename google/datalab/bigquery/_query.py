@@ -202,7 +202,7 @@ class Query(object):
       export_job = export_args = export_kwargs = None
       if output_options.type == 'file':
         if output_options.file_path.startswith('gs://'):
-          export_func = execute_job.results.extract
+          export_func = execute_job.result().extract
           export_args = [output_options.file_path]
           export_kwargs = {
                             'format': output_options.file_format,
@@ -211,7 +211,7 @@ class Query(object):
                             'compress': output_options.compress_file
                           }
         else:
-          export_func = execute_job.results.to_file
+          export_func = execute_job.result().to_file
           export_args = [output_options.file_path]
           export_kwargs = {
                             'format': output_options.file_format,
@@ -219,7 +219,7 @@ class Query(object):
                             'csv_header': output_options.csv_header
                           }
       elif output_options.type == 'dataframe':
-        export_func = execute_job.results.to_dataframe
+        export_func = execute_job.result().to_dataframe
         export_args = []
         export_kwargs = {
                           'start_row': output_options.dataframe_start_row,
