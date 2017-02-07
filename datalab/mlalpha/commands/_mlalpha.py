@@ -618,7 +618,7 @@ def _model(args, _):
     return
   elif len(parts) == 2:
     versions = datalab.mlalpha.CloudModelVersions(parts[0], project_id=args['project'])
-    version_yaml = yaml.safe_dump(versions.get(parts[1]))
+    version_yaml = yaml.safe_dump(versions.get_version_details(parts[1]))
     return datalab.utils.commands.render_text(version_yaml, preformatted=True)
   else:
     raise Exception('Too many "." in name. Use "model" or "model.version".')
