@@ -54,7 +54,7 @@ class CloudModels(object):
   def __iter__(self):
     return iter(datalab.utils.Iterator(self._retrieve_models))
 
-  def get(self, model_name):
+  def get_model_details(self, model_name):
     """Get details of a model.
 
     Args:
@@ -98,10 +98,16 @@ class CloudModels(object):
       Exception if it is called in a non-IPython environment.
     """
     import IPython
-    data = [{'name': model['name'], 
-             'defaultVersion': model['defaultVersion']['name'].split('/')[-1]
-                 if 'defaultVersion' in model else None}
-            for _, model in zip(range(count), self)]
+    data = []
+    # Add range(count) to loop so it will stop either it reaches count, or iteration
+    # on self is exhausted. "self" is iterable (see __iter__() method).
+    for _, model in zip(range(count), self):
+      element = {'name': model['name']}
+      if 'defaultVersion' in model:
+        version_short_name = model['defaultVersion']['name'].split('/')[-1]
+        element['defaultVersion'] = version_short_name
+      data.append(element)
+
     IPython.display.display(
         datalab.utils.commands.render_dictionary(data, ['name', 'defaultVersion']))
     
@@ -111,7 +117,7 @@ class CloudModels(object):
     Args:
       model_name: the name of the model to print details on.
     """    
-    model_yaml = yaml.safe_dump(self.get(model_name), default_flow_style=False)
+    model_yaml = yaml.safe_dump(self.get_model_details(model_name), default_flow_style=False)
     print model_yaml
     
 
@@ -149,7 +155,7 @@ class CloudModelVersions(object):
   def __iter__(self):
     return iter(datalab.utils.Iterator(self._retrieve_versions))
 
-  def get(self, version_name):
+  def get_version_details(self, version_name):
     """Get details of a version.
 
     Args:
@@ -223,7 +229,8 @@ class CloudModelVersions(object):
     Args:
       version: the name of the version in short form, such as "v1".
     """
-    version_yaml = yaml.safe_dump(self.get(version_name), default_flow_style=False)
+    version_yaml = yaml.safe_dump(self.get_version_details(version_name),
+                                  default_flow_style=False)
     print version_yaml
 
   def list(self):
@@ -233,6 +240,8 @@ class CloudModelVersions(object):
       Exception if it is called in a non-IPython environment.
     """    
     import IPython
+
+    # "self" is iterable (see __iter__() method).
     data = [{'name': version['name'].split()[-1], 
              'deploymentUri': version['deploymentUri'], 'createTime': version['createTime']}
             for version in self]
