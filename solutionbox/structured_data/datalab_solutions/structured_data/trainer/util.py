@@ -325,7 +325,7 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
                             'Error for %s') % name)
 
   # Do target transform
-  with tf.name_scope('categorical_feature_preprocess') as scope:
+  with tf.name_scope('target_feature_preprocess') as scope:
     if target_name in train_config['categorical_columns']:
       labels = train_config['vocab_stats'][target_name]['labels']
       target = tf.contrib.lookup.string_to_index(target, labels)

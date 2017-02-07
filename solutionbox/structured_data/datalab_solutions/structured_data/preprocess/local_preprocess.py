@@ -72,7 +72,7 @@ def parse_arguments(argv):
 
 
 def run_numerical_categorical_analysis(args, feature_types, schema_list):
-  """Makes the nuermical and categorical analysis files.
+  """Makes the numerical and categorical analysis files.
 
   Args:
     args: the command line args
