@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from . import _async
-from . import _job
+from google.datalab import _job
 
 
 class LambdaJob(_job.Job):

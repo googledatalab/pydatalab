@@ -98,8 +98,7 @@ class QueryJob(_job.Job):
     self._refresh_state()
     return self
 
-  @property
-  def results(self):
+  def result(self):
     """ Get the table used for the results of the query. If the query is incomplete, this blocks.
 
     Raises:

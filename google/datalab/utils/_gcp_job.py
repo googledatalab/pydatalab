@@ -15,7 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import google.datalab
-from . import _job
+from google.datalab import _job
 
 
 class GCPJob(_job.Job):

@@ -19,12 +19,14 @@ import unittest
 import google.datalab
 import google.datalab.bigquery
 
+from google.datalab.bigquery._job import Job
+
 
 class TestCases(unittest.TestCase):
 
   @staticmethod
   def _make_job(id):
-    return google.datalab.bigquery.Job(id, TestCases._create_context())
+    return Job(id, TestCases._create_context())
 
   @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
   def test_job_complete(self, mock_api_jobs_get):
