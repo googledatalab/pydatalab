@@ -11,3 +11,4 @@
 # the License.
 
 from google.datalab._context import Context
+from google.datalab._job import Job, JobError

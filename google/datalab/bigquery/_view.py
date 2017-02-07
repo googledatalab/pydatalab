@@ -186,7 +186,7 @@ class View(object):
     """
     output_options = QueryOutput.table(use_cache=use_cache)
     return self._materialization.execute(output_options, dialect=dialect,
-                                               billing_tier=billing_tier).results
+                                               billing_tier=billing_tier).result()
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
                     allow_large_results=False, dialect=None, billing_tier=None):
