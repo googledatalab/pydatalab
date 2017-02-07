@@ -51,7 +51,13 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
         shape=(None,),
         name=EXAMPLES_PLACEHOLDER_TENSOR_NAME)
 
-    features = util.parse_example_tensor(examples=examples,
+    parts = tf.string_split(examples, delimiter=',')
+    new_examples = tf.cond(
+        tf.less(tf.shape(parts.values), len(train_config['csv_header'])),
+        lambda: tf.string_join([tf.constant(','), examples]),
+        lambda: examples)
+
+    features = util.parse_example_tensor(examples=new_examples,
                                          train_config=train_config)
 
     global FEATURES_EXAMPLE_DICT_KEY
