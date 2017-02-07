@@ -23,41 +23,77 @@ import e2e_functions
 
 
 class TestTrainer(unittest.TestCase):
+  """Tests training.
+
+  Each test builds a csv test dataset. Preprocessing is run on the data to
+  produce analysis. Training is then ran, and the output is collected and the
+  accuracy/loss values are inspected.
+  """
 
   def setUp(self):
     self._test_dir = tempfile.mkdtemp()
-    self._preprocess_dir = os.path.join(self._test_dir, 'pre')
-    self._train_dir = os.path.join(self._test_dir, 'train')
+    self._preprocess_output = os.path.join(self._test_dir, 'pre')
+    self._train_output = os.path.join(self._test_dir, 'train')
 
-    os.mkdir(self._preprocess_dir)
-    os.mkdir(self._train_dir)
+    os.mkdir(self._preprocess_output)
+    os.mkdir(self._train_output)
 
-    self._csv_filename = os.path.join(self._preprocess_dir, 'raw_csv_data.csv')
+    self._csv_train_filename = os.path.join(self._test_dir, 'train_csv_data.csv')
+    self._csv_eval_filename = os.path.join(self._test_dir, 'eval_csv_data.csv')
     self._schema_filename = os.path.join(self._test_dir, 'schema.json')
+    self._input_features_filename = os.path.join(self._test_dir, 
+                                                 'input_features_file.json')
+
     self._transforms_filename = os.path.join(self._test_dir, 'transforms.json')
+
 
   def tearDown(self):
     print('TestTrainer: removing test dir ' + self._test_dir)
-    shutil.rmtree(self._test_dir)
+    #shutil.rmtree(self._test_dir)
 
-  def _run_training(self, schema, transforms, extra_args):
-    with open(self._schema_filename, 'w') as f:
-      f.write(json.dumps(schema, indent=2, separators=(',', ': ')))
 
+  def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
+    """Runs training.
+
+    Output is saved to _training_screen_output. Nothing from training should be
+    printed to the screen.
+
+    Args:
+      problem_type: 'regression' or 'classification'
+      model_type: 'linear' or 'dnn'
+      transform: JSON object of the transforms file.
+      extra_args: list of strings to pass to the trainer.
+    """
+    # Run preprocessing.
+    e2e_functions.make_csv_data(self._csv_train_filename, 100, problem_type, True)
+    e2e_functions.make_csv_data(self._csv_eval_filename, 100, problem_type, True)
+    e2e_functions.make_preprocess_schema(self._schema_filename)
+    e2e_functions.make_preprocess_input_features(self._input_features_filename, 
+                                                 problem_type)
+
+    e2e_functions.run_preprocess(
+        output_dir=self._preprocess_output,
+        csv_filename=self._csv_train_filename,
+        schema_filename=self._schema_filename,
+        input_features_filename=self._input_features_filename)
+
+    # Write the transforms file.
     with open(self._transforms_filename, 'w') as f:
       f.write(json.dumps(transforms, indent=2, separators=(',', ': ')))
 
-
-    e2e_functions.run_preprocess(output_dir=self._preprocess_dir,
-                                 csv_filename=self._csv_filename,
-                                 schema_filename=self._schema_filename)
-    output = e2e_functions.run_training(output_dir=self._train_dir,
-                               input_dir=self._preprocess_dir,
-                               schema_filename=self._schema_filename,
-                               transforms_filename=self._transforms_filename,
-                               max_steps=2500,
-                               extra_args=extra_args)
+    # Run training and save the output.
+    output = e2e_functions.run_training(
+        train_data_paths=self._csv_train_filename,
+        eval_data_paths=self._csv_eval_filename,
+        output_path=self._train_output,
+        preprocess_output_dir=self._preprocess_output,
+        transforms_file=self._transforms_filename,
+        max_steps=2500,
+        model_type=model_type + '_' + problem_type,
+        extra_args=extra_args)
     self._training_screen_output = output
+    #print(self._training_screen_output)
+    
 
   def _check_training_screen_output(self, accuracy=None, loss=None):
     """Should be called after _run_training.
@@ -65,9 +101,8 @@ class TestTrainer(unittest.TestCase):
     Inspects self._training_screen_output for correct output.
 
     Args:
-      eval_metrics: dict in the form {key: expected_number}. Will inspect the
-          last line of the training output for the line "KEY = NUMBER" and
-          check that NUMBER < expected_number.
+      accuracy: float. Eval accuracy should be > than this number.
+      loss: flaot. Eval loss should be < than this number.
     """
     # Print the last line of training output which has the loss value.
     lines = self._training_screen_output.splitlines()
@@ -86,7 +121,6 @@ class TestTrainer(unittest.TestCase):
     # step_num == ['2500']
     self.assertEqual(len(step_num), 1)
     self.assertEqual(int(step_num[0]), 2500)
-
 
     # Check the accuracy
     if accuracy is not None:
@@ -110,61 +144,94 @@ class TestTrainer(unittest.TestCase):
       self.assertLess(float(loss_num[0]), loss)
 
 
-
-
   def _check_train_files(self):
-    model_folder = os.path.join(self._train_dir, 'model')
+    model_folder = os.path.join(self._train_output, 'model')
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'checkpoint')))
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'export')))
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'export.meta')))
-    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'metadata.json')))
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'schema.json')))
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'transforms.json')))
+    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'input_features.json')))
+
 
   def testRegressionDnn(self):
     print('\n\nTesting Regression DNN')
-    (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
-                                                       'regression')
-    transforms['str1']['transform'] = 'embedding'
-    transforms['str1']['dimension'] = '3'
 
-    flags = ['--layer_sizes 10 10 5',
-             '--model_type=dnn_regression']
+    transforms = {
+        "num1": {"transform": "scale"},
+        "num2": {"transform": "scale","value": 4},
+        "str1": {"transform": "hash_embedding", "embedding_dim": 2, "hash_bucket_size": 4},
+        "str2": {"transform": "embedding", "embedding_dim": 3},
+        "target": {"transform": "target"}
+    }
 
-    self._run_training(schema, transforms, flags)
-    self._check_training_screen_output(loss=10)
+    extra_args = ['--layer_sizes 10 10 5']
+    self._run_training(problem_type='regression', 
+                       model_type='dnn',
+                       transforms=transforms,
+                       extra_args=extra_args)
+
+    self._check_training_screen_output(loss=20)
     self._check_train_files()
+
 
   def testRegressionLinear(self):
     print('\n\nTesting Regression Linear')
-    (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
-                                                       'regression')
-    flags = ['--model_type=linear_regression']
 
-    self._run_training(schema, transforms, flags)
-    self._check_training_screen_output(loss=1)
+    transforms = {
+        "num1": {"transform": "scale"},
+        "num2": {"transform": "scale","value": 4},
+        "str1": {"transform": "hash_sparse", "hash_bucket_size": 2},
+        "str2": {"transform": "hash_sparse", "hash_bucket_size": 2},
+        "str3": {"transform": "hash_sparse", "hash_bucket_size": 2},
+        "target": {"transform": "target"}
+    }
+
+    self._run_training(problem_type='regression', 
+                       model_type='linear',
+                       transforms=transforms)
+
+    self._check_training_screen_output(loss=100)
     self._check_train_files()
+
 
   def testClassificationDnn(self):
     print('\n\nTesting classification DNN')
-    (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
-                                                       'classification')
-    transforms['str1']['transform'] = 'embedding'
-    transforms['str1']['dimension'] = '3'
 
-    flags = ['--layer_sizes 10 10 5',
-             '--model_type=dnn_classification']
+    transforms = {
+        "num1": {"transform": "scale"},
+        "num2": {"transform": "scale","value": 4},
+        "str1": {"transform": "hash_one_hot", "hash_bucket_size": 4},
+        "str2": {"transform": "one_hot"},
+        "str3": {"transform": "embedding", "embedding_dim": 3},
+        "target": {"transform": "target"}
+    }
 
-    self._run_training(schema, transforms, flags)
+    extra_args = ['--layer_sizes 10 10 5']
+    self._run_training(problem_type='classification', 
+                       model_type='dnn',
+                       transforms=transforms,
+                       extra_args=extra_args)
+
     self._check_training_screen_output(accuracy=0.95, loss=0.09)
     self._check_train_files()
 
+
   def testClassificationLinear(self):
     print('\n\nTesting classification Linear')
-    (schema, transforms) = e2e_functions.make_csv_data(self._csv_filename, 5000,
-                                                       'classification')
-    flags = ['--model_type=linear_classification']
 
-    self._run_training(schema, transforms, flags)
-    self._check_training_screen_output(accuracy=0.95, loss=0.15)
+    transforms = {
+        "num1": {"transform": "scale"},
+        "num2": {"transform": "scale","value": 4},
+        "str1": {"transform": "hash_sparse", "hash_bucket_size": 4},
+        "str2": {"transform": "sparse"},
+        "target": {"transform": "target"}
+    }
+
+    self._run_training(problem_type='classification', 
+                       model_type='linear',
+                       transforms=transforms)
+
+    self._check_training_screen_output(accuracy=0.90, loss=0.2)
     self._check_train_files()
+
