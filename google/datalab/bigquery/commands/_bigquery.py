@@ -332,7 +332,7 @@ def _sample_cell(args, cell_body):
                               billing_tier=args['billing']).result()
     else:
       results = query.execute(QueryOutput.table(), sampling=sampling, dialect=args['dialect'],
-                              billing_tier=args['billing']).results
+                              billing_tier=args['billing']).result()
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -465,9 +465,7 @@ def _execute_cell(args, cell_body):
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
   r = query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing'])
-  # if an execute was performed, a QueryJob is returned, which has a .results property
-  # otherwise, it's a base Job object, .result() should be called
-  return r.results if hasattr(r, 'results') else r.result()
+  return r.result()
 
 
 def _pipeline_cell(args, cell_body):
@@ -503,7 +501,7 @@ def _pipeline_cell(args, cell_body):
     output_options = QueryOutput.table(args['target'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-    query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing']).results
+    query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing']).result()
 
 
 def _get_schema(name):
