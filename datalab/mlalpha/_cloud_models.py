@@ -15,6 +15,7 @@
 from googleapiclient import discovery
 import os
 import time
+import yaml
 
 import datalab.context
 import datalab.storage
@@ -29,30 +30,23 @@ _CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
 class CloudModels(object):
   """Represents a list of Cloud ML models for a project."""
 
-  def __init__(self, project_id=None, credentials=None, api=None):
+  def __init__(self, project_id=None):
     """Initializes an instance of a CloudML Model list that is iteratable
            ("for model in CloudModels()").
 
     Args:
       project_id: project_id of the models. If not provided, default project_id will be used.
-      credentials: credentials used to talk to CloudML service. If not provided, default credentials
-          will be used.
-      api: an optional CloudML API client.
     """
     if project_id is None:
       project_id = datalab.context.Context.default().project_id
     self._project_id = project_id
-    if credentials is None:
-      credentials = datalab.context.Context.default().credentials
-    self._credentials = credentials
-    if api is None:
-      api = discovery.build('ml', 'v1beta1', credentials=self._credentials,
-                            discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
-    self._api = api
+    self._credentials = datalab.context.Context.default().credentials
+    self._api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,
+                                discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
 
   def _retrieve_models(self, page_token, page_size):
-    list_info = self._api.projects().models().list(parent='projects/' + self._project_id,
-                                                   pageToken=page_token, pageSize=page_size).execute()
+    list_info = self._api.projects().models().list(
+        parent='projects/' + self._project_id, pageToken=page_token, pageSize=page_size).execute()
     models = list_info.get('models', [])
     page_token = list_info.get('nextPageToken', None)
     return models, page_token
@@ -95,11 +89,36 @@ class CloudModels(object):
       full_name = ('projects/%s/models/%s' % (self._project_id, model_name))
     return self._api.projects().models().delete(name=full_name).execute()
 
+  def list(self, count=10):
+    """List models under the current project in a table view.
+
+    Args:
+      count: upper limit of the number of models to list.
+    Raises:
+      Exception if it is called in a non-IPython environment.
+    """
+    import IPython
+    data = [{'name': model['name'], 
+             'defaultVersion': model['defaultVersion']['name'].split('/')[-1]
+                 if 'defaultVersion' in model else None}
+            for _, model in zip(range(count), self)]
+    IPython.display.display(
+        datalab.utils.commands.render_dictionary(data, ['name', 'defaultVersion']))
+    
+  def describe(self, model_name):
+    """Print information of a specified model.
+
+    Args:
+      model_name: the name of the model to print details on.
+    """    
+    model_yaml = yaml.safe_dump(self.get(model_name), default_flow_style=False)
+    print model_yaml
+    
 
 class CloudModelVersions(object):
   """Represents a list of versions for a Cloud ML model."""
 
-  def __init__(self, model_name, project_id=None, credentials=None, api=None):
+  def __init__(self, model_name, project_id=None):
     """Initializes an instance of a CloudML model version list that is iteratable
         ("for version in CloudModelVersions()").
 
@@ -108,20 +127,12 @@ class CloudModelVersions(object):
           ("projects/[project_id]/models/[model_name]") or just [model_name].
       project_id: project_id of the models. If not provided and model_name is not a full name
           (not including project_id), default project_id will be used.
-      credentials: credentials used to talk to CloudML service. If not provided, default
-          credentials will be used.
-      api: an optional CloudML API client.
     """
     if project_id is None:
-      project_id = datalab.context.Context.default().project_id
-    self._project_id = project_id
-    if credentials is None:
-      credentials = datalab.context.Context.default().credentials
-    self._credentials = credentials
-    if api is None:
-      api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,
-                            discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
-    self._api = api
+      self._project_id = datalab.context.Context.default().project_id
+    self._credentials = datalab.context.Context.default().credentials
+    self._api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,
+                                discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
     if not model_name.startswith('projects/'):
       model_name = ('projects/%s/models/%s' % (self._project_id, model_name))
     self._full_model_name = model_name
@@ -205,3 +216,25 @@ class CloudModelVersions(object):
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     response = self._api.projects().models().versions().delete(name=name).execute()
     self._wait_for_long_running_operation(response)
+    
+  def describe(self, version_name):
+    """Print information of a specified model.
+
+    Args:
+      version: the name of the version in short form, such as "v1".
+    """
+    version_yaml = yaml.safe_dump(self.get(version_name), default_flow_style=False)
+    print version_yaml
+
+  def list(self):
+    """List versions under the current model in a table view.
+
+    Raises:
+      Exception if it is called in a non-IPython environment.
+    """    
+    import IPython
+    data = [{'name': version['name'].split()[-1], 
+             'deploymentUri': version['deploymentUri'], 'createTime': version['createTime']}
+            for version in self]
+    IPython.display.display(
+        datalab.utils.commands.render_dictionary(data, ['name', 'deploymentUri', 'createTime'])) 
