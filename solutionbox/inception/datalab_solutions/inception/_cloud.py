@@ -32,7 +32,8 @@ from . import _util
 
 
 _TF_GS_URL= 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl'
-
+# Keep in sync with "data_files" in package's setup.py
+_SETUP_PY = '/datalab/packages_setup/inception/setup.py'
 
 class Cloud(object):
   """Class for cloud training, preprocessing and prediction."""
@@ -42,17 +43,31 @@ class Cloud(object):
     if self._checkpoint is None:
       self._checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
 
+  def _repackage_to_staging(self, output_path):
+    """Repackage inception from local installed location and copy it to GCS.
+    """
+
+    import datalab.mlalpha as mlalpha
+
+    # Find the package root. __file__ is under [package_root]/datalab_solutions/inception.
+    package_root = os.path.join(os.path.dirname(__file__), '../../')
+    staging_package_url = os.path.join(output_path, 'staging', 'inception.tar.gz')
+    mlalpha.package_and_copy(package_root, _SETUP_PY, staging_package_url)
+    return staging_package_url
+
   def preprocess(self, dataset, output_dir, pipeline_option=None):
     """Cloud preprocessing with Cloud DataFlow."""
 
     import datalab.mlalpha as mlalpha
+
     job_name = 'preprocess-inception-' + datetime.datetime.now().strftime('%y%m%d-%H%M%S')
+    staging_package_url = self._repackage_to_staging(output_dir)
     options = {
         'staging_location': os.path.join(output_dir, 'tmp', 'staging'),
         'temp_location': os.path.join(output_dir, 'tmp'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [ml.sdk_location, _util._PACKAGE_GS_URL, _TF_GS_URL],
+        'extra_packages': [ml.sdk_location, staging_package_url, _TF_GS_URL],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
@@ -64,7 +79,8 @@ class Cloud(object):
     if type(dataset) is mlalpha.CsvDataSet:
       _preprocess.configure_pipeline_csv(p, self._checkpoint, dataset.files, output_dir, job_name)
     elif type(dataset) is mlalpha.BigQueryDataSet:
-      _preprocess.configure_pipeline_bigquery(p, self._checkpoint, dataset.sql, output_dir, job_name)
+      _preprocess.configure_pipeline_bigquery(p, self._checkpoint, dataset.sql,
+                                              output_dir, job_name)
     else:
       raise ValueError('preprocess takes CsvDataSet or BigQueryDataset only.')
     p.run()
@@ -75,6 +91,8 @@ class Cloud(object):
     """Cloud training with CloudML trainer service."""
 
     import datalab.mlalpha as mlalpha
+    
+    staging_package_url = self._repackage_to_staging(output_path)
     job_args = {
       'input_dir': input_dir,
       'output_path': output_path,
@@ -83,7 +101,7 @@ class Cloud(object):
       'checkpoint': self._checkpoint
     }
     job_request = {
-      'package_uris': _util._PACKAGE_GS_URL,
+      'package_uris': staging_package_url,
       'python_module': 'datalab_solutions.inception.task',
       'scale_tier': scale_tier,
       'region': region,
