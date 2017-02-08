@@ -637,7 +637,7 @@ class Table(object):
     return df[ordered_fields] if df is not None else pandas.DataFrame()
 
   def _to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
-"""Save the results to a local file in CSV format.
+    """Save the results to a local file in CSV format.
 
     Args:
       destination: path on the local filesystem for the saved results.
