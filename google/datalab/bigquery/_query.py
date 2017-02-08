@@ -34,7 +34,7 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, context=None, values={}, udfs=None, data_sources=None):
+  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None):
     """Initializes an instance of a Query object.
 
     Args:
@@ -68,6 +68,8 @@ class Query(object):
 
     self._code = None
     self._imports = []
+    if values is None:
+      values = {}
 
     self._sql = google.datalab.data.SqlModule.expand(sql, values)
 
@@ -206,7 +208,7 @@ class Query(object):
                             'compress': output_options.compress_file
                           }
         else:
-          export_func = execute_job.result().to_file
+          export_func = execute_job.result()._to_file
           export_args = [output_options.file_path]
           export_kwargs = {
                             'format': output_options.file_format,

@@ -636,6 +636,30 @@ class Table(object):
     ordered_fields = [field.name for field in self.schema]
     return df[ordered_fields] if df is not None else pandas.DataFrame()
 
+  def _to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
+"""Save the results to a local file in CSV format.
+
+    Args:
+      destination: path on the local filesystem for the saved results.
+      format: the format to use for the exported data; currently only 'csv' is supported.
+      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
+      csv_header: for CSV exports, whether to include an initial header line. Default true.
+    Raises:
+      An Exception if the operation failed.
+    """
+    f = codecs.open(destination, 'w', 'utf-8')
+    fieldnames = []
+    for column in self.schema:
+      fieldnames.append(column.name)
+    if sys.version_info[0] == 2:
+      csv_delimiter = csv_delimiter.encode('unicode_escape')
+    writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=csv_delimiter)
+    if csv_header:
+      writer.writeheader()
+    for row in self:
+      writer.writerow(row)
+    f.close()
+
   @property
   def schema(self):
     """Retrieves the schema of the table.
