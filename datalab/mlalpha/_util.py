@@ -19,25 +19,25 @@ import subprocess
 import tempfile
 
 
-def package_and_copy(package_root_dir, setup_py, out_dir):
+def package_and_copy(package_root_dir, setup_py, output_tar_path):
   """Repackage an CloudML package and copy it to a staging dir.
 
   Args:
     package_root_dir: the root dir to install package from. Usually you can get the path
         from inside your module using a relative path to __file__.
     setup_py: the path to setup.py.
-    out_dir: the ourput directory. Has to be GCS path.
-  Returns:
-    The destination package GS URL.
+    output_tar_path: the GCS path of the output tarball package.
   Raises:
-    ValueError if output_dir is not a GCS path.
+    ValueError if output_tar_path is not a GCS path, or setup_py does not exist.
   """
-  if not out_dir.startswith('gs://'):
-    raise ValueError('Output needs to be a GCS path.')
+  if not output_tar_path.startswith('gs://'):
+    raise ValueError('output_tar_path needs to be a GCS path.')
+  if not os.path.isfile(setup_py):
+    raise ValueError('Supplied file "%s" does not exist.' % setup_py)
 
   dest_setup_py = os.path.join(package_root_dir, 'setup.py')
-  # setuptools requires a "setup.py" in the current dir. So check if
-  # there is existing setup.py. If so, back it up.
+  # setuptools requires a "setup.py" in the current dir, so copy setup.py there.
+  # Also check if there is an existing setup.py. If so, back it up.
   if os.path.isfile(dest_setup_py):
     os.rename(dest_setup_py, dest_setup_py + '._bak_')
   shutil.copyfile(setup_py, dest_setup_py)
@@ -51,12 +51,10 @@ def package_and_copy(package_root_dir, setup_py, out_dir):
     subprocess.check_call(sdist)
 
     # Copy to GCS.
-    package_temp_name = 'package' + datetime.datetime.now().strftime('%d%H%M%S') + '.tar.gz'
-    dest = os.path.join(out_dir, package_temp_name)
     source = os.path.join(tempdir, '*.tar.gz')
-    gscopy = ['gsutil', 'cp', source, dest]
+    gscopy = ['gsutil', 'cp', source, output_tar_path]
     subprocess.check_call(gscopy)
-    return dest
+    return
   finally:
     os.chdir(previous_cwd)
     os.remove(dest_setup_py)
