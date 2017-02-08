@@ -134,7 +134,7 @@ class Query(object):
     _recurse_subqueries(self)
 
     if udfs:
-      expanded_sql += '\n'.join([self._values[udf]._expanded_sql for udf in udfs])
+      expanded_sql += '\n'.join([self._values[udf]._expanded_sql() for udf in udfs])
       expanded_sql += '\n'
 
     if subqueries:
