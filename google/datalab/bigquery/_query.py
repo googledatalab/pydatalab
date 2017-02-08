@@ -107,8 +107,7 @@ class Query(object):
           raise Exception('Referenced external table %s has no known schema' % name)
         self._external_tables[name] = table._to_query_json()
 
-  @property
-  def expanded_sql(self):
+  def _expanded_sql(self, sampling=None):
     """Get the expanded SQL of this object, including all subqueries, UDFs, and external datasources
 
     Returns:
@@ -117,6 +116,7 @@ class Query(object):
 
     udfs = set()
     subqueries = set()
+    expanded_sql = ''
 
     def _recurse_subqueries(query):
       """Recursively scan subqueries and add their pieces to global scope udfs and subqueries
@@ -134,13 +134,17 @@ class Query(object):
     _recurse_subqueries(self)
 
     if udfs:
-      udfs_sql = '\n'.join([self._values[udf].expanded_sql for udf in udfs])
+      expanded_sql += '\n'.join([self._values[udf]._expanded_sql for udf in udfs])
+      expanded_sql += '\n'
 
     if subqueries:
-      subqueries_sql = 'WITH ' + \
-                       ',\n'.join(['%s AS (%s)' % (sq, self._values[sq]._sql) for sq in subqueries])
+      expanded_sql += 'WITH ' + \
+                      ',\n'.join(['%s AS (%s)' % (sq, self._values[sq]._sql) for sq in subqueries])
+      expanded_sql += '\n'
 
-    return '%s\n%s\n%s' % (udfs_sql, subqueries_sql, self._sql)
+    expanded_sql += sampling(self._sql) if sampling else self._sql
+
+    return expanded_sql
 
   def _repr_sql_(self):
     """Creates a SQL representation of this object.
@@ -148,7 +152,7 @@ class Query(object):
     Returns:
       The SQL representation to use when embedding this object into other SQL.
     """
-    return '(%s)' % self._sql
+    return '(%s)' % self.sql
 
   def __str__(self):
     """Creates a string representation of this object.
@@ -169,7 +173,7 @@ class Query(object):
   @property
   def sql(self):
     """ Get the SQL for the query. """
-    return self._sql
+    return self._expanded_sql()
 
   @property
   def scripts(self):
@@ -194,7 +198,7 @@ class Query(object):
       An exception if the query was malformed.
     """
     try:
-      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True,
+      query_result = self._api.jobs_insert_query(self.sql, self._code, self._imports, dry_run=True,
                                                  table_definitions=self._external_tables, dialect=dialect,
                                                  billing_tier=billing_tier)
     except Exception as e:
@@ -235,7 +239,7 @@ class Query(object):
     if table_name is not None:
       table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
-    sql = self._sql if sampling is None else sampling(self._sql)
+    sql = self._expanded_sql(sampling)
 
     try:
       query_result = self._api.jobs_insert_query(sql, self._code, self._imports,
@@ -335,5 +339,5 @@ class Query(object):
     """
     # Do the import here to avoid circular dependencies at top-level.
     from . import _view
-    return _view.View(view_name, self._context).create(self._sql)
+    return _view.View(view_name, self._context).create(self.sql)
 
