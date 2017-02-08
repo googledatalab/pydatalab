@@ -35,9 +35,8 @@ class Query(object):
   """
 
   def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None,
-               subqueries=None, **kwargs):
+               subqueries=None):
     """Initializes an instance of a Query object.
-       Note that either values or kwargs may be used, but not both.
 
     Args:
       sql: the BigQuery SQL query string to execute, or a SqlStatement object. The latter will
@@ -55,8 +54,6 @@ class Query(object):
       udfs: list of UDFs referenced in the SQL.
       data_sources: dictionary of federated (external) tables referenced in the SQL.
       subqueries: list of subqueries referenced in the SQL
-      kwargs: arguments to use when expanding the variables if passed a SqlStatement
-          or a string with variable references.
 
     Raises:
       Exception if expansion of any variables failed.
@@ -76,7 +73,7 @@ class Query(object):
     self._code = None
     self._imports = []
     if self._values is None:
-      self._values = kwargs
+      self._values = {}
 
     self._sql = google.datalab.data.SqlModule.expand(sql, self._values)
 
@@ -127,8 +124,7 @@ class Query(object):
         udfs.update(set(query._udfs))
       if query._subqueries:
         for subquery in query._subqueries:
-          subquery = self._values[subquery]
-          _recurse_subqueries(subquery)
+          _recurse_subqueries(self._values[subquery])
 
     subqueries_sql = udfs_sql = ''
     _recurse_subqueries(self)
