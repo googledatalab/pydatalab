@@ -11,57 +11,100 @@
 # the License.
 
 
-from plotly.offline import iplot
+import google.cloud.ml as ml
+import numpy as np
+import json
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.metrics import confusion_matrix
+
+import datalab.bigquery as bq
+import datalab.data as data
 
 
 class ConfusionMatrix(object):
   """Represents a confusion matrix."""
 
-  def __init__(self, predicted_labels, true_labels, counts):
-    """Initializes an instance of a ComfusionMatrix. the length of predicted_values,
-       true_values, count must be the same.
-
-    Args:
-      predicted_labels: a list of predicted labels.
-      true_labels: a list of true labels.
-      counts: a list of count for each (predicted, true) combination.
-
-    Raises: Exception if predicted_labels, true_labels, and counts are not of the same size
+  def __init__(self, cm, labels):
     """
-    if len(predicted_labels) != len(true_labels) or len(true_labels) != len(counts):
-      raise Exception('The input predicted_labels, true_labels, counts need to be same size.')
-    self._all_labels = list(set(predicted_labels) | set(true_labels))
-    data = []
-    for value in self._all_labels:
-      predicts_for_current_true_label = \
-          {p: c for p, t, c in zip(predicted_labels, true_labels, counts) if t == value}
-      # sort by all_values and fill in zeros if needed
-      predicts_for_current_true_label = [predicts_for_current_true_label.get(v, 0)
-          for v in self._all_labels]
-      data.append(predicts_for_current_true_label)
-    self._data = data
+    Args:
+      cm: a 2-dimensional matrix with row index being target, column index being predicted,
+          and values being count.
+      labels: the labels whose order matches the row/column indexes.
+    """
+    self._cm = cm
+    self._labels = labels
+
+  @staticmethod
+  def from_csv(input_csv, headers=None, schema_file=None):
+    """Create a ConfusionMatrix from a csv file.
+    Args:
+      input_csv: Path to a Csv file (with no header). Can be local or GCS path.
+      headers: Csv headers. If present, it must include 'target' and 'predicted'.
+      schema_file: Path to a JSON file containing BigQuery schema. Used if "headers" is None.
+          If present, it must include 'target' and 'predicted' columns.
+    Returns:
+      A ConfusionMatrix that can be plotted.
+    Raises:
+      ValueError if both headers and schema_file are None, or it does not include 'target'
+          or 'predicted' columns.
+    """
+
+    if headers is not None:
+      names = headers
+    elif schema_file is not None:
+      with ml.util._file.open_local_or_gcs(schema_file, mode='r') as f:
+        schema = json.load(f)
+      names = [x['name'] for x in schema]
+    else:
+      raise ValueError('Either headers or schema_file is needed')
+    with ml.util._file.open_local_or_gcs(input_csv, mode='r') as f:
+      df = pd.read_csv(f, names=names)
+    if 'target' not in df or 'predicted' not in df:
+      raise ValueError('Cannot find "target" or "predicted" column')
+
+    labels = sorted(set(df['target']) | set(df['predicted']))
+    cm = confusion_matrix(df['target'], df['predicted'], labels=labels)
+    return ConfusionMatrix(cm, labels)
+
+  @staticmethod
+  def from_bigquery(sql):
+    """Create a ConfusionMatrix from a BigQuery table or query.
+    Args:
+      sql: Can be one of:
+          A SQL query string.
+          A SQL Query module defined with '%%sql --name [module_name]'.
+          A Bigquery table.
+      The query results or table must include "target", "predicted" columns.
+    Returns:
+      A ConfusionMatrix that can be plotted.
+    Raises:
+      ValueError if query results or table does not include 'target' or 'predicted' columns.
+    """
+
+    query, _ = data.SqlModule.get_sql_statement_with_environment(sql, {})
+    sql = ('SELECT target, predicted, count(*) as count FROM (%s) group by target, predicted'
+        % query.sql)
+    df = bq.Query(sql).results().to_dataframe()
+    labels = sorted(set(df['target']) | set(df['predicted']))
+    labels_count = len(labels)
+    df['target'] = [labels.index(x) for x in df['target']]
+    df['predicted'] = [labels.index(x) for x in df['predicted']]
+    cm = [[0]*labels_count for i in range(labels_count)]
+    for index, row in df.iterrows():
+      cm[row['target']][row['predicted']] = row['count']
+    return ConfusionMatrix(cm, labels)
 
   def plot(self):
     """Plot the confusion matrix."""
-    figure_data = \
-    {
-      "data": [
-        {
-          "x": self._all_labels,
-          "y": self._all_labels,
-          "z": self._data,
-          "colorscale": "YlGnBu",
-          "type": "heatmap"
-        }
-      ],
-      "layout": {
-        "title": "Confusion Matrix",
-        "xaxis": {
-          "title": "Predicted value",
-        },
-        "yaxis": {
-          "title": "True Value",
-        }
-      }
-    }
-    iplot(figure_data)
+
+    plt.imshow(self._cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title('Confusion matrix')
+    plt.colorbar()
+    tick_marks = np.arange(len(self._labels))
+    plt.xticks(tick_marks, self._labels, rotation=45)
+    plt.yticks(tick_marks, self._labels)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+  
