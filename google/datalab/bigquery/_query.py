@@ -34,9 +34,8 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None, **kwargs):
+  def __init__(self, sql, context=None, values={}, udfs=None, data_sources=None):
     """Initializes an instance of a Query object.
-       Note that either values or kwargs may be used, but not both.
 
     Args:
       sql: the BigQuery SQL query string to execute, or a SqlStatement object. The latter will
@@ -53,8 +52,6 @@ class Query(object):
           variable references.
       udfs: array of UDFs referenced in the SQL.
       data_sources: dictionary of federated (external) tables referenced in the SQL.
-      kwargs: arguments to use when expanding the variables if passed a SqlStatement
-          or a string with variable references.
 
     Raises:
       Exception if expansion of any variables failed.
@@ -71,8 +68,6 @@ class Query(object):
 
     self._code = None
     self._imports = []
-    if values is None:
-      values = kwargs
 
     self._sql = google.datalab.data.SqlModule.expand(sql, values)
 
@@ -271,18 +266,4 @@ class Query(object):
     """
     return self.execute_async(output_options, sampling=sampling,
                               dialect=dialect, billing_tier=billing_tier).wait()
-
-  def to_view(self, view_name):
-    """ Create a View from this Query.
-
-    Args:
-      view_name: the name of the View either as a string or a 3-part tuple
-          (projectid, datasetid, name).
-
-    Returns:
-      A View for the Query.
-    """
-    # Do the import here to avoid circular dependencies at top-level.
-    from . import _view
-    return _view.View(view_name, self._context).create(self._sql)
 

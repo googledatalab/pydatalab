@@ -235,18 +235,6 @@ class Buckets(object):
       raise e
     return True
 
-  def create(self, name):
-    """Creates a new bucket.
-
-    Args:
-      name: a unique name for the new bucket.
-    Returns:
-      The newly created bucket.
-    Raises:
-      Exception if there was an error creating the bucket.
-    """
-    return Bucket(name, context=self._context).create(self._project_id)
-
   def _retrieve_buckets(self, page_token, _):
     try:
       list_info = self._api.buckets_list(page_token=page_token, project_id=self._project_id)
