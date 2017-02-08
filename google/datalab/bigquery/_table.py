@@ -608,7 +608,7 @@ class Table(object):
     fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
     return iter(google.datalab.utils.Iterator(fetcher))
 
-  def to_dataframe(self, start_row=0, max_rows=None):
+  def _to_dataframe(self, start_row=0, max_rows=None):
     """ Exports the table to a Pandas dataframe.
 
     Args:

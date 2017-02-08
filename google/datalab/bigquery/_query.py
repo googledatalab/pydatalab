@@ -216,7 +216,7 @@ class Query(object):
                             'csv_header': output_options.csv_header
                           }
       elif output_options.type == 'dataframe':
-        export_func = execute_job.result().to_dataframe
+        export_func = execute_job.result()._to_dataframe
         export_args = []
         export_kwargs = {
                           'start_row': output_options.dataframe_start_row,
