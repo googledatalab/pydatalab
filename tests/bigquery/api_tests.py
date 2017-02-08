@@ -105,7 +105,10 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.utils.Http.request')
   def test_jobs_insert_query(self, mock_http_request):
-    api = TestCases._create_api()
+    context = TestCases._create_context()
+    context.config['bigquery_dialect'] = 'legacy'
+    context.config['bigquery_billing_tier'] = None
+    api = TestCases._create_api(context)
     api.jobs_insert_query('SQL')
     expected_data = {
       'kind': 'bigquery#job',
@@ -123,10 +126,13 @@ class TestCases(unittest.TestCase):
     }
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/test/jobs/',
                   expected_data=expected_data)
+
+    context.config['bigquery_dialect'] = 'standard'
+    context.config['bigquery_billing_tier'] = 1
     api.jobs_insert_query('SQL2', ['CODE'],
                           table_name=google.datalab.bigquery._utils.TableName('p', 'd', 't', ''),
                           append=True, dry_run=True, use_cache=False, batch=False,
-                          allow_large_results=True, dialect='standard', billing_tier=1)
+                          allow_large_results=True)
     expected_data = {
       'kind': 'bigquery#job',
       'configuration': {
@@ -385,8 +391,9 @@ class TestCases(unittest.TestCase):
                   expected_method='PUT', expected_data='INFO')
 
   @staticmethod
-  def _create_api():
-    context = TestCases._create_context()
+  def _create_api(context=None):
+    if not context:
+      context = TestCases._create_context()
     return Api(context)
 
   @staticmethod
