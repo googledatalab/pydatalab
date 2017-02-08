@@ -391,10 +391,17 @@ def sql_cell(args, cell):
   query = _split_cell(cell, module)
   ipy = IPython.get_ipython()
   if not args['module']:
-      # Execute now
-      if query:
-        return google.datalab.bigquery.Query(query, values=ipy.user_ns) \
-          .execute(dialect=args['dialect'], billing_tier=args['billing']).results
+    # Execute now
+    if query:
+      context = google.datalab.Context.default()
+      dialect_arg = args.get('dialect', None)
+      billing_tier_arg = args.get('billing', None)
+      if dialect_arg:
+        context.config['bigquery_dialect'] = dialect_arg
+      if billing_tier_arg:
+        context.config['bigquery_billing_tier'] = billing_tier_arg
+      return google.datalab.bigquery.Query(query, context=context, values=ipy.user_ns) \
+                                    .execute().results
   else:
     # Add it as a module
     sys.modules[name] = module

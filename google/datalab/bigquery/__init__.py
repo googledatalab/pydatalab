@@ -15,7 +15,6 @@ from __future__ import absolute_import
 
 from ._csv_options import CSVOptions
 from ._dataset import Dataset, Datasets
-from ._dialect import Dialect
 from ._federated_table import FederatedTable
 from ._query import Query
 from ._query_output import QueryOutput

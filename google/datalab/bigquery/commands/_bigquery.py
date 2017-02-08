@@ -128,7 +128,8 @@ def _create_sample_subparser(parser):
 
 def _create_udf_subparser(parser):
   udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF')
-  udf_parser.add_argument('-m', '--module', help='The name for this UDF')
+  udf_parser.add_argument('-n', '--name', help='The name for this UDF', required=True)
+  udf_parser.add_argument('-l', '--language', help='The language of the function', required=True)
   return udf_parser
 
 
@@ -250,7 +251,34 @@ def _create_load_subparser(parser):
   return load_parser
 
 
-def _get_query_argument(args, cell, env):
+def _construct_context_for_args(args):
+  """Construct a new Context for the parsed arguments.
+
+  Args:
+    args: the dictionary of magic arguments.
+  Returns:
+    A new Context based on the current default context, but with any explicitly
+      specified arguments overriding the default's config.
+  """
+  global_default_context = google.datalab.Context.default()
+  config = {}
+  for key in global_default_context.config:
+    config[key] = global_default_context.config[key]
+
+  dialect_arg = args.get('dialect', None)
+  billing_tier_arg = args.get('billing', None)
+  if dialect_arg:
+    config['bigquery_dialect'] = dialect_arg
+  if billing_tier_arg:
+    config['bigquery_billing_tier'] = billing_tier_arg
+
+  return google.datalab.Context(
+    project_id=global_default_context.project_id,
+    credentials=global_default_context.credentials,
+    config=config)
+
+
+def _get_query_argument(args, cell, env, context=None):
   """ Get a query argument to a cell magic.
 
   The query is specified with args['query']. We look that up and if it is a BQ query
@@ -265,15 +293,18 @@ def _get_query_argument(args, cell, env):
     cell: the cell contents which can be variable value overrides (if args has a 'query'
         value) or inline SQL otherwise.
     env: a dictionary that is used for looking up variable values.
+    context: an optional Context object.
   Returns:
     A Query object.
   """
+  if not context:
+    context = _construct_context_for_args(args)
   sql_arg = args.get('query', None)
   if sql_arg is None:
     # Assume we have inline SQL in the cell
     if not isinstance(cell, basestring):
       raise Exception('Expected a --query argument or inline SQL')
-    return google.datalab.bigquery.Query(cell, values=env)
+    return google.datalab.bigquery.Query(cell, context=context, values=env)
 
   item = google.datalab.utils.commands.get_notebook_item(sql_arg)
   if isinstance(item, google.datalab.bigquery.Query):  # Queries are already expanded.
@@ -284,8 +315,7 @@ def _get_query_argument(args, cell, env):
   item, env = google.datalab.data.SqlModule.get_sql_statement_with_environment(item, config)
   if cell:
     env.update(config)  # config is both a fallback and an override.
-  return google.datalab.bigquery.Query(item, values=env)
-
+  return google.datalab.bigquery.Query(item, context=context, values=env)
 
 
 def _sample_cell(args, cell_body):
@@ -300,13 +330,14 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
+  context = _construct_context_for_args(args)
   env = google.datalab.utils.commands.notebook_environment()
   query = None
   table = None
   view = None
 
   if args['query']:
-    query = _get_query_argument(args, cell_body, env)
+    query = _get_query_argument(args, cell_body, env, context=context)
   elif args['table']:
     table = _get_table(args['table'])
     if not table:
@@ -316,7 +347,7 @@ def _sample_cell(args, cell_body):
     if not isinstance(view, google.datalab.bigquery.View):
       raise Exception('Could not find view %s' % args['view'])
   else:
-    query = google.datalab.bigquery.Query(cell_body, values=env)
+    query = google.datalab.bigquery.Query(cell_body, context=context, values=env)
 
   # parse comma-separated list of fields
   fields = args['fields'].split(',') if args['fields'] else None
@@ -328,11 +359,9 @@ def _sample_cell(args, cell_body):
 
   if query:
     if args['profile']:
-      results = query.execute(QueryOutput.dataframe(), sampling=sampling, dialect=args['dialect'],
-                              billing_tier=args['billing']).result()
+      results = query.execute(QueryOutput.dataframe(), sampling=sampling).result()
     else:
-      results = query.execute(QueryOutput.table(), sampling=sampling, dialect=args['dialect'],
-                              billing_tier=args['billing']).result()
+      results = query.execute(QueryOutput.table(), sampling=sampling).result()
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -365,76 +394,48 @@ def _dryrun_cell(args, cell_body):
   if args['verbose']:
     print(query.sql)
 
-  result = query.execute_dry_run(dialect=args['dialect'], billing_tier=args['billing'])
+  result = query.execute_dry_run()
   return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                          is_cached=result['cacheHit'])
 
 
-def _udf_cell(args, js):
+def _udf_cell(args, cell_body):
   """Implements the Bigquery udf cell magic for ipython notebooks.
 
   The supported syntax is:
-  %%bq udf --module <var>
+  %%bq udf --name <var> --language <lang>
+  // @param <name> <type>
+  // @returns <type>
+  // @import <gcs_path>
   <js function>
 
   Args:
     args: the optional arguments following '%%bq udf'.
-    js: the UDF declaration (inputs and outputs) and implementation in javascript.
-  Returns:
-    The results of executing the UDF converted to a dataframe if no variable
-    was specified. None otherwise.
+    cell_body: the UDF declaration (inputs and outputs) and implementation in javascript.
   """
-  variable_name = args['module']
-  if not variable_name:
-    raise Exception('Declaration must be of the form %%bq udf --module <variable name>')
+  udf_name = args['name']
+  if not udf_name:
+    raise Exception('Declaration must be of the form %%bq udf --name <variable name>')
 
-  # Parse out the input and output specification
-  spec_pattern = r'\{\{([^}]+)\}\}'
-  spec_part_pattern = r'[a-z_][a-z0-9_]*'
+  # Parse out parameters, return type, and imports
+  param_pattern = r'^\s*\/\/\s*@param\s+(\w+)\s+(\w+)\s*$'
+  returns_pattern = r'^\s*\/\/\s*@returns\s+(\w+)\s*$'
+  import_pattern = r'^\s*\/\/\s*@import\s+(\S+)\s*$'
 
-  specs = re.findall(spec_pattern, js)
-  if len(specs) < 2:
-    raise Exception('The JavaScript must declare the input row and output emitter parameters '
-                    'using valid jsdoc format comments.\n'
-                    'The input row param declaration must be typed as {{field:type, field2:type}} '
-                    'and the output emitter param declaration must be typed as '
-                    'function({{field:type, field2:type}}.')
+  params = re.findall(param_pattern, cell_body, re.MULTILINE)
+  return_type = re.findall(returns_pattern, cell_body, re.MULTILINE)
+  imports = re.findall(import_pattern, cell_body, re.MULTILINE)
 
-  inputs = []
-  input_spec_parts = re.findall(spec_part_pattern, specs[0], flags=re.IGNORECASE)
-  if len(input_spec_parts) % 2 != 0:
-    raise Exception('Invalid input row param declaration. The jsdoc type expression must '
-                    'define an object with field and type pairs.')
-  for n, t in zip(input_spec_parts[0::2], input_spec_parts[1::2]):
-    inputs.append((n, t))
+  if len(return_type) < 1:
+    raise Exception('UDF return type must be defined using // @returns <type>')
+  if len(return_type) > 1:
+    raise Exception('Found more than one return type definition')
 
-  outputs = []
-  output_spec_parts = re.findall(spec_part_pattern, specs[1], flags=re.IGNORECASE)
-  if len(output_spec_parts) % 2 != 0:
-    raise Exception('Invalid output emitter param declaration. The jsdoc type expression must '
-                    'define a function accepting an an object with field and type pairs.')
-  for n, t in zip(output_spec_parts[0::2], output_spec_parts[1::2]):
-    outputs.append((n, t))
-
-  # Look for imports. We use a non-standard @import keyword; we could alternatively use @requires.
-  # Object names can contain any characters except \r and \n.
-  import_pattern = r'@import[\s]+(gs://[a-z\d][a-z\d_\.\-]*[a-z\d]/[^\n\r]+)'
-  imports = re.findall(import_pattern, js)
-
-  # Split the cell if necessary. We look for a 'function(' with no name and a header comment
-  # block with @param and assume this is the primary function, up to a closing '}' at the start
-  # of the line. The remaining cell content is used as support code.
-  split_pattern = r'(.*)(/\*.*?@param.*?@param.*?\*/\w*\n\w*function\w*\(.*?^}\n?)(.*)'
-  parts = re.match(split_pattern, js, re.MULTILINE | re.DOTALL)
-  support_code = ''
-  if parts:
-    support_code = (parts.group(1) + parts.group(3)).strip()
-    if len(support_code):
-      js = parts.group(2)
+  return_type = return_type[0]
 
   # Finally build the UDF object
-  udf = google.datalab.bigquery.UDF(inputs, outputs, variable_name, js, support_code, imports)
-  google.datalab.utils.commands.notebook_environment()[variable_name] = udf
+  udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, params, args['language'], imports)
+  google.datalab.utils.commands.notebook_environment()[udf_name] = udf
 
 
 def _execute_cell(args, cell_body):
@@ -464,7 +465,7 @@ def _execute_cell(args, cell_body):
     output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-  r = query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing'])
+  r = query.execute(output_options)
   return r.result()
 
 
@@ -501,7 +502,7 @@ def _pipeline_cell(args, cell_body):
     output_options = QueryOutput.table(args['target'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-    query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing']).result()
+    query.execute(output_options).result()
 
 
 def _get_schema(name):
@@ -677,7 +678,7 @@ def _extract_cell(args, cell_body):
                                       csv_delimiter=args['delimiter'],
                                       csv_header=args['header'], compress=args['compress'],
                                       use_cache=not args['nocache'])
-    job = query.execute(output_options, dialect=args['dialect'], billing_tier=args['billing'])
+    job = query.execute(output_options)
 
   if job.failed:
     raise Exception('Extract failed: %s' % str(job.fatal_error))
