@@ -125,18 +125,9 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def execute_dry_run(self, dialect=None, billing_tier=None):
+  def execute_dry_run(self):
     """Dry run a query, to check the validity of the query and return some useful statistics.
 
-    Args:
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
     Returns:
       A dict with 'cacheHit' and 'totalBytesProcessed' fields.
     Raises:
@@ -144,26 +135,17 @@ class Query(object):
     """
     try:
       query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True,
-                                                 table_definitions=self._external_tables, dialect=dialect,
-                                                 billing_tier=billing_tier)
+                                                 table_definitions=self._external_tables)
     except Exception as e:
       raise e
     return query_result['statistics']['query']
 
-  def execute_async(self, output_options=None, sampling=None, dialect=None, billing_tier=None):
+  def execute_async(self, output_options=None, sampling=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
       output_options: a QueryOutput object describing how to execute the query
       sampling: sampling function to use. No sampling is done if None. See bigquery.Sampling
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
     Returns:
       A Job object that can wait on creating a table or exporting to a file
       If the output is a table, the Job object additionally has run statistics
@@ -194,9 +176,7 @@ class Query(object):
                                                  use_cache=output_options.use_cache,
                                                  batch=batch,
                                                  allow_large_results=output_options.allow_large_results,
-                                                 table_definitions=self._external_tables,
-                                                 dialect=dialect,
-                                                 billing_tier=billing_tier)
+                                                 table_definitions=self._external_tables)
     except Exception as e:
       raise e
     if 'jobReference' not in query_result:
@@ -250,27 +230,18 @@ class Query(object):
       export_func = google.datalab.utils.async_function(export_func)
       return export_func(*export_args, **export_kwargs)
 
-  def execute(self, output_options=None, sampling=None, dialect=None, billing_tier=None):
+  def execute(self, output_options=None, sampling=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
       output_options: a QueryOutput object describing how to execute the query
       sampling: sampling function to use. No sampling is done if None. See bigquery.Sampling
-      dialect : {'legacy', 'standard'}, default 'legacy'
-          'legacy' : Use BigQuery's legacy SQL dialect.
-          'standard' : Use BigQuery's standard SQL (beta), which is
-          compliant with the SQL 2011 standard.
-      billing_tier: Limits the billing tier for this job. Queries that have resource
-          usage beyond this tier will fail (without incurring a charge). If unspecified, this
-          will be set to your project default. This can also be used to override your
-          project-wide default billing tier on a per-query basis.
     Returns:
       A Job object that can be used to get the query results, or export to a file or dataframe
     Raises:
       Exception if query could not be executed.
     """
-    return self.execute_async(output_options, sampling=sampling,
-                              dialect=dialect, billing_tier=billing_tier).wait()
+    return self.execute_async(output_options, sampling=sampling).wait()
 
   def to_view(self, view_name):
     """ Create a View from this Query.
