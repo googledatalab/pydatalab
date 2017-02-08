@@ -51,11 +51,20 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
         shape=(None,),
         name=EXAMPLES_PLACEHOLDER_TENSOR_NAME)
 
+    # Parts is batch-size x num-columns sparse tensor. This means when running
+    # prediction, all input rows should have a target column as the first
+    # column, or all input rows should have the target column missing.
+    # The condition below checks how many columns are in parts, and appends a 
+    # ',' to the csv 'examples' placeholder string if a column is missing.
     parts = tf.string_split(examples, delimiter=',')
     new_examples = tf.cond(
-        tf.less(tf.shape(parts.values), len(train_config['csv_header'])),
+        tf.less(tf.shape(parts)[1], len(train_config['csv_header'])),
         lambda: tf.string_join([tf.constant(','), examples]),
         lambda: examples)
+
+    print('*'*100)
+    print('ex', examples)
+    print('new', new_examples)
 
     features = util.parse_example_tensor(examples=new_examples,
                                          train_config=train_config)
@@ -64,7 +73,7 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
     while FEATURES_EXAMPLE_DICT_KEY in features:
       FEATURES_EXAMPLE_DICT_KEY = '_' + FEATURES_EXAMPLE_DICT_KEY
 
-    features[FEATURES_EXAMPLE_DICT_KEY] = examples
+    features[FEATURES_EXAMPLE_DICT_KEY] = new_examples
 
     target = features.pop(train_config['target_column'])
     features, target = util.preprocess_input(

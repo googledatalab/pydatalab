@@ -49,7 +49,7 @@ class TestTrainer(unittest.TestCase):
 
   def tearDown(self):
     print('TestTrainer: removing test dir ' + self._test_dir)
-    #shutil.rmtree(self._test_dir)
+    shutil.rmtree(self._test_dir)
 
 
   def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
