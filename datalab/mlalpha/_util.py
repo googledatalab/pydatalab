@@ -12,23 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import datetime
 import os
 import shutil
 import subprocess
 import tempfile
 
 
-# Keep it in sync with
-# https://github.com/googledatalab/datalab/blob/master/containers/base/Dockerfile
-DATALAB_SOLUTION_LIB_DIR = '/datalab/lib/pydatalab/'
-
-
-def package_and_copy(package_name, out_dir):
+def package_and_copy(package_root_dir, setup_py, out_dir):
   """Repackage an CloudML package and copy it to a staging dir.
 
   Args:
-    package_name: the name of the package, such as 'inception'.
+    package_root_dir: the root dir to install package from. Usually you can get the path
+        from inside your module using a relative path to __file__.
+    setup_py: the path to setup.py.
     out_dir: the ourput directory. Has to be GCS path.
   Returns:
     The destination package GS URL.
@@ -38,22 +35,31 @@ def package_and_copy(package_name, out_dir):
   if not out_dir.startswith('gs://'):
     raise ValueError('Output needs to be a GCS path.')
 
-  package_dir = os.path.join(DATALAB_SOLUTION_LIB_DIR, 'solutionbox', package_name)
+  dest_setup_py = os.path.join(package_root_dir, 'setup.py')
+  # setuptools requires a "setup.py" in the current dir. So check if
+  # there is existing setup.py. If so, back it up.
+  if os.path.isfile(dest_setup_py):
+    os.rename(dest_setup_py, dest_setup_py + '._bak_')
+  shutil.copyfile(setup_py, dest_setup_py)
+
   tempdir = tempfile.mkdtemp()
   previous_cwd = os.getcwd()
-  os.chdir(package_dir)
+  os.chdir(package_root_dir)
   try:
-    # Repackage. In Datalab the source files of pydatalab is kept.
-    setup_py = os.path.join(package_dir, 'setup.py')
-    sdist = ['python', setup_py, 'sdist', '--format=gztar', '-d', tempdir]
+    # Repackage. 
+    sdist = ['python', dest_setup_py, 'sdist', '--format=gztar', '-d', tempdir]
     subprocess.check_call(sdist)
 
     # Copy to GCS.
-    dest = os.path.join(out_dir, 'staging', package_name + '.tar.gz')
+    package_temp_name = 'package' + datetime.datetime.now().strftime('%d%H%M%S') + '.tar.gz'
+    dest = os.path.join(out_dir, package_temp_name)
     source = os.path.join(tempdir, '*.tar.gz')
     gscopy = ['gsutil', 'cp', source, dest]
     subprocess.check_call(gscopy)
     return dest
   finally:
     os.chdir(previous_cwd)
+    os.remove(dest_setup_py)
+    if os.path.isfile(dest_setup_py + '._bak_'):
+      os.rename(dest_setup_py + '._bak_', dest_setup_py)
     shutil.rmtree(tempdir)
