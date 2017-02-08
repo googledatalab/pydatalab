@@ -12,10 +12,20 @@
 
 """Implements Cloud ML Operation wrapper."""
 
+
 import datalab.utils
 import datalab.context
 from googleapiclient import discovery
+import yaml
 
+# TODO(qimingj) Remove once the API is public since it will no longer be needed
+_CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
+                         'ml_v1beta1_discovery.json'
+
+import datalab.utils
+import datalab.context
+from googleapiclient import discovery
+import yaml
 
 # TODO(qimingj) Remove once the API is public since it will no longer be needed
 _CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
@@ -54,26 +64,26 @@ class Job(object):
     """ Refresh the job info. """
     self._info = self._api.projects().jobs().get(name=self._name).execute()
 
+  def describe(self):
+    job_yaml = yaml.safe_dump(self._info, default_flow_style=False)
+    print job_yaml
+
 
 class Jobs(object):
   """Represents a list of Cloud ML jobs for a project."""
 
-  def __init__(self, filter=None, context=None, api=None):
+  def __init__(self, filter=None):
     """Initializes an instance of a CloudML Job list that is iteratable ("for job in jobs()").
 
     Args:
-      filter: filter string for retrieving jobs. Currently only "done=true|false" is supported.
+      filter: filter string for retrieving jobs, such as "state=FAILED"
       context: an optional Context object providing project_id and credentials.
       api: an optional CloudML API client.
     """
     self._filter = filter
-    if context is None:
-      context = datalab.context.Context.default()
-    self._context = context
-    if api is None:
-      api = discovery.build('ml', 'v1beta1', credentials=self._context.credentials,
-                            discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
-    self._api = api
+    self._context = datalab.context.Context.default()
+    self._api = discovery.build('ml', 'v1beta1', credentials=self._context.credentials,
+                                discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
 
   def _retrieve_jobs(self, page_token, page_size):
     list_info = self._api.projects().jobs().list(parent='projects/' + self._context.project_id,
@@ -86,10 +96,10 @@ class Jobs(object):
   def __iter__(self):
     return iter(datalab.utils.Iterator(self._retrieve_jobs))
 
-  def get_job_by_name(self, name):
-    """ get a CloudML job by its name.
-    Args:
-      name: the name of the job. See "Job" class constructor.
-    """
-    return Job(name, self._context, self._api)
-
+  def list(self, count=10):
+    import IPython
+    data = [{'Id': job['jobId'], 'State': job.get('state', 'UNKNOWN'),
+             'createTime': job['createTime']}
+            for _, job in zip(range(count), self)]
+    IPython.display.display(
+        datalab.utils.commands.render_dictionary(data, ['Id', 'State', 'createTime']))

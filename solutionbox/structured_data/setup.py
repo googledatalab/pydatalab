@@ -25,7 +25,7 @@ setup(
     'datalab_solutions',
     'datalab_solutions.structured_data',
     'datalab_solutions.structured_data.trainer',
-    'datalab_solutions.structured_data.preprocess',    
+    'datalab_solutions.structured_data.preprocess',
   ],
   description='Google Cloud Datalab Structured Data Package',
   author='Google',
