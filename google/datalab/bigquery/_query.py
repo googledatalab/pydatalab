@@ -25,6 +25,7 @@ from . import _query_job
 from . import _sampling
 from . import _udf
 from . import _utils
+from . import _external_data_source
 
 
 class Query(object):
@@ -33,8 +34,7 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, env=None, udfs=None, data_sources=None,
-               subqueries=None):
+  def __init__(self, sql, env=None, udfs=None, data_sources=None, subqueries=None):
     """Initializes an instance of a Query object.
 
     Args:
@@ -42,40 +42,36 @@ class Query(object):
       env: a dictionary containing objects from the query execution context, used to get references
           to UDFs, subqueries, and external data sources referenced by the query
       udfs: list of UDFs referenced in the SQL.
-      data_sources: dictionary of external data sources referenced in the SQL.
+      data_sources: list of external data sources referenced in the SQL.
       subqueries: list of subqueries referenced in the SQL
 
     Raises:
       Exception if expansion of any variables failed.
       """
     self._sql = sql
-    self._data_sources = data_sources
     self._udfs = udfs
     self._subqueries = subqueries
     self._env = env or {}
+    self._data_sources = []
 
-    if data_sources is None:
-      data_sources = {}
-
-    def _validate_object(obj):
-      if not self._env.__contains__(obj):
+    def _validate_object(obj, obj_type):
+      item = self._env.get(obj)
+      if item is None:
         raise Exception('Cannot find object %s.' % obj)
+      if not isinstance(item, obj_type):
+        raise Exception('Expected type: %s, found: %s.' % (obj_type, type(item)))
 
-    # Validate subqueries and UDFs when adding them to query
+    # Validate subqueries, UDFs, and datasources when adding them to query
     if self._subqueries:
       for subquery in self._subqueries:
-        _validate_object(subquery)
+        _validate_object(subquery, Query)
     if self._udfs:
       for udf in self._udfs:
-        _validate_object(udf)
-
-    self._external_tables = None
-    if len(data_sources):
-      self._external_tables = {}
-      for name, table in list(data_sources.items()):
-        if table.schema is None:
-          raise Exception('Referenced external table %s has no known schema' % name)
-        self._external_tables[name] = table._to_query_json()
+        _validate_object(udf, _udf.UDF)
+    if data_sources:
+      for ds in data_sources:
+        _validate_object(ds, _external_data_source.ExternalDataSource)
+        self._data_sources = {ds: self._env[ds]._to_query_json()}
 
   @staticmethod
   def from_view(view):
@@ -198,7 +194,7 @@ class Query(object):
     api = _api.Api(context)
     try:
       query_result = api.jobs_insert_query(self.sql, dry_run=True,
-                                           table_definitions=self._external_tables,
+                                           table_definitions=self._data_sources,
                                            query_params=query_params)
     except Exception as e:
       raise e
@@ -243,7 +239,7 @@ class Query(object):
                                            append=append, overwrite=overwrite, batch=batch,
                                            use_cache=output_options.use_cache,
                                            allow_large_results=output_options.allow_large_results,
-                                           table_definitions=self._external_tables,
+                                           table_definitions=self._data_sources,
                                            query_params=query_params)
     except Exception as e:
       raise e

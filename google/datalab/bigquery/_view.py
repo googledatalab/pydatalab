@@ -149,4 +149,4 @@ class View(object):
   def __repr__(self):
     """Returns a representation for the view for showing in the notebook.
     """
-    return 'View %s\n%s' % (self._table, self.query)
+    return 'BigQuery View - table: %s, sql: %s' % (self._table, self.query)

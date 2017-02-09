@@ -70,7 +70,7 @@ class UDF(object):
     return self._expanded_sql()
 
   def __repr__(self):
-    return self._code
+    return 'BigQuery UDF - code:\n%s' % self._code
 
   @staticmethod
   def _build_udf(name, code, return_type, params='', language='js', imports=''):

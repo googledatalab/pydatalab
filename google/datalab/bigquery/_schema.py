@@ -20,6 +20,7 @@ from builtins import object
 
 import datetime
 import pandas
+import pprint
 
 
 class SchemaField(object):
@@ -61,7 +62,7 @@ class SchemaField(object):
 
   def __repr__(self):
     """ Returns the schema field as a string form of a dictionary. """
-    return str(self)
+    return 'BigQuery Schema Field:\n%s' % pprint.pformat(vars(self), width=1)
 
   def __getitem__(self, item):
     # TODO(gram): Currently we need this for a Schema object to work with the Parser object.
@@ -307,10 +308,12 @@ class Schema(list):
         self._populate_fields(field_data.get('fields'), name + '.')
 
   def __str__(self):
-    """ Returns a string representation of the non-flattened form of the schema. """
-    # TODO(gram): We should probably return the flattened form. There was a reason why this is
-    # not but I don't remember what it was. Figure that out and fix this.
+    """ Returns a string representation of the non-flattened form of the schema."""
     return str(self._bq_schema)
+
+  def __repr__(self):
+    """ Returns a string representation of the schema for notebooks."""
+    return 'BigQuery Schema - Fields:\n%s' % pprint.pformat(self._bq_schema, width=1)
 
   def __eq__(self, other):
     """ Compares two schema for equality. """

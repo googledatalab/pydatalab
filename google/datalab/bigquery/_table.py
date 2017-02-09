@@ -695,7 +695,7 @@ class Table(object):
   def __repr__(self):
     """Returns a representation for the table for showing in the notebook.
     """
-    return 'Table %s' % self._full_name
+    return 'BigQuery Table - name: %s' % self._full_name
 
   def __str__(self):
     """Returns a string representation of the table using its specified name.
