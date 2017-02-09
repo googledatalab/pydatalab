@@ -86,8 +86,7 @@ class Cloud(object):
     p.run()
     return job_name
 
-  def train(self, input_dir, batch_size, max_steps, output_path,
-            region, scale_tier):
+  def train(self, input_dir, batch_size, max_steps, output_path, cloud_train_config):
     """Cloud training with CloudML trainer service."""
 
     import datalab.mlalpha as mlalpha
@@ -103,10 +102,9 @@ class Cloud(object):
     job_request = {
       'package_uris': staging_package_url,
       'python_module': 'datalab_solutions.inception.task',
-      'scale_tier': scale_tier,
-      'region': region,
       'args': job_args
     }
+    job_request.update(dict(cloud_train_config._asdict()))
     cloud_runner = mlalpha.CloudRunner(job_request)
     job_id = 'inception_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
     return cloud_runner.run(job_id)
