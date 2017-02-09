@@ -333,7 +333,8 @@ def local_batch_predict(model_dir, prediction_input_file, output_dir,
   cmd = ['predict.py',
          '--predict_data=%s' % prediction_input_file,
          '--trained_model_dir=%s' % model_dir,
-         '--output_dir=%s' % output_dir]
+         '--output_dir=%s' % output_dir,
+         '--output_format=csv']         ]
   if batch_size:
     cmd.append('--batch_size=%s' % str(batch_size))
 
@@ -366,7 +367,8 @@ def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
          '--project_id=%s' % _default_project(),
          '--predict_data=%s' % prediction_input_file,
          '--trained_model_dir=%s' % model_dir,
-         '--output_dir=%s' % output_dir]
+         '--output_dir=%s' % output_dir,
+         '--output_format=csv']
   if batch_size:
     cmd.append('--batch_size=%s' % str(batch_size))
 
