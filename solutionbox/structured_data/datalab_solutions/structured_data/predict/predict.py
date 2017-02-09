@@ -122,6 +122,20 @@ class FixMissingTarget(beam.DoFn):
     self._num_expected_columns = len(schema)
 
   def process(self, context):
+    """Fixes csv line if target is missing.
+
+    The first column is assumed to be the target column, and the TF graph
+    expects to always parse the target column, even in prediction. Below,
+    we check how many csv columns there are, and if the target is missing, we
+    prepend a ',' to denote the missing column. 
+
+    Example:
+      'target,key,value1,...' -> 'target,key,value1,...' (no change)
+      'key,value1,...' -> ',key,value1,...' (add missing target column)
+
+    The value of the missing target column comes from the default value given 
+    to tf.decode_csv in the graph.
+    """
     import logging
     import apache_beam as beam
 
@@ -168,7 +182,7 @@ class RunGraphDoFn(beam.DoFn):
     self._trained_model_dir = trained_model_dir
     self._session = None
 
-  def _setup_prediction(self):
+  def start_bundle(self):
     from tensorflow.contrib.session_bundle import session_bundle
     import json
 
@@ -185,6 +199,10 @@ class RunGraphDoFn(beam.DoFn):
 
     self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
 
+  def finish_bundle(self):
+    self._session.close()
+
+
   def process(self, context):
     import collections
     import logging
@@ -192,8 +210,7 @@ class RunGraphDoFn(beam.DoFn):
 
     num_in_batch = 0
     try:
-      if not self._session:
-        self._setup_prediction()
+      assert self._session is not None:
 
       feed_dict = collections.defaultdict(list)
       for line in context.element:
@@ -212,7 +229,6 @@ class RunGraphDoFn(beam.DoFn):
       # (value,
       #  array([a1, b1, c1]),
       #  ...)
-
 
       # Convert the results into a dict and unbatch the results.
       if num_in_batch > 1:
@@ -304,8 +320,6 @@ class FormatAndSave(beam.PTransform):
     # See if the target vocab should be loaded.
     if self._output_format == 'csv':
       from tensorflow.python.lib.io import file_io
-      from StringIO import StringIO
-      import pandas as pd
       import json
       import os
 

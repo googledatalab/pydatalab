@@ -318,14 +318,14 @@ def cloud_predict():
 
 
 def local_batch_predict(model_dir, prediction_input_file, output_dir,
-                        batch_size=None, shard_files=True):
+                        batch_size=1000, shard_files=True):
   """Local batch prediction.
 
   Args:
     model_dir: local file path to trained model. Usually, this is 
         training_output_dir/model.
-    prediction_input_file: csv file pattern
-    output_dir: location to save the results.
+    prediction_input_file: csv file pattern to a local file.
+    output_dir: local output location to save the results.
     batch_size: Int. How many instances to run in memory at once. Larger values
         mean better performace but more memeory consumed.
     shard_files: If false, the output files are not shardded.
@@ -334,9 +334,8 @@ def local_batch_predict(model_dir, prediction_input_file, output_dir,
          '--predict_data=%s' % prediction_input_file,
          '--trained_model_dir=%s' % model_dir,
          '--output_dir=%s' % output_dir,
-         '--output_format=csv']         ]
-  if batch_size:
-    cmd.append('--batch_size=%s' % str(batch_size))
+         '--output_format=csv',
+         '--batch_size=%s' % str(batch_size)]
 
   if shard_files:
     cmd.append('--shard_files')
@@ -350,14 +349,14 @@ def local_batch_predict(model_dir, prediction_input_file, output_dir,
 
 
 def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
-                        batch_size=None, shard_files=True):
+                        batch_size=1000, shard_files=True):
   """Cloud batch prediction. Submitts a Dataflow job.
 
   Args:
-    model_dir: local file path to trained model. Usually, this is 
+    model_dir: GSC file path to trained model. Usually, this is 
         training_output_dir/model.
-    prediction_input_file: csv file pattern
-    output_dir: location to save the results.
+    prediction_input_file: csv file pattern to a GSC file.
+    output_dir: Location to save the results on GCS.
     batch_size: Int. How many instances to run in memory at once. Larger values
         mean better performace but more memeory consumed.
     shard_files: If false, the output files are not shardded.
@@ -368,9 +367,8 @@ def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
          '--predict_data=%s' % prediction_input_file,
          '--trained_model_dir=%s' % model_dir,
          '--output_dir=%s' % output_dir,
-         '--output_format=csv']
-  if batch_size:
-    cmd.append('--batch_size=%s' % str(batch_size))
+         '--output_format=csv',
+         '--batch_size=%s' % str(batch_size)]
 
   if shard_files:
     cmd.append('--shard_files')
