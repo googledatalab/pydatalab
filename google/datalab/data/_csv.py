@@ -110,21 +110,21 @@ class Csv(object):
         df[key] = df[key].astype('category')
     return df
 
-  def _create_federated_table(self, skip_header_rows):
+  def _create_external_data_source(self, skip_header_rows):
     import google.datalab.bigquery as bq
     df = self.browse(1, None)
     # read each column as STRING because we only want to sample rows.
     schema_train = bq.Schema([{'name': name, 'type': 'STRING'} for name in df.keys()])
     options = bq.CSVOptions(skip_leading_rows=(1 if skip_header_rows == True else 0))
-    return bq.FederatedTable.from_storage(self.path,
-                                          csv_options=options,
-                                          schema=schema_train,
-                                          max_bad_records=0)
+    return bq.ExternalDataSource(self.path,
+                                 csv_options=options,
+                                 schema=schema_train,
+                                 max_bad_records=0)
 
-  def _get_gcs_csv_row_count(self, federated_table):
+  def _get_gcs_csv_row_count(self, external_data_source):
     import google.datalab.bigquery as bq
     results = bq.Query('SELECT count(*) from data',
-                       data_sources={'data': federated_table}).execute().results
+                       data_sources={'data': external_data_source}).execute().results
     return results[0].values()[0]
 
   def sample_to(self, count, skip_header_rows, strategy, target):
@@ -146,9 +146,9 @@ class Csv(object):
       import google.datalab.bigquery as bq
       if not self.path.startswith('gs://'):
         raise Exception('Cannot use BIGQUERY if data is not in GCS')
-      federated_table = self._create_federated_table(skip_header_rows)
-      row_count = self._get_gcs_csv_row_count(federated_table)
-      query = bq.Query('SELECT * from data', data_sources={'data': federated_table})
+      external_data_source = self._create_external_data_source(skip_header_rows)
+      row_count = self._get_gcs_csv_row_count(external_data_source)
+      query = bq.Query('SELECT * from data', data_sources={'data': external_data_source})
       sampling = bq.Sampling.random(count*100/float(row_count))
       sample = query.sample(sampling=sampling)
       df = sample.to_dataframe()
