@@ -15,8 +15,8 @@
 from collections import namedtuple
 
 _CloudTrainingConfig = namedtuple("CloudConfig", 
-    "region scale_tier master_type worker_type parameter_server_type " + \
-    "worker_count parameter_server_count")
+    ['region', 'scale_tier', 'master_type', 'worker_type',
+     'parameter_server_type', 'worker_count', 'parameter_server_count'])
 _CloudTrainingConfig.__new__.__defaults__ = ('BASIC', None, None, None, None, None)
 
 
