@@ -51,7 +51,8 @@ class TestCases(unittest.TestCase):
 """
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
-    google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences', 'language': 'js'}, cell_body)
+    google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences',
+                                                          'language': 'js'}, cell_body)
     udf = env['count_occurrences']
     self.assertIsNotNone(udf)
     self.assertEquals('count_occurrences', udf._name)
@@ -59,6 +60,37 @@ class TestCases(unittest.TestCase):
     self.assertEquals('INTEGER', udf._return_type)
     self.assertEquals([('word', 'STRING'), ('corpus', 'STRING')], udf._params)
     self.assertEquals([], udf._imports)
+
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.Context.default')
+  def test_query_cell(self, mock_default_context, mock_notebook_environment):
+    env = {}
+    mock_default_context.return_value = TestCases._create_context()
+    mock_notebook_environment.return_value = env
+    IPython.get_ipython().user_ns = env
+
+    # test query creation
+    q1_body = 'SELECT * FROM test_table'
+    google.datalab.bigquery.commands._bigquery._query_cell({'name': 'q1', 'udfs': None,
+                                                'datasources': None, 'subqueries': None}, q1_body)
+    q1 = env['q1']
+    self.assertIsNotNone(q1)
+    self.assertIsNone(q1._udfs)
+    self.assertIsNone(q1._subqueries)
+    self.assertEqual(q1_body, q1._sql)
+    self.assertEqual(q1_body, q1.sql)
+
+    # test subquery reference and expansion
+    q2_body = 'SELECT * FROM q1'
+    google.datalab.bigquery.commands._bigquery._query_cell({'name': 'q2', 'udfs': None,
+                                                'datasources': None, 'subqueries': ['q1']}, q2_body)
+    q2 = env['q2']
+    self.assertIsNotNone(q2)
+    self.assertIsNone(q2._udfs)
+    self.assertEqual(['q1'], q2._subqueries)
+    expected_sql = 'WITH q1 AS (%s)\n%s' % (q1_body, q2_body)
+    self.assertEqual(q2_body, q2._sql)
+    self.assertEqual(expected_sql, q2.sql)
 
   @staticmethod
   def _create_context():

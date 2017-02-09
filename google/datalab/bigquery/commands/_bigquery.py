@@ -147,6 +147,22 @@ def _create_dryrun_subparser(parser):
   return dryrun_parser
 
 
+def _create_query_subparser(parser):
+  query_parser = parser.subcommand('query',
+      'Create a BigQuery SQL query object, optionally using other SQL objects, UDFs, or external datasources.')
+  query_parser.add_argument('-n', '--name', help='The name of this SQL query object', required=True)
+  query_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
+                            choices=['legacy', 'standard'])
+  query_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
+  query_parser.add_argument('--udfs', help='List of UDFs to reference in the query body', nargs='+')
+  query_parser.add_argument('--datasources', help='List of external datasources to reference in the query body',
+                            nargs='+')
+  query_parser.add_argument('--subqueries', help='List of subqueries to reference in the query body', nargs='+')
+  query_parser.add_argument('-v', '--verbose', help='Show the expanded SQL that is being executed',
+                            action='store_true')
+  return query_parser
+
+
 def _create_execute_subparser(parser):
   execute_parser = parser.subcommand('execute',
       'Execute a BigQuery SQL query and optionally send the results to a named table.\n' +
@@ -436,6 +452,29 @@ def _udf_cell(args, cell_body):
   # Finally build the UDF object
   udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, params, args['language'], imports)
   google.datalab.utils.commands.notebook_environment()[udf_name] = udf
+
+
+def _query_cell(args, cell_body):
+  """Implements the BigQuery cell magic for used to build SQL objects.
+
+  The supported syntax is:
+
+      %%bq query <args>
+      [<inline SQL>]
+
+  Args:
+    args: the optional arguments following '%%bql query'.
+    cell_body: the contents of the cell
+  """
+  name = args['name']
+  udfs = args['udfs']
+  datasources = args['datasources']
+  subqueries = args['subqueries']
+
+  # Finally build the query object
+  query = google.datalab.bigquery.Query(cell_body, values=IPython.get_ipython().user_ns,
+                                        udfs=udfs, data_sources=datasources, subqueries=subqueries)
+  google.datalab.utils.commands.notebook_environment()[name] = query
 
 
 def _execute_cell(args, cell_body):
@@ -760,6 +799,9 @@ for help on a specific command.
 
   # %bq tables
   _add_command(parser, _create_table_subparser, _table_cell)
+
+  # %%bq query
+  _add_command(parser, _create_query_subparser, _query_cell)
 
   # %%bq execute
   _add_command(parser, _create_execute_subparser, _execute_cell)

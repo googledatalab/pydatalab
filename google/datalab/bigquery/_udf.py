@@ -55,8 +55,7 @@ class UDF(object):
     self._imports = imports
     self._sql = None
 
-  @property
-  def expanded_sql(self):
+  def _expanded_sql(self):
     """Get the expanded BigQuery SQL string of this UDF
 
     Returns
@@ -66,6 +65,12 @@ class UDF(object):
       self._sql = UDF._build_udf(self._name, self._code, self._return_type, self._params,
                                  self._language, self._imports)
     return self._sql
+
+  def _repr_sql_(self):
+    return self._expanded_sql()
+
+  def __repr__(self):
+    return self._code
 
   @staticmethod
   def _build_udf(name, code, return_type, params='', language='js', imports=''):
