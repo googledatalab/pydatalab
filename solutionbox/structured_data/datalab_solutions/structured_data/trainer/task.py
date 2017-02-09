@@ -62,10 +62,6 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
         lambda: tf.string_join([tf.constant(','), examples]),
         lambda: examples)
 
-    print('*'*100)
-    print('ex', examples)
-    print('new', new_examples)
-
     features = util.parse_example_tensor(examples=new_examples,
                                          train_config=train_config)
 
@@ -127,7 +123,7 @@ def get_export_signature_fn(train_config, args):
     """Create an export signature with named input and output signatures."""
     target_name = train_config['target_column']
     key_name = train_config['key_column']
-    outputs = {TARGET_SCORE_TENSOR_NAME: predictions.name,
+    outputs = {TARGET_SCORE_TENSOR_NAME: tf.squeeze(predictions).name,
                key_name: tf.squeeze(features[key_name]).name,
               }
 
@@ -142,8 +138,8 @@ def get_export_signature_fn(train_config, args):
           features[target_name],
           mapping=string_value)
       outputs.update(
-          {TARGET_CLASS_TENSOR_NAME: predicted_label.name,
-           TARGET_INPUT_TENSOR_NAME: input_target_label.name})
+          {TARGET_CLASS_TENSOR_NAME: tf.squeeze(predicted_label).name,
+           TARGET_INPUT_TENSOR_NAME: tf.squeeze(input_target_label).name})
     else:
       outputs.update(
           {TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name})
@@ -197,11 +193,20 @@ def get_experiment_fn(args):
     input_features_file = os.path.join(args.preprocess_output_dir,
                                        util.INPUT_FEATURES_FILE)
 
+    # Make list of files to save with the trained model.
+    additional_assets = [args.transforms_file, schema_file, input_features_file]
+    if util.is_classification_model(args.model_type):
+      target_name = train_config['target_column']
+      vocab_file_path = os.path.join(
+          args.preprocess_output_dir, util.CATEGORICAL_ANALYSIS % target_name)
+      assert file_io.file_exists(vocab_file_path)
+      additional_assets.append(vocab_file_path)
+
     # Save the finished model to output_dir/model
     export_monitor = util.ExportLastModelMonitor(
         output_dir=output_dir,
         final_model_location='model',  # Relative to the output_dir.
-        additional_assets=[args.transforms_file, schema_file, input_features_file],
+        additional_assets=additional_assets,
         input_fn=input_placeholder_for_prediction,
         input_feature_key=FEATURES_EXAMPLE_DICT_KEY,
         signature_fn=get_export_signature_fn(train_config, args))
