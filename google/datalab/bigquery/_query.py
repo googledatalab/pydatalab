@@ -21,7 +21,6 @@ import google.datalab.utils
 
 from ._query_output import QueryOutput
 from . import _api
-from . import _federated_table
 from . import _query_job
 from . import _sampling
 from . import _udf
@@ -52,7 +51,7 @@ class Query(object):
       values: a dictionary used to expand variables if passed a SqlStatement or a string with
           variable references.
       udfs: list of UDFs referenced in the SQL.
-      data_sources: dictionary of federated (external) tables referenced in the SQL.
+      data_sources: dictionary of external data sources referenced in the SQL.
       subqueries: list of subqueries referenced in the SQL
 
     Raises:

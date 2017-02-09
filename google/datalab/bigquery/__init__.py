@@ -15,7 +15,7 @@ from __future__ import absolute_import
 
 from ._csv_options import CSVOptions
 from ._dataset import Dataset, Datasets
-from ._federated_table import FederatedTable
+from ._external_data_source import ExternalDataSource
 from ._query import Query
 from ._query_output import QueryOutput
 from ._query_results_table import QueryResultsTable
