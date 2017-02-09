@@ -29,6 +29,7 @@ from ._confusion_matrix import ConfusionMatrix
 from ._analysis import csv_to_dataframe
 from ._package_runner import PackageRunner
 from ._feature_slice_view import FeatureSliceView
+from ._cloud_training_config import CloudTrainingConfig
 from ._util import *
 
 
