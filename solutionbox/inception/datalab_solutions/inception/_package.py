@@ -102,7 +102,7 @@ def local_train(input_dir, batch_size, max_steps, output_dir, checkpoint=None):
 
 
 def cloud_train(input_dir, batch_size, max_steps, output_dir,
-                region, scale_tier='BASIC', checkpoint=None):
+                cloud_train_config, checkpoint=None):
   """Train model in the cloud with CloudML trainer service.
      The output can be used for local prediction or for online deployment.
   Args:
@@ -110,11 +110,12 @@ def cloud_train(input_dir, batch_size, max_steps, output_dir,
     batch_size: size of batch used for training.
     max_steps: number of steps to train.
     output_dir: The output directory to use. GCS path only.
+    cloud_train_config: a datalab.ml.CloudTrainingConfig object.
     checkpoint: the Inception checkpoint to use.
   """
 
   job_info = _cloud.Cloud(checkpoint=checkpoint).train(input_dir, batch_size,
-      max_steps, output_dir, region, scale_tier)
+      max_steps, output_dir, cloud_train_config)
   if (_util.is_in_IPython()):
     import IPython
     log_url_query_strings = {
