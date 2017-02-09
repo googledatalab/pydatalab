@@ -608,7 +608,7 @@ class Table(object):
     fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
     return iter(google.datalab.utils.Iterator(fetcher))
 
-  def to_dataframe(self, start_row=0, max_rows=None):
+  def _to_dataframe(self, start_row=0, max_rows=None):
     """ Exports the table to a Pandas dataframe.
 
     Args:
@@ -636,7 +636,7 @@ class Table(object):
     ordered_fields = [field.name for field in self.schema]
     return df[ordered_fields] if df is not None else pandas.DataFrame()
 
-  def to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
+  def _to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
     """Save the results to a local file in CSV format.
 
     Args:
@@ -659,22 +659,6 @@ class Table(object):
     for row in self:
       writer.writerow(row)
     f.close()
-
-  @google.datalab.utils.async_method
-  def to_file_async(self, destination, format='csv', csv_delimiter=',', csv_header=True):
-    """Start saving the results to a local file in CSV format and return a Job for completion.
-
-    Args:
-      destination: path on the local filesystem for the saved results.
-      format: the format to use for the exported data; currently only 'csv' is supported.
-      csv_delimiter: for CSV exports, the field delimiter to use. Defaults to ','
-      csv_header: for CSV exports, whether to include an initial header line. Default true.
-    Returns:
-      A Job for the async save operation.
-    Raises:
-      An Exception if the operation failed.
-    """
-    self.to_file(destination, format=format, csv_delimiter=csv_delimiter, csv_header=csv_header)
 
   @property
   def schema(self):

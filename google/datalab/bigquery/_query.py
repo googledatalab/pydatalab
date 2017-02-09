@@ -34,9 +34,8 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None, **kwargs):
+  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None):
     """Initializes an instance of a Query object.
-       Note that either values or kwargs may be used, but not both.
 
     Args:
       sql: the BigQuery SQL query string to execute, or a SqlStatement object. The latter will
@@ -53,8 +52,6 @@ class Query(object):
           variable references.
       udfs: array of UDFs referenced in the SQL.
       data_sources: dictionary of federated (external) tables referenced in the SQL.
-      kwargs: arguments to use when expanding the variables if passed a SqlStatement
-          or a string with variable references.
 
     Raises:
       Exception if expansion of any variables failed.
@@ -72,7 +69,7 @@ class Query(object):
     self._code = None
     self._imports = []
     if values is None:
-      values = kwargs
+      values = {}
 
     self._sql = google.datalab.data.SqlModule.expand(sql, values)
 
@@ -211,7 +208,7 @@ class Query(object):
                             'compress': output_options.compress_file
                           }
         else:
-          export_func = execute_job.result().to_file
+          export_func = execute_job.result()._to_file
           export_args = [output_options.file_path]
           export_kwargs = {
                             'format': output_options.file_format,
@@ -219,7 +216,7 @@ class Query(object):
                             'csv_header': output_options.csv_header
                           }
       elif output_options.type == 'dataframe':
-        export_func = execute_job.result().to_dataframe
+        export_func = execute_job.result()._to_dataframe
         export_args = []
         export_kwargs = {
                           'start_row': output_options.dataframe_start_row,
@@ -242,18 +239,4 @@ class Query(object):
       Exception if query could not be executed.
     """
     return self.execute_async(output_options, sampling=sampling).wait()
-
-  def to_view(self, view_name):
-    """ Create a View from this Query.
-
-    Args:
-      view_name: the name of the View either as a string or a 3-part tuple
-          (projectid, datasetid, name).
-
-    Returns:
-      A View for the Query.
-    """
-    # Do the import here to avoid circular dependencies at top-level.
-    from . import _view
-    return _view.View(view_name, self._context).create(self._sql)
 

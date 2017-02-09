@@ -226,13 +226,12 @@ def _storage_copy(args, _):
 
 def _storage_create(args, _):
   """ Create one or more buckets. """
-  buckets = google.datalab.storage.Buckets(project_id=args['project'])
   errs = []
   for name in args['bucket']:
     try:
       bucket, key = google.datalab.storage._bucket.parse_name(name)
       if bucket and not key:
-        buckets.create(bucket)
+        google.datalab.storage.Bucket(bucket).create(project_id=args['project'])
       else:
         raise Exception("Invalid bucket name %s" % name)
     except Exception as e:

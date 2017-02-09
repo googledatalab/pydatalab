@@ -522,7 +522,7 @@ class TestCases(unittest.TestCase):
       ]
     }
     tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
-    df = tbl.to_dataframe()
+    df = tbl._to_dataframe()
     self.assertEquals(2, len(df))
     self.assertEquals(1, df['some'][0])
     self.assertEquals(2, df['some'][1])
