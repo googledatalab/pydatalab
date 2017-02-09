@@ -18,7 +18,7 @@ from builtins import object
 from . import _csv_options
 
 
-class FederatedTable(object):
+class ExternalDataSource(object):
 
   @staticmethod
   def from_storage(source, source_format='csv', csv_options=None, ignore_unknown_values=False,
@@ -36,12 +36,12 @@ class FederatedTable(object):
       max_bad_records: The maximum number of bad records that are allowed (and ignored) before
           returning an 'invalid' error in the Job result (default 0).
       compressed: whether the data is GZ compressed or not (default False). Note that compressed
-          data can be used as a federated table but cannot be loaded into a BQ Table.
-      schema: the schema of the data. This is required for this table to be used as a federated
-          table or to be loaded using a Table object that itself has no schema (default None).
+          data can be used as an external data source but cannot be loaded into a BQ Table.
+      schema: the schema of the data. This is required for this table to be used as an external
+          data source or to be loaded using a Table object that itself has no schema (default None).
 
   """
-    result = FederatedTable()
+    result = ExternalDataSource()
     # Do some sanity checking and concert some params from friendly form to form used by BQ.
     if source_format == 'csv':
       result._bq_source_format = 'CSV'

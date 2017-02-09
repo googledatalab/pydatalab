@@ -21,7 +21,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../g
 
 import bigquery.api_tests
 import bigquery.dataset_tests
-#import bigquery.federated_table_tests
+import bigquery.external_data_source_tests
 import bigquery.jobs_tests
 import bigquery.parser_tests
 import bigquery.query_tests
@@ -58,7 +58,7 @@ import _util.util_tests
 _TEST_MODULES = [
     bigquery.api_tests,
     bigquery.dataset_tests,
-    #bigquery.federated_table_tests, # TODO: enable federated table tests
+    #bigquery.external_data_source_tests, # TODO: enable external data source tests
     bigquery.jobs_tests,
     bigquery.parser_tests,
     bigquery.query_tests,

@@ -112,7 +112,7 @@ class TestCases(unittest.TestCase):
     options = google.datalab.bigquery.CSVOptions(skip_leading_rows=1)
     sql = 'SELECT * FROM weight'
 
-    weight = google.datalab.bigquery.FederatedTable.from_storage(table_uri, schema=schema, csv_options=options)
+    weight = google.datalab.bigquery.ExternalDataSource.from_storage(table_uri, schema=schema, csv_options=options)
     q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
     q.execute_async()
 
@@ -133,7 +133,7 @@ class TestCases(unittest.TestCase):
     table_uris = ['gs://google.datalab/weight1.csv', 'gs://google.datalab/weight2.csv']
     sql = 'SELECT * FROM weight'
 
-    weight = google.datalab.bigquery.FederatedTable.from_storage(table_uris, schema=schema)
+    weight = google.datalab.bigquery.ExternalDataSource.from_storage(table_uris, schema=schema)
     q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
     q.execute_async()
 
@@ -156,10 +156,10 @@ class TestCases(unittest.TestCase):
     sql = 'SELECT * FROM weight1 JOIN weight2 ON day'
 
     options = google.datalab.bigquery.CSVOptions(skip_leading_rows=1)
-    weight1 = google.datalab.bigquery.FederatedTable.from_storage(table_uri1, schema=schema,
+    weight1 = google.datalab.bigquery.ExternalDataSource.from_storage(table_uri1, schema=schema,
                                                        csv_options=options)
-    weight2 = google.datalab.bigquery.FederatedTable.from_storage(table_uri2, schema=schema)
-    q = google.datalab.bigquery.Query(sql, weight1=weight1, weight2=weight2, context=self._create_context())
+    weight2 = google.datalab.bigquery.ExternalDataSource.from_storage(table_uri2, schema=schema)
+    q = google.datalab.bigquery.Query(sql, values={'weight1': weight1, 'weight2': weight2}, context=self._create_context())
     q.execute_async()
 
     table_definition1 = self._get_table_definition(table_uri1, skip_rows=1)
