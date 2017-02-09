@@ -128,6 +128,10 @@ LIMIT $limit
     sql = google.datalab.bigquery.Query(query, values={}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("thus", "forsooth")\nLIMIT 10', sql)
+    # As above but with overrides, using list
+    sql = google.datalab.bigquery.Query(query, values={'words': 'eyeball', 'limit': 5}).sql
+    self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
+                      'WHERE word IN "eyeball"\nLIMIT 5', sql)
     # As above but with overrides, using tuple and values dict
     sql = google.datalab.bigquery.Query(query, values={'limit': 3, 'words': ('thus',)}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
@@ -149,6 +153,10 @@ LIMIT $limit
     sql = google.datalab.bigquery.Query(query, values={'limit': 2, 'words': ['forsooth']}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("forsooth")\nLIMIT 2', sql)
+    # As above but with overrides, using tuple
+    sql = google.datalab.bigquery.Query(query, values={'words': 'eyeball'}).sql
+    self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
+                      'WHERE word IN "eyeball"\nLIMIT 10', sql)
     # TODO(gram): add some tests for source and datestring variables
 
   def test_date(self):

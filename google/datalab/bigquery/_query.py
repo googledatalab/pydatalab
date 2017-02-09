@@ -34,7 +34,8 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None):
+  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None,
+               subqueries=None):
     """Initializes an instance of a Query object.
 
     Args:
@@ -50,8 +51,9 @@ class Query(object):
           level are used.
       values: a dictionary used to expand variables if passed a SqlStatement or a string with
           variable references.
-      udfs: array of UDFs referenced in the SQL.
+      udfs: list of UDFs referenced in the SQL.
       data_sources: dictionary of federated (external) tables referenced in the SQL.
+      subqueries: list of subqueries referenced in the SQL
 
     Raises:
       Exception if expansion of any variables failed.
@@ -62,20 +64,34 @@ class Query(object):
     self._api = _api.Api(context)
     self._data_sources = data_sources
     self._udfs = udfs
+    self._subqueries = subqueries
+    self._values = values
 
     if data_sources is None:
       data_sources = {}
 
     self._code = None
     self._imports = []
-    if values is None:
-      values = {}
+    if self._values is None:
+      self._values = {}
 
-    self._sql = google.datalab.data.SqlModule.expand(sql, values)
+    self._sql = google.datalab.data.SqlModule.expand(sql, self._values)
+
+    def _validate_object(obj):
+      if not self._values.__contains__(obj):
+        raise Exception('Cannot find object %s.' % obj)
+
+    # Validate subqueries and UDFs when adding them to query
+    if self._subqueries:
+      for subquery in self._subqueries:
+        _validate_object(subquery)
+    if self._udfs:
+      for udf in self._udfs:
+        _validate_object(udf)
 
     # We need to take care not to include the same UDF code twice so we use sets.
     udfs = set(udfs if udfs else [])
-    for value in list(values.values()):
+    for value in list(self._values.values()):
       if isinstance(value, _udf.UDF):
         udfs.add(value)
     included_udfs = set([])
@@ -88,13 +104,51 @@ class Query(object):
           raise Exception('Referenced external table %s has no known schema' % name)
         self._external_tables[name] = table._to_query_json()
 
+  def _expanded_sql(self, sampling=None):
+    """Get the expanded SQL of this object, including all subqueries, UDFs, and external datasources
+
+    Returns:
+      The expanded SQL string of this object
+    """
+
+    udfs = set()
+    subqueries = set()
+    expanded_sql = ''
+
+    def _recurse_subqueries(query):
+      """Recursively scan subqueries and add their pieces to global scope udfs and subqueries
+      """
+      if query._subqueries:
+        subqueries.update(query._subqueries)
+      if query._udfs:
+        udfs.update(set(query._udfs))
+      if query._subqueries:
+        for subquery in query._subqueries:
+          _recurse_subqueries(self._values[subquery])
+
+    subqueries_sql = udfs_sql = ''
+    _recurse_subqueries(self)
+
+    if udfs:
+      expanded_sql += '\n'.join([self._values[udf]._expanded_sql() for udf in udfs])
+      expanded_sql += '\n'
+
+    if subqueries:
+      expanded_sql += 'WITH ' + \
+                      ',\n'.join(['%s AS (%s)' % (sq, self._values[sq]._sql) for sq in subqueries])
+      expanded_sql += '\n'
+
+    expanded_sql += sampling(self._sql) if sampling else self._sql
+
+    return expanded_sql
+
   def _repr_sql_(self):
     """Creates a SQL representation of this object.
 
     Returns:
       The SQL representation to use when embedding this object into other SQL.
     """
-    return '(%s)' % self._sql
+    return '(%s)' % self.sql
 
   def __str__(self):
     """Creates a string representation of this object.
@@ -115,7 +169,7 @@ class Query(object):
   @property
   def sql(self):
     """ Get the SQL for the query. """
-    return self._sql
+    return self._expanded_sql()
 
   @property
   def scripts(self):
@@ -131,7 +185,7 @@ class Query(object):
       An exception if the query was malformed.
     """
     try:
-      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True,
+      query_result = self._api.jobs_insert_query(self.sql, self._code, self._imports, dry_run=True,
                                                  table_definitions=self._external_tables)
     except Exception as e:
       raise e
@@ -163,7 +217,7 @@ class Query(object):
     if table_name is not None:
       table_name = _utils.parse_table_name(table_name, self._api.project_id)
 
-    sql = self._sql if sampling is None else sampling(self._sql)
+    sql = self._expanded_sql(sampling)
 
     try:
       query_result = self._api.jobs_insert_query(sql, self._code, self._imports,
@@ -239,4 +293,3 @@ class Query(object):
       Exception if query could not be executed.
     """
     return self.execute_async(output_options, sampling=sampling).wait()
-
