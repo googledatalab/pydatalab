@@ -51,14 +51,25 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
         shape=(None,),
         name=EXAMPLES_PLACEHOLDER_TENSOR_NAME)
 
-    features = util.parse_example_tensor(examples=examples,
+    # Parts is batch-size x num-columns sparse tensor. This means when running
+    # prediction, all input rows should have a target column as the first
+    # column, or all input rows should have the target column missing.
+    # The condition below checks how many columns are in parts, and appends a 
+    # ',' to the csv 'examples' placeholder string if a column is missing.
+    parts = tf.string_split(examples, delimiter=',')
+    new_examples = tf.cond(
+        tf.less(tf.shape(parts)[1], len(train_config['csv_header'])),
+        lambda: tf.string_join([tf.constant(','), examples]),
+        lambda: tf.identity(examples))
+
+    features = util.parse_example_tensor(examples=new_examples,
                                          train_config=train_config)
 
     global FEATURES_EXAMPLE_DICT_KEY
     while FEATURES_EXAMPLE_DICT_KEY in features:
       FEATURES_EXAMPLE_DICT_KEY = '_' + FEATURES_EXAMPLE_DICT_KEY
 
-    features[FEATURES_EXAMPLE_DICT_KEY] = examples
+    features[FEATURES_EXAMPLE_DICT_KEY] = new_examples
 
     target = features.pop(train_config['target_column'])
     features, target = util.preprocess_input(
@@ -102,6 +113,27 @@ def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
   return get_input_features
 
 
+def vector_slice(A, B):
+    """ Returns values of rows i of A at column B[i]
+
+    where A is a 2D Tensor with shape [None, D] 
+    and B is a 1D Tensor with shape [None] 
+    with type int32 elements in [0,D)
+
+    Example:
+      A =[[1,2], B = [0,1], vector_slice(A,B) -> [1,4]
+          [3,4]]
+
+    Converts A into row major order and does a 1D index lookup.
+    """
+    # if A is m x n, then linear_index is [0, n, 2n, ..., (m-1)*n ]
+    linear_index = (tf.shape(A)[1]
+                   * tf.range(0,tf.shape(A)[0]))
+    linear_index = tf.to_int64(linear_index)
+    # linear_A is A in row-major order.
+    linear_A = tf.reshape(A, [-1])
+    return tf.gather(linear_A, B + linear_index)
+
 def get_export_signature_fn(train_config, args):
   """Builds the output layer in the exported graph.
 
@@ -112,26 +144,64 @@ def get_export_signature_fn(train_config, args):
     """Create an export signature with named input and output signatures."""
     target_name = train_config['target_column']
     key_name = train_config['key_column']
-    outputs = {TARGET_SCORE_TENSOR_NAME: predictions.name,
-               key_name: tf.squeeze(features[key_name]).name,
-              }
+
 
     if util.is_classification_model(args.model_type):
       string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
-      prediction = tf.argmax(predictions, 1)
-      predicted_label = tf.contrib.lookup.index_to_string(
-          prediction,
-          mapping=string_value,
-          default_value=train_config['csv_defaults'][target_name])
+      outputs = {
+          key_name: tf.squeeze(features[key_name]).name,
+          'input_target_from_features': tf.squeeze(features[target_name]).name,
+      }
+ 
+      print('8'*1000)
+      print('target tensor', features[target_name])
+      print('predictions', predictions)
+      # Try getting the target prediction prob.
+
+      # Get score of the target column.
       input_target_label = tf.contrib.lookup.index_to_string(
           features[target_name],
           mapping=string_value)
-      outputs.update(
-          {TARGET_CLASS_TENSOR_NAME: predicted_label.name,
-           TARGET_INPUT_TENSOR_NAME: input_target_label.name})
+      input_target_score = vector_slice(predictions, features[target_name])
+
+      outputs.update({
+        'input_target_label': tf.squeeze(input_target_label).name,
+        'score_from_target_label': tf.squeeze(input_target_score).name,
+        'all_score': tf.squeeze(predictions).name,
+        })
+
+      # get top k answers
+      (top_k_values, top_k_indices) = tf.nn.top_k(predictions, k=args.top_n)
+      top_k_labels = tf.contrib.lookup.index_to_string(
+          tf.to_int64(top_k_indices),
+          mapping=string_value)
+
+      outputs.update({
+        'top_n_vaues': tf.squeeze(top_k_values).name,
+        'top_n_indices': tf.squeeze(top_k_indices).name,
+        'top_n_labels': tf.squeeze(top_k_labels).name
+
+        })
+
+
+      # string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
+      # prediction = tf.argmax(predictions, 1)
+      # predicted_label = tf.contrib.lookup.index_to_string(
+      #     prediction,
+      #     mapping=string_value,
+      #     default_value=train_config['csv_defaults'][target_name])
+      # input_target_label = tf.contrib.lookup.index_to_string(
+      #     features[target_name],
+      #     mapping=string_value)
+      # outputs.update(
+      #     {TARGET_CLASS_TENSOR_NAME: tf.squeeze(predicted_label).name,
+      #      TARGET_INPUT_TENSOR_NAME: tf.squeeze(input_target_label).name})
     else:
-      outputs.update(
-          {TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name})
+      outputs = {
+          key_name: tf.squeeze(features[key_name]).name,
+          TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name,
+          TARGET_SCORE_TENSOR_NAME: tf.squeeze(predictions).name
+      }
 
 
     inputs = {EXAMPLES_PLACEHOLDER_TENSOR_NAME: examples.name}
@@ -182,11 +252,20 @@ def get_experiment_fn(args):
     input_features_file = os.path.join(args.preprocess_output_dir,
                                        util.INPUT_FEATURES_FILE)
 
+    # Make list of files to save with the trained model.
+    additional_assets = [args.transforms_file, schema_file, input_features_file]
+    if util.is_classification_model(args.model_type):
+      target_name = train_config['target_column']
+      vocab_file_path = os.path.join(
+          args.preprocess_output_dir, util.CATEGORICAL_ANALYSIS % target_name)
+      assert file_io.file_exists(vocab_file_path)
+      additional_assets.append(vocab_file_path)
+
     # Save the finished model to output_dir/model
     export_monitor = util.ExportLastModelMonitor(
         output_dir=output_dir,
         final_model_location='model',  # Relative to the output_dir.
-        additional_assets=[args.transforms_file, schema_file, input_features_file],
+        additional_assets=additional_assets,
         input_fn=input_placeholder_for_prediction,
         input_feature_key=FEATURES_EXAMPLE_DICT_KEY,
         signature_fn=get_export_signature_fn(train_config, args))
@@ -256,6 +335,12 @@ def parse_arguments(argv):
                       choices=['linear_classification', 'linear_regression',
                                'dnn_classification', 'dnn_regression'],
                       required=True)
+  parser.add_argument('--top_n',
+                      type=int,
+                      default=1,
+                      help=('For classification problems, the output graph '
+                            'will contain the labels and scores for the top '
+                            'n classes.'))
   # Training input parameters
   parser.add_argument('--layer_sizes', type=int, nargs='*')
   parser.add_argument('--max_steps', type=int, default=5000,
