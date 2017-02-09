@@ -21,7 +21,7 @@ from . import _csv_options
 class ExternalDataSource(object):
 
   @staticmethod
-  def from_storage(source, source_format='csv', csv_options=None, ignore_unknown_values=False,
+  def __init__(self, source, source_format='csv', csv_options=None, ignore_unknown_values=False,
                    max_bad_records=0, compressed=False, schema=None):
 
     """ Create an external table for a GCS object.
@@ -41,32 +41,6 @@ class ExternalDataSource(object):
           data source or to be loaded using a Table object that itself has no schema (default None).
 
   """
-    result = ExternalDataSource()
-    # Do some sanity checking and concert some params from friendly form to form used by BQ.
-    if source_format == 'csv':
-      result._bq_source_format = 'CSV'
-      if csv_options is None:
-        csv_options = _csv_options.CSVOptions()  # use defaults
-    elif source_format == 'json':
-      if csv_options:
-        raise Exception('CSV options are not support for JSON tables')
-      result._bq_source_format = 'NEWLINE_DELIMITED_JSON'
-    else:
-      raise Exception("Invalid source format %s" % source_format)
-
-    result._source = source if isinstance(source, list) else [source]
-    result._source_format = source_format
-    result._csv_options = csv_options
-    result._ignore_unknown_values = ignore_unknown_values
-    result._max_bad_records = max_bad_records
-    result._compressed = compressed
-    result._schema = schema
-    return result
-
-  def __init__(self):
-
-    """ Create an external table reference. Do not call this directly; use factory method(s). """
-    # Do some sanity checking and concert some params from friendly form to form used by BQ.
     self._bq_source_format = None
     self._source = None
     self._source_format = None
@@ -75,6 +49,26 @@ class ExternalDataSource(object):
     self._max_bad_records = None
     self._compressed = None
     self._schema = None
+    # Do some sanity checking and concert some params from friendly form to form used by BQ.
+    if source_format == 'csv':
+      self._bq_source_format = 'CSV'
+      if csv_options is None:
+        csv_options = _csv_options.CSVOptions()  # use defaults
+    elif source_format == 'json':
+      if csv_options:
+        raise Exception('CSV options are not support for JSON tables')
+      self._bq_source_format = 'NEWLINE_DELIMITED_JSON'
+    else:
+      raise Exception("Invalid source format %s" % source_format)
+
+    self._source = source if isinstance(source, list) else [source]
+    self._source_format = source_format
+    self._csv_options = csv_options
+    self._ignore_unknown_values = ignore_unknown_values
+    self._max_bad_records = max_bad_records
+    self._compressed = compressed
+    self._schema = schema
+
 
   @property
   def schema(self):

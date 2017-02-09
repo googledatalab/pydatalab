@@ -116,10 +116,10 @@ class Csv(object):
     # read each column as STRING because we only want to sample rows.
     schema_train = bq.Schema([{'name': name, 'type': 'STRING'} for name in df.keys()])
     options = bq.CSVOptions(skip_leading_rows=(1 if skip_header_rows == True else 0))
-    return bq.ExternalDataSource.from_storage(self.path,
-                                              csv_options=options,
-                                              schema=schema_train,
-                                              max_bad_records=0)
+    return bq.ExternalDataSource(self.path,
+                                 csv_options=options,
+                                 schema=schema_train,
+                                 max_bad_records=0)
 
   def _get_gcs_csv_row_count(self, external_data_source):
     import google.datalab.bigquery as bq
