@@ -262,7 +262,7 @@ class Query(object):
                             'compress': output_options.compress_file
                           }
         else:
-          export_func = execute_job.result().to_file
+          export_func = execute_job.result()._to_file
           export_args = [output_options.file_path]
           export_kwargs = {
                             'format': output_options.file_format,
@@ -270,7 +270,7 @@ class Query(object):
                             'csv_header': output_options.csv_header
                           }
       elif output_options.type == 'dataframe':
-        export_func = execute_job.result().to_dataframe
+        export_func = execute_job.result()._to_dataframe
         export_args = []
         export_kwargs = {
                           'start_row': output_options.dataframe_start_row,
@@ -293,18 +293,3 @@ class Query(object):
       Exception if query could not be executed.
     """
     return self.execute_async(output_options, sampling=sampling).wait()
-
-  def to_view(self, view_name):
-    """ Create a View from this Query.
-
-    Args:
-      view_name: the name of the View either as a string or a 3-part tuple
-          (projectid, datasetid, name).
-
-    Returns:
-      A View for the Query.
-    """
-    # Do the import here to avoid circular dependencies at top-level.
-    from . import _view
-    return _view.View(view_name, self._context).create(self.sql)
-

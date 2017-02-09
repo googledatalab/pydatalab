@@ -93,7 +93,6 @@ class Schema(list):
       STRING, so even though the fields in the dataframe themselves may be numeric, the type in the
       derived schema may not be. Hence it is prudent to make sure the Pandas dataframe is typed
       correctly.
-
     Args:
       dataframe: The DataFrame.
       default_type : The default big query type in case the type of the column does not exist in
