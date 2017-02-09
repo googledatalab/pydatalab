@@ -111,10 +111,11 @@ class TestCases(unittest.TestCase):
 
     # test recursive, second level subquery expansion
     q3 = TestCases._create_query('SELECT * FROM q2', name='q3', subqueries=['q2'], values=values)
-    expected_sql = 'WITH q1 AS (SELECT * FROM test_table),\nq2 AS (SELECT * FROM q1)\n' +\
-                   'SELECT * FROM q2'
+    # subquery listing order is random, try both possibilities
+    expected_sql1 = 'WITH q1 AS (%s),\nq2 AS (%s)\n%s' % (q1._sql, q2._sql, q3._sql)
+    expected_sql2 = 'WITH q2 AS (%s),\nq1 AS (%s)\n%s' % (q2._sql, q1._sql, q3._sql)
 
-    self.assertEqual(expected_sql, q3.sql)
+    self.assertTrue((expected_sql1 == q3.sql) or (expected_sql2 == q3.sql))
 
   @staticmethod
   def _create_query(sql='SELECT * ...', name=None, values=None, udfs=None, data_sources=None,
