@@ -24,7 +24,6 @@ import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
 
-_PACKAGE_GS_URL = 'gs://cloud-datalab/packages/inception-0.1.tar.gz'
 _DEFAULT_CHECKPOINT_GSURL = 'gs://cloud-ml-data/img/flower_photos/inception_v3_2016_08_28.ckpt'
 
 
