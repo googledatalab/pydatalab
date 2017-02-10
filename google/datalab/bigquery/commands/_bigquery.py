@@ -151,9 +151,6 @@ def _create_query_subparser(parser):
   query_parser = parser.subcommand('query',
       'Create a BigQuery SQL query object, optionally using other SQL objects, UDFs, or external datasources.')
   query_parser.add_argument('-n', '--name', help='The name of this SQL query object', required=True)
-  query_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                            choices=['legacy', 'standard'])
-  query_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   query_parser.add_argument('--udfs', help='List of UDFs to reference in the query body', nargs='+')
   query_parser.add_argument('--datasources', help='List of external datasources to reference in the query body',
                             nargs='+')
@@ -294,7 +291,7 @@ def _construct_context_for_args(args):
     config=config)
 
 
-def _get_query_argument(args, cell, env, context=None):
+def _get_query_argument(args, cell, env):
   """ Get a query argument to a cell magic.
 
   The query is specified with args['query']. We look that up and if it is a BQ query
@@ -309,18 +306,15 @@ def _get_query_argument(args, cell, env, context=None):
     cell: the cell contents which can be variable value overrides (if args has a 'query'
         value) or inline SQL otherwise.
     env: a dictionary that is used for looking up variable values.
-    context: an optional Context object.
   Returns:
     A Query object.
   """
-  if not context:
-    context = _construct_context_for_args(args)
   sql_arg = args.get('query', None)
   if sql_arg is None:
     # Assume we have inline SQL in the cell
     if not isinstance(cell, basestring):
       raise Exception('Expected a --query argument or inline SQL')
-    return google.datalab.bigquery.Query(cell, context=context, values=env)
+    return google.datalab.bigquery.Query(cell, values=env)
 
   item = google.datalab.utils.commands.get_notebook_item(sql_arg)
   if isinstance(item, google.datalab.bigquery.Query):  # Queries are already expanded.
@@ -331,7 +325,7 @@ def _get_query_argument(args, cell, env, context=None):
   item, env = google.datalab.data.SqlModule.get_sql_statement_with_environment(item, config)
   if cell:
     env.update(config)  # config is both a fallback and an override.
-  return google.datalab.bigquery.Query(item, context=context, values=env)
+  return google.datalab.bigquery.Query(item, values=env)
 
 
 def _sample_cell(args, cell_body):
@@ -346,14 +340,13 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
-  context = _construct_context_for_args(args)
   env = google.datalab.utils.commands.notebook_environment()
   query = None
   table = None
   view = None
 
   if args['query']:
-    query = _get_query_argument(args, cell_body, env, context=context)
+    query = _get_query_argument(args, cell_body, env)
   elif args['table']:
     table = _get_table(args['table'])
     if not table:
@@ -363,7 +356,7 @@ def _sample_cell(args, cell_body):
     if not isinstance(view, google.datalab.bigquery.View):
       raise Exception('Could not find view %s' % args['view'])
   else:
-    query = google.datalab.bigquery.Query(cell_body, context=context, values=env)
+    query = google.datalab.bigquery.Query(cell_body, values=env)
 
   # parse comma-separated list of fields
   fields = args['fields'].split(',') if args['fields'] else None
@@ -373,11 +366,12 @@ def _sample_cell(args, cell_body):
                           percent=percent, key_field=args['key_field'],
                           ascending=args['order']=='ascending')
 
+  context = _construct_context_for_args(args)
   if query:
     if args['profile']:
-      results = query.execute(QueryOutput.dataframe(), sampling=sampling).result()
+      results = query.execute(QueryOutput.dataframe(), sampling=sampling, context=context).result()
     else:
-      results = query.execute(QueryOutput.table(), sampling=sampling).result()
+      results = query.execute(QueryOutput.table(), sampling=sampling, context=context).result()
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -410,7 +404,8 @@ def _dryrun_cell(args, cell_body):
   if args['verbose']:
     print(query.sql)
 
-  result = query.execute_dry_run()
+  context = _construct_context_for_args(args)
+  result = query.execute_dry_run(context=context)
   return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                          is_cached=result['cacheHit'])
 
@@ -504,7 +499,8 @@ def _execute_cell(args, cell_body):
     output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-  r = query.execute(output_options)
+  context = _construct_context_for_args(args)
+  r = query.execute(output_options, context=context)
   return r.result()
 
 
@@ -525,6 +521,7 @@ def _pipeline_cell(args, cell_body):
     raise Exception('Deploying a pipeline is not yet supported')
 
   env = {}
+  context = _construct_context_for_args(args)
   for key, value in google.datalab.utils.commands.notebook_environment().items():
     if isinstance(value, google.datalab.bigquery._udf.UDF):
       env[key] = value
@@ -534,14 +531,14 @@ def _pipeline_cell(args, cell_body):
     print(query.sql)
   if args['action'] == 'dryrun':
     print(query.sql)
-    result = query.execute_dry_run()
+    result = query.execute_dry_run(context=context)
     return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                 is_cached=result['cacheHit'])
   if args['action'] == 'run':
     output_options = QueryOutput.table(args['target'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-    query.execute(output_options).result()
+    query.execute(output_options, context=context).result()
 
 
 def _get_schema(name):
@@ -717,7 +714,8 @@ def _extract_cell(args, cell_body):
                                       csv_delimiter=args['delimiter'],
                                       csv_header=args['header'], compress=args['compress'],
                                       use_cache=not args['nocache'])
-    job = query.execute(output_options)
+    context = _construct_context_for_args(args)
+    job = query.execute(output_options, context=context)
 
   if job.failed:
     raise Exception('Extract failed: %s' % str(job.fatal_error))
