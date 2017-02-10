@@ -72,7 +72,7 @@ def parse_arguments(argv):
                       help='Don\'t shard files')
   parser.set_defaults(shard_files=True)
   parser.add_argument('--output_format',
-                      choices=['csv', 'raw_json'],
+                      choices=['csv', 'json'],
                       default='csv',
                       help="""
       The output results. 
@@ -329,7 +329,7 @@ class FormatAndSave(beam.PTransform):
   def expand(self, datasets):
     tf_graph_predictions, errors = datasets
 
-    if self._output_format == 'raw_json':
+    if self._output_format == 'json':
       _ = (
           tf_graph_predictions 
           | 'Write Raw JSON'

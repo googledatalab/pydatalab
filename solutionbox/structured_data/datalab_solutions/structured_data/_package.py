@@ -37,12 +37,15 @@ import sys
 import tempfile
 import urllib
 import json
+import glob
 
+import pandas as pd
 import tensorflow as tf
 import yaml
 
 from . import preprocess
 from . import trainer
+from . import predict
 
 _TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl'
 
@@ -112,7 +115,8 @@ def local_preprocess(output_dir, input_feature_file, input_file_pattern, schema_
 def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, schema_file=None, bigquery_table=None, project_id=None):
   """Preprocess data in the cloud with BigQuery.
 
-  Produce analysis used by training.
+  Produce analysis used by training. This can take a while, even for small 
+  datasets. For small datasets, it may be faster to use local_preprocess.
 
   Args:
     output_dir: The output directory to use.
@@ -140,6 +144,8 @@ def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, sc
     args.append('--bigquery_table=%s' % full_name)
   
   print('Starting cloud preprocessing.')
+  print('Track BigQuery status at')
+  print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
   preprocess.cloud_preprocess.main(args)
   print('Cloud preprocessing done.')
 
@@ -151,6 +157,7 @@ def local_train(train_file_pattern,
                 transforms_file,
                 model_type,
                 max_steps,
+                top_n=None,
                 layer_sizes=None):
   """Train model locally.
   Args:
@@ -161,6 +168,9 @@ def local_train(train_file_pattern,
     transforms_file: File path to the transforms file.
     model_type: model type
     max_steps: Int. Number of training steps to perform.
+    top_n: Int. For classification problems, the output graph will contain the
+        labels and scores for the top n classes. Use None for regression 
+        problems.    
     layer_sizes: List. Represents the layers in the connected DNN.
         If the model type is DNN, this must be set. Example [10, 3, 2], this 
         will create three DNN layers where the first layer will have 10 nodes, 
@@ -180,6 +190,8 @@ def local_train(train_file_pattern,
           '--max_steps=%s' % str(max_steps)]
   if layer_sizes:
     args.extend(['--layer_sizes'] + [str(x) for x in layer_sizes])
+  if top_n:
+    args.append('--top_n=%s' % str(top_n))
 
   print('Starting local training.')
   trainer.task.main(args)
@@ -192,6 +204,7 @@ def cloud_train(train_file_pattern,
                 transforms_file,
                 model_type,
                 max_steps,
+                top_n=None,
                 layer_sizes=None,
                 staging_bucket=None, 
                 project_id=None,
@@ -208,6 +221,9 @@ def cloud_train(train_file_pattern,
     transforms_file: File path to the transforms file.
     model_type: model type
     max_steps: Int. Number of training steps to perform.
+    top_n: Int. For classification problems, the output graph will contain the
+        labels and scores for the top n classes. Use None for regression 
+        problems.
     layer_sizes: List. Represents the layers in the connected DNN.
         If the model type is DNN, this must be set. Example [10, 3, 2], this 
         will create three DNN layers where the first layer will have 10 nodes, 
@@ -238,6 +254,8 @@ def cloud_train(train_file_pattern,
           '--max_steps=%s' % str(max_steps)]
   if layer_sizes:
     args.extend(['--layer_sizes'] + [str(x) for x in layer_sizes])
+  if top_n:
+    args.append('--top_n=%s' % str(top_n))    
 
   # TODO(brandondutra): move these package uris locally, ask for a staging
   # and copy them there. This package should work without cloudml having to 
@@ -277,22 +295,71 @@ def cloud_train(train_file_pattern,
     print(job_request)
 
 
-def local_predict():
+def local_predict(model_dir, data):
   """Runs local prediction.
 
-  Runs local prediction in memory and prints the results to the screen. For
+  Runs local prediction and returns the result in a Pandas DataFrame. For
   running prediction on a large dataset or saving the results, run
   local_batch_prediction or batch_prediction.
 
   Args:
-
+    model_dir: local path to the trained mode. Usually, this is 
+        training_output_dir/model.
+    data: List of csv strings that match the model schema. Or a pandas DataFrame 
+        where the columns match the model schema. The first column,
+        the target column, could be missing.
   """
   # Save the instances to a file, call local batch prediction, and print it back
+  tmp_dir = tempfile.mkdtemp()
+  _, input_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.csv', 
+                                        prefix='input')
+
+  try:
+    if isinstance(data, pd.DataFrame):
+      data.to_csv(input_file_path, header=False, index=False)
+    else:
+      with open(input_file_path, 'w') as f:
+        for line in data:
+          f.write(line + '\n')
 
 
+    cmd = ['predict.py',
+           '--predict_data=%s' % input_file_path,
+           '--trained_model_dir=%s' % model_dir,
+           '--output_dir=%s' % tmp_dir,
+           '--output_format=csv',
+           '--batch_size=100',
+           '--no-shard_files']
 
+    print('Starting local prediction.')
+    predict.predict.main(cmd)
+    print('Local prediction done.')
+    
+    # Read the header file.
+    with open(os.path.join(tmp_dir, 'csv_header.txt'), 'r') as f:
+      header = f.readline()
 
-def cloud_predict():
+    # Read the predictions data.
+    prediction_file = glob.glob(os.path.join(tmp_dir, 'predictions*'))
+    if not prediction_file:
+      raise FileNotFoundError('Prediction results not found')
+    predictions = pd.read_csv(prediction_file[0], 
+                              header=None,
+                              names=header.split(','))
+
+    # Print any errors to the screen.
+    errors_file = glob.glob(os.path.join(tmp_dir, 'errors*'))
+    if errors_file and os.path.getsize(errors_file[0]) > 0:
+      print('Warning: there are errors. See below:')
+      with open(errors_file[0], 'r') as f:
+        text = f.read()
+        print(text)
+
+    return predictions
+  finally:
+    shutil.rmtree(tmp_dir)
+
+def cloud_predict(model_name, model_version, data, is_target_missing=False):
   """Use Online prediction.
 
   Runs online prediction in the cloud and prints the results to the screen. For
@@ -300,7 +367,17 @@ def cloud_predict():
   local_batch_prediction or batch_prediction.
 
   Args:
-
+    model_name: deployed model name
+    model_verion: depoyed model versions
+    data: List of csv strings that match the model schema. Or a pandas DataFrame 
+        where the columns match the model schema. The first column,
+        the target column, is assumed to exist in the data. 
+    is_target_missing: If true, prepends a ',' in each csv string or adds an 
+        empty DataFrame column. If the csv data has a leading ',' keep this flag
+        False. Example: 
+        1) If data = ['target,input1,input2'], then set is_target_missing=False.
+        2) If data = [',input1,input2'], then set is_target_missing=False.
+        3) If data = ['input1,input2'], then set is_target_missing=True.
 
   Before using this, the model must be created. This can be done by running
   two gcloud commands:
@@ -313,12 +390,26 @@ def cloud_predict():
       --project=PROJECT
   Note that the model must be on GCS.
   """
-  pass
+  import datalab.mlalpha as mlalpha 
+
+
+  if isinstance(data, pd.DataFrame):
+    input_data = 22
+  else:
+    input_data = data
+
+
+  print(input_data)
+  cloud_predictor = mlalpha.CloudPredictor(model_name, model_version)
+  predictions = cloud_predictor.predict(input_data)
+
+  print(predictions)
+
 
 
 
 def local_batch_predict(model_dir, prediction_input_file, output_dir,
-                        batch_size=1000, shard_files=True):
+                        batch_size=1000, shard_files=True, output_format='csv'):
   """Local batch prediction.
 
   Args:
@@ -329,12 +420,13 @@ def local_batch_predict(model_dir, prediction_input_file, output_dir,
     batch_size: Int. How many instances to run in memory at once. Larger values
         mean better performace but more memeory consumed.
     shard_files: If false, the output files are not shardded.
+    output_format: csv or json. Json file are json-newlined.
   """
   cmd = ['predict.py',
          '--predict_data=%s' % prediction_input_file,
          '--trained_model_dir=%s' % model_dir,
          '--output_dir=%s' % output_dir,
-         '--output_format=csv',
+         '--output_format=%s' % output_format,
          '--batch_size=%s' % str(batch_size)]
 
   if shard_files:
@@ -343,13 +435,13 @@ def local_batch_predict(model_dir, prediction_input_file, output_dir,
     cmd.append('--no-shard_files')
 
   print('Starting local batch prediction.')
-  predict.predict.main(args)
+  predict.predict.main(cmd)
   print('Local batch prediction done.')
 
 
 
 def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
-                        batch_size=1000, shard_files=True):
+                        batch_size=1000, shard_files=True, output_format='csv'):
   """Cloud batch prediction. Submitts a Dataflow job.
 
   Args:
@@ -360,6 +452,7 @@ def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
     batch_size: Int. How many instances to run in memory at once. Larger values
         mean better performace but more memeory consumed.
     shard_files: If false, the output files are not shardded.
+    output_format: csv or json. Json file are json-newlined.
   """
   cmd = ['predict.py',
          '--cloud',
@@ -367,7 +460,7 @@ def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
          '--predict_data=%s' % prediction_input_file,
          '--trained_model_dir=%s' % model_dir,
          '--output_dir=%s' % output_dir,
-         '--output_format=csv',
+         '--output_format=%s' % output_format,
          '--batch_size=%s' % str(batch_size)]
 
   if shard_files:
@@ -376,5 +469,5 @@ def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
     cmd.append('--no-shard_files')
 
   print('Starting cloud batch prediction.')
-  predict.predict.main(args)
+  predict.predict.main(cmd)
   print('See above link for job status.')
