@@ -216,9 +216,6 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
     if isinstance(source, basestring):
       source = google.datalab.bigquery.Table(source)
 
-  if isinstance(source, types.ModuleType) or isinstance(source, google.datalab.data.SqlStatement):
-    source = google.datalab.bigquery.Query(source, env=env)
-
   if isinstance(source, list):
     if len(source) == 0:
       return _get_data_from_empty_list(source, fields, first_row, count, schema)
@@ -231,7 +228,7 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
   elif isinstance(source, pandas.DataFrame):
     return _get_data_from_dataframe(source, fields, first_row, count, schema)
   elif isinstance(source, google.datalab.bigquery.Query):
-    return _get_data_from_table(source.execute().results, fields, first_row, count, schema)
+    return _get_data_from_table(source.execute().result(), fields, first_row, count, schema)
   elif isinstance(source, google.datalab.bigquery.Table):
     return _get_data_from_table(source, fields, first_row, count, schema)
   else:
@@ -581,12 +578,7 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
   if chart_options is not None and 'variables' in chart_options:
     controls = chart_options['variables']
     del chart_options['variables']  # Just to make sure GCharts doesn't see them.
-    try:
-      item = get_notebook_item(source)
-      _, variable_defaults = google.datalab.data.SqlModule.get_sql_statement_with_environment(item, '')
-    except Exception:
-      variable_defaults = {}
-    controls_html, defaults, ids = parse_control_options(controls, variable_defaults)
+    controls_html, defaults, ids = parse_control_options(controls)
     # We augment what we are passed so that in principle we can have controls that are
     # shared by charts as well as controls that are specific to a chart.
     control_defaults.update(defaults)
