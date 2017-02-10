@@ -38,13 +38,7 @@ class Query(object):
     """Initializes an instance of a Query object.
 
     Args:
-      sql: the BigQuery SQL query string to execute, or a SqlStatement object. The latter will
-          have any variable references replaced before being associated with the Query (i.e.
-          once constructed the SQL associated with a Query is static).
-
-          It is possible to have variable references in a query string too provided the variables
-          are passed as keyword arguments to this constructor.
-
+      sql: the BigQuery SQL query string to execute
       env: a dictionary containing objects from the query execution context, used to get references
           to UDFs, subqueries, and external data sources referenced by the query
       query_params: a dictionary containing query parameter types and values, passed to BigQuery.
