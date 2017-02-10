@@ -50,7 +50,7 @@ class View(object):
       context = google.datalab.Context.default()
     self._context = context
     self._table = _table.Table(name, context=context)
-    self._materialization = _query.Query('SELECT * FROM %s' % self._repr_sql_(), context=context)
+    self._materialization = _query.Query('SELECT * FROM %s' % self._repr_sql_())
 
   def __str__(self):
     """The full name for the view as a string."""
@@ -78,7 +78,7 @@ class View(object):
       return None
     self._table._load_info()
     if 'view' in self._table._info and 'query' in self._table._info['view']:
-      return _query.Query(self._table._info['view']['query'], context=self._context)
+      return _query.Query(self._table._info['view']['query'])
     return None
 
   def exists(self):
@@ -167,7 +167,7 @@ class View(object):
       Exception if the query could not be executed or query response was malformed.
     """
     output_options = QueryOutput.table(use_cache=use_cache)
-    return self._materialization.execute(output_options).result()
+    return self._materialization.execute(output_options, context=self._context).result()
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
                     allow_large_results=False):
