@@ -182,7 +182,7 @@ class RunGraphDoFn(beam.DoFn):
     self._trained_model_dir = trained_model_dir
     self._session = None
 
-  def start_bundle(self):
+  def start_bundle(self, context=None):
     from tensorflow.contrib.session_bundle import session_bundle
     import json
 
@@ -199,7 +199,7 @@ class RunGraphDoFn(beam.DoFn):
 
     self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
 
-  def finish_bundle(self):
+  def finish_bundle(self, context=None):
     self._session.close()
 
 
@@ -210,7 +210,7 @@ class RunGraphDoFn(beam.DoFn):
 
     num_in_batch = 0
     try:
-      assert self._session is not None:
+      assert self._session is not None
 
       feed_dict = collections.defaultdict(list)
       for line in context.element:
@@ -270,20 +270,19 @@ class RawJsonCoder(beam.coders.Coder):
     return json.dumps(obj, separators=(',', ': '))
 
 
-# TODO(brandondura): make the model a 'top N' model for prediction, so then this
-# class would not be needed.
 class CSVCoder(beam.coders.Coder):
   """Coder for CSV files containing the ouput of prediction."""
 
-  def __init__(self, isClassification=False):
-    self._headers = ['key', 'target_from_input', 'target_score_prediction']
+  def __init__(self, header):
+    """Sets the headers in the csv file.
 
-    if isClassification:
-      self._headers.append('target_class_prediction')
-
+    Args:
+      header: list of strings that correspond to keys in the predictions dict.
+    """
+    self._header = header
 
   def make_header_string(self):
-    return ','.join(self._headers)
+    return ','.join(self._header)
 
   def encode(self, tf_graph_predictions):
     """Encodes the graph json prediction into csv.
@@ -294,18 +293,9 @@ class CSVCoder(beam.coders.Coder):
     Returns:
       csv string.
     """
-    row = [str(tf_graph_predictions['key']),
-           str(tf_graph_predictions['target_from_input'])]    
-
-    if isinstance(tf_graph_predictions['target_score_prediction'], basestring):
-      score = [tf_graph_predictions['target_score_prediction']]
-    else:
-      score = [str(x) for x in tf_graph_predictions['target_score_prediction']]
-    csv_score = '|'.join(score)
-    row.append(csv_score)
-
-    if 'target_class_prediction' in tf_graph_predictions:
-      row.append(str(tf_graph_predictions['target_class_prediction']))
+    row = []
+    for col in self._header:
+      row.append(str(tf_graph_predictions[col]))
 
     return ','.join(row)
 
@@ -319,21 +309,18 @@ class FormatAndSave(beam.PTransform):
 
     # See if the target vocab should be loaded.
     if self._output_format == 'csv':
-      from tensorflow.python.lib.io import file_io
+      from tensorflow.contrib.session_bundle import session_bundle
       import json
-      import os
 
-      schema = json.loads(
-          file_io.read_file_to_string(
-              os.path.join(args.trained_model_dir, 'schema.json')))
-      target_name = schema[0]['name']
+      self._session, _ = session_bundle.load_session_bundle_from_path(
+          args.trained_model_dir)
+     
+      # output_alias_map {'target_from_input': tensor_name, 'key': ...}
+      output_alias_map = json.loads(
+          self._session.graph.get_collection('outputs')[0])
 
-      vocab_file = os.path.join(args.trained_model_dir, 
-                                'vocab_%s.csv' % target_name)
-      if file_io.file_exists(vocab_file):
-        self._isClassification = True
-      else:
-        self._isClassification = False
+      self._header = sorted(output_alias_map.keys())
+      self._session.close()
 
 
   def apply(self, datasets):
@@ -353,7 +340,7 @@ class FormatAndSave(beam.PTransform):
               shard_name_template=self._shard_name_template))
     elif self._output_format == 'csv':
       # make a csv header file 
-      csv_coder = CSVCoder(self._isClassification)
+      csv_coder = CSVCoder(self._header)
       _ = (
           tf_graph_predictions.pipeline
           | 'Make CSV Header'
