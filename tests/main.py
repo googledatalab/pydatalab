@@ -30,14 +30,12 @@ import bigquery.schema_tests
 import bigquery.table_tests
 #import bigquery.udf_tests
 import bigquery.view_tests
-import data.sql_tests
 import kernel.bigquery_tests
 import kernel.chart_data_tests
 import kernel.chart_tests
 import kernel.commands_tests
 import kernel.html_tests
 import kernel.module_tests
-import kernel.sql_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import stackdriver.commands.monitoring_tests
@@ -68,14 +66,12 @@ _TEST_MODULES = [
     #bigquery.udf_tests, # TODO: enable UDF tests once new implementation is done
     bigquery.view_tests,
     bigquery.sampling_tests,
-    data.sql_tests,
     kernel.bigquery_tests,
     kernel.chart_data_tests,
     kernel.chart_tests,
     kernel.commands_tests,
     kernel.html_tests,
     kernel.module_tests,
-    kernel.sql_tests,
     kernel.storage_tests,
     kernel.utils_tests,
     stackdriver.commands.monitoring_tests,

@@ -42,7 +42,7 @@ from ._sampling import Sampling
 
 
 # import of Query is at end of module as we have a circular dependency of
-# Query.execute().results -> Table and Table.sample() -> Query
+# Query.execute().result() -> Table and Table.sample() -> Query
 
 class TableMetadata(object):
   """Represents metadata about a BigQuery table."""
@@ -259,7 +259,7 @@ class Table(object):
     if sampling is None:
       sampling = Sampling.default(fields=fields, count=count)
     return query.execute(QueryOutput.table(use_cache=use_cache), sampling=sampling,
-                         context=self._context).results
+                         context=self._context).result()
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
@@ -748,7 +748,7 @@ class Table(object):
         to reduce the number of calls to tabledata.list.
 
         Note: this is a useful function to have, and supports some current usage like
-        query.execute().results[0], but should be used with care.
+        query.execute().result()[0], but should be used with care.
     """
     if isinstance(item, slice):
       # Just treat this as a set of calls to __getitem__(int)

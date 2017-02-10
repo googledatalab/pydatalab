@@ -295,17 +295,15 @@ def _get_query_argument(args, cell, env):
   """ Get a query argument to a cell magic.
 
   The query is specified with args['query']. We look that up and if it is a BQ query
-  just return it. If it is instead a SqlModule or SqlStatement it may have variable
-  references. We resolve those using the arg parser for the SqlModule, then override
-  the resulting defaults with either the Python code in cell, or the dictionary in
-  overrides. The latter is for if the overrides are specified with YAML or JSON and
-  eventually we should eliminate code in favor of this.
+  object, just return it. If it is a string, build a query object out of it and return
+  that
 
   Args:
     args: the dictionary of magic arguments.
     cell: the cell contents which can be variable value overrides (if args has a 'query'
         value) or inline SQL otherwise.
     env: a dictionary that is used for looking up variable values.
+
   Returns:
     A Query object.
   """
@@ -317,16 +315,10 @@ def _get_query_argument(args, cell, env):
     return google.datalab.bigquery.Query(cell, env=env)
 
   item = google.datalab.utils.commands.get_notebook_item(sql_arg)
-  if isinstance(item, google.datalab.bigquery.Query):  # Queries are already expanded.
+  if isinstance(item, google.datalab.bigquery.Query):
     return item
-
-  # Create an expanded BQ Query.
-  config = google.datalab.utils.commands.parse_config(cell, env)
-  item, env = google.datalab.data.SqlModule.get_sql_statement_with_environment(item, config)
-  if cell:
-    env.update(config)  # config is both a fallback and an override.
-  return google.datalab.bigquery.Query(item, env=env)
-
+  else:
+    raise Exception('Expected a query object, got %s.' % type(item))
 
 def _sample_cell(args, cell_body):
   """Implements the BigQuery sample magic for queries
