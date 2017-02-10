@@ -125,15 +125,15 @@ SELECT * FROM [publicdata:samples.shakespeare]
 WHERE word IN $words
 LIMIT $limit
 """, m)
-    sql = google.datalab.bigquery.Query(query, values={}).sql
+    sql = google.datalab.bigquery.Query(query, env={}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("thus", "forsooth")\nLIMIT 10', sql)
     # As above but with overrides, using list
-    sql = google.datalab.bigquery.Query(query, values={'words': 'eyeball', 'limit': 5}).sql
+    sql = google.datalab.bigquery.Query(query, env={'words': 'eyeball', 'limit': 5}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN "eyeball"\nLIMIT 5', sql)
-    # As above but with overrides, using tuple and values dict
-    sql = google.datalab.bigquery.Query(query, values={'limit': 3, 'words': ('thus',)}).sql
+    # As above but with overrides, using tuple and env dict
+    sql = google.datalab.bigquery.Query(query, env={'limit': 3, 'words': ('thus',)}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("thus")\nLIMIT 3', sql)
     # As above but with list argument
@@ -146,15 +146,15 @@ SELECT * FROM [publicdata:samples.shakespeare]
 WHERE word IN $words
 LIMIT $limit
 """, m)
-    sql = google.datalab.bigquery.Query(query, values={}).sql
+    sql = google.datalab.bigquery.Query(query, env={}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("thus", "forsooth")\nLIMIT 10', sql)
     # As above but with overrides, using list
-    sql = google.datalab.bigquery.Query(query, values={'limit': 2, 'words': ['forsooth']}).sql
+    sql = google.datalab.bigquery.Query(query, env={'limit': 2, 'words': ['forsooth']}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN ("forsooth")\nLIMIT 2', sql)
     # As above but with overrides, using tuple
-    sql = google.datalab.bigquery.Query(query, values={'words': 'eyeball'}).sql
+    sql = google.datalab.bigquery.Query(query, env={'words': 'eyeball'}).sql
     self.assertEquals('SELECT * FROM [publicdata:samples.shakespeare]\n' +
                       'WHERE word IN "eyeball"\nLIMIT 10', sql)
     # TODO(gram): add some tests for source and datestring variables

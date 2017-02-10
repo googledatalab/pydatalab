@@ -314,7 +314,7 @@ def _get_query_argument(args, cell, env):
     # Assume we have inline SQL in the cell
     if not isinstance(cell, basestring):
       raise Exception('Expected a --query argument or inline SQL')
-    return google.datalab.bigquery.Query(cell, values=env)
+    return google.datalab.bigquery.Query(cell, env=env)
 
   item = google.datalab.utils.commands.get_notebook_item(sql_arg)
   if isinstance(item, google.datalab.bigquery.Query):  # Queries are already expanded.
@@ -325,7 +325,7 @@ def _get_query_argument(args, cell, env):
   item, env = google.datalab.data.SqlModule.get_sql_statement_with_environment(item, config)
   if cell:
     env.update(config)  # config is both a fallback and an override.
-  return google.datalab.bigquery.Query(item, values=env)
+  return google.datalab.bigquery.Query(item, env=env)
 
 
 def _sample_cell(args, cell_body):
@@ -356,7 +356,7 @@ def _sample_cell(args, cell_body):
     if not isinstance(view, google.datalab.bigquery.View):
       raise Exception('Could not find view %s' % args['view'])
   else:
-    query = google.datalab.bigquery.Query(cell_body, values=env)
+    query = google.datalab.bigquery.Query(cell_body, env=env)
 
   # parse comma-separated list of fields
   fields = args['fields'].split(',') if args['fields'] else None
@@ -467,7 +467,7 @@ def _query_cell(args, cell_body):
   subqueries = args['subqueries']
 
   # Finally build the query object
-  query = google.datalab.bigquery.Query(cell_body, values=IPython.get_ipython().user_ns,
+  query = google.datalab.bigquery.Query(cell_body, env=IPython.get_ipython().user_ns,
                                         udfs=udfs, data_sources=datasources, subqueries=subqueries)
   google.datalab.utils.commands.notebook_environment()[name] = query
 

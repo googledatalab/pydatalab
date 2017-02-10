@@ -159,7 +159,7 @@ class TestCases(unittest.TestCase):
     weight1 = google.datalab.bigquery.ExternalDataSource(table_uri1, schema=schema,
                                                        csv_options=options)
     weight2 = google.datalab.bigquery.ExternalDataSource(table_uri2, schema=schema)
-    q = google.datalab.bigquery.Query(sql, values={'weight1': weight1, 'weight2': weight2})
+    q = google.datalab.bigquery.Query(sql, env={'weight1': weight1, 'weight2': weight2})
     q.execute_async()
 
     table_definition1 = self._get_table_definition(table_uri1, skip_rows=1)

@@ -33,7 +33,7 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, values=None, udfs=None, data_sources=None,
+  def __init__(self, sql, env=None, query_params=None, udfs=None, data_sources=None,
                subqueries=None):
     """Initializes an instance of a Query object.
 
@@ -45,8 +45,9 @@ class Query(object):
           It is possible to have variable references in a query string too provided the variables
           are passed as keyword arguments to this constructor.
 
-      values: a dictionary used to expand variables if passed a SqlStatement or a string with
-          variable references.
+      env: a dictionary containing objects from the query execution context, used to get references
+          to UDFs, subqueries, and external data sources referenced by the query
+      query_params: a dictionary containing query parameter types and values, passed to BigQuery.
       udfs: list of UDFs referenced in the SQL.
       data_sources: dictionary of external data sources referenced in the SQL.
       subqueries: list of subqueries referenced in the SQL
@@ -54,23 +55,25 @@ class Query(object):
     Raises:
       Exception if expansion of any variables failed.
       """
+    self._sql = sql
     self._data_sources = data_sources
     self._udfs = udfs
     self._subqueries = subqueries
-    self._values = values
+    self._env = env
+    self._query_params = query_params
 
     if data_sources is None:
       data_sources = {}
 
     self._code = None
     self._imports = []
-    if self._values is None:
-      self._values = {}
-
-    self._sql = google.datalab.data.SqlModule.expand(sql, self._values)
+    if self._env is None:
+      self._env = {}
+    if self._query_params is None:
+      self._query_params = {}
 
     def _validate_object(obj):
-      if not self._values.__contains__(obj):
+      if not self._env.__contains__(obj):
         raise Exception('Cannot find object %s.' % obj)
 
     # Validate subqueries and UDFs when adding them to query
@@ -80,13 +83,6 @@ class Query(object):
     if self._udfs:
       for udf in self._udfs:
         _validate_object(udf)
-
-    # We need to take care not to include the same UDF code twice so we use sets.
-    udfs = set(udfs if udfs else [])
-    for value in list(self._values.values()):
-      if isinstance(value, _udf.UDF):
-        udfs.add(value)
-    included_udfs = set([])
 
     self._external_tables = None
     if len(data_sources):
@@ -116,18 +112,18 @@ class Query(object):
         udfs.update(set(query._udfs))
       if query._subqueries:
         for subquery in query._subqueries:
-          _recurse_subqueries(self._values[subquery])
+          _recurse_subqueries(self._env[subquery])
 
     subqueries_sql = udfs_sql = ''
     _recurse_subqueries(self)
 
     if udfs:
-      expanded_sql += '\n'.join([self._values[udf]._expanded_sql() for udf in udfs])
+      expanded_sql += '\n'.join([self._env[udf]._expanded_sql() for udf in udfs])
       expanded_sql += '\n'
 
     if subqueries:
       expanded_sql += 'WITH ' + \
-                      ',\n'.join(['%s AS (%s)' % (sq, self._values[sq]._sql) for sq in subqueries])
+                      ',\n'.join(['%s AS (%s)' % (sq, self._env[sq]._sql) for sq in subqueries])
       expanded_sql += '\n'
 
     expanded_sql += sampling(self._sql) if sampling else self._sql

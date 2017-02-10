@@ -217,7 +217,7 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
       source = google.datalab.bigquery.Table(source)
 
   if isinstance(source, types.ModuleType) or isinstance(source, google.datalab.data.SqlStatement):
-    source = google.datalab.bigquery.Query(source, values=env)
+    source = google.datalab.bigquery.Query(source, env=env)
 
   if isinstance(source, list):
     if len(source) == 0:

@@ -102,15 +102,15 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception) as error:
       TestCases._create_query('SELECT test_udf(field1) FROM test_table', udfs=['test_udf'])
 
-    values = {}
+    env = {}
 
     # test direct subquery expansion
-    q1 = TestCases._create_query('SELECT * FROM test_table', name='q1', values=values)
-    q2 = TestCases._create_query('SELECT * FROM q1', name='q2', subqueries=['q1'], values=values)
+    q1 = TestCases._create_query('SELECT * FROM test_table', name='q1', env=env)
+    q2 = TestCases._create_query('SELECT * FROM q1', name='q2', subqueries=['q1'], env=env)
     self.assertEqual('WITH q1 AS (SELECT * FROM test_table)\nSELECT * FROM q1', q2.sql)
 
     # test recursive, second level subquery expansion
-    q3 = TestCases._create_query('SELECT * FROM q2', name='q3', subqueries=['q2'], values=values)
+    q3 = TestCases._create_query('SELECT * FROM q2', name='q3', subqueries=['q2'], env=env)
     # subquery listing order is random, try both possibilities
     expected_sql1 = 'WITH q1 AS (%s),\nq2 AS (%s)\n%s' % (q1._sql, q2._sql, q3._sql)
     expected_sql2 = 'WITH q2 AS (%s),\nq1 AS (%s)\n%s' % (q2._sql, q1._sql, q3._sql)
@@ -118,12 +118,12 @@ class TestCases(unittest.TestCase):
     self.assertTrue((expected_sql1 == q3.sql) or (expected_sql2 == q3.sql))
 
   @staticmethod
-  def _create_query(sql='SELECT * ...', name=None, values=None, udfs=None, data_sources=None,
+  def _create_query(sql='SELECT * ...', name=None, env=None, udfs=None, data_sources=None,
                     subqueries=None):
-    q = google.datalab.bigquery.Query(sql, values=values, udfs=udfs, data_sources=data_sources,
+    q = google.datalab.bigquery.Query(sql, env=env, udfs=udfs, data_sources=data_sources,
                                       subqueries=subqueries)
     if name:
-      values[name] = q
+      env[name] = q
     return q
 
   @staticmethod

@@ -400,7 +400,7 @@ def sql_cell(args, cell):
         context.config['bigquery_dialect'] = dialect_arg
       if billing_tier_arg:
         context.config['bigquery_billing_tier'] = billing_tier_arg
-      return google.datalab.bigquery.Query(query, values=ipy.user_ns) \
+      return google.datalab.bigquery.Query(query, env=ipy.user_ns) \
                                     .execute(context=context).results
   else:
     # Add it as a module
