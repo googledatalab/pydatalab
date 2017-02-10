@@ -33,7 +33,7 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, context=None, values=None, udfs=None, data_sources=None,
+  def __init__(self, sql, values=None, udfs=None, data_sources=None,
                subqueries=None):
     """Initializes an instance of a Query object.
 
@@ -45,9 +45,6 @@ class Query(object):
           It is possible to have variable references in a query string too provided the variables
           are passed as keyword arguments to this constructor.
 
-      context: an optional Context object providing project_id and credentials. If a specific
-          project id or credentials are unspecified, the default ones configured at the global
-          level are used.
       values: a dictionary used to expand variables if passed a SqlStatement or a string with
           variable references.
       udfs: list of UDFs referenced in the SQL.
@@ -57,10 +54,6 @@ class Query(object):
     Raises:
       Exception if expansion of any variables failed.
       """
-    if context is None:
-      context = google.datalab.Context.default()
-    self._context = context
-    self._api = _api.Api(context)
     self._data_sources = data_sources
     self._udfs = udfs
     self._subqueries = subqueries
@@ -175,27 +168,37 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def execute_dry_run(self):
+  def execute_dry_run(self, context=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
+
+    Args:
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
 
     Returns:
       A dict with 'cacheHit' and 'totalBytesProcessed' fields.
     Raises:
       An exception if the query was malformed.
     """
+    context = context or google.datalab.Context.default()
+    api = _api.Api(context)
     try:
-      query_result = self._api.jobs_insert_query(self.sql, self._code, self._imports, dry_run=True,
+      query_result = api.jobs_insert_query(self.sql, self._code, self._imports, dry_run=True,
                                                  table_definitions=self._external_tables)
     except Exception as e:
       raise e
     return query_result['statistics']['query']
 
-  def execute_async(self, output_options=None, sampling=None):
+  def execute_async(self, output_options=None, sampling=None, context=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
       output_options: a QueryOutput object describing how to execute the query
       sampling: sampling function to use. No sampling is done if None. See bigquery.Sampling
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
     Returns:
       A Job object that can wait on creating a table or exporting to a file
       If the output is a table, the Job object additionally has run statistics
@@ -213,13 +216,15 @@ class Query(object):
     append = output_options.table_mode == 'append'
     overwrite = output_options.table_mode == 'overwrite'
     table_name = output_options.table_name
+    context = context or google.datalab.Context.default()
+    api = _api.Api(context)
     if table_name is not None:
-      table_name = _utils.parse_table_name(table_name, self._api.project_id)
+      table_name = _utils.parse_table_name(table_name, api.project_id)
 
     sql = self._expanded_sql(sampling)
 
     try:
-      query_result = self._api.jobs_insert_query(sql, self._code, self._imports,
+      query_result = api.jobs_insert_query(sql, self._code, self._imports,
                                                  table_name=table_name,
                                                  append=append,
                                                  overwrite=overwrite,
@@ -241,7 +246,7 @@ class Query(object):
         # The query was in error
         raise Exception(_utils.format_query_errors(query_result['status']['errors']))
 
-    execute_job = _query_job.QueryJob(job_id, table_name, sql, context=self._context)
+    execute_job = _query_job.QueryJob(job_id, table_name, sql, context=context)
 
     # If all we need is to execute the query to a table, we're done
     if output_options.type == 'table':
@@ -280,15 +285,18 @@ class Query(object):
       export_func = google.datalab.utils.async_function(export_func)
       return export_func(*export_args, **export_kwargs)
 
-  def execute(self, output_options=None, sampling=None):
+  def execute(self, output_options=None, sampling=None, context=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
       output_options: a QueryOutput object describing how to execute the query
       sampling: sampling function to use. No sampling is done if None. See bigquery.Sampling
+      context: an optional Context object providing project_id and credentials. If a specific
+          project id or credentials are unspecified, the default ones configured at the global
+          level are used.
     Returns:
       A Job object that can be used to get the query results, or export to a file or dataframe
     Raises:
       Exception if query could not be executed.
     """
-    return self.execute_async(output_options, sampling=sampling).wait()
+    return self.execute_async(output_options, sampling=sampling, context=context).wait()

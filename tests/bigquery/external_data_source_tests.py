@@ -113,7 +113,7 @@ class TestCases(unittest.TestCase):
     sql = 'SELECT * FROM weight'
 
     weight = google.datalab.bigquery.ExternalDataSource(table_uri, schema=schema, csv_options=options)
-    q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
+    q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight})
     q.execute_async()
 
     table_definition = self._get_table_definition(table_uri, skip_rows=1)
@@ -134,7 +134,7 @@ class TestCases(unittest.TestCase):
     sql = 'SELECT * FROM weight'
 
     weight = google.datalab.bigquery.ExternalDataSource(table_uris, schema=schema)
-    q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
+    q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight})
     q.execute_async()
 
     table_definition = self._get_table_definition(table_uris)
@@ -159,7 +159,7 @@ class TestCases(unittest.TestCase):
     weight1 = google.datalab.bigquery.ExternalDataSource(table_uri1, schema=schema,
                                                        csv_options=options)
     weight2 = google.datalab.bigquery.ExternalDataSource(table_uri2, schema=schema)
-    q = google.datalab.bigquery.Query(sql, values={'weight1': weight1, 'weight2': weight2}, context=self._create_context())
+    q = google.datalab.bigquery.Query(sql, values={'weight1': weight1, 'weight2': weight2})
     q.execute_async()
 
     table_definition1 = self._get_table_definition(table_uri1, skip_rows=1)

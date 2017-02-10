@@ -255,10 +255,11 @@ class Table(object):
     # Do import here to avoid top-level circular dependencies.
     from . import _query
     sql = self._repr_sql_()
-    query = _query.Query(sql, context=self._context)
+    query = _query.Query(sql)
     if sampling is None:
       sampling = Sampling.default(fields=fields, count=count)
-    return query.execute(QueryOutput.table(use_cache=use_cache), sampling=sampling).results
+    return query.execute(QueryOutput.table(use_cache=use_cache), sampling=sampling,
+                         context=self._context).results
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
@@ -895,5 +896,5 @@ class Table(object):
       fields = '*'
     elif isinstance(fields, list):
       fields = ','.join(fields)
-    return _query.Query('SELECT %s FROM %s' % (fields, self._repr_sql_()), context=self._context)
+    return _query.Query('SELECT %s FROM %s' % (fields, self._repr_sql_()))
 

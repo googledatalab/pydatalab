@@ -115,7 +115,7 @@ def load_ipython_extension(shell):
 
   def _set_bq_dialect(bq_dialect):
     context = google.datalab.Context.default()
-    context.config.['bigquery_dialect'] = bq_dialect
+    context.config['bigquery_dialect'] = bq_dialect
 
   try:
     if 'datalab_project_id' not in _IPython.get_ipython().user_ns:

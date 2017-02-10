@@ -120,8 +120,8 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_query(sql='SELECT * ...', name=None, values=None, udfs=None, data_sources=None,
                     subqueries=None):
-    q = google.datalab.bigquery.Query(sql, context=TestCases._create_context(), values=values,
-                                      udfs=udfs, data_sources=data_sources, subqueries=subqueries)
+    q = google.datalab.bigquery.Query(sql, values=values, udfs=udfs, data_sources=data_sources,
+                                      subqueries=subqueries)
     if name:
       values[name] = q
     return q
