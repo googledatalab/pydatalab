@@ -38,6 +38,7 @@ import tempfile
 import urllib
 import json
 import glob
+import StringIO
 
 import pandas as pd
 import tensorflow as tf
@@ -394,18 +395,30 @@ def cloud_predict(model_name, model_version, data, is_target_missing=False):
 
 
   if isinstance(data, pd.DataFrame):
-    input_data = 22
+    # write the df to csv.
+    string_buffer = StringIO.StringIO()
+    data.to_csv(string_buffer, header=None, index=False)
+    csv_lines = string_buffer.getvalue().split('\n')
+
+    if is_target_missing:
+      input_data = [',' + csv for csv in csv_lines]
+    else:
+      input_data = csv_lines
   else:
-    input_data = data
+    if is_target_missing:
+      input_data = [ ',' + csv for csv in data]
+    else:
+      input_data = data
 
-
-  print(input_data)
   cloud_predictor = mlalpha.CloudPredictor(model_name, model_version)
   predictions = cloud_predictor.predict(input_data)
 
-  print(predictions)
-
-
+  # Convert predictions into a dataframe
+  df = pd.DataFrame(columns=sorted(predictions[0].keys()))
+  for i in range(len(predictions)):
+    for k, v in predictions[i].iteritems():
+      df.loc[i, k] = v
+  return df
 
 
 def local_batch_predict(model_dir, prediction_input_file, output_dir,
