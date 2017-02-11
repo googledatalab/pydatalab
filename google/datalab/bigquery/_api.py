@@ -200,7 +200,7 @@ class Api(object):
     if self.bigquery_billing_tier:
         query_config['maximumBillingTier'] = self.bigquery_billing_tier
 
-    if query_params is not None:
+    if query_params:
       query_config['queryParameters'] = query_params
 
     return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
