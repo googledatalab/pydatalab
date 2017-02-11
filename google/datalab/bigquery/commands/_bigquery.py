@@ -155,6 +155,7 @@ def _create_query_subparser(parser):
   query_parser.add_argument('--datasources', help='List of external datasources to reference in the query body',
                             nargs='+')
   query_parser.add_argument('--subqueries', help='List of subqueries to reference in the query body', nargs='+')
+  query_parser.add_argument('--parameters', help='List of subqueries to reference in the query body', nargs='+')
   query_parser.add_argument('-v', '--verbose', help='Show the expanded SQL that is being executed',
                             action='store_true')
   return query_parser
@@ -321,7 +322,7 @@ def _get_query_argument(args, cell, env):
     raise Exception('Expected a query object, got %s.' % type(item))
 
 def _sample_cell(args, cell_body):
-  """Implements the BigQuery sample magic for queries
+  """Implements the BigQuery sample magic for sampling queries
   The supported sytanx is:
     %%bq sample <args>
      [<inline SQL>]
@@ -457,10 +458,28 @@ def _query_cell(args, cell_body):
   udfs = args['udfs']
   datasources = args['datasources']
   subqueries = args['subqueries']
+  query_params_list = args['parameters'] or []
+  query_params = []
+
+  # parse query parameters
+  for param in query_params_list:
+    param = param.split(':')
+    if len(param) != 3:
+      raise Exception('Bad parameter format. Expected name:type:value')
+    query_params.append({
+        'name': param[0],
+        'parameterType': {
+            'type': param[1]
+        },
+        'parameterValue': {
+            'value': param[2]
+        }
+    })
 
   # Finally build the query object
   query = google.datalab.bigquery.Query(cell_body, env=IPython.get_ipython().user_ns,
-                                        udfs=udfs, data_sources=datasources, subqueries=subqueries)
+                                        udfs=udfs, data_sources=datasources, subqueries=subqueries,
+                                        query_params=query_params)
   google.datalab.utils.commands.notebook_environment()[name] = query
 
 

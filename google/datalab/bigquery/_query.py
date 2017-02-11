@@ -53,18 +53,13 @@ class Query(object):
     self._data_sources = data_sources
     self._udfs = udfs
     self._subqueries = subqueries
-    self._env = env
-    self._query_params = query_params
+    self._env = env or {}
+    self._query_params = query_params or {}
 
     if data_sources is None:
       data_sources = {}
 
     self._code = None
-    self._imports = []
-    if self._env is None:
-      self._env = {}
-    if self._query_params is None:
-      self._query_params = {}
 
     def _validate_object(obj):
       if not self._env.__contains__(obj):
@@ -77,6 +72,12 @@ class Query(object):
     if self._udfs:
       for udf in self._udfs:
         _validate_object(udf)
+
+    # Validate query_params, if any
+    if self._query_params is not None:
+      for param in self._query_params:
+        if 'name' not in param or 'parameterType' not in param or 'parameterValue' not in param:
+          raise Exception('Bad parameter format. Expected name, parameterType, and parameterValue')
 
     self._external_tables = None
     if len(data_sources):
@@ -174,8 +175,9 @@ class Query(object):
     context = context or google.datalab.Context.default()
     api = _api.Api(context)
     try:
-      query_result = api.jobs_insert_query(self.sql, self._code, self._imports, dry_run=True,
-                                                 table_definitions=self._external_tables)
+      query_result = api.jobs_insert_query(self.sql, self._code, dry_run=True,
+                                           table_definitions=self._external_tables,
+                                           query_params=self._query_params)
     except Exception as e:
       raise e
     return query_result['statistics']['query']
@@ -214,14 +216,12 @@ class Query(object):
     sql = self._expanded_sql(sampling)
 
     try:
-      query_result = api.jobs_insert_query(sql, self._code, self._imports,
-                                                 table_name=table_name,
-                                                 append=append,
-                                                 overwrite=overwrite,
-                                                 use_cache=output_options.use_cache,
-                                                 batch=batch,
-                                                 allow_large_results=output_options.allow_large_results,
-                                                 table_definitions=self._external_tables)
+      query_result = api.jobs_insert_query(sql, self._code, table_name=table_name,
+                                           append=append, overwrite=overwrite, batch=batch,
+                                           use_cache=output_options.use_cache,
+                                           allow_large_results=output_options.allow_large_results,
+                                           table_definitions=self._external_tables,
+                                           query_params=self._query_params)
     except Exception as e:
       raise e
     if 'jobReference' not in query_result:
