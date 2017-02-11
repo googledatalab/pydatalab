@@ -25,6 +25,9 @@ setup(
     'datalab_solutions',
     'datalab_solutions.inception',
   ],
+  # setup.py needs to be deployed so it can be repackaged from local installation for cloud run.
+  data_files=[('/datalab/packages_setup/inception', ['setup.py'])],
+
   description='Google Cloud Datalab Inception Package',
   author='Google',
   author_email='google-cloud-datalab-feedback@googlegroups.com',
