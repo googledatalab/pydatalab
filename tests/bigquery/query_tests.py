@@ -23,6 +23,24 @@ import google.datalab.bigquery
 
 class TestCases(unittest.TestCase):
 
+  def test_parameter_validation(self):
+    sql = 'SELECT * FROM table'
+    with self.assertRaises(Exception) as error:
+      q = TestCases._create_query(sql, subqueries=['subquery'])
+    env = {'subquery': TestCases._create_query()}
+    q = TestCases._create_query(sql, env=env, subqueries=['subquery'])
+    self.assertIsNotNone(q)
+    self.assertEqual(q._subqueries, ['subquery'])
+    self.assertEqual(q._sql, sql)
+
+    with self.assertRaises(Exception) as error:
+      q = TestCases._create_query(sql, udfs=['udf'])
+    env = {'udf': TestCases._create_udf('test_udf', 'code', 'TYPE')}
+    q = TestCases._create_query(sql, env=env, udfs=['udf'])
+    self.assertIsNotNone(q)
+    self.assertEqual(q._udfs, ['udf'])
+    self.assertEqual(q._sql, sql)
+
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
   @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
   @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
@@ -125,6 +143,10 @@ class TestCases(unittest.TestCase):
     if name:
       env[name] = q
     return q
+
+  @staticmethod
+  def _create_udf(name, code, return_type):
+    return google.datalab.bigquery.UDF(name, code, return_type)
 
   @staticmethod
   def _create_context():
