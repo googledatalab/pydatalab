@@ -26,6 +26,7 @@ import os
 
 
 from . import _model
+from . import _predictor
 from . import _preprocess
 from . import _trainer
 from . import _util
@@ -55,7 +56,7 @@ class Cloud(object):
     mlalpha.package_and_copy(package_root, _SETUP_PY, staging_package_url)
     return staging_package_url
 
-  def preprocess(self, dataset, output_dir, pipeline_option=None):
+  def preprocess(self, train_dataset, eval_dataset, output_dir, pipeline_option):
     """Cloud preprocessing with Cloud DataFlow."""
 
     import datalab.mlalpha as mlalpha
@@ -76,13 +77,8 @@ class Cloud(object):
 
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     p = beam.Pipeline('DataflowRunner', options=opts)
-    if type(dataset) is mlalpha.CsvDataSet:
-      _preprocess.configure_pipeline_csv(p, self._checkpoint, dataset.files, output_dir, job_name)
-    elif type(dataset) is mlalpha.BigQueryDataSet:
-      _preprocess.configure_pipeline_bigquery(p, self._checkpoint, dataset.sql,
-                                              output_dir, job_name)
-    else:
-      raise ValueError('preprocess takes CsvDataSet or BigQueryDataset only.')
+    _preprocess.configure_pipeline(p, train_dataset, eval_dataset, self._checkpoint,
+        output_dir, job_name)
     p.run()
     return job_name
 
@@ -136,3 +132,29 @@ class Cloud(object):
     labels_and_scores = [(x['prediction'], x['scores'][labels.index(x['prediction'])])
                          for x in predictions]
     return labels_and_scores
+
+  def batch_predict(self, dataset, model_dir, gcs_staging_location, output_csv,
+                    output_bq_table, pipeline_option):
+    """Cloud batch prediction with a model specified by a GCS directory."""
+
+    import datalab.mlalpha as mlalpha
+
+    job_name = 'batch-predict-inception-' + datetime.datetime.now().strftime('%y%m%d-%H%M%S')
+    staging_package_url = self._repackage_to_staging(gcs_staging_location)
+    options = {
+        'staging_location': os.path.join(gcs_staging_location, 'tmp', 'staging'),
+        'temp_location': os.path.join(gcs_staging_location, 'tmp'),
+        'job_name': job_name,
+        'project': _util.default_project(),
+        'extra_packages': [ml.sdk_location, staging_package_url, _TF_GS_URL],
+        'teardown_policy': 'TEARDOWN_ALWAYS',
+        'no_save_main_session': True
+    }
+    if pipeline_option is not None:
+      options.update(pipeline_option)
+
+    opts = beam.pipeline.PipelineOptions(flags=[], **options)
+    p = beam.Pipeline('DataflowRunner', options=opts)
+    _predictor.configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table)
+    p.run()
+    return job_name
