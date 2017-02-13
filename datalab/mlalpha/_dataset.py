@@ -51,7 +51,6 @@ class CsvDataSet(object):
     self._file_pattern = file_pattern
     self._files = []
 
-
   @property
   def file_pattern(self):
     return self._file_pattern
@@ -74,12 +73,7 @@ class CsvDataSet(object):
       
   @property
   def schema(self):
-    return self._schema
-  
-  def save_to_file(self, file_name):
-    file_io.write_string_to_file(
-        file_name, 
-        json.dumps(self._schema, indent=2))
+    return self._schema  
 
   def sample(self, n):
     """ Samples data into a Pandas DataFrame.
