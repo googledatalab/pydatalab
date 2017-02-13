@@ -18,6 +18,7 @@
 
 
 import apache_beam as beam
+from apache_beam.metrics import Metrics
 from apache_beam.utils.pipeline_options import PipelineOptions
 import cStringIO
 import csv
@@ -34,24 +35,24 @@ from . import _util
 
 slim = tf.contrib.slim
 
-error_count = beam.Aggregator('errorCount')
-rows_count = beam.Aggregator('RowsCount')
-skipped_empty_line = beam.Aggregator('skippedEmptyLine')
-embedding_good = beam.Aggregator('embedding_good')
-embedding_bad = beam.Aggregator('embedding_bad')
-incompatible_image = beam.Aggregator('incompatible_image')
-invalid_uri = beam.Aggregator('invalid_file_name')
-ignored_unlabeled_image = beam.Aggregator('ignored_unlabeled_image')
+error_count = Metrics.counter('main', 'errorCount')
+rows_count = Metrics.counter('main', 'rowsCount')
+skipped_empty_line = Metrics.counter('main', 'skippedEmptyLine')
+embedding_good = Metrics.counter('main', 'embedding_good')
+embedding_bad = Metrics.counter('main', 'embedding_bad')
+incompatible_image = Metrics.counter('main', 'incompatible_image')
+invalid_uri = Metrics.counter('main', 'invalid_file_name')
+unlabeled_image = Metrics.counter('main', 'unlabeled_image')
 
 
 class ExtractLabelIdsDoFn(beam.DoFn):
   """Extracts (uri, label_ids) tuples from CSV rows.
   """
 
-  def start_bundle(self, context, *unused_args, **unused_kwargs):
+  def start_bundle(self, context=None):
     self.label_to_id_map = {}
 
-  def process(self, context, all_labels):
+  def process(self, element, all_labels):
     all_labels = list(all_labels)
     # DataFlow cannot garuantee the order of the labels when materializing it.
     # The labels materialized and consumed by training may not be with the same order
@@ -66,21 +67,20 @@ class ExtractLabelIdsDoFn(beam.DoFn):
 
     # Row format is:
     # image_uri,label_id
-    element = context.element
     if not element:
-      context.aggregate_to(skipped_empty_line, 1)
+      skipped_empty_line.inc()
       return
 
-    context.aggregate_to(rows_count, 1)
+    rows_count.inc()
     uri = element['image_url']
     if not uri or not uri.startswith('gs://'):
-      context.aggregate_to(invalid_uri, 1)
+      invalid_uri.inc()
       return
 
     try:
       label_id = self.label_to_id_map[element['label'].strip()]
     except KeyError:
-      context.aggregate_to(ignored_unlabeled_image, 1)
+      unlabeled_image.inc()
     yield uri, label_id
 
 
@@ -91,8 +91,8 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
   of channels.
   """
 
-  def process(self, context):
-    uri, label_id = context.element
+  def process(self, element):
+    uri, label_id = element
 
     try:
       with ml.util._file.open_local_or_gcs(uri, mode='r') as f:
@@ -102,7 +102,7 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
     # pylint: disable broad-except
     except Exception as e:
       logging.exception('Error processing image %s: %s', uri, str(e))
-      context.aggregate_to(error_count, 1)
+      error_count.inc()
       return
 
     # Convert to desired format and output.
@@ -222,7 +222,7 @@ class TFExampleFromImageDoFn(beam.DoFn):
     self.preprocess_graph = None
     self._checkpoint_path = checkpoint_path
 
-  def start_bundle(self, context):
+  def start_bundle(self, context=None):
     # There is one tensorflow session per instance of TFExampleFromImageDoFn.
     # The same instance of session is re-used between bundles.
     # Session is closed by the destructor of Session object, which is called
@@ -233,11 +233,11 @@ class TFExampleFromImageDoFn(beam.DoFn):
       with self.graph.as_default():
         self.preprocess_graph = EmbeddingsGraph(self.tf_session, self._checkpoint_path)
 
-  def finish_bundle(self, context):
+  def finish_bundle(self, context=None):
     if self.tf_session is not None:
       self.tf_session.close()
 
-  def process(self, context):
+  def process(self, element):
 
     def _bytes_feature(value):
       return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
@@ -245,19 +245,19 @@ class TFExampleFromImageDoFn(beam.DoFn):
     def _float_feature(value):
       return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
-    uri, label_id, image_bytes = context.element
+    uri, label_id, image_bytes = element
 
     try:
       embedding = self.preprocess_graph.calculate_embedding(image_bytes)
     except tf.errors.InvalidArgumentError as e:
-      context.aggregate_to(incompatible_image, 1)
+      incompatible_image.inc()
       logging.warning('Could not encode an image from %s: %s', uri, str(e))
       return
 
     if embedding.any():
-      context.aggregate_to(embedding_good, 1)
+      embedding_good.inc()
     else:
-      context.aggregate_to(embedding_bad, 1)
+      embedding_bad.inc()
 
     example = tf.train.Example(features=tf.train.Features(feature={
         'image_uri': _bytes_feature([str(uri)]),
@@ -271,7 +271,7 @@ class TFExampleFromImageDoFn(beam.DoFn):
 
 class TrainEvalSplitPartitionFn(beam.PartitionFn):
   """Split train and eval data."""
-  def partition_for(self, context, num_partitions):
+  def partition_for(self, element, num_partitions):
     import random
     return 1 if random.random() > 0.7 else 0
 

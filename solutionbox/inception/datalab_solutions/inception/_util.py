@@ -148,12 +148,28 @@ def accuracy(logits, labels):
   return [correct_count_update, incorrect_count_update], accuracy_op
 
 
+def check_dataset(dataset, mode):
+  """Validate we have a good dataset."""
+
+  names = [x['name'] for x in dataset.schema]
+  types = [x['type'] for x in dataset.schema]
+  if mode == 'train':
+    if (set(['image_url', 'label']) != set(names) or any (t != 'STRING' for t in types)):
+      raise ValueError('Invalid dataset. Expect only "image_url,label" STRING columns.')
+  else:
+    if ((set(['image_url']) != set(names) and set(['image_url', 'label']) != set(names)) or
+        any (t != 'STRING' for t in types)):
+      raise ValueError('Invalid dataset. Expect only "image_url" or "image_url,label" ' +
+                       'STRING columns.')
+
 def get_sources_from_dataset(p, dataset, mode):
   """get pcollection from dataset."""
+
   import apache_beam as beam
   import csv
   from datalab.mlalpha import CsvDataSet, BigQueryDataSet
 
+  check_dataset(dataset, mode)
   if type(dataset) is CsvDataSet:
     source_list = []
     for ii, input_path in enumerate(dataset.files):
@@ -163,39 +179,8 @@ def get_sources_from_dataset(p, dataset, mode):
         | 'Create Dict from Csv (%s)' % mode >>
           beam.Map(lambda line: csv.DictReader([line], fieldnames=['image_url', 'label']).next()))
   elif type(dataset) is BigQueryDataSet:
-    if len(dataset.sql.split()) == 1:
-      bq_source = beam.io.BigQuerySource(table=dataset.sql)
-    else:
-      bq_source = beam.io.BigQuerySource(query=dataset.sql)
+    bq_source = (beam.io.BigQuerySource(table=dataset.table) if dataset.table is not None else
+                 beam.io.BigQuerySource(query=dataset.query))
     return p | 'Read source from BigQuery (%s)' % mode >> beam.io.Read(bq_source)
   else:
     raise ValueError('Invalid DataSet. Expect CsvDataSet or BigQueryDataSet')
-
-
-def get_schema_from_dataset(dataset):
-  """get schema from dataset."""
-
-  import csv
-  import datalab.bigquery as bq  
-  from datalab.mlalpha import CsvDataSet, BigQueryDataSet
-  import google.cloud.ml as ml
-
-  if type(dataset) is BigQueryDataSet:
-    sql = dataset.sql
-    sql = 'SELECT * FROM (%s) LIMIT 1' % sql
-    return bq.Query(sql).results().schema
-  elif type(dataset) is CsvDataSet:
-    if dataset.schema is not None:
-      return dataset.schema
-    else:
-      with ml.util._file.open_local_or_gcs(dataset.files[0], mode='r') as f:
-        row = next(csv.reader(f))
-      if len(row) > 2 or len(row) == 0:
-        raise Exception('Invalid csv data. Expect one or two columns.')
-      schema = [{'name': 'image_url', 'type': 'STRING'}]
-      if len(row) == 2:
-        schema.append({'name': 'label', 'type': 'STRING'})
-      return schema
-  else:
-    raise ValueError('Invalid DataSet. Expect CsvDataSet or BigQueryDataSet')
-

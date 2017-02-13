@@ -68,8 +68,7 @@ class EmitAsBatchDoFn(beam.DoFn):
     self._batch_size = batch_size
     self._cached = []
 
-  def process(self, context):
-    element = context.element
+  def process(self, element):
     self._cached.append(element)
     if len(self._cached) >= self._batch_size:
       emit = self._cached
@@ -84,17 +83,16 @@ class EmitAsBatchDoFn(beam.DoFn):
 class UnbatchDoFn(beam.DoFn):
   """A DoFn expand batch into elements."""
 
-  def process(self, context):
-    for item in context.element:
+  def process(self, element):
+    for item in element:
       yield item
 
 
 class LoadImagesDoFn(beam.DoFn):
   """A DoFn that reads image from url."""
   
-  def process(self, context):
-    import google.cloud.ml as ml
-    element = context.element  
+  def process(self, element):
+    import google.cloud.ml as ml 
     with ml.util._file.open_local_or_gcs(element['image_url'], 'r') as ff:
       image_bytes = ff.read()
     out_element = {'image_bytes': image_bytes}
@@ -113,7 +111,7 @@ class PredictBatchDoFn(beam.DoFn):
     self._tf_inputs = None
     self._tf_outputs = None
 
-  def start_bundle(self, context):
+  def start_bundle(self, context=None):
     import json
     import os
     import tensorflow as tf
@@ -126,14 +124,13 @@ class PredictBatchDoFn(beam.DoFn):
     self._tf_inputs = json.loads(tf.get_collection('inputs')[0])
     self._tf_outputs = json.loads(tf.get_collection('outputs')[0])
 
-  def finish_bundle(self, context):
+  def finish_bundle(self, context=None):
     if self._session is not None:
       self._session.close()
 
-  def process(self, context):
+  def process(self, element):
     import collections
-    
-    element = context.element
+
     image_urls = [x['image_url'] for x in element]
     targets = None
     if 'label' in element[0] and element[0]['label'] is not None:
@@ -152,10 +149,11 @@ class PredictBatchDoFn(beam.DoFn):
 
 
 class ProcessResultsDoFn(beam.DoFn):
-  """A DoFn that process prediction results."""
+  """A DoFn that process prediction results by casting values and calculating
+     target_prob.
+  """
 
-  def process(self, context):
-    element = context.element
+  def process(self, element):
     target = None
     if len(element) == 5:
       image_url, target, prediction, labels, scores = element
@@ -179,11 +177,10 @@ class ProcessResultsDoFn(beam.DoFn):
 class MakeCsvLineDoFn(beam.DoFn):
   """A DoFn that makes CSV lines out of prediction results."""
 
-  def process(self, context):
+  def process(self, element):
     import csv
     import StringIO
 
-    element = context.element
     line = StringIO.StringIO()
     if len(element) == 5:    
       csv.DictWriter(line, 
@@ -197,10 +194,7 @@ def configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table):
   """Configures a dataflow pipeline for batch prediction."""
 
   data = _util.get_sources_from_dataset(p, dataset, 'predict')
-  schema = _util.get_schema_from_dataset(dataset)
-  if len(schema) > 2 or len(schema) == 0 or any (x['type'] != 'STRING' for x in schema):
-    raise Exception('Dataset schema is invalid. Expect one STRING or two STRING columns')
-  if len(schema) == 2:
+  if len(dataset.schema) == 2:
     output_schema = [
         {'name': 'image_url', 'type': 'STRING'},
         {'name': 'target', 'type': 'STRING'},
