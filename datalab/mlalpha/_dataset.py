@@ -75,13 +75,11 @@ class CsvDataSet(object):
 
   @property
   def files(self):
-    if self._glob_files:
-      return self._glob_files
-
-    for file in self._input_files:
-      # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
-      self._glob_files += [str(x) for x in ml.util._file.glob_files(file)]
-      
+    if not self._glob_files:
+      for file in self._input_files:
+        # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
+        self._glob_files += [str(x) for x in ml.util._file.glob_files(file)]
+    
     return self._glob_files
       
   @property
