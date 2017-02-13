@@ -22,7 +22,7 @@ if __name__ == '__main__':
   setuptools.setup(
       name=NAME,
       version=VERSION,
-      packages=['trainer', 'preprocess'],
+      packages=['trainer', 'preprocess', 'predict'],
       author='Google',
       author_email='cloudml-feedback@google.com',
       test_suite='nose.collector',

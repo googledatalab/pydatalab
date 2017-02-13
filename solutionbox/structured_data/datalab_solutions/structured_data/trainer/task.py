@@ -19,6 +19,7 @@ import argparse
 import json
 import os
 import sys
+import math
 
 from . import util
 import tensorflow as tf
@@ -27,19 +28,27 @@ from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.session_bundle import manifest_pb2
 from tensorflow.python.lib.io import file_io
 
+
 UNKNOWN_LABEL = 'ERROR_UNKNOWN_LABEL'
 FEATURES_EXAMPLE_DICT_KEY = 'features_example_dict_key'
 EXAMPLES_PLACEHOLDER_TENSOR_NAME = 'input_csv_string'
 
-# Constants for prediction graph fetch tensors.
-TARGET_SCORE_TENSOR_NAME = 'target_score_prediction'
-TARGET_CLASS_TENSOR_NAME = 'target_class_prediction'
-TARGET_INPUT_TENSOR_NAME = 'target_from_input'
+# Constants for the Prediction Graph fetch tensors.
+PG_KEY = 'key_from_input'
+PG_TARGET = 'target_from_input'
+
+PG_REGRESSION_PREDICTED_TARGET = 'predicted_target'
+PG_CLASSIFICATION_LABEL_TEMPLATE = 'top_%s_label'
+PG_CLASSIFICATION_SCORE_TEMPLATE = 'top_%s_score'
+
+# If input has the target label, we also give its score (which might not be in 
+# the top n). 
+# todo(brandondutra): get this working and use it.
+PG_CLASSIFICATION_INPUT_TARGET_SCORE = 'score_of_input_target' 
 
 # Constants for the exported input and output collections.
 INPUT_COLLECTION_NAME = 'inputs'
 OUTPUT_COLLECTION_NAME = 'outputs'
-
 
 def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
   """Input layer for the exported graph."""
@@ -59,9 +68,8 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
     parts = tf.string_split(examples, delimiter=',')
     new_examples = tf.cond(
         tf.less(tf.shape(parts)[1], len(train_config['csv_header'])),
-        lambda: tf.string_join([tf.constant(','), examples]),
+        lambda: tf.string_join([tf.constant(','), tf.identity(examples)]),
         lambda: tf.identity(examples))
-
     features = util.parse_example_tensor(examples=new_examples,
                                          train_config=train_config)
 
@@ -134,6 +142,7 @@ def vector_slice(A, B):
     linear_A = tf.reshape(A, [-1])
     return tf.gather(linear_A, B + linear_index)
 
+
 def get_export_signature_fn(train_config, args):
   """Builds the output layer in the exported graph.
 
@@ -145,62 +154,56 @@ def get_export_signature_fn(train_config, args):
     target_name = train_config['target_column']
     key_name = train_config['key_column']
 
-
     if util.is_classification_model(args.model_type):
+      
+      # Get the label of the input target.
       string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
-      outputs = {
-          key_name: tf.squeeze(features[key_name]).name,
-          'input_target_from_features': tf.squeeze(features[target_name]).name,
-      }
- 
-      print('8'*1000)
-      print('target tensor', features[target_name])
-      print('predictions', predictions)
-      # Try getting the target prediction prob.
-
-      # Get score of the target column.
       input_target_label = tf.contrib.lookup.index_to_string(
           features[target_name],
-          mapping=string_value)
-      input_target_score = vector_slice(predictions, features[target_name])
+          mapping=string_value)   
 
-      outputs.update({
-        'input_target_label': tf.squeeze(input_target_label).name,
-        'score_from_target_label': tf.squeeze(input_target_score).name,
-        'all_score': tf.squeeze(predictions).name,
-        })
+      outputs = {
+          PG_KEY: tf.squeeze(features[key_name]).name,
+          PG_TARGET: tf.squeeze(input_target_label).name,
+      }
 
-      # get top k answers
+      # TODO(brandondutra): get the score of the target label too.
+      #input_target_score = vector_slice(predictions, features[target_name])
+      
+      # get top k labels and their scores.
       (top_k_values, top_k_indices) = tf.nn.top_k(predictions, k=args.top_n)
       top_k_labels = tf.contrib.lookup.index_to_string(
           tf.to_int64(top_k_indices),
           mapping=string_value)
+   
+      # Write the top_k values using 2*top_k columns. 
+      num_digits = int(math.ceil(math.log(args.top_n, 10)))
+      if num_digits == 0:
+        num_digits = 1
+      for i in range(0, args.top_n):
+        # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
+        # makes sorting the columns easy.
+        padded_i = str(i+1).zfill(num_digits)
 
-      outputs.update({
-        'top_n_vaues': tf.squeeze(top_k_values).name,
-        'top_n_indices': tf.squeeze(top_k_indices).name,
-        'top_n_labels': tf.squeeze(top_k_labels).name
+        label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
+        label_tensor_name = (tf.squeeze(
+              tf.slice(top_k_labels, 
+                       [0, i],
+                       [tf.shape(top_k_labels)[0], 1])).name)
+        score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
+        score_tensor_name = (tf.squeeze(
+            tf.slice(top_k_values, 
+                     [0, i], 
+                     [tf.shape(top_k_values)[0], 1])).name)
 
-        })
+        outputs.update({label_alias: label_tensor_name,
+                        score_alias: score_tensor_name})
 
-
-      # string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
-      # prediction = tf.argmax(predictions, 1)
-      # predicted_label = tf.contrib.lookup.index_to_string(
-      #     prediction,
-      #     mapping=string_value,
-      #     default_value=train_config['csv_defaults'][target_name])
-      # input_target_label = tf.contrib.lookup.index_to_string(
-      #     features[target_name],
-      #     mapping=string_value)
-      # outputs.update(
-      #     {TARGET_CLASS_TENSOR_NAME: tf.squeeze(predicted_label).name,
-      #      TARGET_INPUT_TENSOR_NAME: tf.squeeze(input_target_label).name})
     else:
       outputs = {
-          key_name: tf.squeeze(features[key_name]).name,
-          TARGET_INPUT_TENSOR_NAME: tf.squeeze(features[target_name]).name,
-          TARGET_SCORE_TENSOR_NAME: tf.squeeze(predictions).name
+          PG_KEY: tf.squeeze(features[key_name]).name,
+          PG_TARGET: tf.squeeze(features[target_name]).name,
+          PG_REGRESSION_PREDICTED_TARGET: tf.squeeze(predictions).name,
       }
 
 
