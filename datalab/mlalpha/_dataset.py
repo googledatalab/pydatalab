@@ -38,38 +38,51 @@ class CsvDataSet(object):
       schema: A BigQuery schema object in the form of 
           [{'name': 'col1', 'type': 'STRING'},
            {'name': 'col2', 'type': 'INTEGER'}]
+          or a single string in of the form 'col1:STRING,col2:INTEGER,col3:FLOAT'.
       schema_file: A JSON serialized schema file. If schema is None, it will try to load from
           schema_file if not None.
+    Raise:
+      ValueError if both schema and schema_file are None.
     """
-    self._schema = None
+    if schema is None and schema_file is None:
+      raise ValueError('schema and schema_file cannot both be None.')
+
     if schema is not None:
-      self._schema = schema
-    elif schema_file is not None:
+      if isinstance(schema, list):
+        self._schema = schema
+      else:
+        self._schema = []
+        for x in schema.split(','):
+          parts = x.split(':')
+          if len(parts) != 2:
+            raise ValueError('invalid schema string "%s"' % x)
+          self._schema.append({'name': parts[0].strip(), 'type': parts[1].strip()})
+    else:
       with ml.util._file.open_local_or_gcs(schema_file, 'r') as f:
         self._schema = json.load(f)
+        
+    if isinstance(files, basestring):
+      files = [files]
+    self._input_files = files
     
-    self._file_pattern = file_pattern
-    self._files = []
+    self._glob_files = []
+
 
   @property
-  def file_pattern(self):
-    return self._file_pattern
+  def _input_files(self):
+    """Returns the file list that was given to this class without globing files."""
+    return self._input_files
 
   @property
   def files(self):
-    if self._files:
-      return self._files
+    if self._glob_files:
+      return self._glob_files
 
-    if isinstance(self._file_pattern, basestring):
-      file_list = [self._file_pattern]
-    else:
-      file_list = self._file_pattern
-      
-    for file in file_list:
+    for file in self._input_files:
       # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
       self._files += [str(x) for x in ml.util._file.glob_files(file)]
-    
-    return self._files
+      
+    return self._glob_files
       
   @property
   def schema(self):
@@ -113,28 +126,48 @@ class CsvDataSet(object):
       skip = [x for x in skip_all if x < row_count]
       skip_all = [x - row_count for x in skip_all if x >= row_count]
       with ml.util._file.open_local_or_gcs(file, 'r') as f:
-        dfs.append(pd.read_csv(file, skiprows=skip, names=names, dtype=dtype, header=None))
+        dfs.append(pd.read_csv(f, skiprows=skip, names=names, dtype=dtype, header=None))
     return pd.concat(dfs, axis=0, ignore_index=True)
 
 
 class BigQueryDataSet(object):
   """DataSet based on BigQuery table or query."""
 
-  def __init__(self, sql):
+  def __init__(self, sql=None, table=None):
     """
     Args:
-      sql: Can be one of:
-          A table name.
-          A SQL query string.
-          A SQL Query module defined with '%%sql --name [module_name]'
+      sql: A SQL query string, or a SQL Query module defined with '%%sql --name [module_name]'
+      table: A table name in the form of "dataset:table".
+    Raises:
+      ValueError if both sql and table are set, or both are None.
     """
-    query, _ = datalab.data.SqlModule.get_sql_statement_with_environment(sql, {})
-    self._sql = query.sql
+    if (sql is None and table is None) or (sql is not None and table is not None):
+      raise ValueError('One and only one of sql and table should be set.')
+
+    self._query = None
+    self._table = None
+    if sql is not None:
+      query, _ = datalab.data.SqlModule.get_sql_statement_with_environment(sql, {})
+      self._query = query.sql
+    if table is not None:
+      self._table = table
+    self._schema = None
 
   @property
-  def sql(self):
-    return self._sql
-  
+  def query(self):
+    return self._query
+
+  @property
+  def table(self):
+    return self._table
+
+  @property
+  def schema(self):
+    if self._schema is None:
+      source = self._query or self._table
+      self._schema = bq.Query('SELECT * FROM (%s) LIMIT 1' % source).results().schema
+    return self._schema
+
   def sample(self, n):
     """Samples data into a Pandas DataFrame. Note that it calls BigQuery so it will
        incur cost.
@@ -145,10 +178,11 @@ class BigQueryDataSet(object):
     Raises:
       Exception if n is larger than number of rows.
     """
-    total = bq.Query('select count(*) from (%s)' % self._sql).results()[0].values()[0]
+    source = self._query or self._table
+    total = bq.Query('select count(*) from (%s)' % source).results()[0].values()[0]
     if n > total:
       raise ValueError('sample larger than population')
     sampling = bq.Sampling.random(n*100.0/float(total))
-    sample = bq.Query(self._sql).sample(sampling=sampling)
+    sample = bq.Query(source).sample(sampling=sampling)
     df = sample.to_dataframe()
     return df

@@ -19,7 +19,10 @@ from __future__ import print_function
 import argparse
 import json
 import os
+import pandas as pd
+import StringIO
 import sys
+
 
 from tensorflow.python.lib.io import file_io
 
@@ -71,7 +74,6 @@ def parse_arguments(argv):
                       help=('project:dataset.table_name'))
 
   args = parser.parse_args(args=argv[1:])
-  print(args)
 
   if not args.output_dir.startswith('gs://'):
     raise ValueError('--output_dir must point to a location on GCS')
@@ -161,10 +163,9 @@ def run_categorical_analysis(table, args, feature_types):
   """Find vocab values for the categorical columns and writes a csv file.
 
   The vocab files are in the from
-  index,categorical_column_name
-  0,'abc'
-  1,'def'
-  2,'ghi'
+  label1
+  label2
+  label3
   ...
 
   Args:
@@ -173,12 +174,12 @@ def run_categorical_analysis(table, args, feature_types):
     feature_types: python object of the feature types file.
   """
   import datalab.bigquery as bq
+
   categorical_columns = []
   for name, config in feature_types.iteritems():
     if config['type'] == 'categorical':
       categorical_columns.append(name)
 
-  jobs = []
   if categorical_columns:
     sys.stdout.write('Running categorical analysis...')
     for name in categorical_columns:
@@ -196,18 +197,25 @@ def run_categorical_analysis(table, args, feature_types):
               {name} IS NOT NULL
             GROUP BY
               {name}
+            ORDER BY
+              {name}
       """.format(name=name, table=table_name)
       out_file = os.path.join(args.output_dir, 
                               CATEGORICAL_ANALYSIS_FILE % name)
 
+      # extract_async seems to have a bug and sometimes hangs. So get the 
+      # results direclty.
       if args.bigquery_table:
-        jobs.append(bq.Query(sql).extract_async(out_file, csv_header=False))
+        df = bq.Query(sql).to_dataframe()
       else:
         query = bq.Query(sql, data_sources={table_name: table})
-        jobs.append(query.extract_async(out_file, csv_header=False))
+        df = query.to_dataframe()
 
-    for job in jobs:
-      job.wait()
+      # Write the results to a file.
+      string_buff = StringIO.StringIO()
+      df.to_csv(string_buff, index=False, header=False)
+      file_io.write_string_to_file(out_file, string_buff.getvalue())
+
 
     sys.stdout.write('done.\n')
 
