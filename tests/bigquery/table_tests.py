@@ -234,14 +234,14 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
-  def test_insert_data_no_table(self,
-                                mock_api_datasets_get,
-                                mock_api_tabledata_insert_all,
-                                mock_api_tables_get,
-                                mock_api_tables_insert,
-                                mock_api_tables_list,
-                                mock_time_sleep,
-                                mock_uuid):
+  def test_insert_no_table(self,
+                           mock_api_datasets_get,
+                           mock_api_tabledata_insert_all,
+                           mock_api_tables_get,
+                           mock_api_tables_insert,
+                           mock_api_tables_list,
+                           mock_time_sleep,
+                           mock_uuid):
     mock_uuid.return_value = TestCases._create_uuid()
     mock_time_sleep.return_value = None
     mock_api_tables_list.return_value = []
@@ -254,7 +254,7 @@ class TestCases(unittest.TestCase):
     df = TestCases._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insert_data(df)
+      table.insert(df)
     self.assertEqual('Table %s does not exist.' % str(table), str(error.exception))
 
   @mock.patch('uuid.uuid4')
@@ -264,14 +264,14 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_missing_field(self,
-                                     mock_api_tabledata_insert_all,
-                                     mock_api_tables_get,
-                                     mock_api_tables_insert,
-                                     mock_api_tables_list,
-                                     mock_api_datasets_get,
-                                     mock_time_sleep,
-                                     mock_uuid,):
+  def test_insert_missing_field(self,
+                                mock_api_tabledata_insert_all,
+                                mock_api_tables_get,
+                                mock_api_tables_insert,
+                                mock_api_tables_list,
+                                mock_api_datasets_get,
+                                mock_time_sleep,
+                                mock_uuid,):
     # Truncate the schema used when creating the table so we have an unmatched column in insert.
     schema = TestCases._create_inferred_schema()[:2]
 
@@ -287,7 +287,7 @@ class TestCases(unittest.TestCase):
     df = TestCases._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insert_data(df)
+      table.insert(df)
     self.assertEqual('Table does not contain field headers', str(error.exception))
 
   @mock.patch('uuid.uuid4')
@@ -297,14 +297,14 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
-  def test_insert_data_mismatched_schema(self,
-                                         mock_api_datasets_get,
-                                         mock_api_tabledata_insert_all,
-                                         mock_api_tables_get,
-                                         mock_api_tables_insert,
-                                         mock_api_tables_list,
-                                         mock_time_sleep,
-                                         mock_uuid):
+  def test_insert_mismatched_schema(self,
+                                    mock_api_datasets_get,
+                                    mock_api_tabledata_insert_all,
+                                    mock_api_tables_get,
+                                    mock_api_tables_insert,
+                                    mock_api_tables_list,
+                                    mock_time_sleep,
+                                    mock_uuid):
     # Change the schema used when creating the table so we get a mismatch when inserting.
     schema = TestCases._create_inferred_schema()
     schema[2]['type'] = 'STRING'
@@ -321,7 +321,7 @@ class TestCases(unittest.TestCase):
     df = TestCases._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insert_data(df)
+      table.insert(df)
     self.assertEqual('Field headers in data has type FLOAT but in table has type STRING',
                      str(error.exception))
 
@@ -332,13 +332,13 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_dataframe(self,
-                                 mock_api_tabledata_insert_all,
-                                 mock_api_tables_get,
-                                 mock_api_tables_insert,
-                                 mock_api_tables_list,
-                                 mock_api_datasets_get,
-                                 mock_time_sleep, mock_uuid):
+  def test_insert_dataframe(self,
+                            mock_api_tabledata_insert_all,
+                            mock_api_tables_get,
+                            mock_api_tables_insert,
+                            mock_api_tables_list,
+                            mock_api_datasets_get,
+                            mock_time_sleep, mock_uuid):
     schema = TestCases._create_inferred_schema()
 
     mock_uuid.return_value = TestCases._create_uuid()
@@ -352,7 +352,7 @@ class TestCases(unittest.TestCase):
     table = TestCases._create_table_with_schema(schema)
     df = TestCases._create_data_frame()
 
-    result = table.insert_data(df)
+    result = table.insert(df)
     self.assertIsNotNone(result, "insert_all should return the table object")
     mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
@@ -368,13 +368,13 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_dictlist(self,
-                                mock_api_tabledata_insert_all,
-                                mock_api_tables_get,
-                                mock_api_tables_insert,
-                                mock_api_tables_list,
-                                mock_api_datasets_get,
-                                mock_time_sleep, mock_uuid):
+  def test_insert_dictlist(self,
+                           mock_api_tabledata_insert_all,
+                           mock_api_tables_get,
+                           mock_api_tables_insert,
+                           mock_api_tables_list,
+                           mock_api_datasets_get,
+                           mock_time_sleep, mock_uuid):
     schema = TestCases._create_inferred_schema()
 
     mock_uuid.return_value = TestCases._create_uuid()
@@ -387,7 +387,7 @@ class TestCases(unittest.TestCase):
 
     table = TestCases._create_table_with_schema(schema)
 
-    result = table.insert_data([
+    result = table.insert([
       {u'column': 'r0', u'headers': 10.0, u'some': 0},
       {u'column': 'r1', u'headers': 10.0, u'some': 1},
       {u'column': 'r2', u'headers': 10.0, u'some': 2},
@@ -408,13 +408,13 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_dictlist_index(self,
-                                      mock_api_tabledata_insert_all,
-                                      mock_api_tables_get,
-                                      mock_api_tables_insert,
-                                      mock_api_tables_list,
-                                      mock_api_datasets_get,
-                                      mock_time_sleep, mock_uuid):
+  def test_insert_dictlist_index(self,
+                                 mock_api_tabledata_insert_all,
+                                 mock_api_tables_get,
+                                 mock_api_tables_insert,
+                                 mock_api_tables_list,
+                                 mock_api_datasets_get,
+                                 mock_time_sleep, mock_uuid):
     schema = TestCases._create_inferred_schema('Index')
 
     mock_uuid.return_value = TestCases._create_uuid()
@@ -427,7 +427,7 @@ class TestCases(unittest.TestCase):
 
     table = TestCases._create_table_with_schema(schema)
 
-    result = table.insert_data([
+    result = table.insert([
       {u'column': 'r0', u'headers': 10.0, u'some': 0},
       {u'column': 'r1', u'headers': 10.0, u'some': 1},
       {u'column': 'r2', u'headers': 10.0, u'some': 2},
@@ -448,13 +448,13 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_dictlist_named_index(self,
-                                            mock_api_tabledata_insert_all,
-                                            mock_api_tables_get,
-                                            mock_api_tables_insert,
-                                            mock_api_tables_list,
-                                            mock_api_datasets_get,
-                                            mock_time_sleep, mock_uuid):
+  def test_insert_dictlist_named_index(self,
+                                       mock_api_tabledata_insert_all,
+                                       mock_api_tables_get,
+                                       mock_api_tables_insert,
+                                       mock_api_tables_list,
+                                       mock_api_datasets_get,
+                                       mock_time_sleep, mock_uuid):
     schema = TestCases._create_inferred_schema('Row')
 
     mock_uuid.return_value = TestCases._create_uuid()
@@ -467,7 +467,7 @@ class TestCases(unittest.TestCase):
 
     table = TestCases._create_table_with_schema(schema)
 
-    result = table.insert_data([
+    result = table.insert([
         {u'column': 'r0', u'headers': 10.0, u'some': 0},
         {u'column': 'r1', u'headers': 10.0, u'some': 1},
         {u'column': 'r2', u'headers': 10.0, u'some': 2},
