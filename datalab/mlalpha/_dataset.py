@@ -61,9 +61,9 @@ class CsvDataSet(object):
       return self._files
 
     if isinstance(self._file_pattern, basestring):
-      file_list = [self.file_pattern]
+      file_list = [self._file_pattern]
     else:
-      file_list = self.file_pattern
+      file_list = self._file_pattern
       
     for file in file_list:
       # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
@@ -86,7 +86,7 @@ class CsvDataSet(object):
     """
     row_total_count = 0
     row_counts = []
-    for file in self._files:
+    for file in self.files:
       with ml.util._file.open_local_or_gcs(file, 'r') as f:
         num_lines = sum(1 for line in f)
         row_total_count += num_lines
@@ -109,7 +109,7 @@ class CsvDataSet(object):
     # Note that random.sample will raise Exception if skip_count is greater than rows count.
     skip_all = sorted(random.sample(xrange(0, row_total_count), skip_count))
     dfs = []
-    for file, row_count in zip(self._files, row_counts):
+    for file, row_count in zip(self.files, row_counts):
       skip = [x for x in skip_all if x < row_count]
       skip_all = [x - row_count for x in skip_all if x >= row_count]
       with ml.util._file.open_local_or_gcs(file, 'r') as f:
