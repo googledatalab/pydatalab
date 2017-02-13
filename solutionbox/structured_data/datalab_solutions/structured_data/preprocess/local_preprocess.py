@@ -58,10 +58,6 @@ def parse_arguments(argv):
                       type=str,
                       required=True,
                       help=('BigQuery json schema file'))
-  parser.add_argument('--input_feature_file',
-                      type=str,
-                      required=True,
-                      help=('Json file containing feature types'))
 
   args = parser.parse_args(args=argv[1:])
 
@@ -71,52 +67,66 @@ def parse_arguments(argv):
   return args
 
 
-def run_numerical_categorical_analysis(args, feature_types, schema_list):
+def run_numerical_categorical_analysis(args, schema_list):
   """Makes the numerical and categorical analysis files.
 
   Args:
     args: the command line args
-    feature_types: python object of the feature types json file
     schema_list: python object of the schema json file.
 
   Raises:
-    ValueError: if feature_types contains unknown column types.
+    ValueError: if schema contains unknown column types.
   """
   header = [column['name'] for column in schema_list]
   input_files = file_io.get_matching_files(args.input_file_pattern)
 
-  # initialize numerical_results
-  numerical_results = {}
-  for name, config in feature_types.iteritems():
-    if config['type'] == 'numerical':
-      numerical_results[name] = {'min': float('inf'), 'max': float('-inf')}
+  # Check the schema is valid
+  for col_schema in schema_list:
+    col_type = col_schema['type'].lower()
+    if col_type != 'string' and col_type != 'integer' and col_type != 'float':
+      raise ValueError('Schema contains an unsupported type %s.' % col_type)
 
-  # initialize categorical_results
+  # initialize the results
+  def _init_numerical_results():
+    return {'min': float('inf'), 
+            'max': float('-inf'),
+            'count': 0,
+            'sum': 0.0}
+  numerical_results = collections.defaultdict(_init_numerical_results)
   categorical_results = collections.defaultdict(set)
 
-  # for each file, update the min/max values from that file, and update the set
+  # for each file, update the numerical stats from that file, and update the set
   # of unique labels.
   for input_file in input_files:
     with file_io.FileIO(input_file, 'r') as f:
       for line in f:
         parsed_line = dict(zip(header, line.strip().split(',')))
 
-        for name, config in feature_types.iteritems():
-          # Update numerical analsysis
-          if config['type'] == 'numerical':
-            numerical_results[name]['min'] = min(numerical_results[name]['min'],
-                                                 float(parsed_line[name]))
-            numerical_results[name]['max'] = max(numerical_results[name]['max'],
-                                                 float(parsed_line[name]))
-          elif config['type'] == 'categorical':
-            # Update categorical analsysis
-
-            categorical_results[name].update([parsed_line[name]])
-          elif config['type'] == 'key':
-            pass
+        for col_schema in schema_list:
+          col_name = col_schema['name']
+          col_type = col_schema['type']
+          if col_type.lower() == 'string':
+            categorical_results[col_name].update([parsed_line[col_name]])
           else:
-            raise ValueError('Unknown type %s in input features'
-                             % config['type'])
+            # numerical column.
+            numerical_results[col_name]['min'] = (
+              min(numerical_results[col_name]['min'], 
+                  float(parsed_line[col_name])))
+            numerical_results[col_name]['max'] = (
+              max(numerical_results[col_name]['max'], 
+                  float(parsed_line[col_name])))
+            numerical_results[col_name]['count'] += 1
+            numerical_results[col_name]['sum'] += float(parsed_line[col_name])
+
+  # Update numerical_results to just have min/min/mean
+  for col_schema in schema_list:
+    if col_schema['type'].lower() != 'string':
+      col_name = col_schema['name']
+      mean = numerical_results[col_name]['sum'] / numerical_results[col_name]['count']
+      del numerical_results[col_name]['sum']
+      del numerical_results[col_name]['count']
+      numerical_results[col_name]['mean'] = mean
+
 
   # Write the numerical_results to a json file.
   file_io.write_string_to_file(
@@ -125,9 +135,11 @@ def run_numerical_categorical_analysis(args, feature_types, schema_list):
 
   # Write the vocab files. Each label is on its own line.
   for name, unique_labels in categorical_results.iteritems():
+    # append a '\n' so the last label is an empty/missing label.
+    labels = '\n'.join(list(unique_labels) + '\n'
     file_io.write_string_to_file(
         os.path.join(args.output_dir, CATEGORICAL_ANALYSIS_FILE % name),
-        '\n'.join(list(unique_labels)))
+        ))
 
 
 def run_analysis(args):
@@ -135,15 +147,10 @@ def run_analysis(args):
 
   # Read the schema and input feature types
   schema_list = json.loads(file_io.read_file_to_string(args.schema_file))
-  feature_types = json.loads(
-      file_io.read_file_to_string(args.input_feature_file))
 
-  run_numerical_categorical_analysis(args, feature_types, schema_list)
+  run_numerical_categorical_analysis(args, schema_list)
 
-  # Also save a copy of the schema/input types in the output folder.
-  file_io.copy(args.input_feature_file,
-               os.path.join(args.output_dir, INPUT_FEATURES_FILE),
-               overwrite=True)
+  # Also save a copy of the schema in the output folder.
   file_io.copy(args.schema_file, 
                os.path.join(args.output_dir, SCHEMA_FILE),
                overwrite=True)

@@ -16,7 +16,7 @@ import datetime
 from setuptools import setup
 
 minor = datetime.datetime.now().strftime("%y%m%d%H%M")
-version = '0.1'
+version = '0.0.1'
 
 setup(
   name='structured_data',
@@ -49,5 +49,7 @@ setup(
   install_requires=[
   ],
   package_data={
-  }
+  },
+  # setup.py needs to be deployed so it can be repackaged from local installation for cloud run.
+  data_files=[('/datalab/packages_setup/structured_data', ['setup.py'])],
 )

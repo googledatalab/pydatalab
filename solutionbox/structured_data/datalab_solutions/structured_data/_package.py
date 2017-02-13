@@ -90,14 +90,13 @@ def _run_cmd(cmd):
       break
 
 
-def local_preprocess(output_dir, input_feature_file, input_file_pattern, schema_file):
+def local_preprocess(output_dir, input_file_pattern, schema_file):
   """Preprocess data locally with Pandas
 
   Produce analysis used by training.
 
   Args:
     output_dir: The output directory to use.
-    input_feature_file: Describes defaults and column types.
     input_file_pattern: String. File pattern what will expand into a list of csv
         files.
     schema_file: File path to the schema file.
@@ -106,14 +105,13 @@ def local_preprocess(output_dir, input_feature_file, input_file_pattern, schema_
   args = ['local_preprocess',
           '--input_file_pattern=%s' % input_file_pattern,
           '--output_dir=%s' % output_dir,
-          '--schema_file=%s' % schema_file,
-          '--input_feature_file=%s' % input_feature_file]
+          '--schema_file=%s' % schema_file]
 
   print('Starting local preprocessing.')
   preprocess.local_preprocess.main(args)
   print('Local preprocessing done.')
 
-def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, schema_file=None, bigquery_table=None, project_id=None):
+def cloud_preprocess(output_dir, input_file_pattern=None, schema_file=None, bigquery_table=None, project_id=None):
   """Preprocess data in the cloud with BigQuery.
 
   Produce analysis used by training. This can take a while, even for small 
@@ -121,7 +119,6 @@ def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, sc
 
   Args:
     output_dir: The output directory to use.
-    input_feature_file: Describes defaults and column types.
     input_file_path: String. File pattern what will expand into a list of csv
         files.
     schema_file: File path to the schema file.
@@ -131,8 +128,7 @@ def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, sc
   _assert_gcs_files([output_dir, input_file_pattern])
 
   args = ['cloud_preprocess',
-          '--output_dir=%s' % output_dir,
-          '--input_feature_file=%s' % input_feature_file]
+          '--output_dir=%s' % output_dir]
 
   if input_file_pattern:
     args.append('--input_file_pattern=%s' % input_file_pattern)
