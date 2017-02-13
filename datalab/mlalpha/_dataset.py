@@ -25,15 +25,17 @@ import random
 
 import datalab.bigquery as bq
 import datalab.data
+from tensorflow.python.lib.io import file_io
 
 
 class CsvDataSet(object):
   """DataSet based on CSV files and schema."""
 
-  def __init__(self, files, schema=None, schema_file=None):
+  def __init__(self, file_pattern, schema=None, schema_file=None):
     """
     Args:
-      files: A list of CSV files. Can contain wildcards in file names. Can be local or GCS path.
+      file_pattern: A list of CSV files. or a string. Can contain wildcards in
+          file names. Can be local or GCS path.
       schema: A BigQuery schema object in the form of 
           [{'name': 'col1', 'type': 'STRING'},
            {'name': 'col2', 'type': 'INTEGER'}]
@@ -46,19 +48,40 @@ class CsvDataSet(object):
     elif schema_file is not None:
       with ml.util._file.open_local_or_gcs(schema_file, 'r') as f:
         self._schema = json.load(f)
+    
+    self._file_pattern = file_pattern
     self._files = []
-    for file in files:
-      # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
-      self._files += [str(x) for x in ml.util._file.glob_files(file)]
+
+
+  @property
+  def file_pattern(self):
+    return self._file_pattern
 
   @property
   def files(self):
+    if self._files:
+      return self._files
+
+    if isinstance(self._file_pattern, basestring):
+      file_list = [self.file_pattern]
+    else:
+      file_list = self.file_pattern
+      
+    for file in file_list:
+      # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
+      self._files += [str(x) for x in ml.util._file.glob_files(file)]
+    
     return self._files
       
   @property
   def schema(self):
     return self._schema
   
+  def save_to_file(self, file_name):
+    file_io.write_string_to_file(
+        file_name, 
+        json.dumps(self._schema, indent=2))
+
   def sample(self, n):
     """ Samples data into a Pandas DataFrame.
     Args:
