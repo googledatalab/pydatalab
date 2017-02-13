@@ -291,7 +291,7 @@ class Table(object):
         del record[k]
     return record
 
-  def insert_data(self, data, include_index=False, index_name=None):
+  def insert(self, data, include_index=False, index_name=None):
     """ Insert the contents of a Pandas DataFrame or a list of dictionaries into the table.
 
     The insertion will be performed using at most 500 rows per POST, and at most 10 POSTs per
