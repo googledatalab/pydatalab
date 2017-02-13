@@ -138,15 +138,15 @@ def cloud_preprocess(output_dir, input_feature_file, input_file_pattern=None, sc
     args.append('--input_file_pattern=%s' % input_file_pattern)
   if schema_file:
     args.append('--schema_file=%s' % schema_file)
+  if not project_id:
+    project_id = _default_project()
   if bigquery_table:
-    if not project_id:
-      project_id = _default_project()
     full_name = project_id + ':' + bigquery_table
     args.append('--bigquery_table=%s' % full_name)
   
   print('Starting cloud preprocessing.')
   print('Track BigQuery status at')
-  print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
+  print('https://bigquery.cloud.google.com/queries/%s' % project_id)
   preprocess.cloud_preprocess.main(args)
   print('Cloud preprocessing done.')
 
@@ -170,8 +170,8 @@ def local_train(train_file_pattern,
     model_type: model type
     max_steps: Int. Number of training steps to perform.
     top_n: Int. For classification problems, the output graph will contain the
-        labels and scores for the top n classes. Use None for regression 
-        problems.    
+        labels and scores for the top n classes with a default of n=1. Use 
+        None for regression problems.
     layer_sizes: List. Represents the layers in the connected DNN.
         If the model type is DNN, this must be set. Example [10, 3, 2], this 
         will create three DNN layers where the first layer will have 10 nodes, 
@@ -223,8 +223,8 @@ def cloud_train(train_file_pattern,
     model_type: model type
     max_steps: Int. Number of training steps to perform.
     top_n: Int. For classification problems, the output graph will contain the
-        labels and scores for the top n classes. Use None for regression 
-        problems.
+        labels and scores for the top n classes with a default of n=1.
+        Use None for regression problems.
     layer_sizes: List. Represents the layers in the connected DNN.
         If the model type is DNN, this must be set. Example [10, 3, 2], this 
         will create three DNN layers where the first layer will have 10 nodes, 
@@ -340,14 +340,6 @@ def local_predict(model_dir, data):
     with open(os.path.join(tmp_dir, 'csv_header.txt'), 'r') as f:
       header = f.readline()
 
-    # Read the predictions data.
-    prediction_file = glob.glob(os.path.join(tmp_dir, 'predictions*'))
-    if not prediction_file:
-      raise FileNotFoundError('Prediction results not found')
-    predictions = pd.read_csv(prediction_file[0], 
-                              header=None,
-                              names=header.split(','))
-
     # Print any errors to the screen.
     errors_file = glob.glob(os.path.join(tmp_dir, 'errors*'))
     if errors_file and os.path.getsize(errors_file[0]) > 0:
@@ -356,9 +348,17 @@ def local_predict(model_dir, data):
         text = f.read()
         print(text)
 
+    # Read the predictions data.
+    prediction_file = glob.glob(os.path.join(tmp_dir, 'predictions*'))
+    if not prediction_file:
+      raise FileNotFoundError('Prediction results not found')
+    predictions = pd.read_csv(prediction_file[0], 
+                              header=None,
+                              names=header.split(','))
     return predictions
   finally:
     shutil.rmtree(tmp_dir)
+
 
 def cloud_predict(model_name, model_version, data, is_target_missing=False):
   """Use Online prediction.
@@ -369,7 +369,7 @@ def cloud_predict(model_name, model_version, data, is_target_missing=False):
 
   Args:
     model_name: deployed model name
-    model_verion: depoyed model versions
+    model_verion: depoyed model version
     data: List of csv strings that match the model schema. Or a pandas DataFrame 
         where the columns match the model schema. The first column,
         the target column, is assumed to exist in the data. 
