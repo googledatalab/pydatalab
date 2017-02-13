@@ -25,6 +25,7 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
+import jsonschema
 import fnmatch
 import json
 import re
@@ -35,6 +36,26 @@ from google.datalab.bigquery._sampling import Sampling
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
+
+query_params_schema = {
+  'type': 'object',
+  'properties': {
+    'queryParameters': {
+      'type': 'array',
+      'items': {
+        'type': 'object',
+        'properties': {
+          'name': {'type': 'string'},
+          'parameterType': {'type': 'object'},
+          'parameterValue': {'type': 'object'}
+        },
+        'required': ['name', 'parameterType', 'parameterValue'],
+        'additionalProperties': False
+      }
+    }
+  },
+  'required': ['queryParameters']
+}
 
 
 def _create_dataset_subparser(parser):
@@ -155,7 +176,6 @@ def _create_query_subparser(parser):
   query_parser.add_argument('--datasources', help='List of external datasources to reference in the query body',
                             nargs='+')
   query_parser.add_argument('--subqueries', help='List of subqueries to reference in the query body', nargs='+')
-  query_parser.add_argument('--parameters', help='List of subqueries to reference in the query body', nargs='+')
   query_parser.add_argument('-v', '--verbose', help='Show the expanded SQL that is being executed',
                             action='store_true')
   return query_parser
@@ -174,7 +194,7 @@ def _create_execute_subparser(parser):
                               choices=['create', 'append', 'overwrite'])
   execute_parser.add_argument('-l', '--large', help='Whether to allow large results',
                               action='store_true')
-  execute_parser.add_argument('-q', '--query', help='The name of query to run')
+  execute_parser.add_argument('-q', '--query', help='The name of query to run', required=True)
   execute_parser.add_argument('-t', '--table', help='Target table name')
   execute_parser.add_argument('--to-dataframe', help='Convert the result into a dataframe',
                               action='store_true')
@@ -321,6 +341,30 @@ def _get_query_argument(args, cell, env):
   else:
     raise Exception('Expected a query object, got %s.' % type(item))
 
+def _get_query_parameters(args, cell_body):
+  """Extract query parameters from cell body if provided
+  Also validates the cell body schema using jsonschema to catch errors before sending the http
+  request. This validation isn't complete, however; it does not validate recursive schemas,
+  but it acts as a good filter against most simple schemas
+
+  Args:
+    args: arguments passed to the magic cell
+    cell_body: body of the magic cell
+
+  Returns:
+    Validated object containing query parameters
+  """
+
+  config = google.datalab.utils.commands.parse_config(cell_body, env=None, as_dict=False)
+  sql = args['query']
+  if sql is None:
+    raise Exception('Cannot extract query parameters in non-query cell')
+
+  # Validate query_params
+  jsonschema.validate(config, query_params_schema)
+
+  return config['queryParameters']
+
 def _sample_cell(args, cell_body):
   """Implements the BigQuery sample magic for sampling queries
   The supported sytanx is:
@@ -339,7 +383,9 @@ def _sample_cell(args, cell_body):
   view = None
 
   if args['query']:
-    query = _get_query_argument(args, cell_body, env)
+    query = google.datalab.utils.commands.get_notebook_item(args['query'])
+    query_params = _get_query_parameters(args, cell_body)
+
   elif args['table']:
     table = _get_table(args['table'])
     if not table:
@@ -349,7 +395,7 @@ def _sample_cell(args, cell_body):
     if not isinstance(view, google.datalab.bigquery.View):
       raise Exception('Could not find view %s' % args['view'])
   else:
-    query = google.datalab.bigquery.Query(cell_body, env=env)
+    raise Exception('A query, table, or view is neede to sample')
 
   # parse comma-separated list of fields
   fields = args['fields'].split(',') if args['fields'] else None
@@ -362,9 +408,11 @@ def _sample_cell(args, cell_body):
   context = _construct_context_for_args(args)
   if query:
     if args['profile']:
-      results = query.execute(QueryOutput.dataframe(), sampling=sampling, context=context).result()
+      results = query.execute(QueryOutput.dataframe(), sampling=sampling,
+                              context=context, query_params=query_params).result()
     else:
-      results = query.execute(QueryOutput.table(), sampling=sampling, context=context).result()
+      results = query.execute(QueryOutput.table(), sampling=sampling, context=context,
+                              query_params=query_params).result()
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -458,28 +506,10 @@ def _query_cell(args, cell_body):
   udfs = args['udfs']
   datasources = args['datasources']
   subqueries = args['subqueries']
-  query_params_list = args['parameters'] or []
-  query_params = []
-
-  # parse query parameters
-  for param in query_params_list:
-    param = param.split(':')
-    if len(param) != 3:
-      raise Exception('Bad parameter format. Expected name:type:value')
-    query_params.append({
-        'name': param[0],
-        'parameterType': {
-            'type': param[1]
-        },
-        'parameterValue': {
-            'value': param[2]
-        }
-    })
 
   # Finally build the query object
   query = google.datalab.bigquery.Query(cell_body, env=IPython.get_ipython().user_ns,
-                                        udfs=udfs, data_sources=datasources, subqueries=subqueries,
-                                        query_params=query_params)
+                                        udfs=udfs, data_sources=datasources, subqueries=subqueries)
   google.datalab.utils.commands.notebook_environment()[name] = query
 
 
@@ -496,9 +526,11 @@ def _execute_cell(args, cell_body):
   Returns:
     QueryResultsTable containing query result
   """
-  query = _get_query_argument(args, cell_body, google.datalab.utils.commands.notebook_environment())
+  query = google.datalab.utils.commands.get_notebook_item(args['query'])
   if args['verbose']:
     print(query.sql)
+
+  query_params = _get_query_parameters(args, cell_body)
 
   if args['to_dataframe']:
     # re-parse the int arguments because they're passed as strings
@@ -511,7 +543,7 @@ def _execute_cell(args, cell_body):
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
   context = _construct_context_for_args(args)
-  r = query.execute(output_options, context=context)
+  r = query.execute(output_options, context=context, query_params=query_params)
   return r.result()
 
 
@@ -705,7 +737,9 @@ def _extract_cell(args, cell_body):
     args: the arguments following '%bigquery extract'.
   """
   env = google.datalab.utils.commands.notebook_environment()
-  query = _get_query_argument(args, cell_body, env)
+  query = google.datalab.utils.commands.get_notebook_item(args['query'])
+  query_params = _get_query_parameters(args, cell_body)
+
   if args['table'] or args['view']:
     if args['table']:
       source = _get_table(args['table'])
@@ -726,7 +760,9 @@ def _extract_cell(args, cell_body):
                                       csv_header=args['header'], compress=args['compress'],
                                       use_cache=not args['nocache'])
     context = _construct_context_for_args(args)
-    job = query.execute(output_options, context=context)
+    job = query.execute(output_options, context=context, query_params=query_params)
+  else:
+    raise Exception('A query, table, or view is needed to extract')
 
   if job.failed:
     raise Exception('Extract failed: %s' % str(job.fatal_error))
