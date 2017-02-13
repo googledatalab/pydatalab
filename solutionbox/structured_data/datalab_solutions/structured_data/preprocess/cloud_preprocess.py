@@ -51,10 +51,6 @@ def parse_arguments(argv):
                       type=str,
                       required=True,
                       help='Google Cloud Storage which to place outputs.')
-  parser.add_argument('--input_feature_file',
-                      type=str,
-                      required=True,
-                      help=('Json file containing feature types'))
 
   parser.add_argument('--schema_file',
                       type=str,
@@ -115,27 +111,31 @@ def parse_table_name(bigquery_table):
   return id_name[1]
 
 
-def run_numerical_analysis(table, args, feature_types):
+def run_numerical_analysis(table, schema_list, args):
   """Find min/max values for the numerical columns and writes a json file.
 
   Args:
     table: Reference to FederatedTable if bigquery_table is false.
+    schema_list: Bigquery schema json object
     args: the command line args
-    feature_types: python object of the feature types file.
   """
   import datalab.bigquery as bq
 
   # Get list of numerical columns.
   numerical_columns = []
-  for name, config in feature_types.iteritems():
-    if config['type'] == 'numerical':
-      numerical_columns.append(name)
+  for col_schema in schema_list:
+    col_type = col_schema['type'].lower()
+    if col_type == 'integer' or col_type == 'float':
+      numerical_columns.append(col_schema['name'])
+
 
   # Run the numerical analysis
   if numerical_columns:
     sys.stdout.write('Running numerical analysis...')
     max_min = [
-        'max({name}) as max_{name}, min({name}) as min_{name}'.format(name=name)
+        ('max({name}) as max_{name}, '
+         'min({name}) as min_{name}, '
+         'avg({name}) as avg_{name} ').format(name=name)
         for name in numerical_columns]
     if args.bigquery_table:
       sql = 'SELECT  %s from %s' % (', '.join(max_min),
@@ -150,7 +150,8 @@ def run_numerical_analysis(table, args, feature_types):
     results_dict = {}
     for name in numerical_columns:
       results_dict[name] = {'max': numerical_results.iloc[0]['max_%s' % name],
-                            'min': numerical_results.iloc[0]['min_%s' % name]}
+                            'min': numerical_results.iloc[0]['min_%s' % name],
+                            'mean':numerical_results.iloc[0]['avg_%s' % name]}
 
     file_io.write_string_to_file(
         os.path.join(args.output_dir, NUMERICAL_ANALYSIS_FILE),
@@ -159,7 +160,7 @@ def run_numerical_analysis(table, args, feature_types):
     sys.stdout.write('done.\n')
 
 
-def run_categorical_analysis(table, args, feature_types):
+def run_categorical_analysis(table, schema_list, args):
   """Find vocab values for the categorical columns and writes a csv file.
 
   The vocab files are in the from
@@ -169,16 +170,19 @@ def run_categorical_analysis(table, args, feature_types):
   ...
 
   Args:
-    table: Reference to FederatedTable if bigquery_table is false.
+    table: Reference to FederatedTable if bigquery_table is false
+    schema_list: Bigquery schema json object
     args: the command line args
-    feature_types: python object of the feature types file.
   """
   import datalab.bigquery as bq
 
+
+  # Get list of categorical columns.
   categorical_columns = []
-  for name, config in feature_types.iteritems():
-    if config['type'] == 'categorical':
-      categorical_columns.append(name)
+  for col_schema in schema_list:
+    col_type = col_schema['type'].lower()
+    if col_type == 'string':
+      categorical_columns.append(col_schema['name'])
 
   if categorical_columns:
     sys.stdout.write('Running categorical analysis...')
@@ -227,10 +231,14 @@ def run_analysis(args):
 
   Args:
     args: command line args
+
+  Raises:
+    ValueError if schema contains unknown types.
   """
   import datalab.bigquery as bq
   if args.bigquery_table:
     table = bq.Table(args.bigquery_table)
+    schema_list = table.schema._bq_schema
   else:
     schema_list = json.loads(file_io.read_file_to_string(args.schema_file))
     table = bq.FederatedTable().from_storage(
@@ -241,26 +249,19 @@ def run_analysis(args):
         compressed=False,
         schema=bq.Schema(schema_list))
 
-  feature_types = json.loads(
-      file_io.read_file_to_string(args.input_feature_file))
+  # Check the schema is supported.
+  for col_schema in schema_list:
+    col_type = col_schema['type'].lower()
+    if col_type != 'string' and col_type != 'integer' and col_type != 'float':
+      raise ValueError('Unknown schema type %s' % col_type)
 
-  run_numerical_analysis(table, args, feature_types)
-  run_categorical_analysis(table, args, feature_types)
-
-  # Save a copy of the input types to the output location.
-  file_io.copy(args.input_feature_file,
-               os.path.join(args.output_dir, INPUT_FEATURES_FILE),
-               overwrite=True)
+  run_numerical_analysis(table, schema_list, args)
+  run_categorical_analysis(table, schema_list, args)
 
   # Save a copy of the schema to the output location.
-  if args.schema_file:
-    file_io.copy(args.schema_file,
-                 os.path.join(args.output_dir, SCHEMA_FILE),
-                 overwrite=True)
-  else:
-    file_io.write_string_to_file(
-        os.path.join(args.output_dir, SCHEMA_FILE),
-        json.dumps(table.schema._bq_schema, indent=2, separators=(',', ': ')))
+  file_io.write_string_to_file(
+      os.path.join(args.output_dir, SCHEMA_FILE),
+      json.dumps(schema_list, indent=2, separators=(',', ': ')))
 
 
 def main(argv=None):

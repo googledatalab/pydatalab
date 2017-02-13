@@ -135,11 +135,10 @@ def run_numerical_categorical_analysis(args, schema_list):
 
   # Write the vocab files. Each label is on its own line.
   for name, unique_labels in categorical_results.iteritems():
-    # append a '\n' so the last label is an empty/missing label.
-    labels = '\n'.join(list(unique_labels) + '\n'
+    labels = '\n'.join(list(unique_labels))
     file_io.write_string_to_file(
         os.path.join(args.output_dir, CATEGORICAL_ANALYSIS_FILE % name),
-        ))
+        labels)
 
 
 def run_analysis(args):
