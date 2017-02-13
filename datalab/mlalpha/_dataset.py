@@ -25,7 +25,6 @@ import random
 
 import datalab.bigquery as bq
 import datalab.data
-from tensorflow.python.lib.io import file_io
 
 
 class CsvDataSet(object):
