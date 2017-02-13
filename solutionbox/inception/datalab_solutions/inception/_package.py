@@ -36,39 +36,49 @@ from . import _trainer
 from . import _util
 
 
-def local_preprocess(dataset, output_dir, checkpoint=None):
+def local_preprocess(train_dataset, output_dir, checkpoint=None, eval_dataset=None):
   """Preprocess data locally. Produce output that can be used by training efficiently.
   Args:
-    dataset: data source to preprocess. Can be either datalab.mlalpha.CsvDataset, or
-        datalab.mlalpha.BigQueryDataSet.
+    train_dataset: training data source to preprocess. Can be CsvDataset or BigQueryDataSet.
+        If eval_dataset is None, the pipeline will randomly split train_dataset into
+        train/eval set with 7:3 ratio.
     output_dir: The output directory to use. Preprocessing will create a sub directory under
         it for each run, and also update "latest" file which points to the latest preprocessed
         directory. Users are responsible for cleanup. Can be local or GCS path.
     checkpoint: the Inception checkpoint to use.
+    eval_dataset: evaluation data source to preprocess. Can be CsvDataset or BigQueryDataSet.
+        If specified, it will be used for evaluation during training, and train_dataset will be
+        completely used for training.
   """
 
   print 'Local preprocessing...'
   # TODO: Move this to a new process to avoid pickling issues
   # TODO: Expose train/eval split ratio
-  _local.Local(checkpoint).preprocess(dataset, output_dir)
+  _local.Local(checkpoint).preprocess(train_dataset, eval_dataset, output_dir)
   print 'Done'
 
 
-def cloud_preprocess(dataset, output_dir, checkpoint=None, pipeline_option=None):
+def cloud_preprocess(train_dataset, output_dir, checkpoint=None, pipeline_option=None,
+                     eval_dataset=None):
   """Preprocess data in Cloud with DataFlow.
      Produce output that can be used by training efficiently.
   Args:
-    dataset: data source to preprocess. Can be either datalab.mlalpha.CsvDataset, or
-        datalab.mlalpha.BigQueryDataSet. For CsvDataSet, all files need to be in GCS.
+    train_dataset: training data source to preprocess. Can be CsvDataset or BigQueryDataSet.
+        For CsvDataSet, all files must be in GCS.
+        If eval_dataset is None, the pipeline will randomly split train_dataset into
+        train/eval set with 7:3 ratio.
     output_dir: The output directory to use. Preprocessing will create a sub directory under
         it for each run, and also update "latest" file which points to the latest preprocessed
         directory. Users are responsible for cleanup. GCS path only.
     checkpoint: the Inception checkpoint to use.
+    pipeline_option: DataFlow pipeline options in a dictionary.
+    eval_dataset: evaluation data source to preprocess. Can be CsvDataset or BigQueryDataSet.
+        If specified, it will be used for evaluation during training, and train_dataset will be
+        completely used for training.
   """
 
-  # TODO: Move this to a new process to avoid pickling issues
-  # TODO: Expose train/eval split ratio
-  job_name = _cloud.Cloud(checkpoint=checkpoint).preprocess(dataset, output_dir, pipeline_option)
+  job_name = _cloud.Cloud(checkpoint=checkpoint).preprocess(train_dataset, eval_dataset,
+      output_dir, pipeline_option)
   if (_util.is_in_IPython()):
     import IPython
     
@@ -172,19 +182,58 @@ def cloud_predict(model_id, image_files, show_image=True):
   _display_predict_results(results, show_image)
 
 
-def local_batch_predict(model_dir, input_csv, output_file, output_bq_table=None):
-  """Batch predict using an offline model.
+def local_batch_predict(dataset, model_dir, output_csv=None, output_bq_table=None):
+  """Batch predict running locally.
   Args:
+    dataset: CsvDataSet or BigQueryDataSet for batch prediction input. Can contain either
+        one column 'image_url', or two columns with another being 'label'.
     model_dir: The directory of a trained inception model. Can be local or GCS paths.
-    input_csv: The input csv which include two columns only: image_gs_url, label.
-        Can be local or GCS paths.
-    output_file: The output csv file containing prediction results.
-    output_bq_table: If provided, will also save the results to BigQuery table.
+    output_csv: The output csv file for prediction results. If specified,
+        it will also output a csv schema file with the name output_csv + '.schema.json'.
+    output_bq_table: if specified, the output BigQuery table for prediction results.
+        output_csv and output_bq_table can both be set.
+  Raises:
+    ValueError if both output_csv and output_bq_table are None.
   """
+
+  if output_csv is None and output_bq_table is None:
+    raise ValueError('output_csv and output_bq_table cannot both be None.')
+
   print('Predicting...')
-  _local.Local().batch_predict(model_dir, input_csv, output_file, output_bq_table)
+  _local.Local().batch_predict(dataset, model_dir, output_csv, output_bq_table)
   print('Done')
 
-def cloud_batch_predict(model_dir, image_files, show_image=True, output_file=None):
-  """Not Implemented Yet"""
-  pass
+
+def cloud_batch_predict(dataset, model_dir, gcs_staging_location,
+                        output_csv=None, output_bq_table=None, pipeline_option=None):
+  """Batch predict running in cloud.
+
+  Args:
+    dataset: CsvDataSet or BigQueryDataSet for batch prediction input. Can contain either
+        one column 'image_url', or two columns with another being 'label'.
+    model_dir: A GCS path to a trained inception model directory.
+    gcs_staging_location: A temporary location for DataFlow staging.
+    output_csv: If specified, prediction results will be saved to the specified Csv file.
+        It will also output a csv schema file with the name output_csv + '.schema.json'.
+        GCS file path only.
+    output_bq_table: If specified, prediction results will be saved to the specified BigQuery
+        table. output_csv and output_bq_table can both be set, but cannot be both None.
+    pipeline_option: DataFlow pipeline options in a dictionary.
+  Raises:
+    ValueError if both output_csv and output_bq_table are None.
+  """
+
+  if output_csv is None and output_bq_table is None:
+    raise ValueError('output_csv and output_bq_table cannot both be None.')
+  
+  job_name = _cloud.Cloud().batch_predict(dataset, model_dir,
+      gcs_staging_location, output_csv, output_bq_table, pipeline_option)
+  if (_util.is_in_IPython()):
+    import IPython
+    
+    dataflow_url = ('https://console.developers.google.com/dataflow?project=%s' %
+                   _util.default_project())
+    html = 'Job "%s" submitted.' % job_name
+    html += ('<p>Click <a href="%s" target="_blank">here</a> to track batch prediction job. <br/>'
+             % dataflow_url)
+    IPython.display.display_html(html, raw=True)

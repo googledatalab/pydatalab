@@ -146,3 +146,56 @@ def accuracy(logits, labels):
   accuracy_op = tf.cast(correct_count, tf.float32) / tf.cast(
       correct_count + incorrect_count, tf.float32)
   return [correct_count_update, incorrect_count_update], accuracy_op
+
+
+def get_sources_from_dataset(p, dataset, mode):
+  """get pcollection from dataset."""
+  import apache_beam as beam
+  import csv
+  from datalab.mlalpha import CsvDataSet, BigQueryDataSet
+
+  if type(dataset) is CsvDataSet:
+    source_list = []
+    for ii, input_path in enumerate(dataset.files):
+      source_list.append(p | 'Read from Csv %d (%s)' % (ii, mode) >> 
+          beam.io.ReadFromText(input_path, strip_trailing_newlines=True))
+    return (source_list | 'Flatten Sources (%s)' % mode >> beam.Flatten()
+        | 'Create Dict from Csv (%s)' % mode >>
+          beam.Map(lambda line: csv.DictReader([line], fieldnames=['image_url', 'label']).next()))
+  elif type(dataset) is BigQueryDataSet:
+    if len(dataset.sql.split()) == 1:
+      bq_source = beam.io.BigQuerySource(table=dataset.sql)
+    else:
+      bq_source = beam.io.BigQuerySource(query=dataset.sql)
+    return p | 'Read source from BigQuery (%s)' % mode >> beam.io.Read(bq_source)
+  else:
+    raise ValueError('Invalid DataSet. Expect CsvDataSet or BigQueryDataSet')
+
+
+def get_schema_from_dataset(dataset):
+  """get schema from dataset."""
+
+  import csv
+  import datalab.bigquery as bq  
+  from datalab.mlalpha import CsvDataSet, BigQueryDataSet
+  import google.cloud.ml as ml
+
+  if type(dataset) is BigQueryDataSet:
+    sql = dataset.sql
+    sql = 'SELECT * FROM (%s) LIMIT 1' % sql
+    return bq.Query(sql).results().schema
+  elif type(dataset) is CsvDataSet:
+    if dataset.schema is not None:
+      return dataset.schema
+    else:
+      with ml.util._file.open_local_or_gcs(dataset.files[0], mode='r') as f:
+        row = next(csv.reader(f))
+      if len(row) > 2 or len(row) == 0:
+        raise Exception('Invalid csv data. Expect one or two columns.')
+      schema = [{'name': 'image_url', 'type': 'STRING'}]
+      if len(row) == 2:
+        schema.append({'name': 'label', 'type': 'STRING'})
+      return schema
+  else:
+    raise ValueError('Invalid DataSet. Expect CsvDataSet or BigQueryDataSet')
+

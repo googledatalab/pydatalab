@@ -276,58 +276,53 @@ class TrainEvalSplitPartitionFn(beam.PartitionFn):
     return 1 if random.random() > 0.7 else 0
 
 
-def _get_sources_from_csvs(p, input_paths):
-  source_list = []
-  for ii, input_path in enumerate(input_paths):
-    source_list.append(p | 'Read from Csv %d' % ii >> 
-        beam.io.ReadFromText(input_path, strip_trailing_newlines=True))
-  all_sources = (source_list | 'Flatten Sources' >> beam.Flatten()
-      | beam.Map(lambda line: csv.DictReader([line], fieldnames=['image_url', 'label']).next()))
-  return all_sources
-
-
-def _get_sources_from_bigquery(p, query):
-  if len(query.split()) == 1:
-    bq_source = beam.io.BigQuerySource(table=query)
-  else:
-    bq_source = beam.io.BigQuerySource(query=query)
-  query_results = p | 'Read from BigQuery' >> beam.io.Read(bq_source)
-  return query_results
-
-
-def _configure_pipeline_from_source(source, checkpoint_path, output_dir, job_id):
-  labels = (source
-      | 'Parse input for labels' >> beam.Map(lambda x: x['label'])
+def _labels_pipeline(sources):
+  labels = (sources 
+      | 'Flatten Sources for labels' >> beam.Flatten()
+      | 'Parse input for labels' >> beam.Map(lambda x: str(x['label']))
       | 'Combine labels' >> beam.transforms.combiners.Count.PerElement()
       | 'Get labels' >> beam.Map(lambda label_count: label_count[0]))
-  all_preprocessed = (source
-      | 'Extract label ids' >> beam.ParDo(ExtractLabelIdsDoFn(),
+  return labels
+
+
+def _transformation_pipeline(source, checkpoint, labels, mode):
+  transformed = (source
+      | 'Extract label ids(%s)' % mode >> beam.ParDo(ExtractLabelIdsDoFn(),
                                           beam.pvalue.AsIter(labels))
-      | 'Read and convert to JPEG' >> beam.ParDo(ReadImageAndConvertToJpegDoFn())
-      | 'Embed and make TFExample' >> beam.ParDo(TFExampleFromImageDoFn(checkpoint_path)))
-  train_eval = (all_preprocessed |
-       'Random Partition' >> beam.Partition(TrainEvalSplitPartitionFn(), 2))
-  preprocessed_train = os.path.join(output_dir, job_id, 'train')
-  preprocessed_eval = os.path.join(output_dir, job_id, 'eval')
+      | 'Read and convert to JPEG(%s)' % mode >> beam.ParDo(ReadImageAndConvertToJpegDoFn())
+      | 'Embed and make TFExample(%s)' % mode >> 
+        beam.ParDo(TFExampleFromImageDoFn(checkpoint)))
+  return transformed
+
+
+def configure_pipeline(p, dataset_train, dataset_eval, checkpoint_path, output_dir, job_id):
+  source_train = _util.get_sources_from_dataset(p, dataset_train, 'train')
+  labels_source = [source_train]
+  if dataset_eval is not None:
+    source_eval = _util.get_sources_from_dataset(p, dataset_eval, 'eval')
+    labels_source.append(source_eval)
+
+  labels = _labels_pipeline(labels_source)
+  train_preprocessed = _transformation_pipeline(source_train, checkpoint_path, labels, 'train')
+  if dataset_eval is not None:
+    # explicit eval data.
+    eval_preprocessed = _transformation_pipeline(source_eval, checkpoint_path, labels, 'eval')
+  else:
+    # Split train/eval.
+    train_preprocessed, eval_preprocessed = (train_preprocessed |
+        'Random Partition' >> beam.Partition(TrainEvalSplitPartitionFn(), 2))
+
+  output_train_path = os.path.join(output_dir, job_id, 'train')
+  output_eval_path = os.path.join(output_dir, job_id, 'eval')
   labels_file = os.path.join(output_dir, job_id, 'labels')
   labels_save = (labels 
       | 'Write labels' >> beam.io.textio.WriteToText(labels_file, shard_name_template=''))
-  eval_save = train_eval[1] | 'Save eval to disk' >> SaveFeatures(preprocessed_eval)
-  train_save = train_eval[0] | 'Save train to disk' >> SaveFeatures(preprocessed_train)
+  train_save = train_preprocessed | 'Save train to disk' >> SaveFeatures(output_train_path)
+  eval_save = eval_preprocessed | 'Save eval to disk' >> SaveFeatures(output_eval_path)
   # Make sure we write "latest" file after train and eval data are successfully written.
   output_latest_file = os.path.join(output_dir, 'latest')
   ([eval_save, train_save, labels_save] | 'Wait for train eval saving' >> beam.Flatten() |
       beam.transforms.combiners.Sample.FixedSizeGlobally('Fixed One', 1) |
       beam.Map(lambda path: job_id) |
       'WriteLatest' >> beam.io.textio.WriteToText(output_latest_file, shard_name_template=''))
-
-
-def configure_pipeline_csv(p, checkpoint_path, input_paths, output_dir, job_id):
-  all_sources = _get_sources_from_csvs(p, input_paths)
-  _configure_pipeline_from_source(all_sources, checkpoint_path, output_dir, job_id)
-
-
-def configure_pipeline_bigquery(p, checkpoint_path, query, output_dir, job_id):
-  all_sources = _get_sources_from_bigquery(p, query)
-  _configure_pipeline_from_source(all_sources, checkpoint_path, output_dir, job_id)
 

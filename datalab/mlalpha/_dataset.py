@@ -46,6 +46,8 @@ class CsvDataSet(object):
     elif schema_file is not None:
       with ml.util._file.open_local_or_gcs(schema_file, 'r') as f:
         self._schema = json.load(f)
+    if isinstance(files, basestring):
+      files = [files]
     self._files = []
     for file in files:
       # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
