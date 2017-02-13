@@ -361,9 +361,10 @@ def _get_query_parameters(args, cell_body):
     raise Exception('Cannot extract query parameters in non-query cell')
 
   # Validate query_params
-  jsonschema.validate(config, query_params_schema)
+  if config:
+    jsonschema.validate(config, query_params_schema)
 
-  return config['queryParameters']
+  return config['queryParameters'] if config else {}
 
 def _sample_cell(args, cell_body):
   """Implements the BigQuery sample magic for sampling queries
