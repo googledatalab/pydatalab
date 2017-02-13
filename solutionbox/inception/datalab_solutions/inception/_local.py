@@ -42,7 +42,7 @@ class Local(object):
     if self._checkpoint is None:
       self._checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
 
-  def preprocess(self, dataset, output_dir):
+  def preprocess(self, train_dataset, eval_dataset, output_dir):
     """Local preprocessing with local DataFlow."""
     
     import datalab.mlalpha as mlalpha
@@ -53,12 +53,8 @@ class Local(object):
     }
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     p = beam.Pipeline('DirectRunner', options=opts)
-    if type(dataset) is mlalpha.CsvDataSet:
-      _preprocess.configure_pipeline_csv(p, self._checkpoint, dataset.files, output_dir, job_id)
-    elif type(dataset) is mlalpha.BigQueryDataSet:
-      _preprocess.configure_pipeline_bigquery(p, self._checkpoint, dataset.sql, output_dir, job_id)
-    else:
-      raise ValueError('preprocess takes CsvDataSet or BigQueryDataset only.')
+    _preprocess.configure_pipeline(p, train_dataset, eval_dataset,
+        self._checkpoint, output_dir, job_id)
     p.run().wait_until_finish()
 
   def train(self, input_dir, batch_size, max_steps, output_dir):
@@ -77,7 +73,15 @@ class Local(object):
     return _predictor.predict(model_dir, image_files)
 
 
-  def batch_predict(self, model_dir, input_csv, output_file, output_bq_table):
+  def batch_predict(self, dataset, model_dir, output_csv, output_bq_table):
     """Local batch prediction."""
-
-    return _predictor.batch_predict(model_dir, input_csv, output_file, output_bq_table)
+    import datalab.mlalpha as mlalpha
+    job_id = 'inception_batch_predict_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+    # Project is needed for bigquery data source, even in local run.
+    options = {
+        'project': _util.default_project(),
+    }
+    opts = beam.pipeline.PipelineOptions(flags=[], **options)
+    p = beam.Pipeline('DirectRunner', options=opts)
+    _predictor.configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table)
+    p.run().wait_until_finish()
