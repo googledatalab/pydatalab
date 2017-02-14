@@ -46,6 +46,9 @@ class QueryResultsTable(_table.Table):
     else:
       return super(QueryResultsTable, self).__repr__()
 
+  def insert(self, *args, **kwargs):
+    raise Exception('QueryResultsTable object is immutable')
+
   @property
   def job(self):
     """ The QueryJob object that caused the table to be populated. """

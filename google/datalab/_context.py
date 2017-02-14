@@ -82,7 +82,7 @@ class Context(object):
     self._config = config
 
   @staticmethod
-  def is_signed_in():
+  def _is_signed_in():
     """ If the user has signed in or it is on GCE VM with default credential."""
     try:
       get_credentials()

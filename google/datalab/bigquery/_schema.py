@@ -250,8 +250,7 @@ class Schema(list):
         raise Exception(('Cannot create a schema from heterogeneous list %s; perhaps you meant ' +
                         'to use Schema.from_record?') % str(source))
     elif isinstance(source, dict):
-      raise Exception(('Cannot create a schema from dict %s; perhaps you meant to use ' +
-                      'Schema.from_record?') % str(source))
+      bq_schema = Schema._from_record(source)
     else:
       raise Exception('Cannot create a schema from %s' % str(source))
     return Schema(bq_schema)
