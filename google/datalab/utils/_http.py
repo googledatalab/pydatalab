@@ -23,6 +23,10 @@ import datetime
 import json
 import urllib.request, urllib.parse, urllib.error
 import httplib2
+import logging
+
+
+log = logging.getLogger(__name__)
 
 
 # TODO(nikhilko): Start using the requests library instead.
@@ -128,6 +132,7 @@ class Http(object):
 
     response = None
     try:
+      log.debug('request: method[%(method)s], url[%(url)s], body[%(data)s]' % locals())
       response, content = http.request(url,
                                        method=method,
                                        body=data,
