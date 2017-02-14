@@ -119,9 +119,7 @@ class ModelVersions(object):
   """Represents a list of versions for a Cloud ML model."""
 
   def __init__(self, model_name, project_id=None):
-    """Initializes an instance of a CloudML model version list that is iteratable
-        ("for version in ModelVersions()").
-
+    """
     Args:
       model_name: the name of the model. It can be a model full name
           ("projects/[project_id]/models/[model_name]") or just [model_name].
