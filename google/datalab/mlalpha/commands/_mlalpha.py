@@ -493,7 +493,7 @@ def _features(args, cell):
   # For now, support CSV and TSV only.
   google.datalab.utils.commands.validate_config_value(format, ['csv', 'tsv'])
   delimiter = ',' if format == 'csv' else '\t'
-  csv = google.datalab.data.Csv(config['path'], delimiter=delimiter)
+  csv = google.datalab.data.CsvFile(config['path'], delimiter=delimiter)
   headers = None
   if 'headers' in config:
     headers = [e.strip() for e in config['headers'].split(',')]
