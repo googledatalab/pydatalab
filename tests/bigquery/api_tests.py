@@ -116,7 +116,6 @@ class TestCases(unittest.TestCase):
         'query': {
           'query': 'SQL',
           'useQueryCache': True,
-          'userDefinedFunctionResources': [],
           'allowLargeResults': False,
           'useLegacySql': True,
         },
@@ -148,11 +147,6 @@ class TestCases(unittest.TestCase):
             'tableId': 't'
           },
           'writeDisposition': 'WRITE_APPEND',
-          'userDefinedFunctionResources': [
-            {
-              'inlineCode': 'CODE'
-            }
-          ]
         },
         'dryRun': True,
         'priority': 'INTERACTIVE',

@@ -33,7 +33,7 @@ class Query(object):
   This object can be used to execute SQL queries and retrieve results.
   """
 
-  def __init__(self, sql, env=None, query_params=None, udfs=None, data_sources=None,
+  def __init__(self, sql, env=None, udfs=None, data_sources=None,
                subqueries=None):
     """Initializes an instance of a Query object.
 
@@ -41,7 +41,6 @@ class Query(object):
       sql: the BigQuery SQL query string to execute
       env: a dictionary containing objects from the query execution context, used to get references
           to UDFs, subqueries, and external data sources referenced by the query
-      query_params: a dictionary containing query parameter types and values, passed to BigQuery.
       udfs: list of UDFs referenced in the SQL.
       data_sources: dictionary of external data sources referenced in the SQL.
       subqueries: list of subqueries referenced in the SQL
@@ -53,18 +52,12 @@ class Query(object):
     self._data_sources = data_sources
     self._udfs = udfs
     self._subqueries = subqueries
-    self._env = env
-    self._query_params = query_params
+    self._env = env or {}
 
     if data_sources is None:
       data_sources = {}
 
     self._code = None
-    self._imports = []
-    if self._env is None:
-      self._env = {}
-    if self._query_params is None:
-      self._query_params = {}
 
     def _validate_object(obj):
       if not self._env.__contains__(obj):
@@ -158,29 +151,32 @@ class Query(object):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def dry_run(self, context=None):
+  def dry_run(self, context=None, query_params=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
 
     Args:
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
+      query_params: a dictionary containing query parameter types and values, passed to BigQuery.
 
     Returns:
       A dict with 'cacheHit' and 'totalBytesProcessed' fields.
     Raises:
       An exception if the query was malformed.
     """
+
     context = context or google.datalab.Context.default()
     api = _api.Api(context)
     try:
-      query_result = api.jobs_insert_query(self.sql, self._code, self._imports, dry_run=True,
-                                                 table_definitions=self._external_tables)
+      query_result = api.jobs_insert_query(self.sql, self._code, dry_run=True,
+                                           table_definitions=self._external_tables,
+                                           query_params=query_params)
     except Exception as e:
       raise e
     return query_result['statistics']['query']
 
-  def execute_async(self, output_options=None, sampling=None, context=None):
+  def execute_async(self, output_options=None, sampling=None, context=None, query_params=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
@@ -189,6 +185,7 @@ class Query(object):
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
+      query_params: a dictionary containing query parameter types and values, passed to BigQuery.
     Returns:
       A Job object that can wait on creating a table or exporting to a file
       If the output is a table, the Job object additionally has run statistics
@@ -214,14 +211,12 @@ class Query(object):
     sql = self._expanded_sql(sampling)
 
     try:
-      query_result = api.jobs_insert_query(sql, self._code, self._imports,
-                                                 table_name=table_name,
-                                                 append=append,
-                                                 overwrite=overwrite,
-                                                 use_cache=output_options.use_cache,
-                                                 batch=batch,
-                                                 allow_large_results=output_options.allow_large_results,
-                                                 table_definitions=self._external_tables)
+      query_result = api.jobs_insert_query(sql, self._code, table_name=table_name,
+                                           append=append, overwrite=overwrite, batch=batch,
+                                           use_cache=output_options.use_cache,
+                                           allow_large_results=output_options.allow_large_results,
+                                           table_definitions=self._external_tables,
+                                           query_params=query_params)
     except Exception as e:
       raise e
     if 'jobReference' not in query_result:
@@ -275,7 +270,7 @@ class Query(object):
       export_func = google.datalab.utils.async_function(export_func)
       return export_func(*export_args, **export_kwargs)
 
-  def execute(self, output_options=None, sampling=None, context=None):
+  def execute(self, output_options=None, sampling=None, context=None, query_params=None):
     """ Initiate the query and return a QueryJob.
 
     Args:
@@ -289,4 +284,5 @@ class Query(object):
     Raises:
       Exception if query could not be executed.
     """
-    return self.execute_async(output_options, sampling=sampling, context=context).wait()
+    return self.execute_async(output_options, sampling=sampling, context=context,
+                              query_params=query_params).wait()
