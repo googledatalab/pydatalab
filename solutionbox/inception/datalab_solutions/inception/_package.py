@@ -124,17 +124,17 @@ def cloud_train(input_dir, batch_size, max_steps, output_dir,
     checkpoint: the Inception checkpoint to use.
   """
 
-  job_info = _cloud.Cloud(checkpoint=checkpoint).train(input_dir, batch_size,
+  job = _cloud.Cloud(checkpoint=checkpoint).train(input_dir, batch_size,
       max_steps, output_dir, cloud_train_config)
   if (_util.is_in_IPython()):
     import IPython
     log_url_query_strings = {
       'project': _util.default_project(),
-      'resource': 'ml.googleapis.com/job_id/' + job_info['jobId']
+      'resource': 'ml.googleapis.com/job_id/' + job.info['jobId']
     }
     log_url = 'https://console.developers.google.com/logs/viewer?' + \
         urllib.urlencode(log_url_query_strings)
-    html = 'Job "%s" submitted.' % job_info['jobId']
+    html = 'Job "%s" submitted.' % job.info['jobId']
     html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
     IPython.display.display_html(html, raw=True)
 

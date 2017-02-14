@@ -27,10 +27,6 @@ import datalab.context
 from googleapiclient import discovery
 import yaml
 
-# TODO(qimingj) Remove once the API is public since it will no longer be needed
-_CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
-                         'ml_v1beta1_discovery.json'
-
 
 class Job(object):
   """Represents a Cloud ML job."""
@@ -67,6 +63,62 @@ class Job(object):
   def describe(self):
     job_yaml = yaml.safe_dump(self._info, default_flow_style=False)
     print job_yaml
+
+  @staticmethod 
+  def submit_training(job_request, job_id=None):
+    """Submit a training job.
+
+    Args:
+      job_request: the arguments of the training job in a dict. For example,
+          {
+            'package_uris':  'gs://my-bucket/iris/trainer-0.1.tar.gz',
+            'python_module': 'trainer.task',
+            'scale_tier': 'BASIC',
+            'region': 'us-central1',
+            'args': {
+              'train_data_paths': ['gs://mubucket/data/features_train'],
+              'eval_data_paths': ['gs://mubucket/data/features_eval'],
+              'metadata_path': 'gs://mubucket/data/metadata.yaml',
+              'output_path': 'gs://mubucket/data/mymodel/',
+            }
+          }
+      job_id: id for the training job. If None, an id based on timestamp will be generated.
+    Returns:
+      A Job object representing the cloud training job.
+    """
+    new_job_request = dict(job_request)
+    # convert job_args from dict to list as service required.
+    if 'args' in job_request and isinstance(job_request['args'], dict):
+      job_args = job_request['args']
+      args = []
+      for k,v in job_args.iteritems():
+        if isinstance(v, list):
+          for item in v:
+            args.append('--' + k)
+            args.append(str(item))
+        else:
+          args.append('--' + k)
+          args.append(str(v))
+      new_job_request['args'] = args
+    
+    if job_id is None:
+      job_id = datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+      if 'python_module' in new_job_request:
+        job_id = new_job_request['python_module'].replace('.', '_') + \
+            '_' + job_id
+        
+    job = {
+        'job_id': job_id,
+        'training_input': new_job_request,
+    }
+    context = datalab.context.Context.default()
+    cloudml = discovery.build('ml', 'v1beta1', credentials=context.credentials,
+                              discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
+    request = cloudml.projects().jobs().create(body=job,
+                                               parent='projects/' + context.project_id)
+    request.headers['user-agent'] = 'GoogleCloudDataLab/1.0'
+    request.execute()
+    return Job(job_id)
 
 
 class Jobs(object):

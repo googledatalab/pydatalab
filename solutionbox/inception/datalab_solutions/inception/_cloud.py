@@ -101,9 +101,9 @@ class Cloud(object):
       'args': job_args
     }
     job_request.update(dict(cloud_train_config._asdict()))
-    cloud_runner = mlalpha.CloudRunner(job_request)
     job_id = 'inception_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-    return cloud_runner.run(job_id)
+    job = mlalpha.Job.submit_training(job_request, job_id)
+    return job
 
   def predict(self, model_id, image_files):
     """Cloud prediction with CloudML prediction service."""
@@ -122,8 +122,7 @@ class Cloud(object):
         'image_bytes': {'b64': img}
       })
 
-    cloud_predictor = mlalpha.CloudPredictor(parts[0], parts[1])
-    predictions = cloud_predictor.predict(data)
+    predictions = mlalpha.CloudModelVersions(parts[0]).predict(parts[1], data)
     if len(predictions) == 0:
       raise Exception('Prediction results are empty.')
     # Although prediction results contains a labels list in each instance, they are all the same

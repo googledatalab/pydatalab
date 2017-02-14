@@ -222,7 +222,32 @@ class CloudModelVersions(object):
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     response = self._api.projects().models().versions().delete(name=name).execute()
     self._wait_for_long_running_operation(response)
-    
+
+  def predict(self, version_name, data):
+    """Get prediction results from features instances.
+
+    Args:
+      version_name: the name of the version used for prediction.
+      data: typically a list of instance to be submitted for prediction. The format of the
+          instance depends on the model. For example, structured data model may require
+          a csv line for each instance.
+    Returns:
+      A list of prediction results for given instances. Each element is a dictionary representing
+          output mapping from the graph.
+      An example:
+        [{"predictions": 1, "score": [0.00078, 0.71406, 0.28515]},
+         {"predictions": 1, "score": [0.00244, 0.99634, 0.00121]}]
+    """
+    full_version_name = ('%s/versions/%s' % (self._full_model_name, version_name))
+    request = self._api.projects().predict(body={'instances': data},
+                                           name=full_version_name)
+    request.headers['user-agent'] = 'GoogleCloudDataLab/1.0'
+    result = request.execute()
+    if 'predictions' not in result:
+      raise Exception('Invalid response from service. Cannot find "predictions" in response.')
+
+    return result['predictions']
+
   def describe(self, version_name):
     """Print information of a specified model.
 
