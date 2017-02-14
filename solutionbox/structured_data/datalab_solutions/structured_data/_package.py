@@ -184,6 +184,7 @@ def local_train(train_file_pattern,
         {
           "col_A": {"transform": "scale", "default": 0.0},
           "col_B": {"transform": "scale","value": 4},
+          # Note col_C is missing, so default transform used.
           "col_D": {"transform": "hash_one_hot", "hash_bucket_size": 4},
           "col_target": {"transform": "target"},
           "col_key": {"transform": "key"}
@@ -204,8 +205,8 @@ def local_train(train_file_pattern,
               to -a, a.
 
            For categorical colums, the transform supported depends on if the 
-           model is a linear or DNN model. For a linear model, the transforms
-           supported are:
+           model is a linear or DNN model because tf.layers is uesed.
+           For a linear model, the transforms supported are:
            i) {"transform": "sparse"}: Makes a sparse vector using the full 
               vocabulary associated with the column (default). 
            ii) {"transform": "hash_sparse", "hash_bucket_size": n}: First each
