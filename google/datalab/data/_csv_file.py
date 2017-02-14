@@ -36,7 +36,7 @@ import google.datalab.utils
 _MAX_CSV_BYTES = 10000000
 
 
-class Csv(object):
+class CsvFile(object):
   """Represents a CSV file in GCS or locally with same schema.
   """
   def __init__(self, path, delimiter=b','):
@@ -89,9 +89,9 @@ class Csv(object):
       headers size does not match columns size.
     """
     if self.path.startswith('gs://'):
-      lines = Csv._read_gcs_lines(self.path, max_lines)
+      lines = CsvFile._read_gcs_lines(self.path, max_lines)
     else:
-      lines = Csv._read_local_lines(self.path, max_lines)
+      lines = CsvFile._read_local_lines(self.path, max_lines)
     if len(lines) == 0:
       return pd.DataFrame(columns=headers)
     columns_size = len(next(csv.reader([lines[0]], delimiter=self._delimiter)))
