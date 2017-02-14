@@ -297,7 +297,7 @@ class Objects(object):
     except Exception as e:
       raise e
 
-    objects = list_info.get('objects', [])
+    objects = list_info.get('items', [])
     if len(objects):
       try:
         objects = [Object(self._bucket, info['name'], info, context=self._context) for info in objects]
