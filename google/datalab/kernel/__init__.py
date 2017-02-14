@@ -29,6 +29,7 @@ import google.datalab
 
 # Import the modules that do cell magics.
 import google.datalab.bigquery.commands
+import google.datalab.commands
 import google.datalab.mlalpha.commands
 import google.datalab.stackdriver.commands
 import google.datalab.storage.commands
