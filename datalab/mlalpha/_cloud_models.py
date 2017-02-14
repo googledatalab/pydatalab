@@ -14,13 +14,13 @@
 
 from googleapiclient import discovery
 import os
-import time
 import yaml
 
 import datalab.context
 import datalab.storage
 import datalab.utils
 
+from . import _util
 
 class Models(object):
   """Represents a list of Cloud ML models for a project."""
@@ -49,7 +49,7 @@ class Models(object):
     return iter(datalab.utils.Iterator(self._retrieve_models))
 
   def get_model_details(self, model_name):
-    """Get details of a model.
+    """Get details of the specified model from CloudML Service.
 
     Args:
       model_name: the name of the model. It can be a model full name
@@ -66,10 +66,16 @@ class Models(object):
 
     Args:
       model_name: the short name of the model, such as "iris".
+    Returns:
+      If successful, returns informaiton of the model, such as
+      {u'regions': [u'us-central1'], u'name': u'projects/myproject/models/mymodel'}
+    Raises:
+      If the model creation failed.
     """
     body = {'name': model_name}
     parent = 'projects/' + self._project_id
-    self._api.projects().models().create(body=body, parent=parent).execute()
+    # Model creation is instant. If anything goes wrong, Exception will be thrown.
+    return self._api.projects().models().create(body=body, parent=parent).execute()
 
   def delete(self, model_name):
     """Delete a model.
@@ -81,7 +87,10 @@ class Models(object):
     full_name = model_name
     if not model_name.startswith('projects/'):
       full_name = ('projects/%s/models/%s' % (self._project_id, model_name))
-    return self._api.projects().models().delete(name=full_name).execute()
+    response = self._api.projects().models().delete(name=full_name).execute()
+    if 'name' not in response:
+      raise Exception('Invalid response from service. "name" is not found.')
+    _util.wait_for_long_running_operation(response['name'])
 
   def list(self, count=10):
     """List models under the current project in a table view.
@@ -159,21 +168,6 @@ class ModelVersions(object):
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     return self._api.projects().models().versions().get(name=name).execute()
 
-  def _wait_for_long_running_operation(self, response):
-    if 'name' not in response:
-      raise Exception('Invaid response from service. Cannot find "name" field.')
-    print('Waiting for job "%s"' % response['name'])
-    while True:
-      response = self._api.projects().operations().get(name=response['name']).execute()
-      if 'done' not in response or response['done'] != True:
-        time.sleep(3)
-      else:
-        if 'error' in response:
-          print(response['error'])
-        else:
-          print('Done.')
-        break
-
   def deploy(self, version_name, path):
     """Deploy a model version to the cloud.
 
@@ -205,7 +199,9 @@ class ModelVersions(object):
     }
     response = self._api.projects().models().versions().create(body=body,
                    parent=self._full_model_name).execute()
-    self._wait_for_long_running_operation(response)
+    if 'name' not in response:
+      raise Exception('Invalid response from service. "name" is not found.')
+    _util.wait_for_long_running_operation(response['name'])
 
   def delete(self, version_name):
     """Delete a version of model.
@@ -215,7 +211,9 @@ class ModelVersions(object):
     """
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     response = self._api.projects().models().versions().delete(name=name).execute()
-    self._wait_for_long_running_operation(response)
+    if 'name' not in response:
+      raise Exception('Invalid response from service. "name" is not found.')
+    _util.wait_for_long_running_operation(response['name'])
 
   def predict(self, version_name, data):
     """Get prediction results from features instances.
@@ -225,6 +223,8 @@ class ModelVersions(object):
       data: typically a list of instance to be submitted for prediction. The format of the
           instance depends on the model. For example, structured data model may require
           a csv line for each instance.
+          Note that online prediction only works on models that take one placeholder value,
+          such as a string encoding a csv line.
     Returns:
       A list of prediction results for given instances. Each element is a dictionary representing
           output mapping from the graph.

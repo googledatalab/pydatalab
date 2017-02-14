@@ -111,7 +111,9 @@ class Cloud(object):
     import datalab.mlalpha as mlalpha
     parts = model_id.split('.')
     if len(parts) != 2:
-      raise Exception('Invalid model name for cloud prediction. Use "model.version".')
+      raise ValueError('Invalid model name for cloud prediction. Use "model.version".')
+    if len(image_files) == 0:
+      raise ValueError('image_files is empty.')
 
     data = []
     for ii, img_file in enumerate(image_files):

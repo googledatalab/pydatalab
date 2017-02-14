@@ -27,7 +27,7 @@ class Job(object):
 
     Args:
       name: the name of the job. It can be an operation full name
-          ("projects/[project_id]/operations/[operation_name]") or just [operation_name].
+          ("projects/[project_id]/jobs/[operation_name]") or just [operation_name].
       context: an optional Context object providing project_id and credentials.
     """
     if context is None:
@@ -69,6 +69,8 @@ class Job(object):
               'output_path': 'gs://mubucket/data/mymodel/',
             }
           }
+          If 'args' is present in job_request and is a dict, it will be expanded to
+          --key value or --key list_item_0 --key list_item_1, ...
       job_id: id for the training job. If None, an id based on timestamp will be generated.
     Returns:
       A Job object representing the cloud training job.
@@ -81,10 +83,10 @@ class Job(object):
       for k,v in job_args.iteritems():
         if isinstance(v, list):
           for item in v:
-            args.append('--' + k)
+            args.append('--' + str(k))
             args.append(str(item))
         else:
-          args.append('--' + k)
+          args.append('--' + str(k))
           args.append(str(v))
       new_job_request['args'] = args
     
@@ -120,8 +122,7 @@ class Jobs(object):
     """
     self._filter = filter
     self._context = datalab.context.Context.default()
-    self._api = discovery.build('ml', 'v1beta1', credentials=self._context.credentials,
-                                discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
+    self._api = discovery.build('ml', 'v1', credentials=self._context.credentials)
 
   def _retrieve_jobs(self, page_token, page_size):
     list_info = self._api.projects().jobs().list(parent='projects/' + self._context.project_id,
@@ -131,7 +132,9 @@ class Jobs(object):
     page_token = list_info.get('nextPageToken', None)
     return jobs, page_token
 
-  def __iter__(self):
+  def get_iterator(self):
+    """Get iterator of jobs so it can be used as "for model in Jobs().get_iterator()".
+    """
     return iter(datalab.utils.Iterator(self._retrieve_jobs))
 
   def list(self, count=10):
