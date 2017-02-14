@@ -95,12 +95,8 @@ for help on a specific command.
 
   list_parser = parser.subcommand('list', 'List buckets in a project, or contents of a bucket.')
   list_parser.add_argument('-p', '--project', help='The project associated with the objects')
-  group = list_parser.add_mutually_exclusive_group()
-  group.add_argument('-o', '--object',
-                     help='The name of the objects(s) to list; can include wildchars',
-                     nargs='?')
-  group.add_argument('-b', '--bucket',
-                     help='The name of the buckets(s) to list; can include wildchars',
+  list_parser.add_argument('-o', '--objects',
+                     help='List objects under the given Google Cloud Storage path',
                      nargs='?')
   list_parser.set_defaults(func=_gcs_list)
 
@@ -304,7 +300,7 @@ def _gcs_list(args, _):
   This command is a bit different in that we allow wildchars in the bucket name and will list
   the buckets that match.
   """
-  target = args['object'] if args['object'] else args['bucket']
+  target = args['objects']
   project = args['project']
   if target is None:
     return _gcs_list_buckets(project, '*')  # List all buckets.
@@ -313,10 +309,11 @@ def _gcs_list(args, _):
   if bucket_name is None:
     raise Exception('Cannot list %s; not a valid bucket name' % target)
 
-  if key or not re.search('\?|\*|\[', target):
-    # List the contents of the bucket
-    if not key:
-      key = '*'
+  if key:
+    if not re.search('\?|\*|\[', target):
+      # If no wild characters are present in the key string, append a '/*' suffix to show all keys
+      key = key.strip('/') + '/*'
+
     if project:
       # Only list if the bucket is in the project
       for bucket in google.datalab.storage.Buckets(project_id=project):
@@ -335,7 +332,7 @@ def _gcs_list(args, _):
   else:
     # Treat the bucket name as a pattern and show matches. We don't use bucket_name as that
     # can strip off wildchars and so we need to strip off gs:// here.
-    return _gcs_list_buckets(project, target[5:])
+    return _gcs_list_buckets(project, target.strip('/')[5:])
 
 
 def _get_object_contents(source_name):
