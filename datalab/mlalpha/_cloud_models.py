@@ -22,11 +22,6 @@ import datalab.storage
 import datalab.utils
 
 
-# TODO(qimingj) Remove once the API is public since it will no longer be needed
-_CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
-                         'ml_v1beta1_discovery.json'
-
-
 class Models(object):
   """Represents a list of Cloud ML models for a project."""
 
@@ -39,8 +34,7 @@ class Models(object):
       project_id = datalab.context.Context.default().project_id
     self._project_id = project_id
     self._credentials = datalab.context.Context.default().credentials
-    self._api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,
-                                discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
+    self._api = discovery.build('ml', 'v1', credentials=self._credentials)
 
   def _retrieve_models(self, page_token, page_size):
     list_info = self._api.projects().models().list(
@@ -137,8 +131,7 @@ class ModelVersions(object):
     if project_id is None:
       self._project_id = datalab.context.Context.default().project_id
     self._credentials = datalab.context.Context.default().credentials
-    self._api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,
-                                discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
+    self._api = discovery.build('ml', 'v1', credentials=self._credentials)
     if not model_name.startswith('projects/'):
       model_name = ('projects/%s/models/%s' % (self._project_id, model_name))
     self._full_model_name = model_name

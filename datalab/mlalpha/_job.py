@@ -18,35 +18,22 @@ import datalab.context
 from googleapiclient import discovery
 import yaml
 
-# TODO(qimingj) Remove once the API is public since it will no longer be needed
-_CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
-                         'ml_v1beta1_discovery.json'
-
-import datalab.utils
-import datalab.context
-from googleapiclient import discovery
-import yaml
-
 
 class Job(object):
   """Represents a Cloud ML job."""
 
-  def __init__(self, name, context=None, api=None):
+  def __init__(self, name, context=None):
     """Initializes an instance of a CloudML Job.
 
     Args:
       name: the name of the job. It can be an operation full name
           ("projects/[project_id]/operations/[operation_name]") or just [operation_name].
       context: an optional Context object providing project_id and credentials.
-      api: optional CloudML API client.
     """
     if context is None:
       context = datalab.context.Context.default()
     self._context = context
-    if api is None:
-      api = discovery.build('ml', 'v1beta1', credentials=self._context.credentials,
-                            discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
-    self._api = api
+    self._api = discovery.build('ml', 'v1', credentials=self._context.credentials)
     if not name.startswith('projects/'):
       name = 'projects/' + self._context.project_id + '/jobs/' + name
     self._name = name
@@ -112,8 +99,7 @@ class Job(object):
         'training_input': new_job_request,
     }
     context = datalab.context.Context.default()
-    cloudml = discovery.build('ml', 'v1beta1', credentials=context.credentials,
-                              discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
+    cloudml = discovery.build('ml', 'v1', credentials=context.credentials)
     request = cloudml.projects().jobs().create(body=job,
                                                parent='projects/' + context.project_id)
     request.headers['user-agent'] = 'GoogleCloudDataLab/1.0'
