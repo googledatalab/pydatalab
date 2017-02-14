@@ -100,7 +100,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_enumeration_single_result():
     return {
-      'objects': [
+      'items': [
         {'name': 'test_object1'}
       ]
     }
@@ -108,7 +108,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_enumeration_multipage_result1():
     return {
-      'objects': [
+      'items': [
         {'name': 'test_object1'}
       ],
       'nextPageToken': 'test_token'
@@ -117,7 +117,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_enumeration_multipage_result2():
     return {
-      'objects': [
+      'items': [
         {'name': 'test_object2'}
       ]
     }
