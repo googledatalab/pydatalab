@@ -24,7 +24,7 @@ from ._summary import Summary
 from ._tensorboard import TensorBoard
 from ._dataset import CsvDataSet, BigQueryDataSet
 from ._package import Packager
-from ._cloud_models import CloudModels, CloudModelVersions
+from ._cloud_models import Models, ModelVersions
 from ._confusion_matrix import ConfusionMatrix
 from ._analysis import csv_to_dataframe
 from ._package_runner import PackageRunner

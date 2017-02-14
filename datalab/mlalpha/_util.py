@@ -13,10 +13,29 @@
 # limitations under the License.
 
 import datetime
+from googleapiclient import discovery
 import os
 import shutil
 import subprocess
 import tempfile
+import time
+
+import datalab.context
+
+# TODO: Create an Operation class.
+def wait_for_long_running_operation(operation_full_name):
+  print('Waiting for operation "%s"' % operation_full_name)
+  api = discovery.build('ml', 'v1', credentials=datalab.context.Context.default().credentials)
+  while True:
+    response = api.projects().operations().get(name=operation_full_name).execute()
+    if 'done' not in response or response['done'] != True:
+      time.sleep(3)
+    else:
+      if 'error' in response:
+        print(response['error'])
+      else:
+        print('Done.')
+      break
 
 
 def package_and_copy(package_root_dir, setup_py, output_tar_path):

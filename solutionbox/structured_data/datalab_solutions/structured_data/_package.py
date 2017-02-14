@@ -246,6 +246,7 @@ def cloud_train(train_file_pattern,
   _assert_gcs_files([train_file_pattern, eval_file_pattern, 
                      preprocess_output_dir, transforms_file])
 
+  # TODO: Convert args to a dictionary so we can use datalab's cloudml trainer.
   args = ['--train_data_paths=%s' % train_file_pattern,
           '--eval_data_paths=%s' % eval_file_pattern,
           '--output_path=%s' % output_dir,
@@ -269,17 +270,10 @@ def cloud_train(train_file_pattern,
     'args': args
   }
   # Local import because cloudml service does not have datalab
-  import datalab
-  cloud_runner = datalab.mlalpha.CloudRunner(job_request)
-
-  # TODO(brandondutra) update CloudRunner to not mess with the args, so that
-  # this hack will not be needed.
-  cloud_runner._job_request['args'] = args
-
+  import datalab.mlaplha
   if not job_name:
     job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-  job_request = cloud_runner.run(job_name)
-
+  job = datalab.mlalpha.Job.submit_training(job_request, job_name)
   
   if _is_in_IPython():
     import IPython
@@ -410,8 +404,7 @@ def cloud_predict(model_name, model_version, data, is_target_missing=False):
     else:
       input_data = data
 
-  cloud_predictor = mlalpha.CloudPredictor(model_name, model_version)
-  predictions = cloud_predictor.predict(input_data)
+  predictions = mlalpha.ModelVersions(model_name).predict(model_version, input_data)
 
   # Convert predictions into a dataframe
   df = pd.DataFrame(columns=sorted(predictions[0].keys()))

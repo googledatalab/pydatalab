@@ -14,26 +14,19 @@
 
 from googleapiclient import discovery
 import os
-import time
 import yaml
 
 import datalab.context
 import datalab.storage
 import datalab.utils
 
+from . import _util
 
-# TODO(qimingj) Remove once the API is public since it will no longer be needed
-_CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
-                         'ml_v1beta1_discovery.json'
-
-
-class CloudModels(object):
+class Models(object):
   """Represents a list of Cloud ML models for a project."""
 
   def __init__(self, project_id=None):
-    """Initializes an instance of a CloudML Model list that is iteratable
-           ("for model in CloudModels()").
-
+    """
     Args:
       project_id: project_id of the models. If not provided, default project_id will be used.
     """
@@ -41,8 +34,7 @@ class CloudModels(object):
       project_id = datalab.context.Context.default().project_id
     self._project_id = project_id
     self._credentials = datalab.context.Context.default().credentials
-    self._api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,
-                                discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
+    self._api = discovery.build('ml', 'v1', credentials=self._credentials)
 
   def _retrieve_models(self, page_token, page_size):
     list_info = self._api.projects().models().list(
@@ -51,11 +43,13 @@ class CloudModels(object):
     page_token = list_info.get('nextPageToken', None)
     return models, page_token
 
-  def __iter__(self):
+  def get_iterator(self):
+    """Get iterator of models so it can be used as "for model in Models().get_iterator()".
+    """
     return iter(datalab.utils.Iterator(self._retrieve_models))
 
   def get_model_details(self, model_name):
-    """Get details of a model.
+    """Get details of the specified model from CloudML Service.
 
     Args:
       model_name: the name of the model. It can be a model full name
@@ -72,10 +66,16 @@ class CloudModels(object):
 
     Args:
       model_name: the short name of the model, such as "iris".
+    Returns:
+      If successful, returns informaiton of the model, such as
+      {u'regions': [u'us-central1'], u'name': u'projects/myproject/models/mymodel'}
+    Raises:
+      If the model creation failed.
     """
     body = {'name': model_name}
     parent = 'projects/' + self._project_id
-    self._api.projects().models().create(body=body, parent=parent).execute()
+    # Model creation is instant. If anything goes wrong, Exception will be thrown.
+    return self._api.projects().models().create(body=body, parent=parent).execute()
 
   def delete(self, model_name):
     """Delete a model.
@@ -87,7 +87,10 @@ class CloudModels(object):
     full_name = model_name
     if not model_name.startswith('projects/'):
       full_name = ('projects/%s/models/%s' % (self._project_id, model_name))
-    return self._api.projects().models().delete(name=full_name).execute()
+    response = self._api.projects().models().delete(name=full_name).execute()
+    if 'name' not in response:
+      raise Exception('Invalid response from service. "name" is not found.')
+    _util.wait_for_long_running_operation(response['name'])
 
   def list(self, count=10):
     """List models under the current project in a table view.
@@ -121,13 +124,11 @@ class CloudModels(object):
     print model_yaml
     
 
-class CloudModelVersions(object):
+class ModelVersions(object):
   """Represents a list of versions for a Cloud ML model."""
 
   def __init__(self, model_name, project_id=None):
-    """Initializes an instance of a CloudML model version list that is iteratable
-        ("for version in CloudModelVersions()").
-
+    """
     Args:
       model_name: the name of the model. It can be a model full name
           ("projects/[project_id]/models/[model_name]") or just [model_name].
@@ -137,8 +138,7 @@ class CloudModelVersions(object):
     if project_id is None:
       self._project_id = datalab.context.Context.default().project_id
     self._credentials = datalab.context.Context.default().credentials
-    self._api = discovery.build('ml', 'v1alpha3', credentials=self._credentials,
-                                discoveryServiceUrl=_CLOUDML_DISCOVERY_URL)
+    self._api = discovery.build('ml', 'v1', credentials=self._credentials)
     if not model_name.startswith('projects/'):
       model_name = ('projects/%s/models/%s' % (self._project_id, model_name))
     self._full_model_name = model_name
@@ -152,7 +152,10 @@ class CloudModelVersions(object):
     page_token = list_info.get('nextPageToken', None)
     return versions, page_token
 
-  def __iter__(self):
+  def get_iterator(self):
+    """Get iterator of versions so it can be used as
+       "for v in ModelVersions(model_name).get_iterator()".
+    """
     return iter(datalab.utils.Iterator(self._retrieve_versions))
 
   def get_version_details(self, version_name):
@@ -164,21 +167,6 @@ class CloudModelVersions(object):
     """
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     return self._api.projects().models().versions().get(name=name).execute()
-
-  def _wait_for_long_running_operation(self, response):
-    if 'name' not in response:
-      raise Exception('Invaid response from service. Cannot find "name" field.')
-    print('Waiting for job "%s"' % response['name'])
-    while True:
-      response = self._api.projects().operations().get(name=response['name']).execute()
-      if 'done' not in response or response['done'] != True:
-        time.sleep(3)
-      else:
-        if 'error' in response:
-          print(response['error'])
-        else:
-          print('Done.')
-        break
 
   def deploy(self, version_name, path):
     """Deploy a model version to the cloud.
@@ -211,7 +199,9 @@ class CloudModelVersions(object):
     }
     response = self._api.projects().models().versions().create(body=body,
                    parent=self._full_model_name).execute()
-    self._wait_for_long_running_operation(response)
+    if 'name' not in response:
+      raise Exception('Invalid response from service. "name" is not found.')
+    _util.wait_for_long_running_operation(response['name'])
 
   def delete(self, version_name):
     """Delete a version of model.
@@ -221,8 +211,37 @@ class CloudModelVersions(object):
     """
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     response = self._api.projects().models().versions().delete(name=name).execute()
-    self._wait_for_long_running_operation(response)
-    
+    if 'name' not in response:
+      raise Exception('Invalid response from service. "name" is not found.')
+    _util.wait_for_long_running_operation(response['name'])
+
+  def predict(self, version_name, data):
+    """Get prediction results from features instances.
+
+    Args:
+      version_name: the name of the version used for prediction.
+      data: typically a list of instance to be submitted for prediction. The format of the
+          instance depends on the model. For example, structured data model may require
+          a csv line for each instance.
+          Note that online prediction only works on models that take one placeholder value,
+          such as a string encoding a csv line.
+    Returns:
+      A list of prediction results for given instances. Each element is a dictionary representing
+          output mapping from the graph.
+      An example:
+        [{"predictions": 1, "score": [0.00078, 0.71406, 0.28515]},
+         {"predictions": 1, "score": [0.00244, 0.99634, 0.00121]}]
+    """
+    full_version_name = ('%s/versions/%s' % (self._full_model_name, version_name))
+    request = self._api.projects().predict(body={'instances': data},
+                                           name=full_version_name)
+    request.headers['user-agent'] = 'GoogleCloudDataLab/1.0'
+    result = request.execute()
+    if 'predictions' not in result:
+      raise Exception('Invalid response from service. Cannot find "predictions" in response.')
+
+    return result['predictions']
+
   def describe(self, version_name):
     """Print information of a specified model.
 
