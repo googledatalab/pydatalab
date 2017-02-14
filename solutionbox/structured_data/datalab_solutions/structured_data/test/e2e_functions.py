@@ -79,16 +79,20 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
       f1.write(csv_line)
 
 
-def make_preprocess_schema(filename):
+def make_preprocess_schema(filename, problem_type):
   """Makes a schema file compatable with the output of make_csv_data.
 
   Writes a json file.
+
+  Args:
+    filename: output file path
+    problem_type: regression or classification
   """
   schema = [
       {
           "mode": "REQUIRED",
           "name": "target",
-          "type": "INTEGER"
+          "type": ("STRING" if problem_type == 'classification' else "FLOAT")
       },  
       {
           "mode": "NULLABLE",
@@ -130,35 +134,7 @@ def make_preprocess_schema(filename):
     f.write(json.dumps(schema))
 
 
-def make_preprocess_input_features(filename, problem_type):
-  """Makes an input features file compatable with the output of make_csv_data.
-
-  Args:
-    filename: filename: writes data to csv file.
-    problem_type: 'classification' or 'regression'. Changes the target value.
-  """
-
-  feature_types = {
-      "key": {"default": -1, "type": "key"},
-      "target": {"default": "unknown", "type": "categorical"},
-      "num1": {"default": 0.0, "type": "numerical"},
-      "num2": {"default": 0, "type": "numerical"},
-      "num3": {"default": 0.0, "type": "numerical"},
-      "str1": {"default": "black", "type": "categorical"},
-      "str2": {"default": "abc", "type": "categorical"},
-      "str3": {"default": "car", "type": "categorical"}
-  }
-
-  if problem_type == 'regression':
-    feature_types['target']['type'] = 'numerical'
-    feature_types['target']['default'] = 0
-
-  with open(filename, 'w') as f:
-    f.write(json.dumps(feature_types))
-
-
-def run_preprocess(output_dir, csv_filename, schema_filename, 
-                   input_features_filename):
+def run_preprocess(output_dir, csv_filename, schema_filename):
   preprocess_script = os.path.abspath(
       os.path.join(os.path.dirname(__file__), 
                    '../preprocess/local_preprocess.py'))
@@ -166,8 +142,7 @@ def run_preprocess(output_dir, csv_filename, schema_filename,
   cmd = ['python', preprocess_script,
          '--output_dir', output_dir,
          '--input_file_pattern', csv_filename,
-         '--schema_file', schema_filename,
-         '--input_feature_file', input_features_filename,
+         '--schema_file', schema_filename
   ]
   print('Going to run command: %s' % ' '.join(cmd))
   subprocess.check_call(cmd) #, stderr=open(os.devnull, 'wb'))
