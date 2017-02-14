@@ -22,6 +22,4 @@ from ._utils import *
 from . import _chart
 from . import _chart_data
 from . import _csv
-from . import _extension
 from . import _job
-from . import _modules
