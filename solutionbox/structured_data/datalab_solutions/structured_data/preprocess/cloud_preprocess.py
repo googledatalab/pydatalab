@@ -26,9 +26,7 @@ import sys
 
 from tensorflow.python.lib.io import file_io
 
-INPUT_FEATURES_FILE = 'input_features.json'
 SCHEMA_FILE = 'schema.json'
-
 NUMERICAL_ANALYSIS_FILE = 'numerical_analysis.json'
 CATEGORICAL_ANALYSIS_FILE = 'vocab_%s.csv'
 

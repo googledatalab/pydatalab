@@ -13,3 +13,6 @@
 
 from ._package import local_preprocess, cloud_preprocess, local_train, cloud_train, local_predict, \
                       cloud_predict, local_batch_predict, cloud_batch_predict
+
+# Source of truth for the version of this package.
+__version__ = '0.0.1'

@@ -43,6 +43,11 @@ def parse_arguments(argv):
                       default=('structured-data-batch-prediction-'
                           + datetime.datetime.now().strftime('%Y%m%d%H%M%S')),
                       help='Dataflow job name. Must be unique over all jobs.')
+  parser.add_argument('--extra_package',
+                      default=[],
+                      action='append',
+                      help=('If using --cloud, also installs these packages on '
+                            'each dataflow worker'))
 
   # I/O args
   parser.add_argument('--predict_data',
@@ -121,7 +126,7 @@ class FixMissingTarget(beam.DoFn):
     schema = json.loads(file_io.read_file_to_string(schema_path))
     self._num_expected_columns = len(schema)
 
-  def process(self, context):
+  def process(self, element):
     """Fixes csv line if target is missing.
 
     The first column is assumed to be the target column, and the TF graph
@@ -136,19 +141,16 @@ class FixMissingTarget(beam.DoFn):
     The value of the missing target column comes from the default value given 
     to tf.decode_csv in the graph.
     """
-    import logging
     import apache_beam as beam
 
-    num_columns = len(context.element.split(','))
+    num_columns = len(element.split(','))
     if num_columns == self._num_expected_columns:
-      yield context.element
+      yield element
     elif num_columns + 1 == self._num_expected_columns:
-      yield ',' + context.element
+      yield ',' + element
     else:
-      logging.error('Got an unexpected number of columns from [%s].' %
-                    context.element)
       yield beam.pvalue.SideOutputValue('errors',
-                                        ('bad columns', context.element))
+                                        ('bad columns', element))
 
 
 class EmitAsBatchDoFn(beam.DoFn):
@@ -163,14 +165,14 @@ class EmitAsBatchDoFn(beam.DoFn):
     self._batch_size = batch_size
     self._cached = []
 
-  def process(self, context):
-    self._cached.append(context.element)
+  def process(self, element):
+    self._cached.append(element)
     if len(self._cached) >= self._batch_size:
       emit = self._cached
       self._cached = []
       yield emit
 
-  def finish_bundle(self, context):
+  def finish_bundle(self, element=None):
     if len(self._cached) > 0:  # pylint: disable=g-explicit-length-test
       yield self._cached
 
@@ -182,7 +184,7 @@ class RunGraphDoFn(beam.DoFn):
     self._trained_model_dir = trained_model_dir
     self._session = None
 
-  def start_bundle(self, context=None):
+  def start_bundle(self, element=None):
     from tensorflow.contrib.session_bundle import session_bundle
     import json
 
@@ -199,13 +201,17 @@ class RunGraphDoFn(beam.DoFn):
 
     self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
 
-  def finish_bundle(self, context=None):
+  def finish_bundle(self, element=None):
     self._session.close()
 
 
-  def process(self, context):
+  def process(self, element):
+    """Run batch prediciton on a TF graph.
+
+    Args:
+      element: list of strings, representing one batch input to the TF graph.
+    """
     import collections
-    import logging
     import apache_beam as beam   
 
     num_in_batch = 0
@@ -213,7 +219,7 @@ class RunGraphDoFn(beam.DoFn):
       assert self._session is not None
 
       feed_dict = collections.defaultdict(list)
-      for line in context.element:
+      for line in element:
         feed_dict[self._input_alias_map.values()[0]].append(line)
         num_in_batch += 1
 
@@ -248,10 +254,8 @@ class RunGraphDoFn(beam.DoFn):
         yield predictions
 
     except Exception as e:  # pylint: disable=broad-except   
-      logging.error('RunGraphDoFn: Bad input: %s, Error: %s',
-                    str(context.element), str(e))
       yield beam.pvalue.SideOutputValue('errors',
-                                        (str(e), context.element))
+                                        (str(e), element))
 
 
 class RawJsonCoder(beam.coders.Coder):
@@ -413,12 +417,15 @@ def main(argv=None):
         'temp_location': os.path.join(args.output_dir, 'tmp', 'staging'),
         'job_name': args.job_name, 
         'project': args.project_id,
+        'no_save_main_session': True,
+        'extra_packages': args.extra_package,
+        'teardown_policy': 'TEARDOWN_ALWAYS',
     }
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     # Or use BlockingDataflowPipelineRunner
-    p = beam.Pipeline('DataflowPipelineRunner', options=opts)
+    p = beam.Pipeline('DataflowRunner', options=opts)
   else:
-    p = beam.Pipeline('DirectPipelineRunner')
+    p = beam.Pipeline('DirectRunner')
 
   make_prediction_pipeline(p, args)
 
@@ -428,7 +435,11 @@ def main(argv=None):
           (options['job_name'], args.project_id))
     sys.stdout.flush()
 
-  p.run()
+  r = p.run()
+  try:
+    r.wait_until_finish()
+  except AttributeError:
+    pass
 
 
 if __name__ == '__main__':

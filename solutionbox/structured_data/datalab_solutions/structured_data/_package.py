@@ -39,6 +39,7 @@ import urllib
 import json
 import glob
 import StringIO
+import subprocess
 
 import pandas as pd
 import tensorflow as tf
@@ -48,10 +49,9 @@ from . import preprocess
 from . import trainer
 from . import predict
 
-_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl'
-
-# TODO(brandondutra): move this url someplace else.
-_SD_GS_URL = 'gs://cloud-ml-dev_bdt/structured_data-0.1.tar.gz'
+#_SETUP_PY = '/datalab/packages_setup/structured_data/setup.py'
+#_TF_VERSION = 'tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl'
+#_TF_WHL = '/datalab/packages_setup/structured_data'
 
 
 def _default_project():
@@ -80,14 +80,27 @@ def _assert_gcs_files(files):
       raise ValueError('File %s is not a gcs path' % f)
 
 
-def _run_cmd(cmd):
-  output = subprocess.Popen(cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+def _package_to_staging(staging_package_url):
+    """Repackage this package from local installed location and copy it to GCS.
 
-  while True:
-    line = output.stdout.readline().rstrip()
-    print(line)
-    if line == '' and output.poll() != None:
-      break
+    Args:
+      staging_package_url: GCS path.
+    """
+    import datalab.mlalpha as mlalpha
+
+    # Find the package root. __file__ is under [package_root]/datalab_solutions/inception.
+    package_root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '../../'))
+    setup_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), 'setup.py'))
+    tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
+
+    print('Building package in %s and uploading to %s' % 
+          (package_root, tar_gz_path))
+    mlalpha.package_and_copy(package_root, setup_path, tar_gz_path)
+
+
+    return tar_gz_path
 
 
 def local_preprocess(output_dir, input_file_pattern, schema_file):
@@ -163,7 +176,8 @@ def local_train(train_file_pattern,
     preprocess_output_dir:  The output directory from preprocessing
     output_dir:  Output directory of training.
     transforms_file: File path to the transforms file.
-    model_type: model type
+    model_type: One of linear_classification, linear_regression,
+        dnn_classification, dnn_regression.
     max_steps: Int. Number of training steps to perform.
     top_n: Int. For classification problems, the output graph will contain the
         labels and scores for the top n classes with a default of n=1. Use 
@@ -185,8 +199,8 @@ def local_train(train_file_pattern,
           '--transforms_file=%s' % transforms_file,
           '--model_type=%s' % model_type,
           '--max_steps=%s' % str(max_steps)]
-  if layer_sizes:
-    args.extend(['--layer_sizes'] + [str(x) for x in layer_sizes])
+  for i in range(len(layer_sizes)):
+    args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
   if top_n:
     args.append('--top_n=%s' % str(top_n))
 
@@ -203,7 +217,6 @@ def cloud_train(train_file_pattern,
                 max_steps,
                 top_n=None,
                 layer_sizes=None,
-                staging_bucket=None, 
                 project_id=None,
                 job_name=None,
                 scale_tier='STANDARD_1',
@@ -216,7 +229,8 @@ def cloud_train(train_file_pattern,
     preprocess_output_dir:  The output directory from preprocessing
     output_dir:  Output directory of training.
     transforms_file: File path to the transforms file.
-    model_type: model type
+    model_type: One of linear_classification, linear_regression,
+        dnn_classification, dnn_regression.
     max_steps: Int. Number of training steps to perform.
     top_n: Int. For classification problems, the output graph will contain the
         labels and scores for the top n classes with a default of n=1.
@@ -226,8 +240,6 @@ def cloud_train(train_file_pattern,
         will create three DNN layers where the first layer will have 10 nodes, 
         the middle layer will have 3 nodes, and the laster layer will have 2
         nodes.
-
-    staging_bucket: GCS bucket.
     project_id: String. The GCE project to use. Defaults to the notebook's
         default project id.
     job_name: String. Job name as listed on the Dataflow service. If None, a
@@ -240,7 +252,7 @@ def cloud_train(train_file_pattern,
   #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
 
   _assert_gcs_files([train_file_pattern, eval_file_pattern, 
-                     preprocess_output_dir, transforms_file])
+                     preprocess_output_dir, transforms_file, output_dir])
 
   # TODO: Convert args to a dictionary so we can use datalab's cloudml trainer.
   args = ['--train_data_paths=%s' % train_file_pattern,
@@ -250,23 +262,21 @@ def cloud_train(train_file_pattern,
           '--transforms_file=%s' % transforms_file,
           '--model_type=%s' % model_type,
           '--max_steps=%s' % str(max_steps)]
-  if layer_sizes:
-    args.extend(['--layer_sizes'] + [str(x) for x in layer_sizes])
+  for i in range(len(layer_sizes)):
+    args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
   if top_n:
     args.append('--top_n=%s' % str(top_n))    
 
-  # TODO(brandondutra): move these package uris locally, ask for a staging
-  # and copy them there. This package should work without cloudml having to 
-  # maintain gs files!!!
   job_request = {
-    'package_uris': [_TF_GS_URL, _SD_GS_URL],
+    'package_uris': [_package_to_staging(output_dir)],
     'python_module': 'datalab_solutions.structured_data.trainer.task',
     'scale_tier': scale_tier,
     'region': region,
     'args': args
   }
   # Local import because cloudml service does not have datalab
-  import datalab.mlaplha
+  import datalab
+  cloud_runner = datalab.mlalpha.CloudRunner(job_request)
   if not job_name:
     job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
   job = datalab.mlalpha.Job.submit_training(job_request, job_name)
@@ -327,7 +337,8 @@ def local_predict(model_dir, data):
     print('Local prediction done.')
     
     # Read the header file.
-    with open(os.path.join(tmp_dir, 'csv_header.txt'), 'r') as f:
+    header_file = os.path.join(tmp_dir, 'csv_header.txt')
+    with open(header_file, 'r') as f:
       header = f.readline()
 
     # Print any errors to the screen.
@@ -463,7 +474,9 @@ def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
          '--trained_model_dir=%s' % model_dir,
          '--output_dir=%s' % output_dir,
          '--output_format=%s' % output_format,
-         '--batch_size=%s' % str(batch_size)]
+         '--batch_size=%s' % str(batch_size),
+         '--extra_package=%s' % _package_to_staging(output_dir)]
+  print(cmd)
 
   if shard_files:
     cmd.append('--shard_files')
