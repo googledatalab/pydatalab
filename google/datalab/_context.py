@@ -59,12 +59,14 @@ class Context(object):
       The current project id to associate with API requests.
     """
     if not self._project_id:
-      raise Exception('No project ID found. Perhaps you should set one by running "%projects set <project-id>" in a code cell.')
+      raise Exception('No project ID found. Perhaps you should set one by running "%datalab project set -p <project-id>" in a code cell.')
     return self._project_id
 
   def set_project_id(self, project_id):
     """ Set the project_id for the context. """
     self._project_id = project_id
+    if self == Context._global_context:
+      save_project_id(self._project_id)
 
   @property
   def config(self):
