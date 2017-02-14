@@ -92,8 +92,8 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.storage._bucket.Bucket.objects', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_get', autospec=True)
   @mock.patch('google.datalab.Context.default')
-  def test_storage_copy(self, mock_context_default, mock_api_objects_get, mock_bucket_objects,
-                        mock_storage_object_copy_to):
+  def test_gcs_copy(self, mock_context_default, mock_api_objects_get, mock_bucket_objects,
+                        mock_gcs_object_copy_to):
     context = TestCases._create_context()
     mock_context_default.return_value = context
     # Mock API for getting objects in a bucket.
@@ -101,39 +101,39 @@ class TestCases(unittest.TestCase):
     # Mock API for getting object metadata.
     mock_api_objects_get.side_effect = TestCases._mock_api_objects_get()
 
-    google.datalab.storage.commands._storage._storage_copy({
+    google.datalab.storage.commands._storage._gcs_copy({
       'source': ['gs://foo/object1'],
       'destination': 'gs://foo/bar1'
     }, None)
 
-    mock_storage_object_copy_to.assert_called_with(mock.ANY, 'bar1', bucket='foo')
-    self.assertEquals('object1', mock_storage_object_copy_to.call_args[0][0].key)
-    self.assertEquals('foo', mock_storage_object_copy_to.call_args[0][0]._bucket)
+    mock_gcs_object_copy_to.assert_called_with(mock.ANY, 'bar1', bucket='foo')
+    self.assertEquals('object1', mock_gcs_object_copy_to.call_args[0][0].key)
+    self.assertEquals('foo', mock_gcs_object_copy_to.call_args[0][0]._bucket)
 
     with self.assertRaises(Exception) as error:
-      google.datalab.storage.commands._storage._storage_copy({
+      google.datalab.storage.commands._storage._gcs_copy({
         'source': ['gs://foo/object*'],
         'destination': 'gs://foo/bar1'
       }, None)
     self.assertEqual('More than one source but target gs://foo/bar1 is not a bucket',
                      str(error.exception))
 
-  @mock.patch('google.datalab.storage.commands._storage._storage_copy', autospec=True)
-  def test_storage_copy_magic(self, mock_storage_copy):
-    google.datalab.storage.commands._storage.storage('copy --source gs://foo/object1 --destination gs://foo/bar1')
-    mock_storage_copy.assert_called_with({
+  @mock.patch('google.datalab.storage.commands._storage._gcs_copy', autospec=True)
+  def test_gcs_copy_magic(self, mock_gcs_copy):
+    google.datalab.storage.commands._storage.gcs('copy --source gs://foo/object1 --destination gs://foo/bar1')
+    mock_gcs_copy.assert_called_with({
         'source': ['gs://foo/object1'],
         'destination': 'gs://foo/bar1',
-        'func': google.datalab.storage.commands._storage._storage_copy
+        'func': google.datalab.storage.commands._storage._gcs_copy
       }, None)
 
   @mock.patch('google.datalab.storage._api.Api.buckets_insert', autospec=True)
   @mock.patch('google.datalab.Context.default')
-  def test_storage_create(self, mock_context_default, mock_api_buckets_insert):
+  def test_gcs_create(self, mock_context_default, mock_api_buckets_insert):
     context = TestCases._create_context()
     mock_context_default.return_value = context
 
-    errs = google.datalab.storage.commands._storage._storage_create({
+    errs = google.datalab.storage.commands._storage._gcs_create({
       'project': 'test',
       'bucket': [
         'gs://baz'
@@ -143,7 +143,7 @@ class TestCases(unittest.TestCase):
     mock_api_buckets_insert.assert_called_with(mock.ANY, 'baz', project_id='test')
 
     with self.assertRaises(Exception) as error:
-      google.datalab.storage.commands._storage._storage_create({
+      google.datalab.storage.commands._storage._gcs_create({
         'project': 'test',
         'bucket': [
           'gs://foo/bar'
@@ -158,7 +158,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.storage._api.Api.objects_delete', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.buckets_delete', autospec=True)
   @mock.patch('google.datalab.Context.default')
-  def test_storage_delete(self, mock_context_default, mock_api_bucket_delete,
+  def test_gcs_delete(self, mock_context_default, mock_api_bucket_delete,
                           mock_api_objects_delete, mock_bucket_objects, mock_api_objects_get,
                           mock_api_buckets_get):
     context = TestCases._create_context()
@@ -170,7 +170,7 @@ class TestCases(unittest.TestCase):
     mock_api_buckets_get.side_effect = TestCases._mock_api_buckets_get()
 
     with self.assertRaises(Exception) as error:
-      google.datalab.storage.commands._storage._storage_delete({
+      google.datalab.storage.commands._storage._gcs_delete({
         'bucket': [
           'gs://bar',
           'gs://baz'
@@ -186,13 +186,13 @@ class TestCases(unittest.TestCase):
     mock_api_objects_delete.assert_called_with(mock.ANY, 'foo', 'object1')
 
   @mock.patch('google.datalab.Context.default')
-  def test_storage_view(self, mock_context_default):
+  def test_gcs_view(self, mock_context_default):
     context = TestCases._create_context()
     mock_context_default.return_value = context
     # TODO(gram): complete this test
 
   @mock.patch('google.datalab.Context.default')
-  def test_storage_write(self, mock_context_default):
+  def test_gcs_write(self, mock_context_default):
     context = TestCases._create_context()
     mock_context_default.return_value = context
     # TODO(gram): complete this test

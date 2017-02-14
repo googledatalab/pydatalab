@@ -35,7 +35,6 @@ import kernel.chart_data_tests
 import kernel.chart_tests
 import kernel.commands_tests
 import kernel.html_tests
-import kernel.module_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import stackdriver.commands.monitoring_tests
@@ -71,7 +70,6 @@ _TEST_MODULES = [
     kernel.chart_tests,
     kernel.commands_tests,
     kernel.html_tests,
-    kernel.module_tests,
     kernel.storage_tests,
     kernel.utils_tests,
     stackdriver.commands.monitoring_tests,

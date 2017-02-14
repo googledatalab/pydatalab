@@ -31,7 +31,7 @@ import google.datalab.storage
 import google.datalab.utils.commands
 
 
-def _extract_storage_api_response_error(message):
+def _extract_gcs_api_response_error(message):
   """ A helper function to extract user-friendly error messages from service exceptions.
 
   Args:
@@ -52,16 +52,16 @@ def _extract_storage_api_response_error(message):
 
 
 @IPython.core.magic.register_line_cell_magic
-def storage(line, cell=None):
-  """Implements the storage cell magic for ipython notebooks.
+def gcs(line, cell=None):
+  """Implements the gcs cell magic for ipython notebooks.
 
   Args:
-    line: the contents of the storage line.
+    line: the contents of the gcs line.
   Returns:
     The results of executing the cell.
   """
-  parser = google.datalab.utils.commands.CommandParser(prog='storage', description="""
-Execute various storage-related operations. Use "%storage <command> -h"
+  parser = google.datalab.utils.commands.CommandParser(prog='gcs', description="""
+Execute various Google Cloud Storage related operations. Use "%gcs <command> -h"
 for help on a specific command.
 """)
 
@@ -74,24 +74,24 @@ for help on a specific command.
   # This is despite 'name' being identified as writable in the storage API docs.
   # The alternative would be to use a copy/delete.
   copy_parser = parser.subcommand('copy',
-                                  'Copy one or more GCS objects to a different location.')
+                                  'Copy one or more Google Cloud Storage objects to a different location.')
   copy_parser.add_argument('-s', '--source', help='The name of the object(s) to copy', nargs='+')
   copy_parser.add_argument('-d', '--destination', required=True,
       help='The copy destination. For multiple source objects this must be a bucket.')
-  copy_parser.set_defaults(func=_storage_copy)
+  copy_parser.set_defaults(func=_gcs_copy)
 
-  create_parser = parser.subcommand('create', 'Create one or more GCS buckets.')
+  create_parser = parser.subcommand('create', 'Create one or more Google Cloud Storage buckets.')
   create_parser.add_argument('-p', '--project', help='The project associated with the objects')
   create_parser.add_argument('-b', '--bucket', help='The name of the bucket(s) to create',
                              nargs='+')
-  create_parser.set_defaults(func=_storage_create)
+  create_parser.set_defaults(func=_gcs_create)
 
-  delete_parser = parser.subcommand('delete', 'Delete one or more GCS buckets or objects.')
+  delete_parser = parser.subcommand('delete', 'Delete one or more Google Cloud Storage buckets or objects.')
   delete_parser.add_argument('-b', '--bucket', nargs='*',
                              help='The name of the bucket(s) to remove')
   delete_parser.add_argument('-o', '--object', nargs='*',
                              help='The name of the object(s) to remove')
-  delete_parser.set_defaults(func=_storage_delete)
+  delete_parser.set_defaults(func=_gcs_delete)
 
   list_parser = parser.subcommand('list', 'List buckets in a project, or contents of a bucket.')
   list_parser.add_argument('-p', '--project', help='The project associated with the objects')
@@ -102,33 +102,33 @@ for help on a specific command.
   group.add_argument('-b', '--bucket',
                      help='The name of the buckets(s) to list; can include wildchars',
                      nargs='?')
-  list_parser.set_defaults(func=_storage_list)
+  list_parser.set_defaults(func=_gcs_list)
 
   read_parser = parser.subcommand('read',
-                                  'Read the contents of a storage object into a Python variable.')
+                                  'Read the contents of a Google Cloud Storage object into a Python variable.')
   read_parser.add_argument('-o', '--object', help='The name of the object to read',
                            required=True)
   read_parser.add_argument('-v', '--variable', required=True,
                            help='The name of the Python variable to set')
-  read_parser.set_defaults(func=_storage_read)
+  read_parser.set_defaults(func=_gcs_read)
 
-  view_parser = parser.subcommand('view', 'View the contents of a storage object.')
+  view_parser = parser.subcommand('view', 'View the contents of a Google Cloud Storage object.')
   view_parser.add_argument('-n', '--head', type=int, default=20,
                            help='The number of initial lines to view')
   view_parser.add_argument('-t', '--tail', type=int, default=20,
                            help='The number of lines from end to view')
   view_parser.add_argument('-o', '--object', help='The name of the object to view',
                            required=True)
-  view_parser.set_defaults(func=_storage_view)
+  view_parser.set_defaults(func=_gcs_view)
 
   write_parser = parser.subcommand('write',
-                                   'Write the value of a Python variable to a storage object.')
+                                   'Write the value of a Python variable to a Google Cloud Storage object.')
   write_parser.add_argument('-v', '--variable', help='The name of the source Python variable',
                             required=True)
   write_parser.add_argument('-o', '--object', required=True,
-                            help='The name of the destination GCS object to write')
+                            help='The name of the destination Google Cloud Storage object to write')
   write_parser.add_argument('-c', '--content_type', help='MIME type', default='text/plain')
-  write_parser.set_defaults(func=_storage_write)
+  write_parser.set_defaults(func=_gcs_write)
 
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
@@ -194,7 +194,7 @@ def _expand_list(names):
   return results
 
 
-def _storage_copy(args, _):
+def _gcs_copy(args, _):
   target = args['destination']
   target_bucket, target_key = google.datalab.storage._bucket.parse_name(target)
   if target_bucket is None and target_key is None:
@@ -219,12 +219,12 @@ def _storage_copy(args, _):
                                                           bucket=destination_bucket)
     except Exception as e:
       errs.append("Couldn't copy %s to %s: %s" %
-                  (source, target, _extract_storage_api_response_error(str(e))))
+                  (source, target, _extract_gcs_api_response_error(str(e))))
   if errs:
     raise Exception('\n'.join(errs))
 
 
-def _storage_create(args, _):
+def _gcs_create(args, _):
   """ Create one or more buckets. """
   errs = []
   for name in args['bucket']:
@@ -236,12 +236,12 @@ def _storage_create(args, _):
         raise Exception("Invalid bucket name %s" % name)
     except Exception as e:
       errs.append("Couldn't create %s: %s" %
-                  (name, _extract_storage_api_response_error(str(e))))
+                  (name, _extract_gcs_api_response_error(str(e))))
   if errs:
     raise Exception('\n'.join(errs))
 
 
-def _storage_delete(args, _):
+def _gcs_delete(args, _):
   """ Delete one or more buckets or objects. """
   objects = _expand_list(args['bucket'])
   objects.extend(_expand_list(args['object']))
@@ -265,40 +265,40 @@ def _storage_delete(args, _):
         raise Exception("Can't delete object with invalid name %s" % obj)
     except Exception as e:
       errs.append("Couldn't delete %s: %s" %
-                  (obj, _extract_storage_api_response_error(str(e))))
+                  (obj, _extract_gcs_api_response_error(str(e))))
   if errs:
     raise Exception('\n'.join(errs))
 
 
-def _storage_list_buckets(project, pattern):
-  """ List all storage buckets that match a pattern. """
+def _gcs_list_buckets(project, pattern):
+  """ List all Google Cloud Storage buckets that match a pattern. """
   data = [{'Bucket': 'gs://' + bucket.name, 'Created': bucket.metadata.created_on}
           for bucket in google.datalab.storage.Buckets(project_id=project)
           if fnmatch.fnmatch(bucket.name, pattern)]
   return google.datalab.utils.commands.render_dictionary(data, ['Bucket', 'Created'])
 
 
-def _storage_get_keys(bucket, pattern):
-  """ Get names of all storage keys in a specified bucket that match a pattern. """
+def _gcs_get_keys(bucket, pattern):
+  """ Get names of all Google Cloud Storage keys in a specified bucket that match a pattern. """
   return [obj for obj in list(bucket.objects()) if fnmatch.fnmatch(obj.metadata.name, pattern)]
 
 
-def _storage_get_key_names(bucket, pattern):
-  """ Get names of all storage keys in a specified bucket that match a pattern. """
-  return [obj.metadata.name for obj in _storage_get_keys(bucket, pattern)]
+def _gcs_get_key_names(bucket, pattern):
+  """ Get names of all Google Cloud Storage keys in a specified bucket that match a pattern. """
+  return [obj.metadata.name for obj in _gcs_get_keys(bucket, pattern)]
 
 
-def _storage_list_keys(bucket, pattern):
-  """ List all storage keys in a specified bucket that match a pattern. """
+def _gcs_list_keys(bucket, pattern):
+  """ List all Google Cloud Storage keys in a specified bucket that match a pattern. """
   data = [{'Name': obj.metadata.name,
            'Type': obj.metadata.content_type,
            'Size': obj.metadata.size,
            'Updated': obj.metadata.updated_on}
-          for obj in _storage_get_keys(bucket, pattern)]
+          for obj in _gcs_get_keys(bucket, pattern)]
   return google.datalab.utils.commands.render_dictionary(data, ['Name', 'Type', 'Size', 'Updated'])
 
 
-def _storage_list(args, _):
+def _gcs_list(args, _):
   """ List the buckets or the contents of a bucket.
 
   This command is a bit different in that we allow wildchars in the bucket name and will list
@@ -307,7 +307,7 @@ def _storage_list(args, _):
   target = args['object'] if args['object'] else args['bucket']
   project = args['project']
   if target is None:
-    return _storage_list_buckets(project, '*')  # List all buckets.
+    return _gcs_list_buckets(project, '*')  # List all buckets.
 
   bucket_name, key = google.datalab.storage._bucket.parse_name(target)
   if bucket_name is None:
@@ -328,14 +328,14 @@ def _storage_list(args, _):
       bucket = google.datalab.storage.Bucket(bucket_name)
 
     if bucket.exists():
-      return _storage_list_keys(bucket, key)
+      return _gcs_list_keys(bucket, key)
     else:
       raise Exception('Bucket %s does not exist' % target)
 
   else:
     # Treat the bucket name as a pattern and show matches. We don't use bucket_name as that
     # can strip off wildchars and so we need to strip off gs:// here.
-    return _storage_list_buckets(project, target[5:])
+    return _gcs_list_buckets(project, target[5:])
 
 
 def _get_object_contents(source_name):
@@ -350,13 +350,13 @@ def _get_object_contents(source_name):
   return source.download()
 
 
-def _storage_read(args, _):
+def _gcs_read(args, _):
   contents = _get_object_contents(args['object'])
   ipy = IPython.get_ipython()
   ipy.push({args['variable']: contents})
 
 
-def _storage_view(args, _):
+def _gcs_view(args, _):
   contents = _get_object_contents(args['object'])
   if not isinstance(contents, basestring):
     contents = str(contents)
@@ -371,7 +371,7 @@ def _storage_view(args, _):
     return contents
 
 
-def _storage_write(args, _):
+def _gcs_write(args, _):
   target_name = args['object']
   target_bucket, target_key = google.datalab.storage._bucket.parse_name(target_name)
   if target_bucket is None or target_key is None:
