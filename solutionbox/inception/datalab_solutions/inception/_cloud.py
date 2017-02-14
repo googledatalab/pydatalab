@@ -122,7 +122,7 @@ class Cloud(object):
         'image_bytes': {'b64': img}
       })
 
-    predictions = mlalpha.CloudModelVersions(parts[0]).predict(parts[1], data)
+    predictions = mlalpha.ModelVersions(parts[0]).predict(parts[1], data)
     if len(predictions) == 0:
       raise Exception('Prediction results are empty.')
     # Although prediction results contains a labels list in each instance, they are all the same

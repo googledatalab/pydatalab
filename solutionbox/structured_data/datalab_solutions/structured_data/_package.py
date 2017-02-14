@@ -404,7 +404,7 @@ def cloud_predict(model_name, model_version, data, is_target_missing=False):
     else:
       input_data = data
 
-  predictions = mlalpha.CloudModelVersions(model_name).predict(model_version, input_data)
+  predictions = mlalpha.ModelVersions(model_name).predict(model_version, input_data)
 
   # Convert predictions into a dataframe
   df = pd.DataFrame(columns=sorted(predictions[0].keys()))

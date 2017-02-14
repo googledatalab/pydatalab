@@ -27,13 +27,11 @@ _CLOUDML_DISCOVERY_URL = 'https://storage.googleapis.com/cloud-ml/discovery/' \
                          'ml_v1beta1_discovery.json'
 
 
-class CloudModels(object):
+class Models(object):
   """Represents a list of Cloud ML models for a project."""
 
   def __init__(self, project_id=None):
-    """Initializes an instance of a CloudML Model list that is iteratable
-           ("for model in CloudModels()").
-
+    """
     Args:
       project_id: project_id of the models. If not provided, default project_id will be used.
     """
@@ -51,7 +49,9 @@ class CloudModels(object):
     page_token = list_info.get('nextPageToken', None)
     return models, page_token
 
-  def __iter__(self):
+  def get_iterator(self):
+    """Get iterator of models so it can be used as "for model in Models().get_iterator()".
+    """
     return iter(datalab.utils.Iterator(self._retrieve_models))
 
   def get_model_details(self, model_name):
@@ -121,12 +121,12 @@ class CloudModels(object):
     print model_yaml
     
 
-class CloudModelVersions(object):
+class ModelVersions(object):
   """Represents a list of versions for a Cloud ML model."""
 
   def __init__(self, model_name, project_id=None):
     """Initializes an instance of a CloudML model version list that is iteratable
-        ("for version in CloudModelVersions()").
+        ("for version in ModelVersions()").
 
     Args:
       model_name: the name of the model. It can be a model full name
@@ -152,7 +152,10 @@ class CloudModelVersions(object):
     page_token = list_info.get('nextPageToken', None)
     return versions, page_token
 
-  def __iter__(self):
+  def get_iterator(self):
+    """Get iterator of versions so it can be used as
+       "for v in ModelVersions(model_name).get_iterator()".
+    """
     return iter(datalab.utils.Iterator(self._retrieve_versions))
 
   def get_version_details(self, version_name):
