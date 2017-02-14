@@ -113,7 +113,8 @@ def run_numerical_analysis(table, schema_list, args):
   """Find min/max values for the numerical columns and writes a json file.
 
   Args:
-    table: Reference to FederatedTable if bigquery_table is false.
+    table: Reference to FederatedTable (if bigquery_table is false) or a 
+        regular Table (otherwise)
     schema_list: Bigquery schema json object
     args: the command line args
   """
@@ -168,7 +169,8 @@ def run_categorical_analysis(table, schema_list, args):
   ...
 
   Args:
-    table: Reference to FederatedTable if bigquery_table is false
+    table: Reference to FederatedTable (if bigquery_table is false) or a 
+        regular Table (otherwise)
     schema_list: Bigquery schema json object
     args: the command line args
   """
