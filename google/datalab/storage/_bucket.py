@@ -241,7 +241,7 @@ class Buckets(object):
     except Exception as e:
       raise e
 
-    buckets = list_info.get('objects', [])
+    buckets = list_info.get('items', [])
     if len(buckets):
       try:
         buckets = [Bucket(info['name'], info, context=self._context) for info in buckets]
