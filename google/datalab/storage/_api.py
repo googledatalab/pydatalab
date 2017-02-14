@@ -274,8 +274,8 @@ class Api(object):
       Exception if user has no permissions to read.
     """
     # TODO(qimingj): Storage APIs need to be modified to allow absence of project
-    #                or credential on Items. When that happens we can move the function
-    #                to Items class.
+    #                or credential on Objects. When that happens we can move the function
+    #                to Objects class.
     from . import _bucket
     bucket, prefix = _bucket.parse_name(gs_path)
     credentials = None
