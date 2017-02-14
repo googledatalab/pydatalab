@@ -106,6 +106,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'pyyaml==3.11',
     'requests==2.9.1',
     'ipykernel==4.4.1',
+    'jsonschema==2.6.0',
   ],
   package_data={
     'google.datalab.notebook': [

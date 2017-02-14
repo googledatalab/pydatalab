@@ -137,15 +137,14 @@ class Api(object):
 
     return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
-  def jobs_insert_query(self, sql, code=None, imports=None, table_name=None, append=False,
+  def jobs_insert_query(self, sql, code=None, table_name=None, append=False,
                         overwrite=False, dry_run=False, use_cache=True, batch=True,
-                        allow_large_results=False, table_definitions=None):
+                        allow_large_results=False, table_definitions=None, query_params=None):
     """Issues a request to insert a query job.
 
     Args:
       sql: the SQL string representing the query to execute.
       code: code for Javascript UDFs, if any.
-      imports: a list of GCS URLs containing additional Javascript UDF support code, if any.
       table_name: None for an anonymous table, or a name parts tuple for a long-lived table.
       append: if True, append to the table if it is non-empty; else the request will fail if table
           is non-empty unless overwrite is True.
@@ -160,6 +159,7 @@ class Api(object):
           can handle big jobs).
       table_definitions: a list of JSON external table definitions for any external tables
           referenced in the query.
+      query_params: a dictionary containing query parameter types and values, passed to BigQuery.
     Returns:
       A parsed result object.
     Raises:
@@ -183,15 +183,6 @@ class Api(object):
 
     query_config = data['configuration']['query']
 
-    resources = []
-    if code:
-      resources.extend([{'inlineCode': fragment} for fragment in code])
-
-    if imports:
-      resources.extend([{'resourceUri': uri} for uri in imports])
-
-    query_config['userDefinedFunctionResources'] = resources
-
     if table_definitions:
       query_config['tableDefinitions'] = table_definitions
 
@@ -208,6 +199,9 @@ class Api(object):
 
     if self.bigquery_billing_tier:
         query_config['maximumBillingTier'] = self.bigquery_billing_tier
+
+    if query_params:
+      query_config['queryParameters'] = query_params
 
     return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
