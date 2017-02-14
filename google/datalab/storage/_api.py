@@ -279,7 +279,7 @@ class Api(object):
     from . import _bucket
     bucket, prefix = _bucket.parse_name(gs_path)
     credentials = None
-    if google.datalab.Context.is_signed_in():
+    if google.datalab.Context._is_signed_in():
       credentials = google.datalab.context._utils.get_credentials()
     args = {
         'maxResults': Api._MAX_RESULTS,
