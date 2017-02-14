@@ -465,7 +465,7 @@ def _dryrun_cell(args, cell_body):
     print(query.sql)
 
   context = _construct_context_for_args(args)
-  result = query.execute_dry_run(context=context)
+  result = query.dry_run(context=context)
   return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                          is_cached=result['cacheHit'])
 
@@ -593,7 +593,7 @@ def _pipeline_cell(args, cell_body):
     print(query.sql)
   if args['action'] == 'dryrun':
     print(query.sql)
-    result = query.execute_dry_run(context=context)
+    result = query.dry_run(context=context)
     return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                 is_cached=result['cacheHit'])
   if args['action'] == 'run':

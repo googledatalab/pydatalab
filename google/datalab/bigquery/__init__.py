@@ -21,7 +21,7 @@ from ._query_output import QueryOutput
 from ._query_results_table import QueryResultsTable
 from ._query_stats import QueryStats
 from ._sampling import Sampling
-from ._schema import Schema
+from ._schema import Schema, SchemaField
 from ._table import Table, TableMetadata
 from ._udf import UDF
 from ._utils import TableName, DatasetName

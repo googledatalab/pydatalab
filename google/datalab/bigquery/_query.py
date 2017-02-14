@@ -147,11 +147,11 @@ class Query(object):
     return self._expanded_sql()
 
   @property
-  def scripts(self):
+  def udfs(self):
     """ Get the code for any Javascript UDFs used in the query. """
     return self._code
 
-  def execute_dry_run(self, context=None, query_params=None):
+  def dry_run(self, context=None, query_params=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
 
     Args:
