@@ -175,7 +175,49 @@ def local_train(train_file_pattern,
     eval_file_pattern: eval csv file
     preprocess_output_dir:  The output directory from preprocessing
     output_dir:  Output directory of training.
-    transforms_file: File path to the transforms file.
+    transforms_file: File path to the transforms file. Example
+        {
+          "col_A": {"transform": "scale", "default": 0.0},
+          "col_B": {"transform": "scale","value": 4},
+          "col_D": {"transform": "hash_one_hot", "hash_bucket_size": 4},
+          "col_target": {"transform": "target"},
+          "col_key": {"transform": "key"}
+        }
+        The keys correspond to the columns in the input files as defined by the
+        schema file during preprocessing. Some notes
+        1) The "key" transform is required, but the "target" transform is 
+           optional, as the target column must be the first column in the input
+           data, and all other transfroms are optional.
+        2) Default values are optional. These are used if the input data has
+           missing values during training and prediction. If not supplied for a
+           column, the default value for a numerical column is that column's 
+           mean vlaue, and for a categorical column the empty string is used. 
+        3) For numerical colums, the following transforms are supported:
+           i) {"transform": "identity"}: does nothing to the number. (default)
+           ii) {"transform": "scale"}: scales the colum values to -1, 1.
+           iii) {"transform": "scale", "value": a}: scales the colum values 
+              to -a, a.
+
+           For categorical colums, the transform supported depends on if the 
+           model is a linear or DNN model. For a linear model, the transforms
+           supported are:
+           i) {"transform": "sparse"}: Makes a sparse vector using the full 
+              vocabulary associated with the column (default). 
+           ii) {"transform": "hash_sparse", "hash_bucket_size": n}: First each
+              string is hashed to an integer in the range [0, n), and then a
+              sparse vector is used.
+
+          For a DNN model, the categorical transforms that are supported are:
+          i) {"transform": "one_hot"}: A one-hot vector using the full 
+              vocabulary is used. (default)
+          ii) {"transform": "embedding", "embedding_dim": d}: Each label is 
+              embedded into an d-dimensional space.
+          iii) {"transform": "hash_one_hot", "hash_bucket_size": n}: The label
+              is first hashed into the range [0, n) and then a one-hot encoding
+              is made.
+          iv) {"transform": "hash_embedding", "hash_bucket_size": n, 
+               "embedding_dim": d}: First each label is hashed to [0, n), and 
+               then each integer is embedded into a d-dimensional space.
     model_type: One of linear_classification, linear_regression,
         dnn_classification, dnn_regression.
     max_steps: Int. Number of training steps to perform.
@@ -228,7 +270,8 @@ def cloud_train(train_file_pattern,
     eval_file_pattern: eval csv file
     preprocess_output_dir:  The output directory from preprocessing
     output_dir:  Output directory of training.
-    transforms_file: File path to the transforms file.
+    transforms_file: File path to the transforms file. See local_train for 
+        a long description of this file.
     model_type: One of linear_classification, linear_regression,
         dnn_classification, dnn_regression.
     max_steps: Int. Number of training steps to perform.

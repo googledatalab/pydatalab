@@ -290,6 +290,10 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
   key_name = train_config['key_column']
 
   # Do the numerical transforms.
+  # Numerical transforms supported for regression/classification
+  # 1) num -> do nothing (identity, default)
+  # 2) num -> scale to -1, 1 (scale)
+  # 3) num -> scale to -a, a (scale with value parameter)
   with tf.name_scope('numerical_feature_preprocess') as scope:
     if train_config['numerical_columns']:
       numerical_analysis_file = os.path.join(preprocess_output_dir,
@@ -568,12 +572,13 @@ def merge_metadata(preprocess_output_dir, transforms_file):
     raise ValueError('Key transform missing form transfroms file.')
 
   # get target column.
+  result_dict['target_column'] = schema[0]['name']
   for name, trans_config in transforms.iteritems():
     if trans_config.get('transform', None) == 'target':
-      result_dict['target_column'] = name
+      if name != result_dict['target_column']:
+        raise ValueError('Target from transform file does not correspond to '
+                         'the first column of data')
       break
-  if result_dict['target_column'] is None:
-    raise ValueError('Target transform missing form transfroms file.')
 
   # Get the numerical/categorical columns.
   for col_schema in schema:
