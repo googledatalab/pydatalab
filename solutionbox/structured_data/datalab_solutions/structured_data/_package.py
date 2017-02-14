@@ -43,7 +43,8 @@ import subprocess
 
 import pandas as pd
 import tensorflow as tf
-import yaml
+
+from tensorflow.python.lib.io import file_io
 
 from . import preprocess
 from . import trainer
@@ -164,9 +165,10 @@ def local_train(train_file_pattern,
                 eval_file_pattern, 
                 preprocess_output_dir, 
                 output_dir,
-                transforms_file,
                 model_type,
                 max_steps,
+                transforms_file=None,
+                key_column=None,
                 top_n=None,
                 layer_sizes=None):
   """Train model locally.
@@ -175,6 +177,9 @@ def local_train(train_file_pattern,
     eval_file_pattern: eval csv file
     preprocess_output_dir:  The output directory from preprocessing
     output_dir:  Output directory of training.
+    model_type: One of linear_classification, linear_regression,
+        dnn_classification, dnn_regression.
+    max_steps: Int. Number of training steps to perform.    
     transforms_file: File path to the transforms file. Example
         {
           "col_A": {"transform": "scale", "default": 0.0},
@@ -218,9 +223,8 @@ def local_train(train_file_pattern,
           iv) {"transform": "hash_embedding", "hash_bucket_size": n, 
                "embedding_dim": d}: First each label is hashed to [0, n), and 
                then each integer is embedded into a d-dimensional space.
-    model_type: One of linear_classification, linear_regression,
-        dnn_classification, dnn_regression.
-    max_steps: Int. Number of training steps to perform.
+    key_column: key column name. If None, this information is read from the
+        transforms_file.
     top_n: Int. For classification problems, the output graph will contain the
         labels and scores for the top n classes with a default of n=1. Use 
         None for regression problems.
@@ -231,7 +235,19 @@ def local_train(train_file_pattern,
         nodes.
   """
   #TODO(brandondutra): allow other flags to be set like batch size/learner rate
-  #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
+
+  if key_column and not transforms_file:
+    # Make a transforms file.
+    transforms_file = os.math.join(output_dir, 'transforms_file.json')
+    file_io.write_string_to_file(
+        transforms_file,
+        json.dumps({key_column: {"transform": "key"}}, indent=2))
+  elif not key_column and transforms_file:
+    pass 
+  else:
+    raise ValueError('Exactly one of key_column or transforms_file should be '
+                     'not None')
+
 
   args = ['local_train',
           '--train_data_paths=%s' % train_file_pattern,
@@ -254,9 +270,10 @@ def cloud_train(train_file_pattern,
                 eval_file_pattern, 
                 preprocess_output_dir, 
                 output_dir,
-                transforms_file,
                 model_type,
                 max_steps,
+                transforms_file=None,                
+                key_column=None,
                 top_n=None,
                 layer_sizes=None,
                 project_id=None,
@@ -270,11 +287,13 @@ def cloud_train(train_file_pattern,
     eval_file_pattern: eval csv file
     preprocess_output_dir:  The output directory from preprocessing
     output_dir:  Output directory of training.
-    transforms_file: File path to the transforms file. See local_train for 
-        a long description of this file.
     model_type: One of linear_classification, linear_regression,
         dnn_classification, dnn_regression.
     max_steps: Int. Number of training steps to perform.
+    transforms_file: File path to the transforms file. See local_train for 
+        a long description of this file. Must include the key transform.
+    key_column: key column name. If None, this information is read from the
+        transforms_file.
     top_n: Int. For classification problems, the output graph will contain the
         labels and scores for the top n classes with a default of n=1.
         Use None for regression problems.
@@ -291,8 +310,19 @@ def cloud_train(train_file_pattern,
         in this package. See https://cloud.google.com/ml/reference/rest/v1beta1/projects.jobs#ScaleTier
   """
   #TODO(brandondutra): allow other flags to be set like batch size,
-  #   learner rate, custom scale tiers, etc
-  #TODO(brandondutra): doc someplace that TF>=0.12 and cloudml >-1.7 are needed.
+  #   learner rate, etc
+
+  if key_column and not transforms_file:
+    # Make a transforms file.
+    transforms_file = os.math.join(output_dir, 'transforms_file.json')
+    file_io.write_string_to_file(
+        transforms_file,
+        json.dumps({key_column: {"transform": "key"}}, indent=2))
+  elif not key_column and transforms_file:
+    pass 
+  else:
+    raise ValueError('Exactly one of key_column or transforms_file should be '
+                     'not None')
 
   _assert_gcs_files([train_file_pattern, eval_file_pattern, 
                      preprocess_output_dir, transforms_file, output_dir])
