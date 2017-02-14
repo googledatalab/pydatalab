@@ -40,21 +40,24 @@ import google.datalab.utils.commands
 query_params_schema = {
   'type': 'object',
   'properties': {
-    'queryParameters': {
+    'parameters': {
       'type': 'array',
-      'items': {
-        'type': 'object',
-        'properties': {
-          'name': {'type': 'string'},
-          'parameterType': {'type': 'object'},
-          'parameterValue': {'type': 'object'}
-        },
-        'required': ['name', 'parameterType', 'parameterValue'],
-        'additionalProperties': False
-      }
+      'items': [
+        {
+          'type': 'object',
+          'properties': {
+            'name': {'type': 'string'},
+            'type': {'type': 'string', 'enum': ['STRING', 'INT64']},
+            'value': {'type': ['string', 'integer']}
+          },
+          'required': ['name', 'type', 'value'],
+          'additionalProperties': False
+        }
+      ]
     }
   },
-  'required': ['queryParameters']
+  'required': ['parameters'],
+  'additionalProperties': False
 }
 
 
@@ -364,7 +367,22 @@ def _get_query_parameters(args, cell_body):
   if config:
     jsonschema.validate(config, query_params_schema)
 
-  return config['queryParameters'] if config else {}
+    # Parse query_params. We're exposing a simpler schema format than the one actually required
+    # by BigQuery to make magics easier. We need to convert between the two formats
+    parsed_params = []
+    for param in config['parameters']:
+      parsed_params.append({
+        'name': param['name'],
+        'parameterType': {
+          'type': param['type']
+        },
+        'parameterValue': {
+          'value': param['value']
+        }
+      })
+    return parsed_params
+  else:
+    return {}
 
 def _sample_cell(args, cell_body):
   """Implements the BigQuery sample magic for sampling queries
