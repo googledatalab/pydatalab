@@ -138,69 +138,6 @@ class View(object):
       self._table._info['view'] = {'query': query}
     self._table.update(friendly_name=friendly_name, description=description)
 
-  def results(self, use_cache=True):
-    """Materialize the view synchronously.
-
-    If you require more control over the execution, use execute() or execute_async().
-
-    Args:
-      use_cache: whether to use cached results or not.
-    Returns:
-      A QueryResultsTable containing the result set.
-    Raises:
-      Exception if the query could not be executed or query response was malformed.
-    """
-    output_options = QueryOutput.table(use_cache=use_cache)
-    return self._materialization.execute(output_options, context=self._context).result()
-
-  def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-                    allow_large_results=False):
-    """Materialize the View asynchronously.
-
-    Args:
-      table_name: the result table name; if None, then a temporary table will be used.
-      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
-          will fail if the table exists.
-      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
-          specified (default True).
-      priority:one of 'low' or 'high' (default). Note that 'high' is more expensive, but is
-          better suited to exploratory analysis.
-      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
-          slower and requires a table_name to be specified) (default False).
-    Returns:
-      A QueryJob for the materialization
-    Raises:
-      Exception (KeyError) if View could not be materialized.
-    """
-    output_options = QueryOutput.table(name=table_name, mode=table_mode,
-                                                     use_cache=use_cache, priority=priority,
-                                                     allow_large_results=allow_large_results)
-    return self._materialization.execute_async(output_options)
-
-  def execute(self, table_name=None, table_mode='create', use_cache=True, priority='high',
-              allow_large_results=False):
-    """Materialize the View synchronously.
-
-    Args:
-      table_name: the result table name; if None, then a temporary table will be used.
-      table_mode: one of 'create', 'overwrite' or 'append'. If 'create' (the default), the request
-          will fail if the table exists.
-      use_cache: whether to use past query results or ignore cache. Has no effect if destination is
-          specified (default True).
-      priority:one of 'low' or 'high' (default). Note that 'high' is more expensive, but is
-          better suited to exploratory analysis.
-      allow_large_results: whether to allow large results; i.e. compressed data over 100MB. This is
-          slower and requires a table_name to be specified) (default False).
-    Returns:
-      A QueryJob for the materialization
-    Raises:
-      Exception (KeyError) if View could not be materialized.
-    """
-    output_options = QueryOutput.table(name=table_name, mode=table_mode,
-                                                     use_cache=use_cache, priority=priority,
-                                                     allow_large_results=allow_large_results)
-    return self._materialization.execute_async(output_options)
-
   def _repr_sql_(self):
     """Returns a representation of the view for embedding into a SQL statement.
 
