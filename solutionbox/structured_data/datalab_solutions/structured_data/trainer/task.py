@@ -18,6 +18,7 @@ from __future__ import print_function
 import argparse
 import json
 import os
+import re
 import sys
 import math
 
@@ -252,11 +253,9 @@ def get_experiment_fn(args):
 
     # Save a copy of the scehma and input to the model folder.
     schema_file = os.path.join(args.preprocess_output_dir, util.SCHEMA_FILE)
-    input_features_file = os.path.join(args.preprocess_output_dir,
-                                       util.INPUT_FEATURES_FILE)
 
     # Make list of files to save with the trained model.
-    additional_assets = [args.transforms_file, schema_file, input_features_file]
+    additional_assets = [args.transforms_file, schema_file]
     if util.is_classification_model(args.model_type):
       target_name = train_config['target_column']
       vocab_file_path = os.path.join(
@@ -307,7 +306,10 @@ def get_experiment_fn(args):
 
 def parse_arguments(argv):
   """Parse the command line arguments."""
-  parser = argparse.ArgumentParser()
+  parser = argparse.ArgumentParser(
+      description=('Train a regression or classification model. Note that if '
+                   'using a DNN model, --layer_size1=NUM, --layer_size2=NUM, '
+                   'should be used. '))
 
   # I/O file parameters
   parser.add_argument('--train_data_paths', type=str, action='append',
@@ -332,6 +334,7 @@ def parse_arguments(argv):
   # HP parameters
   parser.add_argument('--learning_rate', type=float, default=0.01)
   parser.add_argument('--epsilon', type=float, default=0.0005)
+  # --layer_size See below
 
   # Model problems
   parser.add_argument('--model_type',
@@ -345,7 +348,6 @@ def parse_arguments(argv):
                             'will contain the labels and scores for the top '
                             'n classes.'))
   # Training input parameters
-  parser.add_argument('--layer_sizes', type=int, nargs='*')
   parser.add_argument('--max_steps', type=int, default=5000,
                       help='Maximum number of training steps to perform.')
   parser.add_argument('--batch_size', type=int, default=1000)
@@ -361,7 +363,40 @@ def parse_arguments(argv):
                             ' of training steps. Should be large enough so that'
                             ' a new checkpoined model is saved before running '
                             'again.'))
-  return parser.parse_args(args=argv[1:])
+  args, remaining_args = parser.parse_known_args(args=argv[1:])
+
+  # All HP parambeters must be unique, so we need to support an unknown number
+  # of --layer_size1=10 --layer_size2=10 ...
+  # Look at remaining_args for layer_size\d+ to get the layer info.
+  
+  # Get number of layers
+  pattern = re.compile('layer_size(\d+)')
+  num_layers = 0
+  for other_arg in remaining_args:
+    match = re.search(pattern, other_arg)
+    if match:
+      num_layers = max(num_layers, int(match.group(1)))
+
+  # Build a new parser so we catch unknown args and missing layer_sizes.
+  parser = argparse.ArgumentParser()
+  for i in range(num_layers):
+    parser.add_argument('--layer_size%s' % str(i+1), type=int, required=True)
+
+  layer_args = vars(parser.parse_args(args=remaining_args))
+  layer_sizes = []
+  for i in range(num_layers):
+    key = 'layer_size%s' % str(i+1)
+    layer_sizes.append(layer_args[key])
+
+  assert len(layer_sizes) == num_layers
+  args.layer_sizes = layer_sizes
+
+  return args
+
+
+
+
+
 
 
 def main(argv=None):

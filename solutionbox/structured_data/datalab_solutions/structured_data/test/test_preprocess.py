@@ -34,8 +34,6 @@ class TestPreprocess(unittest.TestCase):
 
     self._csv_filename = os.path.join(self._test_dir, 'raw_csv_data.csv')
     self._schema_filename = os.path.join(self._test_dir, 'schema.json')
-    self._input_features_filename = os.path.join(self._test_dir, 
-                                                 'input_features_file.json')
 
     self._preprocess_output = os.path.join(self._test_dir, 'pout')
 
@@ -51,9 +49,8 @@ class TestPreprocess(unittest.TestCase):
       problem_type: 'regression' or 'classification'
     """
     e2e_functions.make_csv_data(self._csv_filename, 100, problem_type, True)
-    e2e_functions.make_preprocess_schema(self._schema_filename)
-    e2e_functions.make_preprocess_input_features(self._input_features_filename, 
-                                                 problem_type)
+    e2e_functions.make_preprocess_schema(self._schema_filename, problem_type)
+
 
   def _test_preprocess(self, problem_type):
     self._make_test_data(problem_type)
@@ -61,17 +58,14 @@ class TestPreprocess(unittest.TestCase):
     e2e_functions.run_preprocess(
         output_dir=self._preprocess_output,
         csv_filename=self._csv_filename,
-        schema_filename=self._schema_filename,
-        input_features_filename=self._input_features_filename)
+        schema_filename=self._schema_filename)
 
 
     schema_file = os.path.join(self._preprocess_output, 'schema.json')
-    features_file = os.path.join(self._preprocess_output, 'input_features.json')
     numerical_analysis_file = os.path.join(self._preprocess_output, 'numerical_analysis.json')
 
-    # test schema and features were copied
+    # test schema file was copied
     self.assertTrue(filecmp.cmp(schema_file, self._schema_filename))
-    self.assertTrue(filecmp.cmp(features_file, self._input_features_filename))
 
     expected_numerical_keys = ['num1', 'num2', 'num3']
     if problem_type == 'regression':
@@ -83,7 +77,8 @@ class TestPreprocess(unittest.TestCase):
     self.assertEqual(sorted(expected_numerical_keys), sorted(analysis.keys()))
 
     # Check that the vocab files are made
-    expected_vocab_files = ['vocab_str1.csv', 'vocab_str2.csv', 'vocab_str3.csv']
+    expected_vocab_files = ['vocab_str1.csv', 'vocab_str2.csv', 
+                            'vocab_str3.csv', 'vocab_key.csv']
     if problem_type == 'classification':
       expected_vocab_files.append('vocab_target.csv')
 
@@ -92,8 +87,8 @@ class TestPreprocess(unittest.TestCase):
       self.assertTrue(os.path.exists(vocab_file))
       self.assertGreater(os.path.getsize(vocab_file), 0)
 
-    all_expected_files = (expected_vocab_files + ['input_features.json',
-                          'numerical_analysis.json', 'schema.json'])
+    all_expected_files = (expected_vocab_files + ['numerical_analysis.json',
+                         'schema.json'])
     all_file_paths = glob.glob(os.path.join(self._preprocess_output, '*'))
     all_files = [os.path.basename(path) for path in all_file_paths]
     self.assertEqual(sorted(all_expected_files), sorted(all_files))

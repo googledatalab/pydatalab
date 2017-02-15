@@ -67,15 +67,12 @@ class TestTrainer(unittest.TestCase):
     # Run preprocessing.
     e2e_functions.make_csv_data(self._csv_train_filename, 100, problem_type, True)
     e2e_functions.make_csv_data(self._csv_eval_filename, 100, problem_type, True)
-    e2e_functions.make_preprocess_schema(self._schema_filename)
-    e2e_functions.make_preprocess_input_features(self._input_features_filename, 
-                                                 problem_type)
+    e2e_functions.make_preprocess_schema(self._schema_filename, problem_type)
 
     e2e_functions.run_preprocess(
         output_dir=self._preprocess_output,
         csv_filename=self._csv_train_filename,
-        schema_filename=self._schema_filename,
-        input_features_filename=self._input_features_filename)
+        schema_filename=self._schema_filename)
 
     # Write the transforms file.
     with open(self._transforms_filename, 'w') as f:
@@ -151,7 +148,6 @@ class TestTrainer(unittest.TestCase):
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'export.meta')))
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'schema.json')))
     self.assertTrue(os.path.isfile(os.path.join(model_folder, 'transforms.json')))
-    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'input_features.json')))
 
 
   def testRegressionDnn(self):
@@ -162,10 +158,11 @@ class TestTrainer(unittest.TestCase):
         "num2": {"transform": "scale","value": 4},
         "str1": {"transform": "hash_embedding", "embedding_dim": 2, "hash_bucket_size": 4},
         "str2": {"transform": "embedding", "embedding_dim": 3},
-        "target": {"transform": "target"}
+        "target": {"transform": "target"},
+        "key": {"transform": "key"},
     }
 
-    extra_args = ['--layer_sizes 10 10 5']
+    extra_args = ['--layer_size1=10', '--layer_size2=10', '--layer_size3=5']
     self._run_training(problem_type='regression', 
                        model_type='dnn',
                        transforms=transforms,
@@ -184,7 +181,8 @@ class TestTrainer(unittest.TestCase):
         "str1": {"transform": "hash_sparse", "hash_bucket_size": 2},
         "str2": {"transform": "hash_sparse", "hash_bucket_size": 2},
         "str3": {"transform": "hash_sparse", "hash_bucket_size": 2},
-        "target": {"transform": "target"}
+        "target": {"transform": "target"},
+        "key": {"transform": "key"},
     }
 
     self._run_training(problem_type='regression', 
@@ -204,10 +202,11 @@ class TestTrainer(unittest.TestCase):
         "str1": {"transform": "hash_one_hot", "hash_bucket_size": 4},
         "str2": {"transform": "one_hot"},
         "str3": {"transform": "embedding", "embedding_dim": 3},
-        "target": {"transform": "target"}
+        "target": {"transform": "target"},
+        "key": {"transform": "key"}
     }
 
-    extra_args = ['--layer_sizes 10 10 5']
+    extra_args = ['--layer_size1=10', '--layer_size2=10', '--layer_size3=5']
     self._run_training(problem_type='classification', 
                        model_type='dnn',
                        transforms=transforms,
@@ -225,7 +224,8 @@ class TestTrainer(unittest.TestCase):
         "num2": {"transform": "scale","value": 4},
         "str1": {"transform": "hash_sparse", "hash_bucket_size": 4},
         "str2": {"transform": "sparse"},
-        "target": {"transform": "target"}
+        "target": {"transform": "target"},
+        "key": {"transform": "key"},
     }
 
     self._run_training(problem_type='classification', 

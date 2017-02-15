@@ -18,11 +18,9 @@ import multiprocessing
 import os
 from StringIO import StringIO
 
-import pandas as pd
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
-INPUT_FEATURES_FILE = 'input_features.json'
 SCHEMA_FILE = 'schema.json'
 NUMERICAL_ANALYSIS = 'numerical_analysis.json'
 CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
@@ -220,9 +218,9 @@ def get_estimator(output_dir, train_config, args):
 
   # Check layers used for dnn models.
   if is_dnn_model(args.model_type)  and not args.layer_sizes:
-    raise ValueError('--layer_sizes must be used with DNN models')
+    raise ValueError('--layer_size* must be used with DNN models')
   if is_linear_model(args.model_type) and args.layer_sizes:
-    raise ValueError('--layer_sizes cannot be used with linear models')
+    raise ValueError('--layer_size* cannot be used with linear models')
 
   # Build tf.learn features
   feature_columns = _tflearn_features(train_config, args)
@@ -292,6 +290,10 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
   key_name = train_config['key_column']
 
   # Do the numerical transforms.
+  # Numerical transforms supported for regression/classification
+  # 1) num -> do nothing (identity, default)
+  # 2) num -> scale to -1, 1 (scale)
+  # 3) num -> scale to -a, a (scale with value parameter)
   with tf.name_scope('numerical_feature_preprocess') as scope:
     if train_config['numerical_columns']:
       numerical_analysis_file = os.path.join(preprocess_output_dir,
@@ -508,20 +510,18 @@ def get_vocabulary(preprocess_output_dir, name):
     raise ValueError('File %s not found in %s' %
                      (CATEGORICAL_ANALYSIS % name, preprocess_output_dir))
 
-  df = pd.read_csv(StringIO(file_io.read_file_to_string(vocab_file)),
-                   header=None,
-                   names=['labels'])
-  label_values = df['labels'].values.tolist()
+  labels = file_io.read_file_to_string(vocab_file).split('\n')
+  label_values = [x for x in labels if x]  # remove empty lines
 
-  return [str(value) for value in label_values]
+  return label_values
 
 
 def merge_metadata(preprocess_output_dir, transforms_file):
-  """Merge schema, input features, and transforms file into one python object.
+  """Merge schema, analysis, and transforms files into one python object.
 
   Args:
     preprocess_output_dir: the output folder of preprocessing. Should contain
-        the schema, input feature files, and the numerical and categorical
+        the schema, and the numerical and categorical
         analysis files.
     transforms_file: the training transforms file.
 
@@ -544,89 +544,102 @@ def merge_metadata(preprocess_output_dir, transforms_file):
   Raises:
     ValueError: if one of the input metadata files is wrong.
   """
-
+  numerical_anlysis_file = os.path.join(preprocess_output_dir,
+                                        NUMERICAL_ANALYSIS)
   schema_file = os.path.join(preprocess_output_dir, SCHEMA_FILE)
-  input_features_file = os.path.join(preprocess_output_dir, INPUT_FEATURES_FILE)
 
+  numerical_anlysis = json.loads(file_io.read_file_to_string(
+      numerical_anlysis_file))
   schema = json.loads(file_io.read_file_to_string(schema_file))
-  input_features = json.loads(file_io.read_file_to_string(input_features_file))
   transforms = json.loads(file_io.read_file_to_string(transforms_file))
 
   result_dict = {}
-  result_dict['csv_header'] = [schema_dict['name'] for schema_dict in schema]
-  result_dict['csv_defaults'] = {}
+  result_dict['csv_header'] = [col_schema['name'] for col_schema in schema]
   result_dict['key_column'] = None
   result_dict['target_column'] = None
   result_dict['categorical_columns'] = []
   result_dict['numerical_columns'] = []
   result_dict['transforms'] = {}
-  result_dict['vocab_stats'] = {}
+  result_dict['csv_defaults'] = {}  
+  result_dict['vocab_stats'] = {}  
 
-  # get key column
-  for name, input_type in input_features.iteritems():
-    if input_type['type'] == 'key':
+  # get key column.
+  for name, trans_config in transforms.iteritems():
+    if trans_config.get('transform', None) == 'key':
       result_dict['key_column'] = name
       break
   if result_dict['key_column'] is None:
-    raise ValueError('Key column missing from input features file.')
+    raise ValueError('Key transform missing form transfroms file.')
 
-  # get target column
-  for name, transform in transforms.iteritems():
-    if transform.get('transform', None) == 'target':
-      result_dict['target_column'] = name
+  # get target column.
+  result_dict['target_column'] = schema[0]['name']
+  for name, trans_config in transforms.iteritems():
+    if trans_config.get('transform', None) == 'target':
+      if name != result_dict['target_column']:
+        raise ValueError('Target from transform file does not correspond to '
+                         'the first column of data')
       break
-  if result_dict['target_column'] is None:
-    raise ValueError('Target transform missing form transfroms file.')
 
   # Get the numerical/categorical columns.
-  for schema_dict in schema:
-    name = schema_dict['name']
-    col_type = input_features.get(name, {}).get('type', None)
+  for col_schema in schema:
+    col_name = col_schema['name']
+    col_type = col_schema['type'].lower()
+    if col_name == result_dict['key_column']:
+      continue
 
-    if col_type is None:
-      raise ValueError('Missing type from %s in file %s' % (
-          name, input_features_file))
-    elif col_type == 'numerical':
-      result_dict['numerical_columns'].append(name)
-    elif col_type == 'categorical':
-      result_dict['categorical_columns'].append(name)
-    elif col_type == 'key':
-      pass
+    if col_type == 'string':
+      result_dict['categorical_columns'].append(col_name)
+    elif col_type == 'integer' or col_type == 'float':
+      result_dict['numerical_columns'].append(col_name)
     else:
-      raise ValueError('unknown type %s in input featrues file.' % col_type)
+      raise ValueError('Unsupported schema type %s' % col_type)
 
-  # Get the defaults
-  for schema_dict in schema:
-    name = schema_dict['name']
-    default = input_features.get(name, {}).get('default', None)
+  # Get the transforms.
+  for name, trans_config in transforms.iteritems():
+    if name != result_dict['target_column'] and name != result_dict['key_column']:
+      result_dict['transforms'][name] = trans_config
 
-    if default is None:
-      raise ValueError('Missing default from %s in file %s' % (
-          name, input_features_file))
-
-    # make all numerical types floats. This means when tf.decode_csv is called,
-    # float tensors and string tensors will be made.
-    if name in result_dict['categorical_columns']:
-      default = str(default)
-    elif name in result_dict['numerical_columns']:
-      default = float(default)
-    else:
-      default = str(default)  # key column
-
-    result_dict['csv_defaults'].update({name: default})
-
-  # Get the transforms
-  for name, transform in transforms.iteritems():
-    if transform['transform'] != 'target':
-      result_dict['transforms'].update({name: transform})
-
-  # Load vocabs
+  # Get the vocab_stats
   for name in result_dict['categorical_columns']:
-    if name != result_dict['key_column']:
-      label_values = get_vocabulary(preprocess_output_dir, name)
-      n_classes = len(label_values)
-      result_dict['vocab_stats'][name] = {'n_classes': n_classes,
-                                          'labels': label_values}
+    if name == result_dict['key_column']:
+      continue
+
+    label_values = get_vocabulary(preprocess_output_dir, name)
+    if name != result_dict['target_column']:
+      label_values.append('') # append a 'missing' label.
+    n_classes = len(label_values)
+    result_dict['vocab_stats'][name] = {'n_classes': n_classes,
+                                        'labels': label_values}
+
+  # Get the csv_defaults
+  for col_schema in schema:
+    name = col_schema['name']
+    col_type = col_schema['type'].lower()
+    default = transforms.get(name, {}).get('default', None)
+    if default is not None:
+      # convert int defaults to float
+      if name in result_dict['numerical_columns']:
+        default = float(default)
+      else:
+        # check default is in the vocab, otherwise use it as is.
+        default = str(default)
+        if default not in result_dict['vocab_stats'][name]['labels']:
+          raise ValueError('Default %s is not in the vocab for %s' %
+                           (default, name))
+    else:
+      # Default is not given, so pick one. 
+      if name in result_dict['categorical_columns']:
+        default = ''
+      elif name in result_dict['numerical_columns']:
+        default = float(numerical_anlysis[name]['mean'])
+      elif name == result_dict['key_column']:
+        if col_type == 'string':
+          default = ''
+        else:
+          default = 0.0 
+
+
+    result_dict['csv_defaults'][name] = default
 
   validate_metadata(result_dict)
   return result_dict
@@ -652,6 +665,7 @@ def validate_metadata(train_config):
   # categorical_columns or numerical_columns.
   sorted_columns = sorted(train_config['csv_header']
                           + [train_config['target_column']])
+
   sorted_columns2 = sorted(train_config['categorical_columns']
                            + train_config['numerical_columns']
                            + [train_config['key_column']]

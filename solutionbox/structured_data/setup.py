@@ -10,17 +10,31 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
+# A copy of this file must be made in datalab_solutions/structured_data/setup.py
 
 import datetime
+import os
+import re
 from setuptools import setup
 
-minor = datetime.datetime.now().strftime("%y%m%d%H%M")
-version = '0.1'
+
+
+# The version is saved in an __init__ file.
+def get_version():
+    VERSIONFILE = os.path.join('datalab_solutions/structured_data/',
+                               '__init__.py')
+    initfile_lines = open(VERSIONFILE, 'rt').readlines()
+    VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+    for line in initfile_lines:
+        mo = re.search(VSRE, line, re.M)
+        if mo:
+            return mo.group(1)
+    raise RuntimeError('Unable to find version string in %s.' % (VERSIONFILE,))
+
 
 setup(
   name='structured_data',
-  version=version,
+  version=get_version(),
   packages=[
     'datalab_solutions',
     'datalab_solutions.structured_data',
@@ -47,7 +61,9 @@ setup(
   long_description="""
   """,
   install_requires=[
+    "tensorflow==0.12.1"
   ],
   package_data={
-  }
+  },
+  data_files=[],
 )
