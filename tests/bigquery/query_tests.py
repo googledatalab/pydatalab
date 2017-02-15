@@ -57,7 +57,8 @@ class TestCases(unittest.TestCase):
 
     sql = 'SELECT field1 FROM [table] LIMIT 1'
     q = TestCases._create_query(sql)
-    results = q.execute().result()
+    context = TestCases._create_context()
+    results = q.execute(context=context).result()
 
     self.assertEqual(sql, results.sql)
     self.assertEqual('(%s)' % sql, q._repr_sql_())
@@ -78,7 +79,8 @@ class TestCases(unittest.TestCase):
     mock_api_insert_query.return_value = TestCases._create_insert_done_result()
 
     q = TestCases._create_query()
-    results = q.execute().result()
+    context = TestCases._create_context()
+    results = q.execute(context=context).result()
 
     self.assertEqual(0, results.length)
 
@@ -97,7 +99,8 @@ class TestCases(unittest.TestCase):
     mock_api_insert_query.return_value = TestCases._create_incomplete_result()
 
     q = TestCases._create_query()
-    results = q.execute().result()
+    context = TestCases._create_context()
+    results = q.execute(context=context).result()
 
     self.assertEqual(1, results.length)
     self.assertEqual('test_job', results.job_id)
@@ -109,7 +112,8 @@ class TestCases(unittest.TestCase):
     q = TestCases._create_query()
 
     with self.assertRaises(Exception) as error:
-      _ = q.execute().result()
+      context = TestCases._create_context()
+      _ = q.execute(context=context).result()
     self.assertEqual('Unexpected response from server', str(error.exception))
 
   def test_nested_subquery_expansion(self):
