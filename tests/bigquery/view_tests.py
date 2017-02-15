@@ -26,7 +26,7 @@ class TestCases(unittest.TestCase):
   def test_view_repr_sql(self):
     name = 'test:testds.testView0'
     view = google.datalab.bigquery.View(name, TestCases._create_context())
-    self.assertEqual('[%s]' % name, view._repr_sql_())
+    self.assertEqual('`%s`' % name, view._repr_sql_())
 
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
@@ -48,7 +48,7 @@ class TestCases(unittest.TestCase):
     result = view.create(sql)
     self.assertTrue(view.exists())
     self.assertEqual(name, str(view))
-    self.assertEqual('[%s]' % name, view._repr_sql_())
+    self.assertEqual('`%s`' % name, view._repr_sql_())
     self.assertIsNotNone(result, 'Expected a view')
 
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')

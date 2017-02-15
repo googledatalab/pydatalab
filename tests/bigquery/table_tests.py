@@ -34,7 +34,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual('requestlogs', parsed_name[1])
     self.assertEqual('today', parsed_name[2])
     self.assertEqual('', parsed_name[3])
-    self.assertEqual('[test:requestlogs.today]', table._repr_sql_())
+    self.assertEqual('`test:requestlogs.today`', table._repr_sql_())
     self.assertEqual('test:requestlogs.today', str(table))
 
   def test_api_paths(self):
@@ -662,12 +662,12 @@ class TestCases(unittest.TestCase):
 
   def test_table_to_query(self):
     tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
-    q = tbl.to_query()
-    self.assertEqual('SELECT * FROM [test:testds.testTable0]', q.sql)
-    q = tbl.to_query('foo, bar')
-    self.assertEqual('SELECT foo, bar FROM [test:testds.testTable0]', q.sql)
-    q = tbl.to_query(['bar', 'foo'])
-    self.assertEqual('SELECT bar,foo FROM [test:testds.testTable0]', q.sql)
+    q = google.datalab.bigquery.Query.from_table(tbl)
+    self.assertEqual('SELECT * FROM `test:testds.testTable0`', q.sql)
+    q = google.datalab.bigquery.Query.from_table(tbl, fields='foo, bar')
+    self.assertEqual('SELECT foo, bar FROM `test:testds.testTable0`', q.sql)
+    q = google.datalab.bigquery.Query.from_table(tbl, fields=['bar', 'foo'])
+    self.assertEqual('SELECT bar,foo FROM `test:testds.testTable0`', q.sql)
 
   @staticmethod
   def _create_context():
