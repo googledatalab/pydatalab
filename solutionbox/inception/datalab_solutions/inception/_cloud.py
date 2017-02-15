@@ -31,8 +31,7 @@ from . import _preprocess
 from . import _trainer
 from . import _util
 
-
-_TF_GS_URL= 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl'
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0rc1-cp27-none-linux_x86_64.whl'
 # Keep in sync with "data_files" in package's setup.py
 _SETUP_PY = '/datalab/packages_setup/inception/setup.py'
 
@@ -68,7 +67,7 @@ class Cloud(object):
         'temp_location': os.path.join(output_dir, 'tmp'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [ml.sdk_location, staging_package_url, _TF_GS_URL],
+        'extra_packages': [_TF_GS_URL, ml.version.nodeps_sdk_location, staging_package_url],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
@@ -96,7 +95,7 @@ class Cloud(object):
       'checkpoint': self._checkpoint
     }
     job_request = {
-      'package_uris': staging_package_url,
+      'package_uris': [_TF_GS_URL, staging_package_url],
       'python_module': 'datalab_solutions.inception.task',
       'args': job_args
     }
@@ -147,7 +146,7 @@ class Cloud(object):
         'temp_location': os.path.join(gcs_staging_location, 'tmp'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [ml.sdk_location, staging_package_url, _TF_GS_URL],
+        'extra_packages': [_TF_GS_URL, ml.version.nodeps_sdk_location, staging_package_url],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
