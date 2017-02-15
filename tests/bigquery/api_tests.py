@@ -128,7 +128,7 @@ class TestCases(unittest.TestCase):
 
     context.config['bigquery_dialect'] = 'standard'
     context.config['bigquery_billing_tier'] = 1
-    api.jobs_insert_query('SQL2', ['CODE'],
+    api.jobs_insert_query('SQL2',
                           table_name=google.datalab.bigquery._utils.TableName('p', 'd', 't', ''),
                           append=True, dry_run=True, use_cache=False, batch=False,
                           allow_large_results=True)

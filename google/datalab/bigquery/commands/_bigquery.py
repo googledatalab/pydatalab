@@ -123,9 +123,9 @@ def _create_sample_subparser(parser):
       'BigQuery SQL query. The cell can optionally contain arguments for expanding variables in ' +
       'the query, if -q/--query was used, or it can contain SQL for a query.')
   group = sample_parser.add_mutually_exclusive_group()
-  group.add_argument('-q', '--query', help='the name of the query to sample')
-  group.add_argument('-t', '--table', help='the name of the table to sample')
-  group.add_argument('-v', '--view', help='the name of the view to sample')
+  group.add_argument('-q', '--query', help='the name of the query object to sample')
+  group.add_argument('-t', '--table', help='the name of the table object to sample')
+  group.add_argument('-v', '--view', help='the name of the view object to sample')
   sample_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                               action='store_true')
   sample_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
@@ -400,9 +400,12 @@ def _sample_cell(args, cell_body):
   query = None
   table = None
   view = None
+  query_params = None
 
   if args['query']:
     query = google.datalab.utils.commands.get_notebook_item(args['query'])
+    if query is None:
+      raise Exception('Cannot find query %s.' % args['query'])
     query_params = _get_query_parameters(args, cell_body)
 
   elif args['table']:
@@ -425,23 +428,30 @@ def _sample_cell(args, cell_body):
                           ascending=args['order']=='ascending')
 
   context = _construct_context_for_args(args)
-  if query:
-    if args['profile']:
-      results = query.execute(QueryOutput.dataframe(), sampling=sampling,
-                              context=context, query_params=query_params).result()
-    else:
-      results = query.execute(QueryOutput.table(), sampling=sampling, context=context,
-                              query_params=query_params).result()
-  elif view:
-    results = view.sample(sampling=sampling)
+
+  if view:
+    view = google.datalab.utils.commands.get_notebook_item(args['view'])
+    if view is None:
+      raise Exception('Cannot find view %s.' % args['view'])
+    query = google.datalab.bigquery.Query.from_view(view)
+  elif table:
+    table = google.datalab.utils.commands.get_notebook_item(args['table'])
+    if table is None:
+      raise Exception('Cannot find table %s.' % args['table'])
+    query = google.datalab.bigquery.Query.from_table(table)
+
+  if args['profile']:
+    results = query.execute(QueryOutput.dataframe(), sampling=sampling,
+                            context=context, query_params=query_params).result()
   else:
-    results = table.sample(sampling=sampling)
+    results = query.execute(QueryOutput.table(), sampling=sampling, context=context,
+                            query_params=query_params).result()
 
   if args['verbose']:
     print(results.sql)
 
-  if args['profile'] and (table or view):
-    return google.datalab.utils.commands.profile_df(results.to_dataframe())
+  if args['profile']:
+    return google.datalab.utils.commands.profile_df(results)
   else:
     return results
 
