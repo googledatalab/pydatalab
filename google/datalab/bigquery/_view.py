@@ -110,22 +110,6 @@ class View(object):
       return self
     raise Exception("View %s could not be created as it already exists" % str(self))
 
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True):
-    """Retrieves a sampling of data from the view.
-
-    Args:
-      fields: an optional list of field names to retrieve.
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      sampling: an optional sampling strategy to apply to the view.
-      use_cache: whether to use cached results or not.
-    Returns:
-      A QueryResultsTable object containing the resulting data.
-    Raises:
-      Exception if the sample query could not be executed or the query response was malformed.
-    """
-    return self._table.sample(fields=fields, count=count, sampling=sampling, use_cache=use_cache)
-
   @property
   def schema(self):
     """Retrieves the schema of the table.
@@ -223,7 +207,7 @@ class View(object):
     Returns:
       A formatted table name for use within SQL statements.
     """
-    return '[' + str(self) + ']'
+    return '`' + str(self) + '`'
 
   def __repr__(self):
     """Returns a representation for the view for showing in the notebook.

@@ -137,14 +137,13 @@ class Api(object):
 
     return google.datalab.utils.Http.request(url, data=data, credentials=self.credentials)
 
-  def jobs_insert_query(self, sql, code=None, table_name=None, append=False,
+  def jobs_insert_query(self, sql, table_name=None, append=False,
                         overwrite=False, dry_run=False, use_cache=True, batch=True,
                         allow_large_results=False, table_definitions=None, query_params=None):
     """Issues a request to insert a query job.
 
     Args:
       sql: the SQL string representing the query to execute.
-      code: code for Javascript UDFs, if any.
       table_name: None for an anonymous table, or a name parts tuple for a long-lived table.
       append: if True, append to the table if it is non-empty; else the request will fail if table
           is non-empty unless overwrite is True.

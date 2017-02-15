@@ -41,9 +41,6 @@ from ._query_output import QueryOutput
 from ._sampling import Sampling
 
 
-# import of Query is at end of module as we have a circular dependency of
-# Query.execute().result() -> Table and Table.sample() -> Query
-
 class TableMetadata(object):
   """Represents metadata about a BigQuery table."""
 
@@ -237,29 +234,6 @@ class Table(object):
       self._schema = schema
       return self
     raise Exception("Table %s could not be created as it already exists" % self._full_name)
-
-  def sample(self, fields=None, count=5, sampling=None, use_cache=True):
-    """Retrieves a sampling of data from the table.
-
-    Args:
-      fields: an optional list of field names to retrieve.
-      count: an optional count of rows to retrieve which is used if a specific
-          sampling is not specified.
-      sampling: an optional sampling strategy to apply to the table.
-      use_cache: whether to use cached results or not.
-    Returns:
-      A QueryResultsTable object containing the resulting data.
-    Raises:
-      Exception if the sample query could not be executed or query response was malformed.
-    """
-    # Do import here to avoid top-level circular dependencies.
-    from . import _query
-    sql = self._repr_sql_()
-    query = _query.Query(sql)
-    if sampling is None:
-      sampling = Sampling.default(fields=fields, count=count)
-    return query.execute(QueryOutput.table(use_cache=use_cache), sampling=sampling,
-                         context=self._context).result()
 
   @staticmethod
   def _encode_dict_as_row(record, column_name_map):
@@ -716,7 +690,7 @@ class Table(object):
     Returns:
       A formatted table name for use within SQL statements.
     """
-    return '[' + self._full_name + ']'
+    return '`' + self._full_name + '`'
 
   def __repr__(self):
     """Returns a representation for the table for showing in the notebook.
@@ -879,22 +853,4 @@ class Table(object):
                       (str(begin), str(end)))
 
     return Table("%s@%s-%s" % (self._full_name, str(start), str(stop)), context=self._context)
-
-  def to_query(self, fields=None):
-    """ Return a Query for this Table.
-
-    Args:
-      fields: the fields to return. If None, all fields will be returned. This can be a string
-          which will be injected into the Query after SELECT, or a list of field names.
-
-    Returns:
-      A Query object that will return the specified fields from the records in the Table.
-    """
-    # Do import here to avoid top-level circular dependencies.
-    from . import _query
-    if fields is None:
-      fields = '*'
-    elif isinstance(fields, list):
-      fields = ','.join(fields)
-    return _query.Query('SELECT %s FROM %s' % (fields, self._repr_sql_()))
 

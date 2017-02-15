@@ -253,27 +253,3 @@ class Job(object):
         concurrent.futures.wait(futures, timeout=Job._POLL_INTERVAL_SECONDS,
                                 return_when=return_when)
 
-  @staticmethod
-  def wait_any(jobs, timeout=None):
-    """ Return when at least one of the specified jobs has completed or timeout expires.
-
-    Args:
-      jobs: a Job or list of Jobs to wait on.
-      timeout: a timeout in seconds to wait for. None (the default) means no timeout.
-    Returns:
-      A list of the jobs that have now completed or None if there were no jobs.
-
-    """
-    return Job._wait(jobs, timeout, concurrent.futures.FIRST_COMPLETED)
-
-  @staticmethod
-  def wait_all(jobs, timeout=None):
-    """ Return when at all of the specified jobs have completed or timeout expires.
-
-    Args:
-      jobs: a Job or list of Jobs to wait on.
-      timeout: a timeout in seconds to wait for. None (the default) means no timeout.
-    Returns:
-      A list of the jobs that have now completed or None if there were no jobs.
-    """
-    return Job._wait(jobs, timeout, concurrent.futures.ALL_COMPLETED)
