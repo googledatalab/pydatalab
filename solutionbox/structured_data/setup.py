@@ -23,6 +23,8 @@ from setuptools import setup
 def get_version():
     VERSIONFILE = os.path.join('datalab_solutions/structured_data/',
                                '__init__.py')
+    if not os.path.isfile(VERSIONFILE):
+      raise ValueError('setup.py: File not found %s' % VERSIONFILE)
     initfile_lines = open(VERSIONFILE, 'rt').readlines()
     VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
     for line in initfile_lines:
@@ -61,7 +63,7 @@ setup(
   long_description="""
   """,
   install_requires=[
-    "tensorflow==0.12.1"
+    #"tensorflow==0.12.1"
   ],
   package_data={
   },
