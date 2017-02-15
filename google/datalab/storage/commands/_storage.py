@@ -309,10 +309,11 @@ def _gcs_list(args, _):
   if bucket_name is None:
     raise Exception('Cannot list %s; not a valid bucket name' % target)
 
-  if key:
+  # If a target was specified, list keys inside it
+  if target:
     if not re.search('\?|\*|\[', target):
       # If no wild characters are present in the key string, append a '/*' suffix to show all keys
-      key = key.strip('/') + '/*'
+      key = key.strip('/') + '/*' if key else '*'
 
     if project:
       # Only list if the bucket is in the project
