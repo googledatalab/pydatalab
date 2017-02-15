@@ -156,8 +156,8 @@ class Model(object):
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
 
     # Then shift images to [-1, 1) for Inception.
-    image = tf.sub(image, 0.5)
-    image = tf.mul(image, 2.0)
+    image = tf.subtract(image, 0.5)
+    image = tf.multiply(image, 2.0)
 
     # Build Inception layers, which expect A tensor of type float from [-1, 1)
     # and shape [batch_size, height, width, channels].
@@ -325,7 +325,7 @@ class Model(object):
     # The labels are needed for client to match class scores list.
     labels_tensor = tf.expand_dims(tf.constant(labels), 0)
     num_instance = tf.shape(keys)
-    labels_tensors_n = tf.tile(labels_tensor, tf.concat(0, [num_instance, [1]]))
+    labels_tensors_n = tf.tile(labels_tensor, tf.concat(axis=0, values=[num_instance, [1]]))
 
     outputs = {
         'key': keys.name,

@@ -61,15 +61,15 @@ class CsvDataSet(object):
       with ml.util._file.open_local_or_gcs(schema_file, 'r') as f:
         self._schema = json.load(f)
         
-    if isinstance(files, basestring):
-      files = [files]
-    self._input_files = files
+    if isinstance(file_pattern, basestring):
+      file_pattern = [file_pattern]
+    self._input_files = file_pattern
     
     self._glob_files = []
 
 
   @property
-  def _input_files(self):
+  def input_files(self):
     """Returns the file list that was given to this class without globing files."""
     return self._input_files
 
