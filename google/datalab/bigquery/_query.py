@@ -57,8 +57,6 @@ class Query(object):
     if data_sources is None:
       data_sources = {}
 
-    self._code = None
-
     def _validate_object(obj):
       if not self._env.__contains__(obj):
         raise Exception('Cannot find object %s.' % obj)
@@ -78,6 +76,36 @@ class Query(object):
         if table.schema is None:
           raise Exception('Referenced external table %s has no known schema' % name)
         self._external_tables[name] = table._to_query_json()
+
+  @staticmethod
+  def from_view(view):
+    """ Return a Query for the given View object
+
+    Args:
+      view: the View object to construct a Query out of
+
+    Returns:
+      A Query object with the same sql as the given View object
+    """
+    return Query('SELECT * FROM %s' % view._repr_sql_())
+
+  @staticmethod
+  def from_table(table, fields=None):
+    """ Return a Query for the given Table object
+
+    Args:
+      table: the Table object to construct a Query out of
+      fields: the fields to return. If None, all fields will be returned. This can be a string
+          which will be injected into the Query after SELECT, or a list of field names.
+
+    Returns:
+      A Query object that will return the specified fields from the records in the Table.
+    """
+    if fields is None:
+      fields = '*'
+    elif isinstance(fields, list):
+      fields = ','.join(fields)
+    return Query('SELECT %s FROM %s' % (fields, table._repr_sql_()))
 
   def _expanded_sql(self, sampling=None):
     """Get the expanded SQL of this object, including all subqueries, UDFs, and external datasources
@@ -148,8 +176,8 @@ class Query(object):
 
   @property
   def udfs(self):
-    """ Get the code for any Javascript UDFs used in the query. """
-    return self._code
+    """ Get the UDFs referenced by the query."""
+    return self._udfs
 
   def dry_run(self, context=None, query_params=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
@@ -169,7 +197,7 @@ class Query(object):
     context = context or google.datalab.Context.default()
     api = _api.Api(context)
     try:
-      query_result = api.jobs_insert_query(self.sql, self._code, dry_run=True,
+      query_result = api.jobs_insert_query(self.sql, dry_run=True,
                                            table_definitions=self._external_tables,
                                            query_params=query_params)
     except Exception as e:
@@ -211,7 +239,7 @@ class Query(object):
     sql = self._expanded_sql(sampling)
 
     try:
-      query_result = api.jobs_insert_query(sql, self._code, table_name=table_name,
+      query_result = api.jobs_insert_query(sql, table_name=table_name,
                                            append=append, overwrite=overwrite, batch=batch,
                                            use_cache=output_options.use_cache,
                                            allow_large_results=output_options.allow_large_results,
