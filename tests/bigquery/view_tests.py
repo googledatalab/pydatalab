@@ -69,9 +69,11 @@ class TestCases(unittest.TestCase):
 
     name = 'test:testds.testView0'
     sql = 'select * from test:testds.testTable0'
-    view = google.datalab.bigquery.View(name, TestCases._create_context())
+    context = TestCases._create_context()
+    view = google.datalab.bigquery.View(name, context)
     view.create(sql)
-    results = view.results()
+    q = google.datalab.bigquery.Query.from_view(view)
+    results = q.execute(context=context).result()
 
     self.assertEqual(1, results.length)
     first_result = results[0]
