@@ -43,16 +43,22 @@ class Summary(object):
     event_dir_dict = {}
     for event_file in self._glob_events_files(self._paths):
       dir = os.path.dirname(event_file)
-      for record in tf_record.tf_record_iterator(event_file):
-        event = event_pb2.Event.FromString(record)
-        if event.summary is None or event.summary.value is None:
-          continue
-        for value in event.summary.value:
-          if value.simple_value is None or value.tag is None:
+      try:
+        for record in tf_record.tf_record_iterator(event_file):
+          event = event_pb2.Event.FromString(record)
+          if event.summary is None or event.summary.value is None:
             continue
-          if not value.tag in event_dir_dict:
-            event_dir_dict[value.tag] = set()
-          event_dir_dict[value.tag].add(dir)
+          for value in event.summary.value:
+            if value.simple_value is None or value.tag is None:
+              continue
+            if not value.tag in event_dir_dict:
+              event_dir_dict[value.tag] = set()
+            event_dir_dict[value.tag].add(dir)
+      except:
+        # It seems current TF (1.0) has a bug when iterating events from a file near the end.
+        # For now just catch and pass.
+        # print('Error in iterating events from file ' + event_file)
+        continue
     return event_dir_dict
   
 
@@ -79,26 +85,32 @@ class Summary(object):
     ret_events = [dict() for i in range(len(event_names))]
     for dir in dirs_to_look:
       for event_file in self._glob_events_files([dir]):
-        for record in tf_record.tf_record_iterator(event_file):
-          event = event_pb2.Event.FromString(record)
-          if event.summary is None or event.wall_time is None or event.summary.value is None:
-            continue
-
-          event_time = datetime.datetime.fromtimestamp(event.wall_time)  
-          for value in event.summary.value:
-            if value.tag not in event_names or value.simple_value is None:
+        try:
+          for record in tf_record.tf_record_iterator(event_file):
+            event = event_pb2.Event.FromString(record)
+            if event.summary is None or event.wall_time is None or event.summary.value is None:
               continue
 
-            index = event_names.index(value.tag)
-            dir_event_dict = ret_events[index]
-            if dir not in dir_event_dict:
-              dir_event_dict[dir] = pd.DataFrame(
-                  [[event_time, event.step, value.simple_value]],
-                  columns=['time', 'step', 'value'])
-            else:
-              df = dir_event_dict[dir]
-              # Append a row.
-              df.loc[len(df)] = [event_time, event.step, value.simple_value]
+            event_time = datetime.datetime.fromtimestamp(event.wall_time)  
+            for value in event.summary.value:
+              if value.tag not in event_names or value.simple_value is None:
+                continue
+
+              index = event_names.index(value.tag)
+              dir_event_dict = ret_events[index]
+              if dir not in dir_event_dict:
+                dir_event_dict[dir] = pd.DataFrame(
+                    [[event_time, event.step, value.simple_value]],
+                    columns=['time', 'step', 'value'])
+              else:
+                df = dir_event_dict[dir]
+                # Append a row.
+                df.loc[len(df)] = [event_time, event.step, value.simple_value]
+        except:
+          # It seems current TF (1.0) has a bug when iterating events from a file near the end.
+          # For now just catch and pass.
+          # print('Error in iterating events from file ' + event_file)
+          continue
 
     for dir_event_dict in ret_events:
       for df in dir_event_dict.values():
