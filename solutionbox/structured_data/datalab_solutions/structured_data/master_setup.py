@@ -19,11 +19,30 @@ from setuptools import setup
 
 
 
+# The version is saved in an __init__ file.
+def get_version():
+    VERSIONFILE = os.path.join('datalab_solutions/structured_data/',
+                               '__init__.py')
+    if not os.path.isfile(VERSIONFILE):
+      raise ValueError('setup.py: File not found %s' % VERSIONFILE)
+    initfile_lines = open(VERSIONFILE, 'rt').readlines()
+    VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+    for line in initfile_lines:
+        mo = re.search(VSRE, line, re.M)
+        if mo:
+            return mo.group(1)
+    raise RuntimeError('Unable to find version string in %s.' % (VERSIONFILE,))
+
+
 setup(
   name='structured_data',
-  version="0.0",
+  version=get_version(),
   packages=[
-      'trainer'
+    'datalab_solutions',
+    'datalab_solutions.structured_data',
+    'datalab_solutions.structured_data.trainer',
+    'datalab_solutions.structured_data.preprocess',
+    'datalab_solutions.structured_data.predict',
   ],
   description='Google Cloud Datalab Structured Data Package',
   author='Google',
@@ -44,7 +63,6 @@ setup(
   long_description="""
   """,
   install_requires=[
-    #"tensorflow==1.0.0"
   ],
   package_data={
   },
