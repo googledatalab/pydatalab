@@ -50,7 +50,7 @@ from . import trainer
 from . import predict
 
 
-_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0rc1-cp27-none-linux_x86_64.whl'
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl'
 
 
 def _default_project():
@@ -344,7 +344,7 @@ def cloud_train(train_file_pattern,
     args.append('--top_n=%s' % str(top_n))    
 
   job_request = {
-    'package_uris': [_package_to_staging(output_dir)],
+    'package_uris': [_package_to_staging(output_dir), _TF_GS_URL],
     'python_module': 'datalab_solutions.structured_data.trainer.task',
     'scale_tier': scale_tier,
     'region': region,
@@ -551,8 +551,8 @@ def cloud_batch_predict(model_dir, prediction_input_file, output_dir,
          '--output_dir=%s' % output_dir,
          '--output_format=%s' % output_format,
          '--batch_size=%s' % str(batch_size),
-         '--extra_package=%s' % _package_to_staging(output_dir)]
-  print(cmd)
+         '--extra_package=%s' % _package_to_staging(output_dir),
+         '--extra_package=%s' % _TF_GS_URL]
 
   if shard_files:
     cmd.append('--shard_files')
