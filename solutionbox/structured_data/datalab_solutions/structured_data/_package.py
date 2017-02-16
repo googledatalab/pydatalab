@@ -23,7 +23,6 @@
      cloud_train
      cloud_predict
 """
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -50,9 +49,8 @@ from . import preprocess
 from . import trainer
 from . import predict
 
-#_SETUP_PY = '/datalab/packages_setup/structured_data/setup.py'
-#_TF_VERSION = 'tensorflow-0.12.0rc0-cp27-none-linux_x86_64.whl'
-#_TF_WHL = '/datalab/packages_setup/structured_data'
+
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0rc1-cp27-none-linux_x86_64.whl'
 
 
 def _default_project():
@@ -93,13 +91,11 @@ def _package_to_staging(staging_package_url):
     package_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '../../'))
     setup_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'setup.py'))
+        os.path.join(os.path.dirname(__file__), 'master_setup.py'))
     tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
 
-    print('Building package in %s and uploading to %s' % 
-          (package_root, tar_gz_path))
+    print('Building package and uploading to %s' % tar_gz_path)
     mlalpha.package_and_copy(package_root, setup_path, tar_gz_path)
-
 
     return tar_gz_path
 
@@ -239,7 +235,9 @@ def local_train(train_file_pattern,
 
   if key_column and not transforms_file:
     # Make a transforms file.
-    transforms_file = os.math.join(output_dir, 'transforms_file.json')
+    if not file_io.file_exists(output_dir):
+      file_io.recursive_create_dir(output_dir)
+    transforms_file = os.path.join(output_dir, 'transforms_file.json')
     file_io.write_string_to_file(
         transforms_file,
         json.dumps({key_column: {"transform": "key"}}, indent=2))
@@ -258,8 +256,9 @@ def local_train(train_file_pattern,
           '--transforms_file=%s' % transforms_file,
           '--model_type=%s' % model_type,
           '--max_steps=%s' % str(max_steps)]
-  for i in range(len(layer_sizes)):
-    args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
+  if layer_sizes:
+    for i in range(len(layer_sizes)):
+      args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
   if top_n:
     args.append('--top_n=%s' % str(top_n))
 
@@ -315,7 +314,9 @@ def cloud_train(train_file_pattern,
 
   if key_column and not transforms_file:
     # Make a transforms file.
-    transforms_file = os.math.join(output_dir, 'transforms_file.json')
+    if not file_io.file_exists(output_dir):
+      file_io.recursive_create_dir(output_dir)    
+    transforms_file = os.path.join(output_dir, 'transforms_file.json')
     file_io.write_string_to_file(
         transforms_file,
         json.dumps({key_column: {"transform": "key"}}, indent=2))
@@ -336,8 +337,9 @@ def cloud_train(train_file_pattern,
           '--transforms_file=%s' % transforms_file,
           '--model_type=%s' % model_type,
           '--max_steps=%s' % str(max_steps)]
-  for i in range(len(layer_sizes)):
-    args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
+  if layer_sizes:
+    for i in range(len(layer_sizes)):
+      args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
   if top_n:
     args.append('--top_n=%s' % str(top_n))    
 

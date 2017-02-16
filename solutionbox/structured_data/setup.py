@@ -23,6 +23,8 @@ from setuptools import setup
 def get_version():
     VERSIONFILE = os.path.join('datalab_solutions/structured_data/',
                                '__init__.py')
+    if not os.path.isfile(VERSIONFILE):
+      raise ValueError('setup.py: File not found %s' % VERSIONFILE)
     initfile_lines = open(VERSIONFILE, 'rt').readlines()
     VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
     for line in initfile_lines:

@@ -13,13 +13,18 @@
 # A copy of this file must be made in datalab_solutions/structured_data/setup.py
 
 import datetime
+import os
+import re
 from setuptools import setup
+
 
 
 # The version is saved in an __init__ file.
 def get_version():
     VERSIONFILE = os.path.join('datalab_solutions/structured_data/',
                                '__init__.py')
+    if not os.path.isfile(VERSIONFILE):
+      raise ValueError('setup.py: File not found %s' % VERSIONFILE)
     initfile_lines = open(VERSIONFILE, 'rt').readlines()
     VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
     for line in initfile_lines:
