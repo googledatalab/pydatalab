@@ -26,7 +26,7 @@ from . import util
 import tensorflow as tf
 from tensorflow.contrib import metrics as metrics_lib
 
-from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
+#from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.session_bundle import manifest_pb2
 from tensorflow.python.lib.io import file_io
@@ -105,7 +105,6 @@ def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
 
   def get_input_features():
     """Read the input features from the given data paths."""
-    print("GOT TO get_reader_input_fn")
     _, examples = util.read_examples(data_paths, batch_size, shuffle)
     features = util.parse_example_tensor(examples=examples,
                                          train_config=train_config)
@@ -119,7 +118,6 @@ def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
         preprocess_output_dir=preprocess_output_dir,
         model_type=model_type)
 
-    print("get_reader_input_fn FINISHED")
     return features, target
 
   # Return a function to input the feaures into the model from a data path.
@@ -240,7 +238,6 @@ def make_export_strategy(serving_input_fn, exports_to_keep=5):
       serving_input_fn, exports_to_keep=exports_to_keep)
 
   def export_fn(estimator, export_dir_base):
-    print('GOT TO make_export_strategy/export_fn')
     base_strategy.export(estimator, export_dir_base)
     # do other stuff
 
@@ -312,8 +309,6 @@ def get_experiment_fn(args):
     else:
       eval_metrics = None
 
-
-    print('GOT TO MAKING THE EXPERIMENT')
     return tf.contrib.learn.Experiment(
         estimator=estimator,
         train_input_fn=input_reader_for_train,

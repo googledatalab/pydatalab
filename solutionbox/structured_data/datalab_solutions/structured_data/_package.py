@@ -23,7 +23,6 @@
      cloud_train
      cloud_predict
 """
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -49,6 +48,9 @@ from tensorflow.python.lib.io import file_io
 from . import preprocess
 from . import trainer
 from . import predict
+
+
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0rc1-cp27-none-linux_x86_64.whl'
 
 
 def _default_project():
@@ -89,33 +91,11 @@ def _package_to_staging(staging_package_url):
     package_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '../../'))
     setup_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'setup.py'))
+        os.path.join(os.path.dirname(__file__), 'master_setup.py'))
     tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
 
-    print('Building package in %s and uploading to %s' % 
-          (package_root, tar_gz_path))
-    print('pr', package_root)
-    print('setup', setup_path)
-    print('tar', tar_gz_path)
+    print('Building package and uploading to %s' % tar_gz_path)
     mlalpha.package_and_copy(package_root, setup_path, tar_gz_path)
-
-
-    # try:
-    #   # Repackage. 
-    #   tempdir = tempfile.mkdtemp()
-    #   print(tempdir)
-    #   cmd = ['cd %s &&' % package_root,
-    #          'python %s sdist --format=gztar -d %s' % (setup_path, tempdir)]
-    #   subprocess.check_call(' '.join(cmd), shell=True)
-
-    #   # Copy to GCS.
-    #   source = os.path.join(tempdir, '*.tar.gz')
-    #   gscopy = ['gsutil', 'cp', source, tar_gz_path]
-    #   subprocess.check_call(gscopy)
-    # finally:
-    #   pass
-    #   #shutil.rmtree(tempdir)
-
 
     return tar_gz_path
 
