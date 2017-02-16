@@ -196,6 +196,7 @@ class ModelVersions(object):
     body = {
       'name': version_name,
       'deployment_uri': path,
+      'runtime_version': '1.0',
     }
     response = self._api.projects().models().versions().create(body=body,
                    parent=self._full_model_name).execute()
