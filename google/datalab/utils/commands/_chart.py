@@ -23,6 +23,7 @@ except ImportError:
 
 from . import _commands
 from . import _utils
+import google.datalab.utils
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -52,6 +53,9 @@ using YAML or JSON.
 
 def _chart_cell(args, cell):
   source = args['data']
+  item = google.datalab.utils.commands.get_notebook_item(source)
+  if item is None:
+    raise Exception('Cannot find object %s.' % source)
   ipy = IPython.get_ipython()
   chart_options = _utils.parse_config(cell, ipy.user_ns)
   if chart_options is None:
@@ -60,5 +64,5 @@ def _chart_cell(args, cell):
     raise Exception("Could not parse chart options")
   chart_type = args['chart']
   fields = args['fields'] if args['fields'] else '*'
-  return IPython.core.display.HTML(_utils.chart_html('gcharts', chart_type, source=source,
+  return IPython.core.display.HTML(_utils.chart_html('gcharts', chart_type, source=item,
                                                      chart_options=chart_options, fields=fields))
