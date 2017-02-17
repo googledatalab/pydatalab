@@ -142,14 +142,14 @@ def cloud_train(input_dir, batch_size, max_steps, output_dir,
 def _display_predict_results(results, show_image):
   if (_util.is_in_IPython()):
     import IPython
-    for image, label_and_score in results:
+    for image_url, image, label_and_score in results:
       if show_image is True:
         IPython.display.display_html('<p style="font-size:28px">%s(%.5f)</p>' % label_and_score,
             raw=True)
         IPython.display.display(IPython.display.Image(data=image))
       else:
         IPython.display.display_html(
-            '<p>%s&nbsp&nbsp%s(%.5f)</p>' % ((image_file,) + label_and_score), raw=True)
+            '<p>%s&nbsp&nbsp&nbsp&nbsp%s(%.5f)</p>' % ((image_url,) + label_and_score), raw=True)
   else:
     print results
 
@@ -160,12 +160,12 @@ def local_predict(model_dir, image_files, resize=False, show_image=True):
     model_dir: The directory of a trained inception model. Can be local or GCS paths.
     image_files: The paths to the image files to predict labels. Can be local or GCS paths.
     show_image: Whether to show images in the results.
-    resize: Whether to resize the image to a reasonable size before prediction.
+    resize: Whether to resize the image to a reasonable size (300x300) before prediction.
   """
   print('Predicting...')
   images = _util.load_images(image_files, resize=resize)
   labels_and_scores = _local.Local().predict(model_dir, images)
-  results = zip(images, labels_and_scores)
+  results = zip(image_files, images, labels_and_scores)
   _display_predict_results(results, show_image)
   print('Done')
 
@@ -176,13 +176,13 @@ def cloud_predict(model_id, image_files, resize=False, show_image=True):
     model_id: The deployed model id in the form of "model.version".
     image_files: The paths to the image files to predict labels. GCS paths only.
     show_image: Whether to show images in the results.
-    resize: Whether to resize the image to a reasonable size before prediction.
+    resize: Whether to resize the image to a reasonable size (300x300) before prediction.
         Set it to True if your images are too large to send over network.
   """
   print('Predicting...')
   images = _util.load_images(image_files, resize=resize)
   labels_and_scores = _cloud.Cloud().predict(model_id, images)
-  results = zip(images, labels_and_scores)
+  results = zip(image_files, images, labels_and_scores)
   _display_predict_results(results, show_image)
   print('Done')
 
