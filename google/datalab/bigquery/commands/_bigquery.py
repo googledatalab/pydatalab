@@ -37,6 +37,39 @@ import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
 
+BIGQUERY_DATATYPES = ['STRING', 'BYTES', 'INTEGER', 'INT64', 'FLOAT', 'FLOAT64', 'BOOLEAN',
+                      'BOOL', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']
+BIGQUERY_DATATYPES_LOWER = [t.lower() for t in BIGQUERY_DATATYPES]
+
+table_schema_schema = {
+  'definitions': {
+    'field': {
+      'title': 'field',
+      'type': 'object',
+      'properties': {
+        'name': {'type': 'string'},
+        'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
+        'mode': {'type': 'string', 'enum': ['nullable', 'required', 'repeated']},
+        'description': {'type': 'string'},
+        'fields': {'$ref': '#/definitions/field'}
+      },
+      'required': ['name', 'type'],
+      'additionalProperties': False
+    }
+  },
+  'type': 'object',
+  'properties': {
+    'schema': {
+      'type': 'array',
+      'items': {
+        'allOf': [{'$ref': '#/definitions/field'}]
+      }
+    }
+  },
+  'required': ['schema'],
+  'additionalProperties': False
+}
+
 query_params_schema = {
   'type': 'object',
   'properties': {
@@ -265,13 +298,14 @@ def _create_extract_subparser(parser):
 
 
 def _create_load_subparser(parser):
-  load_parser = parser.subcommand('load', 'Load data from GCS into a BigQuery table.')
+  load_parser = parser.subcommand('load', 'Load data from GCS into a BigQuery table. If creating a new ' +
+                                          'table, a schema should be specified in YAML or JSON in the cell ' +
+                                          'body, otherwise the schema is inferred from existing table.')
   load_parser.add_argument('-m', '--mode', help='One of create (default), append or overwrite',
                            choices=['create', 'append', 'overwrite'], default='create')
   load_parser.add_argument('-f', '--format', help='The source format', choices=['json', 'csv'],
                            default='csv')
-  load_parser.add_argument('-n', '--skip',
-                           help='The number of initial lines to skip; useful for CSV headers',
+  load_parser.add_argument('--skip', help='The number of initial lines to skip; useful for CSV headers',
                            type=int, default=0)
   load_parser.add_argument('-s', '--strict', help='Whether to reject bad values and jagged lines',
                            action='store_true')
@@ -279,12 +313,8 @@ def _create_load_subparser(parser):
                            help='The inter-field delimiter for CVS (default ,)')
   load_parser.add_argument('-q', '--quote', default='"',
                            help='The quoted field delimiter for CVS (default ")')
-  load_parser.add_argument('-i', '--infer',
-                           help='Whether to attempt to infer the schema from source; ' +
-                               'if false the table must already exist',
-                           action='store_true')
-  load_parser.add_argument('-S', '--source', help='The URL of the GCS source(s)')
-  load_parser.add_argument('-D', '--destination', help='The destination table name')
+  load_parser.add_argument('-p', '--path', help='The path URL of the GCS source(s)')
+  load_parser.add_argument('-t', '--table', help='The destination table name')
   return load_parser
 
 
@@ -800,43 +830,42 @@ def _extract_cell(args, cell_body):
   return job.result()
 
 
-def _load_cell(args, schema):
+def _load_cell(args, cell_body):
   """Implements the BigQuery load magic used to load data from GCS to a table.
 
    The supported syntax is:
 
-       %bq load -S|--source <source> -D|--destination <table>  <other_args>
+       %bq load <optional args>
 
   Args:
     args: the arguments following '%bq load'.
-    schema: a JSON schema for the destination table.
+    cell_body: optional contents of the cell interpreted as YAML or JSON.
   Returns:
     A message about whether the load succeeded or failed.
   """
-  name = args['destination']
+  name = args['table']
   table = _get_table(name)
   if not table:
     table = google.datalab.bigquery.Table(name)
 
-  if table.exists():
+  if cell_body:
+    schema = google.datalab.utils.commands.parse_config(cell_body, None, False)
+    jsonschema.validate(schema, table_schema_schema)
+    schema = google.datalab.bigquery.Schema(schema['schema'])
+    table.create(schema=schema)
+  elif table.exists():
     if args['mode'] == 'create':
       raise Exception('%s already exists; use --append or --overwrite' % name)
-  elif schema:
-    table.create(json.loads(schema))
-  elif not args['infer']:
-    raise Exception(
-        'Table does not exist, no schema specified in cell and no --infer flag; cannot load')
+  else:
+    raise Exception('Table does not exist, and no schema specified in cell; cannot load')
 
-  # TODO(gram): we should probably try do the schema infer ourselves as BQ doesn't really seem
-  # to be able to do it. Alternatively we can drop the --infer argument and force the user
-  # to use a pre-existing table or supply a JSON schema.
   csv_options = google.datalab.bigquery.CSVOptions(delimiter=args['delimiter'],
                                         skip_leading_rows=args['skip'],
                                         allow_jagged_rows=not args['strict'],
                                         quote=args['quote'])
-  job = table.load(args['source'],
+  job = table.load(args['path'],
                    mode=args['mode'],
-                   source_format=('CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
+                   source_format=('csv' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
                    csv_options=csv_options,
                    ignore_unknown_values=not args['strict'])
   if job.failed:
@@ -896,8 +925,6 @@ for help on a specific command.
   _add_command(parser, _create_pipeline_subparser, _pipeline_cell)
 
   # %bq load
-  # TODO(gram): need some additional help, esp. around the option of specifying schema in
-  # cell body and how schema infer may fail.
   _add_command(parser, _create_load_subparser, _load_cell)
   return parser
 
