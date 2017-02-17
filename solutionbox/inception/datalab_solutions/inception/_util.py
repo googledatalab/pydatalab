@@ -16,6 +16,7 @@
 """Reusable utility functions.
 """
 
+import collections
 import google.cloud.ml as ml
 import multiprocessing
 import os
@@ -162,6 +163,7 @@ def check_dataset(dataset, mode):
       raise ValueError('Invalid dataset. Expect only "image_url" or "image_url,label" ' +
                        'STRING columns.')
 
+
 def get_sources_from_dataset(p, dataset, mode):
   """get pcollection from dataset."""
 
@@ -184,3 +186,54 @@ def get_sources_from_dataset(p, dataset, mode):
     return p | 'Read source from BigQuery (%s)' % mode >> beam.io.Read(bq_source)
   else:
     raise ValueError('Invalid DataSet. Expect CsvDataSet or BigQueryDataSet')
+
+
+def decode_and_resize(image_str_tensor):
+  """Decodes jpeg string, resizes it and returns a uint8 tensor."""
+
+  # These constants are set by Inception v3's expectations.
+  height = 299
+  width = 299
+  channels = 3
+
+  image = tf.image.decode_jpeg(image_str_tensor, channels=channels)
+  # Note resize expects a batch_size, but tf_map supresses that index,
+  # thus we have to expand then squeeze.  Resize returns float32 in the
+  # range [0, uint8_max]
+  image = tf.expand_dims(image, 0)
+  image = tf.image.resize_bilinear(image, [height, width], align_corners=False)
+  image = tf.squeeze(image, squeeze_dims=[0])
+  image = tf.cast(image, dtype=tf.uint8)
+  return image
+
+
+def resize_image(image_str_tensor):
+  """Decodes jpeg string, resizes it and re-encode it to jpeg."""
+
+  image = decode_and_resize(image_str_tensor)
+  image = tf.image.encode_jpeg(image, quality=100)
+  return image
+
+
+def load_images(image_files, resize=True):
+  """Load images from files and optionally resize it."""
+
+  images = []
+  for image_file in image_files:
+    with ml.util._file.open_local_or_gcs(image_file, 'r') as ff:
+      images.append(ff.read())
+  if resize is False:
+    return images
+
+  # To resize, run a tf session so we can reuse 'decode_and_resize()'
+  # which is used in prediction graph. This makes sure we don't lose
+  # any quality in prediction, while decreasing the size of the images
+  # submitted to the model over network.
+  image_str_tensor = tf.placeholder(tf.string, shape=[None])
+  image = tf.map_fn(resize_image, image_str_tensor, back_prop=False)
+  feed_dict = collections.defaultdict(list)
+  feed_dict[image_str_tensor.name] = images
+  with tf.Session() as sess:
+    images_resized = sess.run(image, feed_dict=feed_dict)
+  return images_resized
+

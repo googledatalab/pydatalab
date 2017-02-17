@@ -104,23 +104,22 @@ class Cloud(object):
     job = mlalpha.Job.submit_training(job_request, job_id)
     return job
 
-  def predict(self, model_id, image_files):
+  def predict(self, model_id, images):
     """Cloud prediction with CloudML prediction service."""
 
     import datalab.mlalpha as mlalpha
     parts = model_id.split('.')
     if len(parts) != 2:
       raise ValueError('Invalid model name for cloud prediction. Use "model.version".')
-    if len(image_files) == 0:
-      raise ValueError('image_files is empty.')
+    if len(images) == 0:
+      raise ValueError('images is empty.')
 
     data = []
-    for ii, img_file in enumerate(image_files):
-      with ml.util._file.open_local_or_gcs(img_file, 'rb') as f:
-        img = base64.b64encode(f.read())
+    for ii, image in enumerate(images):
+      image_encoded = base64.b64encode(image)
       data.append({
         'key': str(ii),
-        'image_bytes': {'b64': img}
+        'image_bytes': {'b64': image_encoded}
       })
 
     predictions = mlalpha.ModelVersions(parts[0]).predict(parts[1], data)

@@ -67,10 +67,10 @@ class Local(object):
     _trainer.Trainer(input_dir, batch_size, max_steps, output_dir,
                      model, None, task).run_training()
 
-  def predict(self, model_dir, image_files):
+  def predict(self, model_dir, images):
     """Local prediction."""
 
-    return _predictor.predict(model_dir, image_files)
+    return _predictor.predict(model_dir, images)
 
 
   def batch_predict(self, dataset, model_dir, output_csv, output_bq_table):

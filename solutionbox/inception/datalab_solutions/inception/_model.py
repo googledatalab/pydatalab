@@ -122,12 +122,6 @@ class Model(object):
                   Inception layer with image bytes for prediction.
       inception_embeddings: The embeddings tensor.
     """
-
-    # These constants are set by Inception v3's expectations.
-    height = 299
-    width = 299
-    channels = 3
-
     image_str_tensor = tf.placeholder(tf.string, shape=[None])
 
     # The CloudML Prediction API always "feeds" the Tensorflow graph with
@@ -135,23 +129,8 @@ class Model(object):
     # strings because it cannot guarantee a batch of images would have
     # the same output size.  We use tf.map_fn to give decode_jpeg a scalar
     # string from dynamic batches.
-    def decode_and_resize(image_str_tensor):
-      """Decodes jpeg string, resizes it and returns a uint8 tensor."""
-
-      image = tf.image.decode_jpeg(image_str_tensor, channels=channels)
-
-      # Note resize expects a batch_size, but tf_map supresses that index,
-      # thus we have to expand then squeeze.  Resize returns float32 in the
-      # range [0, uint8_max]
-      image = tf.expand_dims(image, 0)
-      image = tf.image.resize_bilinear(
-          image, [height, width], align_corners=False)
-      image = tf.squeeze(image, squeeze_dims=[0])
-      image = tf.cast(image, dtype=tf.uint8)
-      return image
-
     image = tf.map_fn(
-        decode_and_resize, image_str_tensor, back_prop=False, dtype=tf.uint8)
+        _util.decode_and_resize, image_str_tensor, back_prop=False, dtype=tf.uint8)
     # convert_image_dtype, also scales [0, uint8_max] -> [0 ,1).
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
 

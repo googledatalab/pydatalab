@@ -117,7 +117,7 @@ class Trainer(object):
     self.task = task
     self.evaluator = Evaluator(self.model, eval_files, batch_size, output_path, 'eval_set')
     self.train_evaluator = Evaluator(self.model, train_files, batch_size, output_path, 'train_set')
-    self.min_train_eval_rate = 20
+    self.min_train_eval_rate = 8
 
   def run_training(self):
     """Runs a Master."""

@@ -23,10 +23,11 @@ import json
 import os
 import tensorflow as tf
 
+from . import _model
 from . import _util
 
 
-def _tf_predict(model_dir, batches):
+def _tf_predict(model_dir, images):
   model_dir = os.path.join(model_dir, 'model')
   with tf.Session() as sess:
     new_saver = tf.train.import_meta_graph(os.path.join(model_dir, 'export.meta'))
@@ -35,25 +36,19 @@ def _tf_predict(model_dir, batches):
     sess.run(init_op)
     inputs = json.loads(tf.get_collection('inputs')[0])
     outputs = json.loads(tf.get_collection('outputs')[0])
-    for batch in batches:
-      feed_dict = collections.defaultdict(list)
-      for ii, image_filename in enumerate(batch):
-        if image_filename is None:
-          break
-        with ml.util._file.open_local_or_gcs(image_filename, 'r') as ff:
-          image_bytes = ff.read()
-          feed_dict[inputs['image_bytes']].append(image_bytes)
-          feed_dict[inputs['key']].append(str(ii))
-      predictions, labels, scores = sess.run(
-          [outputs['prediction'], outputs['labels'], outputs['scores']], feed_dict=feed_dict)
-      yield zip(predictions, labels, scores)
+    feed_dict = collections.defaultdict(list)
+    for ii, image in enumerate(images):
+      feed_dict[inputs['image_bytes']].append(image)
+      feed_dict[inputs['key']].append(str(ii))
+    predictions, labels, scores = sess.run(
+        [outputs['prediction'], outputs['labels'], outputs['scores']], feed_dict=feed_dict)
+    return zip(predictions, labels, scores)
 
 
-def predict(model_dir, image_files):
+def predict(model_dir, images):
   """Local instant prediction."""
 
-  # Single batch for instant prediction.
-  results = next(_tf_predict(model_dir, [image_files]))
+  results = _tf_predict(model_dir, images)
   predicted_and_scores = [(predicted, label_scores[list(labels).index(predicted)])
                           for predicted, labels, label_scores in results]
   return predicted_and_scores
