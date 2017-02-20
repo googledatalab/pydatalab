@@ -16,15 +16,44 @@
 import json
 import multiprocessing
 import os
+import math
 from StringIO import StringIO
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
+from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
+from tensorflow.contrib.learn.python.learn import export_strategy
+from tensorflow.contrib.learn.python.learn.utils import (
+    saved_model_export_utils)
+
+from tensorflow.python.ops import variables
+from tensorflow.contrib.framework.python.ops import variables as contrib_variables
+from tensorflow.contrib.learn.python.learn.estimators import model_fn as model_fn_lib
+from tensorflow.python.training import saver
+from tensorflow.python.ops import data_flow_ops
+from tensorflow.python.framework import ops
+from tensorflow.python.client import session as tf_session
+from tensorflow.python.saved_model import builder as saved_model_builder
+from tensorflow.python.saved_model import tag_constants
+from tensorflow.python.ops import control_flow_ops
+from tensorflow.python.util import compat
+from tensorflow.python.platform import gfile
+from tensorflow.python.saved_model import signature_def_utils
+
+
 SCHEMA_FILE = 'schema.json'
 NUMERICAL_ANALYSIS = 'numerical_analysis.json'
 CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
 
+
+# Constants for the Prediction Graph fetch tensors.
+PG_KEY = 'key_from_input'
+PG_TARGET = 'target_from_input'
+
+PG_REGRESSION_PREDICTED_TARGET = 'predicted_target'
+PG_CLASSIFICATION_LABEL_TEMPLATE = 'top_%s_label'
+PG_CLASSIFICATION_SCORE_TEMPLATE = 'top_%s_score'
 
 # ==============================================================================
 # Exporting the last trained model to a final location
@@ -41,68 +70,248 @@ def _copy_all(src_files, dest_dir):
 
 def _recursive_copy(src_dir, dest_dir):
   """Copy the contents of src_dir into the folder dest_dir.
-
   Args:
     src_dir: gsc or local path.
     dest_dir: gcs or local path.
-
   When called, dest_dir should exist.
   """
-  for dir_name, sub_dirs, leaf_files in file_io.walk(src_dir):
-    # copy all the files over
-    for leaf_file in leaf_files:
-      leaf_file_path = os.path.join(dir_name, leaf_file)
-      _copy_all([leaf_file_path], dest_dir)
+  file_io.recursive_create_dir(dest_dir)
+  for file_name in file_io.list_directory(src_dir):
+    old_path = os.path.join(src_dir, file_name)
+    new_path = os.path.join(dest_dir, file_name)
 
-    # Now make all the folders.
-    for sub_dir in sub_dirs:
-      file_io.create_dir(os.path.join(dest_dir, sub_dir))
+    if file_io.is_directory(old_path):
+      _recursive_copy(old_path, new_path)
+    else:
+      file_io.copy(old_path, new_path)
+
+def serving_from_csv_input(train_config, args):
+  """Read the input features from a placeholder csv string tensor."""
+  examples = tf.placeholder(
+      dtype=tf.string,
+      shape=(None,),
+      name='csv_input_string')
+
+  features = parse_example_tensor(examples=examples,
+                                       train_config=train_config)
+
+  target = features.pop(train_config['target_column'])
+  features, target = preprocess_input(
+      features=features,
+      target=target,
+      train_config=train_config,
+      preprocess_output_dir=args.preprocess_output_dir,
+      model_type=args.model_type)
+
+  return input_fn_utils.InputFnOps(features,
+                                   target,
+                                   {'csv_line': examples}
+  )    
 
 
-class ExportLastModelMonitor(tf.contrib.learn.monitors.ExportMonitor):
-  """Export the last model to its final location on GCS.
+def build_sig_def(input_fn_ops, estimator):
 
-  The tf.learn ExportMonitor exports the models to a location based on the last
-  n steps move the exported model to a fixed location.
-  """
+  model_fn_ops = estimator._call_model_fn(input_fn_ops.features, None,
+                                         model_fn_lib.ModeKeys.INFER)
+  model_tensor_info = {key: tf.saved_model.utils.build_tensor_info(value) for key, value in model_fn_ops.predictions.iteritems()}   
+  input_tensor_info = {key: tf.saved_model.utils.build_tensor_info(value) for key, value in input_fn_ops.default_inputs.iteritems()}
+  sig_def = tf.saved_model.signature_def_utils.build_signature_def(
+          inputs=input_tensor_info,
+          outputs=model_tensor_info,
+          method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
+  return sig_def
 
-  def __init__(self,
-               output_dir,
-               final_model_location,
-               every_n_steps=5000,
-               additional_assets=None,
-               input_fn=None,
-               input_feature_key=None,
-               exports_to_keep=5,
-               signature_fn=None,
-               default_batch_size=None):
-    # Export the model to a temporary location then upload to its final
-    # GCS destination.
-    export_dir = os.path.join(output_dir, 'intermediate_models')
-    super(ExportLastModelMonitor, self).__init__(
-        every_n_steps=every_n_steps,
-        export_dir=export_dir,
-        input_fn=input_fn,
-        input_feature_key=input_feature_key,
-        exports_to_keep=exports_to_keep,
-        signature_fn=signature_fn,
-        default_batch_size=default_batch_size)
-    self._final_model_location = os.path.join(output_dir, final_model_location)
-    self._additional_assets = additional_assets or []
+def xxxxmake_export_strategy(train_config, args, assets_extra=None):
 
-  def end(self, session=None):
-    super(ExportLastModelMonitor, self).end(session)
-    # Recursively copy the last location export dir from the exporter into the
-    # main export location.
-    file_io.recursive_create_dir(self._final_model_location)
-    _recursive_copy(self.last_export_dir, self._final_model_location)
+  def export_fn(estimator,
+                export_dir_base,
+                checkpoint_path=None
+               ):
+    export_result = estimator.export_savedmodel(
+        export_dir_base,
+        _serving_in_fn,
+        default_output_alternative_key=None,
+        assets_extra=assets_extra,
+        as_text=False)
 
-    if self._additional_assets:
-      # TODO(rhaertel): use the actual assets directory. For now, metadata.json
-      # must be a sibling of the export.meta file.
-      assets_dir = self._final_model_location
-      file_io.create_dir(assets_dir)
-      _copy_all(self._additional_assets, assets_dir)
+    saved_model_export_utils.garbage_collect_exports(export_dir_base, exports_to_keep=5)
+    return export_result
+
+  return export_strategy.ExportStrategy('servolike', export_fn)
+
+def make_output_tensors(train_config, args, input_ops, model_fn_ops, output_target=True):
+    target_name = train_config['target_column']
+    key_name = train_config['key_column']
+
+    outputs = {}
+    outputs[PG_KEY] = tf.squeeze(input_ops.features[key_name])
+
+    if is_classification_model(args.model_type):
+
+      # Get the label of the input target.
+      string_value = get_vocabulary(args.preprocess_output_dir, target_name)
+
+      if output_target:
+        input_target_label = tf.contrib.lookup.index_to_string(
+            input_ops.labels,
+            mapping=string_value,
+            default_value='UNKNOWN')   
+        outputs[PG_TARGET] = tf.squeeze(input_target_label)
+
+      # TODO(brandondutra): get the score of the target label too.
+      probabilities = model_fn_ops.predictions['probabilities']
+      
+      # get top k labels and their scores.
+      (top_k_values, top_k_indices) = tf.nn.top_k(probabilities, k=args.top_n)
+      top_k_labels = tf.contrib.lookup.index_to_string(
+          tf.to_int64(top_k_indices),
+          mapping=string_value)
+   
+      # Write the top_k values using 2*top_k columns. 
+      num_digits = int(math.ceil(math.log(args.top_n, 10)))
+      if num_digits == 0:
+        num_digits = 1
+      for i in range(0, args.top_n):
+        # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
+        # makes sorting the columns easy.
+        padded_i = str(i+1).zfill(num_digits)
+
+        label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
+        label_tensor_name = (tf.squeeze(
+              tf.slice(top_k_labels, 
+                       [0, i],
+                       [tf.shape(top_k_labels)[0], 1])))
+        score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
+        score_tensor_name = (tf.squeeze(
+            tf.slice(top_k_values, 
+                     [0, i], 
+                     [tf.shape(top_k_values)[0], 1])))
+
+        outputs.update({label_alias: label_tensor_name,
+                        score_alias: score_tensor_name})
+
+    else:
+      if output_target:
+        outputs[PG_TARGET] = tf.squeeze(input_ops.labels)
+
+      scores = model_fn_ops.predictions['scores']
+      outputs[PG_REGRESSION_PREDICTED_TARGET] = tf.squeeze(scores)
+
+    return outputs
+
+
+def make_export_strategy(train_config, args, assets_extra=None):
+  default_output_alternative_key=None
+  #serving_from_csv_ops = serving_from_csv_input(train_config, args)
+  #def _serving_in_fn():
+  #  return serving_from_csv_input(train_config, args)
+  def export_fn(estimator, export_dir_base, checkpoint_path=None, eval_result=None):
+    with ops.Graph().as_default() as g:
+      contrib_variables.create_global_step(g)
+
+      # Call the serving_input_fn and collect the input alternatives.
+      input_ops = serving_from_csv_input(train_config, args)
+      input_alternatives, features = (
+          saved_model_export_utils.get_input_alternatives(input_ops))
+
+      # Call the model_fn and collect the output alternatives.
+      model_fn_ops = estimator._call_model_fn(features, None,
+                                         model_fn_lib.ModeKeys.INFER)
+      #output_alternatives, actual_default_output_alternative_key = (
+      #    saved_model_export_utils.get_output_alternatives(
+      #        model_fn_ops, default_output_alternative_key))
+
+      #default_output_tensors = output_alternatives[actual_default_output_alternative_key][1]
+      #print('default_output_tensors', default_output_tensors)
+      #print('output_alternatives', output_alternatives)
+      #print('actual_default_output_alternative_key', actual_default_output_alternative_key)
+      #input_features = serving_from_csv_ops.features
+      input_placeholder = input_ops.default_inputs
+
+      #output_tensors = model_fn_ops.predictions
+      #print('old ot', output_tensors)
+      #output_tensors = model_fn_ops.predictions
+      output_fetch_tensors_csv_target = make_output_tensors(
+          train_config=train_config, 
+          args=args,
+          input_ops=input_ops,
+          model_fn_ops=model_fn_ops,
+          output_target=True) 
+
+      #print('new ot', output_tensors)
+      signature_def_map = {
+        'serving_default': 
+            signature_def_utils.predict_signature_def(
+                input_placeholder, 
+                output_fetch_tensors_csv_target),
+      #  'serving_json_no_target':
+      #      signature_def_utils.predict_signature_def(input_placeholder, 
+      #                                                output_tensors),
+      }
+
+      # Build the SignatureDefs from all pairs of input and output alternatives
+      #signature_def_map = saved_model_export_utils.build_all_signature_defs(
+      #    input_alternatives, output_alternatives,
+      #    actual_default_output_alternative_key)
+
+      if not checkpoint_path:
+        # Locate the latest checkpoint
+        checkpoint_path = saver.latest_checkpoint(estimator._model_dir)
+      if not checkpoint_path:
+        raise NotFittedError("Couldn't find trained model at %s."
+                             % estimator._model_dir)
+
+      export_dir = saved_model_export_utils.get_timestamped_export_dir(
+          export_dir_base)
+
+      with tf_session.Session('') as session:
+        variables.initialize_local_variables()
+        data_flow_ops.tables_initializer()
+        saver_for_restore = saver.Saver(
+            variables.global_variables(),
+            sharded=True)
+        saver_for_restore.restore(session, checkpoint_path)
+
+        init_op = control_flow_ops.group(
+            variables.local_variables_initializer(),
+            data_flow_ops.tables_initializer())
+
+        # Perform the export
+        builder = saved_model_builder.SavedModelBuilder(export_dir)
+        builder.add_meta_graph_and_variables(
+            session, [tag_constants.SERVING],
+            signature_def_map=signature_def_map,
+            assets_collection=ops.get_collection(
+                ops.GraphKeys.ASSET_FILEPATHS),
+            legacy_init_op=init_op)
+        builder.save(False)
+
+      # Add the extra assets
+      if assets_extra:
+        assets_extra_path = os.path.join(compat.as_bytes(export_dir),
+                                         compat.as_bytes('assets.extra'))
+        for dest_relative, source in assets_extra.items():
+          dest_absolute = os.path.join(compat.as_bytes(assets_extra_path),
+                                       compat.as_bytes(dest_relative))
+          dest_path = os.path.dirname(dest_absolute)
+          gfile.MakeDirs(dest_path)
+          gfile.Copy(source, dest_absolute)
+
+    # only keep the last 5 models
+    saved_model_export_utils.garbage_collect_exports(export_dir_base, exports_to_keep=5)
+
+    # save the last model to the model folder.
+    # export_dir_base = A/B/intermediate_models/
+    final_model_location = os.path.abspath(os.path.join(export_dir_base, '../model/'))
+    if file_io.is_directory(final_model_location):
+      file_io.delete_recursively(final_model_location)
+    file_io.recursive_create_dir(final_model_location)
+    _recursive_copy(export_dir, final_model_location)
+
+
+    return final_model_location
+
+  return export_strategy.ExportStrategy('intermediate_models', export_fn)
 
 
 # ==============================================================================

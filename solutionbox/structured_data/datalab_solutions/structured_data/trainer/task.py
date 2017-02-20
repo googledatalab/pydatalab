@@ -76,11 +76,11 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
     features = util.parse_example_tensor(examples=new_examples,
                                          train_config=train_config)
 
-    global FEATURES_EXAMPLE_DICT_KEY
-    while FEATURES_EXAMPLE_DICT_KEY in features:
-      FEATURES_EXAMPLE_DICT_KEY = '_' + FEATURES_EXAMPLE_DICT_KEY
+    #global FEATURES_EXAMPLE_DICT_KEY
+    #while FEATURES_EXAMPLE_DICT_KEY in features:
+    #  FEATURES_EXAMPLE_DICT_KEY = '_' + FEATURES_EXAMPLE_DICT_KEY
 
-    features[FEATURES_EXAMPLE_DICT_KEY] = new_examples
+    #features[FEATURES_EXAMPLE_DICT_KEY] = new_examples
 
     target = features.pop(train_config['target_column'])
     features, target = util.preprocess_input(
@@ -124,26 +124,6 @@ def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
   return get_input_features
 
 
-def vector_slice(A, B):
-    """ Returns values of rows i of A at column B[i]
-
-    where A is a 2D Tensor with shape [None, D] 
-    and B is a 1D Tensor with shape [None] 
-    with type int32 elements in [0,D)
-
-    Example:
-      A =[[1,2], B = [0,1], vector_slice(A,B) -> [1,4]
-          [3,4]]
-
-    Converts A into row major order and does a 1D index lookup.
-    """
-    # if A is m x n, then linear_index is [0, n, 2n, ..., (m-1)*n ]
-    linear_index = (tf.shape(A)[1]
-                   * tf.range(0,tf.shape(A)[0]))
-    linear_index = tf.to_int64(linear_index)
-    # linear_A is A in row-major order.
-    linear_A = tf.reshape(A, [-1])
-    return tf.gather(linear_A, B + linear_index)
 
 
 def get_export_signature_fn(train_config, args):
@@ -233,17 +213,6 @@ def get_export_signature_fn(train_config, args):
   return get_export_signature
 
 
-def make_export_strategy(serving_input_fn, exports_to_keep=5):
-  base_strategy = saved_model_export_utils.make_export_strategy(
-      serving_input_fn, exports_to_keep=exports_to_keep)
-
-  def export_fn(estimator, export_dir_base):
-    base_strategy.export(estimator, export_dir_base)
-    # do other stuff
-
-  return tf.contrib.learn.export_strategy.ExportStrategy('MyCustomExport', export_fn)
-
-
 def get_experiment_fn(args):
   """Builds the experiment function for learn_runner.run.
 
@@ -262,33 +231,24 @@ def get_experiment_fn(args):
     # Get the model to train.
     estimator = util.get_estimator(output_dir, train_config, args)
 
-    input_placeholder_for_prediction = get_placeholder_input_fn(
-        train_config, args.preprocess_output_dir, args.model_type)
+    #input_placeholder_for_prediction = get_placeholder_input_fn(
+    #    train_config, args.preprocess_output_dir, args.model_type)
 
     # Save a copy of the scehma and input to the model folder.
     schema_file = os.path.join(args.preprocess_output_dir, util.SCHEMA_FILE)
 
     # Make list of files to save with the trained model.
-    additional_assets = [args.transforms_file, schema_file]
+    additional_assets = {'transforms.json': args.transforms_file, 
+                         util.SCHEMA_FILE: schema_file}
     if util.is_classification_model(args.model_type):
       target_name = train_config['target_column']
+      vocab_file_name = util.CATEGORICAL_ANALYSIS % target_name
       vocab_file_path = os.path.join(
-          args.preprocess_output_dir, util.CATEGORICAL_ANALYSIS % target_name)
+          args.preprocess_output_dir, vocab_file_name)
       assert file_io.file_exists(vocab_file_path)
-      additional_assets.append(vocab_file_path)
+      additional_assets[vocab_file_name] = vocab_file_path
 
-    # Save the finished model to output_dir/model
-    export_monitor = util.ExportLastModelMonitor(
-        output_dir=output_dir,
-        final_model_location='model',  # Relative to the output_dir.
-        additional_assets=additional_assets,
-        input_fn=input_placeholder_for_prediction,
-        input_feature_key=FEATURES_EXAMPLE_DICT_KEY,
-        signature_fn=get_export_signature_fn(train_config, args))
-
-    #final_export_strategy = make_export_strategy(
-    #  serving_input_fn=input_placeholder_for_prediction, 
-    #  exports_to_keep=5)
+    export_strategy = util.make_export_strategy(train_config, args, additional_assets)
 
     input_reader_for_train = get_reader_input_fn(
         train_config, args.preprocess_output_dir, args.model_type,
@@ -314,10 +274,10 @@ def get_experiment_fn(args):
         train_input_fn=input_reader_for_train,
         eval_input_fn=input_reader_for_eval,
         train_steps=args.max_steps,
-        train_monitors=[export_monitor],
-        #export_strategies=[final_export_strategy],
+        export_strategies=[export_strategy],
         min_eval_frequency=args.min_eval_frequency,
-        eval_metrics=eval_metrics)
+        #eval_metrics=eval_metrics
+        )
 
   # Return a function to create an Experiment.
   return get_experiment
