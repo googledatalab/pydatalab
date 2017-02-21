@@ -62,7 +62,6 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(sql, results.sql)
     self.assertEqual('(%s)' % sql, q._repr_sql_())
-    self.assertEqual(sql, str(q))
     self.assertEqual(1, results.length)
     first_result = results[0]
     self.assertEqual('value1', first_result['field1'])

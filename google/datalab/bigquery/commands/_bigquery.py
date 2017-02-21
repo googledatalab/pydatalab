@@ -190,6 +190,19 @@ def _create_udf_subparser(parser):
   return udf_parser
 
 
+def _create_datasource_subparser(parser):
+  datasource_parser = parser.subcommand('datasource', 'Create a named Javascript BigQuery external data source')
+  datasource_parser.add_argument('-n', '--name', help='The name for this data source',
+                                 required=True)
+  datasource_parser.add_argument('-p', '--paths', help='URL(s) of the data objects, can include ' + \
+                                 'a wildcard "*" at the end', required=True, nargs='+')
+  datasource_parser.add_argument('-f', '--format', help='The format of the table\'s data. ' + \
+                                 'CSV or JSON, default CSV', default='CSV')
+  datasource_parser.add_argument('-c', '--compressed', help='Whether the data is compressed',
+                                 action='store_true')
+  return datasource_parser
+
+
 def _create_dryrun_subparser(parser):
   dryrun_parser = parser.subcommand('dryrun',
       'Execute a dry run of a BigQuery query and display approximate usage statistics')
@@ -549,6 +562,36 @@ def _udf_cell(args, cell_body):
   google.datalab.utils.commands.notebook_environment()[udf_name] = udf
 
 
+def _datasource_cell(args, cell_body):
+  """Implements the BigQuery datasource cell magic for ipython notebooks.
+
+  The supported syntax is
+  %%bq datasource --name <var> --paths <url> [--format <CSV|JSON>]
+  <schema>
+
+  Args:
+    args: the optional arguments following '%%bq datasource'
+    cell_body: the datasource's schema in json/yaml
+  """
+  name = args['name']
+  paths = args['paths']
+  data_format = (args['format'] or 'CSV').lower()
+  compressed = args['compressed'] or False
+
+  # Get the source schema from the cell body
+  record = google.datalab.utils.commands.parse_config(cell_body,
+                                   google.datalab.utils.commands.notebook_environment(),
+                                   as_dict=False)
+
+  jsonschema.validate(record, table_schema_schema)
+  schema = google.datalab.bigquery.Schema(record['schema'])
+
+  # Finally build the datasource object
+  datasource = google.datalab.bigquery.ExternalDataSource(source=paths, source_format=data_format,
+                                                          compressed=compressed, schema=schema)
+  google.datalab.utils.commands.notebook_environment()[name] = datasource
+
+
 def _query_cell(args, cell_body):
   """Implements the BigQuery cell magic for used to build SQL objects.
 
@@ -764,7 +807,8 @@ def _table_cell(args, cell_body):
         record = google.datalab.utils.commands.parse_config(cell_body,
                                          google.datalab.utils.commands.notebook_environment(),
                                          as_dict=False)
-        schema = google.datalab.bigquery.Schema(record)
+        jsonschema.validate(record, table_schema_schema)
+        schema = google.datalab.bigquery.Schema(record['schema'])
         google.datalab.bigquery.Table(args['name']).create(schema=schema,
                                                     overwrite=args['overwrite'])
       except Exception as e:
@@ -920,6 +964,9 @@ for help on a specific command.
 
   # %%bq udf
   _add_command(parser, _create_udf_subparser, _udf_cell, cell_required=True)
+
+  # %%bq datasource
+  _add_command(parser, _create_datasource_subparser, _datasource_cell, cell_required=True)
 
   # %%bq pipeline
   _add_command(parser, _create_pipeline_subparser, _pipeline_cell)

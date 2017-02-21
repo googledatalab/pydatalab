@@ -20,7 +20,6 @@ from . import _csv_options
 
 class ExternalDataSource(object):
 
-  @staticmethod
   def __init__(self, source, source_format='csv', csv_options=None, ignore_unknown_values=False,
                    max_bad_records=0, compressed=False, schema=None):
 
@@ -41,14 +40,6 @@ class ExternalDataSource(object):
           data source or to be loaded using a Table object that itself has no schema (default None).
 
   """
-    self._bq_source_format = None
-    self._source = None
-    self._source_format = None
-    self._csv_options = None
-    self._ignore_unknown_values = None
-    self._max_bad_records = None
-    self._compressed = None
-    self._schema = None
     # Do some sanity checking and concert some params from friendly form to form used by BQ.
     if source_format == 'csv':
       self._bq_source_format = 'CSV'
@@ -69,10 +60,12 @@ class ExternalDataSource(object):
     self._compressed = compressed
     self._schema = schema
 
-
   @property
   def schema(self):
     return self._schema
+
+  def __repr__(self):
+    return 'BigQuery External Datasource - paths: %s' % (','.join(self._source))
 
   def _to_query_json(self):
     """ Return the table as a dictionary to be used as JSON in a query job. """
