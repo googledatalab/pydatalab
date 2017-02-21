@@ -302,10 +302,6 @@ class Schema(list):
         # Recurse into the nested fields, using this field's name as a prefix.
         self._populate_fields(field_data.get('fields'), name + '.')
 
-  def __str__(self):
-    """ Returns a string representation of the non-flattened form of the schema."""
-    return str(self._bq_schema)
-
   def __repr__(self):
     """ Returns a string representation of the schema for notebooks."""
     return 'BigQuery Schema - Fields:\n%s' % pprint.pformat(self._bq_schema, width=1)

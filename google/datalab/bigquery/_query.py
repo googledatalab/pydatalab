@@ -52,7 +52,7 @@ class Query(object):
     self._udfs = udfs
     self._subqueries = subqueries
     self._env = env or {}
-    self._data_sources = []
+    self._data_sources = {}
 
     def _validate_object(obj, obj_type):
       item = self._env.get(obj)
@@ -71,7 +71,7 @@ class Query(object):
     if data_sources:
       for ds in data_sources:
         _validate_object(ds, _external_data_source.ExternalDataSource)
-        self._data_sources = {ds: self._env[ds]._to_query_json()}
+        self._data_sources[ds] = self._env[ds]._to_query_json()
 
     if len(self._data_sources) > 1:
       raise Exception('Only one temporary external datasource is supported in queries.')
