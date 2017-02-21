@@ -52,10 +52,6 @@ class View(object):
     self._table = _table.Table(name, context=context)
     self._materialization = _query.Query('SELECT * FROM %s' % self._repr_sql_())
 
-  def __str__(self):
-    """The full name for the view as a string."""
-    return str(self._table)
-
   @property
   def name(self):
     """The name for the view as a named tuple."""
@@ -144,9 +140,9 @@ class View(object):
     Returns:
       A formatted table name for use within SQL statements.
     """
-    return '`' + str(self) + '`'
+    return self._table._repr_sql_()
 
   def __repr__(self):
     """Returns a representation for the view for showing in the notebook.
     """
-    return 'View %s\n%s' % (self._table, self.query)
+    return 'BigQuery View - table: %s, sql: %s' % (self._table, self.query)
