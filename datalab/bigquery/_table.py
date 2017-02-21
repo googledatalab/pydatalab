@@ -401,7 +401,7 @@ class Table(object):
       self._info = self._api.tables_get(self._name_parts)
       if 'streamingBuffer' not in self._info or \
               'estimatedRows' not in self._info['streamingBuffer'] or \
-              self._info['streamingBuffer']['estimatedRows'] > 0:
+              int(self._info['streamingBuffer']['estimatedRows']) > 0:
         break
       time.sleep(2)
 
