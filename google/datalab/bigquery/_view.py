@@ -140,7 +140,7 @@ class View(object):
     Returns:
       A formatted table name for use within SQL statements.
     """
-    return '`' + str(self) + '`'
+    return self._table._repr_sql_()
 
   def __repr__(self):
     """Returns a representation for the view for showing in the notebook.

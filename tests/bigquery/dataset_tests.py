@@ -140,8 +140,8 @@ class TestCases(unittest.TestCase):
     ds = TestCases._create_dataset('requestlogs')
     tables = [table for table in ds]
     self.assertEqual(2, len(tables))
-    self.assertEqual('p:d.t1', str(tables[0]))
-    self.assertEqual('p:d.t2', str(tables[1]))
+    self.assertEqual('`p:d.t1`', tables[0]._repr_sql_())
+    self.assertEqual('`p:d.t2`', tables[1]._repr_sql_())
 
   @mock.patch('google.datalab.bigquery.Dataset._get_info')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_list')

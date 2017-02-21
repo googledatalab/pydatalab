@@ -47,7 +47,6 @@ class TestCases(unittest.TestCase):
     view = google.datalab.bigquery.View(name, TestCases._create_context())
     result = view.create(sql)
     self.assertTrue(view.exists())
-    self.assertEqual(name, str(view))
     self.assertEqual('`%s`' % name, view._repr_sql_())
     self.assertIsNotNone(result, 'Expected a view')
 
