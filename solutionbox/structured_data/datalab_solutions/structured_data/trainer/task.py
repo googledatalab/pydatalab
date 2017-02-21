@@ -100,14 +100,19 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
 
 
 def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
-                        data_paths, batch_size, shuffle):
+                        data_paths, batch_size, shuffle, num_epochs=None):
   """Builds input layer for training."""
 
   def get_input_features():
     """Read the input features from the given data paths."""
-    _, examples = util.read_examples(data_paths, batch_size, shuffle)
+    _, examples = util.read_examples(
+        input_files=data_paths,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_epochs=num_epochs)
     features = util.parse_example_tensor(examples=examples,
-                                         train_config=train_config)
+                                         train_config=train_config,
+                                         keep_target=True)
 
     target_name = train_config['target_column']
     target = features.pop(target_name)
@@ -126,91 +131,91 @@ def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
 
 
 
-def get_export_signature_fn(train_config, args):
-  """Builds the output layer in the exported graph.
+# def get_export_signature_fn(train_config, args):
+#   """Builds the output layer in the exported graph.
 
-  Also sets up the tensor names when calling session.run
-  """
+#   Also sets up the tensor names when calling session.run
+#   """
 
-  def get_export_signature(examples, features, predictions):
-    """Create an export signature with named input and output signatures."""
-    target_name = train_config['target_column']
-    key_name = train_config['key_column']
+#   def get_export_signature(examples, features, predictions):
+#     """Create an export signature with named input and output signatures."""
+#     target_name = train_config['target_column']
+#     key_name = train_config['key_column']
 
-    if util.is_classification_model(args.model_type):
+#     if util.is_classification_model(args.model_type):
       
-      # Get the label of the input target.
-      string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
-      input_target_label = tf.contrib.lookup.index_to_string(
-          features[target_name],
-          mapping=string_value,
-          default_value='UNKNOWN')   
+#       # Get the label of the input target.
+#       string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
+#       input_target_label = tf.contrib.lookup.index_to_string(
+#           features[target_name],
+#           mapping=string_value,
+#           default_value='UNKNOWN')   
 
-      outputs = {
-          PG_KEY: tf.squeeze(features[key_name]).name,
-          PG_TARGET: tf.squeeze(input_target_label).name,
-      }
+#       outputs = {
+#           PG_KEY: tf.squeeze(features[key_name]).name,
+#           PG_TARGET: tf.squeeze(input_target_label).name,
+#       }
 
-      # TODO(brandondutra): get the score of the target label too.
-      #input_target_score = vector_slice(predictions, features[target_name])
+#       # TODO(brandondutra): get the score of the target label too.
+#       #input_target_score = vector_slice(predictions, features[target_name])
       
-      # get top k labels and their scores.
-      (top_k_values, top_k_indices) = tf.nn.top_k(predictions, k=args.top_n)
-      top_k_labels = tf.contrib.lookup.index_to_string(
-          tf.to_int64(top_k_indices),
-          mapping=string_value)
+#       # get top k labels and their scores.
+#       (top_k_values, top_k_indices) = tf.nn.top_k(predictions, k=args.top_n)
+#       top_k_labels = tf.contrib.lookup.index_to_string(
+#           tf.to_int64(top_k_indices),
+#           mapping=string_value)
    
-      # Write the top_k values using 2*top_k columns. 
-      num_digits = int(math.ceil(math.log(args.top_n, 10)))
-      if num_digits == 0:
-        num_digits = 1
-      for i in range(0, args.top_n):
-        # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
-        # makes sorting the columns easy.
-        padded_i = str(i+1).zfill(num_digits)
+#       # Write the top_k values using 2*top_k columns. 
+#       num_digits = int(math.ceil(math.log(args.top_n, 10)))
+#       if num_digits == 0:
+#         num_digits = 1
+#       for i in range(0, args.top_n):
+#         # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
+#         # makes sorting the columns easy.
+#         padded_i = str(i+1).zfill(num_digits)
 
-        label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
-        label_tensor_name = (tf.squeeze(
-              tf.slice(top_k_labels, 
-                       [0, i],
-                       [tf.shape(top_k_labels)[0], 1])).name)
-        score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
-        score_tensor_name = (tf.squeeze(
-            tf.slice(top_k_values, 
-                     [0, i], 
-                     [tf.shape(top_k_values)[0], 1])).name)
+#         label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
+#         label_tensor_name = (tf.squeeze(
+#               tf.slice(top_k_labels, 
+#                        [0, i],
+#                        [tf.shape(top_k_labels)[0], 1])).name)
+#         score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
+#         score_tensor_name = (tf.squeeze(
+#             tf.slice(top_k_values, 
+#                      [0, i], 
+#                      [tf.shape(top_k_values)[0], 1])).name)
 
-        outputs.update({label_alias: label_tensor_name,
-                        score_alias: score_tensor_name})
+#         outputs.update({label_alias: label_tensor_name,
+#                         score_alias: score_tensor_name})
 
-    else:
-      outputs = {
-          PG_KEY: tf.squeeze(features[key_name]).name,
-          PG_TARGET: tf.squeeze(features[target_name]).name,
-          PG_REGRESSION_PREDICTED_TARGET: tf.squeeze(predictions).name,
-      }
+#     else:
+#       outputs = {
+#           PG_KEY: tf.squeeze(features[key_name]).name,
+#           PG_TARGET: tf.squeeze(features[target_name]).name,
+#           PG_REGRESSION_PREDICTED_TARGET: tf.squeeze(predictions).name,
+#       }
 
 
-    inputs = {EXAMPLES_PLACEHOLDER_TENSOR_NAME: examples.name}
+#     inputs = {EXAMPLES_PLACEHOLDER_TENSOR_NAME: examples.name}
 
-    tf.add_to_collection(INPUT_COLLECTION_NAME, json.dumps(inputs))
-    tf.add_to_collection(OUTPUT_COLLECTION_NAME, json.dumps(outputs))
+#     tf.add_to_collection(INPUT_COLLECTION_NAME, json.dumps(inputs))
+#     tf.add_to_collection(OUTPUT_COLLECTION_NAME, json.dumps(outputs))
 
-    input_signature = manifest_pb2.Signature()
-    output_signature = manifest_pb2.Signature()
+#     input_signature = manifest_pb2.Signature()
+#     output_signature = manifest_pb2.Signature()
 
-    for name, tensor_name in outputs.iteritems():
-      output_signature.generic_signature.map[name].tensor_name = tensor_name
+#     for name, tensor_name in outputs.iteritems():
+#       output_signature.generic_signature.map[name].tensor_name = tensor_name
 
-    for name, tensor_name in inputs.iteritems():
-      input_signature.generic_signature.map[name].tensor_name = tensor_name
+#     for name, tensor_name in inputs.iteritems():
+#       input_signature.generic_signature.map[name].tensor_name = tensor_name
 
-    # Return None for default classification signature.
-    return None, {INPUT_COLLECTION_NAME: input_signature,
-                  OUTPUT_COLLECTION_NAME: output_signature}
+#     # Return None for default classification signature.
+#     return None, {INPUT_COLLECTION_NAME: input_signature,
+#                   OUTPUT_COLLECTION_NAME: output_signature}
 
-  # Return a function to create an export signature.
-  return get_export_signature
+#   # Return a function to create an export signature.
+#   return get_export_signature
 
 
 def get_experiment_fn(args):
@@ -251,22 +256,31 @@ def get_experiment_fn(args):
     export_strategy_csv = util.make_export_strategy(
         train_config=train_config, 
         args=args, 
-        input_type='csv',
         keep_target=True,
         assets_extra=additional_assets)
     export_strategy_json = util.make_export_strategy(
         train_config=train_config, 
         args=args, 
-        input_type='json',
         keep_target=False,
         assets_extra=additional_assets)    
 
     input_reader_for_train = get_reader_input_fn(
-        train_config, args.preprocess_output_dir, args.model_type,
-        args.train_data_paths, args.batch_size, shuffle=True)
+        train_config=train_config,
+        preprocess_output_dir=args.preprocess_output_dir,
+        model_type=args.model_type,
+        data_paths=args.train_data_paths,
+        batch_size=args.train_batch_size,
+        shuffle=True,
+        num_epochs=args.num_epochs)
+
     input_reader_for_eval = get_reader_input_fn(
-        train_config, args.preprocess_output_dir, args.model_type,
-        args.eval_data_paths, args.eval_batch_size, shuffle=False)
+        train_config=train_config,
+        preprocess_output_dir=args.preprocess_output_dir,
+        model_type=args.model_type,
+        data_paths=args.eval_data_paths,
+        batch_size=args.eval_batch_size,
+        shuffle=False,
+        num_epochs=1)
 
     # Set the eval metrics.
     # TODO(brandondutra): make this work with HP tuning.
@@ -287,7 +301,6 @@ def get_experiment_fn(args):
         train_steps=args.max_steps,
         export_strategies=[export_strategy_csv, export_strategy_json],
         min_eval_frequency=args.min_eval_frequency,
-        #eval_metrics=eval_metrics
         )
 
   # Return a function to create an Experiment.
@@ -322,8 +335,10 @@ def parse_arguments(argv):
                             'each column'))
 
   # HP parameters
-  parser.add_argument('--learning_rate', type=float, default=0.01)
-  parser.add_argument('--epsilon', type=float, default=0.0005)
+  parser.add_argument('--learning_rate', type=float, default=0.01,
+                      help='tf.train.AdamOptimizer learning rate')
+  parser.add_argument('--epsilon', type=float, default=0.0005,
+                      help='tf.train.AdamOptimizer epsilon')
   # --layer_size See below
 
   # Model problems
@@ -340,19 +355,24 @@ def parse_arguments(argv):
   # Training input parameters
   parser.add_argument('--max_steps', type=int, default=5000,
                       help='Maximum number of training steps to perform.')
-  parser.add_argument('--batch_size', type=int, default=1000)
-  parser.add_argument('--eval_batch_size', type=int, default=100)
-  parser.add_argument('--min_eval_frequency', type=int, default=1000)
+  parser.add_argument('--num_epochs',
+                      type=int,
+                      help=('Maximum number of training data epochs on which '
+                            'to train. If both --max-steps and --num-epochs '
+                            'are specified, the training job will run for '
+                            '--max-steps or --num-epochs, whichever occurs '
+                            'first. If unspecified will run for --max-steps.'))
+  parser.add_argument('--train_batch_size', type=int, default=1000)
+  parser.add_argument('--eval_batch_size', type=int, default=1000)
+  parser.add_argument('--min_eval_frequency', type=int, default=1000,
+                      help=('Minimum number of training steps between '
+                            'evaluations'))
 
   # Training output parameters
   parser.add_argument('--save_checkpoints_secs', type=int, default=600,
                       help=('How often the model should be checkpointed/saved '
                             'in seconds'))
-  parser.add_argument('--every_n_steps', type=int, default=10000,
-                      help=('How often to export the checkpointed file in terms'
-                            ' of training steps. Should be large enough so that'
-                            ' a new checkpoined model is saved before running '
-                            'again.'))
+
   args, remaining_args = parser.parse_known_args(args=argv[1:])
 
   # All HP parambeters must be unique, so we need to support an unknown number

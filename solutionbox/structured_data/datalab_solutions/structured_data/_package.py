@@ -100,26 +100,40 @@ def _package_to_staging(staging_package_url):
     return tar_gz_path
 
 
-def local_preprocess(output_dir, input_file_pattern, schema_file):
+def local_preprocess(output_dir, dataset):
   """Preprocess data locally with Pandas
 
   Produce analysis used by training.
 
   Args:
     output_dir: The output directory to use.
-    input_file_pattern: String. File pattern what will expand into a list of csv
-        files.
-    schema_file: File path to the schema file.
-    
+    dataset: only CsvDataSet is supported currently.
   """
-  args = ['local_preprocess',
-          '--input_file_pattern=%s' % input_file_pattern,
-          '--output_dir=%s' % output_dir,
-          '--schema_file=%s' % schema_file]
+  import datalab.mlalpha as mlalpha
+  if not isinstance(dataset, mlalpha.CsvDataSet):
+    raise ValueError('Only CsvDataSet is supported')
 
-  print('Starting local preprocessing.')
-  preprocess.local_preprocess.main(args)
-  print('Local preprocessing done.')
+  if len(dataset.input_files) != 1:
+    raise ValueError('CsvDataSet should be built with a file pattern, not a '
+                     'list of files.')
+
+  # Write schema to a file.
+  tmp_dir = tempfile.mkdtemp()
+  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json', 
+                                        prefix='schema')
+  try:
+    file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
+
+    args = ['local_preprocess',
+            '--input_file_pattern=%s' % dataset.input_files[0],
+            '--output_dir=%s' % output_dir,
+            '--schema_file=%s' % schema_file_path]
+
+    print('Starting local preprocessing.')
+    preprocess.local_preprocess.main(args)
+    print('Local preprocessing done.')
+  finally:
+    shutil.rmtree(tmp_dir)
 
 def cloud_preprocess(output_dir, input_file_pattern=None, schema_file=None, bigquery_table=None, project_id=None):
   """Preprocess data in the cloud with BigQuery.

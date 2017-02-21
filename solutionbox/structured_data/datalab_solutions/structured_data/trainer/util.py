@@ -85,7 +85,7 @@ def _recursive_copy(src_dir, dest_dir):
     else:
       file_io.copy(old_path, new_path)
 
-def serving_from_csv_input(train_config, args):
+def serving_from_csv_input(train_config, args, keep_target):
   """Read the input features from a placeholder csv string tensor."""
   examples = tf.placeholder(
       dtype=tf.string,
@@ -93,9 +93,13 @@ def serving_from_csv_input(train_config, args):
       name='csv_input_string')
 
   features = parse_example_tensor(examples=examples,
-                                       train_config=train_config)
+                                  train_config=train_config,
+                                  keep_target=keep_target)
 
-  target = features.pop(train_config['target_column'])
+  if keep_target:
+    target = features.pop(train_config['target_column'])
+  else:
+    target = None
   features, target = preprocess_input(
       features=features,
       target=target,
@@ -143,17 +147,6 @@ def serving_from_json_input(train_config, args):
 
 
 
-def build_sig_def(input_fn_ops, estimator):
-
-  model_fn_ops = estimator._call_model_fn(input_fn_ops.features, None,
-                                         model_fn_lib.ModeKeys.INFER)
-  model_tensor_info = {key: tf.saved_model.utils.build_tensor_info(value) for key, value in model_fn_ops.predictions.iteritems()}   
-  input_tensor_info = {key: tf.saved_model.utils.build_tensor_info(value) for key, value in input_fn_ops.default_inputs.iteritems()}
-  sig_def = tf.saved_model.signature_def_utils.build_signature_def(
-          inputs=input_tensor_info,
-          outputs=model_tensor_info,
-          method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME)
-  return sig_def
 
 def xxxxmake_export_strategy(train_config, args, assets_extra=None):
 
@@ -182,14 +175,19 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
 
     if is_classification_model(args.model_type):
 
-      # Get the label of the input target.
+      # build maps from ints to the origional categorical strings.
       string_value = get_vocabulary(args.preprocess_output_dir, target_name)
+      table = tf.contrib.lookup.index_to_string_table_from_tensor(
+          mapping=string_value,
+          default_value='UNKNOWN')
 
+      # Get the label of the input target.
       if keep_target:
-        input_target_label = tf.contrib.lookup.index_to_string(
-            input_ops.labels,
-            mapping=string_value,
-            default_value='UNKNOWN')   
+        input_target_label = table.lookup(input_ops.labels)
+        #input_target_label = tf.contrib.lookup.index_to_string(
+        #    input_ops.labels,
+        #    mapping=string_value,
+        #    default_value='UNKNOWN')   
         outputs[PG_TARGET] = tf.squeeze(input_target_label)
 
       # TODO(brandondutra): get the score of the target label too.
@@ -197,9 +195,10 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
       
       # get top k labels and their scores.
       (top_k_values, top_k_indices) = tf.nn.top_k(probabilities, k=args.top_n)
-      top_k_labels = tf.contrib.lookup.index_to_string(
-          tf.to_int64(top_k_indices),
-          mapping=string_value)
+      #top_k_labels = tf.contrib.lookup.index_to_string(
+      #    tf.to_int64(top_k_indices),
+      #    mapping=string_value)
+      top_k_labels = table.lookup(tf.to_int64(top_k_indices))
    
       # Write the top_k values using 2*top_k columns. 
       num_digits = int(math.ceil(math.log(args.top_n, 10)))
@@ -234,7 +233,7 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
     return outputs
 
 
-def make_export_strategy(train_config, args, input_type='csv', keep_target=True, assets_extra=None):
+def make_export_strategy(train_config, args, keep_target, assets_extra=None):
   default_output_alternative_key=None
   #serving_from_csv_ops = serving_from_csv_input(train_config, args)
   #def _serving_in_fn():
@@ -267,12 +266,8 @@ def make_export_strategy(train_config, args, input_type='csv', keep_target=True,
       #output_tensors = model_fn_ops.predictions
  
       # Build the feed/fetch tensors starting from csv with a target column.
-      if input_type == 'csv':
-        input_ops = serving_from_csv_input(train_config, args)
-      elif input_type == 'json':
-        input_ops = serving_from_json_input(train_config, args)
-      else:
-        raise ValueError('Unknown type %s' % input_type)
+      
+      input_ops = serving_from_csv_input(train_config, args, keep_target)      
       model_fn_ops = estimator._call_model_fn(input_ops.features, 
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
@@ -306,7 +301,8 @@ def make_export_strategy(train_config, args, input_type='csv', keep_target=True,
           export_dir_base)
 
       with tf_session.Session('') as session:
-        variables.initialize_local_variables()
+        #variables.initialize_local_variables()
+        variables.local_variables_initializer()
         data_flow_ops.tables_initializer()
         saver_for_restore = saver.Saver(
             variables.global_variables(),
@@ -338,12 +334,16 @@ def make_export_strategy(train_config, args, input_type='csv', keep_target=True,
           gfile.MakeDirs(dest_path)
           gfile.Copy(source, dest_absolute)
 
-    # only keep the last 5 models
-    saved_model_export_utils.garbage_collect_exports(export_dir_base, exports_to_keep=5)
+    # only keep the last 3 models
+    saved_model_export_utils.garbage_collect_exports(export_dir_base, exports_to_keep=3)
 
     # save the last model to the model folder.
     # export_dir_base = A/B/intermediate_models/
-    final_model_location = os.path.abspath(os.path.join(export_dir_base, '../%s_model/' % input_type))
+    if keep_target:
+      final_dir = '../evaluation_model'
+    else:
+      final_dir = '../prediction_model'
+    final_model_location = os.path.abspath(os.path.join(export_dir_base, final_dir))
     if file_io.is_directory(final_model_location):
       file_io.delete_recursively(final_model_location)
     file_io.recursive_create_dir(final_model_location)
@@ -352,7 +352,12 @@ def make_export_strategy(train_config, args, input_type='csv', keep_target=True,
 
     return final_model_location
 
-  return export_strategy.ExportStrategy('intermediate_%s_models' % input_type, export_fn)
+  if keep_target:
+    intermediate_dir = 'intermediate_evaluation_models'
+  else:
+    intermediate_dir = 'intermediate_prediction_models'
+
+  return export_strategy.ExportStrategy(intermediate_dir, export_fn)
 
 
 # ==============================================================================
@@ -360,28 +365,37 @@ def make_export_strategy(train_config, args, input_type='csv', keep_target=True,
 # ==============================================================================
 
 
-def parse_example_tensor(examples, train_config):
+def parse_example_tensor(examples, train_config, keep_target):
   """Read the csv files.
 
   Args:
     examples: string tensor
     train_config: training config
+    keep_target: if true, the target column is expected to exist and it is 
+        returned in the features dict.
 
   Returns:
     Dict of feature_name to tensor. Target feature is in the dict.
   """
 
+  csv_header = []
+  if keep_target:
+    csv_header = train_config['csv_header']
+  else:
+    csv_header = [name for name in train_config['csv_header'] 
+                  if name != train_config['target_column']]
+
   # record_defaults are used by tf.decode_csv to insert defaults, and to infer
   # the datatype.
   record_defaults = [[train_config['csv_defaults'][name]]
-                     for name in train_config['csv_header']]
+                     for name in csv_header]
   tensors = tf.decode_csv(examples, record_defaults, name='csv_to_tensors')
 
   # I'm not really sure why expand_dims needs to be called. If using regression
   # models, it errors without it.
   tensors = [tf.expand_dims(x, axis=1) for x in tensors]
 
-  tensor_dict = dict(zip(train_config['csv_header'], tensors))
+  tensor_dict = dict(zip(csv_header, tensors))
   return tensor_dict
 
 
@@ -576,11 +590,14 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
                             'and identity are supported: '
                             'Error for %s') % name)
 
-  # Do target transform
-  with tf.name_scope('target_feature_preprocess') as scope:
-    if target_name in train_config['categorical_columns']:
-      labels = train_config['vocab_stats'][target_name]['labels']
-      target = tf.contrib.lookup.string_to_index(target, labels)
+  # Do target transform if it exists.
+  if target is not None:
+    with tf.name_scope('target_feature_preprocess') as scope:
+      if target_name in train_config['categorical_columns']:
+        labels = train_config['vocab_stats'][target_name]['labels']
+        table = tf.contrib.lookup.string_to_index_table_from_tensor(labels)
+        target = table.lookup(target)
+        #target = tf.contrib.lookup.string_to_index(target, labels)
 
   # Do categorical transforms. Only apply vocab mapping. The real
   # transforms are done with tf learn column features.
@@ -623,8 +640,10 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
                            'hash_sparse are supported.')
       if map_vocab:
         labels = train_config['vocab_stats'][name]['labels']
-        features[name] = tf.contrib.lookup.string_to_index(features[name],
-                                                           labels)
+        table = tf.contrib.lookup.string_to_index_table_from_tensor(labels)
+        features[name] = table.lookup(features[name])
+        #features[name] = tf.contrib.lookup.string_to_index(features[name],
+        #                                                   labels)
 
   return features, target
 
