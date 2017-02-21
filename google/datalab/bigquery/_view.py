@@ -52,10 +52,6 @@ class View(object):
     self._table = _table.Table(name, context=context)
     self._materialization = _query.Query('SELECT * FROM %s' % self._repr_sql_())
 
-  def __str__(self):
-    """The full name for the view as a string."""
-    return str(self._table)
-
   @property
   def name(self):
     """The name for the view as a named tuple."""

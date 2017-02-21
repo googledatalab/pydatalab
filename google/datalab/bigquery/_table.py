@@ -697,14 +697,6 @@ class Table(object):
     """
     return 'BigQuery Table - name: %s' % self._full_name
 
-  def __str__(self):
-    """Returns a string representation of the table using its specified name.
-
-    Returns:
-      The string representation of this object.
-    """
-    return self._full_name
-
   @property
   def length(self):
     """ Get the length of the table (number of rows). We don't use __len__ as this may

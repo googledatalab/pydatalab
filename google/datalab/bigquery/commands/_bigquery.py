@@ -574,11 +574,7 @@ def _datasource_cell(args, cell_body):
     cell_body: the datasource's schema in json/yaml
   """
   name = args['name']
-  if not name:
-    raise Exception('External data source declaration must include name')
   paths = args['paths']
-  if not paths:
-    raise Exception('External data source declaration must include paths')
   data_format = (args['format'] or 'CSV').lower()
   compressed = args['compressed'] or False
 
@@ -586,8 +582,8 @@ def _datasource_cell(args, cell_body):
   record = google.datalab.utils.commands.parse_config(cell_body,
                                    google.datalab.utils.commands.notebook_environment(),
                                    as_dict=False)
-  if 'schema' not in record:
-    raise Exception('\'schema\' key is missing from the magic cell')
+
+  jsonschema.validate(record, table_schema_schema)
   schema = google.datalab.bigquery.Schema(record['schema'])
 
   # Finally build the datasource object

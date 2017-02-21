@@ -73,6 +73,9 @@ class Query(object):
         _validate_object(ds, _external_data_source.ExternalDataSource)
         self._data_sources = {ds: self._env[ds]._to_query_json()}
 
+    if len(self._data_sources) > 1:
+      raise Exception('Only one temporary external datasource is supported in queries.')
+
   @staticmethod
   def from_view(view):
     """ Return a Query for the given View object
@@ -149,21 +152,13 @@ class Query(object):
     """
     return '(%s)' % self.sql
 
-  def __str__(self):
-    """Creates a string representation of this object.
-
-    Returns:
-      The string representation of this object (the unmodified SQL).
-    """
-    return self._sql
-
   def __repr__(self):
     """Creates a friendly representation of this object.
 
     Returns:
       The friendly representation of this object (the unmodified SQL).
     """
-    return self._sql
+    return 'BigQuery Query - %s' % self._sql
 
   @property
   def sql(self):

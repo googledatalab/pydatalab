@@ -55,11 +55,6 @@ class SchemaField(object):
     return self.name == other.name and self.type == other.type\
         and self.mode == other.mode
 
-  def __str__(self):
-    """ Returns the schema field as a string form of a dictionary. """
-    return "{ 'name': '%s', 'type': '%s', 'mode':'%s', 'description': '%s' }" % \
-           (self.name, self.type, self.mode, self.description)
-
   def __repr__(self):
     """ Returns the schema field as a string form of a dictionary. """
     return 'BigQuery Schema Field:\n%s' % pprint.pformat(vars(self), width=1)
