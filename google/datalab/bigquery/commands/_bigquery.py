@@ -195,7 +195,7 @@ def _create_datasource_subparser(parser):
   datasource_parser.add_argument('-n', '--name', help='The name for this data source',
                                  required=True)
   datasource_parser.add_argument('-p', '--paths', help='URL(s) of the data objects, can include ' + \
-                                 'a whilecard "*" at the end', required=True, nargs='+')
+                                 'a wildcard "*" at the end', required=True, nargs='+')
   datasource_parser.add_argument('-f', '--format', help='The format of the table\'s data. ' + \
                                  'CSV or JSON, default CSV', default='CSV')
   datasource_parser.add_argument('-c', '--compressed', help='Whether the data is compressed',
