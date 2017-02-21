@@ -248,7 +248,18 @@ def get_experiment_fn(args):
       assert file_io.file_exists(vocab_file_path)
       additional_assets[vocab_file_name] = vocab_file_path
 
-    export_strategy = util.make_export_strategy(train_config, args, additional_assets)
+    export_strategy_csv = util.make_export_strategy(
+        train_config=train_config, 
+        args=args, 
+        input_type='csv',
+        keep_target=True,
+        assets_extra=additional_assets)
+    export_strategy_json = util.make_export_strategy(
+        train_config=train_config, 
+        args=args, 
+        input_type='json',
+        keep_target=False,
+        assets_extra=additional_assets)    
 
     input_reader_for_train = get_reader_input_fn(
         train_config, args.preprocess_output_dir, args.model_type,
@@ -274,7 +285,7 @@ def get_experiment_fn(args):
         train_input_fn=input_reader_for_train,
         eval_input_fn=input_reader_for_eval,
         train_steps=args.max_steps,
-        export_strategies=[export_strategy],
+        export_strategies=[export_strategy_csv, export_strategy_json],
         min_eval_frequency=args.min_eval_frequency,
         #eval_metrics=eval_metrics
         )

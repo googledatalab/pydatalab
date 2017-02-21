@@ -108,6 +108,40 @@ def serving_from_csv_input(train_config, args):
                                    {'csv_line': examples}
   )    
 
+def serving_from_json_input(train_config, args):
+  feature_placeholders = {}
+  for name in train_config['csv_header']:
+    if name in train_config['numerical_columns']:
+      dtype = tf.float32
+    else:
+      dtype = tf.string
+    feature_placeholders[name] = tf.placeholder(dtype=dtype,
+                                                shape=(None,),
+                                                name=name)
+
+  features = {
+    key: tf.expand_dims(tensor, -1)
+    for key, tensor in feature_placeholders.iteritems()
+  }
+
+
+  target = features.pop(train_config['target_column'])
+  features, target = preprocess_input(
+      features=features,
+      target=target,
+      train_config=train_config,
+      preprocess_output_dir=args.preprocess_output_dir,
+      model_type=args.model_type)
+
+  #_ = feature_placeholders.pop(train_config['target_column'])
+
+  return input_fn_utils.InputFnOps(
+    features,
+    target,
+    feature_placeholders
+  )
+
+
 
 def build_sig_def(input_fn_ops, estimator):
 
@@ -139,7 +173,7 @@ def xxxxmake_export_strategy(train_config, args, assets_extra=None):
 
   return export_strategy.ExportStrategy('servolike', export_fn)
 
-def make_output_tensors(train_config, args, input_ops, model_fn_ops, output_target=True):
+def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target=True):
     target_name = train_config['target_column']
     key_name = train_config['key_column']
 
@@ -151,7 +185,7 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, output_targ
       # Get the label of the input target.
       string_value = get_vocabulary(args.preprocess_output_dir, target_name)
 
-      if output_target:
+      if keep_target:
         input_target_label = tf.contrib.lookup.index_to_string(
             input_ops.labels,
             mapping=string_value,
@@ -191,7 +225,7 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, output_targ
                         score_alias: score_tensor_name})
 
     else:
-      if output_target:
+      if keep_target:
         outputs[PG_TARGET] = tf.squeeze(input_ops.labels)
 
       scores = model_fn_ops.predictions['scores']
@@ -200,7 +234,7 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, output_targ
     return outputs
 
 
-def make_export_strategy(train_config, args, assets_extra=None):
+def make_export_strategy(train_config, args, input_type='csv', keep_target=True, assets_extra=None):
   default_output_alternative_key=None
   #serving_from_csv_ops = serving_from_csv_input(train_config, args)
   #def _serving_in_fn():
@@ -210,13 +244,13 @@ def make_export_strategy(train_config, args, assets_extra=None):
       contrib_variables.create_global_step(g)
 
       # Call the serving_input_fn and collect the input alternatives.
-      input_ops = serving_from_csv_input(train_config, args)
-      input_alternatives, features = (
-          saved_model_export_utils.get_input_alternatives(input_ops))
+      #input_csv_ops = serving_from_csv_input(train_config, args)
+      #input_alternatives, features = (
+      #    saved_model_export_utils.get_input_alternatives(input_csv_ops))
 
       # Call the model_fn and collect the output alternatives.
-      model_fn_ops = estimator._call_model_fn(features, None,
-                                         model_fn_lib.ModeKeys.INFER)
+      #model_fn_ops = estimator._call_model_fn(input_csv_ops.features, None,
+      #                                   model_fn_lib.ModeKeys.INFER)
       #output_alternatives, actual_default_output_alternative_key = (
       #    saved_model_export_utils.get_output_alternatives(
       #        model_fn_ops, default_output_alternative_key))
@@ -226,27 +260,34 @@ def make_export_strategy(train_config, args, assets_extra=None):
       #print('output_alternatives', output_alternatives)
       #print('actual_default_output_alternative_key', actual_default_output_alternative_key)
       #input_features = serving_from_csv_ops.features
-      input_placeholder = input_ops.default_inputs
+      #input_placeholder = input_csv_ops.default_inputs
 
       #output_tensors = model_fn_ops.predictions
       #print('old ot', output_tensors)
       #output_tensors = model_fn_ops.predictions
-      output_fetch_tensors_csv_target = make_output_tensors(
+ 
+      # Build the feed/fetch tensors starting from csv with a target column.
+      if input_type == 'csv':
+        input_ops = serving_from_csv_input(train_config, args)
+      elif input_type == 'json':
+        input_ops = serving_from_json_input(train_config, args)
+      else:
+        raise ValueError('Unknown type %s' % input_type)
+      model_fn_ops = estimator._call_model_fn(input_ops.features, 
+                                              None,
+                                              model_fn_lib.ModeKeys.INFER)
+      output_fetch_tensors = make_output_tensors(
           train_config=train_config, 
           args=args,
           input_ops=input_ops,
           model_fn_ops=model_fn_ops,
-          output_target=True) 
+          keep_target=keep_target) 
 
-      #print('new ot', output_tensors)
       signature_def_map = {
         'serving_default': 
             signature_def_utils.predict_signature_def(
-                input_placeholder, 
-                output_fetch_tensors_csv_target),
-      #  'serving_json_no_target':
-      #      signature_def_utils.predict_signature_def(input_placeholder, 
-      #                                                output_tensors),
+                input_ops.default_inputs, 
+                output_fetch_tensors)
       }
 
       # Build the SignatureDefs from all pairs of input and output alternatives
@@ -302,7 +343,7 @@ def make_export_strategy(train_config, args, assets_extra=None):
 
     # save the last model to the model folder.
     # export_dir_base = A/B/intermediate_models/
-    final_model_location = os.path.abspath(os.path.join(export_dir_base, '../model/'))
+    final_model_location = os.path.abspath(os.path.join(export_dir_base, '../%s_model/' % input_type))
     if file_io.is_directory(final_model_location):
       file_io.delete_recursively(final_model_location)
     file_io.recursive_create_dir(final_model_location)
@@ -311,7 +352,7 @@ def make_export_strategy(train_config, args, assets_extra=None):
 
     return final_model_location
 
-  return export_strategy.ExportStrategy('intermediate_models', export_fn)
+  return export_strategy.ExportStrategy('intermediate_%s_models' % input_type, export_fn)
 
 
 # ==============================================================================
@@ -784,10 +825,10 @@ def merge_metadata(preprocess_output_dir, transforms_file):
   result_dict['target_column'] = schema[0]['name']
   for name, trans_config in transforms.iteritems():
     if trans_config.get('transform', None) == 'target':
-      if name != result_dict['target_column']:
-        raise ValueError('Target from transform file does not correspond to '
-                         'the first column of data')
+      result_dict['target_column'] = name
       break
+  if result_dict['target_column'] is None:
+    raise ValueError('Trarget transform missing form transfroms file.')
 
   # Get the numerical/categorical columns.
   for col_schema in schema:
@@ -825,28 +866,27 @@ def merge_metadata(preprocess_output_dir, transforms_file):
     name = col_schema['name']
     col_type = col_schema['type'].lower()
     default = transforms.get(name, {}).get('default', None)
-    if default is not None:
-      # convert int defaults to float
+
+    if name == result_dict['target_column']:
       if name in result_dict['numerical_columns']:
-        default = float(default)
+        default = float(default or 0.0)
       else:
-        # check default is in the vocab, otherwise use it as is.
-        default = str(default)
+        default = default or ''
+    elif name == result_dict['key_column']:
+      if col_type == 'string':
+        default = str(default or '')
+      elif col_type == 'float':
+        default = float(default or 0.0)
+      else:
+        default = int(default or 0)
+    else:
+      if col_type == 'string':
+        default = str(default or '')
         if default not in result_dict['vocab_stats'][name]['labels']:
           raise ValueError('Default %s is not in the vocab for %s' %
                            (default, name))
-    else:
-      # Default is not given, so pick one. 
-      if name in result_dict['categorical_columns']:
-        default = ''
-      elif name in result_dict['numerical_columns']:
-        default = float(numerical_anlysis[name]['mean'])
-      elif name == result_dict['key_column']:
-        if col_type == 'string':
-          default = ''
-        else:
-          default = 0.0 
-
+      else:
+        default = float(default or numerical_anlysis[name]['mean'])
 
     result_dict['csv_defaults'][name] = default
 
