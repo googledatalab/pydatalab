@@ -27,8 +27,7 @@ class MetricDescriptors(object):
   _DISPLAY_HEADERS = ('Metric type', 'Display name', 'Kind', 'Value', 'Unit',
                       'Labels')
 
-  def __init__(self, filter_string=None, type_prefix=None,
-               project_id=None, context=None):
+  def __init__(self, filter_string=None, type_prefix=None, context=None):
     """Initializes the MetricDescriptors based on the specified filters.
 
     Args:
@@ -36,11 +35,9 @@ class MetricDescriptors(object):
           descriptors to be returned.
       type_prefix: An optional prefix constraining the selected metric types.
           This adds ``metric.type = starts_with("<prefix>")`` to the filter.
-      project_id: An optional project ID or number to override the one provided
-          by the context.
       context: An optional Context object to use instead of the global default.
     """
-    self._client = _utils.make_client(project_id, context)
+    self._client = _utils.make_client(context)
     self._filter_string = filter_string
     self._type_prefix = type_prefix
     self._descriptors = None

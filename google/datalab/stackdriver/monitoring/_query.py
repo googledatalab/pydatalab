@@ -25,8 +25,7 @@ class Query(google.cloud.monitoring.Query):
 
   def __init__(self,
                metric_type=google.cloud.monitoring.Query.DEFAULT_METRIC_TYPE,
-               end_time=None, days=0, hours=0, minutes=0,
-               project_id=None, context=None):
+               end_time=None, days=0, hours=0, minutes=0, context=None):
     """Initializes the core query parameters.
 
     The start time (exclusive) is determined by combining the
@@ -49,8 +48,6 @@ class Query(google.cloud.monitoring.Query):
       days: The number of days in the time interval.
       hours: The number of hours in the time interval.
       minutes: The number of minutes in the time interval.
-      project_id: An optional project ID or number to override the one provided
-          by the context.
       context: An optional Context object to use instead of the global default.
 
     Raises:
@@ -59,7 +56,7 @@ class Query(google.cloud.monitoring.Query):
             time, use
             :meth:`~google.cloud.monitoring.query.Query.select_interval`.
     """
-    client = _utils.make_client(project_id, context)
+    client = _utils.make_client(context)
     super(Query, self).__init__(client, metric_type,
                                 end_time=end_time,
                                 days=days, hours=hours, minutes=minutes)
