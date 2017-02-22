@@ -107,7 +107,7 @@ class Table(object):
   _VALID_COLUMN_NAME_CHARACTERS = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
   # When fetching table contents, the max number of rows to fetch per HTTP request
-  _DEFAULT_PAGE_SIZE = 1024
+  _DEFAULT_PAGE_SIZE = 100000
 
   # Milliseconds per week
   _MSEC_PER_WEEK = 7 * 24 * 3600 * 1000
@@ -553,7 +553,7 @@ class Table(object):
       start_row: the row to start fetching from; default 0.
       max_rows: the maximum number of rows to fetch (across all calls, not per-call). Default
           is None which means no limit.
-      page_size: the maximum number of results to fetch per page; default 1024.
+      page_size: the maximum number of results to fetch per page; default 100000.
     Returns:
       A function that can be called repeatedly with a page token and running count, and that
       will return an array of rows and a next page token; when the returned page token is None
