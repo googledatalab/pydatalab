@@ -297,8 +297,10 @@ class Model(object):
     # To extract the id, we need to add the identity function.
     keys = tf.identity(keys_placeholder)
     labels = self.labels + ['UNKNOWN']
-    predicted_label = tf.contrib.lookup.index_to_string(tensors.predictions[0],
-                                                        mapping=labels)
+    labels_tensor = tf.constant(labels)
+    labels_table = tf.contrib.lookup.index_to_string_table_from_tensor(mapping=labels_tensor)
+    predicted_label = labels_table.lookup(tensors.predictions[0])
+
     # Need to duplicate the labels by num_of_instances so the output is one batch
     # (all output members share the same outer dimension).
     # The labels are needed for client to match class scores list.
@@ -316,7 +318,7 @@ class Model(object):
     # Add table init op to collection so online prediction will load the model and run it.
     # TODO: initialize_all_tables is going to be deprecated but the replacement
     #       tf.tables_initializer does not exist in 0.12 yet.
-    init_tables_op = tf.initialize_all_tables()
+    init_tables_op = tf.tables_initializer()
     tf.add_to_collection(tf.contrib.session_bundle.constants.INIT_OP_KEY, init_tables_op)
 
   def export(self, last_checkpoint, output_dir):
