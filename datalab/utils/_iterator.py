@@ -12,7 +12,6 @@
 
 """Iterator class for iterable cloud lists."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from builtins import object
 
 

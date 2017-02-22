@@ -12,7 +12,6 @@
 
 """Google Cloud Platform library - IPython HTML display Functionality."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from builtins import str
 from builtins import range
 from past.builtins import basestring

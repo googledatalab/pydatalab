@@ -12,7 +12,6 @@
 
 """Implements Dataset, and related Dataset BigQuery APIs."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from builtins import object
 
 import datalab.context

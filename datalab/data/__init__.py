@@ -12,7 +12,6 @@
 
 """Google Cloud Platform library - Generic SQL Helpers."""
 from __future__ import absolute_import
-from __future__ import unicode_literals
 
 from ._csv import Csv
 from ._sql_module import SqlModule
