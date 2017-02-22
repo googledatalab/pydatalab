@@ -116,7 +116,7 @@ def get_project_id():
     proc = subprocess.Popen(['gcloud', 'config', 'list', '--format', 'value(core.project)'],
                             stdout=subprocess.PIPE)
     stdout, _ = proc.communicate()
-    value = stdout.strip()
+    value = stdout.decode().strip()
     if proc.poll() == 0 and value:
       return value
   except:
