@@ -31,9 +31,6 @@ from . import _preprocess
 from . import _trainer
 from . import _util
 
-_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0rc1-cp27-none-linux_x86_64.whl'
-# Keep in sync with "data_files" in package's setup.py
-_SETUP_PY = '/datalab/packages_setup/inception/setup.py'
 
 class Cloud(object):
   """Class for cloud training, preprocessing and prediction."""
@@ -51,8 +48,10 @@ class Cloud(object):
 
     # Find the package root. __file__ is under [package_root]/datalab_solutions/inception.
     package_root = os.path.join(os.path.dirname(__file__), '../../')
+    # We deploy setup.py in the same dir for repackaging purpose.
+    setup_py = os.path.join(os.path.dirname(__file__), 'setup.py')
     staging_package_url = os.path.join(output_path, 'staging', 'inception.tar.gz')
-    mlalpha.package_and_copy(package_root, _SETUP_PY, staging_package_url)
+    mlalpha.package_and_copy(package_root, setup_py, staging_package_url)
     return staging_package_url
 
   def preprocess(self, train_dataset, eval_dataset, output_dir, pipeline_option):
@@ -67,7 +66,7 @@ class Cloud(object):
         'temp_location': os.path.join(output_dir, 'tmp'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [_TF_GS_URL, ml.version.nodeps_sdk_location, staging_package_url],
+        'extra_packages': [ml.version.nodeps_sdk_location, staging_package_url],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
@@ -95,7 +94,7 @@ class Cloud(object):
       'checkpoint': self._checkpoint
     }
     job_request = {
-      'package_uris': [_TF_GS_URL, staging_package_url],
+      'package_uris': [staging_package_url],
       'python_module': 'datalab_solutions.inception.task',
       'args': job_args
     }
@@ -145,7 +144,7 @@ class Cloud(object):
         'temp_location': os.path.join(gcs_staging_location, 'tmp'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [_TF_GS_URL, ml.version.nodeps_sdk_location, staging_package_url],
+        'extra_packages': [ml.version.nodeps_sdk_location, staging_package_url],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
