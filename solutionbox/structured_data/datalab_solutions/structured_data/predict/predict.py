@@ -363,7 +363,7 @@ def make_prediction_pipeline(pipeline, args):
   predicted_values, errors = (
       pipeline
       | 'Read CSV Files'
-      >> beam.io.ReadFromText(args.predict_data,
+      >> beam.io.ReadFromText(str(args.predict_data),  # DF bug: DF does not work with unicode strings
                               strip_trailing_newlines=True)
       | 'Batch Input'
       >> beam.ParDo(EmitAsBatchDoFn(args.batch_size))
