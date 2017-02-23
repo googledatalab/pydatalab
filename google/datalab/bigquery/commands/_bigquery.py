@@ -791,7 +791,11 @@ def _table_cell(args, cell_body):
       else:
         datasets = [google.datalab.bigquery.Dataset((args['project'], args['dataset']))]
     else:
-      datasets = google.datalab.bigquery.Datasets(args['project'])
+      default_context = google.datalab.Context.default()
+      context = google.datalab.Context(default_context.project_id, default_context.credentials)
+      if args['project']:
+        context.project_id = args['project']
+      datasets = google.datalab.bigquery.Datasets(context)
 
     tables = []
     for dataset in datasets:
