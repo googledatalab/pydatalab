@@ -180,11 +180,16 @@ class ModelVersions(object):
     """
     if not path.startswith('gs://'):
       raise Exception('Invalid path. Only Google Cloud Storage path (gs://...) is accepted.')
-    if not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists():
-      # try appending '/model' sub dir.
-      path = os.path.join(path, 'model')
-      if not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists():
-        raise Exception('Cannot find export.meta from given path.')
+
+    # If there is no "export.meta" or"saved_model.pb" under path but there is
+    # path/model/export.meta or path/model/saved_model.pb, then append /model to the path.
+    if (not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists() and
+        not datalab.storage.Item.from_url(os.path.join(path, 'saved_model.pb')).exists()):
+      if (datalab.storage.Item.from_url(os.path.join(path, 'model', 'export.meta')).exists() or
+          datalab.storage.Item.from_url(os.path.join(path, 'model', 'saved_model.pb')).exists()):
+        path = os.path.join(path, 'model')
+      else:
+        print('Cannot find export.meta or saved_model.pb, but continue with deployment anyway.')
 
     body = {'name': self._model_name}
     parent = 'projects/' + self._project_id
