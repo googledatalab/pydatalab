@@ -44,7 +44,7 @@ class Local(object):
   def preprocess(self, train_dataset, eval_dataset, output_dir):
     """Local preprocessing with local DataFlow."""
     
-    import datalab.mlalpha as mlalpha
+    import datalab.ml as ml
     job_id = 'inception_preprocessed_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
     # Project is needed for bigquery data source, even in local run.
     options = {
@@ -74,7 +74,7 @@ class Local(object):
 
   def batch_predict(self, dataset, model_dir, output_csv, output_bq_table):
     """Local batch prediction."""
-    import datalab.mlalpha as mlalpha
+    import datalab.ml as ml
     job_id = 'inception_batch_predict_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
     # Project is needed for bigquery data source, even in local run.
     options = {

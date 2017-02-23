@@ -35,17 +35,6 @@ import datalab.stackdriver.commands
 import datalab.storage.commands
 import datalab.utils.commands
 
-# mlalpha modules require TensorFlow, CloudML SDK, and DataFlow (installed with CloudML SDK).
-# These are big dependencies and users who want to use Bigquery/Storage features may not
-# want to install them.
-# This __init__.py file is called when Jupyter/Datalab loads magics on startup. We don't want
-# Jupyter+pydatalab fail to start because of missing TensorFlow/DataFlow. So we ignore import
-# errors on mlalpha commands.
-try:
-  import datalab.mlalpha.commands
-except:
-  print('TensorFlow and CloudML SDK are required.')
-
 
 _orig_request = _httplib2.Http.request
 _orig_init = _requests.Session.__init__

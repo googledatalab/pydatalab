@@ -199,7 +199,7 @@ def get_sources_from_dataset(p, dataset, mode):
 
   import apache_beam as beam
   import csv
-  from datalab.mlalpha import CsvDataSet, BigQueryDataSet
+  from datalab.ml import CsvDataSet, BigQueryDataSet
 
   check_dataset(dataset, mode)
   if type(dataset) is CsvDataSet:

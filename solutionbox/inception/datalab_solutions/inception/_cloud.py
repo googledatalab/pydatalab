@@ -43,20 +43,20 @@ class Cloud(object):
     """Repackage inception from local installed location and copy it to GCS.
     """
 
-    import datalab.mlalpha as mlalpha
+    import datalab.ml as ml
 
     # Find the package root. __file__ is under [package_root]/datalab_solutions/inception.
     package_root = os.path.join(os.path.dirname(__file__), '../../')
     # We deploy setup.py in the same dir for repackaging purpose.
     setup_py = os.path.join(os.path.dirname(__file__), 'setup.py')
     staging_package_url = os.path.join(output_path, 'staging', 'inception.tar.gz')
-    mlalpha.package_and_copy(package_root, setup_py, staging_package_url)
+    ml.package_and_copy(package_root, setup_py, staging_package_url)
     return staging_package_url
 
   def preprocess(self, train_dataset, eval_dataset, output_dir, pipeline_option):
     """Cloud preprocessing with Cloud DataFlow."""
 
-    import datalab.mlalpha as mlalpha
+    import datalab.ml as ml
 
     job_name = 'preprocess-inception-' + datetime.datetime.now().strftime('%y%m%d-%H%M%S')
     staging_package_url = self._repackage_to_staging(output_dir)
@@ -82,7 +82,7 @@ class Cloud(object):
   def train(self, input_dir, batch_size, max_steps, output_path, cloud_train_config):
     """Cloud training with CloudML trainer service."""
 
-    import datalab.mlalpha as mlalpha
+    import datalab.ml as ml
     
     staging_package_url = self._repackage_to_staging(output_path)
     job_args = {
@@ -99,13 +99,13 @@ class Cloud(object):
     }
     job_request.update(dict(cloud_train_config._asdict()))
     job_id = 'inception_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-    job = mlalpha.Job.submit_training(job_request, job_id)
+    job = ml.Job.submit_training(job_request, job_id)
     return job
 
   def predict(self, model_id, images):
     """Cloud prediction with CloudML prediction service."""
 
-    import datalab.mlalpha as mlalpha
+    import datalab.ml as ml
     parts = model_id.split('.')
     if len(parts) != 2:
       raise ValueError('Invalid model name for cloud prediction. Use "model.version".')
@@ -120,7 +120,7 @@ class Cloud(object):
         'image_bytes': {'b64': image_encoded}
       })
 
-    predictions = mlalpha.ModelVersions(parts[0]).predict(parts[1], data)
+    predictions = ml.ModelVersions(parts[0]).predict(parts[1], data)
     if len(predictions) == 0:
       raise Exception('Prediction results are empty.')
     # Although prediction results contains a labels list in each instance, they are all the same
@@ -134,7 +134,7 @@ class Cloud(object):
                     output_bq_table, pipeline_option):
     """Cloud batch prediction with a model specified by a GCS directory."""
 
-    import datalab.mlalpha as mlalpha
+    import datalab.ml as ml
 
     job_name = 'batch-predict-inception-' + datetime.datetime.now().strftime('%y%m%d-%H%M%S')
     staging_package_url = self._repackage_to_staging(gcs_staging_location)
