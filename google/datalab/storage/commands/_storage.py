@@ -227,7 +227,7 @@ def _gcs_create(args, _):
     try:
       bucket, key = google.datalab.storage._bucket.parse_name(name)
       if bucket and not key:
-        google.datalab.storage.Bucket(bucket).create(project_id=args['project'])
+        google.datalab.storage.Bucket(bucket).create(_make_context(args['project']))
       else:
         raise Exception("Invalid bucket name %s" % name)
     except Exception as e:
@@ -265,11 +265,15 @@ def _gcs_delete(args, _):
   if errs:
     raise Exception('\n'.join(errs))
 
+def _make_context(project_id=None):
+  default_context = google.datalab.Context.default()
+  project_id = project_id or default_context.project_id
+  return google.datalab.Context(project_id, default_context.credentials)
 
 def _gcs_list_buckets(project, pattern):
   """ List all Google Cloud Storage buckets that match a pattern. """
   data = [{'Bucket': 'gs://' + bucket.name, 'Created': bucket.metadata.created_on}
-          for bucket in google.datalab.storage.Buckets(project_id=project)
+          for bucket in google.datalab.storage.Buckets(_make_context(project))
           if fnmatch.fnmatch(bucket.name, pattern)]
   return google.datalab.utils.commands.render_dictionary(data, ['Bucket', 'Created'])
 
@@ -317,7 +321,7 @@ def _gcs_list(args, _):
 
     if project:
       # Only list if the bucket is in the project
-      for bucket in google.datalab.storage.Buckets(project_id=project):
+      for bucket in google.datalab.storage.Buckets(_make_context(project)):
         if bucket.name == bucket_name:
           break
       else:
