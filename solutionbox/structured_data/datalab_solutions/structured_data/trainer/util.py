@@ -65,7 +65,7 @@ def _copy_all(src_files, dest_dir):
   for src_file in src_files:
     file_name = os.path.basename(src_file)
     new_file_location = os.path.join(dest_dir, file_name)
-    file_io.copy(src_file, new_file_location)
+    file_io.copy(src_file, new_file_location, overwrite=True)
 
 
 def _recursive_copy(src_dir, dest_dir):
@@ -83,7 +83,7 @@ def _recursive_copy(src_dir, dest_dir):
     if file_io.is_directory(old_path):
       _recursive_copy(old_path, new_path)
     else:
-      file_io.copy(old_path, new_path)
+      file_io.copy(old_path, new_path, overwrite=True)
 
 def serving_from_csv_input(train_config, args, keep_target):
   """Read the input features from a placeholder csv string tensor."""

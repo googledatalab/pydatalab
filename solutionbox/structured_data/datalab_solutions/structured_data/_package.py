@@ -50,9 +50,6 @@ from . import trainer
 from . import predict
 
 
-_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-0.12.0rc1-cp27-none-linux_x86_64.whl'
-
-
 def _default_project():
   import datalab.context
   context = datalab.context.Context.default()
@@ -171,7 +168,7 @@ def cloud_preprocess(output_dir, dataset, project_id=None):
 
     print('Starting cloud preprocessing.')
     print('Track BigQuery status at')
-    print('https://bigquery.cloud.google.com/queries/%s' % datalab_project_id())
+    print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
     preprocess.cloud_preprocess.main(args)
     print('Cloud preprocessing done.')
   finally:
