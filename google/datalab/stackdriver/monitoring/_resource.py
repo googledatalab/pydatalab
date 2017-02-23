@@ -26,17 +26,15 @@ class ResourceDescriptors(object):
 
   _DISPLAY_HEADERS = ('Resource type', 'Display name', 'Labels')
 
-  def __init__(self, filter_string=None, project_id=None, context=None):
+  def __init__(self, filter_string=None, context=None):
     """Initializes the ResourceDescriptors based on the specified filters.
 
     Args:
       filter_string: An optional filter expression describing the resource
           descriptors to be returned.
-      project_id: An optional project ID or number to override the one provided
-          by the context.
       context: An optional Context object to use instead of the global default.
     """
-    self._client = _utils.make_client(project_id, context)
+    self._client = _utils.make_client(context)
     self._filter_string = filter_string
     self._descriptors = None
 

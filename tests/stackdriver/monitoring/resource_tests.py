@@ -20,6 +20,7 @@ import google.cloud.monitoring
 import google.datalab
 import google.datalab.stackdriver.monitoring as gcm
 
+DEFAULT_PROJECT = 'test'
 PROJECT = 'my-project'
 RESOURCE_TYPES = ['gce_instance', 'aws_ec2_instance']
 DISPLAY_NAMES = ['GCE VM Instance', 'Amazon EC2 Instance']
@@ -34,33 +35,26 @@ FILTER_STRING = 'resource.type = ends_with("instance")'
 class TestCases(unittest.TestCase):
 
   def setUp(self):
-    self.context = self._create_context()
+    self.context = self._create_context(DEFAULT_PROJECT)
     self.descriptors = gcm.ResourceDescriptors(context=self.context)
 
   @mock.patch('google.datalab.Context.default')
   def test_constructor_minimal(self, mock_context_default):
     mock_context_default.return_value = self.context
-
     descriptors = gcm.ResourceDescriptors()
-
-    expected_client = gcm._utils.make_client(context=self.context)
-    self.assertEqual(descriptors._client.project, expected_client.project)
+    self.assertEqual(descriptors._client.project, DEFAULT_PROJECT)
     self.assertEqual(descriptors._client.connection.credentials,
-                     expected_client.connection.credentials)
-
+                     self.context.credentials)
     self.assertIsNone(descriptors._filter_string)
     self.assertIsNone(descriptors._descriptors)
 
   def test_constructor_maximal(self):
     context = self._create_context(PROJECT)
     descriptors = gcm.ResourceDescriptors(
-        filter_string=FILTER_STRING, project_id=PROJECT, context=context)
-
-    expected_client = gcm._utils.make_client(
-        context=context, project_id=PROJECT)
-    self.assertEqual(descriptors._client.project, expected_client.project)
+        filter_string=FILTER_STRING, context=context)
+    self.assertEqual(descriptors._client.project, PROJECT)
     self.assertEqual(descriptors._client.connection.credentials,
-                     expected_client.connection.credentials)
+                     context.credentials)
 
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
     self.assertIsNone(descriptors._descriptors)
@@ -144,7 +138,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.iloc[0, 0], RESOURCE_TYPES[0])
 
   @staticmethod
-  def _create_context(project_id='test'):
+  def _create_context(project_id):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return google.datalab.Context(project_id, creds)
 

@@ -18,6 +18,7 @@ import unittest
 import google.datalab
 import google.datalab.stackdriver.monitoring as gcm
 
+DEFAULT_PROJECT = 'test'
 PROJECT = 'my-project'
 GROUP_IDS = ['GROUP-205', 'GROUP-101']
 PARENT_IDS = [None, GROUP_IDS[0]]
@@ -31,23 +32,30 @@ IS_CLUSTERS = [False, True]
 class TestCases(unittest.TestCase):
 
   def setUp(self):
-    self.context = self._create_context()
+    self.context = self._create_context(DEFAULT_PROJECT)
     self.groups = gcm.Groups(context=self.context)
 
   @mock.patch('google.datalab.Context.default')
-  def test_constructor(self, mock_context_default):
+  def test_constructor_minimal(self, mock_context_default):
     mock_context_default.return_value = self.context
 
     groups = gcm.Groups()
 
     self.assertIs(groups._context, self.context)
-    self.assertIs(groups._project_id, self.context.project_id)
     self.assertIsNone(groups._group_dict)
 
-    expected_client = gcm._utils.make_client(context=self.context)
-    self.assertEqual(groups._client.project, expected_client.project)
+    self.assertEqual(groups._client.project, DEFAULT_PROJECT)
     self.assertEqual(groups._client.connection.credentials,
-                     expected_client.connection.credentials)
+                     self.context.credentials)
+
+  def test_constructor_maximal(self):
+    context = self._create_context(PROJECT)
+    groups = gcm.Groups(context)
+    self.assertIs(groups._context, context)
+    self.assertIsNone(groups._group_dict)
+    self.assertEqual(groups._client.project, PROJECT)
+    self.assertEqual(groups._client.connection.credentials,
+                     context.credentials)
 
   @mock.patch('google.cloud.monitoring.Client.list_groups')
   def test_list(self, mock_api_list_groups):
@@ -115,7 +123,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.iloc[0, 0], GROUP_IDS[0])
 
   @staticmethod
-  def _create_context(project_id='test'):
+  def _create_context(project_id):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return google.datalab.Context(project_id, creds)
 
