@@ -19,6 +19,7 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
+import google.datalab
 import google.datalab.stackdriver.monitoring as gcm
 import google.datalab.utils.commands
 
@@ -77,7 +78,7 @@ def _list_metric_descriptors(args, _):
   """Lists the metric descriptors in the project."""
   project_id = args['project']
   pattern = args['type'] or '*'
-  descriptors = gcm.MetricDescriptors(project_id=project_id)
+  descriptors = gcm.MetricDescriptors(context=_make_context(project_id))
   dataframe = descriptors.as_dataframe(pattern=pattern)
   return _render_dataframe(dataframe)
 
@@ -86,7 +87,7 @@ def _list_resource_descriptors(args, _):
   """Lists the resource descriptors in the project."""
   project_id = args['project']
   pattern = args['type'] or '*'
-  descriptors = gcm.ResourceDescriptors(project_id=project_id)
+  descriptors = gcm.ResourceDescriptors(context=_make_context(project_id))
   dataframe = descriptors.as_dataframe(pattern=pattern)
   return _render_dataframe(dataframe)
 
@@ -95,7 +96,7 @@ def _list_groups(args, _):
   """Lists the groups in the project."""
   project_id = args['project']
   pattern = args['name'] or '*'
-  groups = gcm.Groups(project_id=project_id)
+  groups = gcm.Groups(context=_make_context(project_id))
   dataframe = groups.as_dataframe(pattern=pattern)
   return _render_dataframe(dataframe)
 
@@ -106,3 +107,11 @@ def _render_dataframe(dataframe):
   fields = dataframe.columns.tolist()
   return IPython.core.display.HTML(
       google.datalab.utils.commands.HtmlBuilder.render_table(data, fields))
+
+
+def _make_context(project_id):
+  default_context = google.datalab.Context.default()
+  if project_id:
+    return google.datalab.Context(project_id, default_context.credentials)
+  else:
+    return default_context
