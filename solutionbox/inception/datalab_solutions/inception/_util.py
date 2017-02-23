@@ -16,8 +16,9 @@
 """Reusable utility functions.
 """
 
+from apache_beam.io import gcsio
 import collections
-import google.cloud.ml as ml
+import glob
 import multiprocessing
 import os
 
@@ -42,12 +43,41 @@ def default_project():
   return context.project_id
 
 
+def open_local_or_gcs(path, mode):
+  """Opens the given path."""
+  if path.startswith('gs://'):
+    try:
+      return gcsio.GcsIO().open(path, mode)
+    except Exception as e:  # pylint: disable=broad-except
+      # Currently we retry exactly once, to work around flaky gcs calls.
+      logging.error('Retrying after exception reading gcs file: %s', e)
+      time.sleep(10)
+      return gcsio.GcsIO().open(path, mode)
+  else:
+    return open(path, mode)
+
+
+def file_exists(path):
+  """Returns whether the file exists."""
+  if path.startswith('gs://'):
+    return gcsio.GcsIO().exists(path)
+  else:
+    return os.path.exists(path)
+
+
+def glob_files(path):
+  if path.startswith('gs://'):
+    return gcsio.GcsIO().glob(path)
+  else:
+    return glob.glob(path)
+
+
 def _get_latest_data_dir(input_dir):
   latest_file = os.path.join(input_dir, 'latest')
-  if not ml.util._file.file_exists(latest_file):
+  if not file_exists(latest_file):
     raise Exception(('Cannot find "latest" file in "%s". ' +
                     'Please use a preprocessing output dir.') % input_dir)
-  with ml.util._file.open_local_or_gcs(latest_file, 'r') as f:
+  with open_local_or_gcs(latest_file, 'r') as f:
     dir_name = f.read().rstrip()
   return os.path.join(input_dir, dir_name)
 
@@ -57,8 +87,8 @@ def get_train_eval_files(input_dir):
   data_dir = _get_latest_data_dir(input_dir)
   train_pattern = os.path.join(data_dir, 'train*.tfrecord.gz')
   eval_pattern = os.path.join(data_dir, 'eval*.tfrecord.gz')
-  train_files = ml.util._file.glob_files(train_pattern)
-  eval_files = ml.util._file.glob_files(eval_pattern)
+  train_files = glob_files(train_pattern)
+  eval_files = glob_files(eval_pattern)
   return train_files, eval_files
 
 
@@ -66,7 +96,7 @@ def get_labels(input_dir):
   """Get a list of labels from preprocessed output dir."""
   data_dir = _get_latest_data_dir(input_dir)
   labels_file = os.path.join(data_dir, 'labels')
-  with ml.util._file.open_local_or_gcs(labels_file, mode='r') as f:
+  with open_local_or_gcs(labels_file, mode='r') as f:
     labels = f.read().rstrip().split('\n')
   return labels
 
@@ -220,7 +250,7 @@ def load_images(image_files, resize=True):
 
   images = []
   for image_file in image_files:
-    with ml.util._file.open_local_or_gcs(image_file, 'r') as ff:
+    with open_local_or_gcs(image_file, 'r') as ff:
       images.append(ff.read())
   if resize is False:
     return images
@@ -236,4 +266,3 @@ def load_images(image_files, resize=True):
   with tf.Session() as sess:
     images_resized = sess.run(image, feed_dict=feed_dict)
   return images_resized
-

@@ -18,12 +18,12 @@
 
 
 import apache_beam as beam
+from apache_beam.io import fileio
+from apache_beam.io import tfrecordio
 from apache_beam.metrics import Metrics
 from apache_beam.utils.pipeline_options import PipelineOptions
 import cStringIO
 import csv
-import google.cloud.ml as ml
-from google.cloud.ml.io import SaveFeatures
 import logging
 import os
 from PIL import Image
@@ -95,7 +95,7 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
     uri, label_id = element
 
     try:
-      with ml.util._file.open_local_or_gcs(uri, mode='r') as f:
+      with _util.open_local_or_gcs(uri, mode='r') as f:
         img = Image.open(f).convert('RGB')
     # A variety of different calling libraries throw different exceptions here.
     # They all correspond to an unreadable file so we treat them equivalently.
@@ -274,6 +274,41 @@ class TrainEvalSplitPartitionFn(beam.PartitionFn):
   def partition_for(self, element, num_partitions):
     import random
     return 1 if random.random() > 0.7 else 0
+
+
+class ExampleProtoCoder(beam.coders.Coder):
+  """A coder to encode and decode TensorFlow Example objects."""
+
+  def __init__(self):
+    import tensorflow as tf  # pylint: disable=g-import-not-at-top
+    self._tf_train = tf.train
+
+  def encode(self, example_proto):
+    return example_proto.SerializeToString()
+
+  def decode(self, serialized_str):
+    example = self._tf_train.Example()
+    example.ParseFromString(serialized_str)
+    return example
+
+
+class SaveFeatures(beam.PTransform):
+  """Save Features in a TFRecordIO format.
+  """
+
+  def __init__(self, file_path_prefix):
+    super(SaveFeatures, self).__init__('SaveFeatures')
+    self._file_path_prefix = file_path_prefix
+
+  def expand(self, features):
+    return (features
+            | 'Write to %s' % self._file_path_prefix.replace('/', '_')
+            >> tfrecordio.WriteToTFRecord(
+                file_path_prefix=self._file_path_prefix,
+                file_name_suffix='.tfrecord.gz',
+                shard_name_template=fileio.DEFAULT_SHARD_NAME_TEMPLATE,
+                coder=ExampleProtoCoder(),
+                compression_type=fileio.CompressionTypes.AUTO))
 
 
 def _labels_pipeline(sources):

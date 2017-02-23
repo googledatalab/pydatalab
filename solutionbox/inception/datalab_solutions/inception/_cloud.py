@@ -20,7 +20,6 @@ import apache_beam as beam
 import base64
 import collections
 import datetime
-import google.cloud.ml as ml
 import logging
 import os
 
@@ -66,7 +65,7 @@ class Cloud(object):
         'temp_location': os.path.join(output_dir, 'tmp'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [ml.version.nodeps_sdk_location, staging_package_url],
+        'extra_packages': [staging_package_url],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
@@ -144,7 +143,7 @@ class Cloud(object):
         'temp_location': os.path.join(gcs_staging_location, 'tmp'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [ml.version.nodeps_sdk_location, staging_package_url],
+        'extra_packages': [staging_package_url],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }

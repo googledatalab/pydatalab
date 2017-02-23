@@ -23,7 +23,6 @@
    Datalab will look for functions with the above names.
 """
 
-import google.cloud.ml as ml
 import logging
 import os
 import urllib
