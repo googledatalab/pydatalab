@@ -25,56 +25,63 @@ import google.datalab.utils.commands
 
 
 @IPython.core.magic.register_line_cell_magic
-def monitoring(line, cell=None):
-  """Implements the monitoring cell magic for ipython notebooks.
+def sd(line, cell=None):
+  """Implements the stackdriver cell magic for ipython notebooks.
 
   Args:
     line: the contents of the storage line.
   Returns:
     The results of executing the cell.
   """
-  parser = google.datalab.utils.commands.CommandParser(prog='monitoring', description=(
-      'Execute various Monitoring-related operations. Use "%monitoring '
-      '<command> -h" for help on a specific command.'))
+  parser = google.datalab.utils.commands.CommandParser(prog='sd', description=(
+      'Execute various Stackdriver related operations. Use "%sd '
+      '<stackdriver_product> -h" for help on a specific Stackdriver product.'))
 
-  list_parser = parser.subcommand(
-      'list', 'List the metrics or resource types in a monitored project.')
-
-  list_metric_parser = list_parser.subcommand(
-      'metrics',
-      'List the metrics that are available through the Monitoring API.')
-  list_metric_parser.add_argument(
-      '-t', '--type',
-      help='The type of metric(s) to list; can include wildchars.')
-  list_metric_parser.add_argument(
-      '-p', '--project', help='The project on which to execute the request.')
-  list_metric_parser.set_defaults(func=_list_metric_descriptors)
-
-  list_resource_parser = list_parser.subcommand(
-      'resource_types',
-      ('List the monitored resource types that are available through the '
-       'Monitoring API.'))
-  list_resource_parser.add_argument(
-      '-p', '--project', help='The project on which to execute the request.')
-  list_resource_parser.add_argument(
-      '-t', '--type',
-      help='The resource type(s) to list; can include wildchars.')
-  list_resource_parser.set_defaults(func=_list_resource_descriptors)
-
-  list_group_parser = list_parser.subcommand(
-      'groups',
-      ('List the Stackdriver groups in this project.'))
-  list_group_parser.add_argument(
-      '-p', '--project', help='The project on which to execute the request.')
-  list_group_parser.add_argument(
-      '-n', '--name',
-      help='The name of the group(s) to list; can include wildchars.')
-  list_group_parser.set_defaults(func=_list_groups)
-
+  # %%sd monitoring
+  _create_monitoring_subparser(parser)
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
-def _list_metric_descriptors(args, _):
+def _create_monitoring_subparser(parser):
+  monitoring_parser = parser.subcommand(
+      'monitoring', 'Execute Stackdriver monitoring related operations. Use '
+      '"sd monitoring <command> -h" for help on a specific command')
+
+  metric_parser = monitoring_parser.subcommand(
+      'metrics', 'Operations on Stackdriver Monitoring metrics')
+  metric_list_parser = metric_parser.subcommand('list', 'List metrics')
+  metric_list_parser.add_argument(
+      '-p', '--project',
+      help='The project whose metrics should be listed.')
+  metric_list_parser.add_argument(
+      '-t', '--type',
+      help='The type of metric(s) to list; can include wildchars.')
+  metric_list_parser.set_defaults(func=_monitoring_metrics_list)
+
+  resource_parser = monitoring_parser.subcommand(
+      'resource_types', 'Operations on Stackdriver Monitoring resource types')
+  resource_list_parser = resource_parser.subcommand('list', 'List resource types')
+  resource_list_parser.add_argument(
+      '-p', '--project',
+      help='The project whose resource types should be listed.')
+  resource_list_parser.add_argument(
+      '-t', '--type',
+      help='The resource type(s) to list; can include wildchars.')
+  resource_list_parser.set_defaults(func=_monitoring_resource_types_list)
+
+  group_parser = monitoring_parser.subcommand(
+      'groups', 'Operations on Stackdriver groups')
+  group_list_parser = group_parser.subcommand('list', 'List groups')
+  group_list_parser.add_argument(
+      '-p', '--project',
+      help='The project whose groups should be listed.')
+  group_list_parser.add_argument(
+      '-n', '--name',
+      help='The name of the group(s) to list; can include wildchars.')
+  group_list_parser.set_defaults(func=_monitoring_groups_list)
+
+
+def _monitoring_metrics_list(args, _):
   """Lists the metric descriptors in the project."""
   project_id = args['project']
   pattern = args['type'] or '*'
@@ -83,7 +90,7 @@ def _list_metric_descriptors(args, _):
   return _render_dataframe(dataframe)
 
 
-def _list_resource_descriptors(args, _):
+def _monitoring_resource_types_list(args, _):
   """Lists the resource descriptors in the project."""
   project_id = args['project']
   pattern = args['type'] or '*'
@@ -92,7 +99,7 @@ def _list_resource_descriptors(args, _):
   return _render_dataframe(dataframe)
 
 
-def _list_groups(args, _):
+def _monitoring_groups_list(args, _):
   """Lists the groups in the project."""
   project_id = args['project']
   pattern = args['name'] or '*'
