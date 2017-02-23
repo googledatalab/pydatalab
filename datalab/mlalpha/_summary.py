@@ -1,12 +1,29 @@
+# Copyright 2017 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+
 import datetime
 import fnmatch
 import glob
-import google.cloud.ml as ml
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record
+
+from . import _util 
 
 
 class Summary(object):
@@ -25,9 +42,9 @@ class Summary(object):
     event_files = []
     for path in paths:
       if path.startswith('gs://'):
-        event_files += ml.util._file.glob_files(os.path.join(path, '*.tfevents.*'))
+        event_files += _util.glob_files(os.path.join(path, '*.tfevents.*'))
       else:
-        dirs = ml.util._file.glob_files(path)
+        dirs = _util.glob_files(path)
         for dir in dirs:
           for root, _, filenames in os.walk(dir):
             for filename in fnmatch.filter(filenames, '*.tfevents.*'):

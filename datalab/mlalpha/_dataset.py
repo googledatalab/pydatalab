@@ -18,13 +18,14 @@
 """
 
 import json
-import google.cloud.ml as ml
 import numpy as np
 import pandas as pd
 import random
 
 import datalab.bigquery as bq
 import datalab.data
+
+from . import _util
 
 
 class CsvDataSet(object):
@@ -58,7 +59,7 @@ class CsvDataSet(object):
             raise ValueError('invalid schema string "%s"' % x)
           self._schema.append({'name': parts[0].strip(), 'type': parts[1].strip()})
     else:
-      with ml.util._file.open_local_or_gcs(schema_file, 'r') as f:
+      with _util.open_local_or_gcs(schema_file, 'r') as f:
         self._schema = json.load(f)
         
     if isinstance(file_pattern, basestring):
@@ -78,7 +79,7 @@ class CsvDataSet(object):
     if not self._glob_files:
       for file in self._input_files:
         # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
-        self._glob_files += [str(x) for x in ml.util._file.glob_files(file)]
+        self._glob_files += [str(x) for x in _util.glob_files(file)]
     
     return self._glob_files
       
@@ -98,7 +99,7 @@ class CsvDataSet(object):
     row_total_count = 0
     row_counts = []
     for file in self.files:
-      with ml.util._file.open_local_or_gcs(file, 'r') as f:
+      with _util.open_local_or_gcs(file, 'r') as f:
         num_lines = sum(1 for line in f)
         row_total_count += num_lines
         row_counts.append(num_lines)
@@ -123,7 +124,7 @@ class CsvDataSet(object):
     for file, row_count in zip(self.files, row_counts):
       skip = [x for x in skip_all if x < row_count]
       skip_all = [x - row_count for x in skip_all if x >= row_count]
-      with ml.util._file.open_local_or_gcs(file, 'r') as f:
+      with _util.open_local_or_gcs(file, 'r') as f:
         dfs.append(pd.read_csv(f, skiprows=skip, names=names, dtype=dtype, header=None))
     return pd.concat(dfs, axis=0, ignore_index=True)
 
