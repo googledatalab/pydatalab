@@ -1,8 +1,0 @@
-{
-  "num1": {"transform": "scale"},
-  "num2": {"transform": "scale", "value": 4},
-  "str1": {"transform": "one_hot", "default": "blue"},
-  "str2": {"transform": "embedding", "embedding_dim": 3},
-  "target": {"transform": "target"},
-  "key": {"transform": "key"}
- }

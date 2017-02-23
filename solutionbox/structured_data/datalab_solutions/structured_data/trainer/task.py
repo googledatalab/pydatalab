@@ -26,7 +26,6 @@ from . import util
 import tensorflow as tf
 from tensorflow.contrib import metrics as metrics_lib
 
-#from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.session_bundle import manifest_pb2
 from tensorflow.python.lib.io import file_io
@@ -76,12 +75,6 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
     features = util.parse_example_tensor(examples=new_examples,
                                          train_config=train_config)
 
-    #global FEATURES_EXAMPLE_DICT_KEY
-    #while FEATURES_EXAMPLE_DICT_KEY in features:
-    #  FEATURES_EXAMPLE_DICT_KEY = '_' + FEATURES_EXAMPLE_DICT_KEY
-
-    #features[FEATURES_EXAMPLE_DICT_KEY] = new_examples
-
     target = features.pop(train_config['target_column'])
     features, target = util.preprocess_input(
         features=features,
@@ -129,95 +122,6 @@ def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
   return get_input_features
 
 
-
-
-# def get_export_signature_fn(train_config, args):
-#   """Builds the output layer in the exported graph.
-
-#   Also sets up the tensor names when calling session.run
-#   """
-
-#   def get_export_signature(examples, features, predictions):
-#     """Create an export signature with named input and output signatures."""
-#     target_name = train_config['target_column']
-#     key_name = train_config['key_column']
-
-#     if util.is_classification_model(args.model_type):
-      
-#       # Get the label of the input target.
-#       string_value = util.get_vocabulary(args.preprocess_output_dir, target_name)
-#       input_target_label = tf.contrib.lookup.index_to_string(
-#           features[target_name],
-#           mapping=string_value,
-#           default_value='UNKNOWN')   
-
-#       outputs = {
-#           PG_KEY: tf.squeeze(features[key_name]).name,
-#           PG_TARGET: tf.squeeze(input_target_label).name,
-#       }
-
-#       # TODO(brandondutra): get the score of the target label too.
-#       #input_target_score = vector_slice(predictions, features[target_name])
-      
-#       # get top k labels and their scores.
-#       (top_k_values, top_k_indices) = tf.nn.top_k(predictions, k=args.top_n)
-#       top_k_labels = tf.contrib.lookup.index_to_string(
-#           tf.to_int64(top_k_indices),
-#           mapping=string_value)
-   
-#       # Write the top_k values using 2*top_k columns. 
-#       num_digits = int(math.ceil(math.log(args.top_n, 10)))
-#       if num_digits == 0:
-#         num_digits = 1
-#       for i in range(0, args.top_n):
-#         # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
-#         # makes sorting the columns easy.
-#         padded_i = str(i+1).zfill(num_digits)
-
-#         label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
-#         label_tensor_name = (tf.squeeze(
-#               tf.slice(top_k_labels, 
-#                        [0, i],
-#                        [tf.shape(top_k_labels)[0], 1])).name)
-#         score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
-#         score_tensor_name = (tf.squeeze(
-#             tf.slice(top_k_values, 
-#                      [0, i], 
-#                      [tf.shape(top_k_values)[0], 1])).name)
-
-#         outputs.update({label_alias: label_tensor_name,
-#                         score_alias: score_tensor_name})
-
-#     else:
-#       outputs = {
-#           PG_KEY: tf.squeeze(features[key_name]).name,
-#           PG_TARGET: tf.squeeze(features[target_name]).name,
-#           PG_REGRESSION_PREDICTED_TARGET: tf.squeeze(predictions).name,
-#       }
-
-
-#     inputs = {EXAMPLES_PLACEHOLDER_TENSOR_NAME: examples.name}
-
-#     tf.add_to_collection(INPUT_COLLECTION_NAME, json.dumps(inputs))
-#     tf.add_to_collection(OUTPUT_COLLECTION_NAME, json.dumps(outputs))
-
-#     input_signature = manifest_pb2.Signature()
-#     output_signature = manifest_pb2.Signature()
-
-#     for name, tensor_name in outputs.iteritems():
-#       output_signature.generic_signature.map[name].tensor_name = tensor_name
-
-#     for name, tensor_name in inputs.iteritems():
-#       input_signature.generic_signature.map[name].tensor_name = tensor_name
-
-#     # Return None for default classification signature.
-#     return None, {INPUT_COLLECTION_NAME: input_signature,
-#                   OUTPUT_COLLECTION_NAME: output_signature}
-
-#   # Return a function to create an export signature.
-#   return get_export_signature
-
-
 def get_experiment_fn(args):
   """Builds the experiment function for learn_runner.run.
 
@@ -235,9 +139,6 @@ def get_experiment_fn(args):
 
     # Get the model to train.
     estimator = util.get_estimator(output_dir, train_config, args)
-
-    #input_placeholder_for_prediction = get_placeholder_input_fn(
-    #    train_config, args.preprocess_output_dir, args.model_type)
 
     # Save a copy of the scehma and input to the model folder.
     schema_file = os.path.join(args.preprocess_output_dir, util.SCHEMA_FILE)

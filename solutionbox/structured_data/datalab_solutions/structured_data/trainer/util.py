@@ -112,59 +112,6 @@ def serving_from_csv_input(train_config, args, keep_target):
                                    {'csv_line': examples}
   )    
 
-def serving_from_json_input(train_config, args):
-  feature_placeholders = {}
-  for name in train_config['csv_header']:
-    if name in train_config['numerical_columns']:
-      dtype = tf.float32
-    else:
-      dtype = tf.string
-    feature_placeholders[name] = tf.placeholder(dtype=dtype,
-                                                shape=(None,),
-                                                name=name)
-
-  features = {
-    key: tf.expand_dims(tensor, -1)
-    for key, tensor in feature_placeholders.iteritems()
-  }
-
-
-  target = features.pop(train_config['target_column'])
-  features, target = preprocess_input(
-      features=features,
-      target=target,
-      train_config=train_config,
-      preprocess_output_dir=args.preprocess_output_dir,
-      model_type=args.model_type)
-
-  #_ = feature_placeholders.pop(train_config['target_column'])
-
-  return input_fn_utils.InputFnOps(
-    features,
-    target,
-    feature_placeholders
-  )
-
-
-
-
-def xxxxmake_export_strategy(train_config, args, assets_extra=None):
-
-  def export_fn(estimator,
-                export_dir_base,
-                checkpoint_path=None
-               ):
-    export_result = estimator.export_savedmodel(
-        export_dir_base,
-        _serving_in_fn,
-        default_output_alternative_key=None,
-        assets_extra=assets_extra,
-        as_text=False)
-
-    saved_model_export_utils.garbage_collect_exports(export_dir_base, exports_to_keep=5)
-    return export_result
-
-  return export_strategy.ExportStrategy('servolike', export_fn)
 
 def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target=True):
     target_name = train_config['target_column']
@@ -234,39 +181,10 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
 
 
 def make_export_strategy(train_config, args, keep_target, assets_extra=None):
-  default_output_alternative_key=None
-  #serving_from_csv_ops = serving_from_csv_input(train_config, args)
-  #def _serving_in_fn():
-  #  return serving_from_csv_input(train_config, args)
   def export_fn(estimator, export_dir_base, checkpoint_path=None, eval_result=None):
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
-
-      # Call the serving_input_fn and collect the input alternatives.
-      #input_csv_ops = serving_from_csv_input(train_config, args)
-      #input_alternatives, features = (
-      #    saved_model_export_utils.get_input_alternatives(input_csv_ops))
-
-      # Call the model_fn and collect the output alternatives.
-      #model_fn_ops = estimator._call_model_fn(input_csv_ops.features, None,
-      #                                   model_fn_lib.ModeKeys.INFER)
-      #output_alternatives, actual_default_output_alternative_key = (
-      #    saved_model_export_utils.get_output_alternatives(
-      #        model_fn_ops, default_output_alternative_key))
-
-      #default_output_tensors = output_alternatives[actual_default_output_alternative_key][1]
-      #print('default_output_tensors', default_output_tensors)
-      #print('output_alternatives', output_alternatives)
-      #print('actual_default_output_alternative_key', actual_default_output_alternative_key)
-      #input_features = serving_from_csv_ops.features
-      #input_placeholder = input_csv_ops.default_inputs
-
-      #output_tensors = model_fn_ops.predictions
-      #print('old ot', model_fn_ops.predictions)
-      #output_tensors = model_fn_ops.predictions
- 
-      # Build the feed/fetch tensors starting from csv with a target column.
-      
+     
       input_ops = serving_from_csv_input(train_config, args, keep_target)      
       model_fn_ops = estimator._call_model_fn(input_ops.features, 
                                               None,
@@ -284,11 +202,6 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
                 input_ops.default_inputs, 
                 output_fetch_tensors)
       }
-
-      # Build the SignatureDefs from all pairs of input and output alternatives
-      #signature_def_map = saved_model_export_utils.build_all_signature_defs(
-      #    input_alternatives, output_alternatives,
-      #    actual_default_output_alternative_key)
 
       if not checkpoint_path:
         # Locate the latest checkpoint

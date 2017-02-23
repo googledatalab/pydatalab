@@ -461,7 +461,7 @@ def local_predict(training_ouput_dir, data):
     shutil.rmtree(tmp_dir)
 
 
-def cloud_predict(model_name, model_version, data, is_target_missing=False):
+def cloud_predict(model_name, model_version, data):
   """Use Online prediction.
 
   Runs online prediction in the cloud and prints the results to the screen. For
@@ -471,20 +471,12 @@ def cloud_predict(model_name, model_version, data, is_target_missing=False):
   Args:
     model_name: deployed model name
     model_verion: depoyed model version
-    data: List of csv strings that match the model schema. Or a pandas DataFrame 
-        where the columns match the model schema. The first column,
-        the target column, is assumed to exist in the data. 
-    is_target_missing: If true, prepends a ',' in each csv string or adds an 
-        empty DataFrame column. If the csv data has a leading ',' keep this flag
-        False. Example: 
-        1) If data = ['target,input1,input2'], then set is_target_missing=False.
-        2) If data = [',input1,input2'], then set is_target_missing=False.
-        3) If data = ['input1,input2'], then set is_target_missing=True.
+    data: List of csv strings or a Pandas DataFrame that match the model schema.
 
   Before using this, the model must be created. This can be done by running
   two gcloud commands:
   1) gcloud beta ml models create NAME
-  2) gcloud beta ml models versions create VERSION --model NAME \
+  2) gcloud beta ml versions create VERSION --model NAME \
       --origin gs://BUCKET/training_output_dir/model
   or one datalab magic:
   1) %mlalpha deploy --name=NAME.VERSION \
@@ -499,17 +491,12 @@ def cloud_predict(model_name, model_version, data, is_target_missing=False):
     # write the df to csv.
     string_buffer = StringIO.StringIO()
     data.to_csv(string_buffer, header=None, index=False)
-    csv_lines = string_buffer.getvalue().split('\n')
+    input_data = string_buffer.getvalue().split('\n')
 
-    if is_target_missing:
-      input_data = [',' + csv for csv in csv_lines]
-    else:
-      input_data = csv_lines
+    #remove empty strings
+    input_data = [line for line in input_data if line]
   else:
-    if is_target_missing:
-      input_data = [ ',' + csv for csv in data]
-    else:
-      input_data = data
+    input_data = data
 
   predictions = mlalpha.ModelVersions(model_name).predict(model_version, input_data)
 
@@ -586,15 +573,6 @@ def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
       output_dir])  
 
   cmd = ['predict.py',
-         '--predict_data=%s' % prediction_input_file,
-         '--trained_model_dir=%s' % model_dir,
-         '--output_dir=%s' % output_dir,
-         '--output_format=%s' % output_format,
-         '--batch_size=%s' % str(batch_size),
-         '--shard_files' if shard_files else '--no-shard_files',
-         ]
-
-  cmd = ['predict.py',
          '--cloud',
          '--project_id=%s' % _default_project(),
          '--predict_data=%s' % prediction_input_file,
@@ -603,13 +581,7 @@ def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
          '--output_format=%s' % output_format,
          '--batch_size=%s' % str(batch_size),
          '--shard_files' if shard_files else '--no-shard_files',         
-         '--extra_package=%s' % _package_to_staging(output_dir),
-         '--extra_package=%s' % _TF_GS_URL]
-
-  if shard_files:
-    cmd.append('--shard_files')
-  else:
-    cmd.append('--no-shard_files')
+         '--extra_package=%s' % _package_to_staging(output_dir)]
 
   print('Starting cloud batch prediction.')
   predict.predict.main(cmd)
