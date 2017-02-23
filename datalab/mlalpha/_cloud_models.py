@@ -180,11 +180,12 @@ class ModelVersions(object):
     """
     if not path.startswith('gs://'):
       raise Exception('Invalid path. Only Google Cloud Storage path (gs://...) is accepted.')
-    if not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists():
-      # try appending '/model' sub dir.
+
+    # If there is no "export.meta" under path but there is path/model/export.meta, then
+    # append /model to the path.
+    if (not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists() and
+        datalab.storage.Item.from_url(os.path.join(path, 'model', 'export.meta')).exists()):
       path = os.path.join(path, 'model')
-      if not datalab.storage.Item.from_url(os.path.join(path, 'export.meta')).exists():
-        raise Exception('Cannot find export.meta from given path.')
 
     body = {'name': self._model_name}
     parent = 'projects/' + self._project_id
