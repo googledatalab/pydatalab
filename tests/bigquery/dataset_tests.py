@@ -153,8 +153,7 @@ class TestCases(unittest.TestCase):
       ]
     }
     mock_dataset_get_info.return_value = {}
-    datasets = [dataset for dataset in google.datalab.bigquery.Datasets('test',
-                                                                 TestCases._create_context())]
+    datasets = [dataset for dataset in google.datalab.bigquery.Datasets(TestCases._create_context())]
     self.assertEqual(2, len(datasets))
     self.assertEqual('p:d1', str(datasets[0]))
     self.assertEqual('p:d2', str(datasets[1]))
