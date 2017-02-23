@@ -58,7 +58,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
           t = 102
 
       if keep_target:
-          csv_line = "{target},{id},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
+          csv_line = "{id},{target},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
             id=i,
             target=t,
             num1=num1,
@@ -90,15 +90,15 @@ def make_preprocess_schema(filename, problem_type):
   """
   schema = [
       {
-          "mode": "REQUIRED",
-          "name": "target",
-          "type": ("STRING" if problem_type == 'classification' else "FLOAT")
-      },  
-      {
           "mode": "NULLABLE",
           "name": "key",
           "type": "STRING"
       },
+      {
+          "mode": "REQUIRED",
+          "name": "target",
+          "type": ("STRING" if problem_type == 'classification' else "FLOAT")
+      },        
       {
           "mode": "NULLABLE",
           "name": "num1",
@@ -199,7 +199,10 @@ if __name__ == '__main__':
   make_csv_data('raw_train_regression.csv', 5000, 'regression', True)
   make_csv_data('raw_eval_regression.csv', 1000, 'regression', True)
   make_csv_data('raw_predict_regression.csv', 100, 'regression', False)
+  make_preprocess_schema('schema_regression.json', 'regression')
 
   make_csv_data('raw_train_classification.csv', 5000, 'classification', True)
   make_csv_data('raw_eval_classification.csv', 1000, 'classification', True)
   make_csv_data('raw_predict_classification.csv', 100, 'classification', False)
+  make_preprocess_schema('schema_classification.json', 'classification')
+
