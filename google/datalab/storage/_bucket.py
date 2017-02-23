@@ -164,19 +164,18 @@ class Bucket(object):
     except Exception:
       return False
 
-  def create(self, project_id=None):
+  def create(self, context=None):
     """Creates the bucket.
 
     Args:
-      project_id: the project in which to create the bucket.
+      context: the context object to use when creating the bucket.
     Returns:
       The bucket.
     Raises:
       Exception if there was an error creating the bucket.
     """
     if not self.exists():
-      if project_id is None:
-        project_id = self._api.project_id
+      project_id = context.project_id if context else self._api.project_id
       try:
         self._info = self._api.buckets_insert(self._name, project_id=project_id)
       except Exception as e:
@@ -199,12 +198,10 @@ class Bucket(object):
 class Buckets(object):
   """Represents a list of Cloud Storage buckets for a project."""
 
-  def __init__(self, project_id=None, context=None):
+  def __init__(self, context=None):
     """Initializes an instance of a BucketList.
 
     Args:
-      project_id: an optional project whose buckets we want to manipulate. If None this
-          is obtained from the api object.
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
@@ -213,7 +210,7 @@ class Buckets(object):
       context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
-    self._project_id = project_id if project_id else self._api.project_id
+    self._project_id = context.project_id if context else self._api.project_id
 
   def contains(self, name):
     """Checks if the specified bucket exists.
