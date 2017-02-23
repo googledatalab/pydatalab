@@ -76,6 +76,7 @@ def parse_arguments(argv):
                       action='store_false',
                       help='Don\'t shard files')
   parser.set_defaults(shard_files=True)
+
   parser.add_argument('--output_format',
                       choices=['csv', 'json'],
                       default='csv',
@@ -102,55 +103,6 @@ def parse_arguments(argv):
 
 
   return args
-
-
-class FixMissingTarget(beam.DoFn):
-  """A DoFn to fix missing target columns."""
-
-  def __init__(self, trained_model_dir):
-    """Reads the schema file and extracted the expected number of columns.
-
-    Args:
-      trained_model_dir: path to model.
-
-    Raises:
-      ValueError: if schema.json not found in trained_model_dir
-    """
-    from tensorflow.python.lib.io import file_io
-    import json
-    import os
-
-    schema_path = os.path.join(trained_model_dir, 'schema.json')
-    if not file_io.file_exists(schema_path):
-      raise ValueError('schema.json missing from %s' % schema_path)
-    schema = json.loads(file_io.read_file_to_string(schema_path))
-    self._num_expected_columns = len(schema)
-
-  def process(self, element):
-    """Fixes csv line if target is missing.
-
-    The first column is assumed to be the target column, and the TF graph
-    expects to always parse the target column, even in prediction. Below,
-    we check how many csv columns there are, and if the target is missing, we
-    prepend a ',' to denote the missing column. 
-
-    Example:
-      'target,key,value1,...' -> 'target,key,value1,...' (no change)
-      'key,value1,...' -> ',key,value1,...' (add missing target column)
-
-    The value of the missing target column comes from the default value given 
-    to tf.decode_csv in the graph.
-    """
-    import apache_beam as beam
-
-    num_columns = len(element.split(','))
-    if num_columns == self._num_expected_columns:
-      yield element
-    elif num_columns + 1 == self._num_expected_columns:
-      yield ',' + element
-    else:
-      yield beam.pvalue.SideOutputValue('errors',
-                                        ('bad columns', element))
 
 
 class EmitAsBatchDoFn(beam.DoFn):
@@ -185,21 +137,21 @@ class RunGraphDoFn(beam.DoFn):
     self._session = None
 
   def start_bundle(self, element=None):
-    from tensorflow.contrib.session_bundle import session_bundle
+    from tensorflow.python.saved_model import tag_constants
+    from tensorflow.contrib.session_bundle import bundle_shim  
     import json
 
-    self._session, _ = session_bundle.load_session_bundle_from_path(
-        self._trained_model_dir)
+    self._session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(self._trained_model_dir, tags=[tag_constants.SERVING])
+    signature = meta_graph.signature_def['serving_default']
 
-    # input_alias_map {'input_csv_string': tensor_name}
-    self._input_alias_map = json.loads(
-        self._session.graph.get_collection('inputs')[0])
-
-    # output_alias_map {'target_from_input': tensor_name, 'key': ...}
-    self._output_alias_map = json.loads(
-        self._session.graph.get_collection('outputs')[0])
-
+    # get the mappings between aliases and tensor names
+    # for both inputs and outputs
+    self._input_alias_map = {friendly_name: tensor_info_proto.name 
+        for (friendly_name, tensor_info_proto) in signature.inputs.items() }
+    self._output_alias_map = {friendly_name: tensor_info_proto.name 
+        for (friendly_name, tensor_info_proto) in signature.outputs.items() }
     self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
+
 
   def finish_bundle(self, element=None):
     self._session.close()
@@ -220,6 +172,11 @@ class RunGraphDoFn(beam.DoFn):
 
       feed_dict = collections.defaultdict(list)
       for line in element:
+
+        # Remove trailing newline. 
+        if line.endswith('\n'):
+          line = line[:-1]
+
         feed_dict[self._input_alias_map.values()[0]].append(line)
         num_in_batch += 1
 
@@ -311,26 +268,41 @@ class FormatAndSave(beam.PTransform):
     self._output_format = args.output_format
     self._output_dir = args.output_dir
 
-    # See if the target vocab should be loaded.
+    # Get the BQ schema if csv.
     if self._output_format == 'csv':
-      from tensorflow.contrib.session_bundle import session_bundle
-      import json
+      from tensorflow.python.saved_model import tag_constants
+      from tensorflow.contrib.session_bundle import bundle_shim
+      from tensorflow.core.framework import types_pb2  
+    
+      session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(args.trained_model_dir, tags=[tag_constants.SERVING])
+      signature = meta_graph.signature_def['serving_default']
 
-      self._session, _ = session_bundle.load_session_bundle_from_path(
-          args.trained_model_dir)
-     
-      # output_alias_map {'target_from_input': tensor_name, 'key': ...}
-      output_alias_map = json.loads(
-          self._session.graph.get_collection('outputs')[0])
+      self._schema = []
+      for friendly_name in sorted(signature.outputs):
+        tensor_info_proto = signature.outputs[friendly_name]
 
-      self._header = sorted(output_alias_map.keys())
-      self._session.close()
-
+        # TODO(brandondutra): Could dtype be DT_INVALID?
+        # Consider getting the dtype from the graph via
+        # session.graph.get_tensor_by_name(tensor_info_proto.name).dtype)
+        dtype = tensor_info_proto.dtype
+        if dtype == types_pb2.DT_FLOAT or dtype == types_pb2.DT_DOUBLE:
+          bq_type == 'FLOAT'
+        elif dtype == types_pb2.DT_INT32 or dtype == types_pb2.DT_INT64:
+          bq_type == 'INTEGER'
+        else:
+          bq_type = 'STRING'
+          
+        self._schema.append({'mode': 'NULLABLE', 
+                             'name': friendly_name,
+                             'type': bq_type})
+      session.close()
 
   def apply(self, datasets):
     return self.expand(datasets)
 
   def expand(self, datasets):
+    import json
+
     tf_graph_predictions, errors = datasets
 
     if self._output_format == 'json':
@@ -344,15 +316,16 @@ class FormatAndSave(beam.PTransform):
               shard_name_template=self._shard_name_template))
     elif self._output_format == 'csv':
       # make a csv header file 
-      csv_coder = CSVCoder(self._header)
+      header = [col['name'] for col in self._schema]
+      csv_coder = CSVCoder(header)
       _ = (
           tf_graph_predictions.pipeline
           | 'Make CSV Header'
-          >> beam.Create([csv_coder.make_header_string()])
-          | 'Write CSV Header File'
+          >> beam.Create([json.dumps(self._schema, indent=2)])
+          | 'Write CSV Schema File'
           >> beam.io.textio.WriteToText(
               os.path.join(self._output_dir, 'csv_header'),
-              file_name_suffix='.txt',
+              file_name_suffix='.json',
               shard_name_template=''))   
      
       # Write the csv predictions
@@ -387,15 +360,11 @@ def make_prediction_pipeline(pipeline, args):
     pipeline: the pipeline
     args: command line args
   """
-  
-
   predicted_values, errors = (
       pipeline
       | 'Read CSV Files'
       >> beam.io.ReadFromText(args.predict_data,
                               strip_trailing_newlines=True)
-      | 'Is Target Missing'
-      >> beam.ParDo(FixMissingTarget(args.trained_model_dir))
       | 'Batch Input'
       >> beam.ParDo(EmitAsBatchDoFn(args.batch_size))
       | 'Run TF Graph on Batches'

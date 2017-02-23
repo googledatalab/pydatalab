@@ -262,7 +262,7 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
       #input_placeholder = input_csv_ops.default_inputs
 
       #output_tensors = model_fn_ops.predictions
-      #print('old ot', output_tensors)
+      #print('old ot', model_fn_ops.predictions)
       #output_tensors = model_fn_ops.predictions
  
       # Build the feed/fetch tensors starting from csv with a target column.
@@ -340,17 +340,16 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
     # save the last model to the model folder.
     # export_dir_base = A/B/intermediate_models/
     if keep_target:
-      final_dir = '../evaluation_model'
+      final_dir = os.path.join(args.output_path, 'evaluation_model')
     else:
-      final_dir = '../prediction_model'
-    final_model_location = os.path.abspath(os.path.join(export_dir_base, final_dir))
-    if file_io.is_directory(final_model_location):
-      file_io.delete_recursively(final_model_location)
-    file_io.recursive_create_dir(final_model_location)
-    _recursive_copy(export_dir, final_model_location)
+      final_dir = os.path.join(args.output_path, 'model')
+    if file_io.is_directory(final_dir):
+      file_io.delete_recursively(final_dir)
+    file_io.recursive_create_dir(final_dir)
+    _recursive_copy(export_dir, final_dir)
 
 
-    return final_model_location
+    return export_dir
 
   if keep_target:
     intermediate_dir = 'intermediate_evaluation_models'
@@ -874,7 +873,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
       continue
 
     label_values = get_vocabulary(preprocess_output_dir, name)
-    if name != result_dict['target_column']:
+    if name != result_dict['target_column'] and '' not in label_values:
       label_values.append('') # append a 'missing' label.
     n_classes = len(label_values)
     result_dict['vocab_stats'][name] = {'n_classes': n_classes,

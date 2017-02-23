@@ -58,7 +58,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
           t = 102
 
       if keep_target:
-          csv_line = "{target},{id},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
+          csv_line = "{id},{target},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
             id=i,
             target=t,
             num1=num1,
@@ -90,15 +90,15 @@ def make_preprocess_schema(filename, problem_type):
   """
   schema = [
       {
-          "mode": "REQUIRED",
-          "name": "target",
-          "type": ("STRING" if problem_type == 'classification' else "FLOAT")
-      },  
-      {
           "mode": "NULLABLE",
           "name": "key",
           "type": "STRING"
       },
+      {
+          "mode": "REQUIRED",
+          "name": "target",
+          "type": ("STRING" if problem_type == 'classification' else "FLOAT")
+      },        
       {
           "mode": "NULLABLE",
           "name": "num1",

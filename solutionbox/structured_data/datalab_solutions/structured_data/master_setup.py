@@ -63,6 +63,9 @@ setup(
   long_description="""
   """,
   install_requires=[
+    'tensorflow==1.0',
+    'protobuf==3.1.0',
+    'google-cloud-dataflow==0.5.5'  
   ],
   package_data={
   },

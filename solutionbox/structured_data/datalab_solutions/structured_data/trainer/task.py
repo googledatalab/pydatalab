@@ -364,7 +364,7 @@ def parse_arguments(argv):
                             'first. If unspecified will run for --max-steps.'))
   parser.add_argument('--train_batch_size', type=int, default=1000)
   parser.add_argument('--eval_batch_size', type=int, default=1000)
-  parser.add_argument('--min_eval_frequency', type=int, default=1000,
+  parser.add_argument('--min_eval_frequency', type=int, default=100,
                       help=('Minimum number of training steps between '
                             'evaluations'))
 

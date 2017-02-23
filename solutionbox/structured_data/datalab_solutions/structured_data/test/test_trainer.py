@@ -103,14 +103,17 @@ class TestTrainer(unittest.TestCase):
     """
     # Print the last line of training output which has the loss value.
     lines = self._training_screen_output.splitlines()
-    last_line = lines[len(lines)-1]
+    for line in lines:
+      if line.startswith('INFO:tensorflow:Saving dict for global step %s:' % 2500):
+        last_line = line
+        break
     print(last_line)
 
     # supports positive numbers (int, real) with exponential form support.
     positive_number_re = re.compile('[+]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?')
 
     # Check it made it to step 2500
-    saving_num_re = re.compile('Saving evaluation summary for step \d+')
+    saving_num_re = re.compile('global_step = \d+')
     saving_num = saving_num_re.findall(last_line)
     # saving_num == ['Saving evaluation summary for step NUM']
     self.assertEqual(len(saving_num), 1)
@@ -142,12 +145,16 @@ class TestTrainer(unittest.TestCase):
 
 
   def _check_train_files(self):
-    model_folder = os.path.join(self._train_output, 'model')
-    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'checkpoint')))
-    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'export')))
-    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'export.meta')))
-    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'schema.json')))
-    self.assertTrue(os.path.isfile(os.path.join(model_folder, 'transforms.json')))
+    model_folder = os.path.join(self._train_output, 
+        'train/export/prediction_model')
+    self.assertTrue(
+        os.path.isfile(os.path.join(model_folder, 'saved_model.pb')))
+    self.assertTrue(
+        os.path.isfile(os.path.join(model_folder, 'variables/variables.index')))
+    self.assertTrue(
+        os.path.isfile(os.path.join(model_folder, 'assets.extra/schema.json')))
+    self.assertTrue(
+        os.path.isfile(os.path.join(model_folder, 'assets.extra/transforms.json')))
 
 
   def testRegressionDnn(self):
