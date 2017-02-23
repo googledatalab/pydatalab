@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+from apache_beam.io import gcsio
 import datetime
+import glob
 from googleapiclient import discovery
 import os
 import shutil
@@ -80,3 +83,27 @@ def package_and_copy(package_root_dir, setup_py, output_tar_path):
     if os.path.isfile(dest_setup_py + '._bak_'):
       os.rename(dest_setup_py + '._bak_', dest_setup_py)
     shutil.rmtree(tempdir)
+
+
+def open_local_or_gcs(path, mode):
+  """Opens the given path."""
+
+  if path.startswith('gs://'):
+    try:
+      return gcsio.GcsIO().open(path, mode)
+    except Exception as e:  # pylint: disable=broad-except
+      # Currently we retry exactly once, to work around flaky gcs calls.
+      logging.error('Retrying after exception reading gcs file: %s', e)
+      time.sleep(10)
+      return gcsio.GcsIO().open(path, mode)
+  else:
+    return open(path, mode)
+
+
+def glob_files(path):
+  """Glob the given path."""
+
+  if path.startswith('gs://'):
+    return gcsio.GcsIO().glob(path)
+  else:
+    return glob.glob(path)

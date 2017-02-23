@@ -11,7 +11,6 @@
 # the License.
 
 
-import google.cloud.ml as ml
 import numpy as np
 import json
 import matplotlib.pyplot as plt
@@ -20,6 +19,8 @@ from sklearn.metrics import confusion_matrix
 
 import datalab.bigquery as bq
 import datalab.data as data
+
+from . import _util
 
 
 class ConfusionMatrix(object):
@@ -53,12 +54,12 @@ class ConfusionMatrix(object):
     if headers is not None:
       names = headers
     elif schema_file is not None:
-      with ml.util._file.open_local_or_gcs(schema_file, mode='r') as f:
+      with _util.open_local_or_gcs(schema_file, mode='r') as f:
         schema = json.load(f)
       names = [x['name'] for x in schema]
     else:
       raise ValueError('Either headers or schema_file is needed')
-    with ml.util._file.open_local_or_gcs(input_csv, mode='r') as f:
+    with _util.open_local_or_gcs(input_csv, mode='r') as f:
       df = pd.read_csv(f, names=names)
     if 'target' not in df or 'predicted' not in df:
       raise ValueError('Cannot find "target" or "predicted" column')
