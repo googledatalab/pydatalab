@@ -20,7 +20,6 @@ import apache_beam as beam
 import collections
 import csv
 import datetime
-import google.cloud.ml as ml
 import json
 import os
 import tensorflow as tf

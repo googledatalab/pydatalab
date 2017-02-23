@@ -18,7 +18,6 @@
 
 import apache_beam as beam
 import collections
-import google.cloud.ml as ml
 import json
 import os
 import tensorflow as tf
@@ -87,8 +86,7 @@ class LoadImagesDoFn(beam.DoFn):
   """A DoFn that reads image from url."""
   
   def process(self, element):
-    import google.cloud.ml as ml 
-    with ml.util._file.open_local_or_gcs(element['image_url'], 'r') as ff:
+    with _util.open_local_or_gcs(element['image_url'], 'r') as ff:
       image_bytes = ff.read()
     out_element = {'image_bytes': image_bytes}
     out_element.update(element)
