@@ -131,10 +131,6 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
       # Get the label of the input target.
       if keep_target:
         input_target_label = table.lookup(input_ops.labels)
-        #input_target_label = tf.contrib.lookup.index_to_string(
-        #    input_ops.labels,
-        #    mapping=string_value,
-        #    default_value='UNKNOWN')   
         outputs[PG_TARGET] = tf.squeeze(input_target_label)
 
       # TODO(brandondutra): get the score of the target label too.
@@ -142,9 +138,6 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
       
       # get top k labels and their scores.
       (top_k_values, top_k_indices) = tf.nn.top_k(probabilities, k=args.top_n)
-      #top_k_labels = tf.contrib.lookup.index_to_string(
-      #    tf.to_int64(top_k_indices),
-      #    mapping=string_value)
       top_k_labels = table.lookup(tf.to_int64(top_k_indices))
    
       # Write the top_k values using 2*top_k columns. 
@@ -554,8 +547,6 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
         labels = train_config['vocab_stats'][name]['labels']
         table = tf.contrib.lookup.string_to_index_table_from_tensor(labels)
         features[name] = table.lookup(features[name])
-        #features[name] = tf.contrib.lookup.string_to_index(features[name],
-        #                                                   labels)
 
   return features, target
 
@@ -759,7 +750,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
       result_dict['target_column'] = name
       break
   if result_dict['target_column'] is None:
-    raise ValueError('Trarget transform missing form transfroms file.')
+    raise ValueError('Target transform missing from transforms file.')
 
   # Get the numerical/categorical columns.
   for col_schema in schema:

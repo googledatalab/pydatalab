@@ -43,10 +43,10 @@ PG_REGRESSION_PREDICTED_TARGET = 'predicted_target'
 PG_CLASSIFICATION_LABEL_TEMPLATE = 'top_%s_label'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'top_%s_score'
 
-# If input has the target label, we also give its score (which might not be in 
-# the top n). 
+# If input has the target label, we also give its score (which might not be in
+# the top n).
 # todo(brandondutra): get this working and use it.
-PG_CLASSIFICATION_INPUT_TARGET_SCORE = 'score_of_input_target' 
+PG_CLASSIFICATION_INPUT_TARGET_SCORE = 'score_of_input_target'
 
 # Constants for the exported input and output collections.
 INPUT_COLLECTION_NAME = 'inputs'
@@ -65,7 +65,7 @@ def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
     # Parts is batch-size x num-columns sparse tensor. This means when running
     # prediction, all input rows should have a target column as the first
     # column, or all input rows should have the target column missing.
-    # The condition below checks how many columns are in parts, and appends a 
+    # The condition below checks how many columns are in parts, and appends a
     # ',' to the csv 'examples' placeholder string if a column is missing.
     parts = tf.string_split(examples, delimiter=',')
     new_examples = tf.cond(
@@ -144,7 +144,7 @@ def get_experiment_fn(args):
     schema_file = os.path.join(args.preprocess_output_dir, util.SCHEMA_FILE)
 
     # Make list of files to save with the trained model.
-    additional_assets = {'transforms.json': args.transforms_file, 
+    additional_assets = {'transforms.json': args.transforms_file,
                          util.SCHEMA_FILE: schema_file}
     if util.is_classification_model(args.model_type):
       target_name = train_config['target_column']
@@ -154,16 +154,16 @@ def get_experiment_fn(args):
       assert file_io.file_exists(vocab_file_path)
       additional_assets[vocab_file_name] = vocab_file_path
 
-    export_strategy_csv = util.make_export_strategy(
-        train_config=train_config, 
-        args=args, 
+    export_strategy_target = util.make_export_strategy(
+        train_config=train_config,
+        args=args,
         keep_target=True,
         assets_extra=additional_assets)
-    export_strategy_json = util.make_export_strategy(
-        train_config=train_config, 
-        args=args, 
+    export_strategy_notarget = util.make_export_strategy(
+        train_config=train_config,
+        args=args,
         keep_target=False,
-        assets_extra=additional_assets)    
+        assets_extra=additional_assets)
 
     input_reader_for_train = get_reader_input_fn(
         train_config=train_config,
@@ -200,7 +200,7 @@ def get_experiment_fn(args):
         train_input_fn=input_reader_for_train,
         eval_input_fn=input_reader_for_eval,
         train_steps=args.max_steps,
-        export_strategies=[export_strategy_csv, export_strategy_json],
+        export_strategies=[export_strategy_target, export_strategy_notarget],
         min_eval_frequency=args.min_eval_frequency,
         )
 
@@ -279,7 +279,7 @@ def parse_arguments(argv):
   # All HP parambeters must be unique, so we need to support an unknown number
   # of --layer_size1=10 --layer_size2=10 ...
   # Look at remaining_args for layer_size\d+ to get the layer info.
-  
+
   # Get number of layers
   pattern = re.compile('layer_size(\d+)')
   num_layers = 0

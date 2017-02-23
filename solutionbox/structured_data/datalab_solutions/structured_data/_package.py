@@ -119,7 +119,7 @@ def local_preprocess(output_dir, dataset):
 
   # Write schema to a file.
   tmp_dir = tempfile.mkdtemp()
-  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json', 
+  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
                                         prefix='schema')
   try:
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
@@ -138,7 +138,7 @@ def local_preprocess(output_dir, dataset):
 def cloud_preprocess(output_dir, dataset, project_id=None):
   """Preprocess data in the cloud with BigQuery.
 
-  Produce analysis used by training. This can take a while, even for small 
+  Produce analysis used by training. This can take a while, even for small
   datasets. For small datasets, it may be faster to use local_preprocess.
 
   Args:
@@ -148,7 +148,7 @@ def cloud_preprocess(output_dir, dataset, project_id=None):
   """
   import datalab.mlalpha as mlalpha
   if not isinstance(dataset, mlalpha.CsvDataSet):
-    raise ValueError('Only CsvDataSet is supported')  
+    raise ValueError('Only CsvDataSet is supported')
 
   if len(dataset.input_files) != 1:
     raise ValueError('CsvDataSet should be built with a file pattern, not a '
@@ -158,29 +158,29 @@ def cloud_preprocess(output_dir, dataset, project_id=None):
 
   # Write schema to a file.
   tmp_dir = tempfile.mkdtemp()
-  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json', 
+  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
                                         prefix='schema')
   try:
-    file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))  
+    file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
     args = ['cloud_preprocess',
             '--input_file_pattern=%s' % dataset.input_files[0],
             '--output_dir=%s' % output_dir,
             '--schema_file=%s' % schema_file_path]
 
-  
+
     print('Starting cloud preprocessing.')
     print('Track BigQuery status at')
     print('https://bigquery.cloud.google.com/queries/%s' % datalab_project_id())
     preprocess.cloud_preprocess.main(args)
     print('Cloud preprocessing done.')
   finally:
-    shutil.rmtree(tmp_dir)    
+    shutil.rmtree(tmp_dir)
 
 
 def local_train(train_dataset,
-                eval_dataset, 
-                preprocess_output_dir, 
+                eval_dataset,
+                preprocess_output_dir,
                 output_dir,
                 transforms,
                 model_type,
@@ -195,8 +195,8 @@ def local_train(train_dataset,
                 epsilon=0.0005):
   """Train model locally.
   Args:
-    train_file_pattern: CsvDataSet
-    eval_file_pattern: CsvDataSet
+    train_dataset: CsvDataSet
+    eval_dataset: CsvDataSet
     preprocess_output_dir:  The output directory from preprocessing
     output_dir:  Output directory of training.
     transforms: file path or transform object. Example:
@@ -213,49 +213,49 @@ def local_train(train_dataset,
         1) The "key" and "target" transforms are required.
         2) Default values are optional. These are used if the input data has
            missing values during training and prediction. If not supplied for a
-           column, the default value for a numerical column is that column's 
-           mean vlaue, and for a categorical column the empty string is used. 
+           column, the default value for a numerical column is that column's
+           mean vlaue, and for a categorical column the empty string is used.
         3) For numerical colums, the following transforms are supported:
            i) {"transform": "identity"}: does nothing to the number. (default)
            ii) {"transform": "scale"}: scales the colum values to -1, 1.
-           iii) {"transform": "scale", "value": a}: scales the colum values 
+           iii) {"transform": "scale", "value": a}: scales the colum values
               to -a, a.
 
-           For categorical colums, the transform supported depends on if the 
+           For categorical colums, the transform supported depends on if the
            model is a linear or DNN model because tf.layers is uesed.
            For a linear model, the transforms supported are:
-           i) {"transform": "sparse"}: Makes a sparse vector using the full 
-              vocabulary associated with the column (default). 
+           i) {"transform": "sparse"}: Makes a sparse vector using the full
+              vocabulary associated with the column (default).
            ii) {"transform": "hash_sparse", "hash_bucket_size": n}: First each
               string is hashed to an integer in the range [0, n), and then a
               sparse vector is used.
 
           For a DNN model, the categorical transforms that are supported are:
-          i) {"transform": "one_hot"}: A one-hot vector using the full 
+          i) {"transform": "one_hot"}: A one-hot vector using the full
               vocabulary is used. (default)
-          ii) {"transform": "embedding", "embedding_dim": d}: Each label is 
+          ii) {"transform": "embedding", "embedding_dim": d}: Each label is
               embedded into an d-dimensional space.
           iii) {"transform": "hash_one_hot", "hash_bucket_size": n}: The label
               is first hashed into the range [0, n) and then a one-hot encoding
               is made.
-          iv) {"transform": "hash_embedding", "hash_bucket_size": n, 
-               "embedding_dim": d}: First each label is hashed to [0, n), and 
+          iv) {"transform": "hash_embedding", "hash_bucket_size": n,
+               "embedding_dim": d}: First each label is hashed to [0, n), and
                then each integer is embedded into a d-dimensional space.
     model_type: One of linear_classification, linear_regression,
         dnn_classification, dnn_regression.
-    max_steps: Int. Number of training steps to perform.    
-    num_epochs: Maximum number of training data epochs on which to train. 
+    max_steps: Int. Number of training steps to perform.
+    num_epochs: Maximum number of training data epochs on which to train.
         The training job will run for max_steps or num_epochs, whichever occurs
         first.
     train_batch_size: number of rows to train on in one step.
     eval_batch_size: number of rows to eval in one step.
     min_eval_frequency: Minimum number of training steps between evaluations.
     top_n: Int. For classification problems, the output graph will contain the
-        labels and scores for the top n classes with a default of n=1. Use 
+        labels and scores for the top n classes with a default of n=1. Use
         None for regression problems.
     layer_sizes: List. Represents the layers in the connected DNN.
-        If the model type is DNN, this must be set. Example [10, 3, 2], this 
-        will create three DNN layers where the first layer will have 10 nodes, 
+        If the model type is DNN, this must be set. Example [10, 3, 2], this
+        will create three DNN layers where the first layer will have 10 nodes,
         the middle layer will have 3 nodes, and the laster layer will have 2
         nodes.
      learning_rate: tf.train.AdamOptimizer's learning rate,
@@ -295,7 +295,7 @@ def local_train(train_dataset,
   if num_epochs:
     args.append('--num_epochs=%s' % str(num_epochs))
   if top_n:
-    args.append('--top_n=%s' % str(top_n))    
+    args.append('--top_n=%s' % str(top_n))
   if layer_sizes:
     for i in range(len(layer_sizes)):
       args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
@@ -308,8 +308,8 @@ def local_train(train_dataset,
   sys.stderr = stderr
 
 def cloud_train(train_dataset,
-                eval_dataset, 
-                preprocess_output_dir, 
+                eval_dataset,
+                preprocess_output_dir,
                 output_dir,
                 transforms,
                 model_type,
@@ -323,11 +323,11 @@ def cloud_train(train_dataset,
                 layer_sizes=None,
                 learning_rate=0.01,
                 epsilon=0.0005,
-                job_name=None,):
+                job_name=None):
   """Train model using CloudML.
 
   See local_train() for a description of the args.
-  Args: 
+  Args:
     cloud_training_config: A CloudTrainingConfig object.
     job_name: Training job name. A default will be picked if None.
   """
@@ -370,7 +370,7 @@ def cloud_train(train_dataset,
   if num_epochs:
     args.append('--num_epochs=%s' % str(num_epochs))
   if top_n:
-    args.append('--top_n=%s' % str(top_n))    
+    args.append('--top_n=%s' % str(top_n))
   if layer_sizes:
     for i in range(len(layer_sizes)):
       args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
@@ -386,7 +386,7 @@ def cloud_train(train_dataset,
     job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
   job = datalab.mlalpha.Job.submit_training(job_request, job_name)
   print('Job request send. View status of job at')
-  print('https://console.developers.google.com/ml/jobs?project=%s' % 
+  print('https://console.developers.google.com/ml/jobs?project=%s' %
         _default_project())
 
   return job
@@ -398,7 +398,7 @@ def local_predict(training_ouput_dir, data):
   Runs local prediction and returns the result in a Pandas DataFrame. For
   running prediction on a large dataset or saving the results, run
   local_batch_prediction or batch_prediction. Input data should fully match
-  the schema that was used at training, except the target column should not 
+  the schema that was used at training, except the target column should not
   exist.
 
   Args:
@@ -408,7 +408,7 @@ def local_predict(training_ouput_dir, data):
   """
   # Save the instances to a file, call local batch prediction, and print it back
   tmp_dir = tempfile.mkdtemp()
-  _, input_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.csv', 
+  _, input_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.csv',
                                         prefix='input')
 
   try:
@@ -435,7 +435,7 @@ def local_predict(training_ouput_dir, data):
     print('Starting local prediction.')
     predict.predict.main(cmd)
     print('Local prediction done.')
-    
+
     # Read the header file.
     schema_file = os.path.join(tmp_dir, 'csv_header.json')
     with open(schema_file, 'r') as f:
@@ -453,7 +453,7 @@ def local_predict(training_ouput_dir, data):
     prediction_file = glob.glob(os.path.join(tmp_dir, 'predictions*'))
     if not prediction_file:
       raise FileNotFoundError('Prediction results not found')
-    predictions = pd.read_csv(prediction_file[0], 
+    predictions = pd.read_csv(prediction_file[0],
                               header=None,
                               names=[col['name'] for col in schema])
     return predictions
@@ -470,7 +470,7 @@ def cloud_predict(model_name, model_version, data):
 
   Args:
     model_name: deployed model name
-    model_verion: depoyed model version
+    model_version: depoyed model version
     data: List of csv strings or a Pandas DataFrame that match the model schema.
 
   Before using this, the model must be created. This can be done by running
@@ -478,13 +478,14 @@ def cloud_predict(model_name, model_version, data):
   1) gcloud beta ml models create NAME
   2) gcloud beta ml versions create VERSION --model NAME \
       --origin gs://BUCKET/training_output_dir/model
-  or one datalab magic:
-  1) %mlalpha deploy --name=NAME.VERSION \
-      --path=gs://BUCKET/training_output_dir/model \
-      --project=PROJECT
+  or these datalab commands:
+  1) import datalab
+     model = datalab.mlalpha.ModelVersions(MODEL_NAME)
+     model.deploy(version_name=VERSION,
+                  path='gs://BUCKET/training_output_dir/model')
   Note that the model must be on GCS.
   """
-  import datalab.mlalpha as mlalpha 
+  import datalab.mlalpha as mlalpha
 
 
   if isinstance(data, pd.DataFrame):
@@ -517,9 +518,9 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
     training_ouput_dir: The output folder of training.
     prediction_input_file: csv file pattern to a local file.
     output_dir: output location to save the results.
-    mode: evaluation or prediction. If evaluation, the input data must contain
-        a target column. If prediction, the input data must not contain a 
-        target column.
+    mode: 'evaluation' or 'prediction'. If 'evaluation', the input data must
+        contain a target column. If 'prediction', the input data must not
+        contain a target column.
     batch_size: Int. How many instances to run in memory at once. Larger values
         mean better performace but more memeory consumed.
     shard_files: If false, the output files are not shardded.
@@ -570,7 +571,7 @@ def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
     raise ValueError('Model folder %s does not exist' % model_dir)
 
   _assert_gcs_files([training_ouput_dir, prediction_input_file,
-      output_dir])  
+      output_dir])
 
   cmd = ['predict.py',
          '--cloud',
@@ -580,7 +581,7 @@ def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
          '--output_dir=%s' % output_dir,
          '--output_format=%s' % output_format,
          '--batch_size=%s' % str(batch_size),
-         '--shard_files' if shard_files else '--no-shard_files',         
+         '--shard_files' if shard_files else '--no-shard_files',
          '--extra_package=%s' % _package_to_staging(output_dir)]
 
   print('Starting cloud batch prediction.')
