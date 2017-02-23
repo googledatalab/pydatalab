@@ -23,7 +23,6 @@ import google.datalab.stackdriver.monitoring as gcm
 
 
 PROJECT = 'my-project'
-
 METRIC_TYPE = 'compute.googleapis.com/instance/cpu/utilization'
 RESOURCE_TYPE = 'gce_instance'
 INSTANCE_NAMES = ['instance-1', 'instance-2']
@@ -33,14 +32,17 @@ INSTANCE_IDS = ['1234567890123456789', '9876543210987654321']
 
 class TestCases(unittest.TestCase):
 
+  def setUp(self):
+    creds = AccessTokenCredentials('test_token', 'test_ua')
+    self.context = google.datalab.Context(PROJECT, creds)
+
   @mock.patch('google.datalab.Context.default')
   def test_constructor_minimal(self, mock_context_default):
-    default_context = self._create_context()
-    mock_context_default.return_value = default_context
+    mock_context_default.return_value = self.context
 
     query = gcm.Query()
 
-    expected_client = gcm._utils.make_client(context=default_context)
+    expected_client = gcm._utils.make_client(context=self.context)
     self.assertEqual(query._client.project, expected_client.project)
     self.assertEqual(query._client.connection.credentials,
                      expected_client.connection.credentials)
@@ -61,13 +63,11 @@ class TestCases(unittest.TestCase):
     DAYS, HOURS, MINUTES = 1, 2, 3
     T0 = T1 - datetime.timedelta(days=DAYS, hours=HOURS, minutes=MINUTES)
 
-    context = self._create_context(PROJECT)
     query = gcm.Query(UPTIME_METRIC,
                       end_time=T1, days=DAYS, hours=HOURS, minutes=MINUTES,
-                      project_id=PROJECT, context=context)
+                      context=self.context)
 
-    expected_client = gcm._utils.make_client(
-        context=context, project_id=PROJECT)
+    expected_client = gcm._utils.make_client(context=self.context)
     self.assertEqual(query._client.project, expected_client.project)
     self.assertEqual(query._client.connection.credentials,
                      expected_client.connection.credentials)
@@ -84,14 +84,9 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')
   def test_metadata(self, mock_query_iter):
-    query = gcm.Query(METRIC_TYPE, hours=1, context=self._create_context())
+    query = gcm.Query(METRIC_TYPE, hours=1, context=self.context)
     query_metadata = query.metadata()
 
     mock_query_iter.assert_called_once_with(headers_only=True)
     self.assertIsInstance(query_metadata, gcm.QueryMetadata)
     self.assertEqual(query_metadata.metric_type, METRIC_TYPE)
-
-  @staticmethod
-  def _create_context(project_id='test'):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.Context(project_id, creds)

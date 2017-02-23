@@ -20,6 +20,7 @@ import google.cloud.monitoring
 import google.datalab
 import google.datalab.stackdriver.monitoring as gcm
 
+DEFAULT_PROJECT = 'test'
 PROJECT = 'my-project'
 METRIC_TYPES = ['compute.googleapis.com/instances/cpu/utilization',
                 'compute.googleapis.com/instances/cpu/usage_time']
@@ -38,7 +39,7 @@ TYPE_PREFIX = 'compute'
 class TestCases(unittest.TestCase):
 
   def setUp(self):
-    self.context = self._create_context()
+    self.context = self._create_context(DEFAULT_PROJECT)
     self.descriptors = gcm.MetricDescriptors(context=self.context)
 
   @mock.patch('google.datalab.Context.default')
@@ -47,10 +48,9 @@ class TestCases(unittest.TestCase):
 
     descriptors = gcm.MetricDescriptors()
 
-    expected_client = gcm._utils.make_client(context=self.context)
-    self.assertEqual(descriptors._client.project, expected_client.project)
+    self.assertEqual(descriptors._client.project, DEFAULT_PROJECT)
     self.assertEqual(descriptors._client.connection.credentials,
-                     expected_client.connection.credentials)
+                     self.context.credentials)
 
     self.assertIsNone(descriptors._filter_string)
     self.assertIsNone(descriptors._type_prefix)
@@ -60,13 +60,11 @@ class TestCases(unittest.TestCase):
     context = self._create_context(PROJECT)
     descriptors = gcm.MetricDescriptors(
         filter_string=FILTER_STRING, type_prefix=TYPE_PREFIX,
-        project_id=PROJECT, context=context)
+        context=context)
 
-    expected_client = gcm._utils.make_client(
-        context=context, project_id=PROJECT)
-    self.assertEqual(descriptors._client.project, expected_client.project)
+    self.assertEqual(descriptors._client.project, PROJECT)
     self.assertEqual(descriptors._client.connection.credentials,
-                     expected_client.connection.credentials)
+                     context.credentials)
 
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
     self.assertEqual(descriptors._type_prefix, TYPE_PREFIX)
@@ -159,7 +157,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.iloc[0, 0], METRIC_TYPES[0])
 
   @staticmethod
-  def _create_context(project_id='test'):
+  def _create_context(project_id):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return google.datalab.Context(project_id, creds)
 

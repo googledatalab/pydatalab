@@ -22,11 +22,10 @@ import google.datalab.stackdriver.monitoring as gcm
 class TestCases(unittest.TestCase):
 
   def test_make_client(self):
-    project_id = 'project_id'
     context = self._create_context()
-    client = gcm._utils.make_client(project_id, context)
+    client = gcm._utils.make_client(context)
 
-    self.assertEqual(client.project, project_id)
+    self.assertEqual(client.project, context.project_id)
     self.assertEqual(client.connection.credentials, context.credentials)
     self.assertEqual(client._connection_class.USER_AGENT, 'pydatalab/v0')
 
@@ -42,6 +41,6 @@ class TestCases(unittest.TestCase):
     self.assertEqual(client._connection_class.USER_AGENT, 'pydatalab/v0')
 
   @staticmethod
-  def _create_context(project_id='test'):
+  def _create_context():
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.Context(project_id, creds)
+    return google.datalab.Context('test_project', creds)
