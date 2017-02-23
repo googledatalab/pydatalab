@@ -82,7 +82,7 @@ def _package_to_staging(staging_package_url):
     Args:
       staging_package_url: GCS path.
     """
-    import datalab.mlalpha as mlalpha
+    import datalab.ml as ml
 
     # Find the package root. __file__ is under [package_root]/datalab_solutions/inception.
     package_root = os.path.abspath(
@@ -92,7 +92,7 @@ def _package_to_staging(staging_package_url):
     tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
 
     print('Building package and uploading to %s' % tar_gz_path)
-    mlalpha.package_and_copy(package_root, setup_path, tar_gz_path)
+    ml.package_and_copy(package_root, setup_path, tar_gz_path)
 
     return tar_gz_path
 
@@ -106,8 +106,8 @@ def local_preprocess(output_dir, dataset):
     output_dir: The output directory to use.
     dataset: only CsvDataSet is supported currently.
   """
-  import datalab.mlalpha as mlalpha
-  if not isinstance(dataset, mlalpha.CsvDataSet):
+  import datalab.ml as ml
+  if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
 
   if len(dataset.input_files) != 1:
@@ -143,8 +143,8 @@ def cloud_preprocess(output_dir, dataset, project_id=None):
     dataset: only CsvDataSet is supported currently.
     project_id: project id the table is in. If none, uses the default project.
   """
-  import datalab.mlalpha as mlalpha
-  if not isinstance(dataset, mlalpha.CsvDataSet):
+  import datalab.ml as ml
+  if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
 
   if len(dataset.input_files) != 1:
@@ -381,7 +381,7 @@ def cloud_train(train_dataset,
 
   if not job_name:
     job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-  job = datalab.mlalpha.Job.submit_training(job_request, job_name)
+  job = datalab.ml.Job.submit_training(job_request, job_name)
   print('Job request send. View status of job at')
   print('https://console.developers.google.com/ml/jobs?project=%s' %
         _default_project())
@@ -477,12 +477,12 @@ def cloud_predict(model_name, model_version, data):
       --origin gs://BUCKET/training_output_dir/model
   or these datalab commands:
   1) import datalab
-     model = datalab.mlalpha.ModelVersions(MODEL_NAME)
+     model = datalab.ml.ModelVersions(MODEL_NAME)
      model.deploy(version_name=VERSION,
                   path='gs://BUCKET/training_output_dir/model')
   Note that the model must be on GCS.
   """
-  import datalab.mlalpha as mlalpha
+  import datalab.ml as ml
 
 
   if isinstance(data, pd.DataFrame):
@@ -496,7 +496,7 @@ def cloud_predict(model_name, model_version, data):
   else:
     input_data = data
 
-  predictions = mlalpha.ModelVersions(model_name).predict(model_version, input_data)
+  predictions = ml.ModelVersions(model_name).predict(model_version, input_data)
 
   # Convert predictions into a dataframe
   df = pd.DataFrame(columns=sorted(predictions[0].keys()))
