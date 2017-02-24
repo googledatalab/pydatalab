@@ -286,9 +286,9 @@ class FormatAndSave(beam.PTransform):
         # session.graph.get_tensor_by_name(tensor_info_proto.name).dtype)
         dtype = tensor_info_proto.dtype
         if dtype == types_pb2.DT_FLOAT or dtype == types_pb2.DT_DOUBLE:
-          bq_type == 'FLOAT'
+          bq_type = 'FLOAT'
         elif dtype == types_pb2.DT_INT32 or dtype == types_pb2.DT_INT64:
-          bq_type == 'INTEGER'
+          bq_type = 'INTEGER'
         else:
           bq_type = 'STRING'
           
