@@ -226,12 +226,10 @@ class Dataset(object):
 class Datasets(object):
   """ Iterator class for enumerating the datasets in a project. """
 
-  def __init__(self, project_id=None, context=None):
+  def __init__(self, context=None):
     """ Initialize the Datasets object.
 
     Args:
-      project_id: the ID of the project whose datasets you want to list. If None defaults
-          to the project in the context.
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
@@ -240,7 +238,7 @@ class Datasets(object):
       context = google.datalab.Context.default()
     self._context = context
     self._api = _api.Api(context)
-    self._project_id = project_id if project_id else self._api.project_id
+    self._project_id = context.project_id if context else self._api.project_id
 
   def _retrieve_datasets(self, page_token, count):
     try:

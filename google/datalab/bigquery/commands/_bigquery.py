@@ -262,33 +262,6 @@ def _create_execute_subparser(parser):
   return execute_parser
 
 
-def _create_pipeline_subparser(parser):
-  pipeline_parser = parser.subcommand('pipeline',
-      'Define a deployable pipeline based on a BigQuery query.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query.')
-  pipeline_parser.add_argument('-n', '--name', help='The pipeline name')
-  pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
-                               action='store_true')
-  pipeline_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'])
-  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
-  pipeline_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
-                               choices=['create', 'append', 'overwrite'])
-  pipeline_parser.add_argument('-l', '--large', help='Allow large results', action='store_true')
-  pipeline_parser.add_argument('-q', '--query', help='The name of query to run', required=True)
-  pipeline_parser.add_argument('-t', '--target', help='The target table name', nargs='?')
-  pipeline_parser.add_argument('-v', '--verbose',
-                               help='Show the expanded SQL that is being executed',
-                               action='store_true')
-  pipeline_parser.add_argument('action', nargs='?', choices=('deploy', 'run', 'dryrun'),
-                               default='dryrun',
-                               help='Whether to deploy the pipeline, execute it immediately in ' +
-                                    'the notebook, or validate it with a dry run')
-  # TODO(gram): we may want to move some command line arguments to the cell body config spec
-  # eventually.
-  return pipeline_parser
-
-
 def _create_extract_subparser(parser):
   extract_parser = parser.subcommand('extract', 'Extract a query or table into file (local or GCS)')
   extract_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
@@ -648,43 +621,6 @@ def _execute_cell(args, cell_body):
   return r.result()
 
 
-def _pipeline_cell(args, cell_body):
-  """Implements the BigQuery cell magic used to validate, execute or deploy BQ pipelines.
-
-   The supported syntax is:
-   %%bq pipeline [-q|--sql <query identifier>] <other args> <action>
-   [<YAML or JSON cell_body or inline SQL>]
-
-  Args:
-    args: the arguments following '%bq pipeline'.
-    cell_body: optional contents of the cell interpreted as YAML or JSON.
-  Returns:
-    The QueryResultsTable
-  """
-  if args['action'] == 'deploy':
-    raise Exception('Deploying a pipeline is not yet supported')
-
-  env = {}
-  context = _construct_context_for_args(args)
-  for key, value in google.datalab.utils.commands.notebook_environment().items():
-    if isinstance(value, google.datalab.bigquery._udf.UDF):
-      env[key] = value
-
-  query = _get_query_argument(args, cell_body, env)
-  if args['verbose']:
-    print(query.sql)
-  if args['action'] == 'dryrun':
-    print(query.sql)
-    result = query.dry_run(context=context)
-    return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
-                                                is_cached=result['cacheHit'])
-  if args['action'] == 'run':
-    output_options = QueryOutput.table(args['target'], mode=args['mode'],
-                                       use_cache=not args['nocache'],
-                                       allow_large_results=args['large'])
-    query.execute(output_options, context=context).result()
-
-
 def _get_schema(name):
   """ Given a variable or table name, get the Schema if it exists. """
   item = google.datalab.utils.commands.get_notebook_item(name)
@@ -790,7 +726,11 @@ def _table_cell(args, cell_body):
       else:
         datasets = [google.datalab.bigquery.Dataset((args['project'], args['dataset']))]
     else:
-      datasets = google.datalab.bigquery.Datasets(args['project'])
+      default_context = google.datalab.Context.default()
+      context = google.datalab.Context(default_context.project_id, default_context.credentials)
+      if args['project']:
+        context.project_id = args['project']
+      datasets = google.datalab.bigquery.Datasets(context)
 
     tables = []
     for dataset in datasets:
@@ -972,9 +912,6 @@ for help on a specific command.
 
   # %%bq datasource
   _add_command(parser, _create_datasource_subparser, _datasource_cell, cell_required=True)
-
-  # %%bq pipeline
-  _add_command(parser, _create_pipeline_subparser, _pipeline_cell)
 
   # %bq load
   _add_command(parser, _create_load_subparser, _load_cell)
