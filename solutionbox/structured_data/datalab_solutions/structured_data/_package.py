@@ -434,7 +434,7 @@ def local_predict(training_ouput_dir, data):
     print('Local prediction done.')
 
     # Read the header file.
-    schema_file = os.path.join(tmp_dir, 'csv_header.json')
+    schema_file = os.path.join(tmp_dir, 'csv_schema.json')
     with open(schema_file, 'r') as f:
       schema = json.loads(f.read())
 
