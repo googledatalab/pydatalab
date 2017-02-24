@@ -39,14 +39,14 @@ TableName = collections.namedtuple('TableName',
     decorator: the optional decorator for the table (for windowing/snapshot-ing).
 """
 
-# Absolute project-qualified name pattern: <project>:<dataset>
-_ABS_DATASET_NAME_PATTERN = r'^([a-z\d\-_\.:]+)\:(\w+)$'
+# Absolute project-qualified name pattern: <project>.<dataset>
+_ABS_DATASET_NAME_PATTERN = r'^([a-z\d\-_\.]+)\.(\w+)$'
 
 # Relative name pattern: <dataset>
 _REL_DATASET_NAME_PATTERN = r'^(\w+)$'
 
-# Absolute project-qualified name pattern: <project>:<dataset>.<table>
-_ABS_TABLE_NAME_PATTERN = r'^([a-z\d\-_\.:]+)\:(\w+)\.(\w+)(@[\d\-]+)?$'
+# Absolute project-qualified name pattern: <project>.<dataset>.<table>
+_ABS_TABLE_NAME_PATTERN = r'^([a-z\d\-_\.]+)\.(\w+)\.(\w+)(@[\d\-]+)?$'
 
 # Relative name pattern: <dataset>.<table>
 _REL_TABLE_NAME_PATTERN = r'^(\w+)\.(\w+)(@[\d\-]+)?$'

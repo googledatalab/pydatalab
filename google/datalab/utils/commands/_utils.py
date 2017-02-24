@@ -85,13 +85,26 @@ def get_field_list(fields, schema):
       can't handle nested data.
   """
   # If the fields weren't supplied get them from the schema.
+  if schema:
+    all_fields = [f['name'] for f in schema._bq_schema if f['type'] != 'RECORD']
+
   if isinstance(fields, list):
+    if schema:
+      # validate fields exist
+      for f in fields:
+        if f not in all_fields:
+          raise Exception('Cannot find field %s in given schema' % f)
     return fields
   if isinstance(fields, basestring) and fields != '*':
-    return fields.split(',')
+    if schema:
+      # validate fields exist
+      for f in fields.split(','):
+        if f not in all_fields:
+          raise Exception('Cannot find field %s in given schema' % f)
+      return fields.split(',')
   if not schema:
     return []
-  return [f['name'] for f in schema._bq_schema if f['type'] != 'RECORD']
+  return all_fields
 
 
 def _get_cols(fields, schema):

@@ -24,7 +24,7 @@ import google.datalab.bigquery
 class TestCases(unittest.TestCase):
 
   def test_view_repr_sql(self):
-    name = 'test:testds.testView0'
+    name = 'test.testds.testView0'
     view = google.datalab.bigquery.View(name, TestCases._create_context())
     self.assertEqual('`%s`' % name, view._repr_sql_())
 
@@ -42,8 +42,8 @@ class TestCases(unittest.TestCase):
     mock_api_tables_get.return_value = None
     mock_api_tables_insert.return_value = TestCases._create_tables_insert_success_result()
 
-    name = 'test:testds.testView0'
-    sql = 'select * from test:testds.testTable0'
+    name = 'test.testds.testView0'
+    sql = 'select * from test.testds.testTable0'
     view = google.datalab.bigquery.View(name, TestCases._create_context())
     result = view.create(sql)
     self.assertTrue(view.exists())
@@ -66,8 +66,8 @@ class TestCases(unittest.TestCase):
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_tabledata_list.return_value = TestCases._create_single_row_result()
 
-    name = 'test:testds.testView0'
-    sql = 'select * from test:testds.testTable0'
+    name = 'test.testds.testView0'
+    sql = 'select * from test.testds.testTable0'
     context = TestCases._create_context()
     view = google.datalab.bigquery.View(name, context)
     view.create(sql)
@@ -89,12 +89,12 @@ class TestCases(unittest.TestCase):
     mock_api_table_update.return_value = None
     friendly_name = 'casper'
     description = 'ghostly logs'
-    sql = 'select * from [test:testds.testTable0]'
+    sql = 'select * from `test.testds.testTable0`'
     info = {'friendlyName': friendly_name,
             'description': description,
             'view': {'query': sql}}
     mock_api_tables_get.return_value = info
-    name = 'test:testds.testView0'
+    name = 'test.testds.testView0'
     view = google.datalab.bigquery.View(name, TestCases._create_context())
     view.create(sql)
     self.assertEqual(friendly_name, view.friendly_name)
