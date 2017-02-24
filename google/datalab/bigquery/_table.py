@@ -583,7 +583,7 @@ class Table(object):
     fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
     return iter(google.datalab.utils.Iterator(fetcher))
 
-  def _to_dataframe(self, start_row=0, max_rows=None):
+  def to_dataframe(self, start_row=0, max_rows=None):
     """ Exports the table to a Pandas dataframe.
 
     Args:
@@ -611,7 +611,7 @@ class Table(object):
     ordered_fields = [field.name for field in self.schema]
     return df[ordered_fields] if df is not None else pandas.DataFrame()
 
-  def _to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
+  def to_file(self, destination, format='csv', csv_delimiter=',', csv_header=True):
     """Save the results to a local file in CSV format.
 
     Args:
