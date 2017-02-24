@@ -128,7 +128,7 @@ class Table(object):
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_table_name(name, self._api.project_id)
-    self._full_name = '%s:%s.%s%s' % self._name_parts
+    self._full_name = '%s.%s.%s%s' % self._name_parts
     self._info = None
     self._cached_page = None
     self._cached_page_index = 0

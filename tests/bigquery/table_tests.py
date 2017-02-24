@@ -34,7 +34,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual('requestlogs', parsed_name[1])
     self.assertEqual('today', parsed_name[2])
     self.assertEqual('', parsed_name[3])
-    self.assertEqual('`test:requestlogs.today`', table._repr_sql_())
+    self.assertEqual('`test.requestlogs.today`', table._repr_sql_())
 
   def test_api_paths(self):
     name = google.datalab.bigquery._utils.TableName('a', 'b', 'c', 'd')
@@ -46,7 +46,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual('/projects/a/datasets/b', google.datalab.bigquery._api.Api._DATASETS_PATH % name)
 
   def test_parse_full_name(self):
-    table = TestCases._create_table('test:requestlogs.today')
+    table = TestCases._create_table('test.requestlogs.today')
     self._check_name_parts(table)
 
   def test_parse_local_name(self):
@@ -89,7 +89,7 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_table_metadata(self, mock_api_tables_get):
-    name = 'test:requestlogs.today'
+    name = 'test.requestlogs.today'
     ts = dt.datetime.utcnow()
 
     mock_api_tables_get.return_value = TestCases._create_table_info_result(ts=ts)
@@ -107,7 +107,7 @@ class TestCases(unittest.TestCase):
   def test_table_schema(self, mock_api_tables):
     mock_api_tables.return_value = TestCases._create_table_info_result()
 
-    t = TestCases._create_table('test:requestlogs.today')
+    t = TestCases._create_table('test.requestlogs.today')
     schema = t.schema
 
     self.assertEqual(2, len(schema))
@@ -117,7 +117,7 @@ class TestCases(unittest.TestCase):
   def test_table_schema_nested(self, mock_api_tables):
     mock_api_tables.return_value = TestCases._create_table_info_nested_schema_result()
 
-    t = TestCases._create_table('test:requestlogs.today')
+    t = TestCases._create_table('test.requestlogs.today')
     schema = t.schema
 
     self.assertEqual(4, len(schema))
@@ -133,7 +133,7 @@ class TestCases(unittest.TestCase):
   def test_malformed_response_raises_exception(self, mock_api_tables_get):
     mock_api_tables_get.return_value = {}
 
-    t = TestCases._create_table('test:requestlogs.today')
+    t = TestCases._create_table('test.requestlogs.today')
 
     with self.assertRaises(Exception) as error:
       _ = t.schema
@@ -151,8 +151,8 @@ class TestCases(unittest.TestCase):
     for table in ds:
       tables.append(table)
     self.assertEqual(2, len(tables))
-    self.assertEqual('`test:testds.testTable1`', tables[0]._repr_sql_())
-    self.assertEqual('`test:testds.testTable2`', tables[1]._repr_sql_())
+    self.assertEqual('`test.testds.testTable1`', tables[0]._repr_sql_())
+    self.assertEqual('`test.testds.testTable2`', tables[1]._repr_sql_())
 
   @mock.patch('google.datalab.bigquery._api.Api.tables_list')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
@@ -166,8 +166,8 @@ class TestCases(unittest.TestCase):
     for table in ds.tables():
       tables.append(table)
     self.assertEqual(2, len(tables))
-    self.assertEqual('`test:testds.testTable1`', tables[0]._repr_sql_())
-    self.assertEqual('`test:testds.testTable2`', tables[1]._repr_sql_())
+    self.assertEqual('`test.testds.testTable1`', tables[0]._repr_sql_())
+    self.assertEqual('`test.testds.testTable2`', tables[1]._repr_sql_())
 
   @mock.patch('google.datalab.bigquery._api.Api.tables_list')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
@@ -181,7 +181,7 @@ class TestCases(unittest.TestCase):
     for view in ds.views():
       views.append(view)
     self.assertEqual(1, len(views))
-    self.assertEqual('`test:testds.testView1`', views[0]._repr_sql_())
+    self.assertEqual('`test.testds.testView1`', views[0]._repr_sql_())
 
   @mock.patch('google.datalab.bigquery._api.Api.tables_list')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
@@ -220,7 +220,7 @@ class TestCases(unittest.TestCase):
     mock_api_tables_insert.return_value = {}
     with self.assertRaises(Exception) as error:
       _ = TestCases._create_table_with_schema(schema)
-    self.assertEqual('Table test:testds.testTable0 could not be created as it already exists',
+    self.assertEqual('Table test.testds.testTable0 could not be created as it already exists',
                      str(error.exception))
 
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
@@ -538,7 +538,7 @@ class TestCases(unittest.TestCase):
   def test_decorators(self):
     tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
     tbl2 = tbl.snapshot(dt.timedelta(hours=-1))
-    self.assertEquals('`test:testds.testTable0@-3600000`', tbl2._repr_sql_())
+    self.assertEquals('`test.testds.testTable0@-3600000`', tbl2._repr_sql_())
 
     with self.assertRaises(Exception) as error:
       tbl2 = tbl2.snapshot(dt.timedelta(hours=-2))
@@ -563,7 +563,7 @@ class TestCases(unittest.TestCase):
         str(error.exception))
 
     tbl2 = tbl.snapshot(dt.timedelta(days=-1))
-    self.assertEquals('`test:testds.testTable0@-86400000`', tbl2._repr_sql_())
+    self.assertEquals('`test.testds.testTable0@-86400000`', tbl2._repr_sql_())
 
     with self.assertRaises(Exception) as error:
       _ = tbl.snapshot(dt.timedelta(days=1))
@@ -576,7 +576,7 @@ class TestCases(unittest.TestCase):
                      str(error.exception))
 
     _ = dt.datetime.utcnow() - dt.timedelta(1)
-    self.assertEquals('`test:testds.testTable0@-86400000`', tbl2._repr_sql_())
+    self.assertEquals('`test.testds.testTable0@-86400000`', tbl2._repr_sql_())
 
     when = dt.datetime.utcnow() + dt.timedelta(1)
     with self.assertRaises(Exception) as error:
@@ -597,7 +597,7 @@ class TestCases(unittest.TestCase):
     tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
 
     tbl2 = tbl.window(dt.timedelta(hours=-1))
-    self.assertEquals('`test:testds.testTable0@-3600000-0`', tbl2._repr_sql_())
+    self.assertEquals('`test.testds.testTable0@-3600000-0`', tbl2._repr_sql_())
 
     with self.assertRaises(Exception) as error:
       tbl2 = tbl2.window(-400000, 0)
@@ -662,11 +662,11 @@ class TestCases(unittest.TestCase):
   def test_table_to_query(self):
     tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
     q = google.datalab.bigquery.Query.from_table(tbl)
-    self.assertEqual('SELECT * FROM `test:testds.testTable0`', q.sql)
+    self.assertEqual('SELECT * FROM `test.testds.testTable0`', q.sql)
     q = google.datalab.bigquery.Query.from_table(tbl, fields='foo, bar')
-    self.assertEqual('SELECT foo, bar FROM `test:testds.testTable0`', q.sql)
+    self.assertEqual('SELECT foo, bar FROM `test.testds.testTable0`', q.sql)
     q = google.datalab.bigquery.Query.from_table(tbl, fields=['bar', 'foo'])
-    self.assertEqual('SELECT bar,foo FROM `test:testds.testTable0`', q.sql)
+    self.assertEqual('SELECT bar,foo FROM `test.testds.testTable0`', q.sql)
 
   @staticmethod
   def _create_context():
@@ -783,7 +783,7 @@ class TestCases(unittest.TestCase):
     return schema
 
   @staticmethod
-  def _create_table_with_schema(schema, name='test:testds.testTable0'):
+  def _create_table_with_schema(schema, name='test.testds.testTable0'):
     return google.datalab.bigquery.Table(name, TestCases._create_context()).create(schema)
 
   class _uuid(object):

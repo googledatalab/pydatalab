@@ -87,7 +87,7 @@ class Sampling(object):
       raise Exception('Hash field must be specified')
     def _hashed_sampling(sql):
       projection = Sampling._create_projection(fields)
-      sql = 'SELECT %s FROM (%s) WHERE ABS(HASH(%s)) %% 100 < %d' % \
+      sql = 'SELECT %s FROM (%s) WHERE MOD(FARM_FINGERPRINT(CAST(%s AS STRING)), 100) < %d' % \
             (projection, sql, field_name, percent)
       if count != 0:
         sql = '%s LIMIT %d' % (sql, count)

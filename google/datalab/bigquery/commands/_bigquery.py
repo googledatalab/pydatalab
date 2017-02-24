@@ -148,6 +148,11 @@ def _create_table_subparser(parser):
   delete_parser.add_argument('-n', '--name', help='The name of the table to delete.',
                                    required=True)
 
+  # %%bq tables view
+  delete_parser = sub_commands.add_parser('view', help='View a table.')
+  delete_parser.add_argument('-n', '--name', help='The name of the table to view.',
+                                   required=True)
+
   return table_parser
 
 
@@ -446,14 +451,8 @@ def _sample_cell(args, cell_body):
   context = _construct_context_for_args(args)
 
   if view:
-    view = google.datalab.utils.commands.get_notebook_item(args['view'])
-    if view is None:
-      raise Exception('Cannot find view %s.' % args['view'])
     query = google.datalab.bigquery.Query.from_view(view)
   elif table:
-    table = google.datalab.utils.commands.get_notebook_item(args['table'])
-    if table is None:
-      raise Exception('Cannot find table %s.' % args['table'])
     query = google.datalab.bigquery.Query.from_table(table)
 
   if args['profile']:
@@ -711,7 +710,7 @@ def _table_cell(args, cell_body):
    %%bq tables <command> <args>
 
   Commands:
-    {list, create, delete}
+    {list, create, delete, describe, view}
 
   Args:
     args: the optional arguments following '%%bq tables command'.
@@ -769,6 +768,12 @@ def _table_cell(args, cell_body):
     except Exception as e:
       print('Failed to delete table %s: %s' % (args['name'], e))
 
+  elif args['command'] == 'view':
+    name = args['name']
+    table = _get_table(name)
+    if not table:
+      raise Exception('Could not find table %s' % name)
+    return table
 
 def _extract_cell(args, cell_body):
   """Implements the BigQuery extract magic used to extract query or table data to GCS.
