@@ -32,7 +32,7 @@ class TestCases(unittest.TestCase):
                   'bigquery.defineFunction(\'foo\', ["field1", "field2"], ' +\
                   '[{"name": "output1", "type": "integer"}, ' +\
                   '{"name": "output2", "type": "string"}], foo);'
-    self.assertEqual(query.sql, 'SELECT * FROM (SELECT output1, output2 FROM foo([test:requestlogs.today]))')
+    self.assertEqual(query.sql, 'SELECT * FROM (SELECT output1, output2 FROM foo(`test:requestlogs.today`))')
     self.assertEqual(udf._code, expected_js)
 
   def test_udf_expansion(self):

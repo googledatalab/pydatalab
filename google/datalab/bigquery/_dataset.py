@@ -43,7 +43,7 @@ class Dataset(object):
     self._context = context
     self._api = _api.Api(context)
     self._name_parts = _utils.parse_dataset_name(name, self._api.project_id)
-    self._full_name = '%s:%s' % self._name_parts
+    self._full_name = '%s.%s' % self._name_parts
     self._info = None
     try:
       self._info = self._get_info()

@@ -28,11 +28,11 @@ class TestCases(unittest.TestCase):
     parsed_name = dataset._name_parts
     self.assertEqual('test', parsed_name[0])
     self.assertEqual('requestlogs', parsed_name[1])
-    self.assertEqual('test:requestlogs', dataset._full_name)
-    self.assertEqual('test:requestlogs', str(dataset))
+    self.assertEqual('test.requestlogs', dataset._full_name)
+    self.assertEqual('test.requestlogs', str(dataset))
 
   def test_parse_full_name(self):
-    dataset = TestCases._create_dataset('test:requestlogs')
+    dataset = TestCases._create_dataset('test.requestlogs')
     self._check_name_parts(dataset)
 
   def test_parse_local_name(self):
@@ -74,7 +74,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
   def test_dataset_exists(self, mock_api_datasets_get):
     mock_api_datasets_get.return_value = ''
-    dataset = TestCases._create_dataset('test:requestlogs')
+    dataset = TestCases._create_dataset('test.requestlogs')
     self.assertTrue(dataset.exists())
     mock_api_datasets_get.side_effect = google.datalab.utils.RequestException(404, None)
     dataset._info = None
@@ -140,8 +140,8 @@ class TestCases(unittest.TestCase):
     ds = TestCases._create_dataset('requestlogs')
     tables = [table for table in ds]
     self.assertEqual(2, len(tables))
-    self.assertEqual('`p:d.t1`', tables[0]._repr_sql_())
-    self.assertEqual('`p:d.t2`', tables[1]._repr_sql_())
+    self.assertEqual('`p.d.t1`', tables[0]._repr_sql_())
+    self.assertEqual('`p.d.t2`', tables[1]._repr_sql_())
 
   @mock.patch('google.datalab.bigquery.Dataset._get_info')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_list')
@@ -156,8 +156,8 @@ class TestCases(unittest.TestCase):
     datasets = [dataset for dataset in google.datalab.bigquery.Datasets('test',
                                                                  TestCases._create_context())]
     self.assertEqual(2, len(datasets))
-    self.assertEqual('p:d1', str(datasets[0]))
-    self.assertEqual('p:d2', str(datasets[1]))
+    self.assertEqual('p.d1', str(datasets[0]))
+    self.assertEqual('p.d2', str(datasets[1]))
 
   @mock.patch('google.datalab.bigquery._api.Api.tables_list')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
