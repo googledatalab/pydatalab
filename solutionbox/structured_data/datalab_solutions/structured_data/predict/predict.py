@@ -324,7 +324,7 @@ class FormatAndSave(beam.PTransform):
           >> beam.Create([json.dumps(self._schema, indent=2)])
           | 'Write CSV Schema File'
           >> beam.io.textio.WriteToText(
-              os.path.join(self._output_dir, 'csv_header'),
+              os.path.join(self._output_dir, 'csv_schema'),
               file_name_suffix='.json',
               shard_name_template=''))   
      
