@@ -112,7 +112,7 @@ class Bucket(object):
   def __repr__(self):
     """Returns a representation for the table for showing in the notebook.
     """
-    return 'Bucket gs://%s' % self._name
+    return 'Google Cloud Storage Bucket gs://%s' % self._name
 
   @property
   def metadata(self):
