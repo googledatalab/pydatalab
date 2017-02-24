@@ -106,7 +106,7 @@ class Object(object):
   def __repr__(self):
     """Returns a representation for the table for showing in the notebook.
     """
-    return 'Object %s' % self.uri
+    return 'Google Cloud Storage Object %s' % self.uri
 
   def copy_to(self, new_key, bucket=None):
     """Copies this object to the specified new key.
