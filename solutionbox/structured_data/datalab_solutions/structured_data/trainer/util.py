@@ -48,7 +48,6 @@ CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
 
 
 # Constants for the Prediction Graph fetch tensors.
-PG_KEY = 'key_from_input'
 PG_TARGET = 'target_from_input'
 
 PG_REGRESSION_PREDICTED_TARGET = 'predicted_target'
@@ -118,7 +117,7 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
     key_name = train_config['key_column']
 
     outputs = {}
-    outputs[PG_KEY] = tf.squeeze(input_ops.features[key_name])
+    outputs[key_name] = tf.squeeze(input_ops.features[key_name])
 
     if is_classification_model(args.model_type):
 

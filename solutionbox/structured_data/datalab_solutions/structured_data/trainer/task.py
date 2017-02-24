@@ -31,67 +31,6 @@ from tensorflow.contrib.session_bundle import manifest_pb2
 from tensorflow.python.lib.io import file_io
 
 
-UNKNOWN_LABEL = 'ERROR_UNKNOWN_LABEL'
-FEATURES_EXAMPLE_DICT_KEY = 'features_example_dict_key'
-EXAMPLES_PLACEHOLDER_TENSOR_NAME = 'input_csv_string'
-
-# Constants for the Prediction Graph fetch tensors.
-PG_KEY = 'key_from_input'
-PG_TARGET = 'target_from_input'
-
-PG_REGRESSION_PREDICTED_TARGET = 'predicted_target'
-PG_CLASSIFICATION_LABEL_TEMPLATE = 'top_%s_label'
-PG_CLASSIFICATION_SCORE_TEMPLATE = 'top_%s_score'
-
-# If input has the target label, we also give its score (which might not be in
-# the top n).
-# todo(brandondutra): get this working and use it.
-PG_CLASSIFICATION_INPUT_TARGET_SCORE = 'score_of_input_target'
-
-# Constants for the exported input and output collections.
-INPUT_COLLECTION_NAME = 'inputs'
-OUTPUT_COLLECTION_NAME = 'outputs'
-
-def get_placeholder_input_fn(train_config, preprocess_output_dir, model_type):
-  """Input layer for the exported graph."""
-
-  def get_input_features():
-    """Read the input features from a placeholder example string tensor."""
-    examples = tf.placeholder(
-        dtype=tf.string,
-        shape=(None,),
-        name=EXAMPLES_PLACEHOLDER_TENSOR_NAME)
-
-    # Parts is batch-size x num-columns sparse tensor. This means when running
-    # prediction, all input rows should have a target column as the first
-    # column, or all input rows should have the target column missing.
-    # The condition below checks how many columns are in parts, and appends a
-    # ',' to the csv 'examples' placeholder string if a column is missing.
-    parts = tf.string_split(examples, delimiter=',')
-    new_examples = tf.cond(
-        tf.less(tf.shape(parts)[1], len(train_config['csv_header'])),
-        lambda: tf.string_join([tf.constant(','), tf.identity(examples)]),
-        lambda: tf.identity(examples))
-    features = util.parse_example_tensor(examples=new_examples,
-                                         train_config=train_config)
-
-    target = features.pop(train_config['target_column'])
-    features, target = util.preprocess_input(
-        features=features,
-        target=target,
-        train_config=train_config,
-        preprocess_output_dir=preprocess_output_dir,
-        model_type=model_type)
-    # The target feature column is not used for prediction so return None.
-
-    # Put target back in so it can be used when making the exported graph.
-    features[train_config['target_column']] = target
-    return features, None
-
-  # Return a function to input the feaures into the model from a placeholder.
-  return get_input_features
-
-
 def get_reader_input_fn(train_config, preprocess_output_dir, model_type,
                         data_paths, batch_size, shuffle, num_epochs=None):
   """Builds input layer for training."""
