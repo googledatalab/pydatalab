@@ -1,6 +1,7 @@
 import subprocess, pkgutil, importlib, sys
 from cStringIO import StringIO
 
+
 IGNORED_MAGICS = []
 
 # import submodules
