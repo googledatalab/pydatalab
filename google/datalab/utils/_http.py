@@ -53,6 +53,16 @@ class Http(object):
   """A helper class for making HTTP requests.
   """
 
+  # Reuse one Http object across requests to take advantage of Keep-Alive, e.g.
+  # for BigQuery queries that requires at least ~5 sequential http requests.
+  #
+  # TODO(nikhilko):
+  # SSL cert validation seemingly fails, and workarounds are not amenable
+  # to implementing in library code. So configure the Http object to skip
+  # doing so, in the interim.
+  http = httplib2.Http()
+  http.disable_ssl_certificate_validation = True
+
   def __init__(self):
     pass
 
@@ -109,15 +119,8 @@ class Http(object):
     if method is None:
       method = 'GET'
 
-    # Create an Http object to issue requests. Associate the credentials
-    # with it if specified to perform authorization.
-    #
-    # TODO(nikhilko):
-    # SSL cert validation seemingly fails, and workarounds are not amenable
-    # to implementing in library code. So configure the Http object to skip
-    # doing so, in the interim.
-    http = httplib2.Http()
-    http.disable_ssl_certificate_validation = True
+    # Authorize with credentials if given
+    http = Http.http
     if credentials is not None:
       http = credentials.authorize(http)
     if stats is not None:
