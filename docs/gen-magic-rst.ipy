@@ -1,9 +1,8 @@
 import subprocess, pkgutil, importlib, sys
 from cStringIO import StringIO
 
-# ignore mlalpha and tensorboard for now because of their tensorflow dependency
-# until tensorboard is pip installable and can be listed as a pydatalab dependency
-IGNORED_MAGICS = ['mlalpha', 'tensorboard']
+
+IGNORED_MAGICS = []
 
 # import submodules
 submodules = [s for _,s,_ in pkgutil.iter_modules(['../datalab'])]
