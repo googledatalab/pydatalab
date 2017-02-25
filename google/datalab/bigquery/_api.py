@@ -31,7 +31,6 @@ class Api(object):
   _TABLES_PATH = '/projects/%s/datasets/%s/tables/%s%s'
   _TABLEDATA_PATH = '/projects/%s/datasets/%s/tables/%s%s/data'
 
-  _DEFAULT_PAGE_SIZE = 1024
   _DEFAULT_TIMEOUT = 60000
 
   def __init__(self, context):
