@@ -16,24 +16,24 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.context
-import datalab.storage
-import datalab.utils
+import google.datalab
+import google.datalab.storage
+import google.datalab.utils
 
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.storage._api.Api.buckets_get')
+  @mock.patch('google.datalab.storage._api.Api.buckets_get')
   def test_bucket_existence(self, mock_api_buckets):
     mock_api_buckets.return_value = TestCases._create_buckets_get_result()
 
-    buckets = datalab.storage.Buckets(context=TestCases._create_context())
+    buckets = google.datalab.storage.Buckets(context=TestCases._create_context())
     self.assertTrue(buckets.contains('test_bucket'))
 
-    mock_api_buckets.side_effect = datalab.utils.RequestException(404, 'failed')
+    mock_api_buckets.side_effect = google.datalab.utils.RequestException(404, 'failed')
     self.assertFalse(buckets.contains('test_bucket_2'))
 
-  @mock.patch('datalab.storage._api.Api.buckets_get')
+  @mock.patch('google.datalab.storage._api.Api.buckets_get')
   def test_bucket_metadata(self, mock_api_buckets):
     mock_api_buckets.return_value = TestCases._create_buckets_get_result()
 
@@ -44,13 +44,13 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_bucket(name='test_bucket'):
-    return datalab.storage.Bucket(name, context=TestCases._create_context())
+    return google.datalab.storage.Bucket(name, context=TestCases._create_context())
 
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)
 
   @staticmethod
   def _create_buckets_get_result():

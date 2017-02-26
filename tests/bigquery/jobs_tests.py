@@ -16,17 +16,19 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.bigquery
-import datalab.context
+import google.datalab
+import google.datalab.bigquery
+
+from google.datalab.bigquery._job import Job
 
 
 class TestCases(unittest.TestCase):
 
   @staticmethod
   def _make_job(id):
-    return datalab.bigquery.Job(id, TestCases._create_context())
+    return Job(id, TestCases._create_context())
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
   def test_job_complete(self, mock_api_jobs_get):
     mock_api_jobs_get.return_value = {}
     j = TestCases._make_job('foo')
@@ -36,7 +38,7 @@ class TestCases(unittest.TestCase):
     self.assertTrue(j.is_complete)
     self.assertFalse(j.failed)
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
   def test_job_fatal_error(self, mock_api_jobs_get):
     mock_api_jobs_get.return_value = {
       'status': {
@@ -57,7 +59,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual('B', e.message)
     self.assertEqual('C', e.reason)
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
   def test_job_errors(self, mock_api_jobs_get):
     mock_api_jobs_get.return_value = {
       'status': {
@@ -91,8 +93,8 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)
 
   @staticmethod
   def _create_api():
-    return datalab.bigquery._api.Api(TestCases._create_context())
+    return google.datalab.bigquery._api.Api(TestCases._create_context())

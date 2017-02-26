@@ -21,9 +21,9 @@ from oauth2client.client import AccessTokenCredentials
 import pandas
 import unittest
 
-import datalab.bigquery
-import datalab.context
-import datalab.utils
+import google.datalab
+import google.datalab.bigquery
+import google.datalab.utils
 
 
 class TestCases(unittest.TestCase):
@@ -34,20 +34,19 @@ class TestCases(unittest.TestCase):
     self.assertEqual('requestlogs', parsed_name[1])
     self.assertEqual('today', parsed_name[2])
     self.assertEqual('', parsed_name[3])
-    self.assertEqual('[test:requestlogs.today]', table._repr_sql_())
-    self.assertEqual('test:requestlogs.today', str(table))
+    self.assertEqual('`test.requestlogs.today`', table._repr_sql_())
 
   def test_api_paths(self):
-    name = datalab.bigquery._utils.TableName('a', 'b', 'c', 'd')
+    name = google.datalab.bigquery._utils.TableName('a', 'b', 'c', 'd')
     self.assertEqual('/projects/a/datasets/b/tables/cd',
-                     datalab.bigquery._api.Api._TABLES_PATH % name)
+                     google.datalab.bigquery._api.Api._TABLES_PATH % name)
     self.assertEqual('/projects/a/datasets/b/tables/cd/data',
-                     datalab.bigquery._api.Api._TABLEDATA_PATH % name)
-    name = datalab.bigquery._utils.DatasetName('a', 'b')
-    self.assertEqual('/projects/a/datasets/b', datalab.bigquery._api.Api._DATASETS_PATH % name)
+                     google.datalab.bigquery._api.Api._TABLEDATA_PATH % name)
+    name = google.datalab.bigquery._utils.DatasetName('a', 'b')
+    self.assertEqual('/projects/a/datasets/b', google.datalab.bigquery._api.Api._DATASETS_PATH % name)
 
   def test_parse_full_name(self):
-    table = TestCases._create_table('test:requestlogs.today')
+    table = TestCases._create_table('test.requestlogs.today')
     self._check_name_parts(table)
 
   def test_parse_local_name(self):
@@ -64,7 +63,7 @@ class TestCases(unittest.TestCase):
     self._check_name_parts(table)
 
   def test_parse_named_tuple_name(self):
-    table = TestCases._create_table(datalab.bigquery._utils.TableName('test',
+    table = TestCases._create_table(google.datalab.bigquery._utils.TableName('test',
                                                                       'requestlogs', 'today', ''))
     self._check_name_parts(table)
 
@@ -88,9 +87,9 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception):
       _ = TestCases._create_table('today@')
 
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_table_metadata(self, mock_api_tables_get):
-    name = 'test:requestlogs.today'
+    name = 'test.requestlogs.today'
     ts = dt.datetime.utcnow()
 
     mock_api_tables_get.return_value = TestCases._create_table_info_result(ts=ts)
@@ -104,21 +103,21 @@ class TestCases(unittest.TestCase):
     self.assertTrue(abs((metadata.created_on - ts).total_seconds()) <= 1)
     self.assertEqual(None, metadata.expires_on)
 
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_table_schema(self, mock_api_tables):
     mock_api_tables.return_value = TestCases._create_table_info_result()
 
-    t = TestCases._create_table('test:requestlogs.today')
+    t = TestCases._create_table('test.requestlogs.today')
     schema = t.schema
 
     self.assertEqual(2, len(schema))
     self.assertEqual('name', schema[0].name)
 
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_table_schema_nested(self, mock_api_tables):
     mock_api_tables.return_value = TestCases._create_table_info_nested_schema_result()
 
-    t = TestCases._create_table('test:requestlogs.today')
+    t = TestCases._create_table('test.requestlogs.today')
     schema = t.schema
 
     self.assertEqual(4, len(schema))
@@ -130,67 +129,67 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(schema['value'])
     self.assertIsNotNone(schema['val'])
 
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_malformed_response_raises_exception(self, mock_api_tables_get):
     mock_api_tables_get.return_value = {}
 
-    t = TestCases._create_table('test:requestlogs.today')
+    t = TestCases._create_table('test.requestlogs.today')
 
     with self.assertRaises(Exception) as error:
       _ = t.schema
     self.assertEqual('Unexpected table response: missing schema', str(error.exception))
 
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
   def test_dataset_list(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = TestCases._create_table_list_result()
 
-    ds = datalab.bigquery.Dataset('testds', context=TestCases._create_context())
+    ds = google.datalab.bigquery.Dataset('testds', context=TestCases._create_context())
 
     tables = []
     for table in ds:
       tables.append(table)
     self.assertEqual(2, len(tables))
-    self.assertEqual('test:testds.testTable1', str(tables[0]))
-    self.assertEqual('test:testds.testTable2', str(tables[1]))
+    self.assertEqual('`test.testds.testTable1`', tables[0]._repr_sql_())
+    self.assertEqual('`test.testds.testTable2`', tables[1]._repr_sql_())
 
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
   def test_table_list(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = TestCases._create_table_list_result()
 
-    ds = datalab.bigquery.Dataset('testds', context=TestCases._create_context())
+    ds = google.datalab.bigquery.Dataset('testds', context=TestCases._create_context())
 
     tables = []
     for table in ds.tables():
       tables.append(table)
     self.assertEqual(2, len(tables))
-    self.assertEqual('test:testds.testTable1', str(tables[0]))
-    self.assertEqual('test:testds.testTable2', str(tables[1]))
+    self.assertEqual('`test.testds.testTable1`', tables[0]._repr_sql_())
+    self.assertEqual('`test.testds.testTable2`', tables[1]._repr_sql_())
 
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
   def test_view_list(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = TestCases._create_table_list_result()
 
-    ds = datalab.bigquery.Dataset('testds', context=TestCases._create_context())
+    ds = google.datalab.bigquery.Dataset('testds', context=TestCases._create_context())
 
     views = []
     for view in ds.views():
       views.append(view)
     self.assertEqual(1, len(views))
-    self.assertEqual('test:testds.testView1', str(views[0]))
+    self.assertEqual('`test.testds.testView1`', views[0]._repr_sql_())
 
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
   def test_table_list_empty(self, mock_api_datasets_get, mock_api_tables_list):
     mock_api_datasets_get.return_value = None
     mock_api_tables_list.return_value = TestCases._create_table_list_empty_result()
 
-    ds = datalab.bigquery.Dataset('testds', context=TestCases._create_context())
+    ds = google.datalab.bigquery.Dataset('testds', context=TestCases._create_context())
 
     tables = []
     for table in ds:
@@ -198,18 +197,18 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(0, len(tables))
 
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_table_exists(self, mock_api_tables_get):
     mock_api_tables_get.return_value = None
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
     self.assertTrue(tbl.exists())
 
-    mock_api_tables_get.side_effect = datalab.utils.RequestException(404, 'failed')
+    mock_api_tables_get.side_effect = google.datalab.utils.RequestException(404, 'failed')
     self.assertFalse(tbl.exists())
 
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
   def test_tables_create(self,
                          mock_api_datasets_get,
                          mock_api_tables_list,
@@ -221,7 +220,7 @@ class TestCases(unittest.TestCase):
     mock_api_tables_insert.return_value = {}
     with self.assertRaises(Exception) as error:
       _ = TestCases._create_table_with_schema(schema)
-    self.assertEqual('Table test:testds.testTable0 could not be created as it already exists',
+    self.assertEqual('Table test.testds.testTable0 could not be created as it already exists',
                      str(error.exception))
 
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
@@ -229,24 +228,24 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.tabledata_insert_all')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
-  def test_insert_data_no_table(self,
-                                mock_api_datasets_get,
-                                mock_api_tabledata_insert_all,
-                                mock_api_tables_get,
-                                mock_api_tables_insert,
-                                mock_api_tables_list,
-                                mock_time_sleep,
-                                mock_uuid):
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
+  def test_insert_no_table(self,
+                           mock_api_datasets_get,
+                           mock_api_tabledata_insert_all,
+                           mock_api_tables_get,
+                           mock_api_tables_insert,
+                           mock_api_tables_list,
+                           mock_time_sleep,
+                           mock_uuid):
     mock_uuid.return_value = TestCases._create_uuid()
     mock_time_sleep.return_value = None
     mock_api_tables_list.return_value = []
     mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
-    mock_api_tables_get.side_effect = datalab.utils.RequestException(404, 'failed')
+    mock_api_tables_get.side_effect = google.datalab.utils.RequestException(404, 'failed')
     mock_api_tabledata_insert_all.return_value = {}
     mock_api_datasets_get.return_value = None
 
@@ -254,24 +253,24 @@ class TestCases(unittest.TestCase):
     df = TestCases._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insert_data(df)
-    self.assertEqual('Table %s does not exist.' % str(table), str(error.exception))
+      table.insert(df)
+    self.assertEqual('Table %s does not exist.' % table._full_name, str(error.exception))
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_missing_field(self,
-                                     mock_api_tabledata_insert_all,
-                                     mock_api_tables_get,
-                                     mock_api_tables_insert,
-                                     mock_api_tables_list,
-                                     mock_api_datasets_get,
-                                     mock_time_sleep,
-                                     mock_uuid,):
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
+  def test_insert_missing_field(self,
+                                mock_api_tabledata_insert_all,
+                                mock_api_tables_get,
+                                mock_api_tables_insert,
+                                mock_api_tables_list,
+                                mock_api_datasets_get,
+                                mock_time_sleep,
+                                mock_uuid,):
     # Truncate the schema used when creating the table so we have an unmatched column in insert.
     schema = TestCases._create_inferred_schema()[:2]
 
@@ -287,24 +286,24 @@ class TestCases(unittest.TestCase):
     df = TestCases._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insert_data(df)
+      table.insert(df)
     self.assertEqual('Table does not contain field headers', str(error.exception))
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.tabledata_insert_all')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
-  def test_insert_data_mismatched_schema(self,
-                                         mock_api_datasets_get,
-                                         mock_api_tabledata_insert_all,
-                                         mock_api_tables_get,
-                                         mock_api_tables_insert,
-                                         mock_api_tables_list,
-                                         mock_time_sleep,
-                                         mock_uuid):
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
+  def test_insert_mismatched_schema(self,
+                                    mock_api_datasets_get,
+                                    mock_api_tabledata_insert_all,
+                                    mock_api_tables_get,
+                                    mock_api_tables_insert,
+                                    mock_api_tables_list,
+                                    mock_time_sleep,
+                                    mock_uuid):
     # Change the schema used when creating the table so we get a mismatch when inserting.
     schema = TestCases._create_inferred_schema()
     schema[2]['type'] = 'STRING'
@@ -321,24 +320,24 @@ class TestCases(unittest.TestCase):
     df = TestCases._create_data_frame()
 
     with self.assertRaises(Exception) as error:
-      table.insert_data(df)
+      table.insert(df)
     self.assertEqual('Field headers in data has type FLOAT but in table has type STRING',
                      str(error.exception))
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_dataframe(self,
-                                 mock_api_tabledata_insert_all,
-                                 mock_api_tables_get,
-                                 mock_api_tables_insert,
-                                 mock_api_tables_list,
-                                 mock_api_datasets_get,
-                                 mock_time_sleep, mock_uuid):
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
+  def test_insert_dataframe(self,
+                            mock_api_tabledata_insert_all,
+                            mock_api_tables_get,
+                            mock_api_tables_insert,
+                            mock_api_tables_list,
+                            mock_api_datasets_get,
+                            mock_time_sleep, mock_uuid):
     schema = TestCases._create_inferred_schema()
 
     mock_uuid.return_value = TestCases._create_uuid()
@@ -352,7 +351,7 @@ class TestCases(unittest.TestCase):
     table = TestCases._create_table_with_schema(schema)
     df = TestCases._create_data_frame()
 
-    result = table.insert_data(df)
+    result = table.insert(df)
     self.assertIsNotNone(result, "insert_all should return the table object")
     mock_api_tabledata_insert_all.assert_called_with(('test', 'testds', 'testTable0', ''), [
       {'insertId': '#0', 'json': {u'column': 'r0', u'headers': 10.0, u'some': 0}},
@@ -363,18 +362,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_dictlist(self,
-                                mock_api_tabledata_insert_all,
-                                mock_api_tables_get,
-                                mock_api_tables_insert,
-                                mock_api_tables_list,
-                                mock_api_datasets_get,
-                                mock_time_sleep, mock_uuid):
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
+  def test_insert_dictlist(self,
+                           mock_api_tabledata_insert_all,
+                           mock_api_tables_get,
+                           mock_api_tables_insert,
+                           mock_api_tables_list,
+                           mock_api_datasets_get,
+                           mock_time_sleep, mock_uuid):
     schema = TestCases._create_inferred_schema()
 
     mock_uuid.return_value = TestCases._create_uuid()
@@ -387,7 +386,7 @@ class TestCases(unittest.TestCase):
 
     table = TestCases._create_table_with_schema(schema)
 
-    result = table.insert_data([
+    result = table.insert([
       {u'column': 'r0', u'headers': 10.0, u'some': 0},
       {u'column': 'r1', u'headers': 10.0, u'some': 1},
       {u'column': 'r2', u'headers': 10.0, u'some': 2},
@@ -403,18 +402,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_dictlist_index(self,
-                                      mock_api_tabledata_insert_all,
-                                      mock_api_tables_get,
-                                      mock_api_tables_insert,
-                                      mock_api_tables_list,
-                                      mock_api_datasets_get,
-                                      mock_time_sleep, mock_uuid):
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
+  def test_insert_dictlist_index(self,
+                                 mock_api_tabledata_insert_all,
+                                 mock_api_tables_get,
+                                 mock_api_tables_insert,
+                                 mock_api_tables_list,
+                                 mock_api_datasets_get,
+                                 mock_time_sleep, mock_uuid):
     schema = TestCases._create_inferred_schema('Index')
 
     mock_uuid.return_value = TestCases._create_uuid()
@@ -427,7 +426,7 @@ class TestCases(unittest.TestCase):
 
     table = TestCases._create_table_with_schema(schema)
 
-    result = table.insert_data([
+    result = table.insert([
       {u'column': 'r0', u'headers': 10.0, u'some': 0},
       {u'column': 'r1', u'headers': 10.0, u'some': 1},
       {u'column': 'r2', u'headers': 10.0, u'some': 2},
@@ -443,18 +442,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('uuid.uuid4')
   @mock.patch('time.sleep')
-  @mock.patch('datalab.bigquery._api.Api.datasets_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_list')
-  @mock.patch('datalab.bigquery._api.Api.tables_insert')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.tabledata_insert_all')
-  def test_insert_data_dictlist_named_index(self,
-                                            mock_api_tabledata_insert_all,
-                                            mock_api_tables_get,
-                                            mock_api_tables_insert,
-                                            mock_api_tables_list,
-                                            mock_api_datasets_get,
-                                            mock_time_sleep, mock_uuid):
+  @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_list')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_insert_all')
+  def test_insert_dictlist_named_index(self,
+                                       mock_api_tabledata_insert_all,
+                                       mock_api_tables_get,
+                                       mock_api_tables_insert,
+                                       mock_api_tables_list,
+                                       mock_api_datasets_get,
+                                       mock_time_sleep, mock_uuid):
     schema = TestCases._create_inferred_schema('Row')
 
     mock_uuid.return_value = TestCases._create_uuid()
@@ -467,7 +466,7 @@ class TestCases(unittest.TestCase):
 
     table = TestCases._create_table_with_schema(schema)
 
-    result = table.insert_data([
+    result = table.insert([
         {u'column': 'r0', u'headers': 10.0, u'some': 0},
         {u'column': 'r1', u'headers': 10.0, u'some': 1},
         {u'column': 'r2', u'headers': 10.0, u'some': 2},
@@ -481,37 +480,37 @@ class TestCases(unittest.TestCase):
       {'insertId': '#3', 'json': {u'column': 'r3', u'headers': 10.0, u'some': 3, 'Row': 3}}
     ])
 
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_load')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_load')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
   def test_table_load(self, mock_api_jobs_get, mock_api_jobs_insert_load, mock_api_tables_get):
     schema = TestCases._create_inferred_schema('Row')
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_jobs_insert_load.return_value = None
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
     job = tbl.load('gs://foo')
     self.assertIsNone(job)
     mock_api_jobs_insert_load.return_value = {'jobReference': {'jobId': 'bar'}}
     job = tbl.load('gs://foo')
     self.assertEquals('bar', job.id)
 
-  @mock.patch('datalab.bigquery._api.Api.table_extract')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.table_extract')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_table_extract(self, mock_api_tables_get, mock_api_jobs_get, mock_api_table_extract):
     mock_api_tables_get.return_value = {}
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_table_extract.return_value = None
-    tbl = datalab.bigquery.Table('testds.testTable0', context=self._create_context())
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=self._create_context())
     job = tbl.extract('gs://foo')
     self.assertIsNone(job)
     mock_api_table_extract.return_value = {'jobReference': {'jobId': 'bar'}}
     job = tbl.extract('gs://foo')
     self.assertEquals('bar', job.id)
 
-  @mock.patch('datalab.bigquery._api.Api.tabledata_list')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_table_to_dataframe(self, mock_api_tables_get, mock_api_tabledata_list):
     schema = self._create_inferred_schema()
     mock_api_tables_get.return_value = {'schema': {'fields': schema}}
@@ -521,7 +520,7 @@ class TestCases(unittest.TestCase):
           {'f': [{'v': 2}, {'v': 'bar'}, {'v': 0.5}]},
       ]
     }
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
     df = tbl.to_dataframe()
     self.assertEquals(2, len(df))
     self.assertEquals(1, df['some'][0])
@@ -533,13 +532,13 @@ class TestCases(unittest.TestCase):
 
   def test_encode_dict_as_row(self):
     when = dt.datetime(2001, 2, 3, 4, 5, 6, 7)
-    row = datalab.bigquery.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
+    row = google.datalab.bigquery.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
     self.assertEqual({'foo': 'b@r', 'bar': '2001-02-03T04:05:06.000007'}, row)
 
   def test_decorators(self):
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
     tbl2 = tbl.snapshot(dt.timedelta(hours=-1))
-    self.assertEquals('test:testds.testTable0@-3600000', str(tbl2))
+    self.assertEquals('`test.testds.testTable0@-3600000`', tbl2._repr_sql_())
 
     with self.assertRaises(Exception) as error:
       tbl2 = tbl2.snapshot(dt.timedelta(hours=-2))
@@ -564,7 +563,7 @@ class TestCases(unittest.TestCase):
         str(error.exception))
 
     tbl2 = tbl.snapshot(dt.timedelta(days=-1))
-    self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
+    self.assertEquals('`test.testds.testTable0@-86400000`', tbl2._repr_sql_())
 
     with self.assertRaises(Exception) as error:
       _ = tbl.snapshot(dt.timedelta(days=1))
@@ -577,7 +576,7 @@ class TestCases(unittest.TestCase):
                      str(error.exception))
 
     _ = dt.datetime.utcnow() - dt.timedelta(1)
-    self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
+    self.assertEquals('`test.testds.testTable0@-86400000`', tbl2._repr_sql_())
 
     when = dt.datetime.utcnow() + dt.timedelta(1)
     with self.assertRaises(Exception) as error:
@@ -595,10 +594,10 @@ class TestCases(unittest.TestCase):
     # The at test above already tests many of the conversion cases. The extra things we
     # have to test are that we can use two values, we get a meaningful default for the second
     # if we pass None, and that the first time comes before the second.
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
 
     tbl2 = tbl.window(dt.timedelta(hours=-1))
-    self.assertEquals('test:testds.testTable0@-3600000-0', str(tbl2))
+    self.assertEquals('`test.testds.testTable0@-3600000-0`', tbl2._repr_sql_())
 
     with self.assertRaises(Exception) as error:
       tbl2 = tbl2.window(-400000, 0)
@@ -616,15 +615,15 @@ class TestCases(unittest.TestCase):
         'window: Between arguments: begin must be before end: 0:00:00, -1 day, 23:00:00',
         str(error.exception))
 
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.table_update')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.table_update')
   def test_table_update(self, mock_api_table_update, mock_api_tables_get):
     schema = self._create_inferred_schema()
     info = {'schema': {'fields': schema}, 'friendlyName': 'casper',
             'description': 'ghostly logs',
             'expirationTime': calendar.timegm(dt.datetime(2020, 1, 1).utctimetuple()) * 1000}
     mock_api_tables_get.return_value = info
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
     new_name = 'aziraphale'
     new_description = 'demon duties'
     new_schema = [{'name': 'injected', 'type': 'FLOAT'}]
@@ -638,15 +637,15 @@ class TestCases(unittest.TestCase):
     self.assertEqual(new_expiry, tbl.metadata.expires_on)
     self.assertEqual(len(new_schema), len(tbl.schema))
 
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.table_update')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.table_update')
   def test_table_update(self, mock_api_table_update, mock_api_tables_get):
     schema = self._create_inferred_schema()
     info = {'schema': {'fields': schema}, 'friendlyName': 'casper',
             'description': 'ghostly logs',
             'expirationTime': calendar.timegm(dt.datetime(2020, 1, 1).utctimetuple()) * 1000}
     mock_api_tables_get.return_value = info
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
     new_name = 'aziraphale'
     new_description = 'demon duties'
     new_schema = [{'name': 'injected', 'type': 'FLOAT'}]
@@ -661,23 +660,23 @@ class TestCases(unittest.TestCase):
     self.assertEqual(len(new_schema), len(tbl.schema))
 
   def test_table_to_query(self):
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
-    q = tbl.to_query()
-    self.assertEqual('SELECT * FROM [test:testds.testTable0]', q.sql)
-    q = tbl.to_query('foo, bar')
-    self.assertEqual('SELECT foo, bar FROM [test:testds.testTable0]', q.sql)
-    q = tbl.to_query(['bar', 'foo'])
-    self.assertEqual('SELECT bar,foo FROM [test:testds.testTable0]', q.sql)
+    tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
+    q = google.datalab.bigquery.Query.from_table(tbl)
+    self.assertEqual('SELECT * FROM `test.testds.testTable0`', q.sql)
+    q = google.datalab.bigquery.Query.from_table(tbl, fields='foo, bar')
+    self.assertEqual('SELECT foo, bar FROM `test.testds.testTable0`', q.sql)
+    q = google.datalab.bigquery.Query.from_table(tbl, fields=['bar', 'foo'])
+    self.assertEqual('SELECT bar,foo FROM `test.testds.testTable0`', q.sql)
 
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)
 
   @staticmethod
   def _create_table(name):
-    return datalab.bigquery.Table(name, TestCases._create_context())
+    return google.datalab.bigquery.Table(name, TestCases._create_context())
 
   @staticmethod
   def _create_table_info_result(ts=None):
@@ -730,7 +729,7 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_dataset(dataset_id):
-    return datalab.bigquery.Dataset(dataset_id, context=TestCases._create_context())
+    return google.datalab.bigquery.Dataset(dataset_id, context=TestCases._create_context())
 
   @staticmethod
   def _create_table_list_result():
@@ -784,8 +783,8 @@ class TestCases(unittest.TestCase):
     return schema
 
   @staticmethod
-  def _create_table_with_schema(schema, name='test:testds.testTable0'):
-    return datalab.bigquery.Table(name, TestCases._create_context()).create(schema)
+  def _create_table_with_schema(schema, name='test.testds.testTable0'):
+    return google.datalab.bigquery.Table(name, TestCases._create_context()).create(schema)
 
   class _uuid(object):
     @property
