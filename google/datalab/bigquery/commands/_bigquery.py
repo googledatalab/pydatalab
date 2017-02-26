@@ -191,7 +191,8 @@ def _create_sample_subparser(parser):
 def _create_udf_subparser(parser):
   udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF')
   udf_parser.add_argument('-n', '--name', help='The name for this UDF', required=True)
-  udf_parser.add_argument('-l', '--language', help='The language of the function', required=True)
+  udf_parser.add_argument('-l', '--language', help='The language of the function', required=True,
+                          choices=['sql', 'js'])
   return udf_parser
 
 
@@ -515,8 +516,8 @@ def _udf_cell(args, cell_body):
     raise Exception('Declaration must be of the form %%bq udf --name <variable name>')
 
   # Parse out parameters, return type, and imports
-  param_pattern = r'^\s*\/\/\s*@param\s+(\w+)\s+(\w+)\s*$'
-  returns_pattern = r'^\s*\/\/\s*@returns\s+(\w+)\s*$'
+  param_pattern = r'^\s*\/\/\s*@param\s+([<>\w]+)\s+([<>\w]+)\s*$'
+  returns_pattern = r'^\s*\/\/\s*@returns\s+([<>\w]+)\s*$'
   import_pattern = r'^\s*\/\/\s*@import\s+(\S+)\s*$'
 
   params = re.findall(param_pattern, cell_body, re.MULTILINE)
