@@ -380,7 +380,8 @@ def _get_query_parameters(args, cell_body):
     Validated object containing query parameters
   """
 
-  config = google.datalab.utils.commands.parse_config(cell_body, env=None, as_dict=False)
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env=env, as_dict=False)
   sql = args['query']
   if sql is None:
     raise Exception('Cannot extract query parameters in non-query cell')
@@ -687,7 +688,10 @@ def _dataset_line(args):
   """
   if args['command'] == 'list':
     filter_ = args['filter'] if args['filter'] else '*'
-    return _render_list([str(dataset) for dataset in google.datalab.bigquery.Datasets(args['project'])
+    context = google.datalab.Context.default()
+    if args['project']:
+      context = google.datalab.Context(args['project'], context.credentials)
+    return _render_list([str(dataset) for dataset in google.datalab.bigquery.Datasets(context)
                          if fnmatch.fnmatch(str(dataset), filter_)])
 
   elif args['command'] == 'create':
