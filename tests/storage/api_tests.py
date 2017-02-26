@@ -16,8 +16,8 @@ import unittest
 import mock
 from oauth2client.client import AccessTokenCredentials
 
-import datalab.context
-from datalab.storage._api import Api
+import google.datalab
+from google.datalab.storage._api import Api
 
 
 class TestCases(unittest.TestCase):
@@ -36,7 +36,7 @@ class TestCases(unittest.TestCase):
     if expected_method is not None:
       self.assertEquals(expected_method, kwargs['method'])
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_buckets_insert(self, mock_http_request):
     api = TestCases._create_api()
 
@@ -48,14 +48,14 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/storage/v1/b/',
                   expected_args={'project': 'bar'}, expected_data={'name': 'foo'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_buckets_delete(self, mock_http_request):
     api = TestCases._create_api()
     api.buckets_delete('foo')
     self.validate(mock_http_request, 'https://www.googleapis.com/storage/v1/b/foo',
                   expected_method='DELETE')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_buckets_get(self, mock_http_request):
     api = TestCases._create_api()
     api.buckets_get('foo')
@@ -65,7 +65,7 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/storage/v1/b/foo',
                   expected_args={'projection': 'bar'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_buckets_list(self, mock_http_request):
     api = TestCases._create_api()
     api.buckets_list()
@@ -77,14 +77,14 @@ class TestCases(unittest.TestCase):
                   expected_args={'project': 'bar', 'maxResults': 99,
                                  'projection': 'foo', 'pageToken': 'xyz'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_object_download(self, mock_http_request):
     api = TestCases._create_api()
     api.object_download('foo', 'bar')
     self.validate(mock_http_request, 'https://www.googleapis.com/download/storage/v1/b/foo/o/bar',
                   expected_args={'alt': 'media'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_object_upload(self, mock_http_request):
     api = TestCases._create_api()
     api.object_upload('b', 'k', 'c', 't')
@@ -92,7 +92,7 @@ class TestCases(unittest.TestCase):
                   expected_args={'uploadType': 'media', 'name': 'k'},
                   expected_data='c', expected_headers={'Content-Type': 't'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_objects_copy(self, mock_http_request):
     api = TestCases._create_api()
     api.objects_copy('sb', 'sk', 'tb', 'tk')
@@ -100,14 +100,14 @@ class TestCases(unittest.TestCase):
                   'https://www.googleapis.com/storage/v1/b/sb/o/sk/copyTo/b/tb/o/tk',
                   expected_method='POST')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_objects_delete(self, mock_http_request):
     api = TestCases._create_api()
     api.objects_delete('b', 'k')
     self.validate(mock_http_request, 'https://www.googleapis.com/storage/v1/b/b/o/k',
                   expected_method='DELETE')
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_objects_get(self, mock_http_request):
     api = TestCases._create_api()
     api.objects_get('b', 'k')
@@ -118,7 +118,7 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/storage/v1/b/b/o/k',
                   expected_args={'projection': 'p'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_objects_list(self, mock_http_request):
     api = TestCases._create_api()
     api.objects_list('b')
@@ -131,7 +131,7 @@ class TestCases(unittest.TestCase):
                                  'prefix': 'p', 'delimiter': 'd', 'versions': 'true',
                                  'pageToken': 'foo'})
 
-  @mock.patch('datalab.utils.Http.request')
+  @mock.patch('google.datalab.utils.Http.request')
   def test_objects_patch(self, mock_http_request):
     api = TestCases._create_api()
     api.objects_patch('b', 'k', 'i')
@@ -147,4 +147,4 @@ class TestCases(unittest.TestCase):
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)

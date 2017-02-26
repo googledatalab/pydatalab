@@ -17,17 +17,35 @@ import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
 
-import datalab.bigquery
-import datalab.context
+import google.datalab
+import google.datalab.bigquery
 
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.bigquery._api.Api.tabledata_list')
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
-  @mock.patch('datalab.bigquery._api.Api.jobs_query_results')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  def test_parameter_validation(self):
+    sql = 'SELECT * FROM table'
+    with self.assertRaises(Exception) as error:
+      q = TestCases._create_query(sql, subqueries=['subquery'])
+    env = {'subquery': TestCases._create_query()}
+    q = TestCases._create_query(sql, env=env, subqueries=['subquery'])
+    self.assertIsNotNone(q)
+    self.assertEqual(q._subqueries, ['subquery'])
+    self.assertEqual(q._sql, sql)
+
+    with self.assertRaises(Exception) as error:
+      q = TestCases._create_query(sql, udfs=['udf'])
+    env = {'udf': TestCases._create_udf('test_udf', 'code', 'TYPE')}
+    q = TestCases._create_query(sql, env=env, udfs=['udf'])
+    self.assertIsNotNone(q)
+    self.assertEqual(q._udfs, ['udf'])
+    self.assertEqual(q._sql, sql)
+
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_single_result_query(self, mock_api_tables_get, mock_api_jobs_get,
                                mock_api_jobs_query_results, mock_api_insert_query,
                                mock_api_tabledata_list):
@@ -39,19 +57,19 @@ class TestCases(unittest.TestCase):
 
     sql = 'SELECT field1 FROM [table] LIMIT 1'
     q = TestCases._create_query(sql)
-    results = q.results()
+    context = TestCases._create_context()
+    results = q.execute(context=context).result()
 
     self.assertEqual(sql, results.sql)
     self.assertEqual('(%s)' % sql, q._repr_sql_())
-    self.assertEqual(sql, str(q))
     self.assertEqual(1, results.length)
     first_result = results[0]
     self.assertEqual('value1', first_result['field1'])
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
-  @mock.patch('datalab.bigquery._api.Api.jobs_query_results')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_empty_result_query(self, mock_api_tables_get, mock_api_jobs_get,
                               mock_api_jobs_query_results, mock_api_insert_query):
     mock_api_tables_get.return_value = TestCases._create_tables_get_result(0)
@@ -60,14 +78,15 @@ class TestCases(unittest.TestCase):
     mock_api_insert_query.return_value = TestCases._create_insert_done_result()
 
     q = TestCases._create_query()
-    results = q.results()
+    context = TestCases._create_context()
+    results = q.execute(context=context).result()
 
     self.assertEqual(0, results.length)
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
-  @mock.patch('datalab.bigquery._api.Api.jobs_query_results')
-  @mock.patch('datalab.bigquery._api.Api.jobs_get')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_get')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
   def test_incomplete_result_query(self,
                                    mock_api_tables_get,
                                    mock_api_jobs_get,
@@ -79,43 +98,64 @@ class TestCases(unittest.TestCase):
     mock_api_insert_query.return_value = TestCases._create_incomplete_result()
 
     q = TestCases._create_query()
-    results = q.results()
+    context = TestCases._create_context()
+    results = q.execute(context=context).result()
 
     self.assertEqual(1, results.length)
     self.assertEqual('test_job', results.job_id)
 
-  @mock.patch('datalab.bigquery._api.Api.jobs_insert_query')
+  @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
   def test_malformed_response_raises_exception(self, mock_api_insert_query):
     mock_api_insert_query.return_value = {}
 
     q = TestCases._create_query()
 
     with self.assertRaises(Exception) as error:
-      _ = q.results()
+      context = TestCases._create_context()
+      _ = q.execute(context=context).result()
     self.assertEqual('Unexpected response from server', str(error.exception))
 
-  def test_udf_expansion(self):
-    sql = 'SELECT * FROM udf(source)'
-    udf = datalab.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf', 'code')
-    context = TestCases._create_context()
-    query = datalab.bigquery.Query(sql, udf=udf, context=context)
-    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
+  def test_nested_subquery_expansion(self):
+    # test expanding subquery and udf validation
+    with self.assertRaises(Exception) as error:
+      TestCases._create_query('SELECT * FROM subquery', subqueries=['subquery'])
 
-    # Alternate form
-    query = datalab.bigquery.Query(sql, udfs=[udf], context=context)
-    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
+    with self.assertRaises(Exception) as error:
+      TestCases._create_query('SELECT test_udf(field1) FROM test_table', udfs=['test_udf'])
+
+    env = {}
+
+    # test direct subquery expansion
+    q1 = TestCases._create_query('SELECT * FROM test_table', name='q1', env=env)
+    q2 = TestCases._create_query('SELECT * FROM q1', name='q2', subqueries=['q1'], env=env)
+    self.assertEqual('WITH q1 AS (SELECT * FROM test_table)\nSELECT * FROM q1', q2.sql)
+
+    # test recursive, second level subquery expansion
+    q3 = TestCases._create_query('SELECT * FROM q2', name='q3', subqueries=['q2'], env=env)
+    # subquery listing order is random, try both possibilities
+    expected_sql1 = 'WITH q1 AS (%s),\nq2 AS (%s)\n%s' % (q1._sql, q2._sql, q3._sql)
+    expected_sql2 = 'WITH q2 AS (%s),\nq1 AS (%s)\n%s' % (q2._sql, q1._sql, q3._sql)
+
+    self.assertTrue((expected_sql1 == q3.sql) or (expected_sql2 == q3.sql))
 
   @staticmethod
-  def _create_query(sql=None):
-    if sql is None:
-      sql = 'SELECT * ...'
-    return datalab.bigquery.Query(sql, context=TestCases._create_context())
+  def _create_query(sql='SELECT * ...', name=None, env=None, udfs=None, data_sources=None,
+                    subqueries=None):
+    q = google.datalab.bigquery.Query(sql, env=env, udfs=udfs, data_sources=data_sources,
+                                      subqueries=subqueries)
+    if name:
+      env[name] = q
+    return q
+
+  @staticmethod
+  def _create_udf(name, code, return_type):
+    return google.datalab.bigquery.UDF(name, code, return_type)
 
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)
 
   @staticmethod
   def _create_insert_done_result():

@@ -14,7 +14,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
 
-from datalab.utils._lru_cache import LRUCache
+from google.datalab.utils._lru_cache import LRUCache
 
 
 class TestCases(unittest.TestCase):

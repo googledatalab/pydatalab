@@ -30,9 +30,9 @@ IPython.core.magic.register_line_magic = mock.Mock()
 IPython.core.magic.register_cell_magic = mock.Mock()
 IPython.get_ipython = mock.Mock()
 
-import datalab.bigquery
-import datalab.context
-import datalab.utils.commands
+import google.datalab
+import google.datalab.bigquery
+import google.datalab.utils.commands
 
 
 class TestCases(unittest.TestCase):
@@ -132,10 +132,10 @@ class TestCases(unittest.TestCase):
   def test_get_data_from_list_of_dicts(self):
     self._test_get_data(TestCases._get_test_data_as_list_of_dicts(),
          TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-         datalab.utils.commands._utils._get_data_from_list_of_dicts)
+         google.datalab.utils.commands._utils._get_data_from_list_of_dicts)
     self._test_get_data(TestCases._get_test_data_as_list_of_dicts(),
          TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-         datalab.utils.commands._utils.get_data)
+         google.datalab.utils.commands._utils.get_data)
 
   def test_get_data_from_list_of_lists(self):
     test_data = [
@@ -148,21 +148,21 @@ class TestCases(unittest.TestCase):
     ]
 
     self._test_get_data(test_data, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-         datalab.utils.commands._utils._get_data_from_list_of_lists)
+         google.datalab.utils.commands._utils._get_data_from_list_of_lists)
     self._test_get_data(test_data, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-         datalab.utils.commands._utils.get_data)
+         google.datalab.utils.commands._utils.get_data)
 
   def test_get_data_from_dataframe(self):
     df = pandas.DataFrame(self._get_test_data_as_list_of_dicts())
     self._test_get_data(df, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-         datalab.utils.commands._utils._get_data_from_dataframe)
+         google.datalab.utils.commands._utils._get_data_from_dataframe)
     self._test_get_data(df, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-         datalab.utils.commands._utils.get_data)
+         google.datalab.utils.commands._utils.get_data)
 
-  @mock.patch('datalab.bigquery._api.Api.tabledata_list')
-  @mock.patch('datalab.bigquery._table.Table.exists')
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.context._context.Context.default')
+  @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
+  @mock.patch('google.datalab.bigquery._table.Table.exists')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.Context.default')
   def test_get_data_from_table(self, mock_context_default, mock_api_tables_get,
                                mock_table_exists, mock_api_tabledata_list):
     data = TestCases._get_expected_rows()
@@ -191,18 +191,18 @@ class TestCases(unittest.TestCase):
       return {'rows': raw_data[start_index:start_index + max_results]}
 
     mock_api_tabledata_list.side_effect = tabledata_list
-    t = datalab.bigquery.Table('foo.bar')
+    t = google.datalab.bigquery.Table('foo.bar')
     self._test_get_data(t, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-                        datalab.utils.commands._utils._get_data_from_table)
+                        google.datalab.utils.commands._utils._get_data_from_table)
     self._test_get_data(t, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-                        datalab.utils.commands._utils.get_data)
+                        google.datalab.utils.commands._utils.get_data)
 
   def test_get_data_from_empty_list(self):
-    self._test_get_data([], [], [], 0, datalab.utils.commands._utils.get_data)
+    self._test_get_data([], [], [], 0, google.datalab.utils.commands._utils.get_data)
 
   def test_get_data_from_malformed_list(self):
     with self.assertRaises(Exception) as error:
-      self._test_get_data(['foo', 'bar'], [], [], 0, datalab.utils.commands._utils.get_data)
+      self._test_get_data(['foo', 'bar'], [], [], 0, google.datalab.utils.commands._utils.get_data)
     self.assertEquals('To get tabular data from a list it must contain dictionaries or lists.',
                       str(error.exception))
 
@@ -258,10 +258,10 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_api():
     context = TestCases._create_context()
-    return datalab.bigquery._api.Api(context.credentials, context.project_id)
+    return google.datalab.bigquery._api.Api(context.credentials, context.project_id)
 
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)

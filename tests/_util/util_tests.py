@@ -15,7 +15,7 @@ from __future__ import unicode_literals
 import imp
 import unittest
 
-from datalab.utils._utils import get_item
+from google.datalab.utils._utils import get_item
 
 
 class TestCases(unittest.TestCase):

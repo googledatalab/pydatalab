@@ -19,8 +19,8 @@ from google.cloud.monitoring import Resource
 from google.cloud.monitoring import Metric
 from google.cloud.monitoring import TimeSeries
 
-import datalab.context
-import datalab.stackdriver.monitoring as gcm
+import google.datalab
+import google.datalab.stackdriver.monitoring as gcm
 
 
 PROJECT = 'my-project'
@@ -36,10 +36,10 @@ class TestCases(unittest.TestCase):
 
   def setUp(self):
     creds = AccessTokenCredentials('test_token', 'test_ua')
-    context = datalab.context.Context(PROJECT, creds)
+    context = google.datalab.Context(PROJECT, creds)
     self.query = gcm.Query(METRIC_TYPE, context=context)
 
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')
   def test_constructor(self, mock_query_iter):
     time_series_iterable = list(self._query_iter_get_result())
     mock_query_iter.return_value = self._query_iter_get_result()
@@ -51,7 +51,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(query_metadata.resource_types, set([RESOURCE_TYPE]))
     self.assertEqual(query_metadata._timeseries_list, time_series_iterable)
 
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')
   def test_iteration(self, mock_query_iter):
     time_series_iterable = list(self._query_iter_get_result())
     mock_query_iter.return_value = self._query_iter_get_result()
@@ -62,7 +62,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(len(response), len(time_series_iterable))
     self.assertEqual(response, time_series_iterable)
 
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')
   def test_as_dataframe(self, mock_query_iter):
     mock_query_iter.return_value = self._query_iter_get_result()
 
@@ -92,7 +92,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.index.tolist(), list(range(NUM_INSTANCES)))
     self.assertEqual(dataframe.index.names, [None])
 
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')
   def test_as_dataframe_w_max_rows(self, mock_query_iter):
     mock_query_iter.return_value = self._query_iter_get_result()
 
@@ -121,7 +121,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.index.tolist(), list(range(MAX_ROWS)))
     self.assertEqual(dataframe.index.names, [None])
 
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')
   def test_as_dataframe_w_no_data(self, mock_query_iter):
     query_metadata = gcm.QueryMetadata(self.query)
     dataframe = query_metadata.as_dataframe()

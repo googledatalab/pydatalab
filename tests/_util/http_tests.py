@@ -17,13 +17,13 @@ import unittest
 
 # The httplib2 import is implicitly used when mocking its functionality.
 # pylint: disable=unused-import
-from datalab.utils._http import Http
+from google.datalab.utils._http import Http
 
 
 class TestCases(unittest.TestCase):
 
   @mock.patch('httplib2.Response')
-  @mock.patch('datalab.utils._http.Http.http.request')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_get_request_is_invoked(self, mock_request, mock_response):
     TestCases._setup_mocks(mock_request, mock_response, '{}')
 
@@ -32,7 +32,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(mock_request.call_args[1]['method'], 'GET')
 
   @mock.patch('httplib2.Response')
-  @mock.patch('datalab.utils._http.Http.http.request')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_post_request_is_invoked(self, mock_request, mock_response):
     TestCases._setup_mocks(mock_request, mock_response, '{}')
 
@@ -40,7 +40,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(mock_request.call_args[1]['method'], 'POST')
 
   @mock.patch('httplib2.Response')
-  @mock.patch('datalab.utils._http.Http.http.request')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_explicit_post_request_is_invoked(self, mock_request, mock_response):
     TestCases._setup_mocks(mock_request, mock_response, '{}')
 
@@ -48,7 +48,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(mock_request.call_args[1]['method'], 'POST')
 
   @mock.patch('httplib2.Response')
-  @mock.patch('datalab.utils._http.Http.http.request')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_query_string_format(self, mock_request, mock_response):
     TestCases._setup_mocks(mock_request, mock_response, '{}')
 
@@ -59,7 +59,7 @@ class TestCases(unittest.TestCase):
     self.assertTrue('b=a+b+c' in parts[1:])
 
   @mock.patch('httplib2.Response')
-  @mock.patch('datalab.utils._http.Http.http.request')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_formats_json_request(self, mock_request, mock_response):
     TestCases._setup_mocks(mock_request, mock_response, '{}')
 
@@ -71,7 +71,7 @@ class TestCases(unittest.TestCase):
                      'application/json')
 
   @mock.patch('httplib2.Response')
-  @mock.patch('datalab.utils._http.Http.http.request')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_supports_custom_content(self, mock_request, mock_response):
     TestCases._setup_mocks(mock_request, mock_response, '{}')
 
@@ -83,7 +83,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(mock_request.call_args[1]['headers']['Content-Type'], 'text/plain')
 
   @mock.patch('httplib2.Response')
-  @mock.patch('datalab.utils._http.Http.http.request')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_parses_json_response(self, mock_request, mock_response):
     TestCases._setup_mocks(mock_request, mock_response, '{"abc":123}')
 
@@ -91,7 +91,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(data['abc'], 123)
 
   @mock.patch('httplib2.Response')
-  @mock.patch('datalab.utils._http.Http.http.request')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_raises_http_error(self, mock_request, mock_response):
     TestCases._setup_mocks(mock_request, mock_response, 'Not Found', 404)
 
