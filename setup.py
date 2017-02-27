@@ -51,8 +51,7 @@ setup(
     'datalab.data',
     'datalab.data.commands',
     'datalab.kernel',
-    'datalab.mlalpha',
-    'datalab.mlalpha.commands',
+    'datalab.ml',
     'datalab.notebook',
     'datalab.stackdriver',
     'datalab.stackdriver.commands',
@@ -106,6 +105,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'pyyaml==3.11',
     'requests==2.9.1',
     'ipykernel==4.4.1',
+    'psutil==4.3.0',
     'jsonschema==2.6.0',
   ],
   package_data={
@@ -140,6 +140,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/extern/d3.parcoords.js',
         'static/extern/d3.parcoords.css',
         'static/extern/sylvester.js',
+        'static/extern/lantern-browser.html',
       ]
   }
 )
