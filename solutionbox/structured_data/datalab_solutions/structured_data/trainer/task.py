@@ -27,7 +27,6 @@ import tensorflow as tf
 from tensorflow.contrib import metrics as metrics_lib
 
 from tensorflow.contrib.learn.python.learn import learn_runner
-from tensorflow.contrib.session_bundle import manifest_pb2
 from tensorflow.python.lib.io import file_io
 
 
@@ -141,6 +140,7 @@ def get_experiment_fn(args):
         train_steps=args.max_steps,
         export_strategies=[export_strategy_target, export_strategy_notarget],
         min_eval_frequency=args.min_eval_frequency,
+        eval_steps=None,
         )
 
   # Return a function to create an Experiment.
