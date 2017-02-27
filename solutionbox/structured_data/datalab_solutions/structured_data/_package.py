@@ -184,7 +184,7 @@ def local_train(train_dataset,
                 max_steps=5000,
                 num_epochs=None,
                 train_batch_size=100,
-                eval_batch_size=100,
+                eval_batch_size=10,
                 min_eval_frequency=100,
                 top_n=None,
                 layer_sizes=None,
@@ -245,7 +245,9 @@ def local_train(train_dataset,
         The training job will run for max_steps or num_epochs, whichever occurs
         first.
     train_batch_size: number of rows to train on in one step.
-    eval_batch_size: number of rows to eval in one step.
+    eval_batch_size: number of rows to eval in one step. One pass of the eval
+        dataset is done. If eval_batch_size does not perfectly divide the numer
+        of eval instances, the last fractional batch is not used.
     min_eval_frequency: Minimum number of training steps between evaluations.
     top_n: Int. For classification problems, the output graph will contain the
         labels and scores for the top n classes with a default of n=1. Use
@@ -314,7 +316,7 @@ def cloud_train(train_dataset,
                 max_steps=5000,
                 num_epochs=None,
                 train_batch_size=100,
-                eval_batch_size=100,
+                eval_batch_size=10,
                 min_eval_frequency=100,
                 top_n=None,
                 layer_sizes=None,
@@ -519,9 +521,7 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
         contain a target column. If 'prediction', the input data must not
         contain a target column.
     batch_size: Int. How many instances to run in memory at once. Larger values
-        mean better performace but more memeory consumed. One pass of the eval
-        dataset is done. If batch_size does not perfectly divide the numer of
-        eval instances, the last fractional batch is not used.
+        mean better performace but more memeory consumed.
     shard_files: If false, the output files are not shardded.
     output_format: csv or json. Json file are json-newlined.
   """
