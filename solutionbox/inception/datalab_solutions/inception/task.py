@@ -64,9 +64,6 @@ def main(_):
   logging.info('Original job data: %s', env.get('job', {}))
   task_data = env.get('task', None) or {'type': 'master', 'index': 0}
   task = type('TaskSpec', (object,), task_data)
-  trial = task_data.get('trial')
-  if trial is not None:
-    args.output_path = os.path.join(args.output_path, trial)
 
   cluster_data = env.get('cluster', None)
   cluster = tf.train.ClusterSpec(cluster_data) if cluster_data else None

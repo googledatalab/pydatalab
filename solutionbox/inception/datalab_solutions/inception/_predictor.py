@@ -26,22 +26,33 @@ from . import _model
 from . import _util
 
 
-def _tf_predict(model_dir, images):
+def _load_tf_model(model_dir):
+  from tensorflow.python.saved_model import tag_constants
+  from tensorflow.contrib.session_bundle import bundle_shim
+
   model_dir = os.path.join(model_dir, 'model')
-  with tf.Session() as sess:
-    new_saver = tf.train.import_meta_graph(os.path.join(model_dir, 'export.meta'))
-    new_saver.restore(sess, os.path.join(model_dir, 'export'))
-    init_op = tf.get_collection(tf.contrib.session_bundle.constants.INIT_OP_KEY)[0]
-    sess.run(init_op)
-    inputs = json.loads(tf.get_collection('inputs')[0])
-    outputs = json.loads(tf.get_collection('outputs')[0])
+  session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(
+      model_dir, tags=[tag_constants.SERVING])
+  signature = meta_graph.signature_def['serving_default']
+  inputs = {friendly_name: tensor_info_proto.name
+      for (friendly_name, tensor_info_proto) in signature.inputs.items() }
+  outputs = {friendly_name: tensor_info_proto.name
+      for (friendly_name, tensor_info_proto) in signature.outputs.items() }
+  return session, inputs, outputs
+
+
+def _tf_predict(model_dir, images):
+  session, inputs, outputs = _load_tf_model(model_dir)
+
+  with session:
     feed_dict = collections.defaultdict(list)
     for ii, image in enumerate(images):
       feed_dict[inputs['image_bytes']].append(image)
       feed_dict[inputs['key']].append(str(ii))
-    predictions, labels, scores = sess.run(
-        [outputs['prediction'], outputs['labels'], outputs['scores']], feed_dict=feed_dict)
-    return zip(predictions, labels, scores)
+    predictions, labels, scores = session.run(
+      [outputs['prediction'], outputs['labels'], outputs['scores']], feed_dict=feed_dict)
+
+  return zip(predictions, labels, scores)
 
 
 def predict(model_dir, images):
@@ -99,23 +110,13 @@ class PredictBatchDoFn(beam.DoFn):
   def __init__(self, model_dir):
     import os
 
-    self._model_dir = os.path.join(model_dir, 'model')
+    self._model_dir = model_dir
     self._session = None
     self._tf_inputs = None
     self._tf_outputs = None
 
   def start_bundle(self, context=None):
-    import json
-    import os
-    import tensorflow as tf
-
-    self._session = tf.Session()
-    new_saver = tf.train.import_meta_graph(os.path.join(self._model_dir, 'export.meta'))
-    new_saver.restore(self._session, os.path.join(self._model_dir, 'export'))
-    init_op = tf.get_collection(tf.contrib.session_bundle.constants.INIT_OP_KEY)[0]
-    self._session.run(init_op)
-    self._tf_inputs = json.loads(tf.get_collection('inputs')[0])
-    self._tf_outputs = json.loads(tf.get_collection('outputs')[0])
+    self._session, self._tf_inputs, self._tf_outputs = _load_tf_model(self._model_dir)
 
   def finish_bundle(self, context=None):
     if self._session is not None:
