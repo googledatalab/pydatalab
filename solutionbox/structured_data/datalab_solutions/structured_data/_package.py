@@ -508,7 +508,7 @@ def cloud_predict(model_name, model_version, data):
 
 def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
                         mode,
-                        batch_size=100, shard_files=True, output_format='csv'):
+                        batch_size=10, shard_files=True, output_format='csv'):
   """Local batch prediction.
 
   Args:
@@ -519,7 +519,9 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
         contain a target column. If 'prediction', the input data must not
         contain a target column.
     batch_size: Int. How many instances to run in memory at once. Larger values
-        mean better performace but more memeory consumed.
+        mean better performace but more memeory consumed. One pass of the eval
+        dataset is done. If batch_size does not perfectly divide the numer of
+        eval instances, the last fractional batch is not used.
     shard_files: If false, the output files are not shardded.
     output_format: csv or json. Json file are json-newlined.
   """
@@ -552,7 +554,7 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
 
 def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
                         mode,
-                        batch_size=100, shard_files=True, output_format='csv'):
+                        batch_size=10, shard_files=True, output_format='csv'):
   """Cloud batch prediction. Submitts a Dataflow job.
 
   See local_batch_predict() for a description of the args.
