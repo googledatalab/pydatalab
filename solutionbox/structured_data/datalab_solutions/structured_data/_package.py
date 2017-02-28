@@ -184,7 +184,7 @@ def local_train(train_dataset,
                 max_steps=5000,
                 num_epochs=None,
                 train_batch_size=100,
-                eval_batch_size=10,
+                eval_batch_size=16,
                 min_eval_frequency=100,
                 top_n=None,
                 layer_sizes=None,
@@ -319,7 +319,7 @@ def cloud_train(train_dataset,
                 max_steps=5000,
                 num_epochs=None,
                 train_batch_size=100,
-                eval_batch_size=10,
+                eval_batch_size=16,
                 min_eval_frequency=100,
                 top_n=None,
                 layer_sizes=None,
@@ -430,7 +430,7 @@ def local_predict(training_ouput_dir, data):
            '--trained_model_dir=%s' % model_dir,
            '--output_dir=%s' % tmp_dir,
            '--output_format=csv',
-           '--batch_size=100',
+           '--batch_size=16',
            '--mode=prediction',
            '--no-shard_files']
 
@@ -513,7 +513,7 @@ def cloud_predict(model_name, model_version, data):
 
 def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
                         mode,
-                        batch_size=10, shard_files=True, output_format='csv'):
+                        batch_size=16, shard_files=True, output_format='csv'):
   """Local batch prediction.
 
   Args:
@@ -557,7 +557,7 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
 
 def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
                         mode,
-                        batch_size=10, shard_files=True, output_format='csv'):
+                        batch_size=16, shard_files=True, output_format='csv'):
   """Cloud batch prediction. Submitts a Dataflow job.
 
   See local_batch_predict() for a description of the args.
