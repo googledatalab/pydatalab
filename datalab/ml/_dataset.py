@@ -90,6 +90,8 @@ class CsvDataSet(object):
 
   @property
   def size(self):
+    """The size of the schema. If the underlying data source changes, it may be outdated.
+    """
     if self._size is None:
       self._size = 0
       for csv_file in self.files:
@@ -180,6 +182,8 @@ class BigQueryDataSet(object):
 
   @property
   def size(self):
+    """The size of the schema. If the underlying data source changes, it may be outdated.
+    """
     if self._size is None:
       source = self._query or self._table
       self._size = bq.Query('SELECT COUNT(*) FROM (%s)' % source).results()[0].values()[0]
