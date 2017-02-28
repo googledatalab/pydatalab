@@ -267,6 +267,9 @@ def local_train(train_dataset,
   if file_io.file_exists(output_dir):
     raise ValueError('output_dir already exist. Use a new output path.')
 
+  if eval_dataset.size < eval_batch_size:
+    raise ValueError('Eval batch size must be smaller than the eval data size.')
+
   if isinstance(transforms, dict):
     # Make a transforms file.
     if not file_io.file_exists(output_dir):
