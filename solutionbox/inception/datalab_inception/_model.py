@@ -22,6 +22,12 @@ import logging
 import os
 import tensorflow as tf
 from tensorflow.contrib import layers
+from tensorflow.python.ops import control_flow_ops
+from tensorflow.python.ops import data_flow_ops
+from tensorflow.python.ops import variables
+from tensorflow.python.saved_model import builder as saved_model_builder
+from tensorflow.python.saved_model import signature_def_utils
+from tensorflow.python.saved_model import tag_constants
 
 from . import _inceptionlib
 from . import _util
@@ -288,11 +294,9 @@ class Model(object):
 
     keys_placeholder = tf.placeholder(tf.string, shape=[None])
     inputs = {
-        'key': keys_placeholder.name,
-        'image_bytes': tensors.input_jpeg.name
+        'key': keys_placeholder,
+        'image_bytes': tensors.input_jpeg
     }
-
-    tf.add_to_collection('inputs', json.dumps(inputs))
 
     # To extract the id, we need to add the identity function.
     keys = tf.identity(keys_placeholder)
@@ -309,17 +313,12 @@ class Model(object):
     labels_tensors_n = tf.tile(labels_tensor, tf.concat(axis=0, values=[num_instance, [1]]))
 
     outputs = {
-        'key': keys.name,
-        'prediction': predicted_label.name,
-        'labels': labels_tensors_n.name,
-        'scores': tensors.predictions[1].name,
+        'key': keys,
+        'prediction': predicted_label,
+        'labels': labels_tensors_n,
+        'scores': tensors.predictions[1],
     }
-    tf.add_to_collection('outputs', json.dumps(outputs))
-    # Add table init op to collection so online prediction will load the model and run it.
-    # TODO: initialize_all_tables is going to be deprecated but the replacement
-    #       tf.tables_initializer does not exist in 0.12 yet.
-    init_tables_op = tf.tables_initializer()
-    tf.add_to_collection(tf.contrib.session_bundle.constants.INIT_OP_KEY, init_tables_op)
+    return inputs, outputs
 
   def export(self, last_checkpoint, output_dir):
     """Builds a prediction graph and xports the model.
@@ -331,14 +330,24 @@ class Model(object):
     logging.info('Exporting prediction graph to %s', output_dir)
     with tf.Session(graph=tf.Graph()) as sess:
       # Build and save prediction meta graph and trained variable values.
-      self.build_prediction_graph()
+      inputs, outputs = self.build_prediction_graph()
+      signature_def_map = {
+        'serving_default': signature_def_utils.predict_signature_def(inputs, outputs)
+      }
       init_op = tf.global_variables_initializer()
       sess.run(init_op)
       self.restore_from_checkpoint(sess, self.inception_checkpoint_file,
                                    last_checkpoint)
-      saver = tf.train.Saver()
-      saver.export_meta_graph(filename=os.path.join(output_dir, 'export.meta'))
-      saver.save(sess, os.path.join(output_dir, 'export'), write_meta_graph=False)
+      init_op_serving = control_flow_ops.group(
+          variables.local_variables_initializer(),
+          data_flow_ops.tables_initializer())
+
+      builder = saved_model_builder.SavedModelBuilder(output_dir)
+      builder.add_meta_graph_and_variables(
+          sess, [tag_constants.SERVING],
+          signature_def_map=signature_def_map,
+          legacy_init_op=init_op_serving)
+      builder.save(False)
 
   def format_metric_values(self, metric_values):
     """Formats metric values - used for logging purpose."""
