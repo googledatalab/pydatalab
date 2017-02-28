@@ -67,6 +67,7 @@ class CsvDataSet(object):
     self._input_files = file_pattern
     
     self._glob_files = []
+    self._size = None
 
 
   @property
@@ -87,6 +88,17 @@ class CsvDataSet(object):
   def schema(self):
     return self._schema  
 
+  @property
+  def size(self):
+    """The size of the schema. If the underlying data source changes, it may be outdated.
+    """
+    if self._size is None:
+      self._size = 0
+      for csv_file in self.files:
+        self._size += sum(1 if line else 0 for line in _util.open_local_or_gcs(csv_file, 'r'))
+
+    return self._size
+    
   def sample(self, n):
     """ Samples data into a Pandas DataFrame.
     Args:
@@ -151,6 +163,7 @@ class BigQueryDataSet(object):
     if table is not None:
       self._table = table
     self._schema = None
+    self._size = None
 
   @property
   def query(self):
@@ -166,6 +179,15 @@ class BigQueryDataSet(object):
       source = self._query or self._table
       self._schema = bq.Query('SELECT * FROM (%s) LIMIT 1' % source).results().schema
     return self._schema
+
+  @property
+  def size(self):
+    """The size of the schema. If the underlying data source changes, it may be outdated.
+    """
+    if self._size is None:
+      source = self._query or self._table
+      self._size = bq.Query('SELECT COUNT(*) FROM (%s)' % source).results()[0].values()[0]
+    return self._size
 
   def sample(self, n):
     """Samples data into a Pandas DataFrame. Note that it calls BigQuery so it will
