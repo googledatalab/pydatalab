@@ -179,7 +179,7 @@ def local_train(train_dataset,
                 eval_dataset,
                 preprocess_output_dir,
                 output_dir,
-                transforms,
+                features,
                 model_type,
                 max_steps=5000,
                 num_epochs=None,
@@ -196,7 +196,7 @@ def local_train(train_dataset,
     eval_dataset: CsvDataSet
     preprocess_output_dir:  The output directory from preprocessing
     output_dir:  Output directory of training.
-    transforms: file path or transform object. Example:
+    features: file path or features object. Example:
         {
           "col_A": {"transform": "scale", "default": 0.0},
           "col_B": {"transform": "scale","value": 4},
@@ -270,23 +270,23 @@ def local_train(train_dataset,
   if eval_dataset.size < eval_batch_size:
     raise ValueError('Eval batch size must be smaller than the eval data size.')
 
-  if isinstance(transforms, dict):
-    # Make a transforms file.
+  if isinstance(features, dict):
+    # Make a features file.
     if not file_io.file_exists(output_dir):
       file_io.recursive_create_dir(output_dir)
-    transforms_file = os.path.join(output_dir, 'transforms_file.json')
+    features_file = os.path.join(output_dir, 'features_file.json')
     file_io.write_string_to_file(
-        transforms_file,
-        json.dumps(transforms))
+        features_file,
+        json.dumps(features))
   else:
-    transforms_file = transforms
+    features_file = features
 
   args = ['local_train',
           '--train_data_paths=%s' % train_dataset.input_files[0],
           '--eval_data_paths=%s' % eval_dataset.input_files[0],
           '--output_path=%s' % output_dir,
           '--preprocess_output_dir=%s' % preprocess_output_dir,
-          '--transforms_file=%s' % transforms_file,
+          '--transforms_file=%s' % features_file,
           '--model_type=%s' % model_type,
           '--max_steps=%s' % str(max_steps),
           '--train_batch_size=%s' % str(train_batch_size),
@@ -313,7 +313,7 @@ def cloud_train(train_dataset,
                 eval_dataset,
                 preprocess_output_dir,
                 output_dir,
-                transforms,
+                features,
                 model_type,
                 cloud_training_config,
                 max_steps=5000,
@@ -342,26 +342,26 @@ def cloud_train(train_dataset,
   if file_io.file_exists(output_dir):
     raise ValueError('output_dir already exist. Use a new output path.')
 
-  if isinstance(transforms, dict):
-    # Make a transforms file.
+  if isinstance(features, dict):
+    # Make a features file.
     if not file_io.file_exists(output_dir):
       file_io.recursive_create_dir(output_dir)
-    transforms_file = os.path.join(output_dir, 'transforms_file.json')
+    features_file = os.path.join(output_dir, 'features_file.json')
     file_io.write_string_to_file(
-        transforms_file,
-        json.dumps(transforms))
+        features_file,
+        json.dumps(features))
   else:
-    transforms_file = transforms
+    features_file = features
 
   _assert_gcs_files([output_dir, train_dataset.input_files[0],
-      eval_dataset.input_files[0], transforms_file,
+      eval_dataset.input_files[0], features_file,
       preprocess_output_dir])
 
   args = ['--train_data_paths=%s' % train_dataset.input_files[0],
           '--eval_data_paths=%s' % eval_dataset.input_files[0],
           '--output_path=%s' % output_dir,
           '--preprocess_output_dir=%s' % preprocess_output_dir,
-          '--transforms_file=%s' % transforms_file,
+          '--transforms_file=%s' % features_file,
           '--model_type=%s' % model_type,
           '--max_steps=%s' % str(max_steps),
           '--train_batch_size=%s' % str(train_batch_size),
