@@ -35,7 +35,7 @@ def get_version():
 
 
 setup(
-  name='structured_data',
+  name='datalab_structured_data',
   version=get_version(),
   packages=[
     'datalab_structured_data',
