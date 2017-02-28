@@ -84,9 +84,9 @@ def _package_to_staging(staging_package_url):
     """
     import datalab.ml as ml
 
-    # Find the package root. __file__ is under [package_root]/datalab_solutions/inception.
+    # Find the package root. __file__ is under [package_root]/datalab_structured_data/
     package_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../../'))
+        os.path.join(os.path.dirname(__file__), '../'))
     setup_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), 'master_setup.py'))
     tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
@@ -379,7 +379,7 @@ def cloud_train(train_dataset,
 
   job_request = {
     'package_uris': [_package_to_staging(output_dir)],
-    'python_module': 'datalab_solutions.structured_data.trainer.task',
+    'python_module': 'datalab_structured_data.trainer.task',
     'args': args
   }
   job_request.update(dict(cloud_training_config._asdict()))

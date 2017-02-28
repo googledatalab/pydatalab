@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# A copy of this file must be made in datalab_solutions/structured_data/setup.py
+# A copy of this file must be made in datalab_structured_data/setup.py
 
 import datetime
 import os
@@ -21,7 +21,7 @@ from setuptools import setup
 
 # The version is saved in an __init__ file.
 def get_version():
-    VERSIONFILE = os.path.join('datalab_solutions/structured_data/',
+    VERSIONFILE = os.path.join('datalab_structured_data/',
                                '__init__.py')
     if not os.path.isfile(VERSIONFILE):
       raise ValueError('setup.py: File not found %s' % VERSIONFILE)
@@ -38,11 +38,10 @@ setup(
   name='structured_data',
   version=get_version(),
   packages=[
-    'datalab_solutions',
-    'datalab_solutions.structured_data',
-    'datalab_solutions.structured_data.trainer',
-    'datalab_solutions.structured_data.preprocess',
-    'datalab_solutions.structured_data.predict',
+    'datalab_structured_data',
+    'datalab_structured_data.trainer',
+    'datalab_structured_data.preprocess',
+    'datalab_structured_data.predict',
   ],
   description='Google Cloud Datalab Structured Data Package',
   author='Google',
