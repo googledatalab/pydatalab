@@ -686,7 +686,11 @@ def _dataset_line(args):
   """
   if args['command'] == 'list':
     filter_ = args['filter'] if args['filter'] else '*'
-    return _render_list([str(dataset) for dataset in google.datalab.bigquery.Datasets(args['project'])
+    default_context = google.datalab.Context.default()
+    context = google.datalab.Context(default_context.project_id, default_context.credentials)
+    if args['project']:
+      context.project_id = args['project']
+    return _render_list([str(dataset) for dataset in google.datalab.bigquery.Datasets(context)
                          if fnmatch.fnmatch(str(dataset), filter_)])
 
   elif args['command'] == 'create':
