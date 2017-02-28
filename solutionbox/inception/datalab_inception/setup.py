@@ -22,8 +22,7 @@ setup(
   name='inception',
   version=version,
   packages=[
-    'datalab_solutions',
-    'datalab_solutions.inception',
+    'datalab_inception',
   ],
 
   description='Google Cloud Datalab Inception Package',
