@@ -121,8 +121,8 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
       p.wait()
 
 
-def local_preprocess(output_dir, dataset):
-  """Preprocess data locally with Pandas
+def local_analysis(output_dir, dataset):
+  """Analyze data locally with Pandas
 
   Produce analysis used by training.
 
@@ -156,11 +156,11 @@ def local_preprocess(output_dir, dataset):
   finally:
     shutil.rmtree(tmp_dir)
 
-def cloud_preprocess(output_dir, dataset, project_id=None):
-  """Preprocess data in the cloud with BigQuery.
+def cloud_analysis(output_dir, dataset, project_id=None):
+  """Analyze data in the cloud with BigQuery.
 
   Produce analysis used by training. This can take a while, even for small
-  datasets. For small datasets, it may be faster to use local_preprocess.
+  datasets. For small datasets, it may be faster to use local_analysis.
 
   Args:
     output_dir: The output directory to use.
