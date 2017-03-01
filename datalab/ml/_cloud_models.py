@@ -104,7 +104,7 @@ class Models(object):
     data = []
     # Add range(count) to loop so it will stop either it reaches count, or iteration
     # on self is exhausted. "self" is iterable (see __iter__() method).
-    for _, model in zip(range(count), self):
+    for _, model in zip(range(count), self.get_iterator()):
       element = {'name': model['name']}
       if 'defaultVersion' in model:
         version_short_name = model['defaultVersion']['name'].split('/')[-1]
@@ -269,6 +269,6 @@ class ModelVersions(object):
     # "self" is iterable (see __iter__() method).
     data = [{'name': version['name'].split()[-1], 
              'deploymentUri': version['deploymentUri'], 'createTime': version['createTime']}
-            for version in self]
+            for version in self.get_iterator()]
     IPython.display.display(
         datalab.utils.commands.render_dictionary(data, ['name', 'deploymentUri', 'createTime'])) 

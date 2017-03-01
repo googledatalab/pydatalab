@@ -74,6 +74,8 @@ def cloud_preprocess(train_dataset, output_dir, checkpoint=None, pipeline_option
     eval_dataset: evaluation data source to preprocess. Can be CsvDataset or BigQueryDataSet.
         If specified, it will be used for evaluation during training, and train_dataset will be
         completely used for training.
+  Returns:
+    the job name of the DataFlow job.
   """
 
   job_name = _cloud.Cloud(checkpoint=checkpoint).preprocess(train_dataset, eval_dataset,
@@ -87,6 +89,7 @@ def cloud_preprocess(train_dataset, output_dir, checkpoint=None, pipeline_option
     html += '<p>Click <a href="%s" target="_blank">here</a> to track preprocessing job. <br/>' \
         % dataflow_url
     IPython.display.display_html(html, raw=True)
+  return job_name
 
 
 def local_train(input_dir, batch_size, max_steps, output_dir, checkpoint=None):
@@ -121,6 +124,8 @@ def cloud_train(input_dir, batch_size, max_steps, output_dir,
     output_dir: The output directory to use. GCS path only.
     cloud_train_config: a datalab.ml.CloudTrainingConfig object.
     checkpoint: the Inception checkpoint to use.
+  Returns:
+    the job name of the training job.
   """
 
   job = _cloud.Cloud(checkpoint=checkpoint).train(input_dir, batch_size,
@@ -136,22 +141,21 @@ def cloud_train(input_dir, batch_size, max_steps, output_dir,
     html = 'Job "%s" submitted.' % job.info['jobId']
     html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
     IPython.display.display_html(html, raw=True)
+  return str(job.info['jobId'])
 
 
 def _display_predict_results(results, show_image):
-  if (_util.is_in_IPython()):
+  import pandas as pd
+
+  if (_util.is_in_IPython() and show_image is True):
     import IPython
     for image_url, image, label_and_score in results:
-      if show_image is True:
-        IPython.display.display_html('<p style="font-size:28px">%s(%.5f)</p>' % label_and_score,
-            raw=True)
-        IPython.display.display(IPython.display.Image(data=image))
-      else:
-        IPython.display.display_html(
-            '<p>%s&nbsp&nbsp&nbsp&nbsp%s(%.5f)</p>' % ((image_url,) + label_and_score), raw=True)
-  else:
-    print results
-
+      IPython.display.display_html('<p style="font-size:28px">%s(%.5f)</p>' % label_and_score,
+          raw=True)
+      IPython.display.display(IPython.display.Image(data=image))
+  result_dict = [{'image_url': url, 'label': r[0], 'score': r[1]} for url,_,r in results]
+  return pd.DataFrame(result_dict)
+  
 
 def local_predict(model_dir, image_files, resize=False, show_image=True):
   """Predict using an offline model.
@@ -165,8 +169,9 @@ def local_predict(model_dir, image_files, resize=False, show_image=True):
   images = _util.load_images(image_files, resize=resize)
   labels_and_scores = _local.Local().predict(model_dir, images)
   results = zip(image_files, images, labels_and_scores)
-  _display_predict_results(results, show_image)
+  ret = _display_predict_results(results, show_image)
   print('Done')
+  return ret
 
 
 def cloud_predict(model_id, image_files, resize=False, show_image=True):
@@ -182,9 +187,9 @@ def cloud_predict(model_id, image_files, resize=False, show_image=True):
   images = _util.load_images(image_files, resize=resize)
   labels_and_scores = _cloud.Cloud().predict(model_id, images)
   results = zip(image_files, images, labels_and_scores)
-  _display_predict_results(results, show_image)
+  ret = _display_predict_results(results, show_image)
   print('Done')
-
+  return ret
 
 def local_batch_predict(dataset, model_dir, output_csv=None, output_bq_table=None):
   """Batch predict running locally.
@@ -223,6 +228,8 @@ def cloud_batch_predict(dataset, model_dir, gcs_staging_location,
     output_bq_table: If specified, prediction results will be saved to the specified BigQuery
         table. output_csv and output_bq_table can both be set, but cannot be both None.
     pipeline_option: DataFlow pipeline options in a dictionary.
+  Returns:
+    the job name of the DataFlow job.
   Raises:
     ValueError if both output_csv and output_bq_table are None.
   """
@@ -241,3 +248,4 @@ def cloud_batch_predict(dataset, model_dir, gcs_staging_location,
     html += ('<p>Click <a href="%s" target="_blank">here</a> to track batch prediction job. <br/>'
              % dataflow_url)
     IPython.display.display_html(html, raw=True)
+  return job_name

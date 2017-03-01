@@ -87,14 +87,14 @@ class Cloud(object):
     staging_package_url = self._repackage_to_staging(output_path)
     job_args = {
       'input_dir': input_dir,
-      'output_path': output_path,
       'max_steps': max_steps,
       'batch_size': batch_size,
       'checkpoint': self._checkpoint
     }
     job_request = {
       'package_uris': [staging_package_url],
-      'python_module': 'datalab_solutions.inception.task',
+      'python_module': 'datalab_inception.task',
+      'job_dir': output_path,
       'args': job_args
     }
     job_request.update(dict(cloud_train_config._asdict()))
