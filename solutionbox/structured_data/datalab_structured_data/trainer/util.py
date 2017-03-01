@@ -55,7 +55,7 @@ PG_CLASSIFICATION_LABEL_TEMPLATE = 'top_%s_label'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'top_%s_score'
 
 # ==============================================================================
-# Exporting the last trained model to a final location
+# Functions for saving the exported graphs.
 # ==============================================================================
 
 
@@ -245,9 +245,9 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
     # save the last model to the model folder.
     # export_dir_base = A/B/intermediate_models/
     if keep_target:
-      final_dir = os.path.join(args.output_path, 'evaluation_model')
+      final_dir = os.path.join(args.job_dir, 'evaluation_model')
     else:
-      final_dir = os.path.join(args.output_path, 'model')
+      final_dir = os.path.join(args.job_dir, 'model')
     if file_io.is_directory(final_dir):
       file_io.delete_recursively(final_dir)
     file_io.recursive_create_dir(final_dir)
@@ -514,34 +514,31 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
 
       # Supported transforms:
       # for DNN
-      # 1) string -> hash -> embedding  (hash_embedding)
-      # 2) string -> make int -> embedding (embedding)
-      # 3) string -> hash -> one_hot (hash_one_hot)
-      # 4) string -> make int -> one_hot (one_hot, default)
+      # 1) string -> make int -> embedding (embedding)
+      # 2) string -> make int -> one_hot (one_hot, default)
       # for linear
-      # 1) string -> make int -> sparse_column_with_integerized_feature (sparse, default)
-      # 2) string -> sparse_column_with_hash_bucket (hash_sparse)
+      # 1) string -> sparse_column_with_hash_bucket (embedding)
+      # 2) string -> make int -> sparse_column_with_integerized_feature (one_hot, default)
+      # It is unfortunate that tf.layers has different feature transforms if the 
+      # model is linear or DNN. This pacakge should not expose to the user that
+      # we are using tf.layers. It is crazy that DNN models support more feature
+      # types (like string -> hash sparse column -> embedding)
+      
       if is_dnn_model(model_type):
-        if (transform_name == 'hash_embedding' or
-            transform_name == 'hash_one_hot'):
-          map_vocab = False
-        elif (transform_name == 'embedding' or
-              transform_name == 'one_hot' or
-              transform_name is None):
-          map_vocab = True
-        else:
-          raise ValueError('For DNN modles, only hash_embedding, '
-                           'hash_one_hot, embedding, and one_hot transforms '
-                           'are supported.')
-      elif is_linear_model(model_type):
-        if (transform_name == 'sparse' or
+        if (transform_name == 'embedding' or
+            transform_name == 'one_hot' or
             transform_name is None):
           map_vocab = True
-        elif transform_name == 'hash_sparse':
+        else:
+          raise ValueError('Unknown transform %s' % transform_name)
+      elif is_linear_model(model_type):
+        if (transform_name == 'one_hot' or
+            transform_name is None):
+          map_vocab = True
+        elif transform_name == 'embedding':
           map_vocab = False
         else:
-          raise ValueError('For linear models, only sparse and '
-                           'hash_sparse are supported.')
+          raise ValueError('Unknown transform %s' % transform_name)
       if map_vocab:
         labels = train_config['vocab_stats'][name]['labels']
         table = tf.contrib.lookup.string_to_index_table_from_tensor(labels)
@@ -604,27 +601,24 @@ def _tflearn_features(train_config, args):
           name,
           dimension=1))
 
+      # Supported transforms:
+      # for DNN
+      # 1) string -> make int -> embedding (embedding)
+      # 2) string -> make int -> one_hot (one_hot, default)
+      # for linear
+      # 1) string -> sparse_column_with_hash_bucket (embedding)
+      # 2) string -> make int -> sparse_column_with_integerized_feature (one_hot, default)
+      # It is unfortunate that tf.layers has different feature transforms if the 
+      # model is linear or DNN. This pacakge should not expose to the user that
+      # we are using tf.layers. It is crazy that DNN models support more feature
+      # types (like string -> hash sparse column -> embedding)
   for name in train_config['categorical_columns']:
     if name != target_name and name != key_name:
       transform_config = train_config['transforms'].get(name, {})
       transform_name = transform_config.get('transform', None)
 
       if is_dnn_model(args.model_type):
-        if transform_name == 'hash_embedding':
-          sparse = tf.contrib.layers.sparse_column_with_hash_bucket(
-              name,
-              hash_bucket_size=transform_config['hash_bucket_size'])
-          learn_feature = tf.contrib.layers.embedding_column(
-              sparse,
-              dimension=transform_config['embedding_dim'])
-        elif transform_name == 'hash_one_hot':
-          sparse = tf.contrib.layers.sparse_column_with_hash_bucket(
-              name,
-              hash_bucket_size=transform_config['hash_bucket_size'])
-          learn_feature = tf.contrib.layers.embedding_column(
-              sparse,
-              dimension=train_config['vocab_stats'][name]['n_classes'])
-        elif transform_name == 'embedding':
+        if transform_name == 'embedding':
           sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
               name,
               bucket_size=train_config['vocab_stats'][name]['n_classes'])
@@ -637,21 +631,22 @@ def _tflearn_features(train_config, args):
               bucket_size=train_config['vocab_stats'][name]['n_classes'])
           learn_feature = tf.contrib.layers.one_hot_column(sparse)
         else:
-          raise ValueError('For DNN modles, only hash_embedding, '
-                           'hash_one_hot, embedding, and one_hot transforms '
-                           'are supported.')
+          raise ValueError(('Unknown transform name. Only embedding '
+                            'and one_hot transforms are supported. Got %s')
+                           % transform_name)
       elif is_linear_model(args.model_type):
-        if transform_name == 'sparse' or transform_name is None:
+        if transform_name == 'one_hot' or transform_name is None:
           learn_feature = tf.contrib.layers.sparse_column_with_integerized_feature(
               name,
               bucket_size=train_config['vocab_stats'][name]['n_classes'])
-        elif transform_name == 'hash_sparse':
+        elif transform_name == 'embedding':
           learn_feature = tf.contrib.layers.sparse_column_with_hash_bucket(
               name,
-              hash_bucket_size=transform_config['hash_bucket_size'])
+              hash_bucket_size=transform_config['embedding_dim'])
         else:
-          raise ValueError('For linear models, only sparse and '
-                           'hash_sparse are supported.')
+          raise ValueError(('Unknown transform name. Only embedding '
+                            'and one_hot transforms are supported. Got %s')
+                           % transform_name)
 
       # Save the feature
       feature_columns.append(learn_feature)
@@ -659,7 +654,7 @@ def _tflearn_features(train_config, args):
 
 
 # ==============================================================================
-# Building the TF learn estimators
+# Functions for dealing with the parameter files.
 # ==============================================================================
 
 

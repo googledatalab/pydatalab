@@ -121,18 +121,6 @@ def get_experiment_fn(args):
         shuffle=False,
         num_epochs=1)
 
-    # Set the eval metrics.
-    # TODO(brandondutra): make this work with HP tuning.
-    if util.is_classification_model(args.model_type):
-      streaming_accuracy = metrics_lib.streaming_accuracy
-      eval_metrics = {
-          ('accuracy', 'classes'): streaming_accuracy,
-          # Export the accuracy as a metric for hyperparameter tuning.
-          #('training/hptuning/metric', 'classes'): streaming_accuracy
-      }
-    else:
-      eval_metrics = None
-
     return tf.contrib.learn.Experiment(
         estimator=estimator,
         train_input_fn=input_reader_for_train,
