@@ -511,18 +511,6 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
         continue
       transform_config = train_config['transforms'].get(name, {})
       transform_name = transform_config.get('transform', None)
-
-      # Supported transforms:
-      # for DNN
-      # 1) string -> make int -> embedding (embedding)
-      # 2) string -> make int -> one_hot (one_hot, default)
-      # for linear
-      # 1) string -> sparse_column_with_hash_bucket (embedding)
-      # 2) string -> make int -> sparse_column_with_integerized_feature (one_hot, default)
-      # It is unfortunate that tf.layers has different feature transforms if the 
-      # model is linear or DNN. This pacakge should not expose to the user that
-      # we are using tf.layers. It is crazy that DNN models support more feature
-      # types (like string -> hash sparse column -> embedding)
       
       if is_dnn_model(model_type):
         if (transform_name == 'embedding' or

@@ -236,17 +236,6 @@ def main(argv=None):
   """Run a Tensorflow model on the Iris dataset."""
   args = parse_arguments(sys.argv if argv is None else argv)
 
-  #env = json.loads(os.environ.get('TF_CONFIG', '{}'))
-  # First find out if there's a task value on the environment variable.
-  # If there is none or it is empty define a default one.
-  #task_data = env.get('task') or {'type': 'master', 'index': 0}
-
-  #trial = task_data.get('trial')
-  #if trial is not None:
-  #  output_dir = os.path.join(args.output_path, trial)
-  #else:
-  #  output_dir = args.output_path
-
   learn_runner.run(
       experiment_fn=get_experiment_fn(args),
       output_dir=args.job_dir)
