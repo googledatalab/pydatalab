@@ -49,7 +49,7 @@ class TestTrainer(unittest.TestCase):
 
   def tearDown(self):
     print('TestTrainer: removing test dir ' + self._test_dir)
-    shutil.rmtree(self._test_dir)
+    #shutil.rmtree(self._test_dir)
 
 
   def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
@@ -103,10 +103,17 @@ class TestTrainer(unittest.TestCase):
     """
     # Print the last line of training output which has the loss value.
     lines = self._training_screen_output.splitlines()
+    last_line = None
     for line in lines:
-      if line.startswith('INFO:tensorflow:Saving dict for global step %s:' % 2500):
+      if line.startswith('INFO:tensorflow:Loss for final step:'):
+        print(line)
+      if line.startswith('INFO:tensorflow:Saving dict for global step 2500'):
         last_line = line
         break
+    if not last_line:
+      print('Skipping _check_training_screen_output as could not find last eval'
+            ' line')
+      return
     print(last_line)
 
     # supports positive numbers (int, real) with exponential form support.
@@ -163,13 +170,13 @@ class TestTrainer(unittest.TestCase):
     transforms = {
         "num1": {"transform": "scale"},
         "num2": {"transform": "scale","value": 4},
-        "str1": {"transform": "hash_embedding", "embedding_dim": 2, "hash_bucket_size": 4},
+        "str1": {"transform": "one_hot"},
         "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"},
         "key": {"transform": "key"},
     }
 
-    extra_args = ['--layer_size1=10', '--layer_size2=10', '--layer_size3=5']
+    extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
     self._run_training(problem_type='regression', 
                        model_type='dnn',
                        transforms=transforms,
@@ -185,9 +192,8 @@ class TestTrainer(unittest.TestCase):
     transforms = {
         "num1": {"transform": "scale"},
         "num2": {"transform": "scale","value": 4},
-        "str1": {"transform": "hash_sparse", "hash_bucket_size": 2},
-        "str2": {"transform": "hash_sparse", "hash_bucket_size": 2},
-        "str3": {"transform": "hash_sparse", "hash_bucket_size": 2},
+        "str1": {"transform": "one_hot"},
+        "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"},
         "key": {"transform": "key"},
     }
@@ -206,14 +212,13 @@ class TestTrainer(unittest.TestCase):
     transforms = {
         "num1": {"transform": "scale"},
         "num2": {"transform": "scale","value": 4},
-        "str1": {"transform": "hash_one_hot", "hash_bucket_size": 4},
-        "str2": {"transform": "one_hot"},
-        "str3": {"transform": "embedding", "embedding_dim": 3},
+        "str1": {"transform": "one_hot"},
+        "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"},
-        "key": {"transform": "key"}
+        "key": {"transform": "key"},
     }
 
-    extra_args = ['--layer_size1=10', '--layer_size2=10', '--layer_size3=5']
+    extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
     self._run_training(problem_type='classification', 
                        model_type='dnn',
                        transforms=transforms,
@@ -229,8 +234,8 @@ class TestTrainer(unittest.TestCase):
     transforms = {
         "num1": {"transform": "scale"},
         "num2": {"transform": "scale","value": 4},
-        "str1": {"transform": "hash_sparse", "hash_bucket_size": 4},
-        "str2": {"transform": "sparse"},
+        "str1": {"transform": "one_hot"},
+        "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"},
         "key": {"transform": "key"},
     }

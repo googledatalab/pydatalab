@@ -43,15 +43,15 @@ def parse_arguments(argv):
   """
   parser = argparse.ArgumentParser(
       description='Runs Preprocessing on structured CSV data.')
-  parser.add_argument('--input_file_pattern',
+  parser.add_argument('--input-file-pattern',
                       type=str,
                       required=True,
                       help='Input CSV file names. May contain a file pattern')
-  parser.add_argument('--output_dir',
+  parser.add_argument('--output-dir',
                       type=str,
                       required=True,
                       help='Google Cloud Storage which to place outputs.')
-  parser.add_argument('--schema_file',
+  parser.add_argument('--schema-file',
                       type=str,
                       required=True,
                       help=('BigQuery json schema file'))
