@@ -329,6 +329,7 @@ def local_train(train_dataset,
     for i in range(len(layer_sizes)):
       args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
 
+  monitor_process = None
   try:
     print('Starting local training')
     p = subprocess.Popen(' '.join(args),
@@ -346,8 +347,9 @@ def local_train(train_dataset,
       sys.stdout.write(p.stdout.readline())
     print('Local training done.')
   finally:
-    monitor_process.kill()
-    monitor_process.wait()
+    if monitor_process:
+      monitor_process.kill()
+      monitor_process.wait()
   
 
 def cloud_train(train_dataset,
