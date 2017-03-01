@@ -191,7 +191,8 @@ def _create_sample_subparser(parser):
 def _create_udf_subparser(parser):
   udf_parser = parser.subcommand('udf', 'Create a named Javascript BigQuery UDF')
   udf_parser.add_argument('-n', '--name', help='The name for this UDF', required=True)
-  udf_parser.add_argument('-l', '--language', help='The language of the function', required=True)
+  udf_parser.add_argument('-l', '--language', help='The language of the function', required=True,
+                          choices=['sql', 'js'])
   return udf_parser
 
 
@@ -379,7 +380,8 @@ def _get_query_parameters(args, cell_body):
     Validated object containing query parameters
   """
 
-  config = google.datalab.utils.commands.parse_config(cell_body, env=None, as_dict=False)
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env=env, as_dict=False)
   sql = args['query']
   if sql is None:
     raise Exception('Cannot extract query parameters in non-query cell')
@@ -514,8 +516,8 @@ def _udf_cell(args, cell_body):
     raise Exception('Declaration must be of the form %%bq udf --name <variable name>')
 
   # Parse out parameters, return type, and imports
-  param_pattern = r'^\s*\/\/\s*@param\s+(\w+)\s+(\w+)\s*$'
-  returns_pattern = r'^\s*\/\/\s*@returns\s+(\w+)\s*$'
+  param_pattern = r'^\s*\/\/\s*@param\s+([<>\w]+)\s+([<>\w]+)\s*$'
+  returns_pattern = r'^\s*\/\/\s*@returns\s+([<>\w]+)\s*$'
   import_pattern = r'^\s*\/\/\s*@import\s+(\S+)\s*$'
 
   params = re.findall(param_pattern, cell_body, re.MULTILINE)
@@ -686,10 +688,9 @@ def _dataset_line(args):
   """
   if args['command'] == 'list':
     filter_ = args['filter'] if args['filter'] else '*'
-    default_context = google.datalab.Context.default()
-    context = google.datalab.Context(default_context.project_id, default_context.credentials)
+    context = google.datalab.Context.default()
     if args['project']:
-      context.project_id = args['project']
+      context = google.datalab.Context(args['project'], context.credentials)
     return _render_list([str(dataset) for dataset in google.datalab.bigquery.Datasets(context)
                          if fnmatch.fnmatch(str(dataset), filter_)])
 
