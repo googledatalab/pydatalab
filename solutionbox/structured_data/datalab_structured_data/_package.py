@@ -242,26 +242,11 @@ def local_train(train_dataset,
            iii) {"transform": "scale", "value": a}: scales the colum values
               to -a, a.
 
-           For categorical colums, the transform supported depends on if the
-           model is a linear or DNN model because tf.layers is uesed.
-           For a linear model, the transforms supported are:
-           i) {"transform": "sparse"}: Makes a sparse vector using the full
-              vocabulary associated with the column (default).
-           ii) {"transform": "hash_sparse", "hash_bucket_size": n}: First each
-              string is hashed to an integer in the range [0, n), and then a
-              sparse vector is used.
-
-          For a DNN model, the categorical transforms that are supported are:
+           For categorical colums, the following transforms are supported:
           i) {"transform": "one_hot"}: A one-hot vector using the full
               vocabulary is used. (default)
           ii) {"transform": "embedding", "embedding_dim": d}: Each label is
               embedded into an d-dimensional space.
-          iii) {"transform": "hash_one_hot", "hash_bucket_size": n}: The label
-              is first hashed into the range [0, n) and then a one-hot encoding
-              is made.
-          iv) {"transform": "hash_embedding", "hash_bucket_size": n,
-               "embedding_dim": d}: First each label is hashed to [0, n), and
-               then each integer is embedded into a d-dimensional space.
     model_type: One of linear_classification, linear_regression,
         dnn_classification, dnn_regression.
     max_steps: Int. Number of training steps to perform.
