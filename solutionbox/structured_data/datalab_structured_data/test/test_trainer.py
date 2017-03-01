@@ -49,7 +49,7 @@ class TestTrainer(unittest.TestCase):
 
   def tearDown(self):
     print('TestTrainer: removing test dir ' + self._test_dir)
-    shutil.rmtree(self._test_dir)
+    #shutil.rmtree(self._test_dir)
 
 
   def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
@@ -103,12 +103,17 @@ class TestTrainer(unittest.TestCase):
     """
     # Print the last line of training output which has the loss value.
     lines = self._training_screen_output.splitlines()
+    last_line = None
     for line in lines:
       if line.startswith('INFO:tensorflow:Loss for final step:'):
         print(line)
-      if line.startswith('INFO:tensorflow:Saving dict for global step %s:' % 2500):
+      if line.startswith('INFO:tensorflow:Saving dict for global step 2500'):
         last_line = line
         break
+    if not last_line:
+      print('Skipping _check_training_screen_output as could not find last eval'
+            ' line')
+      return
     print(last_line)
 
     # supports positive numbers (int, real) with exponential form support.

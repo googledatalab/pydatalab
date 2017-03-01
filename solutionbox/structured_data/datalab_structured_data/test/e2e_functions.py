@@ -190,7 +190,7 @@ def run_training(
          '--transforms-file=%s' % transforms_file,
          '--model-type=%s' % model_type,
          '--train-batch-size=100',
-         '--eval-batch-size=10'
+         '--eval-batch-size=10',
          '--max-steps=%s' % max_steps] + extra_args
   print('Going to run command: %s' % ' '.join(cmd))
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
