@@ -329,27 +329,26 @@ def local_train(train_dataset,
     for i in range(len(layer_sizes)):
       args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
 
+  try:
+    print('Starting local training')
+    p = subprocess.Popen(' '.join(args),
+                         shell=True,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+    pids_to_kill = [p.pid]
 
-  p = subprocess.Popen(' '.join(args),
-                       shell=True,
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.STDOUT)
-  print('Started local training in subprocess %s' % str(p.pid))
+    #script -> name = datalab_structured_data._package
+    script = 'import %s; %s._wait_and_kill(%s, %s)' % \
+          (__name__, __name__, str(os.getpid()), str(pids_to_kill))
+    monitor_process = subprocess.Popen(['python', '-c', script])
 
-  pids_to_kill = [p.pid]
-  #script -> name = datalab_structured_data._package
-  script = 'import %s; %s._wait_and_kill(%s, %s)' % \
-        (__name__, __name__, str(os.getpid()), str(pids_to_kill))
-  monitor_process = subprocess.Popen(['python', '-c', script])
-
-  while p.poll() is None:
-    sys.stdout.write(p.stdout.readline())
-
-
-  monitor_process.kill()
-  monitor_process.wait()
-  print('Local training done.')
-
+    while p.poll() is None:
+      sys.stdout.write(p.stdout.readline())
+    print('Local training done.')
+  finally:
+    monitor_process.kill()
+    monitor_process.wait()
+  
 
 def cloud_train(train_dataset,
                 eval_dataset,
