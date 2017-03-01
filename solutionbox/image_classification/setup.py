@@ -19,10 +19,10 @@ minor = datetime.datetime.now().strftime("%y%m%d%H%M")
 version = '0.1'
 
 setup(
-  name='inception',
+  name='datalab_image_classification',
   version=version,
   packages=[
-    'datalab_inception',
+    'datalab_image_classification',
   ],
 
   description='Google Cloud Datalab Inception Package',
