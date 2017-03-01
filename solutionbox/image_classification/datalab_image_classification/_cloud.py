@@ -59,7 +59,8 @@ class Cloud(object):
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
 
-    job_name = 'preprocess-inception-' + datetime.datetime.now().strftime('%y%m%d-%H%M%S')
+    job_name = ('preprocess-image-classification-' +
+                datetime.datetime.now().strftime('%y%m%d-%H%M%S'))
     staging_package_url = _util.repackage_to_staging(output_dir)
     options = {
         'staging_location': os.path.join(output_dir, 'tmp', 'staging'),
@@ -115,12 +116,12 @@ class Cloud(object):
     }
     job_request = {
       'package_uris': [staging_package_url],
-      'python_module': 'datalab_inception.task',
+      'python_module': 'datalab_image_classification.task',
       'job_dir': output_dir,
       'args': job_args
     }
     job_request.update(dict(cloud_train_config._asdict()))
-    job_id = 'inception_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+    job_id = 'image_classification_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
     job = ml.Job.submit_training(job_request, job_id)
     if (_util.is_in_IPython()):
       import IPython
@@ -203,7 +204,8 @@ class Cloud(object):
     if output_csv is None and output_bq_table is None:
       raise ValueError('output_csv and output_bq_table cannot both be None.')
 
-    job_name = 'batch-predict-inception-' + datetime.datetime.now().strftime('%y%m%d-%H%M%S')
+    job_name = ('batch-predict-image-classification-' +
+                datetime.datetime.now().strftime('%y%m%d-%H%M%S'))
     staging_package_url = _util.repackage_to_staging(gcs_staging_location)
     options = {
         'staging_location': os.path.join(gcs_staging_location, 'tmp', 'staging'),

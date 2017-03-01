@@ -55,7 +55,8 @@ class Local(object):
     print('Local preprocessing...')
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
-    job_id = 'inception_preprocessed_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+    job_id = ('preprocess-image-classification-' +
+              datetime.datetime.now().strftime('%y%m%d-%H%M%S'))
     # Project is needed for bigquery data source, even in local run.
     options = {
         'project': _util.default_project(),
@@ -132,7 +133,8 @@ class Local(object):
     if output_csv is None and output_bq_table is None:
       raise ValueError('output_csv and output_bq_table cannot both be None.')
 
-    job_id = 'inception_batch_predict_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+    job_id = ('batch-predict-image-classification-' +
+              datetime.datetime.now().strftime('%y%m%d-%H%M%S'))
 
     # Project is needed for bigquery data source, even in local run.
     options = {

@@ -292,6 +292,6 @@ def repackage_to_staging(output_path):
   package_root = os.path.join(os.path.dirname(__file__), '../')
   # We deploy setup.py in the same dir for repackaging purpose.
   setup_py = os.path.join(os.path.dirname(__file__), 'setup.py')
-  staging_package_url = os.path.join(output_path, 'staging', 'inception.tar.gz')
+  staging_package_url = os.path.join(output_path, 'staging', 'image_classification.tar.gz')
   ml.package_and_copy(package_root, setup_py, staging_package_url)
   return staging_package_url
