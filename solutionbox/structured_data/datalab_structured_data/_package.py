@@ -146,9 +146,9 @@ def local_analysis(output_dir, dataset):
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
     args = ['local_preprocess',
-            '--input_file_pattern=%s' % dataset.input_files[0],
-            '--output_dir=%s' % output_dir,
-            '--schema_file=%s' % schema_file_path]
+            '--input-file-pattern=%s' % dataset.input_files[0],
+            '--output-dir=%s' % output_dir,
+            '--schema-file=%s' % schema_file_path]
 
     print('Starting local preprocessing.')
     preprocess.local_preprocess.main(args)
@@ -185,9 +185,9 @@ def cloud_analysis(output_dir, dataset, project_id=None):
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
     args = ['cloud_preprocess',
-            '--input_file_pattern=%s' % dataset.input_files[0],
-            '--output_dir=%s' % output_dir,
-            '--schema_file=%s' % schema_file_path]
+            '--input-file-pattern=%s' % dataset.input_files[0],
+            '--output-dir=%s' % output_dir,
+            '--schema-file=%s' % schema_file_path]
 
 
     print('Starting cloud preprocessing.')
@@ -311,25 +311,25 @@ def local_train(train_dataset,
 
   args = ['cd %s &&' % os.path.abspath(os.path.dirname(__file__)),
           'python -m trainer.task',
-          '--train_data_paths=%s' % _get_abs_path(train_dataset.input_files[0]),
-          '--eval_data_paths=%s' % _get_abs_path(eval_dataset.input_files[0]),
-          '--output_path=%s' % _get_abs_path(output_dir),
-          '--preprocess_output_dir=%s' % _get_abs_path(preprocess_output_dir),
-          '--transforms_file=%s' % _get_abs_path(features_file),
-          '--model_type=%s' % model_type,
-          '--max_steps=%s' % str(max_steps),
-          '--train_batch_size=%s' % str(train_batch_size),
-          '--eval_batch_size=%s' % str(eval_batch_size),
-          '--min_eval_frequency=%s' % str(min_eval_frequency),
-          '--learning_rate=%s' % str(learning_rate),
+          '--train-data-paths=%s' % _get_abs_path(train_dataset.input_files[0]),
+          '--eval-data-paths=%s' % _get_abs_path(eval_dataset.input_files[0]),
+          '--job-dir=%s' % _get_abs_path(output_dir),
+          '--preprocess-output-dir=%s' % _get_abs_path(preprocess_output_dir),
+          '--transforms-file=%s' % _get_abs_path(features_file),
+          '--model-type=%s' % model_type,
+          '--max-steps=%s' % str(max_steps),
+          '--train-batch-size=%s' % str(train_batch_size),
+          '--eval-batch-size=%s' % str(eval_batch_size),
+          '--min-eval-frequency=%s' % str(min_eval_frequency),
+          '--learning-rate=%s' % str(learning_rate),
           '--epsilon=%s' % str(epsilon)]
   if num_epochs:
-    args.append('--num_epochs=%s' % str(num_epochs))
+    args.append('--num-epochs=%s' % str(num_epochs))
   if top_n:
-    args.append('--top_n=%s' % str(top_n))
+    args.append('--top-n=%s' % str(top_n))
   if layer_sizes:
     for i in range(len(layer_sizes)):
-      args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
+      args.append('--layer-size%s=%s' % (i+1, str(layer_sizes[i])))
 
   monitor_process = None
   try:
@@ -402,29 +402,30 @@ def cloud_train(train_dataset,
       eval_dataset.input_files[0], features_file,
       preprocess_output_dir])
 
-  args = ['--train_data_paths=%s' % train_dataset.input_files[0],
-          '--eval_data_paths=%s' % eval_dataset.input_files[0],
-          '--output_path=%s' % output_dir,
-          '--preprocess_output_dir=%s' % preprocess_output_dir,
-          '--transforms_file=%s' % features_file,
-          '--model_type=%s' % model_type,
-          '--max_steps=%s' % str(max_steps),
-          '--train_batch_size=%s' % str(train_batch_size),
-          '--eval_batch_size=%s' % str(eval_batch_size),
-          '--min_eval_frequency=%s' % str(min_eval_frequency),
-          '--learning_rate=%s' % str(learning_rate),
+  args = ['--train-data-paths=%s' % train_dataset.input_files[0],
+          '--eval-data-paths=%s' % eval_dataset.input_files[0],
+          '--output-path=%s' % output_dir,
+          '--preprocess-output-dir=%s' % preprocess_output_dir,
+          '--transforms-file=%s' % features_file,
+          '--model-type=%s' % model_type,
+          '--max-steps=%s' % str(max_steps),
+          '--train-batch-size=%s' % str(train_batch_size),
+          '--eval-batch-size=%s' % str(eval_batch_size),
+          '--min-eval-frequency=%s' % str(min_eval_frequency),
+          '--learning-rate=%s' % str(learning_rate),
           '--epsilon=%s' % str(epsilon)]
   if num_epochs:
-    args.append('--num_epochs=%s' % str(num_epochs))
+    args.append('--num-epochs=%s' % str(num_epochs))
   if top_n:
-    args.append('--top_n=%s' % str(top_n))
+    args.append('--top-n=%s' % str(top_n))
   if layer_sizes:
     for i in range(len(layer_sizes)):
-      args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
+      args.append('--layer-size%s=%s' % (i+1, str(layer_sizes[i])))
 
   job_request = {
     'package_uris': [_package_to_staging(output_dir)],
     'python_module': 'datalab_structured_data.trainer.task',
+    'job_dir': output_dir,
     'args': args
   }
   job_request.update(dict(cloud_training_config._asdict()))
@@ -471,13 +472,13 @@ def local_predict(training_ouput_dir, data):
       raise ValueError('training_ouput_dir should contain the folder model')
 
     cmd = ['predict.py',
-           '--predict_data=%s' % input_file_path,
-           '--trained_model_dir=%s' % model_dir,
-           '--output_dir=%s' % tmp_dir,
-           '--output_format=csv',
-           '--batch_size=16',
+           '--predict-data=%s' % input_file_path,
+           '--trained-model-dir=%s' % model_dir,
+           '--output-dir=%s' % tmp_dir,
+           '--output-format=csv',
+           '--batch-size=16',
            '--mode=prediction',
-           '--no-shard_files']
+           '--no-shard-files']
 
     print('Starting local prediction.')
     predict.predict.main(cmd)
@@ -585,13 +586,13 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
     raise ValueError('Model folder %s does not exist' % model_dir)
 
   cmd = ['predict.py',
-         '--predict_data=%s' % prediction_input_file,
-         '--trained_model_dir=%s' % model_dir,
-         '--output_dir=%s' % output_dir,
-         '--output_format=%s' % output_format,
-         '--batch_size=%s' % str(batch_size),
-         '--shard_files' if shard_files else '--no-shard_files',
-         '--has_target' if mode == 'evaluation' else '--no-has_target'
+         '--predict-data=%s' % prediction_input_file,
+         '--trained-model-dir=%s' % model_dir,
+         '--output-dir=%s' % output_dir,
+         '--output-format=%s' % output_format,
+         '--batch-size=%s' % str(batch_size),
+         '--shard-files' if shard_files else '--no-shard-files',
+         '--has-target' if mode == 'evaluation' else '--no-has-target'
          ]
 
   print('Starting local batch prediction.')
@@ -622,14 +623,14 @@ def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
 
   cmd = ['predict.py',
          '--cloud',
-         '--project_id=%s' % _default_project(),
-         '--predict_data=%s' % prediction_input_file,
-         '--trained_model_dir=%s' % model_dir,
-         '--output_dir=%s' % output_dir,
-         '--output_format=%s' % output_format,
-         '--batch_size=%s' % str(batch_size),
-         '--shard_files' if shard_files else '--no-shard_files',
-         '--extra_package=%s' % _package_to_staging(output_dir)]
+         '--project-id=%s' % _default_project(),
+         '--predict-data=%s' % prediction_input_file,
+         '--trained-model-dir=%s' % model_dir,
+         '--output-dir=%s' % output_dir,
+         '--output-format=%s' % output_format,
+         '--batch-size=%s' % str(batch_size),
+         '--shard-files' if shard_files else '--no-shard-files',
+         '--extra-package=%s' % _package_to_staging(output_dir)]
 
   print('Starting cloud batch prediction.')
   predict.predict.main(cmd)

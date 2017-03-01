@@ -140,9 +140,9 @@ def run_preprocess(output_dir, csv_filename, schema_filename):
                    '../preprocess/local_preprocess.py'))
 
   cmd = ['python', preprocess_script,
-         '--output_dir', output_dir,
-         '--input_file_pattern', csv_filename,
-         '--schema_file', schema_filename
+         '--output-dir', output_dir,
+         '--input-file-pattern', csv_filename,
+         '--schema-file', schema_filename
   ]
   print('Going to run command: %s' % ' '.join(cmd))
   subprocess.check_call(cmd) #, stderr=open(os.devnull, 'wb'))
@@ -183,13 +183,13 @@ def run_training(
          '--module-name=trainer.task',
          '--package-path=trainer',
          '--',
-         '--train_data_paths=%s' % train_data_paths,
-         '--eval_data_paths=%s' % eval_data_paths,
-         '--output_path=%s' % output_path,
-         '--preprocess_output_dir=%s' % preprocess_output_dir,
-         '--transforms_file=%s' % transforms_file,
-         '--model_type=%s' % model_type,
-         '--max_steps=%s' % max_steps] + extra_args
+         '--train-data-paths=%s' % train_data_paths,
+         '--eval-data-paths=%s' % eval_data_paths,
+         '--job-dir=%s' % output_path,
+         '--preprocess-output-dir=%s' % preprocess_output_dir,
+         '--transforms-file=%s' % transforms_file,
+         '--model-type=%s' % model_type,
+         '--max-steps=%s' % max_steps] + extra_args
   print('Going to run command: %s' % ' '.join(cmd))
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
   _, err = sp.communicate()

@@ -386,9 +386,9 @@ def get_estimator(output_dir, train_config, args):
 
   # Check layers used for dnn models.
   if is_dnn_model(args.model_type)  and not args.layer_sizes:
-    raise ValueError('--layer_size* must be used with DNN models')
+    raise ValueError('--layer-size* must be used with DNN models')
   if is_linear_model(args.model_type) and args.layer_sizes:
-    raise ValueError('--layer_size* cannot be used with linear models')
+    raise ValueError('--layer-size* cannot be used with linear models')
 
   # Build tf.learn features
   feature_columns = _tflearn_features(train_config, args)
@@ -431,7 +431,7 @@ def get_estimator(output_dir, train_config, args):
         optimizer=tf.train.AdamOptimizer(
             args.learning_rate, epsilon=args.epsilon))
   else:
-    raise ValueError('bad --model_type value')
+    raise ValueError('bad --model-type value')
 
   return estimator
 

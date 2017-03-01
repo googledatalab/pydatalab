@@ -169,7 +169,7 @@ class TestTrainer(unittest.TestCase):
         "key": {"transform": "key"},
     }
 
-    extra_args = ['--layer_size1=10', '--layer_size2=10', '--layer_size3=5']
+    extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
     self._run_training(problem_type='regression', 
                        model_type='dnn',
                        transforms=transforms,
@@ -213,7 +213,7 @@ class TestTrainer(unittest.TestCase):
         "key": {"transform": "key"}
     }
 
-    extra_args = ['--layer_size1=10', '--layer_size2=10', '--layer_size3=5']
+    extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
     self._run_training(problem_type='classification', 
                        model_type='dnn',
                        transforms=transforms,

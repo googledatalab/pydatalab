@@ -151,16 +151,16 @@ def parse_arguments(argv):
   """Parse the command line arguments."""
   parser = argparse.ArgumentParser(
       description=('Train a regression or classification model. Note that if '
-                   'using a DNN model, --layer_size1=NUM, --layer_size2=NUM, '
+                   'using a DNN model, --layer-size1=NUM, --layer-size2=NUM, '
                    'should be used. '))
 
   # I/O file parameters
-  parser.add_argument('--train_data_paths', type=str, action='append',
+  parser.add_argument('--train-data-paths', type=str, action='append',
                       required=True)
-  parser.add_argument('--eval_data_paths', type=str, action='append',
+  parser.add_argument('--eval-data-paths', type=str, action='append',
                       required=True)
-  parser.add_argument('--output_path', type=str, required=True)
-  parser.add_argument('--preprocess_output_dir',
+  parser.add_argument('--job-dir', type=str, required=True)
+  parser.add_argument('--preprocess-output-dir',
                       type=str,
                       required=True,
                       help=('Output folder of preprocessing. Should contain the'
@@ -168,48 +168,48 @@ def parse_arguments(argv):
                             ' optional files numerical_analysis.json and'
                             ' vocab_str1.csv. Path must be on GCS if running'
                             ' cloud training.'))
-  parser.add_argument('--transforms_file',
+  parser.add_argument('--transforms-file',
                       type=str,
                       required=True,
                       help=('File describing the the transforms to apply on '
                             'each column'))
 
   # HP parameters
-  parser.add_argument('--learning_rate', type=float, default=0.01,
+  parser.add_argument('--learning-rate', type=float, default=0.01,
                       help='tf.train.AdamOptimizer learning rate')
   parser.add_argument('--epsilon', type=float, default=0.0005,
                       help='tf.train.AdamOptimizer epsilon')
   # --layer_size See below
 
   # Model problems
-  parser.add_argument('--model_type',
+  parser.add_argument('--model-type',
                       choices=['linear_classification', 'linear_regression',
                                'dnn_classification', 'dnn_regression'],
                       required=True)
-  parser.add_argument('--top_n',
+  parser.add_argument('--top-n',
                       type=int,
                       default=1,
                       help=('For classification problems, the output graph '
                             'will contain the labels and scores for the top '
                             'n classes.'))
   # Training input parameters
-  parser.add_argument('--max_steps', type=int, default=5000,
+  parser.add_argument('--max-steps', type=int, default=5000,
                       help='Maximum number of training steps to perform.')
-  parser.add_argument('--num_epochs',
+  parser.add_argument('--num-epochs',
                       type=int,
                       help=('Maximum number of training data epochs on which '
                             'to train. If both --max-steps and --num-epochs '
                             'are specified, the training job will run for '
                             '--max-steps or --num-epochs, whichever occurs '
                             'first. If unspecified will run for --max-steps.'))
-  parser.add_argument('--train_batch_size', type=int, default=1000)
-  parser.add_argument('--eval_batch_size', type=int, default=1000)
-  parser.add_argument('--min_eval_frequency', type=int, default=100,
+  parser.add_argument('--train-batch-size', type=int, default=1000)
+  parser.add_argument('--eval-batch-size', type=int, default=1000)
+  parser.add_argument('--min-eval-frequency', type=int, default=100,
                       help=('Minimum number of training steps between '
                             'evaluations'))
 
   # Training output parameters
-  parser.add_argument('--save_checkpoints_secs', type=int, default=600,
+  parser.add_argument('--save-checkpoints-secs', type=int, default=600,
                       help=('How often the model should be checkpointed/saved '
                             'in seconds'))
 
@@ -220,7 +220,7 @@ def parse_arguments(argv):
   # Look at remaining_args for layer_size\d+ to get the layer info.
 
   # Get number of layers
-  pattern = re.compile('layer_size(\d+)')
+  pattern = re.compile('layer-size(\d+)')
   num_layers = 0
   for other_arg in remaining_args:
     match = re.search(pattern, other_arg)
@@ -230,7 +230,7 @@ def parse_arguments(argv):
   # Build a new parser so we catch unknown args and missing layer_sizes.
   parser = argparse.ArgumentParser()
   for i in range(num_layers):
-    parser.add_argument('--layer_size%s' % str(i+1), type=int, required=True)
+    parser.add_argument('--layer-size%s' % str(i+1), type=int, required=True)
 
   layer_args = vars(parser.parse_args(args=remaining_args))
   layer_sizes = []
@@ -248,20 +248,20 @@ def main(argv=None):
   """Run a Tensorflow model on the Iris dataset."""
   args = parse_arguments(sys.argv if argv is None else argv)
 
-  env = json.loads(os.environ.get('TF_CONFIG', '{}'))
+  #env = json.loads(os.environ.get('TF_CONFIG', '{}'))
   # First find out if there's a task value on the environment variable.
   # If there is none or it is empty define a default one.
-  task_data = env.get('task') or {'type': 'master', 'index': 0}
+  #task_data = env.get('task') or {'type': 'master', 'index': 0}
 
-  trial = task_data.get('trial')
-  if trial is not None:
-    output_dir = os.path.join(args.output_path, trial)
-  else:
-    output_dir = args.output_path
+  #trial = task_data.get('trial')
+  #if trial is not None:
+  #  output_dir = os.path.join(args.output_path, trial)
+  #else:
+  #  output_dir = args.output_path
 
   learn_runner.run(
       experiment_fn=get_experiment_fn(args),
-      output_dir=output_dir)
+      output_dir=args.job_dir)
 
 
 if __name__ == '__main__':

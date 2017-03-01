@@ -45,16 +45,16 @@ def parse_arguments(argv):
   """
   parser = argparse.ArgumentParser(
       description='Runs Preprocessing on structured data.')
-  parser.add_argument('--output_dir',
+  parser.add_argument('--output-dir',
                       type=str,
                       required=True,
                       help='Google Cloud Storage which to place outputs.')
 
-  parser.add_argument('--schema_file',
+  parser.add_argument('--schema-file',
                       type=str,
                       required=False,
                       help=('BigQuery json schema file'))
-  parser.add_argument('--input_file_pattern',
+  parser.add_argument('--input-file-pattern',
                       type=str,
                       required=False,
                       help='Input CSV file names. May contain a file pattern')
@@ -62,7 +62,7 @@ def parse_arguments(argv):
   # If using bigquery table
   # TODO(brandondutra): maybe also support an sql input, so the table can be 
   # ad-hoc.
-  parser.add_argument('--bigquery_table',
+  parser.add_argument('--bigquery-table',
                       type=str,
                       required=False,
                       help=('project:dataset.table_name'))
@@ -70,21 +70,21 @@ def parse_arguments(argv):
   args = parser.parse_args(args=argv[1:])
 
   if not args.output_dir.startswith('gs://'):
-    raise ValueError('--output_dir must point to a location on GCS')
+    raise ValueError('--output-dir must point to a location on GCS')
 
   if args.bigquery_table:
     if args.schema_file or args.input_file_pattern:
-      raise ValueError('If using --bigquery_table, then --schema_file and '
-                       '--input_file_pattern, '
+      raise ValueError('If using --bigquery-table, then --schema-file and '
+                       '--input-file-pattern, '
                        'are not needed.')
   else:
     if not args.schema_file or not args.input_file_pattern:
-      raise ValueError('If not using --bigquery_table, then --schema_file and '
-                       '--input_file_pattern '
+      raise ValueError('If not using --bigquery-table, then --schema-file and '
+                       '--input-file-pattern '
                        'are required.')
 
     if not args.input_file_pattern.startswith('gs://'):
-      raise ValueError('--input_file_pattern must point to files on GCS')
+      raise ValueError('--input-file-pattern must point to files on GCS')
 
   return args
 

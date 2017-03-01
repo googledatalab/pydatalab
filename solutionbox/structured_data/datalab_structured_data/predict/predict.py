@@ -34,50 +34,50 @@ def parse_arguments(argv):
   parser = argparse.ArgumentParser(
       description='Runs Prediction inside a beam or Dataflow job.')
   # cloud options
-  parser.add_argument('--project_id',
+  parser.add_argument('--project-id',
                       help='The project to which the job will be submitted.')
   parser.add_argument('--cloud',
                       action='store_true',
                       help='Run preprocessing on the cloud.')
-  parser.add_argument('--job_name',
+  parser.add_argument('--job-name',
                       default=('structured-data-batch-prediction-'
                           + datetime.datetime.now().strftime('%Y%m%d%H%M%S')),
                       help='Dataflow job name. Must be unique over all jobs.')
-  parser.add_argument('--extra_package',
+  parser.add_argument('--extra-package',
                       default=[],
                       action='append',
                       help=('If using --cloud, also installs these packages on '
                             'each dataflow worker'))
 
   # I/O args
-  parser.add_argument('--predict_data',
+  parser.add_argument('--predict-data',
                       required=True,
                       help='Data to run prediction on')
-  parser.add_argument('--trained_model_dir',
+  parser.add_argument('--trained-model-dir',
                       required=True,
                       help='Usually train_output_path/model.')
-  parser.add_argument('--output_dir',
+  parser.add_argument('--output-dir',
                       required=True,
                       help=('Location to save output.'))
 
   # Other args
-  parser.add_argument('--batch_size',
+  parser.add_argument('--batch-size',
                       required=False,
                       default=1000,
                       type=int,
                       help=('Batch size. Larger values consumes more memrory '
                             'but takes less time to finish.'))
-  parser.add_argument('--shard_files',
+  parser.add_argument('--shard-files',
                       dest='shard_files',
                       action='store_true',
                       help='Shard files')
-  parser.add_argument('--no-shard_files',
+  parser.add_argument('--no-shard-files',
                       dest='shard_files',
                       action='store_false',
                       help='Don\'t shard files')
   parser.set_defaults(shard_files=True)
 
-  parser.add_argument('--output_format',
+  parser.add_argument('--output-format',
                       choices=['csv', 'json'],
                       default='csv',
                       help="""
@@ -93,13 +93,13 @@ def parse_arguments(argv):
 
   if args.cloud:
     if not args.project_id:
-      raise ValueError('--project_id needed with --cloud')
+      raise ValueError('--project-id needed with --cloud')
     if not args.trained_model_dir.startswith('gs://'):
-      raise ValueError('trained_model_dir needs to be a GCS path,')
+      raise ValueError('--trained-model-dir needs to be a GCS path,')
     if not args.output_dir.startswith('gs://'):
-      raise ValueError('output_dir needs to be a GCS path.')
+      raise ValueError('--output-dir needs to be a GCS path.')
     if not args.predict_data.startswith('gs://'):
-      raise ValueError('predict_data needs to be a GCS path.')
+      raise ValueError('--predict-data needs to be a GCS path.')
 
 
   return args
