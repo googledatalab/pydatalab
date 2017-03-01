@@ -97,6 +97,28 @@ def _package_to_staging(staging_package_url):
     return tar_gz_path
 
 
+def _wait_and_kill(pid_to_wait, pids_to_kill):
+  """ Helper function.
+
+      Wait for a process to finish if it exists, and then try to kill a list of
+      processes.
+
+      Used by local_train
+
+  Args:
+    pid_to_wait: the process to wait for.
+    pids_to_kill: a list of processes to kill after the process of pid_to_wait finishes.
+  """
+  if psutil.pid_exists(pid_to_wait):
+    psutil.Process(pid=pid_to_wait).wait()
+
+  for pid_to_kill in pids_to_kill:
+    if psutil.pid_exists(pid_to_kill):
+      p = psutil.Process(pid=pid_to_kill)
+      p.kill()
+      p.wait()
+
+
 def local_preprocess(output_dir, dataset):
   """Preprocess data locally with Pandas
 
@@ -281,12 +303,17 @@ def local_train(train_dataset,
   else:
     features_file = features
 
-  args = ['local_train',
-          '--train_data_paths=%s' % train_dataset.input_files[0],
-          '--eval_data_paths=%s' % eval_dataset.input_files[0],
-          '--output_path=%s' % output_dir,
-          '--preprocess_output_dir=%s' % preprocess_output_dir,
-          '--transforms_file=%s' % features_file,
+  def _get_abs_path(input_path):
+    cur_path = os.getcwd()
+    return os.path.abspath(os.path.join(cur_path, input_path))
+
+  args = ['cd %s &&' % os.path.abspath(os.path.dirname(__file__)),
+          'python -m trainer.task',
+          '--train_data_paths=%s' % _get_abs_path(train_dataset.input_files[0]),
+          '--eval_data_paths=%s' % _get_abs_path(eval_dataset.input_files[0]),
+          '--output_path=%s' % _get_abs_path(output_dir),
+          '--preprocess_output_dir=%s' % _get_abs_path(preprocess_output_dir),
+          '--transforms_file=%s' % _get_abs_path(features_file),
           '--model_type=%s' % model_type,
           '--max_steps=%s' % str(max_steps),
           '--train_batch_size=%s' % str(train_batch_size),
@@ -302,12 +329,27 @@ def local_train(train_dataset,
     for i in range(len(layer_sizes)):
       args.append('--layer_size%s=%s' % (i+1, str(layer_sizes[i])))
 
-  stderr = sys.stderr
-  sys.stderr = sys.stdout
-  print('Starting local training.')
-  trainer.task.main(args)
+
+  p = subprocess.Popen(' '.join(args),
+                       shell=True,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT)
+  print('Started local training in subprocess %s' % str(p.pid))
+
+  pids_to_kill = [p.pid]
+  #script -> name = datalab_structured_data._package
+  script = 'import %s; %s._wait_and_kill(%s, %s)' % \
+        (__name__, __name__, str(os.getpid()), str(pids_to_kill))
+  monitor_process = subprocess.Popen(['python', '-c', script])
+
+  while p.poll() is None:
+    sys.stdout.write(p.stdout.readline())
+
+
+  monitor_process.kill()
+  monitor_process.wait()
   print('Local training done.')
-  sys.stderr = stderr
+
 
 def cloud_train(train_dataset,
                 eval_dataset,
