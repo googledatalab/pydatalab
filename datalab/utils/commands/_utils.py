@@ -38,6 +38,8 @@ import datalab.data
 import datalab.bigquery
 import datalab.storage
 import datalab.utils
+import google.datalab.bigquery
+import google.datalab.utils
 
 from . import _html
 
@@ -230,6 +232,10 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
       raise Exception("To get tabular data from a list it must contain dictionaries or lists.")
   elif isinstance(source, pandas.DataFrame):
     return _get_data_from_dataframe(source, fields, first_row, count, schema)
+  elif (isinstance(source, google.datalab.bigquery.Query) or
+        isinstance(source, google.datalab.bigquery.Table)):
+    return google.datalab.utils.commands._utils.get_data(
+        source, fields, env, first_row, count, schema)
   elif isinstance(source, datalab.bigquery.Query):
     return _get_data_from_table(source.results(), fields, first_row, count, schema)
   elif isinstance(source, datalab.bigquery.Table):
