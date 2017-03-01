@@ -51,7 +51,9 @@ class Query(object):
     self._sql = sql
     self._udfs = udfs
     self._subqueries = subqueries
-    self._env = env or {}
+    self._env = env
+    if self._env is None:
+      self._env = google.datalab.utils.commands.notebook_environment()
     self._data_sources = {}
 
     def _validate_object(obj, obj_type):
