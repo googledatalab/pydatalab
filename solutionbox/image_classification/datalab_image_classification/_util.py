@@ -266,3 +266,32 @@ def load_images(image_files, resize=True):
   with tf.Session() as sess:
     images_resized = sess.run(image, feed_dict=feed_dict)
   return images_resized
+
+
+def process_prediction_results(results, show_image):
+  """Create DataFrames out of prediction results, and display images in IPython if requested."""
+
+  import pandas as pd
+
+  if (is_in_IPython() and show_image is True):
+    import IPython
+    for image_url, image, label_and_score in results:
+      IPython.display.display_html('<p style="font-size:28px">%s(%.5f)</p>' % label_and_score,
+          raw=True)
+      IPython.display.display(IPython.display.Image(data=image))
+  result_dict = [{'image_url': url, 'label': r[0], 'score': r[1]} for url,_,r in results]
+  return pd.DataFrame(result_dict)
+
+
+def repackage_to_staging(output_path):
+  """Repackage it from local installed location and copy it to GCS."""
+
+  import datalab.ml as ml
+
+  # Find the package root. __file__ is under [package_root]/datalab_inception.
+  package_root = os.path.join(os.path.dirname(__file__), '../')
+  # We deploy setup.py in the same dir for repackaging purpose.
+  setup_py = os.path.join(os.path.dirname(__file__), 'setup.py')
+  staging_package_url = os.path.join(output_path, 'staging', 'inception.tar.gz')
+  ml.package_and_copy(package_root, setup_py, staging_package_url)
+  return staging_package_url
