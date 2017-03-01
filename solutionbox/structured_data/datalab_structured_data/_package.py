@@ -360,7 +360,7 @@ def cloud_train(train_dataset,
                 output_dir,
                 features,
                 model_type,
-                cloud_training_config,
+                config,
                 max_steps=5000,
                 num_epochs=None,
                 train_batch_size=100,
@@ -375,7 +375,7 @@ def cloud_train(train_dataset,
 
   See local_train() for a description of the args.
   Args:
-    cloud_training_config: A CloudTrainingConfig object.
+    config: A CloudTrainingConfig object.
     job_name: Training job name. A default will be picked if None.
   """
   import datalab
@@ -428,7 +428,7 @@ def cloud_train(train_dataset,
     'job_dir': output_dir,
     'args': args
   }
-  job_request.update(dict(cloud_training_config._asdict()))
+  job_request.update(dict(config._asdict()))
 
   if not job_name:
     job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
