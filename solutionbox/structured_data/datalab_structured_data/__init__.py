@@ -10,3 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+
+from ._package import local_preprocess, cloud_preprocess, local_train, cloud_train, local_predict, \
+                      cloud_predict, local_batch_predict, cloud_batch_predict
+
+# Source of truth for the version of this package.
+__version__ = '1.0.0'

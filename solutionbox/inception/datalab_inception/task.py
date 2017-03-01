@@ -37,11 +37,10 @@ def main(_):
       type=str,
       help='The input dir path for training and evaluation data.')
   parser.add_argument(
-      '--output_path',
+      '--job-dir',
+      dest='job_dir',
       type=str,
-      help='The path to which checkpoints and other outputs '
-      'should be saved. This can be either a local or GCS '
-      'path.')
+      help='The GCS path to which checkpoints and other outputs should be saved.')
   parser.add_argument(
       '--max_steps',
       type=int,)
@@ -69,7 +68,7 @@ def main(_):
   cluster = tf.train.ClusterSpec(cluster_data) if cluster_data else None
   if not cluster or not task or task.type == 'master' or task.type == 'worker':
      _trainer.Trainer(args.input_dir, args.batch_size, args.max_steps,
-                      args.output_path, model, cluster, task).run_training()
+                      args.job_dir, model, cluster, task).run_training()
   elif task.type == 'ps':
      server = _trainer.start_server(cluster, task)
      server.join()
