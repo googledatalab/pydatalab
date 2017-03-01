@@ -619,8 +619,8 @@ def _tflearn_features(train_config, args):
               bucket_size=train_config['vocab_stats'][name]['n_classes'])
           learn_feature = tf.contrib.layers.one_hot_column(sparse)
         else:
-          raise ValueError(('Unknown transform name. Only embedding '
-                            'and one_hot transforms are supported. Got %s')
+          raise ValueError(('Unknown transform name. Only \'embedding\' '
+                            'and \'one_hot\' transforms are supported. Got %s')
                            % transform_name)
       elif is_linear_model(args.model_type):
         if transform_name == 'one_hot' or transform_name is None:
@@ -632,8 +632,8 @@ def _tflearn_features(train_config, args):
               name,
               hash_bucket_size=transform_config['embedding_dim'])
         else:
-          raise ValueError(('Unknown transform name. Only embedding '
-                            'and one_hot transforms are supported. Got %s')
+          raise ValueError(('Unknown transform name. Only \'embedding\' '
+                            'and \'one_hot\' transforms are supported. Got %s')
                            % transform_name)
 
       # Save the feature

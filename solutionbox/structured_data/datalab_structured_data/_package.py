@@ -201,7 +201,7 @@ def cloud_analysis(output_dir, dataset, project_id=None):
 
 def local_train(train_dataset,
                 eval_dataset,
-                preprocess_output_dir,
+                analysis_output_dir,
                 output_dir,
                 features,
                 model_type,
@@ -218,7 +218,7 @@ def local_train(train_dataset,
   Args:
     train_dataset: CsvDataSet
     eval_dataset: CsvDataSet
-    preprocess_output_dir:  The output directory from preprocessing
+    analysis_output_dir:  The output directory from local_analysis
     output_dir:  Output directory of training.
     features: file path or features object. Example:
         {
@@ -314,7 +314,7 @@ def local_train(train_dataset,
           '--train-data-paths=%s' % _get_abs_path(train_dataset.input_files[0]),
           '--eval-data-paths=%s' % _get_abs_path(eval_dataset.input_files[0]),
           '--job-dir=%s' % _get_abs_path(output_dir),
-          '--preprocess-output-dir=%s' % _get_abs_path(preprocess_output_dir),
+          '--preprocess-output-dir=%s' % _get_abs_path(analysis_output_dir),
           '--transforms-file=%s' % _get_abs_path(features_file),
           '--model-type=%s' % model_type,
           '--max-steps=%s' % str(max_steps),
@@ -356,7 +356,7 @@ def local_train(train_dataset,
 
 def cloud_train(train_dataset,
                 eval_dataset,
-                preprocess_output_dir,
+                analysis_output_dir,
                 output_dir,
                 features,
                 model_type,
@@ -405,7 +405,7 @@ def cloud_train(train_dataset,
   args = ['--train-data-paths=%s' % train_dataset.input_files[0],
           '--eval-data-paths=%s' % eval_dataset.input_files[0],
           '--output-path=%s' % output_dir,
-          '--preprocess-output-dir=%s' % preprocess_output_dir,
+          '--preprocess-output-dir=%s' % analysis_output_dir,
           '--transforms-file=%s' % features_file,
           '--model-type=%s' % model_type,
           '--max-steps=%s' % str(max_steps),
