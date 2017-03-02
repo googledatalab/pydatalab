@@ -512,15 +512,15 @@ def predict(data, training_ouput_dir=None, model_name=None, model_version=None,
     Pandas object.
   """
   if cloud:
-    if not model_version or not model_name or not data:
-      raise ValueError('model_version, model_name or data is not set')
+    if not model_version or not model_name:
+      raise ValueError('model_version or model_name is not set')
     if training_ouput_dir:
       raise ValueError('training_ouput_dir not needed when cloud is True')
 
     return cloud_predict(model_name, model_version, data)
   else:
-    if not training_ouput_dir or not data:
-      raise ValueError('training_ouput_dir or data is not set')
+    if not training_ouput_dir:
+      raise ValueError('training_ouput_dir is not set')
     if model_version or model_name:
       raise ValueError('model_name and model_version not needed when cloud is '
                        'false.')
