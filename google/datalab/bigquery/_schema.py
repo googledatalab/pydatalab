@@ -120,6 +120,10 @@ class Schema(list):
     entry = {'name': name}
     if isinstance(value, datetime.datetime):
       _type = 'TIMESTAMP'
+    elif isinstance(value, datetime.date):
+      _type = 'DATE'
+    elif isinstance(value, datetime.time):
+      _type = 'TIME'
     elif isinstance(value, bool):
       _type = 'BOOLEAN'
     elif isinstance(value, float):
