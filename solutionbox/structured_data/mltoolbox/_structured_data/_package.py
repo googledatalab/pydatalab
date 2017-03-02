@@ -196,8 +196,9 @@ def train(train_dataset,
           ):
   # NOTE: if you make a chane go this doc string, you MUST COPY it 4 TIMES in 
   # mltoolbox.{classification|regression}.{dnn|linear}, but you must remove
-  # the model_type parameter!
-  # Datalab does some tricky things and just messing with train.__doc__ will
+  # the model_type parameter, and maybe change the layer_sizes and top_n
+  # parameters!
+  # Datalab does some tricky things and messing with train.__doc__ will
   # not work!
   """Train model locally or in the cloud.
 
@@ -233,8 +234,8 @@ def train(train_dataset,
               vocabulary is used. (default)
           ii) {"transform": "embedding", "embedding_dim": d}: Each label is
               embedded into an d-dimensional space.
-    model_type: One of linear_classification, linear_regression,
-        dnn_classification, dnn_regression.
+    model_type: One of 'linear_classification', 'linear_regression',
+        'dnn_classification', 'dnn_regression'.
     max_steps: Int. Number of training steps to perform.
     num_epochs: Maximum number of training data epochs on which to train.
         The training job will run for max_steps or num_epochs, whichever occurs
@@ -252,8 +253,8 @@ def train(train_dataset,
         will create three DNN layers where the first layer will have 10 nodes,
         the middle layer will have 3 nodes, and the laster layer will have 2
         nodes.
-     learning_rate: tf.train.AdamOptimizer's learning rate,
-     epsilon: tf.train.AdamOptimizer's epsilon value.
+    learning_rate: tf.train.AdamOptimizer's learning rate,
+    epsilon: tf.train.AdamOptimizer's epsilon value.
 
   Args for cloud training:
     All local training arguments are valid for cloud training. Cloud training
@@ -262,6 +263,9 @@ def train(train_dataset,
     cloud: A CloudTrainingConfig object.
     job_name: Training job name. A default will be picked if None.    
   """
+  if model_type not in ['linear_classification', 'linear_regression',
+      'dnn_classification', 'dnn_regression']:
+    raise ValueError('Unknown model_type %s' % model_type)
 
   if cloud:
     cloud_train(
@@ -301,18 +305,6 @@ def train(train_dataset,
         learning_rate=learning_rate,
         epsilon=epsilon,
     )
-
-
-
-
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-
 
 def local_train(train_dataset,
                 eval_dataset,
@@ -490,11 +482,50 @@ def cloud_train(train_dataset,
 
 
 
-def predict():
-  pass
+def predict(data, training_ouput_dir=None, model_name=None, model_version=None, 
+  cloud=False):
+  """Runs prediction locally or on the cloud.
 
-def batch_predict():
-  pass
+  Args:
+    data: List of csv strings or a Pandas DataFrame that match the model schema.
+    training_ouput_dir: local path to the trained output folder.
+    model_name: deployed model name
+    model_version: depoyed model version
+    cloud: bool. If fales, does local prediction and data and training_ouput_dir
+        must be set. If true, does cloud prediction and data, model_name, 
+        and model_version must be set.
+
+
+  For cloud prediction, the model must be created. This can be done by running
+  two gcloud commands:
+  1) gcloud beta ml models create NAME
+  2) gcloud beta ml versions create VERSION --model NAME \
+      --origin gs://BUCKET/training_output_dir/model
+  or these datalab commands:
+  1) import datalab
+     model = datalab.ml.ModelVersions(MODEL_NAME)
+     model.deploy(version_name=VERSION,
+                  path='gs://BUCKET/training_output_dir/model')
+  Note that the model must be on GCS.
+
+  Returns:
+    Pandas object.
+  """
+  if cloud:
+    if not model_version or not model_name or not data:
+      raise ValueError('model_version, model_name or data is not set')
+    if training_ouput_dir:
+      raise ValueError('training_ouput_dir not needed when cloud is True')
+
+    return cloud_predict(model_name, model_version, data)
+  else:
+    if not training_ouput_dir or not data:
+      raise ValueError('training_ouput_dir or data is not set')
+    if model_version or model_name:
+      raise ValueError('model_name and model_version not needed when cloud is '
+                       'false.')
+    return local_predict(training_ouput_dir, data)
+
 
 def local_predict(training_ouput_dir, data):
   """Runs local prediction on the prediction graph.
@@ -611,6 +642,35 @@ def cloud_predict(model_name, model_version, data):
     for k, v in predictions[i].iteritems():
       df.loc[i, k] = v
   return df
+
+
+def batch_predict(training_ouput_dir, prediction_input_file, output_dir,
+                  mode, batch_size=16, shard_files=True, output_format='csv',
+                  cloud=False):
+  """Local and cloud batch prediction.
+
+  Args:
+    training_ouput_dir: The output folder of training.
+    prediction_input_file: csv file pattern to a file. File must be on GCS if 
+        running cloud prediction
+    output_dir: output location to save the results. Must be a GSC path if 
+        running cloud prediction.
+    mode: 'evaluation' or 'prediction'. If 'evaluation', the input data must
+        contain a target column. If 'prediction', the input data must not
+        contain a target column.
+    batch_size: Int. How many instances to run in memory at once. Larger values
+        mean better performace but more memeory consumed.
+    shard_files: If false, the output files are not shardded.
+    output_format: csv or json. Json file are json-newlined.
+    cloud: If ture, does cloud batch prediction. If false, runs batch prediction
+        locally.
+  """
+  if cloud:
+    cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
+                  mode, batch_size, shard_files, output_format)
+  else:
+    local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
+                  mode, batch_size, shard_files, output_format)
 
 
 def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,

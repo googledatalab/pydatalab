@@ -4,13 +4,11 @@ def train(train_dataset,
           analysis_output_dir,
           output_dir,
           features,
-          layer_sizes,
           max_steps=5000,
           num_epochs=None,
           train_batch_size=100,
           eval_batch_size=16,
           min_eval_frequency=100,
-          top_n=None,
           learning_rate=0.01,
           epsilon=0.0005,
           job_name=None, 
@@ -59,14 +57,6 @@ def train(train_dataset,
         dataset is done. If eval_batch_size does not perfectly divide the numer
         of eval instances, the last fractional batch is not used.
     min_eval_frequency: Minimum number of training steps between evaluations.
-    top_n: Int. For classification problems, the output graph will contain the
-        labels and scores for the top n classes with a default of n=1. Use
-        None for regression problems.
-    layer_sizes: List. Represents the layers in the connected DNN.
-        If the model type is DNN, this must be set. Example [10, 3, 2], this
-        will create three DNN layers where the first layer will have 10 nodes,
-        the middle layer will have 3 nodes, and the laster layer will have 2
-        nodes.
     learning_rate: tf.train.AdamOptimizer's learning rate,
     epsilon: tf.train.AdamOptimizer's epsilon value.
 
@@ -83,14 +73,14 @@ def train(train_dataset,
       analysis_output_dir=analysis_output_dir,
       output_dir=output_dir,
       features=features,
-      model_type='dnn_classification', #
+      model_type='linear_regression', 
       max_steps=max_steps,
       num_epochs=num_epochs,
       train_batch_size=train_batch_size,
       eval_batch_size=eval_batch_size,
       min_eval_frequency=min_eval_frequency,
-      top_n=top_n,
-      layer_sizes=layer_sizes,
+      top_n=None,
+      layer_sizes=None,
       learning_rate=learning_rate,
       epsilon=epsilon,
       job_name=job_name,

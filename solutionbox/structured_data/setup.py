@@ -38,12 +38,6 @@ setup(
   namespace_packages=['mltoolbox'],
   version=get_version(),
   packages=find_packages(),
-  #['mltoolbox',
-  #          'mltoolbox._structured_data',
-  #          'mltoolbox._structured_data.preprocess',
-  #          'mltoolbox._structured_data.predict',
-  #          'mltoolbox._structured_data.trainer'
-  #],
   description='Google Cloud Datalab Structured Data Package',
   author='Google',
   author_email='google-cloud-datalab-feedback@googlegroups.com',
