@@ -49,7 +49,7 @@ from tensorflow.python.lib.io import file_io
 
 from . import preprocess
 from . import trainer
-from . import predict
+from . import predict as predict_module
 
 
 def _default_project():
@@ -568,7 +568,7 @@ def local_predict(training_ouput_dir, data):
            '--no-shard-files']
 
     print('Starting local prediction.')
-    predict.predict.main(cmd)
+    predict_module.predict.main(cmd)
     print('Local prediction done.')
 
     # Read the header file.
@@ -712,7 +712,7 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
          ]
 
   print('Starting local batch prediction.')
-  predict.predict.main(cmd)
+  predict_module.predict.main(cmd)
   print('Local batch prediction done.')
 
 
@@ -749,5 +749,5 @@ def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
          '--extra-package=%s' % _package_to_staging(output_dir)]
 
   print('Starting cloud batch prediction.')
-  predict.predict.main(cmd)
+  predict_module.predict.main(cmd)
   print('See above link for job status.')
