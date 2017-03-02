@@ -9,10 +9,9 @@
 # is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
-__import__('pkg_resources').declare_namespace(__name__)
 
-from ._package import local_analysis, cloud_analysis, local_train, cloud_train, local_predict, \
-                      cloud_predict, local_batch_predict, cloud_batch_predict
+from ._package import analyze, train, predict, batch_predict
 
-# Source of truth for the version of this package.
-__version__ = '1.0.0'
+#from ._package import local_analysis, cloud_analysis, local_train, cloud_train, local_predict, \
+#                      cloud_predict, local_batch_predict, cloud_batch_predict
+

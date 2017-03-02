@@ -121,43 +121,8 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
       p.wait()
 
 
-def local_analysis(output_dir, dataset):
-  """Analyze data locally with Pandas
-
-  Produce analysis used by training.
-
-  Args:
-    output_dir: The output directory to use.
-    dataset: only CsvDataSet is supported currently.
-  """
-  import datalab.ml as ml
-  if not isinstance(dataset, ml.CsvDataSet):
-    raise ValueError('Only CsvDataSet is supported')
-
-  if len(dataset.input_files) != 1:
-    raise ValueError('CsvDataSet should be built with a file pattern, not a '
-                     'list of files.')
-
-  # Write schema to a file.
-  tmp_dir = tempfile.mkdtemp()
-  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
-                                        prefix='schema')
-  try:
-    file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
-
-    args = ['local_preprocess',
-            '--input-file-pattern=%s' % dataset.input_files[0],
-            '--output-dir=%s' % output_dir,
-            '--schema-file=%s' % schema_file_path]
-
-    print('Starting local preprocessing.')
-    preprocess.local_preprocess.main(args)
-    print('Local preprocessing done.')
-  finally:
-    shutil.rmtree(tmp_dir)
-
-def cloud_analysis(output_dir, dataset, project_id=None):
-  """Analyze data in the cloud with BigQuery.
+def analyze(output_dir, dataset, cloud=False, project_id=None):
+  """Analyze data locally or in the cloud with BigQuery.
 
   Produce analysis used by training. This can take a while, even for small
   datasets. For small datasets, it may be faster to use local_analysis.
@@ -165,8 +130,11 @@ def cloud_analysis(output_dir, dataset, project_id=None):
   Args:
     output_dir: The output directory to use.
     dataset: only CsvDataSet is supported currently.
-    project_id: project id the table is in. If none, uses the default project.
-  """
+    cloud: If false, runs analysis locally with Pandas. If ture, runs analysis
+        in the cloud with BigQuery.
+    project_id: Uses BigQuery with this project id. Default is datalab's 
+        default project id.
+  """  
   import datalab.ml as ml
   if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
@@ -175,47 +143,65 @@ def cloud_analysis(output_dir, dataset, project_id=None):
     raise ValueError('CsvDataSet should be built with a file pattern, not a '
                      'list of files.')
 
-  _assert_gcs_files([output_dir, dataset.input_files[0]])
+  if project_id and not cloud:
+    raise ValueError('project_id only needed if cloud is True')
 
-  # Write schema to a file.
+  if cloud:
+    _assert_gcs_files([output_dir, dataset.input_files[0]])
+
+
   tmp_dir = tempfile.mkdtemp()
-  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
-                                        prefix='schema')
   try:
+    # write the schema file.
+    _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
+                                           prefix='schema')    
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
-    args = ['cloud_preprocess',
+    args = ['preprocess',
             '--input-file-pattern=%s' % dataset.input_files[0],
             '--output-dir=%s' % output_dir,
             '--schema-file=%s' % schema_file_path]
 
-
-    print('Starting cloud preprocessing.')
-    print('Track BigQuery status at')
-    print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
-    preprocess.cloud_preprocess.main(args)
-    print('Cloud preprocessing done.')
+    if cloud:
+      print('Starting cloud preprocessing.')
+      print('Track BigQuery status at')
+      print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
+      preprocess.cloud_preprocess.main(args)
+      print('Cloud preprocessing done.')
+    else:
+      print('Starting local preprocessing.')
+      preprocess.local_preprocess.main(args)
+      print('Local preprocessing done.')      
   finally:
     shutil.rmtree(tmp_dir)
 
 
-def local_train(train_dataset,
-                eval_dataset,
-                analysis_output_dir,
-                output_dir,
-                features,
-                model_type,
-                max_steps=5000,
-                num_epochs=None,
-                train_batch_size=100,
-                eval_batch_size=16,
-                min_eval_frequency=100,
-                top_n=None,
-                layer_sizes=None,
-                learning_rate=0.01,
-                epsilon=0.0005):
-  """Train model locally.
-  Args:
+def train(train_dataset,
+          eval_dataset,
+          analysis_output_dir,
+          output_dir,
+          features,
+          model_type,
+          max_steps=5000,
+          num_epochs=None,
+          train_batch_size=100,
+          eval_batch_size=16,
+          min_eval_frequency=100,
+          top_n=None,
+          layer_sizes=None,
+          learning_rate=0.01,
+          epsilon=0.0005,
+          job_name=None, # cloud param
+          cloud=None, # cloud param
+          ):
+  # NOTE: if you make a chane go this doc string, you MUST COPY it 4 TIMES in 
+  # mltoolbox.{classification|regression}.{dnn|linear}, but you must remove
+  # the model_type parameter!
+  # Datalab does some tricky things and just messing with train.__doc__ will
+  # not work!
+  """Train model locally or in the cloud.
+
+  Args for local training:
     train_dataset: CsvDataSet
     eval_dataset: CsvDataSet
     analysis_output_dir:  The output directory from local_analysis
@@ -268,7 +254,81 @@ def local_train(train_dataset,
         nodes.
      learning_rate: tf.train.AdamOptimizer's learning rate,
      epsilon: tf.train.AdamOptimizer's epsilon value.
+
+  Args for cloud training:
+    All local training arguments are valid for cloud training. Cloud training
+    contains two additional args:
+
+    cloud: A CloudTrainingConfig object.
+    job_name: Training job name. A default will be picked if None.    
   """
+
+  if cloud:
+    cloud_train(
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        analysis_output_dir=analysis_output_dir,
+        output_dir=output_dir,
+        features=features,
+        model_type=model_type,
+        max_steps=max_steps,
+        num_epochs=num_epochs,
+        train_batch_size=train_batch_size,
+        eval_batch_size=eval_batch_size,
+        min_eval_frequency=min_eval_frequency,
+        top_n=top_n,
+        layer_sizes=layer_sizes,
+        learning_rate=learning_rate,
+        epsilon=epsilon,
+        job_name=job_name,
+        config=cloud,      
+    )
+  else:
+    local_train(
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        analysis_output_dir=analysis_output_dir,
+        output_dir=output_dir,
+        features=features,
+        model_type=model_type,
+        max_steps=max_steps,
+        num_epochs=num_epochs,
+        train_batch_size=train_batch_size,
+        eval_batch_size=eval_batch_size,
+        min_eval_frequency=min_eval_frequency,
+        top_n=top_n,
+        layer_sizes=layer_sizes,
+        learning_rate=learning_rate,
+        epsilon=epsilon,
+    )
+
+
+
+
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+
+def local_train(train_dataset,
+                eval_dataset,
+                analysis_output_dir,
+                output_dir,
+                features,
+                model_type,
+                max_steps,
+                num_epochs,
+                train_batch_size,
+                eval_batch_size,
+                min_eval_frequency,
+                top_n,
+                layer_sizes,
+                learning_rate,
+                epsilon):
   if len(train_dataset.input_files) != 1 or len(eval_dataset.input_files) != 1:
     raise ValueError('CsvDataSets must be built with a file pattern, not list '
                      'of files.')
@@ -345,17 +405,17 @@ def cloud_train(train_dataset,
                 output_dir,
                 features,
                 model_type,
-                config,
-                max_steps=5000,
-                num_epochs=None,
-                train_batch_size=100,
-                eval_batch_size=16,
-                min_eval_frequency=100,
-                top_n=None,
-                layer_sizes=None,
-                learning_rate=0.01,
-                epsilon=0.0005,
-                job_name=None):
+                max_steps,
+                num_epochs,
+                train_batch_size,
+                eval_batch_size,
+                min_eval_frequency,
+                top_n,
+                layer_sizes,
+                learning_rate,
+                epsilon,
+                job_name,
+                config):
   """Train model using CloudML.
 
   See local_train() for a description of the args.
@@ -382,6 +442,10 @@ def cloud_train(train_dataset,
         json.dumps(features))
   else:
     features_file = features
+
+  if not isinstance(config, datalab.ml.CloudTrainingConfig):
+    raise ValueError('cloud should be an instance of '
+                     'datalab.ml.CloudTrainingConfig for cloud training.')
 
   _assert_gcs_files([output_dir, train_dataset.input_files[0],
       eval_dataset.input_files[0], features_file,
@@ -424,6 +488,13 @@ def cloud_train(train_dataset,
 
   return job
 
+
+
+def predict():
+  pass
+
+def batch_predict():
+  pass
 
 def local_predict(training_ouput_dir, data):
   """Runs local prediction on the prediction graph.
