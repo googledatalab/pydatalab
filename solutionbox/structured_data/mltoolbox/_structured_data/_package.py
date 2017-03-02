@@ -40,7 +40,7 @@ import glob
 import psutil
 import StringIO
 import subprocess
-
+import uuid
 
 import pandas as pd
 import tensorflow as tf
@@ -121,6 +121,11 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
       p.wait()
 
 
+# ==============================================================================
+# Analyze
+# ==============================================================================
+
+
 def analyze(output_dir, dataset, cloud=False, project_id=None):
   """Analyze data locally or in the cloud with BigQuery.
 
@@ -130,11 +135,19 @@ def analyze(output_dir, dataset, cloud=False, project_id=None):
   Args:
     output_dir: The output directory to use.
     dataset: only CsvDataSet is supported currently.
-    cloud: If false, runs analysis locally with Pandas. If ture, runs analysis
+    cloud: If False, runs analysis locally with Pandas. If Ture, runs analysis
         in the cloud with BigQuery.
     project_id: Uses BigQuery with this project id. Default is datalab's 
         default project id.
-  """  
+
+  Returns:
+    A datalab object
+  """
+  import datalab
+  fn = lambda : _analyze(output_dir, dataset, cloud, project_id)
+  return datalab.utils.LambdaJob(fn, job_id=str(uuid.uuid4()))  
+
+def _analyze(output_dir, dataset, cloud=False, project_id=None):
   import datalab.ml as ml
   if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
@@ -176,6 +189,9 @@ def analyze(output_dir, dataset, cloud=False, project_id=None):
     shutil.rmtree(tmp_dir)
 
 
+# ==============================================================================
+# Train
+# ==============================================================================
 def train(train_dataset,
           eval_dataset,
           analysis_output_dir,
@@ -262,7 +278,51 @@ def train(train_dataset,
 
     cloud: A CloudTrainingConfig object.
     job_name: Training job name. A default will be picked if None.    
+
+  Returns:
+    Datalab job
   """
+  import datalab
+  def fn():
+    _train(train_dataset,
+          eval_dataset,
+          analysis_output_dir,
+          output_dir,
+          features,
+          model_type,
+          max_steps,
+          num_epochs,
+          train_batch_size,
+          eval_batch_size,
+          min_eval_frequency,
+          top_n,
+          layer_sizes,
+          learning_rate,
+          epsilon,
+          job_name, 
+          cloud)
+  return datalab.utils.LambdaJob(fn, job_id=str(uuid.uuid4()))  
+
+
+def _train(train_dataset,
+          eval_dataset,
+          analysis_output_dir,
+          output_dir,
+          features,
+          model_type,
+          max_steps=5000,
+          num_epochs=None,
+          train_batch_size=100,
+          eval_batch_size=16,
+          min_eval_frequency=100,
+          top_n=None,
+          layer_sizes=None,
+          learning_rate=0.01,
+          epsilon=0.0005,
+          job_name=None, # cloud param
+          cloud=None, # cloud param
+          ):
+
   if model_type not in ['linear_classification', 'linear_regression',
       'dnn_classification', 'dnn_regression']:
     raise ValueError('Unknown model_type %s' % model_type)
@@ -480,7 +540,9 @@ def cloud_train(train_dataset,
 
   return job
 
-
+# ==============================================================================
+# Predict
+# ==============================================================================
 
 def predict(data, training_ouput_dir=None, model_name=None, model_version=None, 
   cloud=False):
@@ -492,7 +554,7 @@ def predict(data, training_ouput_dir=None, model_name=None, model_version=None,
     model_name: deployed model name
     model_version: depoyed model version
     cloud: bool. If fales, does local prediction and data and training_ouput_dir
-        must be set. If true, does cloud prediction and data, model_name, 
+        must be set. If True, does cloud prediction and data, model_name, 
         and model_version must be set.
 
 
@@ -523,7 +585,7 @@ def predict(data, training_ouput_dir=None, model_name=None, model_version=None,
       raise ValueError('training_ouput_dir is not set')
     if model_version or model_name:
       raise ValueError('model_name and model_version not needed when cloud is '
-                       'false.')
+                       'False.')
     return local_predict(training_ouput_dir, data)
 
 
@@ -568,7 +630,8 @@ def local_predict(training_ouput_dir, data):
            '--no-shard-files']
 
     print('Starting local prediction.')
-    predict_module.predict.main(cmd)
+    runner_results = predict_module.predict.main(cmd)
+    runner_results.wait_until_finish()
     print('Local prediction done.')
 
     # Read the header file.
@@ -643,6 +706,9 @@ def cloud_predict(model_name, model_version, data):
       df.loc[i, k] = v
   return df
 
+# ==============================================================================
+# Batch predict
+# ==============================================================================
 
 def batch_predict(training_ouput_dir, prediction_input_file, output_dir,
                   mode, batch_size=16, shard_files=True, output_format='csv',
@@ -660,36 +726,28 @@ def batch_predict(training_ouput_dir, prediction_input_file, output_dir,
         contain a target column.
     batch_size: Int. How many instances to run in memory at once. Larger values
         mean better performace but more memeory consumed.
-    shard_files: If false, the output files are not shardded.
+    shard_files: If False, the output files are not shardded.
     output_format: csv or json. Json file are json-newlined.
-    cloud: If ture, does cloud batch prediction. If false, runs batch prediction
+    cloud: If ture, does cloud batch prediction. If False, runs batch prediction
         locally.
   """
+  import datalab
   if cloud:
-    cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
-                  mode, batch_size, shard_files, output_format)
+    runner_results = cloud_batch_predict(training_ouput_dir,
+        prediction_input_file, output_dir, mode, batch_size, shard_files,
+        output_format)
   else:
-    local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
-                  mode, batch_size, shard_files, output_format)
+    runner_results = local_batch_predict(training_ouput_dir,
+        prediction_input_file, output_dir, mode, batch_size, shard_files, 
+        output_format)
+
+  return datalab.utils.DataflowJob(runner_results)
 
 
 def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
                         mode,
-                        batch_size=16, shard_files=True, output_format='csv'):
-  """Local batch prediction.
-
-  Args:
-    training_ouput_dir: The output folder of training.
-    prediction_input_file: csv file pattern to a local file.
-    output_dir: output location to save the results.
-    mode: 'evaluation' or 'prediction'. If 'evaluation', the input data must
-        contain a target column. If 'prediction', the input data must not
-        contain a target column.
-    batch_size: Int. How many instances to run in memory at once. Larger values
-        mean better performace but more memeory consumed.
-    shard_files: If false, the output files are not shardded.
-    output_format: csv or json. Json file are json-newlined.
-  """
+                        batch_size, shard_files, output_format):
+  """See batch_predict"""
 
   if mode == 'evaluation':
     model_dir = os.path.join(training_ouput_dir, 'evaluation_model')
@@ -711,19 +769,15 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
          '--has-target' if mode == 'evaluation' else '--no-has-target'
          ]
 
-  print('Starting local batch prediction.')
-  predict_module.predict.main(cmd)
-  print('Local batch prediction done.')
+  return predict_module.predict.main(cmd)
 
 
 
 def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
                         mode,
-                        batch_size=16, shard_files=True, output_format='csv'):
-  """Cloud batch prediction. Submitts a Dataflow job.
+                        batch_size, shard_files, output_format):
+  """See batch_predict"""
 
-  See local_batch_predict() for a description of the args.
-  """
   if mode == 'evaluation':
     model_dir = os.path.join(training_ouput_dir, 'evaluation_model')
   elif mode == 'prediction':
@@ -748,6 +802,5 @@ def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
          '--shard-files' if shard_files else '--no-shard-files',
          '--extra-package=%s' % _package_to_staging(output_dir)]
 
-  print('Starting cloud batch prediction.')
-  predict_module.predict.main(cmd)
-  print('See above link for job status.')
+  return predict_module.predict.main(cmd)
+

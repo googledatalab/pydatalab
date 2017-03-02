@@ -70,8 +70,10 @@ def train(train_dataset,
 
     cloud: A CloudTrainingConfig object.
     job_name: Training job name. A default will be picked if None.    
+  Returns:
+    Datalab job
   """
-  core_train(
+  return core_train(
       train_dataset=train_dataset,
       eval_dataset=eval_dataset,
       analysis_output_dir=analysis_output_dir,

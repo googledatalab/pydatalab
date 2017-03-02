@@ -405,10 +405,11 @@ def main(argv=None):
     sys.stdout.flush()
 
   r = p.run()
-  try:
-    r.wait_until_finish()
-  except AttributeError:
-    pass
+  return r
+  #try:
+  #  r.wait_until_finish()
+  #except AttributeError:
+  #  pass
 
 
 if __name__ == '__main__':
