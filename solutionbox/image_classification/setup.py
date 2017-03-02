@@ -24,7 +24,8 @@ setup(
   version=version,
   packages=[
     'mltoolbox',
-    'mltoolbox.datalab_image_classification',
+    'mltoolbox.image',
+    'mltoolbox.image.classification',
   ],
 
   description='Google Cloud Datalab Inception Package',

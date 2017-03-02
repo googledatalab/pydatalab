@@ -35,26 +35,10 @@ class Cloud(object):
   """Class for cloud training, preprocessing and prediction."""
 
   @staticmethod
-  def preprocess(train_dataset, output_dir, eval_dataset=None, checkpoint=None,
-                 pipeline_option=None):
-    """Preprocess data in Cloud with DataFlow.
-       Produce output that can be used by training efficiently.
-    Args:
-      train_dataset: training data source to preprocess. Can be CsvDataset or BigQueryDataSet.
-          For CsvDataSet, all files must be in GCS.
-          If eval_dataset is None, the pipeline will randomly split train_dataset into
-          train/eval set with 7:3 ratio.
-      output_dir: The output directory to use. Preprocessing will create a sub directory under
-          it for each run, and also update "latest" file which points to the latest preprocessed
-          directory. Users are responsible for cleanup. GCS path only.
-      eval_dataset: evaluation data source to preprocess. Can be CsvDataset or BigQueryDataSet.
-          If specified, it will be used for evaluation during training, and train_dataset will be
-          completely used for training.
-      checkpoint: the Inception checkpoint to use.
-      pipeline_option: DataFlow pipeline options in a dictionary.
-    Returns:
-      the job name of the DataFlow job.
-    """
+  def preprocess(train_dataset, output_dir, eval_dataset, checkpoint, pipeline_option):
+    """Preprocess data in Cloud with DataFlow."""
+
+    import datalab.utils
 
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
@@ -78,7 +62,7 @@ class Cloud(object):
     p = beam.Pipeline('DataflowRunner', options=opts)
     _preprocess.configure_pipeline(p, train_dataset, eval_dataset, checkpoint,
         output_dir, job_name)
-    p.run()
+    job_results = p.run()
     if (_util.is_in_IPython()):
       import IPython
       dataflow_url = 'https://console.developers.google.com/dataflow?project=%s' % \
@@ -87,22 +71,11 @@ class Cloud(object):
       html += '<p>Click <a href="%s" target="_blank">here</a> to track preprocessing job. <br/>' \
           % dataflow_url
       IPython.display.display_html(html, raw=True)
-    return job_name
+    return datalab.utils.DataflowJob(job_results)
 
   @staticmethod
-  def train(input_dir, batch_size, max_steps, output_dir, cloud_train_config, checkpoint=None):
-    """Train model in the cloud with CloudML trainer service.
-       The output can be used for local prediction or for online deployment.
-    Args:
-      input_dir: A directory path containing preprocessed results. GCS path only.
-      batch_size: size of batch used for training.
-      max_steps: number of steps to train.
-      output_dir: The output directory to use. GCS path only.
-      cloud_train_config: a datalab.ml.CloudTrainingConfig object.
-      checkpoint: the Inception checkpoint to use.
-    Returns:
-      the job name of the training job.
-    """
+  def train(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud_train_config):
+    """Train model in the cloud with CloudML trainer service."""
 
     import datalab.ml as ml
     if checkpoint is None:
@@ -116,7 +89,7 @@ class Cloud(object):
     }
     job_request = {
       'package_uris': [staging_package_url],
-      'python_module': 'datalab_image_classification.task',
+      'python_module': 'mltoolbox.image.classification.task',
       'job_dir': output_dir,
       'args': job_args
     }
@@ -137,21 +110,13 @@ class Cloud(object):
     return job
 
   @staticmethod
-  def predict(model_id, image_files, resize=False, show_image=True):
-    """Predict using a deployed (online) model.
-    Args:
-      model_id: The deployed model id in the form of "model.version".
-      image_files: The paths to the image files to predict labels. GCS paths only.
-      show_image: Whether to show images in the results.
-      resize: Whether to resize the image to a reasonable size (300x300) before prediction.
-          Set it to True if your images are too large to send over network.
-    """
+  def predict(model_id, image_files, resize, show_image):
+    """Predict using a deployed (online) model."""
 
     import datalab.ml as ml
 
     images = _util.load_images(image_files, resize=resize)
 
-    print('Predicting...')
     parts = model_id.split('.')
     if len(parts) != 2:
       raise ValueError('Invalid model name for cloud prediction. Use "model.version".')
@@ -176,53 +141,36 @@ class Cloud(object):
                          for x in predictions]
     results = zip(image_files, images, labels_and_scores)
     ret = _util.process_prediction_results(results, show_image)
-    print('Done')
     return ret
 
   @staticmethod
-  def batch_predict(dataset, model_dir, gcs_staging_location,
-                    output_csv=None, output_bq_table=None, pipeline_option=None):
-    """Batch predict running in cloud.
+  def batch_predict(dataset, model_dir, output_csv, output_bq_table, pipeline_option):
+    """Batch predict running in cloud."""
 
-    Args:
-      dataset: CsvDataSet or BigQueryDataSet for batch prediction input. Can contain either
-          one column 'image_url', or two columns with another being 'label'.
-      model_dir: A GCS path to a trained inception model directory.
-      gcs_staging_location: A temporary location for DataFlow staging.
-      output_csv: If specified, prediction results will be saved to the specified Csv file.
-          It will also output a csv schema file with the name output_csv + '.schema.json'.
-          GCS file path only.
-      output_bq_table: If specified, prediction results will be saved to the specified BigQuery
-          table. output_csv and output_bq_table can both be set, but cannot be both None.
-      pipeline_option: DataFlow pipeline options in a dictionary.
-    Returns:
-      the job name of the DataFlow job.
-    Raises:
-      ValueError if both output_csv and output_bq_table are None.
-    """
+    import datalab.utils
 
     if output_csv is None and output_bq_table is None:
       raise ValueError('output_csv and output_bq_table cannot both be None.')
+    if 'temp_location' not in pipeline_option:
+      raise ValueError('"temp_location" is not set in cloud.')
 
     job_name = ('batch-predict-image-classification-' +
                 datetime.datetime.now().strftime('%y%m%d-%H%M%S'))
-    staging_package_url = _util.repackage_to_staging(gcs_staging_location)
+    staging_package_url = _util.repackage_to_staging(pipeline_option['temp_location'])
     options = {
-        'staging_location': os.path.join(gcs_staging_location, 'tmp', 'staging'),
-        'temp_location': os.path.join(gcs_staging_location, 'tmp'),
+        'staging_location': os.path.join(pipeline_option['temp_location'], 'staging'),
         'job_name': job_name,
         'project': _util.default_project(),
         'extra_packages': [staging_package_url],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
-    if pipeline_option is not None:
-      options.update(pipeline_option)
+    options.update(pipeline_option)
 
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     p = beam.Pipeline('DataflowRunner', options=opts)
     _predictor.configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table)
-    p.run()
+    job_results = p.run()
     if (_util.is_in_IPython()):
       import IPython
       dataflow_url = ('https://console.developers.google.com/dataflow?project=%s' %
@@ -231,4 +179,4 @@ class Cloud(object):
       html += ('<p>Click <a href="%s" target="_blank">here</a> to track batch prediction job. <br/>'
                % dataflow_url)
       IPython.display.display_html(html, raw=True)
-    return job_name
+    return datalab.utils.DataflowJob(job_results)
