@@ -34,8 +34,8 @@ class DataflowJob(_job.Job):
 
     # DataFlow's DataflowPipelineResult does not refresh state, so we have to do it ourselves
     # as a workaround.
-    self._runner_results._job = \
-        self._runner_results._runner.dataflow_client.get_job(self._runner_results.job_id())
+    self._runner_results._job = (
+        self._runner_results._runner.dataflow_client.get_job(self._runner_results.job_id()))
     self._is_complete = self._runner_results.state in ['STOPPED', 'DONE', 'FAILED', 'CANCELLED']
     self._fator_error = getattr(self._runner_results._runner, 'last_error_msg', None)
 
