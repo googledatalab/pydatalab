@@ -143,9 +143,9 @@ def analyze(output_dir, dataset, cloud=False, project_id=None):
   Returns:
     A datalab object
   """
-  import datalab
+  import datalab.utils as du
   fn = lambda : _analyze(output_dir, dataset, cloud, project_id)
-  return datalab.utils.LambdaJob(fn, job_id=str(uuid.uuid4()))  
+  return du.LambdaJob(fn, job_id=None)  
 
 def _analyze(output_dir, dataset, cloud=False, project_id=None):
   import datalab.ml as ml
@@ -176,15 +176,11 @@ def _analyze(output_dir, dataset, cloud=False, project_id=None):
             '--schema-file=%s' % schema_file_path]
 
     if cloud:
-      print('Starting cloud preprocessing.')
       print('Track BigQuery status at')
       print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
       preprocess.cloud_preprocess.main(args)
-      print('Cloud preprocessing done.')
     else:
-      print('Starting local preprocessing.')
       preprocess.local_preprocess.main(args)
-      print('Local preprocessing done.')      
   finally:
     shutil.rmtree(tmp_dir)
 
@@ -282,7 +278,7 @@ def train(train_dataset,
   Returns:
     Datalab job
   """
-  import datalab
+  import datalab.utils as du
   def fn():
     _train(train_dataset,
           eval_dataset,
@@ -301,7 +297,7 @@ def train(train_dataset,
           epsilon,
           job_name, 
           cloud)
-  return datalab.utils.LambdaJob(fn, job_id=str(uuid.uuid4()))  
+  return du.LambdaJob(fn, job_id=None)  
 
 
 def _train(train_dataset,
@@ -430,7 +426,6 @@ def local_train(train_dataset,
 
   monitor_process = None
   try:
-    print('Starting local training')
     p = subprocess.Popen(' '.join(args),
                          shell=True,
                          stdout=subprocess.PIPE,
@@ -444,7 +439,6 @@ def local_train(train_dataset,
 
     while p.poll() is None:
       sys.stdout.write(p.stdout.readline())
-    print('Local training done.')
   finally:
     if monitor_process:
       monitor_process.kill()
@@ -603,7 +597,7 @@ def local_predict(training_output_dir, data):
     data: List of csv strings or a Pandas DataFrame that match the model schema.
 
   """
-  # Save the instances to a file, call local batch prediction, and print it back
+  # Save the instances to a file, call local batch prediction, and return it
   tmp_dir = tempfile.mkdtemp()
   _, input_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.csv',
                                         prefix='input')
@@ -734,18 +728,18 @@ def batch_predict(training_output_dir, prediction_input_file, output_dir,
   Returns:
     Datalab job
   """
-  import datalab
+  import datalab.utils as du
   if cloud:
     runner_results = cloud_batch_predict(training_output_dir,
         prediction_input_file, output_dir, mode, batch_size, shard_files,
         output_format)
-    job = datalab.utils.DataflowJob(runner_results)
+    job = du.DataflowJob(runner_results)
   else:
     runner_results = local_batch_predict(training_output_dir,
         prediction_input_file, output_dir, mode, batch_size, shard_files, 
         output_format)
-    job = datalab.utils.LambdaJob(lambda: runner_results.wait_until_finish(),
-        job_id=str(uuid.uuid4()))
+    job = du.LambdaJob(lambda: runner_results.wait_until_finish(),
+        job_id=None)
 
   return job
 

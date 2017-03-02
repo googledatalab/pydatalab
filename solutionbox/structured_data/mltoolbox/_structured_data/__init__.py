@@ -11,7 +11,3 @@
 # the License.
 
 from ._package import analyze, train, predict, batch_predict
-
-#from ._package import local_analysis, cloud_analysis, local_train, cloud_train, local_predict, \
-#                      cloud_predict, local_batch_predict, cloud_batch_predict
-
