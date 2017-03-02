@@ -15,14 +15,13 @@
 import datetime
 import os
 import re
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 
 # The version is saved in an __init__ file.
 def get_version():
-    VERSIONFILE = os.path.join('datalab_structured_data/',
-                               '__init__.py')
+    VERSIONFILE = 'mltoolbox/_structured_data/__init__.py'
     if not os.path.isfile(VERSIONFILE):
       raise ValueError('setup.py: File not found %s' % VERSIONFILE)
     initfile_lines = open(VERSIONFILE, 'rt').readlines()
@@ -35,13 +34,14 @@ def get_version():
 
 
 setup(
-  name='datalab_structured_data',
+  name='mltoolbox_datalab_structured_data',
+  namespace_packages=['mltoolbox'],
   version=get_version(),
-  packages=[
-    'datalab_structured_data',
-    'datalab_structured_data.trainer',
-    'datalab_structured_data.preprocess',
-    'datalab_structured_data.predict',
+  packages=['mltoolbox',
+            'mltoolbox._structured_data',
+            'mltoolbox._structured_data.preprocess',
+            'mltoolbox._structured_data.predict',
+            'mltoolbox._structured_data.trainer'
   ],
   description='Google Cloud Datalab Structured Data Package',
   author='Google',
@@ -64,7 +64,8 @@ setup(
   install_requires=[
     'tensorflow==1.0',
     'protobuf==3.1.0',
-    'google-cloud-dataflow==0.5.5'  
+    'google-cloud-dataflow==0.5.5',
+    'psutil>=4.3.0'
   ],
   package_data={
   },
