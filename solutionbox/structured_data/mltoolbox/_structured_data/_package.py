@@ -400,7 +400,9 @@ def local_train(train_dataset,
 
   def _get_abs_path(input_path):
     cur_path = os.getcwd()
-    return os.path.abspath(os.path.join(cur_path, input_path))
+    full_path = os.path.abspath(os.path.join(cur_path, input_path))
+    # put path in quotes as it could contain spaces.
+    return "'" + full_path + "'"
 
   args = ['cd %s &&' % os.path.abspath(os.path.dirname(__file__)),
           'python -m trainer.task',
@@ -497,11 +499,15 @@ def cloud_train(train_dataset,
       eval_dataset.input_files[0], features_file,
       preprocess_output_dir])
 
-  args = ['--train-data-paths=%s' % train_dataset.input_files[0],
-          '--eval-data-paths=%s' % eval_dataset.input_files[0],
-          '--output-path=%s' % output_dir,
-          '--preprocess-output-dir=%s' % analysis_output_dir,
-          '--transforms-file=%s' % features_file,
+  # file paths can have spaces!
+  def _space(path):
+    return "'" + path + "'"
+
+  args = ['--train-data-paths=%s' % _space(train_dataset.input_files[0]),
+          '--eval-data-paths=%s' % _space(eval_dataset.input_files[0]),
+          '--output-path=%s' % _space(output_dir),
+          '--preprocess-output-dir=%s' % _space(analysis_output_dir),
+          '--transforms-file=%s' % _space(features_file),
           '--model-type=%s' % model_type,
           '--max-steps=%s' % str(max_steps),
           '--train-batch-size=%s' % str(train_batch_size),
