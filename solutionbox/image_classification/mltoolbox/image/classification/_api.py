@@ -73,7 +73,8 @@ def train(input_dir, batch_size, max_steps, output_dir, checkpoint=None, cloud=N
 
 
 def predict(model, image_files, resize=False, show_image=True, cloud=None):
-  """Predict using an model in a local or GCS directory.
+  """Predict using an model in a local or GCS directory (offline), or a deployed model (online).
+
   Args:
     model: if cloud is None, a local or GCS directory of a trained model. Otherwise, it specifies
         a deployed model identified by model.version, such as "imagemodel.v1".
@@ -81,6 +82,7 @@ def predict(model, image_files, resize=False, show_image=True, cloud=None):
     resize: Whether to resize the image to a reasonable size (300x300) before prediction.
     show_image: Whether to show images in the results.
     cloud: if None, predicts with offline model locally. Otherwise, predict with a deployed online model.
+
   Returns:
     A pandas DataFrame including the prediction results.
   """
@@ -94,7 +96,7 @@ def predict(model, image_files, resize=False, show_image=True, cloud=None):
 
 
 def batch_predict(dataset, model_dir, output_csv=None, output_bq_table=None, cloud=None):
-  """Batch predict running locally.
+  """Batch prediction with an offline model.
 
   Args:
     dataset: CsvDataSet or BigQueryDataSet for batch prediction input. Can contain either

@@ -73,9 +73,6 @@ class ExtractLabelIdsDoFn(beam.DoFn):
 
     rows_count.inc()
     uri = element['image_url']
-    if not uri or not uri.startswith('gs://'):
-      invalid_uri.inc()
-      return
 
     try:
       label_id = self.label_to_id_map[element['label'].strip()]
