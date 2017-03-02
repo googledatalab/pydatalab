@@ -19,7 +19,7 @@ from googleapiclient import discovery
 import yaml
 
 
-class Job(object):
+class Job(datalab.utils.Job):
   """Represents a Cloud ML job."""
 
   def __init__(self, name, context=None):
@@ -30,6 +30,7 @@ class Job(object):
           ("projects/[project_id]/jobs/[operation_name]") or just [operation_name].
       context: an optional Context object providing project_id and credentials.
     """
+    super(Job, self).__init__(name)
     if context is None:
       context = datalab.context.Context.default()
     self._context = context
@@ -37,17 +38,22 @@ class Job(object):
     if not name.startswith('projects/'):
       name = 'projects/' + self._context.project_id + '/jobs/' + name
     self._name = name
-    self.refresh()
+    self._refresh_state()
+
+  def _refresh_state(self):
+    """ Refresh the job info. """
+    self._info = self._api.projects().jobs().get(name=self._name).execute()
+    self._fatal_error = self._info.get('errorMessage', None)
+    state = str(self._info.get('state'))
+    self._is_complete = (state == 'SUCCEEDED' or state == 'FAILED')
 
   @property
   def info(self):
+    self._refresh_state()
     return self._info
 
-  def refresh(self):
-    """ Refresh the job info. """
-    self._info = self._api.projects().jobs().get(name=self._name).execute()
-
   def describe(self):
+    self._refresh_state()
     job_yaml = yaml.safe_dump(self._info, default_flow_style=False)
     print job_yaml
 
