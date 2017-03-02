@@ -11,5 +11,4 @@
 # the License.
 
 
-from ._local import Local
-from ._cloud import Cloud
+from ._api import preprocess,train,predict,batch_predict

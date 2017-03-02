@@ -288,8 +288,8 @@ def repackage_to_staging(output_path):
 
   import datalab.ml as ml
 
-  # Find the package root. __file__ is under [package_root]/datalab_inception.
-  package_root = os.path.join(os.path.dirname(__file__), '../')
+  # Find the package root. __file__ is under [package_root]/mltoolbox/image/classification.
+  package_root = os.path.join(os.path.dirname(__file__), '../../../')
   # We deploy setup.py in the same dir for repackaging purpose.
   setup_py = os.path.join(os.path.dirname(__file__), 'setup.py')
   staging_package_url = os.path.join(output_path, 'staging', 'image_classification.tar.gz')
