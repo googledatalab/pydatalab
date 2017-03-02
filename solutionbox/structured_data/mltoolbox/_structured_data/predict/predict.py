@@ -232,7 +232,7 @@ class RawJsonCoder(beam.coders.Coder):
 
 
 class CSVCoder(beam.coders.Coder):
-  """Coder for CSV files containing the ouput of prediction."""
+  """Coder for CSV files containing the output of prediction."""
 
   def __init__(self, header):
     """Sets the headers in the csv file.
@@ -404,12 +404,9 @@ def main(argv=None):
           (options['job_name'], args.project_id))
     sys.stdout.flush()
 
-  r = p.run()
-  try:
-    r.wait_until_finish()
-  except AttributeError:
-    pass
-
+  runner_results = p.run()
+  return runner_results
 
 if __name__ == '__main__':
-  main()
+  runner_results = main()
+  runner_results.wait_until_finish()

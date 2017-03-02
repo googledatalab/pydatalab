@@ -40,7 +40,7 @@ import glob
 import psutil
 import StringIO
 import subprocess
-
+import uuid
 
 import pandas as pd
 import tensorflow as tf
@@ -49,7 +49,7 @@ from tensorflow.python.lib.io import file_io
 
 from . import preprocess
 from . import trainer
-from . import predict
+from . import predict as predict_module
 
 
 def _default_project():
@@ -121,43 +121,13 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
       p.wait()
 
 
-def local_analysis(output_dir, dataset):
-  """Analyze data locally with Pandas
+# ==============================================================================
+# Analyze
+# ==============================================================================
 
-  Produce analysis used by training.
 
-  Args:
-    output_dir: The output directory to use.
-    dataset: only CsvDataSet is supported currently.
-  """
-  import datalab.ml as ml
-  if not isinstance(dataset, ml.CsvDataSet):
-    raise ValueError('Only CsvDataSet is supported')
-
-  if len(dataset.input_files) != 1:
-    raise ValueError('CsvDataSet should be built with a file pattern, not a '
-                     'list of files.')
-
-  # Write schema to a file.
-  tmp_dir = tempfile.mkdtemp()
-  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
-                                        prefix='schema')
-  try:
-    file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
-
-    args = ['local_preprocess',
-            '--input-file-pattern=%s' % dataset.input_files[0],
-            '--output-dir=%s' % output_dir,
-            '--schema-file=%s' % schema_file_path]
-
-    print('Starting local preprocessing.')
-    preprocess.local_preprocess.main(args)
-    print('Local preprocessing done.')
-  finally:
-    shutil.rmtree(tmp_dir)
-
-def cloud_analysis(output_dir, dataset, project_id=None):
-  """Analyze data in the cloud with BigQuery.
+def analyze(output_dir, dataset, cloud=False, project_id=None):
+  """Analyze data locally or in the cloud with BigQuery.
 
   Produce analysis used by training. This can take a while, even for small
   datasets. For small datasets, it may be faster to use local_analysis.
@@ -165,8 +135,19 @@ def cloud_analysis(output_dir, dataset, project_id=None):
   Args:
     output_dir: The output directory to use.
     dataset: only CsvDataSet is supported currently.
-    project_id: project id the table is in. If none, uses the default project.
+    cloud: If False, runs analysis locally with Pandas. If Ture, runs analysis
+        in the cloud with BigQuery.
+    project_id: Uses BigQuery with this project id. Default is datalab's 
+        default project id.
+
+  Returns:
+    A datalab object
   """
+  import datalab.utils as du
+  fn = lambda : _analyze(output_dir, dataset, cloud, project_id)
+  return du.LambdaJob(fn, job_id=None)  
+
+def _analyze(output_dir, dataset, cloud=False, project_id=None):
   import datalab.ml as ml
   if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
@@ -175,47 +156,65 @@ def cloud_analysis(output_dir, dataset, project_id=None):
     raise ValueError('CsvDataSet should be built with a file pattern, not a '
                      'list of files.')
 
-  _assert_gcs_files([output_dir, dataset.input_files[0]])
+  if project_id and not cloud:
+    raise ValueError('project_id only needed if cloud is True')
 
-  # Write schema to a file.
+  if cloud:
+    _assert_gcs_files([output_dir, dataset.input_files[0]])
+
+
   tmp_dir = tempfile.mkdtemp()
-  _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
-                                        prefix='schema')
   try:
+    # write the schema file.
+    _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
+                                           prefix='schema')    
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
-    args = ['cloud_preprocess',
+    args = ['preprocess',
             '--input-file-pattern=%s' % dataset.input_files[0],
             '--output-dir=%s' % output_dir,
             '--schema-file=%s' % schema_file_path]
 
-
-    print('Starting cloud preprocessing.')
-    print('Track BigQuery status at')
-    print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
-    preprocess.cloud_preprocess.main(args)
-    print('Cloud preprocessing done.')
+    if cloud:
+      print('Track BigQuery status at')
+      print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
+      preprocess.cloud_preprocess.main(args)
+    else:
+      preprocess.local_preprocess.main(args)
   finally:
     shutil.rmtree(tmp_dir)
 
 
-def local_train(train_dataset,
-                eval_dataset,
-                analysis_output_dir,
-                output_dir,
-                features,
-                model_type,
-                max_steps=5000,
-                num_epochs=None,
-                train_batch_size=100,
-                eval_batch_size=16,
-                min_eval_frequency=100,
-                top_n=None,
-                layer_sizes=None,
-                learning_rate=0.01,
-                epsilon=0.0005):
-  """Train model locally.
-  Args:
+# ==============================================================================
+# Train
+# ==============================================================================
+def train(train_dataset,
+          eval_dataset,
+          analysis_output_dir,
+          output_dir,
+          features,
+          model_type,
+          max_steps=5000,
+          num_epochs=None,
+          train_batch_size=100,
+          eval_batch_size=16,
+          min_eval_frequency=100,
+          top_n=None,
+          layer_sizes=None,
+          learning_rate=0.01,
+          epsilon=0.0005,
+          job_name=None, # cloud param
+          cloud=None, # cloud param
+          ):
+  # NOTE: if you make a chane go this doc string, you MUST COPY it 4 TIMES in 
+  # mltoolbox.{classification|regression}.{dnn|linear}, but you must remove
+  # the model_type parameter, and maybe change the layer_sizes and top_n
+  # parameters!
+  # Datalab does some tricky things and messing with train.__doc__ will
+  # not work!
+  """Train model locally or in the cloud.
+
+  Args for local training:
     train_dataset: CsvDataSet
     eval_dataset: CsvDataSet
     analysis_output_dir:  The output directory from local_analysis
@@ -247,8 +246,8 @@ def local_train(train_dataset,
               vocabulary is used. (default)
           ii) {"transform": "embedding", "embedding_dim": d}: Each label is
               embedded into an d-dimensional space.
-    model_type: One of linear_classification, linear_regression,
-        dnn_classification, dnn_regression.
+    model_type: One of 'linear_classification', 'linear_regression',
+        'dnn_classification', 'dnn_regression'.
     max_steps: Int. Number of training steps to perform.
     num_epochs: Maximum number of training data epochs on which to train.
         The training job will run for max_steps or num_epochs, whichever occurs
@@ -266,9 +265,118 @@ def local_train(train_dataset,
         will create three DNN layers where the first layer will have 10 nodes,
         the middle layer will have 3 nodes, and the laster layer will have 2
         nodes.
-     learning_rate: tf.train.AdamOptimizer's learning rate,
-     epsilon: tf.train.AdamOptimizer's epsilon value.
+    learning_rate: tf.train.AdamOptimizer's learning rate,
+    epsilon: tf.train.AdamOptimizer's epsilon value.
+
+  Args for cloud training:
+    All local training arguments are valid for cloud training. Cloud training
+    contains two additional args:
+
+    cloud: A CloudTrainingConfig object.
+    job_name: Training job name. A default will be picked if None.    
+
+  Returns:
+    Datalab job
   """
+  import datalab.utils as du
+  def fn():
+    _train(train_dataset,
+          eval_dataset,
+          analysis_output_dir,
+          output_dir,
+          features,
+          model_type,
+          max_steps,
+          num_epochs,
+          train_batch_size,
+          eval_batch_size,
+          min_eval_frequency,
+          top_n,
+          layer_sizes,
+          learning_rate,
+          epsilon,
+          job_name, 
+          cloud)
+  return du.LambdaJob(fn, job_id=None)  
+
+
+def _train(train_dataset,
+          eval_dataset,
+          analysis_output_dir,
+          output_dir,
+          features,
+          model_type,
+          max_steps=5000,
+          num_epochs=None,
+          train_batch_size=100,
+          eval_batch_size=16,
+          min_eval_frequency=100,
+          top_n=None,
+          layer_sizes=None,
+          learning_rate=0.01,
+          epsilon=0.0005,
+          job_name=None, # cloud param
+          cloud=None, # cloud param
+          ):
+
+  if model_type not in ['linear_classification', 'linear_regression',
+      'dnn_classification', 'dnn_regression']:
+    raise ValueError('Unknown model_type %s' % model_type)
+
+  if cloud:
+    cloud_train(
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        analysis_output_dir=analysis_output_dir,
+        output_dir=output_dir,
+        features=features,
+        model_type=model_type,
+        max_steps=max_steps,
+        num_epochs=num_epochs,
+        train_batch_size=train_batch_size,
+        eval_batch_size=eval_batch_size,
+        min_eval_frequency=min_eval_frequency,
+        top_n=top_n,
+        layer_sizes=layer_sizes,
+        learning_rate=learning_rate,
+        epsilon=epsilon,
+        job_name=job_name,
+        config=cloud,      
+    )
+  else:
+    local_train(
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        analysis_output_dir=analysis_output_dir,
+        output_dir=output_dir,
+        features=features,
+        model_type=model_type,
+        max_steps=max_steps,
+        num_epochs=num_epochs,
+        train_batch_size=train_batch_size,
+        eval_batch_size=eval_batch_size,
+        min_eval_frequency=min_eval_frequency,
+        top_n=top_n,
+        layer_sizes=layer_sizes,
+        learning_rate=learning_rate,
+        epsilon=epsilon,
+    )
+
+def local_train(train_dataset,
+                eval_dataset,
+                analysis_output_dir,
+                output_dir,
+                features,
+                model_type,
+                max_steps,
+                num_epochs,
+                train_batch_size,
+                eval_batch_size,
+                min_eval_frequency,
+                top_n,
+                layer_sizes,
+                learning_rate,
+                epsilon):
   if len(train_dataset.input_files) != 1 or len(eval_dataset.input_files) != 1:
     raise ValueError('CsvDataSets must be built with a file pattern, not list '
                      'of files.')
@@ -292,7 +400,9 @@ def local_train(train_dataset,
 
   def _get_abs_path(input_path):
     cur_path = os.getcwd()
-    return os.path.abspath(os.path.join(cur_path, input_path))
+    full_path = os.path.abspath(os.path.join(cur_path, input_path))
+    # put path in quotes as it could contain spaces.
+    return "'" + full_path + "'"
 
   args = ['cd %s &&' % os.path.abspath(os.path.dirname(__file__)),
           'python -m trainer.task',
@@ -318,7 +428,6 @@ def local_train(train_dataset,
 
   monitor_process = None
   try:
-    print('Starting local training')
     p = subprocess.Popen(' '.join(args),
                          shell=True,
                          stdout=subprocess.PIPE,
@@ -332,7 +441,6 @@ def local_train(train_dataset,
 
     while p.poll() is None:
       sys.stdout.write(p.stdout.readline())
-    print('Local training done.')
   finally:
     if monitor_process:
       monitor_process.kill()
@@ -345,17 +453,17 @@ def cloud_train(train_dataset,
                 output_dir,
                 features,
                 model_type,
-                config,
-                max_steps=5000,
-                num_epochs=None,
-                train_batch_size=100,
-                eval_batch_size=16,
-                min_eval_frequency=100,
-                top_n=None,
-                layer_sizes=None,
-                learning_rate=0.01,
-                epsilon=0.0005,
-                job_name=None):
+                max_steps,
+                num_epochs,
+                train_batch_size,
+                eval_batch_size,
+                min_eval_frequency,
+                top_n,
+                layer_sizes,
+                learning_rate,
+                epsilon,
+                job_name,
+                config):
   """Train model using CloudML.
 
   See local_train() for a description of the args.
@@ -383,15 +491,23 @@ def cloud_train(train_dataset,
   else:
     features_file = features
 
+  if not isinstance(config, datalab.ml.CloudTrainingConfig):
+    raise ValueError('cloud should be an instance of '
+                     'datalab.ml.CloudTrainingConfig for cloud training.')
+
   _assert_gcs_files([output_dir, train_dataset.input_files[0],
       eval_dataset.input_files[0], features_file,
       preprocess_output_dir])
 
-  args = ['--train-data-paths=%s' % train_dataset.input_files[0],
-          '--eval-data-paths=%s' % eval_dataset.input_files[0],
-          '--output-path=%s' % output_dir,
-          '--preprocess-output-dir=%s' % analysis_output_dir,
-          '--transforms-file=%s' % features_file,
+  # file paths can have spaces!
+  def _space(path):
+    return "'" + path + "'"
+
+  args = ['--train-data-paths=%s' % _space(train_dataset.input_files[0]),
+          '--eval-data-paths=%s' % _space(eval_dataset.input_files[0]),
+          '--output-path=%s' % _space(output_dir),
+          '--preprocess-output-dir=%s' % _space(analysis_output_dir),
+          '--transforms-file=%s' % _space(features_file),
           '--model-type=%s' % model_type,
           '--max-steps=%s' % str(max_steps),
           '--train-batch-size=%s' % str(train_batch_size),
@@ -424,8 +540,56 @@ def cloud_train(train_dataset,
 
   return job
 
+# ==============================================================================
+# Predict
+# ==============================================================================
 
-def local_predict(training_ouput_dir, data):
+def predict(data, training_output_dir=None, model_name=None, model_version=None, 
+  cloud=False):
+  """Runs prediction locally or on the cloud.
+
+  Args:
+    data: List of csv strings or a Pandas DataFrame that match the model schema.
+    training_output_dir: local path to the trained output folder.
+    model_name: deployed model name
+    model_version: depoyed model version
+    cloud: bool. If False, does local prediction and data and training_output_dir
+        must be set. If True, does cloud prediction and data, model_name, 
+        and model_version must be set.
+
+
+  For cloud prediction, the model must be created. This can be done by running
+  two gcloud commands:
+  1) gcloud beta ml models create NAME
+  2) gcloud beta ml versions create VERSION --model NAME \
+      --origin gs://BUCKET/training_output_dir/model
+  or these datalab commands:
+  1) import datalab
+     model = datalab.ml.ModelVersions(MODEL_NAME)
+     model.deploy(version_name=VERSION,
+                  path='gs://BUCKET/training_output_dir/model')
+  Note that the model must be on GCS.
+
+  Returns:
+    Pandas DataFrame.
+  """
+  if cloud:
+    if not model_version or not model_name:
+      raise ValueError('model_version or model_name is not set')
+    if training_output_dir:
+      raise ValueError('training_output_dir not needed when cloud is True')
+
+    return cloud_predict(model_name, model_version, data)
+  else:
+    if not training_output_dir:
+      raise ValueError('training_output_dir is not set')
+    if model_version or model_name:
+      raise ValueError('model_name and model_version not needed when cloud is '
+                       'False.')
+    return local_predict(training_output_dir, data)
+
+
+def local_predict(training_output_dir, data):
   """Runs local prediction on the prediction graph.
 
   Runs local prediction and returns the result in a Pandas DataFrame. For
@@ -435,11 +599,11 @@ def local_predict(training_ouput_dir, data):
   exist.
 
   Args:
-    training_ouput_dir: local path to the trained output folder.
+    training_output_dir: local path to the trained output folder.
     data: List of csv strings or a Pandas DataFrame that match the model schema.
 
   """
-  # Save the instances to a file, call local batch prediction, and print it back
+  # Save the instances to a file, call local batch prediction, and return it
   tmp_dir = tempfile.mkdtemp()
   _, input_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.csv',
                                         prefix='input')
@@ -452,9 +616,9 @@ def local_predict(training_ouput_dir, data):
         for line in data:
           f.write(line + '\n')
 
-    model_dir = os.path.join(training_ouput_dir, 'model')
+    model_dir = os.path.join(training_output_dir, 'model')
     if not file_io.file_exists(model_dir):
-      raise ValueError('training_ouput_dir should contain the folder model')
+      raise ValueError('training_output_dir should contain the folder model')
 
     cmd = ['predict.py',
            '--predict-data=%s' % input_file_path,
@@ -466,7 +630,8 @@ def local_predict(training_ouput_dir, data):
            '--no-shard-files']
 
     print('Starting local prediction.')
-    predict.predict.main(cmd)
+    runner_results = predict_module.predict.main(cmd)
+    runner_results.wait_until_finish()
     print('Local prediction done.')
 
     # Read the header file.
@@ -541,29 +706,59 @@ def cloud_predict(model_name, model_version, data):
       df.loc[i, k] = v
   return df
 
+# ==============================================================================
+# Batch predict
+# ==============================================================================
 
-def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
-                        mode,
-                        batch_size=16, shard_files=True, output_format='csv'):
-  """Local batch prediction.
+def batch_predict(training_output_dir, prediction_input_file, output_dir,
+                  mode, batch_size=16, shard_files=True, output_format='csv',
+                  cloud=False):
+  """Local and cloud batch prediction.
 
   Args:
-    training_ouput_dir: The output folder of training.
-    prediction_input_file: csv file pattern to a local file.
-    output_dir: output location to save the results.
+    training_output_dir: The output folder of training.
+    prediction_input_file: csv file pattern to a file. File must be on GCS if 
+        running cloud prediction
+    output_dir: output location to save the results. Must be a GSC path if 
+        running cloud prediction.
     mode: 'evaluation' or 'prediction'. If 'evaluation', the input data must
         contain a target column. If 'prediction', the input data must not
         contain a target column.
     batch_size: Int. How many instances to run in memory at once. Larger values
         mean better performace but more memeory consumed.
-    shard_files: If false, the output files are not shardded.
+    shard_files: If False, the output files are not shardded.
     output_format: csv or json. Json file are json-newlined.
+    cloud: If ture, does cloud batch prediction. If False, runs batch prediction
+        locally.
+
+  Returns:
+    Datalab job
   """
+  import datalab.utils as du
+  if cloud:
+    runner_results = cloud_batch_predict(training_output_dir,
+        prediction_input_file, output_dir, mode, batch_size, shard_files,
+        output_format)
+    job = du.DataflowJob(runner_results)
+  else:
+    runner_results = local_batch_predict(training_output_dir,
+        prediction_input_file, output_dir, mode, batch_size, shard_files, 
+        output_format)
+    job = du.LambdaJob(lambda: runner_results.wait_until_finish(),
+        job_id=None)
+
+  return job
+
+
+def local_batch_predict(training_output_dir, prediction_input_file, output_dir,
+                        mode,
+                        batch_size, shard_files, output_format):
+  """See batch_predict"""
 
   if mode == 'evaluation':
-    model_dir = os.path.join(training_ouput_dir, 'evaluation_model')
+    model_dir = os.path.join(training_output_dir, 'evaluation_model')
   elif mode == 'prediction':
-    model_dir = os.path.join(training_ouput_dir, 'model')
+    model_dir = os.path.join(training_output_dir, 'model')
   else:
     raise ValueError('mode must be evaluation or prediction')
 
@@ -580,30 +775,26 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
          '--has-target' if mode == 'evaluation' else '--no-has-target'
          ]
 
-  print('Starting local batch prediction.')
-  predict.predict.main(cmd)
-  print('Local batch prediction done.')
+  return predict_module.predict.main(cmd)
 
 
 
-def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
+def cloud_batch_predict(training_output_dir, prediction_input_file, output_dir,
                         mode,
-                        batch_size=16, shard_files=True, output_format='csv'):
-  """Cloud batch prediction. Submitts a Dataflow job.
+                        batch_size, shard_files, output_format):
+  """See batch_predict"""
 
-  See local_batch_predict() for a description of the args.
-  """
   if mode == 'evaluation':
-    model_dir = os.path.join(training_ouput_dir, 'evaluation_model')
+    model_dir = os.path.join(training_output_dir, 'evaluation_model')
   elif mode == 'prediction':
-    model_dir = os.path.join(training_ouput_dir, 'model')
+    model_dir = os.path.join(training_output_dir, 'model')
   else:
     raise ValueError('mode must be evaluation or prediction')
 
   if not file_io.file_exists(model_dir):
     raise ValueError('Model folder %s does not exist' % model_dir)
 
-  _assert_gcs_files([training_ouput_dir, prediction_input_file,
+  _assert_gcs_files([training_output_dir, prediction_input_file,
       output_dir])
 
   cmd = ['predict.py',
@@ -617,6 +808,5 @@ def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
          '--shard-files' if shard_files else '--no-shard-files',
          '--extra-package=%s' % _package_to_staging(output_dir)]
 
-  print('Starting cloud batch prediction.')
-  predict.predict.main(cmd)
-  print('See above link for job status.')
+  return predict_module.predict.main(cmd)
+

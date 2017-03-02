@@ -10,4 +10,5 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-from ._package import analyze, train, predict, batch_predict
+# Source of truth for the version of this package.
+__version__ = '1.0.0'
