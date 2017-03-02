@@ -544,16 +544,16 @@ def cloud_train(train_dataset,
 # Predict
 # ==============================================================================
 
-def predict(data, training_ouput_dir=None, model_name=None, model_version=None, 
+def predict(data, training_output_dir=None, model_name=None, model_version=None, 
   cloud=False):
   """Runs prediction locally or on the cloud.
 
   Args:
     data: List of csv strings or a Pandas DataFrame that match the model schema.
-    training_ouput_dir: local path to the trained output folder.
+    training_output_dir: local path to the trained output folder.
     model_name: deployed model name
     model_version: depoyed model version
-    cloud: bool. If fales, does local prediction and data and training_ouput_dir
+    cloud: bool. If False, does local prediction and data and training_output_dir
         must be set. If True, does cloud prediction and data, model_name, 
         and model_version must be set.
 
@@ -571,25 +571,25 @@ def predict(data, training_ouput_dir=None, model_name=None, model_version=None,
   Note that the model must be on GCS.
 
   Returns:
-    Pandas object.
+    Pandas DataFrame.
   """
   if cloud:
     if not model_version or not model_name:
       raise ValueError('model_version or model_name is not set')
-    if training_ouput_dir:
-      raise ValueError('training_ouput_dir not needed when cloud is True')
+    if training_output_dir:
+      raise ValueError('training_output_dir not needed when cloud is True')
 
     return cloud_predict(model_name, model_version, data)
   else:
-    if not training_ouput_dir:
-      raise ValueError('training_ouput_dir is not set')
+    if not training_output_dir:
+      raise ValueError('training_output_dir is not set')
     if model_version or model_name:
       raise ValueError('model_name and model_version not needed when cloud is '
                        'False.')
-    return local_predict(training_ouput_dir, data)
+    return local_predict(training_output_dir, data)
 
 
-def local_predict(training_ouput_dir, data):
+def local_predict(training_output_dir, data):
   """Runs local prediction on the prediction graph.
 
   Runs local prediction and returns the result in a Pandas DataFrame. For
@@ -599,7 +599,7 @@ def local_predict(training_ouput_dir, data):
   exist.
 
   Args:
-    training_ouput_dir: local path to the trained output folder.
+    training_output_dir: local path to the trained output folder.
     data: List of csv strings or a Pandas DataFrame that match the model schema.
 
   """
@@ -616,9 +616,9 @@ def local_predict(training_ouput_dir, data):
         for line in data:
           f.write(line + '\n')
 
-    model_dir = os.path.join(training_ouput_dir, 'model')
+    model_dir = os.path.join(training_output_dir, 'model')
     if not file_io.file_exists(model_dir):
-      raise ValueError('training_ouput_dir should contain the folder model')
+      raise ValueError('training_output_dir should contain the folder model')
 
     cmd = ['predict.py',
            '--predict-data=%s' % input_file_path,
@@ -710,13 +710,13 @@ def cloud_predict(model_name, model_version, data):
 # Batch predict
 # ==============================================================================
 
-def batch_predict(training_ouput_dir, prediction_input_file, output_dir,
+def batch_predict(training_output_dir, prediction_input_file, output_dir,
                   mode, batch_size=16, shard_files=True, output_format='csv',
                   cloud=False):
   """Local and cloud batch prediction.
 
   Args:
-    training_ouput_dir: The output folder of training.
+    training_output_dir: The output folder of training.
     prediction_input_file: csv file pattern to a file. File must be on GCS if 
         running cloud prediction
     output_dir: output location to save the results. Must be a GSC path if 
@@ -730,29 +730,35 @@ def batch_predict(training_ouput_dir, prediction_input_file, output_dir,
     output_format: csv or json. Json file are json-newlined.
     cloud: If ture, does cloud batch prediction. If False, runs batch prediction
         locally.
+
+  Returns:
+    Datalab job
   """
   import datalab
   if cloud:
-    runner_results = cloud_batch_predict(training_ouput_dir,
+    runner_results = cloud_batch_predict(training_output_dir,
         prediction_input_file, output_dir, mode, batch_size, shard_files,
         output_format)
+    job = datalab.utils.DataflowJob(runner_results)
   else:
-    runner_results = local_batch_predict(training_ouput_dir,
+    runner_results = local_batch_predict(training_output_dir,
         prediction_input_file, output_dir, mode, batch_size, shard_files, 
         output_format)
+    job = datalab.utils.LambdaJob(lambda: runner_results.wait_until_finish(),
+        job_id=str(uuid.uuid4()))
 
-  return datalab.utils.DataflowJob(runner_results)
+  return job
 
 
-def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
+def local_batch_predict(training_output_dir, prediction_input_file, output_dir,
                         mode,
                         batch_size, shard_files, output_format):
   """See batch_predict"""
 
   if mode == 'evaluation':
-    model_dir = os.path.join(training_ouput_dir, 'evaluation_model')
+    model_dir = os.path.join(training_output_dir, 'evaluation_model')
   elif mode == 'prediction':
-    model_dir = os.path.join(training_ouput_dir, 'model')
+    model_dir = os.path.join(training_output_dir, 'model')
   else:
     raise ValueError('mode must be evaluation or prediction')
 
@@ -773,22 +779,22 @@ def local_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
 
 
 
-def cloud_batch_predict(training_ouput_dir, prediction_input_file, output_dir,
+def cloud_batch_predict(training_output_dir, prediction_input_file, output_dir,
                         mode,
                         batch_size, shard_files, output_format):
   """See batch_predict"""
 
   if mode == 'evaluation':
-    model_dir = os.path.join(training_ouput_dir, 'evaluation_model')
+    model_dir = os.path.join(training_output_dir, 'evaluation_model')
   elif mode == 'prediction':
-    model_dir = os.path.join(training_ouput_dir, 'model')
+    model_dir = os.path.join(training_output_dir, 'model')
   else:
     raise ValueError('mode must be evaluation or prediction')
 
   if not file_io.file_exists(model_dir):
     raise ValueError('Model folder %s does not exist' % model_dir)
 
-  _assert_gcs_files([training_ouput_dir, prediction_input_file,
+  _assert_gcs_files([training_output_dir, prediction_input_file,
       output_dir])
 
   cmd = ['predict.py',
