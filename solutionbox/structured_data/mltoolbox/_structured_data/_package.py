@@ -92,9 +92,6 @@ def _package_to_staging(staging_package_url):
         os.path.join(os.path.dirname(__file__), 'master_setup.py'))
     tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
 
-    print(__file__)
-    print('proot', package_root)
-    print('setup_path', setup_path)
     print('Building package and uploading to %s' % tar_gz_path)
     ml.package_and_copy(package_root, setup_path, tar_gz_path)
 
