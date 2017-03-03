@@ -17,6 +17,7 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 import argparse
+import pandas as pd
 import psutil
 import subprocess
 import time
@@ -44,8 +45,7 @@ class TensorBoard(object):
       del cmd_args[0:2] # remove 'python' and 'tensorboard'
       args = parser.parse_args(cmd_args)
       running_list.append({'pid': p.pid, 'logdir': args.logdir, 'port': args.port})
-    IPython.display.display(datalab.utils.commands.render_dictionary(
-        running_list, ['pid', 'logdir', 'port']))
+    return pd.DataFrame(running_list)
 
   
   @staticmethod
