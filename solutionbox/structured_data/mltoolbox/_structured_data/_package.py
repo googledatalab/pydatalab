@@ -465,14 +465,10 @@ def cloud_train(train_dataset,
       eval_dataset.input_files[0], features_file,
       analysis_output_dir])
 
-  # file paths can have spaces!
-  def _space(path):
-    return "'" + path + "'"
-
-  args = ['--train-data-paths=%s' % _space(train_dataset.input_files[0]),
-          '--eval-data-paths=%s' % _space(eval_dataset.input_files[0]),
-          '--preprocess-output-dir=%s' % _space(analysis_output_dir),
-          '--transforms-file=%s' % _space(features_file),
+  args = ['--train-data-paths=%s' % train_dataset.input_files[0],
+          '--eval-data-paths=%s' % eval_dataset.input_files[0],
+          '--preprocess-output-dir=%s' % analysis_output_dir,
+          '--transforms-file=%s' % features_file,
           '--model-type=%s' % model_type,
           '--max-steps=%s' % str(max_steps),
           '--train-batch-size=%s' % str(train_batch_size),
