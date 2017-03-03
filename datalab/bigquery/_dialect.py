@@ -36,6 +36,12 @@ class Dialect(object):
     """ Set the default BigQuery SQL dialect"""
     if bq_dialect in ['legacy', 'standard']:
       self._global_dialect = bq_dialect
+      try:
+        from google.datalab import Context as new_context
+        new_context.default().config['bigquery_dialect'] = bq_dialect
+      except ImportError:
+        # If the new library is not loaded, then we have nothing to do.
+        pass
 
   @staticmethod
   def default():

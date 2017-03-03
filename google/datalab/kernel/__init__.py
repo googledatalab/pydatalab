@@ -118,6 +118,12 @@ def load_ipython_extension(shell):
   def _set_project_id(project_id):
     context = google.datalab.Context.default()
     context.set_project_id(project_id)
+    try:
+      from datalab.context import Context as _old_context
+      _old_context.default().set_project_id(project_id)
+    except ImportError:
+      # If the old library is not loaded, then we don't have to do anything
+      pass
 
   def _get_bq_dialect():
     context = google.datalab.Context.default()
@@ -126,6 +132,12 @@ def load_ipython_extension(shell):
   def _set_bq_dialect(bq_dialect):
     context = google.datalab.Context.default()
     context.config['bigquery_dialect'] = bq_dialect
+    try:
+      from datalab.bigquery import Dialect
+      Dialect.default().set_bq_dialect(bq_dialect)
+    except ImportError:
+      # If the old library is not loaded, then we don't have to do anything
+      pass
 
   try:
     if 'datalab_project_id' not in _IPython.get_ipython().user_ns:
