@@ -125,26 +125,10 @@ def load_ipython_extension(shell):
       # If the old library is not loaded, then we don't have to do anything
       pass
 
-  def _get_bq_dialect():
-    context = google.datalab.Context.default()
-    return context.config.get('bigquery_dialect', 'standard')
-
-  def _set_bq_dialect(bq_dialect):
-    context = google.datalab.Context.default()
-    context.config['bigquery_dialect'] = bq_dialect
-    try:
-      from datalab.bigquery import Dialect
-      Dialect.default().set_bq_dialect(bq_dialect)
-    except ImportError:
-      # If the old library is not loaded, then we don't have to do anything
-      pass
-
   try:
     if 'datalab_project_id' not in _IPython.get_ipython().user_ns:
       _IPython.get_ipython().user_ns['datalab_project_id'] = _get_project_id
       _IPython.get_ipython().user_ns['set_datalab_project_id'] = _set_project_id
-      _IPython.get_ipython().user_ns['datalab_bq_dialect'] = _get_bq_dialect
-      _IPython.get_ipython().user_ns['set_datalab_bq_dialect'] = _set_bq_dialect
   except TypeError:
     pass
 

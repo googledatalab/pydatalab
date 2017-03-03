@@ -130,6 +130,7 @@ def load_ipython_extension(shell):
     if 'datalab_project_id' not in _IPython.get_ipython().user_ns:
       _IPython.get_ipython().user_ns['datalab_project_id'] = _get_project_id
       _IPython.get_ipython().user_ns['set_datalab_project_id'] = _set_project_id
+    if 'datalab_bq_dialect' not in _IPython.get_ipython().user_ns:
       _IPython.get_ipython().user_ns['datalab_bq_dialect'] = _get_bq_dialect
       _IPython.get_ipython().user_ns['set_datalab_bq_dialect'] = _set_bq_dialect
   except TypeError:
