@@ -30,8 +30,9 @@ class TensorBoard(object):
   """
 
   @staticmethod
-  def list():
-    """List running TensorBoard instances.
+  def get_list():
+    """Return list of running TensorBoard instances.
+       Each instance is represented by a dict that contains 'pid', 'logdir' and 'port'
     """
     running_list = []
     parser = argparse.ArgumentParser()
@@ -44,9 +45,15 @@ class TensorBoard(object):
       del cmd_args[0:2] # remove 'python' and 'tensorboard'
       args = parser.parse_args(cmd_args)
       running_list.append({'pid': p.pid, 'logdir': args.logdir, 'port': args.port})
+    return running_list
+
+  @staticmethod
+  def list():
+    """Show list of running TensorBoard instances.
+    """
+    running_list = get_list()
     IPython.display.display(datalab.utils.commands.render_dictionary(
         running_list, ['pid', 'logdir', 'port']))
-
   
   @staticmethod
   def start(logdir):
