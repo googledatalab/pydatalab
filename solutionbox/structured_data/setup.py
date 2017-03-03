@@ -76,7 +76,6 @@ setup(
     'tensorflow==1.0',
     'protobuf==3.1.0',
     'google-cloud-dataflow==0.5.5',
-    'psutil'
   ],
   package_data={
   },
