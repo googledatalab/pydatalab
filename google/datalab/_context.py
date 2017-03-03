@@ -112,9 +112,15 @@ class Context(object):
     Returns:
       An initialized and shared instance of a Context object.
     """
-    if Context._global_context is None:
-      project = get_default_project_id()
-      credentials = get_credentials()
-      config = Context._get_default_config()
+    credentials = get_credentials()
+    project = get_default_project_id()
+    config = Context._get_default_config()
+    if Context._global_context is None:  
       Context._global_context = Context(project, credentials, config)
+    else:
+      # Always update everything in case the access token is revoked or expired, config changed,
+      # or project changed.
+      Context._global_context.set_credentials(credentials)
+      Context._global_context.set_project_id(project)
+      Context._global_context.set_config(config)
     return Context._global_context
