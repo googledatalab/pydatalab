@@ -37,7 +37,6 @@ import tempfile
 import urllib
 import json
 import glob
-import psutil
 import StringIO
 import subprocess
 import uuid
@@ -86,13 +85,16 @@ def _package_to_staging(staging_package_url):
     """
     import datalab.ml as ml
 
-    # Find the package root. __file__ is under [package_root]/datalab_structured_data/
+    # Find the package root. __file__ is under [package_root]/mltoolbox/_structured_data/this_file
     package_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../'))
+        os.path.join(os.path.dirname(__file__), '../../'))
     setup_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), 'master_setup.py'))
     tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
 
+    print(__file__)
+    print('proot', package_root)
+    print('setup_path', setup_path)
     print('Building package and uploading to %s' % tar_gz_path)
     ml.package_and_copy(package_root, setup_path, tar_gz_path)
 
@@ -111,6 +113,8 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
     pid_to_wait: the process to wait for.
     pids_to_kill: a list of processes to kill after the process of pid_to_wait finishes.
   """
+  # cloud workers don't have psutil
+  import psutil
   if psutil.pid_exists(pid_to_wait):
     psutil.Process(pid=pid_to_wait).wait()
 
@@ -279,52 +283,13 @@ def train(train_dataset,
     Datalab job
   """
   import datalab.utils as du
-  def fn():
-    _train(train_dataset,
-          eval_dataset,
-          analysis_output_dir,
-          output_dir,
-          features,
-          model_type,
-          max_steps,
-          num_epochs,
-          train_batch_size,
-          eval_batch_size,
-          min_eval_frequency,
-          top_n,
-          layer_sizes,
-          learning_rate,
-          epsilon,
-          job_name, 
-          cloud)
-  return du.LambdaJob(fn, job_id=None)  
-
-
-def _train(train_dataset,
-          eval_dataset,
-          analysis_output_dir,
-          output_dir,
-          features,
-          model_type,
-          max_steps=5000,
-          num_epochs=None,
-          train_batch_size=100,
-          eval_batch_size=16,
-          min_eval_frequency=100,
-          top_n=None,
-          layer_sizes=None,
-          learning_rate=0.01,
-          epsilon=0.0005,
-          job_name=None, # cloud param
-          cloud=None, # cloud param
-          ):
-
+  
   if model_type not in ['linear_classification', 'linear_regression',
       'dnn_classification', 'dnn_regression']:
     raise ValueError('Unknown model_type %s' % model_type)
 
   if cloud:
-    cloud_train(
+    return cloud_train(
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         analysis_output_dir=analysis_output_dir,
@@ -344,23 +309,24 @@ def _train(train_dataset,
         config=cloud,      
     )
   else:
-    local_train(
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        analysis_output_dir=analysis_output_dir,
-        output_dir=output_dir,
-        features=features,
-        model_type=model_type,
-        max_steps=max_steps,
-        num_epochs=num_epochs,
-        train_batch_size=train_batch_size,
-        eval_batch_size=eval_batch_size,
-        min_eval_frequency=min_eval_frequency,
-        top_n=top_n,
-        layer_sizes=layer_sizes,
-        learning_rate=learning_rate,
-        epsilon=epsilon,
-    )
+    def fn():
+      return local_train(
+          train_dataset=train_dataset,
+          eval_dataset=eval_dataset,
+          analysis_output_dir=analysis_output_dir,
+          output_dir=output_dir,
+          features=features,
+          model_type=model_type,
+          max_steps=max_steps,
+          num_epochs=num_epochs,
+          train_batch_size=train_batch_size,
+          eval_batch_size=eval_batch_size,
+          min_eval_frequency=min_eval_frequency,
+          top_n=top_n,
+          layer_sizes=layer_sizes,
+          learning_rate=learning_rate,
+          epsilon=epsilon)
+    return du.LambdaJob(fn, job_id=None)  
 
 def local_train(train_dataset,
                 eval_dataset,
@@ -497,7 +463,7 @@ def cloud_train(train_dataset,
 
   _assert_gcs_files([output_dir, train_dataset.input_files[0],
       eval_dataset.input_files[0], features_file,
-      preprocess_output_dir])
+      analysis_output_dir])
 
   # file paths can have spaces!
   def _space(path):
@@ -505,7 +471,6 @@ def cloud_train(train_dataset,
 
   args = ['--train-data-paths=%s' % _space(train_dataset.input_files[0]),
           '--eval-data-paths=%s' % _space(eval_dataset.input_files[0]),
-          '--output-path=%s' % _space(output_dir),
           '--preprocess-output-dir=%s' % _space(analysis_output_dir),
           '--transforms-file=%s' % _space(features_file),
           '--model-type=%s' % model_type,
@@ -525,7 +490,7 @@ def cloud_train(train_dataset,
 
   job_request = {
     'package_uris': [_package_to_staging(output_dir)],
-    'python_module': 'datalab_structured_data.trainer.task',
+    'python_module': 'mltoolbox._structured_data.trainer.task',
     'job_dir': output_dir,
     'args': args
   }

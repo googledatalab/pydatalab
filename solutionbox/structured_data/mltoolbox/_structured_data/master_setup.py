@@ -33,11 +33,27 @@ def get_version():
     raise RuntimeError('Unable to find version string in %s.' % (VERSIONFILE,))
 
 
+# Calling setuptools.find_packages does not work with cloud training repackaging
+# because this script is not ran from this folder.
+
 setup(
   name='mltoolbox_datalab_classification_and_regression',
   namespace_packages=['mltoolbox'],
   version=get_version(),
-  packages=find_packages(),
+  packages=[
+    'mltoolbox', 
+    'mltoolbox.classification', 
+    'mltoolbox.classification.linear', 
+    'mltoolbox.classification.dnn', 
+    'mltoolbox.regression', 
+    'mltoolbox.regression.linear', 
+    'mltoolbox.regression.dnn',
+    'mltoolbox._structured_data', 
+    'mltoolbox._structured_data.preprocess', 
+    'mltoolbox._structured_data.predict', 
+    # 'mltoolbox._structured_data.test', 
+    'mltoolbox._structured_data.trainer', 
+  ],
   description='Google Cloud Datalab Structured Data Package',
   author='Google',
   author_email='google-cloud-datalab-feedback@googlegroups.com',
@@ -60,7 +76,7 @@ setup(
     'tensorflow==1.0',
     'protobuf==3.1.0',
     'google-cloud-dataflow==0.5.5',
-    #'psutil>=4.3.0'
+    #'psutil'
   ],
   package_data={
   },
