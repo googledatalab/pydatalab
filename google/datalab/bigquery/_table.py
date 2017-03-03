@@ -253,7 +253,7 @@ class Table(object):
     for k in list(record.keys()):
       v = record[k]
       # If the column is a date, convert to ISO string.
-      if isinstance(v, pandas.Timestamp) or isinstance(v, datetime.datetime):
+      if isinstance(v, (pandas.Timestamp, datetime.datetime, datetime.date, datetime.time)):
         v = record[k] = record[k].isoformat()
 
       # If k has invalid characters clean it up

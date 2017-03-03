@@ -530,10 +530,20 @@ class TestCases(unittest.TestCase):
     self.assertEquals(3.1415, df['headers'][0])
     self.assertEquals(0.5, df['headers'][1])
 
-  def test_encode_dict_as_row(self):
+  def test_encode_dict_as_row_datetime(self):
     when = dt.datetime(2001, 2, 3, 4, 5, 6, 7)
     row = google.datalab.bigquery.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
     self.assertEqual({'foo': 'b@r', 'bar': '2001-02-03T04:05:06.000007'}, row)
+
+  def test_encode_dict_as_row_date(self):
+    when = dt.date(2001, 2, 3)
+    row = google.datalab.bigquery.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
+    self.assertEqual({'foo': 'b@r', 'bar': '2001-02-03'}, row)
+
+  def test_encode_dict_as_row_time(self):
+    when = dt.time(1,2,3,4)
+    row = google.datalab.bigquery.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
+    self.assertEqual({'foo': 'b@r', 'bar': '01:02:03.000004'}, row)
 
   def test_decorators(self):
     tbl = google.datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
