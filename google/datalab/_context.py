@@ -94,7 +94,6 @@ class Context(object):
   def _get_default_config():
     """Return a default config object"""
     return {
-      'bigquery_dialect': 'standard',
       'bigquery_billing_tier': None
     }
 

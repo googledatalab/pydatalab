@@ -27,18 +27,20 @@ class TestCases(unittest.TestCase):
     sql = 'SELECT * FROM table'
     with self.assertRaises(Exception) as error:
       q = TestCases._create_query(sql, subqueries=['subquery'])
-    env = {'subquery': TestCases._create_query()}
+    sq = TestCases._create_query()
+    env = {'subquery': sq}
     q = TestCases._create_query(sql, env=env, subqueries=['subquery'])
     self.assertIsNotNone(q)
-    self.assertEqual(q._subqueries, ['subquery'])
+    self.assertEqual(q._subqueries, {'subquery': sq})
     self.assertEqual(q._sql, sql)
 
     with self.assertRaises(Exception) as error:
       q = TestCases._create_query(sql, udfs=['udf'])
-    env = {'udf': TestCases._create_udf('test_udf', 'code', 'TYPE')}
-    q = TestCases._create_query(sql, env=env, udfs=['udf'])
+    udf = TestCases._create_udf('test_udf', 'code', 'TYPE')
+    env = {'testudf': udf}
+    q = TestCases._create_query(sql, env=env, udfs=['testudf'])
     self.assertIsNotNone(q)
-    self.assertEqual(q._udfs, ['udf'])
+    self.assertEqual(q._udfs, {'testudf': udf})
     self.assertEqual(q._sql, sql)
 
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')

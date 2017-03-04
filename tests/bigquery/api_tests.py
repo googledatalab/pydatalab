@@ -106,7 +106,6 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.utils.Http.request')
   def test_jobs_insert_query(self, mock_http_request):
     context = TestCases._create_context()
-    context.config['bigquery_dialect'] = 'legacy'
     context.config['bigquery_billing_tier'] = None
     api = TestCases._create_api(context)
     api.jobs_insert_query('SQL')
@@ -117,7 +116,7 @@ class TestCases(unittest.TestCase):
           'query': 'SQL',
           'useQueryCache': True,
           'allowLargeResults': False,
-          'useLegacySql': True,
+          'useLegacySql': False,
         },
         'dryRun': False,
         'priority': 'BATCH',
@@ -126,7 +125,6 @@ class TestCases(unittest.TestCase):
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/test/jobs/',
                   expected_data=expected_data)
 
-    context.config['bigquery_dialect'] = 'standard'
     context.config['bigquery_billing_tier'] = 1
     api.jobs_insert_query('SQL2',
                           table_name=google.datalab.bigquery._utils.TableName('p', 'd', 't', ''),

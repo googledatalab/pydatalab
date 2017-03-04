@@ -52,11 +52,6 @@ class Api(object):
     return self._context.credentials
 
   @property
-  def bigquery_dialect(self):
-    """The BigQuery dialect associated with this API client."""
-    return self._context.config.get('bigquery_dialect', 'standard')
-
-  @property
   def bigquery_billing_tier(self):
     """The BigQuery billing tier associated with this API client."""
     return self._context.config.get('bigquery_billing_tier', None)
@@ -155,7 +150,7 @@ class Api(object):
           priority, more expensive).
       allow_large_results: whether to allow large results (slower with some restrictions but
           can handle big jobs).
-      table_definitions: a dictionary of JSON external table definitions for any external tables
+      table_definitions: a dictionary of ExternalDataSource names and objects for any external tables
           referenced in the query.
       query_params: a dictionary containing query parameter types and values, passed to BigQuery.
     Returns:
@@ -172,7 +167,7 @@ class Api(object):
                 'query': sql,
                 'useQueryCache': use_cache,
                 'allowLargeResults': allow_large_results,
-                'useLegacySql': self.bigquery_dialect == 'legacy'
+                'useLegacySql': False
             },
             'dryRun': dry_run,
             'priority': 'BATCH' if batch else 'INTERACTIVE',
@@ -182,7 +177,10 @@ class Api(object):
     query_config = data['configuration']['query']
 
     if table_definitions:
-      query_config['tableDefinitions'] = table_definitions
+      expanded_definitions = {}
+      for td in table_definitions:
+        expanded_definitions[td] = table_definitions[td]._to_query_json()
+      query_config['tableDefinitions'] = expanded_definitions
 
     if table_name:
       query_config['destinationTable'] = {

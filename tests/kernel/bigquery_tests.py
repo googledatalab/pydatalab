@@ -75,8 +75,8 @@ class TestCases(unittest.TestCase):
                                                 'datasources': None, 'subqueries': None}, q1_body)
     q1 = env['q1']
     self.assertIsNotNone(q1)
-    self.assertIsNone(q1._udfs)
-    self.assertIsNone(q1._subqueries)
+    self.assertEqual(q1.udfs, {})
+    self.assertEqual(q1.subqueries, {})
     self.assertEqual(q1_body, q1._sql)
     self.assertEqual(q1_body, q1.sql)
 
@@ -86,8 +86,8 @@ class TestCases(unittest.TestCase):
                                                 'datasources': None, 'subqueries': ['q1']}, q2_body)
     q2 = env['q2']
     self.assertIsNotNone(q2)
-    self.assertIsNone(q2._udfs)
-    self.assertEqual(['q1'], q2._subqueries)
+    self.assertEqual(q2.udfs, {})
+    self.assertEqual({'q1': q1}, q2.subqueries)
     expected_sql = 'WITH q1 AS (%s)\n%s' % (q1_body, q2_body)
     self.assertEqual(q2_body, q2._sql)
     self.assertEqual(expected_sql, q2.sql)
