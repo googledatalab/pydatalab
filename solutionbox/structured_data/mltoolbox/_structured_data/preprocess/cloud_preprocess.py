@@ -118,7 +118,7 @@ def run_numerical_analysis(table, schema_list, args):
     schema_list: Bigquery schema json object
     args: the command line args
   """
-  import datalab.bigquery as bq
+  import google.datalab.bigquery as bq
 
   # Get list of numerical columns.
   numerical_columns = []
@@ -137,13 +137,13 @@ def run_numerical_analysis(table, schema_list, args):
          'avg({name}) as avg_{name} ').format(name=name)
         for name in numerical_columns]
     if args.bigquery_table:
-      sql = 'SELECT  %s from %s' % (', '.join(max_min),
+      sql = 'SELECT  %s from `%s`' % (', '.join(max_min),
                                     parse_table_name(args.bigquery_table))
-      numerical_results = bq.Query(sql).to_dataframe()
+      numerical_results = bq.Query(sql).execute().result().to_dataframe()
     else:
       sql = 'SELECT  %s from csv_table' % ', '.join(max_min)
       query = bq.Query(sql, data_sources={'csv_table': table})
-      numerical_results = query.to_dataframe()
+      numerical_results = query.execute().result().to_dataframe()
 
     # Convert the numerical results to a json file.
     results_dict = {}
@@ -174,7 +174,7 @@ def run_categorical_analysis(table, schema_list, args):
     schema_list: Bigquery schema json object
     args: the command line args
   """
-  import datalab.bigquery as bq
+  import google.datalab.bigquery as bq
 
 
   # Get list of categorical columns.
@@ -194,7 +194,7 @@ def run_categorical_analysis(table, schema_list, args):
 
       sql = """
             SELECT
-              {name},
+              {name}
             FROM
               {table}
             WHERE
@@ -210,10 +210,10 @@ def run_categorical_analysis(table, schema_list, args):
       # extract_async seems to have a bug and sometimes hangs. So get the 
       # results direclty.
       if args.bigquery_table:
-        df = bq.Query(sql).to_dataframe()
+        df = bq.Query(sql).execute().result().to_dataframe()
       else:
-        query = bq.Query(sql, data_sources={table_name: table})
-        df = query.to_dataframe()
+        query = bq.Query(sql, data_sources={'table_name': table})
+        df = query.execute().result().to_dataframe()
 
       # Write the results to a file.
       string_buff = StringIO.StringIO()
@@ -235,18 +235,14 @@ def run_analysis(args):
   Raises:
     ValueError if schema contains unknown types.
   """
-  import datalab.bigquery as bq
+  import google.datalab.bigquery as bq
   if args.bigquery_table:
     table = bq.Table(args.bigquery_table)
     schema_list = table.schema._bq_schema
   else:
     schema_list = json.loads(file_io.read_file_to_string(args.schema_file))
-    table = bq.FederatedTable().from_storage(
+    table = bq.ExternalDataSource(
         source=args.input_file_pattern,
-        source_format='csv',
-        ignore_unknown_values=False,
-        max_bad_records=0,
-        compressed=False,
         schema=bq.Schema(schema_list))
 
   # Check the schema is supported.

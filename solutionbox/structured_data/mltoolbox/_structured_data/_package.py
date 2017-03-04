@@ -52,9 +52,8 @@ from . import predict as predict_module
 
 
 def _default_project():
-  import datalab.context
-  context = datalab.context.Context.default()
-  return context.project_id
+  from google.datalab import Context
+  return Context.default().project_id
 
 def _is_in_IPython():
   try:
@@ -83,7 +82,7 @@ def _package_to_staging(staging_package_url):
     Args:
       staging_package_url: GCS path.
     """
-    import datalab.ml as ml
+    import google.datalab.ml as ml
 
     # Find the package root. __file__ is under [package_root]/mltoolbox/_structured_data/this_file
     package_root = os.path.abspath(
@@ -142,14 +141,14 @@ def analyze(output_dir, dataset, cloud=False, project_id=None):
         default project id.
 
   Returns:
-    A datalab object
+    A google.datalab.utils.Job object that can be used to query state from or wait.
   """
-  import datalab.utils as du
+  import google.datalab.utils as du
   fn = lambda : _analyze(output_dir, dataset, cloud, project_id)
   return du.LambdaJob(fn, job_id=None)  
 
 def _analyze(output_dir, dataset, cloud=False, project_id=None):
-  import datalab.ml as ml
+  import google.datalab.ml as ml
   if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
 
@@ -277,9 +276,9 @@ def train(train_dataset,
     job_name: Training job name. A default will be picked if None.    
 
   Returns:
-    Datalab job
+    A google.datalab.utils.Job object that can be used to query state from or wait.
   """
-  import datalab.utils as du
+  import google.datalab.utils as du
   
   if model_type not in ['linear_classification', 'linear_regression',
       'dnn_classification', 'dnn_regression']:
@@ -434,7 +433,7 @@ def cloud_train(train_dataset,
     config: A CloudTrainingConfig object.
     job_name: Training job name. A default will be picked if None.
   """
-  import datalab
+  import google.datalab.ml as ml
 
   if len(train_dataset.input_files) != 1 or len(eval_dataset.input_files) != 1:
     raise ValueError('CsvDataSets must be built with a file pattern, not list '
@@ -454,9 +453,9 @@ def cloud_train(train_dataset,
   else:
     features_file = features
 
-  if not isinstance(config, datalab.ml.CloudTrainingConfig):
+  if not isinstance(config, ml.CloudTrainingConfig):
     raise ValueError('cloud should be an instance of '
-                     'datalab.ml.CloudTrainingConfig for cloud training.')
+                     'google.datalab.ml.CloudTrainingConfig for cloud training.')
 
   _assert_gcs_files([output_dir, train_dataset.input_files[0],
       eval_dataset.input_files[0], features_file,
@@ -491,7 +490,7 @@ def cloud_train(train_dataset,
 
   if not job_name:
     job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-  job = datalab.ml.Job.submit_training(job_request, job_name)
+  job = ml.Job.submit_training(job_request, job_name)
   print('Job request send. View status of job at')
   print('https://console.developers.google.com/ml/jobs?project=%s' %
         _default_project())
@@ -522,7 +521,7 @@ def predict(data, training_output_dir=None, model_name=None, model_version=None,
   2) gcloud beta ml versions create VERSION --model NAME \
       --origin gs://BUCKET/training_output_dir/model
   or these datalab commands:
-  1) import datalab
+  1) import google.datalab as datalab
      model = datalab.ml.ModelVersions(MODEL_NAME)
      model.deploy(version_name=VERSION,
                   path='gs://BUCKET/training_output_dir/model')
@@ -635,14 +634,13 @@ def cloud_predict(model_name, model_version, data):
   2) gcloud beta ml versions create VERSION --model NAME \
       --origin gs://BUCKET/training_output_dir/model
   or these datalab commands:
-  1) import datalab
+  1) import google.datalab as datalab
      model = datalab.ml.ModelVersions(MODEL_NAME)
      model.deploy(version_name=VERSION,
                   path='gs://BUCKET/training_output_dir/model')
   Note that the model must be on GCS.
   """
-  import datalab.ml as ml
-
+  import google.datalab.ml as ml
 
   if isinstance(data, pd.DataFrame):
     # write the df to csv.
@@ -690,9 +688,9 @@ def batch_predict(training_output_dir, prediction_input_file, output_dir,
         locally.
 
   Returns:
-    Datalab job
+    A google.datalab.utils.Job object that can be used to query state from or wait.
   """
-  import datalab.utils as du
+  import google.datalab.utils as du
   if cloud:
     runner_results = cloud_batch_predict(training_output_dir,
         prediction_input_file, output_dir, mode, batch_size, shard_files,

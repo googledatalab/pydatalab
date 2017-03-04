@@ -1,4 +1,4 @@
-# Copyright 2016 Google Inc. All rights reserved.
+# Copyright 2017 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -11,24 +11,27 @@
 # the License.
 
 
+try:
+  import IPython
+except ImportError:
+  raise Exception('This module can only be loaded in ipython.')
+
 import argparse
+import pandas as pd
 import psutil
 import subprocess
 import time
 
-import google.datalab.utils
-import google.datalab.storage
+import google.datalab as datalab
 
 
-class TensorBoardManager(object):
+class TensorBoard(object):
   """Start, shutdown, and list TensorBoard instances.
   """
 
   @staticmethod
-  def get_running_list():
+  def list():
     """List running TensorBoard instances.
-
-    Returns: A list of {'pid': pid, 'logdir': logdir, 'port': port}
     """
     running_list = []
     parser = argparse.ArgumentParser()
@@ -41,27 +44,15 @@ class TensorBoardManager(object):
       del cmd_args[0:2] # remove 'python' and 'tensorboard'
       args = parser.parse_args(cmd_args)
       running_list.append({'pid': p.pid, 'logdir': args.logdir, 'port': args.port})
-    return running_list
+    return pd.DataFrame(running_list)
 
-  @staticmethod
-  def get_reverse_proxy_url(port):
-    """Get the reverse proxy url. Note that this URL only works with
-       Datalab web server which supports reverse proxy.
-
-    Args:
-      port: the port of the tensorboard instance.
-    Returns: the reverse proxy URL.
-    """
-    return '/_proxy/%d/' % port
-
+  
   @staticmethod
   def start(logdir):
     """Start a TensorBoard instance.
 
     Args:
       logdir: the logdir to run TensorBoard on.
-    Returns:
-      A tuple. First is the pid of the instance. Second is the port used.
     Raises:
       Exception if the instance cannot be started.
     """
@@ -69,15 +60,19 @@ class TensorBoardManager(object):
       # Check user does have access. TensorBoard will start successfully regardless
       # the user has read permissions or not so we check permissions here to
       # give user alerts if needed.
-      google.datalab.storage._api.Api.verify_permitted_to_read(logdir)
+      datalab.storage._api.Api.verify_permitted_to_read(logdir)
 
-    port = google.datalab.utils.pick_unused_port()
+    port = datalab.utils.pick_unused_port()
     args = ['tensorboard', '--logdir=' + logdir, '--port=' + str(port)]
     p = subprocess.Popen(args)
     retry = 5
     while (retry > 0):
-      if google.datalab.utils.is_http_running_on(port):
-        return p.pid, port
+      if datalab.utils.is_http_running_on(port):
+        url = '/_proxy/%d/' % port
+        html = '<p>TensorBoard was started successfully with pid %d. ' % p.pid
+        html += 'Click <a href="%s" target="_blank">here</a> to access it.</p>' % url
+        IPython.display.display_html(html, raw=True)
+        return
       time.sleep(1)
       retry -= 1
 

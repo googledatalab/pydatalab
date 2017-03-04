@@ -17,18 +17,19 @@ from apache_beam.io import gcsio
 import datetime
 import glob
 from googleapiclient import discovery
+import logging
 import os
 import shutil
 import subprocess
 import tempfile
 import time
 
-import google.datalab as datalab
+import datalab.context
 
 # TODO: Create an Operation class.
 def wait_for_long_running_operation(operation_full_name):
   print('Waiting for operation "%s"' % operation_full_name)
-  api = discovery.build('ml', 'v1', credentials=datalab.Context.default().credentials)
+  api = discovery.build('ml', 'v1', credentials=datalab.context.Context.default().credentials)
   while True:
     response = api.projects().operations().get(name=operation_full_name).execute()
     if 'done' not in response or response['done'] != True:

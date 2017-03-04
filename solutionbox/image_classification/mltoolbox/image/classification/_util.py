@@ -38,9 +38,8 @@ def is_in_IPython():
 
 
 def default_project():
-  import datalab.context
-  context = datalab.context.Context.default()
-  return context.project_id
+  from google.datalab import Context
+  return Context.default().project_id
 
 
 def open_local_or_gcs(path, mode):
@@ -199,7 +198,7 @@ def get_sources_from_dataset(p, dataset, mode):
 
   import apache_beam as beam
   import csv
-  from datalab.ml import CsvDataSet, BigQueryDataSet
+  from google.datalab.ml import CsvDataSet, BigQueryDataSet
 
   check_dataset(dataset, mode)
   if type(dataset) is CsvDataSet:
@@ -286,7 +285,7 @@ def process_prediction_results(results, show_image):
 def repackage_to_staging(output_path):
   """Repackage it from local installed location and copy it to GCS."""
 
-  import datalab.ml as ml
+  import google.datalab.ml as ml
 
   # Find the package root. __file__ is under [package_root]/mltoolbox/image/classification.
   package_root = os.path.join(os.path.dirname(__file__), '../../../')
