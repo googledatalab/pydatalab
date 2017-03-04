@@ -280,7 +280,7 @@ class Api(object):
     bucket, prefix = _bucket.parse_name(gs_path)
     credentials = None
     if google.datalab.Context._is_signed_in():
-      credentials = google.datalab.context._utils.get_credentials()
+      credentials = google.datalab.Context.default().credentials
     args = {
         'maxResults': Api._MAX_RESULTS,
         'projection': 'noAcl'

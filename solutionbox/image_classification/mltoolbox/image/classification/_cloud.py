@@ -38,7 +38,7 @@ class Cloud(object):
   def preprocess(train_dataset, output_dir, eval_dataset, checkpoint, pipeline_option):
     """Preprocess data in Cloud with DataFlow."""
 
-    import datalab.utils
+    import google.datalab.utils
 
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
@@ -71,13 +71,13 @@ class Cloud(object):
       html += '<p>Click <a href="%s" target="_blank">here</a> to track preprocessing job. <br/>' \
           % dataflow_url
       IPython.display.display_html(html, raw=True)
-    return datalab.utils.DataflowJob(job_results)
+    return google.datalab.utils.DataflowJob(job_results)
 
   @staticmethod
   def train(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud_train_config):
     """Train model in the cloud with CloudML trainer service."""
 
-    import datalab.ml as ml
+    import google.datalab.ml as ml
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL    
     staging_package_url = _util.repackage_to_staging(output_dir)
@@ -113,7 +113,7 @@ class Cloud(object):
   def predict(model_id, image_files, resize, show_image):
     """Predict using a deployed (online) model."""
 
-    import datalab.ml as ml
+    import google.datalab.ml as ml
 
     images = _util.load_images(image_files, resize=resize)
 
@@ -147,7 +147,7 @@ class Cloud(object):
   def batch_predict(dataset, model_dir, output_csv, output_bq_table, pipeline_option):
     """Batch predict running in cloud."""
 
-    import datalab.utils
+    import google.datalab.utils
 
     if output_csv is None and output_bq_table is None:
       raise ValueError('output_csv and output_bq_table cannot both be None.')
@@ -179,4 +179,4 @@ class Cloud(object):
       html += ('<p>Click <a href="%s" target="_blank">here</a> to track batch prediction job. <br/>'
                % dataflow_url)
       IPython.display.display_html(html, raw=True)
-    return datalab.utils.DataflowJob(job_results)
+    return google.datalab.utils.DataflowJob(job_results)
