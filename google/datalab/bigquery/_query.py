@@ -41,39 +41,48 @@ class Query(object):
       sql: the BigQuery SQL query string to execute
       env: a dictionary containing objects from the query execution context, used to get references
           to UDFs, subqueries, and external data sources referenced by the query
-      udfs: list of UDFs referenced in the SQL.
-      data_sources: list of external data sources referenced in the SQL.
-      subqueries: list of subqueries referenced in the SQL
+      udfs: list of UDFs names referenced in the SQL, or dictionary of names and UDF objects
+      data_sources: list of external data sources names referenced in the SQL, or dictionary of
+          names and data source objects
+      subqueries: list of subqueries names referenced in the SQL, or dictionary of names and
+          Query objects
 
     Raises:
       Exception if expansion of any variables failed.
       """
     self._sql = sql
-    self._udfs = udfs
-    self._subqueries = subqueries
-    self._env = env
-    if self._env is None:
-      self._env = google.datalab.utils.commands.notebook_environment()
+    self._udfs = {}
+    self._subqueries = {}
     self._data_sources = {}
+    self._env = env or {}
 
-    def _validate_object(obj, obj_type):
-      item = self._env.get(obj)
-      if item is None:
-        raise Exception('Cannot find object %s.' % obj)
-      if not isinstance(item, obj_type):
-        raise Exception('Expected type: %s, found: %s.' % (obj_type, type(item)))
+    # Validate given list or dictionary of objects that they are of correct type
+    # and add them to the target dictionary
+    def _expand_objects(obj_container, obj_type, target_dict):
+      for item in obj_container:
+        # for a list of objects, we should find these objects in the given environment
+        if isinstance(obj_container, list):
+          value = self._env.get(item)
+          if value is None:
+            raise Exception('Cannot find object %s' % item)
 
-    # Validate subqueries, UDFs, and datasources when adding them to query
-    if self._subqueries:
-      for subquery in self._subqueries:
-        _validate_object(subquery, Query)
-    if self._udfs:
-      for udf in self._udfs:
-        _validate_object(udf, _udf.UDF)
+        # for a dictionary of objects, each pair must be a string an object of the expected type
+        elif isinstance(obj_container, dict):
+          value = obj_container[item]
+          if not isinstance(value, obj_type):
+            raise Exception('Expected type: %s, found: %s.' % (obj_type, type(value)))
+
+        else:
+          raise Exception('Unexpected container for type %s. Expected a list or dictionary' % obj_type)
+
+        target_dict[item] = value
+
+    if subqueries:
+      _expand_objects(subqueries, Query, self._subqueries)
+    if udfs:
+      _expand_objects(udfs, _udf.UDF, self._udfs)
     if data_sources:
-      for ds in data_sources:
-        _validate_object(ds, _external_data_source.ExternalDataSource)
-        self._data_sources[ds] = self._env[ds]._to_query_json()
+      _expand_objects(data_sources, _external_data_source.ExternalDataSource, self._data_sources)
 
     if len(self._data_sources) > 1:
       raise Exception('Only one temporary external datasource is supported in queries.')
@@ -115,8 +124,8 @@ class Query(object):
       The expanded SQL string of this object
     """
 
-    udfs = set()
-    subqueries = set()
+    udfs = {}
+    subqueries = {}
     expanded_sql = ''
 
     def _recurse_subqueries(query):
@@ -125,21 +134,21 @@ class Query(object):
       if query._subqueries:
         subqueries.update(query._subqueries)
       if query._udfs:
-        udfs.update(set(query._udfs))
+        udfs.update(query._udfs)
       if query._subqueries:
         for subquery in query._subqueries:
-          _recurse_subqueries(self._env[subquery])
+          _recurse_subqueries(query._subqueries[subquery])
 
     subqueries_sql = udfs_sql = ''
     _recurse_subqueries(self)
 
     if udfs:
-      expanded_sql += '\n'.join([self._env[udf]._expanded_sql() for udf in udfs])
+      expanded_sql += '\n'.join([udfs[udf]._expanded_sql() for udf in udfs])
       expanded_sql += '\n'
 
     if subqueries:
       expanded_sql += 'WITH ' + \
-                      ',\n'.join(['%s AS (%s)' % (sq, self._env[sq]._sql) for sq in subqueries])
+                      ',\n'.join(['%s AS (%s)' % (sq, subqueries[sq]._sql) for sq in subqueries])
       expanded_sql += '\n'
 
     expanded_sql += sampling(self._sql) if sampling else self._sql
@@ -169,8 +178,18 @@ class Query(object):
 
   @property
   def udfs(self):
-    """ Get the UDFs referenced by the query."""
+    """ Get a dictionary of UDFs referenced by the query."""
     return self._udfs
+
+  @property
+  def subqueries(self):
+    """ Get a dictionary of subqueries referenced by the query."""
+    return self._subqueries
+
+  @property
+  def data_sources(self):
+    """ Get a dictionary of external data sources referenced by the query."""
+    return self._data_sources
 
   def dry_run(self, context=None, query_params=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
