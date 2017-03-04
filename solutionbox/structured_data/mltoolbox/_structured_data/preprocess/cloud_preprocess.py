@@ -142,7 +142,7 @@ def run_numerical_analysis(table, schema_list, args):
       numerical_results = bq.Query(sql).execute().result().to_dataframe()
     else:
       sql = 'SELECT  %s from csv_table' % ', '.join(max_min)
-      query = bq.Query(sql, data_sources=['csv_table'], env={'csv_table': table})
+      query = bq.Query(sql, data_sources={'csv_table': table})
       numerical_results = query.execute().result().to_dataframe()
 
     # Convert the numerical results to a json file.
@@ -212,7 +212,7 @@ def run_categorical_analysis(table, schema_list, args):
       if args.bigquery_table:
         df = bq.Query(sql).execute().result().to_dataframe()
       else:
-        query = bq.Query(sql, data_sources=['table_name'], env={'table_name': table})
+        query = bq.Query(sql, data_sources={'table_name': table})
         df = query.execute().result().to_dataframe()
 
       # Write the results to a file.
