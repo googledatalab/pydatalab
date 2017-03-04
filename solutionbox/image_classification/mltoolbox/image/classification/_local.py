@@ -41,7 +41,7 @@ class Local(object):
   def preprocess(train_dataset, output_dir, eval_dataset, checkpoint):
     """Preprocess data locally."""
 
-    from datalab.utils import LambdaJob
+    from google.datalab.utils import LambdaJob
 
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
@@ -61,7 +61,7 @@ class Local(object):
   @staticmethod
   def train(input_dir, batch_size, max_steps, output_dir, checkpoint):
     """Train model locally."""
-    from datalab.utils import LambdaJob
+    from google.datalab.utils import LambdaJob
 
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
@@ -88,7 +88,7 @@ class Local(object):
   def batch_predict(dataset, model_dir, output_csv, output_bq_table):
     """Batch predict running locally."""
 
-    from datalab.utils import LambdaJob
+    from google.datalab.utils import LambdaJob
 
     if output_csv is None and output_bq_table is None:
       raise ValueError('output_csv and output_bq_table cannot both be None.')

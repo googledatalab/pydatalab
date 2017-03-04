@@ -39,7 +39,7 @@ def preprocess(train_dataset, output_dir, eval_dataset=None, checkpoint=None, cl
         not None, it will run in cloud. Otherwise, it runs locally.
 
   Returns:
-    A datalab.utils.Job object that can be used to query state from or wait.
+    A google.datalab.utils.Job object that can be used to query state from or wait.
   """
 
   if cloud is None:
@@ -59,11 +59,11 @@ def train(input_dir, batch_size, max_steps, output_dir, checkpoint=None, cloud=N
     max_steps: number of steps to train.
     output_dir: The output directory to use. Can be local or GCS path.
     checkpoint: the Inception checkpoint to use. If None, a default checkpoint is used.
-    cloud: a datalab.ml.CloudTrainingConfig object to let it run in cloud.
+    cloud: a google.datalab.ml.CloudTrainingConfig object to let it run in cloud.
         If None, it runs locally.
 
   Returns:
-    A datalab.utils.Job object that can be used to query state from or wait.
+    A google.datalab.utils.Job object that can be used to query state from or wait.
   """
 
   if cloud is None:
@@ -116,7 +116,7 @@ def batch_predict(dataset, model_dir, output_csv=None, output_bq_table=None, clo
         but it does not include 'temp_location'.
 
   Returns:
-    A datalab.utils.Job object that can be used to query state from or wait.
+    A google.datalab.utils.Job object that can be used to query state from or wait.
   """
   if cloud is None:
     return _local.Local.batch_predict(dataset, model_dir, output_csv, output_bq_table)
