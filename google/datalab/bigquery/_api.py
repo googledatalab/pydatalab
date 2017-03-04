@@ -52,11 +52,6 @@ class Api(object):
     return self._context.credentials
 
   @property
-  def bigquery_dialect(self):
-    """The BigQuery dialect associated with this API client."""
-    return self._context.config.get('bigquery_dialect', 'standard')
-
-  @property
   def bigquery_billing_tier(self):
     """The BigQuery billing tier associated with this API client."""
     return self._context.config.get('bigquery_billing_tier', None)
@@ -172,7 +167,7 @@ class Api(object):
                 'query': sql,
                 'useQueryCache': use_cache,
                 'allowLargeResults': allow_large_results,
-                'useLegacySql': self.bigquery_dialect == 'legacy'
+                'useLegacySql': False
             },
             'dryRun': dry_run,
             'priority': 'BATCH' if batch else 'INTERACTIVE',
