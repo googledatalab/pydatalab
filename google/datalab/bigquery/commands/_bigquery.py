@@ -166,8 +166,6 @@ def _create_sample_subparser(parser):
   group.add_argument('-v', '--view', help='the name of the view object to sample')
   sample_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                               action='store_true')
-  sample_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'])
   sample_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   sample_parser.add_argument('-m', '--method', help='The type of sampling to use',
                              choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
@@ -214,8 +212,6 @@ def _create_dryrun_subparser(parser):
       'Execute a dry run of a BigQuery query and display approximate usage statistics')
   dryrun_parser.add_argument('-q', '--query',
                               help='The name of the query to be dry run')
-  dryrun_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'])
   dryrun_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   dryrun_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
@@ -242,8 +238,6 @@ def _create_execute_subparser(parser):
       'The cell can optionally contain arguments for expanding variables in the query.')
   execute_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                               action='store_true')
-  execute_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'])
   execute_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   execute_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                               choices=['create', 'append', 'overwrite'])
@@ -269,8 +263,6 @@ def _create_extract_subparser(parser):
                               action='store_true')
   extract_parser.add_argument('-f', '--format', choices=['csv', 'json'], default='csv',
                               help='The format to use for the export')
-  extract_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'])
   extract_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   extract_parser.add_argument('-c', '--compress', action='store_true',
                               help='Whether to compress the data')
@@ -324,10 +316,7 @@ def _construct_context_for_args(args):
   for key in global_default_context.config:
     config[key] = global_default_context.config[key]
 
-  dialect_arg = args.get('dialect', None)
   billing_tier_arg = args.get('billing', None)
-  if dialect_arg:
-    config['bigquery_dialect'] = dialect_arg
   if billing_tier_arg:
     config['bigquery_billing_tier'] = billing_tier_arg
 
