@@ -150,7 +150,7 @@ class Api(object):
           priority, more expensive).
       allow_large_results: whether to allow large results (slower with some restrictions but
           can handle big jobs).
-      table_definitions: a dictionary of JSON external table definitions for any external tables
+      table_definitions: a dictionary of ExternalDataSource names and objects for any external tables
           referenced in the query.
       query_params: a dictionary containing query parameter types and values, passed to BigQuery.
     Returns:
@@ -177,7 +177,10 @@ class Api(object):
     query_config = data['configuration']['query']
 
     if table_definitions:
-      query_config['tableDefinitions'] = table_definitions
+      expanded_definitions = {}
+      for td in table_definitions:
+        expanded_definitions[td] = table_definitions[td]._to_query_json()
+      query_config['tableDefinitions'] = expanded_definitions
 
     if table_name:
       query_config['destinationTable'] = {
