@@ -64,6 +64,13 @@ class Context(object):
   def set_project_id(self, project_id):
     """ Set the project_id for the context. """
     self._project_id = project_id
+    if self == Context._global_context:
+      try:
+        from google.datalab import Context as new_context
+        new_context.default().set_project_id(project_id)
+      except ImportError:
+        # If the new library is not loaded, then we have nothing to do.
+        pass
 
   @staticmethod
   def is_signed_in():
