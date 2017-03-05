@@ -117,7 +117,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/element.js',
         'static/style.js',
         'static/visualization.js',
-        'static/codemirror/mode/sql.js',
+        'static/codemirror/mode/bigquery.js',
         'static/parcoords.js',
         'static/extern/d3.parcoords.js',
         'static/extern/d3.parcoords.css',

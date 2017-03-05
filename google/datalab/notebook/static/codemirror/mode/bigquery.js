@@ -13,7 +13,7 @@
  */
 
 define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) {
-  CodeMirror.defineMode('sql', function(config) {
+  CodeMirror.defineMode('bigquery', function(config) {
     var indentUnit = config.indentUnit;
     var curPunc;
 
@@ -429,6 +429,6 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
     };
   });
 
-  CodeMirror.defineMIME('text/sql', 'sql');
+  CodeMirror.defineMIME('text/bigquery', 'bigquery');
 });
 
