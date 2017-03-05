@@ -21,68 +21,21 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
       return new RegExp('^(?:' + words.join('|') + ')$', 'i');
     }
 
+    /*
+     * Based on the documentation at:
+     * https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical
+     */
     var keywords = wordRegexp([
-      'ALL',
-      'AND',
-      'ARRAY',
-      'AS',
-      'ASC',
-      'BETWEEN',
-      'BY',
-      'CASE',
-      'CONTAINS',
-      'COUNT',
-      'CROSS',
-      'DELETE',
-      'DESC',
-      'DISTINCT',
-      'EACH',
-      'ELSE',
-      'END',
-      'FALSE',
-      'FROM',
-      'FULL',
-      'GROUP',
-      'HAVING',
-      'IGNORE',
-      'IN',
-      'INNER',
-      'INSERT',
-      'IS',
-      'JOIN',
-      'LEFT',
-      'LIKE',
-      'LIMIT',
-      'NOT',
-      'NULL',
-      'OMIT',
-      'ON',
-      'OR',
-      'ORDER',
-      'OUTER',
-      'OVER',
-      'PARTITION',
-      'RECORD',
-      'RIGHT',
-      'ROLLUP',
-      'SELECT',
-      'SET',
-      'STRUCT',
-      'THEN',
-      'TRUE',
-      'UNION',
-      'UNNEST',
-      'UPDATE',
-      'VALUES',
-      'WHEN',
-      'WHERE',
-      'WITH',
-      'WITHIN',
-      'XOR',
-
-      // DataLab extensions
-      'DEFINE',
-      'QUERY'
+      'ALL', 'ANY', 'AS', 'ASC', 'ASSERT_ROWS_MODIFIED', 'AT', 'BETWEEN', 'BY', 'CASE', 'CAST',
+      'COLLATE', 'CONTAINS', 'CREATE', 'CROSS', 'CUBE', 'CURRENT', 'DELETE', 'DEFAULT', 'DEFINE',
+      'DESC', 'DISTINCT', 'ELSE', 'END', 'ENUM', 'ESCAPE', 'EXCEPT', 'EXCLUDE', 'EXISTS',
+      'EXTRACT', 'FALSE', 'FETCH', 'FOLLOWING', 'FOR', 'FROM', 'FULL', 'GROUP', 'GROUPING',
+      'GROUPS', 'HASH', 'HAVING', 'IF', 'IGNORE', 'IN', 'INNER', 'INSERT', 'INTERSECT', 'INTERVAL',
+      'INTO', 'JOIN', 'LATERAL', 'LEFT', 'LIMIT', 'LOOKUP', 'NATURAL', 'NEW', 'NULL', 'MERGE',
+      'NO', 'NULLS', 'OF', 'ON', 'ORDER', 'OUTER', 'OVER', 'PARTITION', 'PRECEDING', 'PROTO',
+      'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT', 'ROLLUP', 'ROWS', 'SELECT', 'SET', 'SOME',
+      'TABLESAMPLE', 'THEN', 'TO', 'TREAT', 'TRUE', 'UNBOUNDED', 'UNION', 'UNNEST', 'UPDATE',
+      'USING', 'WHEN', 'WHERE', 'WINDOW', 'WITH', 'WITHIN'
     ]);
 
     /*
@@ -90,213 +43,79 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
      * https://developers.google.com/bigquery/query-reference
      */
     var functions = wordRegexp([
-      'ABS',
-      'ACOS',
-      'ACOSH',
-      'ASIN',
-      'ASINH',
-      'ATAN',
-      'ATAN2',
-      'ATANH',
-      'AVG',
-      'BIT_AND',
-      'BIT_COUNT',
-      'BIT_OR',
-      'BIT_XOR',
-      'BOOLEAN',
-      'CAST',  // Not really a function, but close enough for syntax highlighting.
-      'CEIL',
-      'COALESCE',
-      'CONCAT',
-      'CORR',
-      'COS',
-      'COSH',
-      'COUNT',
-      'COVAR_POP',
-      'COVAR_SAMP',
-      'CUME_DIST',
-      'CURRENT_DATE',
-      'CURRENT_TIME',
-      'CURRENT_TIMESTAMP',
-      'DATE',
-      'DATEDIFF',
-      'DATE_ADD',
-      'DAY',
-      'DAYOFWEEK',
-      'DAYOFYEAR',
-      'DEGREES',
-      'DENSE_RANK',
-      'DOMAIN',
-      'EVERY',
-      'EXACT_COUNT_DISTINCT',
-      'EXP',
-      'FIRST',
-      'FIRST_VALUE',
-      'FLATTEN',
-      'FLOAT',
-      'FLOOR',
-      'FORMAT_IP',
-      'FORMAT_PACKED_IP',
-      'FORMAT_UTC_USEC',
-      'GREATEST',
-      'GROUPING',
-      'GROUP_CONCAT',
-      'GROUP_CONCAT_UNQUOTED',
-      'HASH',
-      'HEX_STRING',
-      'HOST',
-      'HOUR',
-      'IF',
-      'IFNULL',
-      'INSTR',
-      'INTEGER',
-      'IS_EXPLICITLY_DEFINED',
-      'IS_INF',
-      'IS_NAN',
-      'JSON_EXTRACT',
-      'JSON_EXTRACT_SCALAR',
-      'LAG',
-      'LAST',
-      'LAST_VALUE',
-      'LEAD',
-      'LEAST',
-      'LEFT',
-      'LENGTH',
-      'LN',
-      'LOG',
-      'LOG10',
-      'LOG2',
-      'LOWER',
-      'LPAD',
-      'LTRIM',
-      'NTILE',
-      'MAX',
-      'MIN',
-      'MINUTE',
-      'MONTH',
-      'MSEC_TO_TIMESTAMP',
-      'NEST',
-      'NOW',
-      'NTH',
-      'NTH_VALUE',
-      'PARSE_IP',
-      'PARSE_PACKED_IP',
-      'PARSE_UTC_USEC',
-      'PERCENT_RANK',
-      'PERCENTILE_CONT',
-      'PERCENTILE_DISC',
-      'PERCENTILE_RANK',
-      'PI',
-      'POSITION',
-      'POW',
-      'QUANTILES',
-      'QUARTER',
-      'RADIANS',
-      'RAND',
-      'RANK',
-      'RATIO_TO_REPORT',
-      'REGEXP_EXTRACT',
-      'REGEXP_MATCH',
-      'REGEXP_REPLACE',
-      'REPLACE',
-      'RIGHT',
-      'ROUND',
-      'ROW_NUMBER',
-      'RPAD',
-      'RTRIM',
-      'SECOND',
-      'SEC_TO_TIMESTAMP',
-      'SIN',
-      'SINH',
-      'SOME',
-      'SPLIT',
-      'SQRT',
-      'STDDEV',
-      'STDDEV_POP',
-      'STDDEV_SAMP',
-      'STRFTIME_UTC_USEC',
-      'STRING',
-      'SUBSTR',
-      'SUM',
-      'TABLE_DATE_RANGE',
-      'TABLE_DATE_RANGE_STRICT',
-      'TABLE_QUERY',
-      'TAN',
-      'TANH',
-      'TIME',
-      'TIMESTAMP',
-      'TIMESTAMP_TO_MSEC',
-      'TIMESTAMP_TO_SEC',
-      'TIMESTAMP_TO_USEC',
-      'TLD',
-      'TOP',
-      'UNIQUE',
-      'UPPER',
-      'USEC_TO_TIMESTAMP',
-      'UTC_USEC_TO_DAY',
-      'UTC_USEC_TO_HOUR',
-      'UTC_USEC_TO_MONTH',
-      'UTC_USEC_TO_QUARTER',
-      'UTC_USEC_TO_WEEK',
-      'UTC_USEC_TO_YEAR',
-      'VARIANCE',
-      'VAR_POP',
-      'VAR_SAMP',
-      'WEEK',
-      'YEAR',
-
-      // DataLab extensions
-      'source',
-      'datestring'
+      'ABS', 'ACOS', 'ACOSH', 'ANY_VALUE', 'APPROX_COUNT_DISTINCT', 'APPROX_QUANTILES',
+      'APPROX_TOP_COUNT', 'APPROX_TOP_SUM', 'ARRAY_AGG', 'ARRAY_CONCAT', 'ARRAY_CONCAT_AGG',
+      'ARRAY_LENGTH', 'ARRAY_REVERSE', 'ARRAY_TO_STRING', 'ASIN', 'ASINH', 'ATAN', 'ATAN2',
+      'ATANH', 'AVG', 'BIT_AND', 'BIT_COUNT', 'BIT_OR', 'BIT_XOR', 'BYTE_LENGTH', 'CEIL',
+      'CEILING', 'CHARACTER_LENGTH', 'CHAR_LENGTH', 'CODE_POINTS_TO_BYTES',
+      'CODE_POINTS_TO_STRING', 'CONCAT', 'CORR', 'COS', 'COSH', 'COUNT', 'COUNTIF', 'COVAR_POP',
+      'COVAR_SAMP', 'CUME_DIST', 'CURRENT_DATE', 'CURRENT_DATETIME', 'CURRENT_TIME',
+      'CURRENT_TIMESTAMP', 'DATE', 'DATETIME', 'DATETIME_ADD', 'DATETIME_DIFF', 'DATETIME_SUB',
+      'DATETIME_TRUNC', 'DATE_ADD', 'DATE_DIFF', 'DATE_FROM_UNIX_DATE', 'DATE_SUB', 'DATE_TRUNC',
+      'DENSE_RANK', 'DIV', 'ENDS_WITH', 'EXP', 'EXTRACT', 'FARM_FINGERPRINT', 'FIRST_VALUE',
+      'FLOOR', 'FORMAT', 'FORMAT_DATE', 'FORMAT_DATETIME', 'FORMAT_TIME', 'FORMAT_TIMESTAMP',
+      'FROM_BASE64', 'GENERATE_ARRAY', 'GENERATE_DATE_ARRAY', 'GREATEST', 'IEEE_DIVIDE', 'IS_INF',
+      'IS_NAN', 'JSON_EXTRACT', 'JSON_EXTRACT_SCALAR', 'LAG', 'LAST_VALUE', 'LEAD', 'LEAST',
+      'LENGTH', 'LN', 'LOG', 'LOG10', 'LOGICAL_AND', 'LOGICAL_OR', 'LOWER', 'LPAD', 'LTRIM', 'MAX',
+      'MD5', 'MIN', 'MOD', 'NET.HOST', 'NET.IPV4_FROM_INT64', 'NET.IPV4_TO_INT64',
+      'NET.IP_FROM_STRING', 'NET.IP_NET_MASK', 'NET.IP_TO_STRING', 'NET.IP_TRUNC',
+      'NET.PUBLIC_SUFFIX', 'NET.REG_DOMAIN', 'NET.SAFE_IP_FROM_STRING', 'NTH_VALUE', 'NTILE',
+      'OFFSET', 'ORDINAL', 'PARSE_DATE', 'PARSE_DATETIME', 'PARSE_TIME', 'PARSE_TIMESTAMP',
+      'PERCENT_RANK', 'POW', 'POWER', 'RAND', 'RANK', 'REGEXP_CONTAINS', 'REGEXP_EXTRACT',
+      'REGEXP_EXTRACT_ALL', 'REGEXP_REPLACE', 'REPEAT', 'REPLACE', 'REVERSE', 'ROUND',
+      'ROW_NUMBER', 'RPAD', 'RTRIM', 'SAFE_CONVERT_BYTES_TO_STRING', 'SAFE_DIVIDE', 'SAFE_OFFSET',
+      'SAFE_ORDINAL', 'SESSION_USER', 'SHA1', 'SHA256', 'SHA512', 'SIGN', 'SIN', 'SINH', 'SPLIT',
+      'SQRT', 'STARTS_WITH', 'STDDEV', 'STDDEV_POP', 'STDDEV_SAMP', 'STRING_AGG',
+      'STRPOS', 'SUBSTR', 'SUM', 'TAN', 'TANH', 'TIMESTAMP', 'TIMESTAMP_ADD', 'TIMESTAMP_DIFF',
+      'TIMESTAMP_MICROS', 'TIMESTAMP_MILLIS', 'TIMESTAMP_SECONDS', 'TIMESTAMP_SUB',
+      'TIMESTAMP_TRUNC', 'TIME_ADD', 'TIME_DIFF', 'TIME_SUB', 'TIME_TRUNC', 'TO_BASE64',
+      'TO_CODE_POINTS', 'TRIM', 'TRUNC', 'UNIX_DATE', 'UNIX_MICROS', 'UNIX_MILLIS', 'UNIX_SECONDS',
+      'UPPER', 'VARIANCE', 'VAR_POP', 'VAR_SAMP'
     ]);
 
-    var types = wordRegexp([]);
+    var types = wordRegexp([
+      'INT64', 'FLOAT64', 'BOOL', 'STRING', 'BYTES', 'DATE', 'TIME', 'TIMESTAMP', 'ARRAY', 'STRUCT'
+    ]);
 
-    var operatorChars = /[*+\-<>=&|]/;
+    var operatorChars = /[.~^!<>*+=&|\\-]/;
+    var operatorWords = wordRegexp([
+      'NOT', 'LIKE', 'IS', 'AND', 'OR'
+    ]);
+
     var punctuationChars = /[{}\(\),;\[\]]/;
 
     function tokenBase(stream, state) {
       var ch = stream.next();
       curPunc = null;
-      if (stream.column() == 0 && ch == '#') {
+      if (ch == '#') {
         stream.skipToEnd();
         return 'comment';
-      } else if (ch === '$' || ch === '?') {
-        stream.match(/^[\w\d]*/);
-        return 'variable-2';
-      } else if (ch === '<' && !stream.match(/^[\s\u00a0=]/, false)) {
-        stream.match(/^[^\s\u00a0>]*>?/);
-        return 'atom';
-      } else if (ch === '"' || ch === '\'') {
-        state.tokenize = tokenLiteral(ch);
-        return state.tokenize(stream, state);
-      } else if (ch === '`') {
-        state.tokenize = tokenOpLiteral(ch);
-        return state.tokenize(stream, state);
-      } else if (punctuationChars.test(ch)) {
-        curPunc = ch;
-        return null;
       } else if (ch === '-') {
         var ch2 = stream.next();
         if (ch2 === '-') {
           stream.skipToEnd();
           return 'comment';
         }
+      } else if (ch === '$' || ch === '?') {
+        stream.match(/^[\w\d]*/);
+        return 'variable-2';
+      } else if (ch === '"' || ch === '\'') {
+        state.tokenize = tokenLiteral(ch);
+        return state.tokenize(stream, state);
+      } else if (ch === '`') {
+        stream.eatWhile(/[^`]/);
+        return 'string'
+      } else if (punctuationChars.test(ch)) {
+        curPunc = ch;
+        return null;
       } else if (operatorChars.test(ch)) {
         stream.eatWhile(operatorChars);
-        return null;
-      } else if (ch === ':') {
-        stream.eatWhile(/[\w\d._\-]/);
-        return 'atom';
+        return 'operator';
       } else if (ch.charCodeAt(0) > 47 && ch.charCodeAt(0) < 58) {
         stream.match(/^[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?/);
         return "number"
       } else {
         stream.eatWhile(/[_\w\d.\-]/);
-        if (stream.eat(':')) {
-          stream.eatWhile(/[\w\d._\-]/);
-          return 'atom';
-        }
 
         var word = stream.current();
         if (functions.test(word))
@@ -305,6 +124,8 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
           return 'keyword';
         else if (types.test(word))
           return 'type';
+        else if (operatorWords.test(word))
+          return 'operator';
         else
           return 'variable';
       }
