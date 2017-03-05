@@ -99,12 +99,9 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
       } else if (ch === '$' || ch === '?') {
         stream.match(/^[\w\d]*/);
         return 'variable-2';
-      } else if (ch === '"' || ch === '\'') {
+      } else if (ch === '"' || ch === '\'' || ch === '`') {
         state.tokenize = tokenLiteral(ch);
         return state.tokenize(stream, state);
-      } else if (ch === '`') {
-        stream.eatWhile(/[^`]/);
-        return 'string'
       } else if (punctuationChars.test(ch)) {
         curPunc = ch;
         return null;
@@ -142,20 +139,6 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
           escaped = !escaped && ch === '\\';
         }
         return 'string';
-      };
-    }
-
-    function tokenOpLiteral(quote) {
-      return function(stream, state) {
-        var escaped = false, ch;
-        while ((ch = stream.next()) != null) {
-          if (ch === quote && !escaped) {
-            state.tokenize = tokenBase;
-            break;
-          }
-          escaped = !escaped && ch === '\\'
-        }
-        return 'variable-2';
       };
     }
 
