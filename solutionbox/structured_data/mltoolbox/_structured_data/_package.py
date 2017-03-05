@@ -125,8 +125,17 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
 # Analyze
 # ==============================================================================
 
-
 def analyze(output_dir, dataset, cloud=False, project_id=None):
+  """Blocking version of analyze_async. See documentation of analyze_async."""
+  job = analyze_async(
+      output_dir=output_dir,
+      dataset=dataset,
+      cloud=cloud,
+      project_id=project_id)
+  job.wait()
+  return job
+
+def analyze_async(output_dir, dataset, cloud=False, project_id=None):
   """Analyze data locally or in the cloud with BigQuery.
 
   Produce analysis used by training. This can take a while, even for small
@@ -188,7 +197,7 @@ def _analyze(output_dir, dataset, cloud=False, project_id=None):
 # ==============================================================================
 # Train
 # ==============================================================================
-def train(train_dataset,
+def train_async(train_dataset,
           eval_dataset,
           analysis_output_dir,
           output_dir,
@@ -667,6 +676,25 @@ def cloud_predict(model_name, model_version, data):
 # ==============================================================================
 
 def batch_predict(training_output_dir, prediction_input_file, output_dir,
+                  mode, batch_size=16, shard_files=True, output_format='csv',
+                  cloud=False):
+  """Blocking versoin of batch_predict. 
+
+  See documentation of batch_prediction_async.
+  """
+  job = batch_prediction_async(
+      training_output_dir=training_output_dir,
+      prediction_input_file=prediction_input_file, 
+      output_dir=output_dir,
+      mode=mode, 
+      batch_size=batch_size, 
+      shard_files=shard_files, 
+      output_format=output_format,
+      cloud=cloud)
+  job.wait()
+  return job
+
+def batch_predict_async(training_output_dir, prediction_input_file, output_dir,
                   mode, batch_size=16, shard_files=True, output_format='csv',
                   cloud=False):
   """Local and cloud batch prediction.
