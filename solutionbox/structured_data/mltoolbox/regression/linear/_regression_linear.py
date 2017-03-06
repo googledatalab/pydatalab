@@ -33,7 +33,7 @@ def train(train_dataset,
       cloud=cloud, 
       )
   job.wait()
-  print(job.__repr__())
+  print('Training: ' + str(job.state))
 
 
 def train(train_dataset,
