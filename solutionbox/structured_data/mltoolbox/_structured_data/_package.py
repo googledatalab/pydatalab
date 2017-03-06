@@ -686,7 +686,7 @@ def batch_predict(training_output_dir, prediction_input_file, output_dir,
 
   See documentation of batch_prediction_async.
   """
-  job = batch_prediction_async(
+  job = batch_predict_async(
       training_output_dir=training_output_dir,
       prediction_input_file=prediction_input_file, 
       output_dir=output_dir,
