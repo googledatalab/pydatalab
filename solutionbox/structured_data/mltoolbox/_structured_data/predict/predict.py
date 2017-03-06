@@ -40,7 +40,7 @@ def parse_arguments(argv):
                       action='store_true',
                       help='Run preprocessing on the cloud.')
   parser.add_argument('--job-name',
-                      default=('structured-data-batch-prediction-'
+                      default=('mltoolbox-batch-prediction-'
                           + datetime.datetime.now().strftime('%Y%m%d%H%M%S')),
                       help='Dataflow job name. Must be unique over all jobs.')
   parser.add_argument('--extra-package',
