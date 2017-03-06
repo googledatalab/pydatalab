@@ -40,15 +40,22 @@ import glob
 import StringIO
 import subprocess
 import uuid
-
 import pandas as pd
 import tensorflow as tf
-
 from tensorflow.python.lib.io import file_io
 
-from . import preprocess
-from . import trainer
-from . import predict as predict_module
+# Note that subpackages of _structured_data are locally imported.
+# This is because this part of the mltoolbox is packaged up during training
+# and batch prediction. This package depends on datafow, but the trainer
+# workers should not need it; therefore at training time, a package cannot
+# import apache_beam.
+
+# Likewise, datalab packages are locally imported. This is because TF and
+# dataflow workers should not need it.
+
+
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinux1_x86_64.whl'
+_PROTOBUF_GS_URL = 'gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl'
 
 
 def _default_project():
@@ -158,6 +165,8 @@ def analyze_async(output_dir, dataset, cloud=False, project_id=None):
 
 def _analyze(output_dir, dataset, cloud=False, project_id=None):
   import google.datalab.ml as ml
+  from . import preprocess 
+
   if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
 
@@ -499,7 +508,7 @@ def cloud_train(train_dataset,
       args.append('--layer-size%s=%s' % (i+1, str(layer_sizes[i])))
 
   job_request = {
-    'package_uris': [_package_to_staging(output_dir)],
+    'package_uris': [_package_to_staging(output_dir), _TF_GS_URL, _PROTOBUF_GS_URL],
     'python_module': 'mltoolbox._structured_data.trainer.task',
     'job_dir': output_dir,
     'args': args
@@ -579,6 +588,9 @@ def local_predict(training_dir, data):
     data: List of csv strings or a Pandas DataFrame that match the model schema.
 
   """
+  #from . import predict as predict_module
+  from .prediction import predict as predict_module
+
   # Save the instances to a file, call local batch prediction, and return it
   tmp_dir = tempfile.mkdtemp()
   _, input_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.csv',
@@ -605,7 +617,8 @@ def local_predict(training_dir, data):
            '--mode=prediction',
            '--no-shard-files']
 
-    runner_results = predict_module.predict.main(cmd)
+    #runner_results = predict_module.predict.main(cmd)
+    runner_results = predict_module.main(cmd)
     runner_results.wait_until_finish()
 
     # Read the header file.
@@ -746,6 +759,8 @@ def local_batch_predict(training_dir, prediction_input_file, output_dir,
                         mode,
                         batch_size, shard_files, output_format):
   """See batch_predict"""
+  #from . import predict as predict_module
+  from .prediction import predict as predict_module
 
   if mode == 'evaluation':
     model_dir = os.path.join(training_dir, 'evaluation_model')
@@ -767,7 +782,8 @@ def local_batch_predict(training_dir, prediction_input_file, output_dir,
          '--has-target' if mode == 'evaluation' else '--no-has-target'
          ]
 
-  return predict_module.predict.main(cmd)
+  #return predict_module.predict.main(cmd)
+  return predict_module.main(cmd)
 
 
 
@@ -775,6 +791,8 @@ def cloud_batch_predict(training_dir, prediction_input_file, output_dir,
                         mode,
                         batch_size, shard_files, output_format):
   """See batch_predict"""
+  #from . import predict as predict_module
+  from .prediction import predict as predict_module
 
   if mode == 'evaluation':
     model_dir = os.path.join(training_dir, 'evaluation_model')
@@ -798,7 +816,10 @@ def cloud_batch_predict(training_dir, prediction_input_file, output_dir,
          '--output-format=%s' % output_format,
          '--batch-size=%s' % str(batch_size),
          '--shard-files' if shard_files else '--no-shard-files',
-         '--extra-package=%s' % _package_to_staging(output_dir)]
+         '--extra-package=%s' % _TF_GS_URL,
+         '--extra-package=%s' % _PROTOBUF_GS_URL,
+         '--extra-package=%s' % _package_to_staging(output_dir)
+         ]
 
-  return predict_module.predict.main(cmd)
+  return predict_module.main(cmd)
 
