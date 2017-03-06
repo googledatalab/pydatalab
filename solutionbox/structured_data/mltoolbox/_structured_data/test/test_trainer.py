@@ -49,7 +49,7 @@ class TestTrainer(unittest.TestCase):
 
   def tearDown(self):
     print('TestTrainer: removing test dir ' + self._test_dir)
-    #shutil.rmtree(self._test_dir)
+    shutil.rmtree(self._test_dir)
 
 
   def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
@@ -152,8 +152,7 @@ class TestTrainer(unittest.TestCase):
 
 
   def _check_train_files(self):
-    model_folder = os.path.join(self._train_output, 
-        'train/export/prediction_model')
+    model_folder = os.path.join(self._train_output, 'model')
     self.assertTrue(
         os.path.isfile(os.path.join(model_folder, 'saved_model.pb')))
     self.assertTrue(
@@ -202,7 +201,7 @@ class TestTrainer(unittest.TestCase):
                        model_type='linear',
                        transforms=transforms)
 
-    self._check_training_screen_output(loss=100)
+    self._check_training_screen_output(loss=20)
     self._check_train_files()
 
 
@@ -224,7 +223,7 @@ class TestTrainer(unittest.TestCase):
                        transforms=transforms,
                        extra_args=extra_args)
 
-    self._check_training_screen_output(accuracy=0.95, loss=0.09)
+    self._check_training_screen_output(accuracy=0.70, loss=0.10)
     self._check_train_files()
 
 
@@ -244,6 +243,6 @@ class TestTrainer(unittest.TestCase):
                        model_type='linear',
                        transforms=transforms)
 
-    self._check_training_screen_output(accuracy=0.90, loss=0.2)
+    self._check_training_screen_output(accuracy=0.70, loss=0.2)
     self._check_train_files()
 
