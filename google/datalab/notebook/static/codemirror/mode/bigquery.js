@@ -96,9 +96,9 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
           stream.skipToEnd();
           return 'comment';
         }
-      } else if (ch === '$' || ch === '?') {
+      } else if (ch === '$' || ch === '?' || ch === '@') {
         stream.match(/^[\w\d]*/);
-        return 'variable-2';
+        return 'atom';
       } else if (ch === '"' || ch === '\'' || ch === '`') {
         state.tokenize = tokenLiteral(ch);
         return state.tokenize(stream, state);
