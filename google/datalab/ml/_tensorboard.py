@@ -72,7 +72,7 @@ class TensorBoard(object):
         html = '<p>TensorBoard was started successfully with pid %d. ' % p.pid
         html += 'Click <a href="%s" target="_blank">here</a> to access it.</p>' % url
         IPython.display.display_html(html, raw=True)
-        return
+        return p.pid
       time.sleep(1)
       retry -= 1
 
