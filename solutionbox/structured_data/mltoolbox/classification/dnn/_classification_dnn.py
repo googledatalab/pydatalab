@@ -37,6 +37,7 @@ def train(train_dataset,
       cloud=cloud, 
       )
   job.wait()
+  print(job.__repr__())
 
 
 def train_async(train_dataset,
