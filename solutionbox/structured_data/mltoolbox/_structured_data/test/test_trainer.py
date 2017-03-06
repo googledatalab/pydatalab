@@ -44,7 +44,7 @@ class TestTrainer(unittest.TestCase):
     self._input_features_filename = os.path.join(self._test_dir, 
                                                  'input_features_file.json')
 
-    self._transforms_filename = os.path.join(self._test_dir, 'transforms.json')
+    self._transforms_filename = os.path.join(self._test_dir, 'features.json')
 
 
   def tearDown(self):
@@ -161,7 +161,7 @@ class TestTrainer(unittest.TestCase):
     self.assertTrue(
         os.path.isfile(os.path.join(model_folder, 'assets.extra/schema.json')))
     self.assertTrue(
-        os.path.isfile(os.path.join(model_folder, 'assets.extra/transforms.json')))
+        os.path.isfile(os.path.join(model_folder, 'assets.extra/features.json')))
 
 
   def testRegressionDnn(self):

@@ -128,5 +128,6 @@ def train_async(train_dataset,
       learning_rate=learning_rate,
       epsilon=epsilon,
       job_name=job_name,
+      job_name_prefix='mltoolbox_classification_linear',
       cloud=cloud,      
   )

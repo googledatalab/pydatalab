@@ -27,7 +27,7 @@ import sys
 from tensorflow.python.lib.io import file_io
 
 SCHEMA_FILE = 'schema.json'
-NUMERICAL_ANALYSIS_FILE = 'numerical_analysis.json'
+NUMERICAL_ANALYSIS_FILE = 'stats.json'
 CATEGORICAL_ANALYSIS_FILE = 'vocab_%s.csv'
 
 
