@@ -82,7 +82,7 @@ def get_experiment_fn(args):
     schema_file = os.path.join(args.preprocess_output_dir, util.SCHEMA_FILE)
 
     # Make list of files to save with the trained model.
-    additional_assets = {'transforms.json': args.transforms_file,
+    additional_assets = {'features.json': args.transforms_file,
                          util.SCHEMA_FILE: schema_file}
     if util.is_classification_model(args.model_type):
       target_name = train_config['target_column']
@@ -152,9 +152,8 @@ def parse_arguments(argv):
                       type=str,
                       required=True,
                       help=('Output folder of preprocessing. Should contain the'
-                            ' files input_features.json, schema.json, and the'
-                            ' optional files numerical_analysis.json and'
-                            ' vocab_str1.csv. Path must be on GCS if running'
+                            ' schema file, and numerical stats and vocab files.'
+                            ' Path must be on GCS if running'
                             ' cloud training.'))
   parser.add_argument('--transforms-file',
                       type=str,
@@ -196,7 +195,7 @@ def parse_arguments(argv):
                       help=('Minimum number of training steps between '
                             'evaluations'))
 
-  # Training output parameters
+  # other parameters
   parser.add_argument('--save-checkpoints-secs', type=int, default=600,
                       help=('How often the model should be checkpointed/saved '
                             'in seconds'))
@@ -236,11 +235,11 @@ def main(argv=None):
   """Run a Tensorflow model on the Iris dataset."""
   args = parse_arguments(sys.argv if argv is None else argv)
 
+  tf.logging.set_verbosity(tf.logging.INFO)
   learn_runner.run(
       experiment_fn=get_experiment_fn(args),
       output_dir=args.job_dir)
 
 
 if __name__ == '__main__':
-  tf.logging.set_verbosity(tf.logging.INFO)
   main()

@@ -40,15 +40,22 @@ import glob
 import StringIO
 import subprocess
 import uuid
-
 import pandas as pd
 import tensorflow as tf
-
 from tensorflow.python.lib.io import file_io
 
-from . import preprocess
-from . import trainer
-from . import predict as predict_module
+# Note that subpackages of _structured_data are locally imported.
+# This is because this part of the mltoolbox is packaged up during training
+# and batch prediction. This package depends on datafow, but the trainer
+# workers should not need it; therefore at training time, a package cannot
+# import apache_beam.
+
+# Likewise, datalab packages are locally imported. This is because TF and
+# dataflow workers should not need it.
+
+
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinux1_x86_64.whl'
+_PROTOBUF_GS_URL = 'gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl'
 
 
 def _default_project():
@@ -89,7 +96,7 @@ def _package_to_staging(staging_package_url):
         os.path.join(os.path.dirname(__file__), '../../'))
     setup_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), 'master_setup.py'))
-    tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
+    tar_gz_path = os.path.join(staging_package_url, 'staging', 'trainer.tar.gz')
 
     print('Building package and uploading to %s' % tar_gz_path)
     ml.package_and_copy(package_root, setup_path, tar_gz_path)
@@ -125,8 +132,17 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
 # Analyze
 # ==============================================================================
 
-
 def analyze(output_dir, dataset, cloud=False, project_id=None):
+  """Blocking version of analyze_async. See documentation of analyze_async."""
+  job = analyze_async(
+      output_dir=output_dir,
+      dataset=dataset,
+      cloud=cloud,
+      project_id=project_id)
+  job.wait()
+
+
+def analyze_async(output_dir, dataset, cloud=False, project_id=None):
   """Analyze data locally or in the cloud with BigQuery.
 
   Produce analysis used by training. This can take a while, even for small
@@ -149,6 +165,8 @@ def analyze(output_dir, dataset, cloud=False, project_id=None):
 
 def _analyze(output_dir, dataset, cloud=False, project_id=None):
   import google.datalab.ml as ml
+  from . import preprocess 
+
   if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
 
@@ -188,9 +206,9 @@ def _analyze(output_dir, dataset, cloud=False, project_id=None):
 # ==============================================================================
 # Train
 # ==============================================================================
-def train(train_dataset,
+def train_async(train_dataset,
           eval_dataset,
-          analysis_output_dir,
+          analysis_dir,
           output_dir,
           features,
           model_type,
@@ -204,6 +222,7 @@ def train(train_dataset,
           learning_rate=0.01,
           epsilon=0.0005,
           job_name=None, # cloud param
+          job_name_prefix='', # cloud param
           cloud=None, # cloud param
           ):
   # NOTE: if you make a chane go this doc string, you MUST COPY it 4 TIMES in 
@@ -217,7 +236,7 @@ def train(train_dataset,
   Args for local training:
     train_dataset: CsvDataSet
     eval_dataset: CsvDataSet
-    analysis_output_dir:  The output directory from local_analysis
+    analysis_dir:  The output directory from local_analysis
     output_dir:  Output directory of training.
     features: file path or features object. Example:
         {
@@ -273,7 +292,9 @@ def train(train_dataset,
     contains two additional args:
 
     cloud: A CloudTrainingConfig object.
-    job_name: Training job name. A default will be picked if None.    
+    job_name: Training job name. A default will be picked if None. 
+    job_name_prefix: If job_name is None, the job will be named 
+        '<job_name_prefix>_<timestamp>'.   
 
   Returns:
     A google.datalab.utils.Job object that can be used to query state from or wait.
@@ -288,7 +309,7 @@ def train(train_dataset,
     return cloud_train(
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        analysis_output_dir=analysis_output_dir,
+        analysis_dir=analysis_dir,
         output_dir=output_dir,
         features=features,
         model_type=model_type,
@@ -302,6 +323,7 @@ def train(train_dataset,
         learning_rate=learning_rate,
         epsilon=epsilon,
         job_name=job_name,
+        job_name_prefix=job_name_prefix,
         config=cloud,      
     )
   else:
@@ -309,7 +331,7 @@ def train(train_dataset,
       return local_train(
           train_dataset=train_dataset,
           eval_dataset=eval_dataset,
-          analysis_output_dir=analysis_output_dir,
+          analysis_dir=analysis_dir,
           output_dir=output_dir,
           features=features,
           model_type=model_type,
@@ -326,7 +348,7 @@ def train(train_dataset,
 
 def local_train(train_dataset,
                 eval_dataset,
-                analysis_output_dir,
+                analysis_dir,
                 output_dir,
                 features,
                 model_type,
@@ -371,7 +393,7 @@ def local_train(train_dataset,
           '--train-data-paths=%s' % _get_abs_path(train_dataset.input_files[0]),
           '--eval-data-paths=%s' % _get_abs_path(eval_dataset.input_files[0]),
           '--job-dir=%s' % _get_abs_path(output_dir),
-          '--preprocess-output-dir=%s' % _get_abs_path(analysis_output_dir),
+          '--preprocess-output-dir=%s' % _get_abs_path(analysis_dir),
           '--transforms-file=%s' % _get_abs_path(features_file),
           '--model-type=%s' % model_type,
           '--max-steps=%s' % str(max_steps),
@@ -402,7 +424,11 @@ def local_train(train_dataset,
     monitor_process = subprocess.Popen(['python', '-c', script])
 
     while p.poll() is None:
-      sys.stdout.write(p.stdout.readline())
+      line = p.stdout.readline()
+      if (line.startswith('INFO:tensorflow:global') or
+          line.startswith('INFO:tensorflow:loss') or
+          line.startswith('INFO:tensorflow:Saving dict')):
+        sys.stdout.write(line)
   finally:
     if monitor_process:
       monitor_process.kill()
@@ -411,7 +437,7 @@ def local_train(train_dataset,
 
 def cloud_train(train_dataset,
                 eval_dataset,
-                analysis_output_dir,
+                analysis_dir,
                 output_dir,
                 features,
                 model_type,
@@ -425,6 +451,7 @@ def cloud_train(train_dataset,
                 learning_rate,
                 epsilon,
                 job_name,
+                job_name_prefix,
                 config):
   """Train model using CloudML.
 
@@ -459,11 +486,11 @@ def cloud_train(train_dataset,
 
   _assert_gcs_files([output_dir, train_dataset.input_files[0],
       eval_dataset.input_files[0], features_file,
-      analysis_output_dir])
+      analysis_dir])
 
   args = ['--train-data-paths=%s' % train_dataset.input_files[0],
           '--eval-data-paths=%s' % eval_dataset.input_files[0],
-          '--preprocess-output-dir=%s' % analysis_output_dir,
+          '--preprocess-output-dir=%s' % analysis_dir,
           '--transforms-file=%s' % features_file,
           '--model-type=%s' % model_type,
           '--max-steps=%s' % str(max_steps),
@@ -481,7 +508,7 @@ def cloud_train(train_dataset,
       args.append('--layer-size%s=%s' % (i+1, str(layer_sizes[i])))
 
   job_request = {
-    'package_uris': [_package_to_staging(output_dir)],
+    'package_uris': [_package_to_staging(output_dir), _TF_GS_URL, _PROTOBUF_GS_URL],
     'python_module': 'mltoolbox._structured_data.trainer.task',
     'job_dir': output_dir,
     'args': args
@@ -489,7 +516,8 @@ def cloud_train(train_dataset,
   job_request.update(dict(config._asdict()))
 
   if not job_name:
-    job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+    job_name = job_name_prefix or 'structured_data_train'
+    job_name += '_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
   job = ml.Job.submit_training(job_request, job_name)
   print('Job request send. View status of job at')
   print('https://console.developers.google.com/ml/jobs?project=%s' %
@@ -501,16 +529,16 @@ def cloud_train(train_dataset,
 # Predict
 # ==============================================================================
 
-def predict(data, training_output_dir=None, model_name=None, model_version=None, 
+def predict(data, training_dir=None, model_name=None, model_version=None, 
   cloud=False):
   """Runs prediction locally or on the cloud.
 
   Args:
     data: List of csv strings or a Pandas DataFrame that match the model schema.
-    training_output_dir: local path to the trained output folder.
+    training_dir: local path to the trained output folder.
     model_name: deployed model name
     model_version: depoyed model version
-    cloud: bool. If False, does local prediction and data and training_output_dir
+    cloud: bool. If False, does local prediction and data and training_dir
         must be set. If True, does cloud prediction and data, model_name, 
         and model_version must be set.
 
@@ -519,12 +547,12 @@ def predict(data, training_output_dir=None, model_name=None, model_version=None,
   two gcloud commands:
   1) gcloud beta ml models create NAME
   2) gcloud beta ml versions create VERSION --model NAME \
-      --origin gs://BUCKET/training_output_dir/model
+      --origin gs://BUCKET/training_dir/model
   or these datalab commands:
   1) import google.datalab as datalab
      model = datalab.ml.ModelVersions(MODEL_NAME)
      model.deploy(version_name=VERSION,
-                  path='gs://BUCKET/training_output_dir/model')
+                  path='gs://BUCKET/training_dir/model')
   Note that the model must be on GCS.
 
   Returns:
@@ -533,20 +561,20 @@ def predict(data, training_output_dir=None, model_name=None, model_version=None,
   if cloud:
     if not model_version or not model_name:
       raise ValueError('model_version or model_name is not set')
-    if training_output_dir:
-      raise ValueError('training_output_dir not needed when cloud is True')
+    if training_dir:
+      raise ValueError('training_dir not needed when cloud is True')
 
     return cloud_predict(model_name, model_version, data)
   else:
-    if not training_output_dir:
-      raise ValueError('training_output_dir is not set')
+    if not training_dir:
+      raise ValueError('training_dir is not set')
     if model_version or model_name:
       raise ValueError('model_name and model_version not needed when cloud is '
                        'False.')
-    return local_predict(training_output_dir, data)
+    return local_predict(training_dir, data)
 
 
-def local_predict(training_output_dir, data):
+def local_predict(training_dir, data):
   """Runs local prediction on the prediction graph.
 
   Runs local prediction and returns the result in a Pandas DataFrame. For
@@ -556,10 +584,13 @@ def local_predict(training_output_dir, data):
   exist.
 
   Args:
-    training_output_dir: local path to the trained output folder.
+    training_dir: local path to the trained output folder.
     data: List of csv strings or a Pandas DataFrame that match the model schema.
 
   """
+  #from . import predict as predict_module
+  from .prediction import predict as predict_module
+
   # Save the instances to a file, call local batch prediction, and return it
   tmp_dir = tempfile.mkdtemp()
   _, input_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.csv',
@@ -573,9 +604,9 @@ def local_predict(training_output_dir, data):
         for line in data:
           f.write(line + '\n')
 
-    model_dir = os.path.join(training_output_dir, 'model')
+    model_dir = os.path.join(training_dir, 'model')
     if not file_io.file_exists(model_dir):
-      raise ValueError('training_output_dir should contain the folder model')
+      raise ValueError('training_dir should contain the folder model')
 
     cmd = ['predict.py',
            '--predict-data=%s' % input_file_path,
@@ -586,10 +617,9 @@ def local_predict(training_output_dir, data):
            '--mode=prediction',
            '--no-shard-files']
 
-    print('Starting local prediction.')
-    runner_results = predict_module.predict.main(cmd)
+    #runner_results = predict_module.predict.main(cmd)
+    runner_results = predict_module.main(cmd)
     runner_results.wait_until_finish()
-    print('Local prediction done.')
 
     # Read the header file.
     schema_file = os.path.join(tmp_dir, 'csv_schema.json')
@@ -632,12 +662,12 @@ def cloud_predict(model_name, model_version, data):
   two gcloud commands:
   1) gcloud beta ml models create NAME
   2) gcloud beta ml versions create VERSION --model NAME \
-      --origin gs://BUCKET/training_output_dir/model
+      --origin gs://BUCKET/training_dir/model
   or these datalab commands:
   1) import google.datalab as datalab
      model = datalab.ml.ModelVersions(MODEL_NAME)
      model.deploy(version_name=VERSION,
-                  path='gs://BUCKET/training_output_dir/model')
+                  path='gs://BUCKET/training_dir/model')
   Note that the model must be on GCS.
   """
   import google.datalab.ml as ml
@@ -666,13 +696,32 @@ def cloud_predict(model_name, model_version, data):
 # Batch predict
 # ==============================================================================
 
-def batch_predict(training_output_dir, prediction_input_file, output_dir,
+def batch_predict(training_dir, prediction_input_file, output_dir,
+                  mode, batch_size=16, shard_files=True, output_format='csv',
+                  cloud=False):
+  """Blocking versoin of batch_predict. 
+
+  See documentation of batch_prediction_async.
+  """
+  job = batch_predict_async(
+      training_dir=training_dir,
+      prediction_input_file=prediction_input_file, 
+      output_dir=output_dir,
+      mode=mode, 
+      batch_size=batch_size, 
+      shard_files=shard_files, 
+      output_format=output_format,
+      cloud=cloud)
+  job.wait()
+
+
+def batch_predict_async(training_dir, prediction_input_file, output_dir,
                   mode, batch_size=16, shard_files=True, output_format='csv',
                   cloud=False):
   """Local and cloud batch prediction.
 
   Args:
-    training_output_dir: The output folder of training.
+    training_dir: The output folder of training.
     prediction_input_file: csv file pattern to a file. File must be on GCS if 
         running cloud prediction
     output_dir: output location to save the results. Must be a GSC path if 
@@ -692,12 +741,12 @@ def batch_predict(training_output_dir, prediction_input_file, output_dir,
   """
   import google.datalab.utils as du
   if cloud:
-    runner_results = cloud_batch_predict(training_output_dir,
+    runner_results = cloud_batch_predict(training_dir,
         prediction_input_file, output_dir, mode, batch_size, shard_files,
         output_format)
     job = du.DataflowJob(runner_results)
   else:
-    runner_results = local_batch_predict(training_output_dir,
+    runner_results = local_batch_predict(training_dir,
         prediction_input_file, output_dir, mode, batch_size, shard_files, 
         output_format)
     job = du.LambdaJob(lambda: runner_results.wait_until_finish(),
@@ -706,15 +755,17 @@ def batch_predict(training_output_dir, prediction_input_file, output_dir,
   return job
 
 
-def local_batch_predict(training_output_dir, prediction_input_file, output_dir,
+def local_batch_predict(training_dir, prediction_input_file, output_dir,
                         mode,
                         batch_size, shard_files, output_format):
   """See batch_predict"""
+  #from . import predict as predict_module
+  from .prediction import predict as predict_module
 
   if mode == 'evaluation':
-    model_dir = os.path.join(training_output_dir, 'evaluation_model')
+    model_dir = os.path.join(training_dir, 'evaluation_model')
   elif mode == 'prediction':
-    model_dir = os.path.join(training_output_dir, 'model')
+    model_dir = os.path.join(training_dir, 'model')
   else:
     raise ValueError('mode must be evaluation or prediction')
 
@@ -731,26 +782,29 @@ def local_batch_predict(training_output_dir, prediction_input_file, output_dir,
          '--has-target' if mode == 'evaluation' else '--no-has-target'
          ]
 
-  return predict_module.predict.main(cmd)
+  #return predict_module.predict.main(cmd)
+  return predict_module.main(cmd)
 
 
 
-def cloud_batch_predict(training_output_dir, prediction_input_file, output_dir,
+def cloud_batch_predict(training_dir, prediction_input_file, output_dir,
                         mode,
                         batch_size, shard_files, output_format):
   """See batch_predict"""
+  #from . import predict as predict_module
+  from .prediction import predict as predict_module
 
   if mode == 'evaluation':
-    model_dir = os.path.join(training_output_dir, 'evaluation_model')
+    model_dir = os.path.join(training_dir, 'evaluation_model')
   elif mode == 'prediction':
-    model_dir = os.path.join(training_output_dir, 'model')
+    model_dir = os.path.join(training_dir, 'model')
   else:
     raise ValueError('mode must be evaluation or prediction')
 
   if not file_io.file_exists(model_dir):
     raise ValueError('Model folder %s does not exist' % model_dir)
 
-  _assert_gcs_files([training_output_dir, prediction_input_file,
+  _assert_gcs_files([training_dir, prediction_input_file,
       output_dir])
 
   cmd = ['predict.py',
@@ -762,7 +816,10 @@ def cloud_batch_predict(training_output_dir, prediction_input_file, output_dir,
          '--output-format=%s' % output_format,
          '--batch-size=%s' % str(batch_size),
          '--shard-files' if shard_files else '--no-shard-files',
-         '--extra-package=%s' % _package_to_staging(output_dir)]
+         '--extra-package=%s' % _TF_GS_URL,
+         '--extra-package=%s' % _PROTOBUF_GS_URL,
+         '--extra-package=%s' % _package_to_staging(output_dir)
+         ]
 
-  return predict_module.predict.main(cmd)
+  return predict_module.main(cmd)
 

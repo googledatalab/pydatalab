@@ -1,7 +1,43 @@
-from mltoolbox._structured_data import train as core_train
+from mltoolbox._structured_data import train_async as core_train
+
 def train(train_dataset,
           eval_dataset,
-          analysis_output_dir,
+          analysis_dir,
+          output_dir,
+          features,
+          max_steps=5000,
+          num_epochs=None,
+          train_batch_size=100,
+          eval_batch_size=16,
+          min_eval_frequency=100,
+          learning_rate=0.01,
+          epsilon=0.0005,
+          job_name=None, 
+          cloud=None, 
+          ):
+  """Blocking version of train_async. See documentation for train_async."""
+  job = train_async(
+      train_dataset=train_dataset,
+      eval_dataset=eval_dataset,
+      analysis_dir=analysis_dir,
+      output_dir=output_dir,
+      features=features,
+      max_steps=max_steps,
+      num_epochs=num_epochs,
+      train_batch_size=train_batch_size,
+      eval_batch_size=eval_batch_size,
+      min_eval_frequency=min_eval_frequency,
+      learning_rate=learning_rate,
+      epsilon=epsilon,
+      job_name=job_name, 
+      cloud=cloud, 
+      )
+  job.wait()
+
+
+def train(train_dataset,
+          eval_dataset,
+          analysis_dir,
           output_dir,
           features,
           max_steps=5000,
@@ -19,7 +55,7 @@ def train(train_dataset,
   Args for local training:
     train_dataset: CsvDataSet
     eval_dataset: CsvDataSet
-    analysis_output_dir:  The output directory from local_analysis
+    analysis_dir:  The output directory from local_analysis
     output_dir:  Output directory of training.
     features: file path or features object. Example:
         {
@@ -72,7 +108,7 @@ def train(train_dataset,
   return core_train(
       train_dataset=train_dataset,
       eval_dataset=eval_dataset,
-      analysis_output_dir=analysis_output_dir,
+      analysis_dir=analysis_dir,
       output_dir=output_dir,
       features=features,
       model_type='linear_regression', 
@@ -86,5 +122,6 @@ def train(train_dataset,
       learning_rate=learning_rate,
       epsilon=epsilon,
       job_name=job_name,
+      job_name_prefix='mltoolbox_regression_linear',
       cloud=cloud,      
   )

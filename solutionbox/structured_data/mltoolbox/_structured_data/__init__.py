@@ -10,4 +10,5 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-from ._package import analyze, train, predict, batch_predict
+from ._package import (analyze, analyze_async, train_async, predict, 
+                       batch_predict, batch_predict_async)

@@ -62,7 +62,7 @@ class TestPreprocess(unittest.TestCase):
 
 
     schema_file = os.path.join(self._preprocess_output, 'schema.json')
-    numerical_analysis_file = os.path.join(self._preprocess_output, 'numerical_analysis.json')
+    numerical_analysis_file = os.path.join(self._preprocess_output, 'stats.json')
 
     # test schema file was copied
     self.assertTrue(filecmp.cmp(schema_file, self._schema_filename))
@@ -87,7 +87,7 @@ class TestPreprocess(unittest.TestCase):
       self.assertTrue(os.path.exists(vocab_file))
       self.assertGreater(os.path.getsize(vocab_file), 0)
 
-    all_expected_files = (expected_vocab_files + ['numerical_analysis.json',
+    all_expected_files = (expected_vocab_files + ['stats.json',
                          'schema.json'])
     all_file_paths = glob.glob(os.path.join(self._preprocess_output, '*'))
     all_files = [os.path.basename(path) for path in all_file_paths]

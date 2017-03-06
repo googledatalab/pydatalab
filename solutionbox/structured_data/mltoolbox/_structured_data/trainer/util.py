@@ -43,7 +43,7 @@ from tensorflow.python.saved_model import signature_def_utils
 
 
 SCHEMA_FILE = 'schema.json'
-NUMERICAL_ANALYSIS = 'numerical_analysis.json'
+NUMERICAL_ANALYSIS = 'stats.json'
 CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
 
 
