@@ -11,4 +11,4 @@
 # the License.
 
 
-from ._api import preprocess,train,predict,batch_predict
+from ._api import preprocess,preprocess_async,train,train_async,predict,batch_predict,batch_predict_async
