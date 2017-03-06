@@ -2,7 +2,7 @@ from mltoolbox._structured_data import train_async as core_train
 
 def train(train_dataset,
           eval_dataset,
-          analysis_output_dir,
+          analysis_dir,
           output_dir,
           features,
           layer_sizes,
@@ -20,7 +20,7 @@ def train(train_dataset,
   job = train_async(
       train_dataset=train_dataset,
       eval_dataset=eval_dataset,
-      analysis_output_dir=analysis_output_dir,
+      analysis_dir=analysis_dir,
       output_dir=output_dir,
       features=features,
       layer_sizes=layer_sizes,
@@ -39,7 +39,7 @@ def train(train_dataset,
 
 def train_async(train_dataset,
           eval_dataset,
-          analysis_output_dir,
+          analysis_dir,
           output_dir,
           features,
           layer_sizes,
@@ -58,7 +58,7 @@ def train_async(train_dataset,
   Args for local training:
     train_dataset: CsvDataSet
     eval_dataset: CsvDataSet
-    analysis_output_dir:  The output directory from local_analysis
+    analysis_dir:  The output directory from local_analysis
     output_dir:  Output directory of training.
     features: file path or features object. Example:
         {
@@ -117,7 +117,7 @@ def train_async(train_dataset,
   return core_train(
       train_dataset=train_dataset,
       eval_dataset=eval_dataset,
-      analysis_output_dir=analysis_output_dir,
+      analysis_dir=analysis_dir,
       output_dir=output_dir,
       features=features,
       model_type='dnn_regression', 
