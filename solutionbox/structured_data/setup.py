@@ -50,7 +50,7 @@ setup(
     'mltoolbox.regression.dnn',
     'mltoolbox._structured_data', 
     'mltoolbox._structured_data.preprocess', 
-    'mltoolbox._structured_data.predict', 
+    'mltoolbox._structured_data.prediction', 
     # 'mltoolbox._structured_data.test', 
     'mltoolbox._structured_data.trainer', 
   ],
