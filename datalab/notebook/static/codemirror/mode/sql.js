@@ -252,7 +252,7 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
 
     var types = wordRegexp([]);
 
-    var operatorChars = /[*+\-<>=&|]/;
+    var operatorChars = /[<>*+=&|\\-]/;
     var punctuationChars = /[{}\(\),;\[\]]/;
 
     function tokenBase(stream, state) {
@@ -284,7 +284,7 @@ define(["require", 'codemirror/lib/codemirror'], function (require, CodeMirror) 
         }
       } else if (operatorChars.test(ch)) {
         stream.eatWhile(operatorChars);
-        return null;
+        return 'operator';
       } else if (ch === ':') {
         stream.eatWhile(/[\w\d._\-]/);
         return 'atom';

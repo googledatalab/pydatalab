@@ -12,7 +12,7 @@
  * the License.
  */
 
-/// <reference path="../../../externs/ts/require/require.d.ts" />
+/// <reference path="../../../../externs/ts/require/require.d.ts" />
 
 module Element {
 
