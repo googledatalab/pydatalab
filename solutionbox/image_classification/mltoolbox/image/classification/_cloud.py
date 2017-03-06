@@ -31,6 +31,9 @@ from . import _trainer
 from . import _util
 
 
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinux1_x86_64.whl'
+_PROTOBUF_GS_URL = 'gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl'
+
 class Cloud(object):
   """Class for cloud training, preprocessing and prediction."""
 
@@ -51,7 +54,7 @@ class Cloud(object):
         'temp_location': os.path.join(output_dir, 'tmp'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [staging_package_url],
+        'extra_packages': [staging_package_url, _TF_GS_URL, _PROTOBUF_GS_URL],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
@@ -62,7 +65,14 @@ class Cloud(object):
     p = beam.Pipeline('DataflowRunner', options=opts)
     _preprocess.configure_pipeline(p, train_dataset, eval_dataset, checkpoint,
         output_dir, job_name)
-    job_results = p.run()
+    # suppress DataFlow warnings about wheel package as extra package.
+    logger = logging.getLogger()		
+    logger.setLevel(logging.ERROR)
+    original_level = logger.getEffectiveLevel()
+    try:
+      job_results = p.run()
+    finally:
+      logger.setLevel(original_level)
     if (_util.is_in_IPython()):
       import IPython
       dataflow_url = 'https://console.developers.google.com/dataflow?project=%s' % \
@@ -88,7 +98,7 @@ class Cloud(object):
       'checkpoint': checkpoint
     }
     job_request = {
-      'package_uris': [staging_package_url],
+      'package_uris': [staging_package_url, _TF_GS_URL, _PROTOBUF_GS_URL],
       'python_module': 'mltoolbox.image.classification.task',
       'job_dir': output_dir,
       'args': job_args
@@ -161,7 +171,7 @@ class Cloud(object):
         'staging_location': os.path.join(pipeline_option['temp_location'], 'staging'),
         'job_name': job_name,
         'project': _util.default_project(),
-        'extra_packages': [staging_package_url],
+        'extra_packages': [staging_package_url, _TF_GS_URL, _PROTOBUF_GS_URL],
         'teardown_policy': 'TEARDOWN_ALWAYS',
         'no_save_main_session': True
     }
@@ -170,7 +180,13 @@ class Cloud(object):
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     p = beam.Pipeline('DataflowRunner', options=opts)
     _predictor.configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table)
-    job_results = p.run()
+    logger = logging.getLogger()		
+    logger.setLevel(logging.ERROR)
+    original_level = logger.getEffectiveLevel()
+    try:
+      job_results = p.run()
+    finally:
+      logger.setLevel(original_level)
     if (_util.is_in_IPython()):
       import IPython
       dataflow_url = ('https://console.developers.google.com/dataflow?project=%s' %
