@@ -89,7 +89,7 @@ def _package_to_staging(staging_package_url):
         os.path.join(os.path.dirname(__file__), '../../'))
     setup_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), 'master_setup.py'))
-    tar_gz_path = os.path.join(staging_package_url, 'staging', 'sd.tar.gz')
+    tar_gz_path = os.path.join(staging_package_url, 'staging', 'trainer.tar.gz')
 
     print('Building package and uploading to %s' % tar_gz_path)
     ml.package_and_copy(package_root, setup_path, tar_gz_path)
@@ -125,8 +125,17 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
 # Analyze
 # ==============================================================================
 
-
 def analyze(output_dir, dataset, cloud=False, project_id=None):
+  """Blocking version of analyze_async. See documentation of analyze_async."""
+  job = analyze_async(
+      output_dir=output_dir,
+      dataset=dataset,
+      cloud=cloud,
+      project_id=project_id)
+  job.wait()
+
+
+def analyze_async(output_dir, dataset, cloud=False, project_id=None):
   """Analyze data locally or in the cloud with BigQuery.
 
   Produce analysis used by training. This can take a while, even for small
@@ -188,7 +197,7 @@ def _analyze(output_dir, dataset, cloud=False, project_id=None):
 # ==============================================================================
 # Train
 # ==============================================================================
-def train(train_dataset,
+def train_async(train_dataset,
           eval_dataset,
           analysis_output_dir,
           output_dir,
@@ -204,6 +213,7 @@ def train(train_dataset,
           learning_rate=0.01,
           epsilon=0.0005,
           job_name=None, # cloud param
+          job_name_prefix='', # cloud param
           cloud=None, # cloud param
           ):
   # NOTE: if you make a chane go this doc string, you MUST COPY it 4 TIMES in 
@@ -273,7 +283,9 @@ def train(train_dataset,
     contains two additional args:
 
     cloud: A CloudTrainingConfig object.
-    job_name: Training job name. A default will be picked if None.    
+    job_name: Training job name. A default will be picked if None. 
+    job_name_prefix: If job_name is None, the job will be named 
+        '<job_name_prefix>_<timestamp>'.   
 
   Returns:
     A google.datalab.utils.Job object that can be used to query state from or wait.
@@ -302,6 +314,7 @@ def train(train_dataset,
         learning_rate=learning_rate,
         epsilon=epsilon,
         job_name=job_name,
+        job_name_prefix=job_name_prefix,
         config=cloud,      
     )
   else:
@@ -402,7 +415,11 @@ def local_train(train_dataset,
     monitor_process = subprocess.Popen(['python', '-c', script])
 
     while p.poll() is None:
-      sys.stdout.write(p.stdout.readline())
+      line = p.stdout.readline()
+      if (line.startswith('INFO:tensorflow:global') or
+          line.startswith('INFO:tensorflow:loss') or
+          line.startswith('INFO:tensorflow:Saving dict')):
+        sys.stdout.write(line)
   finally:
     if monitor_process:
       monitor_process.kill()
@@ -425,6 +442,7 @@ def cloud_train(train_dataset,
                 learning_rate,
                 epsilon,
                 job_name,
+                job_name_prefix,
                 config):
   """Train model using CloudML.
 
@@ -489,7 +507,8 @@ def cloud_train(train_dataset,
   job_request.update(dict(config._asdict()))
 
   if not job_name:
-    job_name = 'structured_data_train_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+    job_name = job_name_prefix or 'structured_data_train'
+    job_name += '_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
   job = ml.Job.submit_training(job_request, job_name)
   print('Job request send. View status of job at')
   print('https://console.developers.google.com/ml/jobs?project=%s' %
@@ -586,10 +605,8 @@ def local_predict(training_output_dir, data):
            '--mode=prediction',
            '--no-shard-files']
 
-    print('Starting local prediction.')
     runner_results = predict_module.predict.main(cmd)
     runner_results.wait_until_finish()
-    print('Local prediction done.')
 
     # Read the header file.
     schema_file = os.path.join(tmp_dir, 'csv_schema.json')
@@ -667,6 +684,25 @@ def cloud_predict(model_name, model_version, data):
 # ==============================================================================
 
 def batch_predict(training_output_dir, prediction_input_file, output_dir,
+                  mode, batch_size=16, shard_files=True, output_format='csv',
+                  cloud=False):
+  """Blocking versoin of batch_predict. 
+
+  See documentation of batch_prediction_async.
+  """
+  job = batch_predict_async(
+      training_output_dir=training_output_dir,
+      prediction_input_file=prediction_input_file, 
+      output_dir=output_dir,
+      mode=mode, 
+      batch_size=batch_size, 
+      shard_files=shard_files, 
+      output_format=output_format,
+      cloud=cloud)
+  job.wait()
+
+
+def batch_predict_async(training_output_dir, prediction_input_file, output_dir,
                   mode, batch_size=16, shard_files=True, output_format='csv',
                   cloud=False):
   """Local and cloud batch prediction.
