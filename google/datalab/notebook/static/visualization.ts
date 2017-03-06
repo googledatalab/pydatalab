@@ -14,7 +14,7 @@
 
 // require.js plugin to allow Google Chart API to be loaded.
 
-/// <reference path="../../../externs/ts/require/require.d.ts" />
+/// <reference path="../../../../externs/ts/require/require.d.ts" />
 
 declare var google: any;
 declare var window: any;
