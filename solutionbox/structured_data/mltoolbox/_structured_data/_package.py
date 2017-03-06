@@ -133,7 +133,7 @@ def analyze(output_dir, dataset, cloud=False, project_id=None):
       cloud=cloud,
       project_id=project_id)
   job.wait()
-  return job
+
 
 def analyze_async(output_dir, dataset, cloud=False, project_id=None):
   """Analyze data locally or in the cloud with BigQuery.
@@ -700,7 +700,7 @@ def batch_predict(training_output_dir, prediction_input_file, output_dir,
       output_format=output_format,
       cloud=cloud)
   job.wait()
-  return job
+
 
 def batch_predict_async(training_output_dir, prediction_input_file, output_dir,
                   mode, batch_size=16, shard_files=True, output_format='csv',

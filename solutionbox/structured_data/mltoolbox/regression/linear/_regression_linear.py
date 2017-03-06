@@ -33,7 +33,7 @@ def train(train_dataset,
       cloud=cloud, 
       )
   job.wait()
-  return job
+
 
 def train(train_dataset,
           eval_dataset,
