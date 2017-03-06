@@ -195,7 +195,7 @@ def parse_arguments(argv):
                       help=('Minimum number of training steps between '
                             'evaluations'))
 
-  # Training output parameters
+  # other parameters
   parser.add_argument('--save-checkpoints-secs', type=int, default=600,
                       help=('How often the model should be checkpointed/saved '
                             'in seconds'))
@@ -235,11 +235,11 @@ def main(argv=None):
   """Run a Tensorflow model on the Iris dataset."""
   args = parse_arguments(sys.argv if argv is None else argv)
 
+  tf.logging.set_verbosity(tf.logging.INFO)
   learn_runner.run(
       experiment_fn=get_experiment_fn(args),
       output_dir=args.job_dir)
 
 
 if __name__ == '__main__':
-  tf.logging.set_verbosity(tf.logging.INFO)
   main()

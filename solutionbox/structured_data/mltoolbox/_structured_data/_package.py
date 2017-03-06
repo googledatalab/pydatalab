@@ -415,7 +415,11 @@ def local_train(train_dataset,
     monitor_process = subprocess.Popen(['python', '-c', script])
 
     while p.poll() is None:
-      sys.stdout.write(p.stdout.readline())
+      line = p.stdout.readline()
+      if (line.startswith('INFO:tensorflow:global') or
+          line.startswith('INFO:tensorflow:loss') or
+          line.startswith('INFO:tensorflow:Saving dict')):
+        sys.stdout.write(line)
   finally:
     if monitor_process:
       monitor_process.kill()
