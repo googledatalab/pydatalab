@@ -221,8 +221,9 @@ def _create_dryrun_subparser(parser):
 
 def _create_query_subparser(parser):
   query_parser = parser.subcommand('query',
-      'Create a BigQuery SQL query object, optionally using other SQL objects, UDFs, or external datasources.')
-  query_parser.add_argument('-n', '--name', help='The name of this SQL query object', required=True)
+      'Create or execute a BigQuery SQL query object, optionally using other SQL objects, UDFs, ' + \
+              'or external datasources. If a query name is not specified, the query is executed.')
+  query_parser.add_argument('-n', '--name', help='The name of this SQL query object')
   query_parser.add_argument('--udfs', help='List of UDFs to reference in the query body', nargs='+')
   query_parser.add_argument('--datasources', help='List of external datasources to reference in the query body',
                             nargs='+')
@@ -575,7 +576,12 @@ def _query_cell(args, cell_body):
   # Finally build the query object
   query = google.datalab.bigquery.Query(cell_body, env=IPython.get_ipython().user_ns,
                                         udfs=udfs, data_sources=datasources, subqueries=subqueries)
-  google.datalab.utils.commands.notebook_environment()[name] = query
+
+  # if no name is specified, execute this query instead of defining it
+  if name is None:
+    return query.execute().result()
+  else:
+    google.datalab.utils.commands.notebook_environment()[name] = query
 
 
 def _execute_cell(args, cell_body):
