@@ -8,9 +8,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>datalab.data package &mdash; Google Cloud Datalab  documentation</title>
+  <title>datalab.data Module &mdash; Google Cloud Datalab  documentation</title>
   
 
+  
+  
   
   
 
@@ -34,8 +36,8 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
-        <link rel="next" title="datalab.mlalpha package" href="datalab.mlalpha.html"/>
-        <link rel="prev" title="datalab.context package" href="datalab.context.html"/> 
+        <link rel="next" title="datalab.stackdriver.monitoring Module" href="datalab.stackdriver.monitoring.html"/>
+        <link rel="prev" title="datalab.context Module" href="datalab.context.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -44,6 +46,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -80,17 +83,23 @@
           
             
             
-                <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context package</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.data package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-datalab.data">Module contents</a></li>
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.magics.html">google.datalab.magics</a></li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.mlalpha.html">datalab.mlalpha package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.utils.html">datalab.utils package</a></li>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.magics.html">datalab.magics</a></li>
 </ul>
 
@@ -104,8 +113,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">Google Cloud Datalab</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Google Cloud Datalab</a>
+        
       </nav>
 
 
@@ -114,36 +125,51 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li>datalab.data package</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>datalab.data Module</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/datalab.data.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="datalab-data-package">
-<h1>datalab.data package<a class="headerlink" href="#datalab-data-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-datalab.data">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-datalab.data" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="module-datalab.data">
+<span id="datalab-data-module"></span><h1>datalab.data Module<a class="headerlink" href="#module-datalab.data" title="Permalink to this headline">¶</a></h1>
 <p>Google Cloud Platform library - Generic SQL Helpers.</p>
 <dl class="class">
 <dt id="datalab.data.Csv">
-<em class="property">class </em><code class="descclassname">datalab.data.</code><code class="descname">Csv</code><span class="sig-paren">(</span><em>path</em>, <em>delimiter=u'</em>, <em>'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">datalab.data.</code><code class="descname">Csv</code><span class="sig-paren">(</span><em>path</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_csv.html#Csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.Csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a CSV file in GCS or locally with same schema.</p>
 <p>Initializes an instance of a Csv instance.
 :param path: path of the Csv file.
@@ -324,46 +350,22 @@ exception if that fails due to either undefined or circular references.</p>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="datalab.data.tokenize">
-<code class="descclassname">datalab.data.</code><code class="descname">tokenize</code><span class="sig-paren">(</span><em>sql</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/data/_utils.html#tokenize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.data.tokenize" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is a basic tokenizer for our limited purposes.
-It splits a SQL statement up into a series of segments, where a segment is one of:
-- identifiers
-- left or right parentheses
-- multi-line comments
-- single line comments
-- white-space sequences
-- string literals
-- consecutive strings of characters that are not one of the items above</p>
-<p>The aim is for us to be able to find function calls (identifiers followed by &#8216;(&#8216;), and the
-associated closing &#8216;)&#8217;) so we can augment these if needed.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sql</strong> &#8211; a SQL statement as a (possibly multi-line) string.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A list of strings corresponding to the groups above.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</div>
 </div>
 
 
+           </div>
+           <div class="articleComments">
+            
            </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="datalab.mlalpha.html" class="btn btn-neutral float-right" title="datalab.mlalpha package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="datalab.stackdriver.monitoring.html" class="btn btn-neutral float-right" title="datalab.stackdriver.monitoring Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="datalab.context.html" class="btn btn-neutral" title="datalab.context package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="datalab.context.html" class="btn btn-neutral" title="datalab.context Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -397,7 +399,8 @@ associated closing &#8216;)&#8217;) so we can augment these if needed.</p>
             VERSION:'',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>

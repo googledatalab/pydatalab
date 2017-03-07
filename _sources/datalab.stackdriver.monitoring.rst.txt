@@ -1,8 +1,5 @@
-datalab.stackdriver.monitoring package
-======================================
-
-Module contents
----------------
+datalab.stackdriver.monitoring Module
+=====================================
 
 .. autoclass:: datalab.stackdriver.monitoring.Groups
     :members:

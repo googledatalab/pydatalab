@@ -8,9 +8,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>datalab.bigquery package &mdash; Google Cloud Datalab  documentation</title>
+  <title>datalab.bigquery Module &mdash; Google Cloud Datalab  documentation</title>
   
 
+  
+  
   
   
 
@@ -34,8 +36,8 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
-        <link rel="next" title="datalab.context package" href="datalab.context.html"/>
-        <link rel="prev" title="Welcome to Cloud Datalab’s documentation!" href="index.html"/> 
+        <link rel="next" title="datalab.context Module" href="datalab.context.html"/>
+        <link rel="prev" title="google.datalab.magics" href="google.datalab.magics.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -44,6 +46,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -80,17 +83,23 @@
           
             
             
-                <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.bigquery package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-datalab.bigquery">Module contents</a></li>
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.magics.html">google.datalab.magics</a></li>
 </ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.mlalpha.html">datalab.mlalpha package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datalab.utils.html">datalab.utils package</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.magics.html">datalab.magics</a></li>
 </ul>
 
@@ -104,8 +113,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">Google Cloud Datalab</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Google Cloud Datalab</a>
+        
       </nav>
 
 
@@ -114,32 +125,47 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li>datalab.bigquery package</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>datalab.bigquery Module</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/datalab.bigquery.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="datalab-bigquery-package">
-<h1>datalab.bigquery package<a class="headerlink" href="#datalab-bigquery-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-datalab.bigquery">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-datalab.bigquery" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="module-datalab.bigquery">
+<span id="datalab-bigquery-module"></span><h1>datalab.bigquery Module<a class="headerlink" href="#module-datalab.bigquery" title="Permalink to this headline">¶</a></h1>
 <p>Google Cloud Platform library - BigQuery Functionality.</p>
 <dl class="function">
 <dt id="datalab.bigquery.wait_all">
@@ -411,46 +437,6 @@ level are used.</li>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="class">
-<dt id="datalab.bigquery.Dialect">
-<em class="property">class </em><code class="descclassname">datalab.bigquery.</code><code class="descname">Dialect</code><span class="sig-paren">(</span><em>bq_dialect</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_dialect.html#Dialect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Dialect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents the default BigQuery SQL dialect</p>
-<dl class="attribute">
-<dt id="datalab.bigquery.Dialect.bq_dialect">
-<code class="descname">bq_dialect</code><a class="headerlink" href="#datalab.bigquery.Dialect.bq_dialect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieves the value of the bq_dialect property.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The default BigQuery SQL dialect</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="datalab.bigquery.Dialect.default">
-<em class="property">static </em><code class="descname">default</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_dialect.html#Dialect.default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Dialect.default" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieves the default BigQuery SQL dialect, creating it if necessary.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">An initialized and shared instance of a Dialect object.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="datalab.bigquery.Dialect.set_bq_dialect">
-<code class="descname">set_bq_dialect</code><span class="sig-paren">(</span><em>bq_dialect</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datalab/bigquery/_dialect.html#Dialect.set_bq_dialect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datalab.bigquery.Dialect.set_bq_dialect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the default BigQuery SQL dialect</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="class">
@@ -2266,19 +2252,21 @@ project-wide default billing tier on a per-query basis.</li>
 </dd></dl>
 
 </div>
-</div>
 
 
+           </div>
+           <div class="articleComments">
+            
            </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="datalab.context.html" class="btn btn-neutral float-right" title="datalab.context package" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="datalab.context.html" class="btn btn-neutral float-right" title="datalab.context Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="Welcome to Cloud Datalab’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="google.datalab.magics.html" class="btn btn-neutral" title="google.datalab.magics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -2312,7 +2300,8 @@ project-wide default billing tier on a per-query basis.</li>
             VERSION:'',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>

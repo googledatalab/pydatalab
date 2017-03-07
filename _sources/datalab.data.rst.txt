@@ -1,8 +1,5 @@
-datalab.data package
-====================
-
-Module contents
----------------
+datalab.data Module
+===================
 
 .. automodule:: datalab.data
     :members:
@@ -18,4 +15,3 @@ Module contents
 .. autoclass:: datalab.data.SqlStatement
     :members:
 
-.. autofunction:: datalab.data.tokenize

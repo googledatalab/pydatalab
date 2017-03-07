@@ -1,8 +1,5 @@
-datalab.bigquery package
-========================
-
-Module contents
----------------
+datalab.bigquery Module
+=======================
 
 .. automodule:: datalab.bigquery
     :members:
@@ -19,9 +16,6 @@ Module contents
     :members:
 
 .. autoclass:: datalab.bigquery.Datasets
-    :members:
-
-.. autoclass:: datalab.bigquery.Dialect
     :members:
 
 .. autoclass:: datalab.bigquery.FederatedTable

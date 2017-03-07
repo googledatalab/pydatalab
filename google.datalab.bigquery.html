@@ -1,0 +1,1696 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab.bigquery Module &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="google.datalab.data Module" href="google.datalab.data.html"/>
+        <link rel="prev" title="google.datalab Module" href="google.datalab.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.magics.html">google.datalab.magics</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.magics.html">datalab.magics</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>google.datalab.bigquery Module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/google.datalab.bigquery.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-google.datalab.bigquery">
+<span id="google-datalab-bigquery-module"></span><h1>google.datalab.bigquery Module<a class="headerlink" href="#module-google.datalab.bigquery" title="Permalink to this headline">¶</a></h1>
+<p>Google Cloud Platform library - BigQuery Functionality.</p>
+<dl class="class">
+<dt id="google.datalab.bigquery.CSVOptions">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">CSVOptions</code><span class="sig-paren">(</span><em>delimiter=u'</em>, <em>'</em>, <em>skip_leading_rows=0</em>, <em>encoding=u'utf-8'</em>, <em>quote=u'&quot;'</em>, <em>allow_quoted_newlines=False</em>, <em>allow_jagged_rows=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_csv_options.html#CSVOptions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.CSVOptions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an instance of CSV options.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>delimiter</strong> &#8211; The separator for fields in a CSV file. BigQuery converts the string to
+ISO-8859-1 encoding, and then uses the first byte of the encoded string to split the data
+as raw binary (default &#8216;,&#8217;).</li>
+<li><strong>skip_leading_rows</strong> &#8211; A number of rows at the top of a CSV file to skip (default 0).</li>
+<li><strong>encoding</strong> &#8211; The character encoding of the data, either &#8216;utf-8&#8217; (the default) or &#8216;iso-8859-1&#8217;.</li>
+<li><strong>quote</strong> &#8211; The value used to quote data sections in a CSV file; default &#8216;&#8221;&#8217;. If your data does
+not contain quoted sections, set the property value to an empty string. If your data
+contains quoted newline characters, you must also enable allow_quoted_newlines.</li>
+<li><strong>allow_quoted_newlines</strong> &#8211; If True, allow quoted data sections in CSV files that contain newline
+characters (default False).</li>
+<li><strong>allow_jagged_rows</strong> &#8211; If True, accept rows in CSV files that are missing trailing optional
+columns; the missing values are treated as nulls (default False).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.Dataset">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">Dataset</code><span class="sig-paren">(</span><em>name</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_dataset.html#Dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of BigQuery tables in a dataset.</p>
+<p>Initializes an instance of a Dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the dataset, as a string or (project_id, dataset_id) tuple.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the name is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.bigquery.Dataset.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>friendly_name=None</em>, <em>description=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_dataset.html#Dataset.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Dataset.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the Dataset with the specified friendly name and description.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>friendly_name</strong> &#8211; (optional) the friendly name for the dataset if it is being created.</li>
+<li><strong>description</strong> &#8211; (optional) a description for the dataset if it is being created.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The Dataset.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the Dataset could not be created.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Dataset.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>delete_contents=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_dataset.html#Dataset.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Dataset.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Issues a request to delete the dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>delete_contents</strong> &#8211; if True, any tables and views in the dataset will be deleted. If False
+and the dataset is non-empty an exception will be raised.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None on success.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the delete fails (including if table was nonexistent).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Dataset.description">
+<code class="descname">description</code><a class="headerlink" href="#google.datalab.bigquery.Dataset.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>The description of the dataset, if any.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the dataset exists but the metadata for the dataset could not be retrieved.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Dataset.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_dataset.html#Dataset.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Dataset.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the dataset exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the dataset exists; False otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if the dataset exists but the metadata for the dataset could not be retrieved.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Dataset.friendly_name">
+<code class="descname">friendly_name</code><a class="headerlink" href="#google.datalab.bigquery.Dataset.friendly_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The friendly name of the dataset, if any.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the dataset exists but the metadata for the dataset could not be retrieved.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Dataset.name">
+<code class="descname">name</code><a class="headerlink" href="#google.datalab.bigquery.Dataset.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The DatasetName named tuple (project_id, dataset_id) for the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Dataset.tables">
+<code class="descname">tables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_dataset.html#Dataset.tables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Dataset.tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator for iterating through the Tables in the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Dataset.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>friendly_name=None</em>, <em>description=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_dataset.html#Dataset.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Dataset.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Selectively updates Dataset information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>friendly_name</strong> &#8211; if not None, the new friendly name.</li>
+<li><strong>description</strong> &#8211; if not None, the new description.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Dataset.views">
+<code class="descname">views</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_dataset.html#Dataset.views"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Dataset.views" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator for iterating through the Views in the dataset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.DatasetName">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">DatasetName</code><span class="sig-paren">(</span><em>project_id</em>, <em>dataset_id</em><span class="sig-paren">)</span><a class="headerlink" href="#google.datalab.bigquery.DatasetName" title="Permalink to this definition">¶</a></dt>
+<dd><p>A namedtuple for Dataset names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>project_id</strong> &#8211; the project id for the dataset.</li>
+<li><strong>dataset_id</strong> &#8211; the dataset id for the dataset.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="google.datalab.bigquery.DatasetName.dataset_id">
+<code class="descname">dataset_id</code><a class="headerlink" href="#google.datalab.bigquery.DatasetName.dataset_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.DatasetName.project_id">
+<code class="descname">project_id</code><a class="headerlink" href="#google.datalab.bigquery.DatasetName.project_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.Datasets">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">Datasets</code><span class="sig-paren">(</span><em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_dataset.html#Datasets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Datasets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterator class for enumerating the datasets in a project.</p>
+<p>Initialize the Datasets object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.ExternalDataSource">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">ExternalDataSource</code><span class="sig-paren">(</span><em>source</em>, <em>source_format=u'csv'</em>, <em>csv_options=None</em>, <em>ignore_unknown_values=False</em>, <em>max_bad_records=0</em>, <em>compressed=False</em>, <em>schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_external_data_source.html#ExternalDataSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.ExternalDataSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an external table for a GCS object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>source</strong> &#8211; the URL of the source objects(s). Can include a wildcard &#8216;*&#8217; at the end of the item
+name. Can be a single source or a list.</li>
+<li><strong>source_format</strong> &#8211; the format of the data, &#8216;csv&#8217; or &#8216;json&#8217;; default &#8216;csv&#8217;.</li>
+<li><strong>csv_options</strong> &#8211; For CSV files, the options such as quote character and delimiter.</li>
+<li><strong>ignore_unknown_values</strong> &#8211; If True, accept rows that contain values that do not match the schema;
+the unknown values are ignored (default False).</li>
+<li><strong>max_bad_records</strong> &#8211; The maximum number of bad records that are allowed (and ignored) before
+returning an &#8216;invalid&#8217; error in the Job result (default 0).</li>
+<li><strong>compressed</strong> &#8211; whether the data is GZ compressed or not (default False). Note that compressed
+data can be used as an external data source but cannot be loaded into a BQ Table.</li>
+<li><strong>schema</strong> &#8211; the schema of the data. This is required for this table to be used as an external
+data source or to be loaded using a Table object that itself has no schema (default None).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.Query">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">Query</code><span class="sig-paren">(</span><em>sql</em>, <em>env=None</em>, <em>udfs=None</em>, <em>data_sources=None</em>, <em>subqueries=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query.html#Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a Query object that encapsulates a BigQuery SQL query.</p>
+<p>This object can be used to execute SQL queries and retrieve results.</p>
+<p>Initializes an instance of a Query object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; the BigQuery SQL query string to execute</li>
+<li><strong>env</strong> &#8211; a dictionary containing objects from the query execution context, used to get references
+to UDFs, subqueries, and external data sources referenced by the query</li>
+<li><strong>udfs</strong> &#8211; list of UDFs names referenced in the SQL, or dictionary of names and UDF objects</li>
+<li><strong>data_sources</strong> &#8211; list of external data sources names referenced in the SQL, or dictionary of
+names and data source objects</li>
+<li><strong>subqueries</strong> &#8211; list of subqueries names referenced in the SQL, or dictionary of names and
+Query objects</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if expansion of any variables failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Query.data_sources">
+<code class="descname">data_sources</code><a class="headerlink" href="#google.datalab.bigquery.Query.data_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a dictionary of external data sources referenced by the query.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Query.dry_run">
+<code class="descname">dry_run</code><span class="sig-paren">(</span><em>context=None</em>, <em>query_params=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query.html#Query.dry_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Query.dry_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dry run a query, to check the validity of the query and return some useful statistics.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+<li><strong>query_params</strong> &#8211; a dictionary containing query parameter types and values, passed to BigQuery.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A dict with &#8216;cacheHit&#8217; and &#8216;totalBytesProcessed&#8217; fields.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An exception if the query was malformed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Query.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><em>output_options=None</em>, <em>sampling=None</em>, <em>context=None</em>, <em>query_params=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query.html#Query.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Query.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiate the query and return a QueryJob.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>output_options</strong> &#8211; a QueryOutput object describing how to execute the query</li>
+<li><strong>sampling</strong> &#8211; sampling function to use. No sampling is done if None. See bigquery.Sampling</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Job object that can be used to get the query results, or export to a file or dataframe</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if query could not be executed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Query.execute_async">
+<code class="descname">execute_async</code><span class="sig-paren">(</span><em>output_options=None</em>, <em>sampling=None</em>, <em>context=None</em>, <em>query_params=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query.html#Query.execute_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Query.execute_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initiate the query and return a QueryJob.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>output_options</strong> &#8211; a QueryOutput object describing how to execute the query</li>
+<li><strong>sampling</strong> &#8211; sampling function to use. No sampling is done if None. See bigquery.Sampling</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+<li><strong>query_params</strong> &#8211; a dictionary containing query parameter types and values, passed to BigQuery.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Job object that can wait on creating a table or exporting to a file
+If the output is a table, the Job object additionally has run statistics
+and query results</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if query could not be executed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.Query.from_table">
+<em class="property">static </em><code class="descname">from_table</code><span class="sig-paren">(</span><em>table</em>, <em>fields=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query.html#Query.from_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Query.from_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a Query for the given Table object</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>table</strong> &#8211; the Table object to construct a Query out of</li>
+<li><strong>fields</strong> &#8211; the fields to return. If None, all fields will be returned. This can be a string
+which will be injected into the Query after SELECT, or a list of field names.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Query object that will return the specified fields from the records in the Table.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.Query.from_view">
+<em class="property">static </em><code class="descname">from_view</code><span class="sig-paren">(</span><em>view</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query.html#Query.from_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Query.from_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a Query for the given View object</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>view</strong> &#8211; the View object to construct a Query out of</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Query object with the same sql as the given View object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Query.sql">
+<code class="descname">sql</code><a class="headerlink" href="#google.datalab.bigquery.Query.sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the SQL for the query.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Query.subqueries">
+<code class="descname">subqueries</code><a class="headerlink" href="#google.datalab.bigquery.Query.subqueries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a dictionary of subqueries referenced by the query.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Query.udfs">
+<code class="descname">udfs</code><a class="headerlink" href="#google.datalab.bigquery.Query.udfs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a dictionary of UDFs referenced by the query.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.QueryOutput">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">QueryOutput</code><a class="reference internal" href="_modules/google/datalab/bigquery/_query_output.html#QueryOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.QueryOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a BigQuery output type object. Do not call this directly; use factory methods.</p>
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.QueryOutput.dataframe">
+<em class="property">static </em><code class="descname">dataframe</code><span class="sig-paren">(</span><em>start_row=0</em>, <em>max_rows=None</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query_output.html#QueryOutput.dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.QueryOutput.dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a query output object where the result is a dataframe</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>start_row</strong> &#8211; the row of the table at which to start the export (default 0).</li>
+<li><strong>max_rows</strong> &#8211; an upper limit on the number of rows to export (default None).</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not (default True).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.QueryOutput.file">
+<em class="property">static </em><code class="descname">file</code><span class="sig-paren">(</span><em>path</em>, <em>format='csv'</em>, <em>csv_delimiter='</em>, <em>'</em>, <em>csv_header=True</em>, <em>compress=False</em>, <em>use_cache=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query_output.html#QueryOutput.file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.QueryOutput.file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a query output object where the result is either a local file or a GCS path</p>
+<p>Note that there are two jobs that may need to be run sequentially, one to run the query,
+and the second to extract the resulting table. These are wrapped by a single outer Job.</p>
+<p>If the query has already been executed and you would prefer to get a Job just for the
+extract, you can can call extract[_async] on the QueryResultsTable returned by the query</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; the destination path. Can either be a local or GCS URI (starting with gs://)</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; one of &#8216;csv&#8217;, &#8216;json&#8217;, or &#8216;avro&#8217;
+(default &#8216;csv&#8217;).</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use (default &#8216;,&#8217;).</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line (default True).</li>
+<li><strong>compress</strong> &#8211; whether to compress the data on export. Compression is not supported for
+AVRO format (default False). Applies only to GCS URIs.</li>
+<li><strong>use_cache</strong> &#8211; whether to use cached results or not (default True).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.QueryOutput.table">
+<em class="property">static </em><code class="descname">table</code><span class="sig-paren">(</span><em>name=None</em>, <em>mode='create'</em>, <em>use_cache=True</em>, <em>priority='interactive'</em>, <em>allow_large_results=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query_output.html#QueryOutput.table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.QueryOutput.table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a query output object where the result is a table</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; the result table name as a string or TableName; if None (the default), then a
+temporary table will be used.</li>
+<li><strong>table_mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;overwrite&#8217; or &#8216;append&#8217;. If &#8216;create&#8217; (the default), the request
+will fail if the table exists.</li>
+<li><strong>use_cache</strong> &#8211; whether to use past query results or ignore cache. Has no effect if destination is
+specified (default True).</li>
+<li><strong>priority</strong> &#8211; one of &#8216;batch&#8217; or &#8216;interactive&#8217; (default). &#8216;interactive&#8217; jobs should be scheduled
+to run quickly but are subject to rate limits; &#8216;batch&#8217; jobs could be delayed by as much
+as three hours but are not rate-limited.</li>
+<li><strong>allow_large_results</strong> &#8211; whether to allow large results; i.e. compressed data over 100MB. This is
+slower and requires a name to be specified) (default False).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.QueryResultsTable">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">QueryResultsTable</code><span class="sig-paren">(</span><em>name</em>, <em>context</em>, <em>job</em>, <em>is_temporary=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query_results_table.html#QueryResultsTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.QueryResultsTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>A subclass of Table specifically for Query results.</p>
+<p>The primary differences are the additional properties job_id and sql.</p>
+<p>Initializes an instance of a Table object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+<li><strong>job</strong> &#8211; the QueryJob associated with these results.</li>
+<li><strong>is_temporary</strong> &#8211; if True, this is a short-lived table for intermediate results (default False).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="google.datalab.bigquery.QueryResultsTable.is_temporary">
+<code class="descname">is_temporary</code><a class="headerlink" href="#google.datalab.bigquery.QueryResultsTable.is_temporary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this is a short-lived table or not.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.QueryResultsTable.job">
+<code class="descname">job</code><a class="headerlink" href="#google.datalab.bigquery.QueryResultsTable.job" title="Permalink to this definition">¶</a></dt>
+<dd><p>The QueryJob object that caused the table to be populated.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.QueryResultsTable.job_id">
+<code class="descname">job_id</code><a class="headerlink" href="#google.datalab.bigquery.QueryResultsTable.job_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>The ID of the query job that caused the table to be populated.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.QueryResultsTable.sql">
+<code class="descname">sql</code><a class="headerlink" href="#google.datalab.bigquery.QueryResultsTable.sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>The SQL statement for the query that populated the table.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.QueryStats">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">QueryStats</code><span class="sig-paren">(</span><em>total_bytes</em>, <em>is_cached</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_query_stats.html#QueryStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.QueryStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for statistics returned by a dry run query. Useful so we can get an HTML
+representation in a notebook.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.Sampling">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">Sampling</code><a class="reference internal" href="_modules/google/datalab/bigquery/_sampling.html#Sampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Sampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides common sampling strategies.</p>
+<p>Sampling strategies can be used for sampling tables or queries.</p>
+<p>They are implemented as functions that take in a SQL statement representing the table or query
+that should be sampled, and return a new SQL statement that limits the result set in some manner.</p>
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.Sampling.default">
+<em class="property">static </em><code class="descname">default</code><span class="sig-paren">(</span><em>fields=None</em>, <em>count=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_sampling.html#Sampling.default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Sampling.default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a simple default sampling strategy which limits the result set by a count.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; optional number of rows to limit the sampled results to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sampling function that can be applied to get a random sampling.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.Sampling.hashed">
+<em class="property">static </em><code class="descname">hashed</code><span class="sig-paren">(</span><em>field_name</em>, <em>percent</em>, <em>fields=None</em>, <em>count=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_sampling.html#Sampling.hashed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Sampling.hashed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a sampling strategy based on hashing and selecting a percentage of data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>field_name</strong> &#8211; the name of the field to hash.</li>
+<li><strong>percent</strong> &#8211; the percentage of the resulting hashes to select.</li>
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; optional maximum count of rows to pick.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sampling function that can be applied to get a hash-based sampling.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.Sampling.random">
+<em class="property">static </em><code class="descname">random</code><span class="sig-paren">(</span><em>percent</em>, <em>fields=None</em>, <em>count=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_sampling.html#Sampling.random"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Sampling.random" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a sampling strategy that picks a semi-random set of rows.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>percent</strong> &#8211; the percentage of the resulting hashes to select.</li>
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; maximum number of rows to limit the sampled results to (default 5).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sampling function that can be applied to get some random rows. In order for this to
+provide a good random sample percent should be chosen to be ~count/#rows where #rows
+is the number of rows in the object (query, view or table) being sampled.
+The rows will be returned in order; i.e. the order itself is not randomized.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.Sampling.sorted">
+<em class="property">static </em><code class="descname">sorted</code><span class="sig-paren">(</span><em>field_name</em>, <em>ascending=True</em>, <em>fields=None</em>, <em>count=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_sampling.html#Sampling.sorted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Sampling.sorted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides a sampling strategy that picks from an ordered set of rows.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>field_name</strong> &#8211; the name of the field to sort the rows by.</li>
+<li><strong>ascending</strong> &#8211; whether to sort in ascending direction or not.</li>
+<li><strong>fields</strong> &#8211; an optional list of field names to retrieve.</li>
+<li><strong>count</strong> &#8211; optional number of rows to limit the sampled results to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sampling function that can be applied to get the initial few rows.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.Schema">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">Schema</code><span class="sig-paren">(</span><em>definition=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_schema.html#Schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the schema of a BigQuery table as a flattened list of objects representing fields.</p>
+<p>Each field object has name, type, mode and description properties. Nested fields
+get flattened with their full-qualified names. So a Schema that has an object A with nested
+field B will be represented as [(name: &#8216;A&#8217;, ...), (name: &#8216;A.b&#8217;, ...)].</p>
+<p>Initializes a Schema from its raw JSON representation, a Pandas Dataframe, or a list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>definition</strong> &#8211; a definition of the schema as a list of dictionaries with &#8216;name&#8217; and &#8216;type&#8217;
+entries and possibly &#8216;mode&#8217; and &#8216;description&#8217; entries. Only used if no data argument was
+provided. &#8216;mode&#8217; can be &#8216;NULLABLE&#8217;, &#8216;REQUIRED&#8217; or &#8216;REPEATED&#8217;. For the allowed types, see:
+<a class="reference external" href="https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes">https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes</a></td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.bigquery.Schema.find">
+<code class="descname">find</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_schema.html#Schema.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Schema.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the index of a field in the flattened list given its (fully-qualified) name.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> &#8211; the fully-qualified name of the field.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The index of the field, if found; else -1.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.Schema.from_data">
+<em class="property">static </em><code class="descname">from_data</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_schema.html#Schema.from_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Schema.from_data" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Infers a table/view schema from its JSON representation, a list of records, or a Pandas</dt>
+<dd>dataframe.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>source</strong> &#8211; <p>the Pandas Dataframe, a dictionary representing a record, a list of heterogeneous
+data (record) or homogeneous data (list of records) from which to infer the schema, or
+a definition of the schema as a list of dictionaries with &#8216;name&#8217; and &#8216;type&#8217; entries
+and possibly &#8216;mode&#8217; and &#8216;description&#8217; entries. Only used if no data argument was provided.
+&#8216;mode&#8217; can be &#8216;NULLABLE&#8217;, &#8216;REQUIRED&#8217; or &#8216;REPEATED&#8217;. For the allowed types, see:
+<a class="reference external" href="https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes">https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes</a></p>
+<p>Note that there is potential ambiguity when passing a list of lists or a list of
+dicts between whether that should be treated as a list of records or a single record
+that is a list. The heuristic used is to check the length of the entries in the
+list; if they are equal then a list of records is assumed. To avoid this ambiguity
+you can instead use the Schema.from_record method which assumes a single record,
+in either list of values or dictionary of key-values form.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Schema for the data.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.bigquery.Schema.from_record">
+<em class="property">static </em><code class="descname">from_record</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_schema.html#Schema.from_record"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Schema.from_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Infers a table/view schema from a single record that can contain a list of fields or a
+dictionary of fields. The type of the elements is used for the types in the schema. For a
+dict, key names are used for column names while for a list, the field names are simply named
+&#8216;Column1&#8217;, &#8216;Column2&#8217;, etc. Note that if using a dict you may want to use an OrderedDict
+to ensure column ordering is deterministic.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>source</strong> &#8211; The list of field values or dictionary of key/values.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A Schema for the data.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.SchemaField">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">SchemaField</code><span class="sig-paren">(</span><em>name</em>, <em>type</em>, <em>mode=u'NULLABLE'</em>, <em>description=u''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_schema.html#SchemaField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.SchemaField" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a single field in a Table schema.</p>
+<p>This has the properties:</p>
+<ul class="simple">
+<li>name: the flattened, full-qualified name of the field.</li>
+<li><dl class="first docutils">
+<dt>type: the type of the field as a string (&#8216;INTEGER&#8217;, &#8216;BOOLEAN&#8217;, &#8216;FLOAT&#8217;, &#8216;STRING&#8217;</dt>
+<dd>or &#8216;TIMESTAMP&#8217;).</dd>
+</dl>
+</li>
+<li>mode: the mode of the field; &#8216;NULLABLE&#8217; by default.</li>
+<li>description: a description of the field, if known; empty string by default.</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.Table">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">Table</code><span class="sig-paren">(</span><em>name</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a Table object referencing a BigQuery table.</p>
+<p>Initializes an instance of a Table object. The Table need not exist yet.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
+If a string, it must have the form &#8216;&lt;project&gt;:&lt;dataset&gt;.&lt;table&gt;&#8217; or &#8216;&lt;dataset&gt;.&lt;table&gt;&#8217;.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the name is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>schema</em>, <em>overwrite=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the table with the specified schema.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>schema</strong> &#8211; the schema to use to create the table. Should be a list of dictionaries, each
+containing at least a pair of entries, &#8216;name&#8217; and &#8216;type&#8217;.
+See <a class="reference external" href="https://cloud.google.com/bigquery/docs/reference/v2/tables#resource">https://cloud.google.com/bigquery/docs/reference/v2/tables#resource</a></li>
+<li><strong>overwrite</strong> &#8211; if True, delete the table first if it exists. If False and the table exists,
+creation will fail and raise an Exception.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The Table instance.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the table couldn&#8217;t be created or already exists and truncate was False.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the Table no longer exists; False otherwise.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the table exists.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the table exists; False otherwise.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if there was an error requesting information about the table.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.extract">
+<code class="descname">extract</code><span class="sig-paren">(</span><em>destination</em>, <em>format=u'csv'</em>, <em>csv_delimiter=u'</em>, <em>'</em>, <em>csv_header=True</em>, <em>compress=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.extract"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.extract" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports the table to GCS; blocks until complete.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>destination</strong> &#8211; the destination URI(s). Can be a single URI or a list.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; one of &#8216;csv&#8217;, &#8216;json&#8217;, or &#8216;avro&#8217;
+(default &#8216;csv&#8217;).</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+<li><strong>compress</strong> &#8211; whether to compress the data on export. Compression is not supported for
+AVRO format. Defaults to False.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Job object for the completed export Job if it was started successfully; else None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.extract_async">
+<code class="descname">extract_async</code><span class="sig-paren">(</span><em>destination</em>, <em>format=u'csv'</em>, <em>csv_delimiter=u'</em>, <em>'</em>, <em>csv_header=True</em>, <em>compress=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.extract_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.extract_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts a job to export the table to GCS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>destination</strong> &#8211; the destination URI(s). Can be a single URI or a list.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; one of &#8216;csv&#8217;, &#8216;json&#8217;, or &#8216;avro&#8217;
+(default &#8216;csv&#8217;).</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+<li><strong>compress</strong> &#8211; whether to compress the data on export. Compression is not supported for
+AVRO format. Defaults to False.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Job object for the export Job if it was started successfully; else None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.insert">
+<code class="descname">insert</code><span class="sig-paren">(</span><em>data</em>, <em>include_index=False</em>, <em>index_name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.insert" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert the contents of a Pandas DataFrame or a list of dictionaries into the table.</p>
+<p>The insertion will be performed using at most 500 rows per POST, and at most 10 POSTs per
+second, as BigQuery has some limits on streaming rates.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; the DataFrame or list to insert.</li>
+<li><strong>include_index</strong> &#8211; whether to include the DataFrame or list index as a column in the BQ table.</li>
+<li><strong>index_name</strong> &#8211; for a list, if include_index is True, this should be the name for the index.
+If not specified, &#8216;Index&#8217; will be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The table.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li>Exception if the table doesn&#8217;t exist, the table&#8217;s schema differs from the data&#8217;s schema,</li>
+<li>or the insert failed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Table.is_temporary">
+<code class="descname">is_temporary</code><a class="headerlink" href="#google.datalab.bigquery.Table.is_temporary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this is a short-lived table or not. Always False for non-QueryResultsTables.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Table.job">
+<code class="descname">job</code><a class="headerlink" href="#google.datalab.bigquery.Table.job" title="Permalink to this definition">¶</a></dt>
+<dd><p>For tables resulting from executing queries, the job that created the table.</p>
+<p>Default is None for a Table object; this is overridden by QueryResultsTable.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Table.length">
+<code class="descname">length</code><a class="headerlink" href="#google.datalab.bigquery.Table.length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the length of the table (number of rows). We don&#8217;t use __len__ as this may
+return -1 for &#8216;unknown&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>source</em>, <em>mode=u'create'</em>, <em>source_format=u'csv'</em>, <em>csv_options=None</em>, <em>ignore_unknown_values=False</em>, <em>max_bad_records=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the table from GCS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> &#8211; the URL of the source objects(s). Can include a wildcard &#8216;*&#8217; at the end of the item
+name. Can be a single source or a list.</li>
+<li><strong>mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;append&#8217;, or &#8216;overwrite&#8217;. &#8216;append&#8217; or &#8216;overwrite&#8217; will fail if the
+table does not already exist, while &#8216;create&#8217; will fail if it does. The default is
+&#8216;create&#8217;. If &#8216;create&#8217; the schema will be inferred if necessary.</li>
+<li><strong>source_format</strong> &#8211; the format of the data, &#8216;csv&#8217; or &#8216;json&#8217;; default &#8216;csv&#8217;.</li>
+<li><strong>csv_options</strong> &#8211; if source format is &#8216;csv&#8217;, additional options as a CSVOptions object.</li>
+<li><strong>ignore_unknown_values</strong> &#8211; if True, accept rows that contain values that do not match the schema;
+the unknown values are ignored (default False).</li>
+<li><strong>max_bad_records</strong> &#8211; the maximum number of bad records that are allowed (and ignored) before
+returning an &#8216;invalid&#8217; error in the Job result (default 0).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Job object for the completed load Job if it was started successfully; else None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.load_async">
+<code class="descname">load_async</code><span class="sig-paren">(</span><em>source</em>, <em>mode=u'create'</em>, <em>source_format=u'csv'</em>, <em>csv_options=None</em>, <em>ignore_unknown_values=False</em>, <em>max_bad_records=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.load_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.load_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts importing a table from GCS and return a Future.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> &#8211; the URL of the source objects(s). Can include a wildcard &#8216;*&#8217; at the end of the item
+name. Can be a single source or a list.</li>
+<li><strong>mode</strong> &#8211; one of &#8216;create&#8217;, &#8216;append&#8217;, or &#8216;overwrite&#8217;. &#8216;append&#8217; or &#8216;overwrite&#8217; will fail if the
+table does not already exist, while &#8216;create&#8217; will fail if it does. The default is
+&#8216;create&#8217;. If &#8216;create&#8217; the schema will be inferred if necessary.</li>
+<li><strong>source_format</strong> &#8211; the format of the data, &#8216;csv&#8217; or &#8216;json&#8217;; default &#8216;csv&#8217;.</li>
+<li><strong>csv_options</strong> &#8211; if source format is &#8216;csv&#8217;, additional options as a CSVOptions object.</li>
+<li><strong>ignore_unknown_values</strong> &#8211; If True, accept rows that contain values that do not match the schema;
+the unknown values are ignored (default False).</li>
+<li><strong>max_bad_records</strong> &#8211; the maximum number of bad records that are allowed (and ignored) before
+returning an &#8216;invalid&#8217; error in the Job result (default 0).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A Job object for the import if it was started successfully or None if not.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the load job failed to be started or invalid arguments were supplied.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Table.metadata">
+<code class="descname">metadata</code><a class="headerlink" href="#google.datalab.bigquery.Table.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves metadata about the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A TableMetadata object.</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises</dt>
+<dd>Exception if the request could not be executed or the response was malformed.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Table.name">
+<code class="descname">name</code><a class="headerlink" href="#google.datalab.bigquery.Table.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The TableName named tuple (project_id, dataset_id, table_id, decorator) for the table.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.range">
+<code class="descname">range</code><span class="sig-paren">(</span><em>start_row=0</em>, <em>max_rows=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an iterator to iterate through a set of table rows.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start_row</strong> &#8211; the row of the table at which to start the iteration (default 0)</li>
+<li><strong>max_rows</strong> &#8211; an upper limit on the number of rows to iterate through (default None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A row iterator.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.Table.schema">
+<code class="descname">schema</code><a class="headerlink" href="#google.datalab.bigquery.Table.schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the schema of the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A Schema object containing a list of schema fields and associated metadata.</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises</dt>
+<dd>Exception if the request could not be executed or the response was malformed.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.snapshot">
+<code class="descname">snapshot</code><span class="sig-paren">(</span><em>at</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.snapshot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.snapshot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new Table which is a snapshot of this table at the specified time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>at</strong> &#8211; <p>the time of the snapshot. This can be a Python datetime (absolute) or timedelta
+(relative to current time). The result must be after the table was created and no more
+than seven days in the past. Passing None will get a reference the oldest snapshot.</p>
+<p>Note that using a datetime will get a snapshot at an absolute point in time, while
+a timedelta will provide a varying snapshot; any queries issued against such a Table
+will be done against a snapshot that has an age relative to the execution time of the
+query.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A new Table object referencing the snapshot.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">An exception if this Table is already decorated, or if the time specified is invalid.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.to_dataframe">
+<code class="descname">to_dataframe</code><span class="sig-paren">(</span><em>start_row=0</em>, <em>max_rows=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports the table to a Pandas dataframe.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>start_row</strong> &#8211; the row of the table at which to start the export (default 0)</li>
+<li><strong>max_rows</strong> &#8211; an upper limit on the number of rows to export (default None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Pandas dataframe containing the table data.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.to_file">
+<code class="descname">to_file</code><span class="sig-paren">(</span><em>destination</em>, <em>format=u'csv'</em>, <em>csv_delimiter=u'</em>, <em>'</em>, <em>csv_header=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the results to a local file in CSV format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>destination</strong> &#8211; path on the local filesystem for the saved results.</li>
+<li><strong>format</strong> &#8211; the format to use for the exported data; currently only &#8216;csv&#8217; is supported.</li>
+<li><strong>csv_delimiter</strong> &#8211; for CSV exports, the field delimiter to use. Defaults to &#8216;,&#8217;</li>
+<li><strong>csv_header</strong> &#8211; for CSV exports, whether to include an initial header line. Default true.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An Exception if the operation failed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>friendly_name=None</em>, <em>description=None</em>, <em>expiry=None</em>, <em>schema=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Selectively updates Table information.</p>
+<p>Any parameters that are omitted or None are not updated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>friendly_name</strong> &#8211; if not None, the new friendly name.</li>
+<li><strong>description</strong> &#8211; if not None, the new description.</li>
+<li><strong>expiry</strong> &#8211; if not None, the new expiry time, either as a DateTime or milliseconds since epoch.</li>
+<li><strong>schema</strong> &#8211; if not None, the new schema: either a list of dictionaries or a Schema.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.Table.window">
+<code class="descname">window</code><span class="sig-paren">(</span><em>begin</em>, <em>end=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#Table.window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.Table.window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new Table limited to the rows added to this Table during the specified time range.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>begin</strong> &#8211; <p>the start time of the window. This can be a Python datetime (absolute) or timedelta
+(relative to current time). The result must be after the table was created and no more
+than seven days in the past.</p>
+<p>Note that using a relative value will provide a varying snapshot, not a fixed
+snapshot; any queries issued against such a Table will be done against a snapshot
+that has an age relative to the execution time of the query.</p>
+</li>
+<li><strong>end</strong> &#8211; the end time of the snapshot; if None, then the current time is used. The types and
+interpretation of values is as for start.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A new Table object referencing the window.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">An exception if this Table is already decorated, or if the time specified is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.TableMetadata">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">TableMetadata</code><span class="sig-paren">(</span><em>table</em>, <em>info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#TableMetadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.TableMetadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents metadata about a BigQuery table.</p>
+<p>Initializes a TableMetadata instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>table</strong> &#8211; the Table object this belongs to.</li>
+<li><strong>info</strong> &#8211; The BigQuery information about this table as a Python dictionary.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableMetadata.created_on">
+<code class="descname">created_on</code><a class="headerlink" href="#google.datalab.bigquery.TableMetadata.created_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>The creation timestamp.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableMetadata.description">
+<code class="descname">description</code><a class="headerlink" href="#google.datalab.bigquery.TableMetadata.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>The description of the table if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableMetadata.expires_on">
+<code class="descname">expires_on</code><a class="headerlink" href="#google.datalab.bigquery.TableMetadata.expires_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>The timestamp for when the table will expire, or None if unknown.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableMetadata.friendly_name">
+<code class="descname">friendly_name</code><a class="headerlink" href="#google.datalab.bigquery.TableMetadata.friendly_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The friendly name of the table if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableMetadata.modified_on">
+<code class="descname">modified_on</code><a class="headerlink" href="#google.datalab.bigquery.TableMetadata.modified_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>The timestamp for when the table was last modified.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.TableMetadata.refresh">
+<code class="descname">refresh</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_table.html#TableMetadata.refresh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.TableMetadata.refresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refresh the metadata.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableMetadata.rows">
+<code class="descname">rows</code><a class="headerlink" href="#google.datalab.bigquery.TableMetadata.rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of rows within the table, or -1 if unknown.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableMetadata.size">
+<code class="descname">size</code><a class="headerlink" href="#google.datalab.bigquery.TableMetadata.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The size of the table in bytes, or -1 if unknown.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.TableName">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">TableName</code><span class="sig-paren">(</span><em>project_id</em>, <em>dataset_id</em>, <em>table_id</em>, <em>decorator</em><span class="sig-paren">)</span><a class="headerlink" href="#google.datalab.bigquery.TableName" title="Permalink to this definition">¶</a></dt>
+<dd><p>A namedtuple for Table names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>project_id</strong> &#8211; the project id for the table.</li>
+<li><strong>dataset_id</strong> &#8211; the dataset id for the table.</li>
+<li><strong>table_id</strong> &#8211; the table id for the table.</li>
+<li><strong>decorator</strong> &#8211; the optional decorator for the table (for windowing/snapshot-ing).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableName.dataset_id">
+<code class="descname">dataset_id</code><a class="headerlink" href="#google.datalab.bigquery.TableName.dataset_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableName.decorator">
+<code class="descname">decorator</code><a class="headerlink" href="#google.datalab.bigquery.TableName.decorator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableName.project_id">
+<code class="descname">project_id</code><a class="headerlink" href="#google.datalab.bigquery.TableName.project_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.TableName.table_id">
+<code class="descname">table_id</code><a class="headerlink" href="#google.datalab.bigquery.TableName.table_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.UDF">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">UDF</code><span class="sig-paren">(</span><em>name</em>, <em>code</em>, <em>return_type</em>, <em>params=u''</em>, <em>language=u'js'</em>, <em>imports=u''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_udf.html#UDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.UDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a BigQuery UDF declaration.</p>
+<p>Initializes a UDF object from its pieces.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; the name of the javascript function</li>
+<li><strong>code</strong> &#8211; function body implementing the logic.</li>
+<li><strong>return_type</strong> &#8211; BigQuery data type of the function return. See supported data types in
+the BigQuery docs</li>
+<li><strong>params</strong> &#8211; dictionary of parameter names and types</li>
+<li><strong>language</strong> &#8211; see list of supported languages in the BigQuery docs</li>
+<li><strong>imports</strong> &#8211; a list of GCS paths containing further support code.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.bigquery.View">
+<em class="property">class </em><code class="descclassname">google.datalab.bigquery.</code><code class="descname">View</code><span class="sig-paren">(</span><em>name</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_view.html#View"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.View" title="Permalink to this definition">¶</a></dt>
+<dd><p>An implementation of a BigQuery View.</p>
+<p>Initializes an instance of a View object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> &#8211; the name of the view either as a string or a 3-part tuple
+(projectid, datasetid, name). If a string, it must have the form
+&#8216;&lt;project&gt;:&lt;dataset&gt;.&lt;view&gt;&#8217; or &#8216;&lt;dataset&gt;.&lt;view&gt;&#8217;.</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials. If a specific
+project id or credentials are unspecified, the default ones configured at the global
+level are used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">Exception if the name is invalid.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.bigquery.View.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>query</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_view.html#View.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.View.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the view with the specified query.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query</strong> &#8211; the query to use to for the View; either a string containing a SQL query or
+a Query object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The View instance.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if the view couldn&#8217;t be created or already exists and overwrite was False.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.View.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_view.html#View.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.View.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the view if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.View.description">
+<code class="descname">description</code><a class="headerlink" href="#google.datalab.bigquery.View.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>The description of the view if it exists.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.View.exists">
+<code class="descname">exists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_view.html#View.exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.View.exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the view&#8217;s Query has been executed and the view is available or not.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.View.friendly_name">
+<code class="descname">friendly_name</code><a class="headerlink" href="#google.datalab.bigquery.View.friendly_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The friendly name of the view if it exists.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.View.name">
+<code class="descname">name</code><a class="headerlink" href="#google.datalab.bigquery.View.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name for the view as a named tuple.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.View.query">
+<code class="descname">query</code><a class="headerlink" href="#google.datalab.bigquery.View.query" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Query that defines the view.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.bigquery.View.schema">
+<code class="descname">schema</code><a class="headerlink" href="#google.datalab.bigquery.View.schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the schema of the table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A Schema object containing a list of schema fields and associated metadata.</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises</dt>
+<dd>Exception if the request could not be executed or the response was malformed.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.bigquery.View.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>friendly_name=None</em>, <em>description=None</em>, <em>query=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/bigquery/_view.html#View.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.bigquery.View.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Selectively updates View information.</p>
+<p>Any parameters that are None (the default) are not applied in the update.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>friendly_name</strong> &#8211; if not None, the new friendly name.</li>
+<li><strong>description</strong> &#8211; if not None, the new description.</li>
+<li><strong>query</strong> &#8211; if not None, a new query string for the View.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="google.datalab.data.html" class="btn btn-neutral float-right" title="google.datalab.data Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="google.datalab.html" class="btn btn-neutral" title="google.datalab Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
