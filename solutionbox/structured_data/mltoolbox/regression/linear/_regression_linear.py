@@ -36,7 +36,7 @@ def train(train_dataset,
   print('Training: ' + str(job.state))
 
 
-def train(train_dataset,
+def train_async(train_dataset,
           eval_dataset,
           analysis_dir,
           output_dir,
