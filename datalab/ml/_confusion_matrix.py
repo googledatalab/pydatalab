@@ -41,6 +41,7 @@ class ConfusionMatrix(object):
     """Create a ConfusionMatrix from a csv file.
     Args:
       input_csv: Path to a Csv file (with no header). Can be local or GCS path.
+          May contain wildcards.
       headers: Csv headers. If present, it must include 'target' and 'predicted'.
       schema_file: Path to a JSON file containing BigQuery schema. Used if "headers" is None.
           If present, it must include 'target' and 'predicted' columns.
@@ -59,8 +60,14 @@ class ConfusionMatrix(object):
       names = [x['name'] for x in schema]
     else:
       raise ValueError('Either headers or schema_file is needed')
-    with _util.open_local_or_gcs(input_csv, mode='r') as f:
-      df = pd.read_csv(f, names=names)
+
+    all_files = _util.glob_files(input_csv)
+    all_df = []
+    for file_name in all_files:
+      with _util.open_local_or_gcs(file_name, mode='r') as f:
+        all_df.append(pd.read_csv(f, names=names))
+    df = pd.concat(all_df, ignore_index=True)
+    
     if 'target' not in df or 'predicted' not in df:
       raise ValueError('Cannot find "target" or "predicted" column')
 
