@@ -37,6 +37,7 @@ class DataflowJob(_job.Job):
     self._runner_results._job = (
         self._runner_results._runner.dataflow_client.get_job(self._runner_results.job_id()))
     self._is_complete = self._runner_results.state in ['STOPPED', 'DONE', 'FAILED', 'CANCELLED']
-    self._fator_error = getattr(self._runner_results._runner, 'last_error_msg', None)
-
-
+    self._fatal_error = getattr(self._runner_results._runner, 'last_error_msg', None)
+    # Sometimes Dataflow does not populate runner.last_error_msg even if the job fails.
+    if self._fatal_error is None and self._runner_results.state == 'FAILED':
+      self._fatal_error = 'FAILED'
