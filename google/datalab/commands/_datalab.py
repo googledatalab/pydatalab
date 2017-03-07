@@ -36,7 +36,7 @@ def datalab(line, cell=None):
     The results of executing the cell.
   """
   parser = google.datalab.utils.commands.CommandParser(
-      prog='datalab',
+      prog='%datalab',
       description="""
 Execute operations that apply to multiple Datalab APIs.
 

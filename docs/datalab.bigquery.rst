@@ -1,8 +1,5 @@
-datalab.bigquery package
-========================
-
-Module contents
----------------
+datalab.bigquery Module
+=======================
 
 .. automodule:: datalab.bigquery
     :members:
