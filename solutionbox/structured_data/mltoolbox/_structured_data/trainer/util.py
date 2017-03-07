@@ -48,11 +48,14 @@ CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
 
 
 # Constants for the Prediction Graph fetch tensors.
-PG_TARGET = 'target_from_input'
+PG_TARGET = 'target'  # from input
 
-PG_REGRESSION_PREDICTED_TARGET = 'predicted_target'
-PG_CLASSIFICATION_LABEL_TEMPLATE = 'top_%s_label'
-PG_CLASSIFICATION_SCORE_TEMPLATE = 'top_%s_score'
+PG_REGRESSION_PREDICTED_TARGET = 'predicted'
+
+PG_CLASSIFICATION_FIRST_LABEL = 'predicted'
+PG_CLASSIFICATION_FIRST_SCORE = 'score'
+PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
+PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
 
 # ==============================================================================
 # Functions for saving the exported graphs.
