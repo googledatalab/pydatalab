@@ -48,11 +48,14 @@ CATEGORICAL_ANALYSIS = 'vocab_%s.csv'
 
 
 # Constants for the Prediction Graph fetch tensors.
-PG_TARGET = 'target_from_input'
+PG_TARGET = 'target'  # from input
 
-PG_REGRESSION_PREDICTED_TARGET = 'predicted_target'
-PG_CLASSIFICATION_LABEL_TEMPLATE = 'top_%s_label'
-PG_CLASSIFICATION_SCORE_TEMPLATE = 'top_%s_score'
+PG_REGRESSION_PREDICTED_TARGET = 'predicted'
+
+PG_CLASSIFICATION_FIRST_LABEL = 'predicted'
+PG_CLASSIFICATION_FIRST_SCORE = 'score'
+PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
+PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
 
 # ==============================================================================
 # Functions for saving the exported graphs.
@@ -148,12 +151,21 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
         # makes sorting the columns easy.
         padded_i = str(i+1).zfill(num_digits)
 
-        label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
+        if i == 0:
+          label_alias = PG_CLASSIFICATION_FIRST_LABEL
+        else:
+          label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
+
         label_tensor_name = (tf.squeeze(
               tf.slice(top_k_labels, 
                        [0, i],
                        [tf.shape(top_k_labels)[0], 1])))
-        score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
+
+        if i == 0:
+          score_alias = PG_CLASSIFICATION_FIRST_SCORE
+        else:
+          score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
+
         score_tensor_name = (tf.squeeze(
             tf.slice(top_k_values, 
                      [0, i], 
