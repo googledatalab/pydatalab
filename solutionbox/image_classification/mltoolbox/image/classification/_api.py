@@ -54,8 +54,9 @@ def preprocess(train_dataset, output_dir, eval_dataset=None, checkpoint=None, cl
   """Blocking version of preprocess_async(). The only difference is that it blocks the caller
      until the job finishes, and it does not have a return value.
   """
-
-  preprocess_async(train_dataset, output_dir, eval_dataset, checkpoint, cloud).wait()
+  job = preprocess_async(train_dataset, output_dir, eval_dataset, checkpoint, cloud)
+  job.wait()
+  print job.state
 
 
 def train_async(input_dir, batch_size, max_steps, output_dir, checkpoint=None, cloud=None):
@@ -85,7 +86,9 @@ def train(input_dir, batch_size, max_steps, output_dir, checkpoint=None, cloud=N
      until the job finishes, and it does not have a return value.
   """
 
-  train_async(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud).wait()
+  job = train_async(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud)
+  job.wait()
+  print job.state
 
 
 def predict(model, image_files, resize=False, show_image=True, cloud=None):
@@ -147,4 +150,6 @@ def batch_predict(dataset, model_dir, output_csv=None, output_bq_table=None, clo
      until the job finishes, and it does not have a return value.
   """
 
-  batch_predict_async(dataset, model_dir, output_csv, output_bq_table, cloud).wait()
+  job = batch_predict_async(dataset, model_dir, output_csv, output_bq_table, cloud)
+  job.wait()
+  print job.state

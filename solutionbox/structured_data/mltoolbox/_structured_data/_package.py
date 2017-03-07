@@ -140,6 +140,7 @@ def analyze(output_dir, dataset, cloud=False, project_id=None):
       cloud=cloud,
       project_id=project_id)
   job.wait()
+  print('Analyze: ' + str(job.state))
 
 
 def analyze_async(output_dir, dataset, cloud=False, project_id=None):
@@ -713,6 +714,7 @@ def batch_predict(training_dir, prediction_input_file, output_dir,
       output_format=output_format,
       cloud=cloud)
   job.wait()
+  print('Batch predict: ' + str(job.state))
 
 
 def batch_predict_async(training_dir, prediction_input_file, output_dir,
