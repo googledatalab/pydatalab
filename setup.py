@@ -15,13 +15,39 @@
 import datetime
 import sys
 from setuptools import setup
+from setuptools.command.install import install
 
 if sys.version_info[0] == 2:
-  import platform
   import pip
 
 minor = datetime.datetime.now().strftime("%y%m%d%H%M")
 version = '0.1.' + minor
+
+
+class InstallPipPackages(install):
+    def run(self):
+        install.run(self)
+        # for python2 only, install tensorflow and cloudml
+        if sys.version_info[0] == 2:
+          tensorflow_path = None
+          if sys.platform.startswith("darwin"):
+            tensorflow_path = 'https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-0.11.0-py2-none-any.whl'
+          elif sys.platform.startswith("linux"):
+            from pip._vendor import distro
+            if distro.linux_distribution()[0].startswith('Ubuntu'):
+              tensorflow_path = 'https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl'
+            elif distro.linux_distribution()[0].startswith('Debian'):
+              tensorflow_path = 'https://storage.googleapis.com/tensorflow/linux/cpu/debian/jessie/tensorflow-0.11.0-cp27-none-linux_x86_64.whl'
+
+          # install tensorflow
+          if not tensorflow_path:
+            print("""Warning: could not find tensorflow build for your OS.
+            Please go to https://www.tensorflow.org/get_started/os_setup to see install options""")
+          else:
+            pip.main(['install', tensorflow_path])
+
+          # install cloud ml sdk
+          pip.main(['install', 'https://storage.googleapis.com/cloud-ml/sdk/cloudml.latest.tar.gz'])
 
 setup(
   name='datalab',
@@ -141,5 +167,8 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/extern/sylvester.js',
         'static/extern/lantern-browser.html',
       ]
+  },
+  cmdclass = {
+    'install': InstallPipPackages,
   }
 )
