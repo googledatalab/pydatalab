@@ -17,6 +17,7 @@ Contents:
    google.datalab
    google.datalab.bigquery
    google.datalab.data
+   google.datalab.ml
    google.datalab.stackdriver.monitoring
    google.datalab.storage
    google.datalab.magics
