@@ -120,12 +120,12 @@ class Http(object):
     if method is None:
       method = 'GET'
 
-    # Make a copy of the shared http instance in case we need to modify
-    # it (e.g. by adding credentials) below.
-    http = copy.copy(Http.http)
+    http = Http.http
 
     # Authorize with credentials if given
     if credentials is not None:
+      # Make a copy of the shared http instance before we modify it.
+      http = copy.copy(http)
       http = credentials.authorize(http)
     if stats is not None:
       stats['duration'] = datetime.datetime.utcnow()
