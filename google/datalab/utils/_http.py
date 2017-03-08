@@ -19,6 +19,7 @@ from builtins import str
 from past.builtins import basestring
 from builtins import object
 
+import copy
 import datetime
 import json
 import urllib.request, urllib.parse, urllib.error
@@ -119,8 +120,11 @@ class Http(object):
     if method is None:
       method = 'GET'
 
+    # Make a copy of the shared http instance in case we need to modify
+    # it (e.g. by adding credentials) below.
+    http = copy.copy(Http.http)
+
     # Authorize with credentials if given
-    http = Http.http
     if credentials is not None:
       http = credentials.authorize(http)
     if stats is not None:
