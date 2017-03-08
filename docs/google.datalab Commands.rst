@@ -1,4 +1,4 @@
-google.datalab commands
+google.datalab Commands
 =======================
 
 .. attribute:: %sd

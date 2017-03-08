@@ -21,7 +21,7 @@ def generate_magic_docs(submodules, header, dir, ignored_magics=None):
   indent = '\n  '
 
   reSTfile.write(header + '\n')
-  reSTfile.write('======================\n\n')
+  reSTfile.write('=======================\n\n')
 
   for m in magics.split():
     if m in ignored_magics:
@@ -39,6 +39,6 @@ def generate_magic_docs(submodules, header, dir, ignored_magics=None):
       reSTfile.writelines(indent + indent.join(resultout) + '\n\n')
 
 
-generate_magic_docs(datalab_submodules, 'datalab.magics', '../datalab', ignored_magics=['chart', 'csv']);
-generate_magic_docs(google_submodules, 'google.datalab.magics', '../google');
+generate_magic_docs(datalab_submodules, 'datalab Commands', '../datalab', ignored_magics=['chart', 'csv']);
+generate_magic_docs(google_submodules, 'google.datalab Commands', '../google');
 
