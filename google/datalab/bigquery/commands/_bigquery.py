@@ -40,6 +40,8 @@ import google.datalab.utils.commands
 BIGQUERY_DATATYPES = ['STRING', 'BYTES', 'INTEGER', 'INT64', 'FLOAT', 'FLOAT64', 'BOOLEAN',
                       'BOOL', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']
 BIGQUERY_DATATYPES_LOWER = [t.lower() for t in BIGQUERY_DATATYPES]
+BIGQUERY_MODES = ['NULLABLE', 'REQUIRED', 'REPEATED']
+BIGQUERY_MODES_LOWER = [m.lower() for m in BIGQUERY_MODES]
 
 table_schema_schema = {
   'definitions': {
@@ -49,7 +51,7 @@ table_schema_schema = {
       'properties': {
         'name': {'type': 'string'},
         'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
-        'mode': {'type': 'string', 'enum': ['nullable', 'required', 'repeated']},
+        'mode': {'type': 'string', 'enum': BIGQUERY_MODES + BIGQUERY_MODES_LOWER},
         'description': {'type': 'string'},
         'fields': {'$ref': '#/definitions/field'}
       },
