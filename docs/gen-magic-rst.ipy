@@ -23,7 +23,7 @@ def generate_magic_docs(submodules, header, dir, ignored_magics=None):
   reSTfile.write(header + '\n')
   reSTfile.write('=======================\n\n')
 
-  for m in magics.split():
+  for m in sorted(magics.split()):
     if m in ignored_magics:
       sys.stderr.write('Ignoring magic ' + m + '\n')
     else:
