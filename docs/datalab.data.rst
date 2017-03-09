@@ -1,8 +1,5 @@
-datalab.data package
-====================
-
-Module contents
----------------
+datalab.data Module
+===================
 
 .. automodule:: datalab.data
     :members:

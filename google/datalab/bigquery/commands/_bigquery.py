@@ -880,7 +880,7 @@ def _create_bigquery_parser():
   for the handlers that bind the cell contents and thus must recreate this parser for each
   cell upon execution.
   """
-  parser = google.datalab.utils.commands.CommandParser(prog='bq', description="""
+  parser = google.datalab.utils.commands.CommandParser(prog='%bq', description="""
 Execute various BigQuery-related operations. Use "%bq <command> -h"
 for help on a specific command.
   """)

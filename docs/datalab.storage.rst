@@ -1,8 +1,5 @@
-datalab.storage package
-=======================
-
-Module contents
----------------
+datalab.storage Module
+======================
 
 .. automodule:: datalab.storage
     :members:
