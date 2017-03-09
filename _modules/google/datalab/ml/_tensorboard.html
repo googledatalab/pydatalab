@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab.ml._tensorboard &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.datalab.ml._tensorboard</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.datalab.ml._tensorboard</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+  <span class="kn">import</span> <span class="nn">IPython</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+  <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;This module can only be loaded in ipython.&#39;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">psutil</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">google.datalab</span> <span class="k">as</span> <span class="nn">datalab</span>
+
+
+<div class="viewcode-block" id="TensorBoard"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.TensorBoard">[docs]</a><span class="k">class</span> <span class="nc">TensorBoard</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Start, shutdown, and list TensorBoard instances.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="TensorBoard.list"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.TensorBoard.list">[docs]</a>  <span class="k">def</span> <span class="nf">list</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;List running TensorBoard instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">running_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--logdir&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--port&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">psutil</span><span class="o">.</span><span class="n">process_iter</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;tensorboard&#39;</span><span class="p">:</span>
+        <span class="k">continue</span>
+      <span class="n">cmd_args</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">cmdline</span><span class="p">()</span>
+      <span class="k">del</span> <span class="n">cmd_args</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="c1"># remove &#39;python&#39; and &#39;tensorboard&#39;</span>
+      <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">cmd_args</span><span class="p">)</span>
+      <span class="n">running_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;pid&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span> <span class="s1">&#39;logdir&#39;</span><span class="p">:</span> <span class="n">args</span><span class="o">.</span><span class="n">logdir</span><span class="p">,</span> <span class="s1">&#39;port&#39;</span><span class="p">:</span> <span class="n">args</span><span class="o">.</span><span class="n">port</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">running_list</span><span class="p">)</span></div>
+
+  
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="TensorBoard.start"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.TensorBoard.start">[docs]</a>  <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">logdir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Start a TensorBoard instance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      logdir: the logdir to run TensorBoard on.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if the instance cannot be started.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">logdir</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+      <span class="c1"># Check user does have access. TensorBoard will start successfully regardless</span>
+      <span class="c1"># the user has read permissions or not so we check permissions here to</span>
+      <span class="c1"># give user alerts if needed.</span>
+      <span class="n">datalab</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">Api</span><span class="o">.</span><span class="n">verify_permitted_to_read</span><span class="p">(</span><span class="n">logdir</span><span class="p">)</span>
+
+    <span class="n">port</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">pick_unused_port</span><span class="p">()</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tensorboard&#39;</span><span class="p">,</span> <span class="s1">&#39;--logdir=&#39;</span> <span class="o">+</span> <span class="n">logdir</span><span class="p">,</span> <span class="s1">&#39;--port=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">)]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">retry</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">retry</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+      <span class="k">if</span> <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">is_http_running_on</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;/_proxy/</span><span class="si">%d</span><span class="s1">/&#39;</span> <span class="o">%</span> <span class="n">port</span>
+        <span class="n">html</span> <span class="o">=</span> <span class="s1">&#39;&lt;p&gt;TensorBoard was started successfully with pid </span><span class="si">%d</span><span class="s1">. &#39;</span> <span class="o">%</span> <span class="n">p</span><span class="o">.</span><span class="n">pid</span>
+        <span class="n">html</span> <span class="o">+=</span> <span class="s1">&#39;Click &lt;a href=&quot;</span><span class="si">%s</span><span class="s1">&quot; target=&quot;_blank&quot;&gt;here&lt;/a&gt; to access it.&lt;/p&gt;&#39;</span> <span class="o">%</span> <span class="n">url</span>
+        <span class="n">IPython</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">display_html</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">pid</span>
+      <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+      <span class="n">retry</span> <span class="o">-=</span> <span class="mi">1</span>
+
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot start TensorBoard.&#39;</span><span class="p">)</span></div>
+
+  <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="TensorBoard.stop"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.TensorBoard.stop">[docs]</a>  <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="n">pid</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Shut down a specific process.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      pid: the pid of the process to shutdown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">psutil</span><span class="o">.</span><span class="n">pid_exists</span><span class="p">(</span><span class="n">pid</span><span class="p">):</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+      <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

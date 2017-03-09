@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab.ml._dataset &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.datalab.ml._dataset</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.datalab.ml._dataset</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Implements DataSets that serve two purposes:</span>
+
+<span class="sd">1. Recommended way to pass data source to ML packages.</span>
+<span class="sd">2. All DataSets can be sampled into dataframe for analysis/visualization.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">import</span> <span class="nn">google.datalab.bigquery</span> <span class="k">as</span> <span class="nn">bq</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_util</span>
+
+
+<div class="viewcode-block" id="CsvDataSet"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.CsvDataSet">[docs]</a><span class="k">class</span> <span class="nc">CsvDataSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;DataSet based on CSV files and schema.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_pattern</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schema_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">      file_pattern: A list of CSV files. or a string. Can contain wildcards in</span>
+<span class="sd">          file names. Can be local or GCS path.</span>
+<span class="sd">      schema: A BigQuery schema object in the form of </span>
+<span class="sd">          [{&#39;name&#39;: &#39;col1&#39;, &#39;type&#39;: &#39;STRING&#39;},</span>
+<span class="sd">           {&#39;name&#39;: &#39;col2&#39;, &#39;type&#39;: &#39;INTEGER&#39;}]</span>
+<span class="sd">          or a single string in of the form &#39;col1:STRING,col2:INTEGER,col3:FLOAT&#39;.</span>
+<span class="sd">      schema_file: A JSON serialized schema file. If schema is None, it will try to load from</span>
+<span class="sd">          schema_file if not None.</span>
+<span class="sd">    Raise:</span>
+<span class="sd">      ValueError if both schema and schema_file are None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">schema_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;schema and schema_file cannot both be None.&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="n">schema</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+          <span class="n">parts</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+          <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid schema string &quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">x</span><span class="p">)</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()})</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">with</span> <span class="n">_util</span><span class="o">.</span><span class="n">open_local_or_gcs</span><span class="p">(</span><span class="n">schema_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_pattern</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+      <span class="n">file_pattern</span> <span class="o">=</span> <span class="p">[</span><span class="n">file_pattern</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_input_files</span> <span class="o">=</span> <span class="n">file_pattern</span>
+    
+    <span class="bp">self</span><span class="o">.</span><span class="n">_glob_files</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">input_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the file list that was given to this class without globing files.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_files</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_glob_files</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_files</span><span class="p">:</span>
+        <span class="c1"># glob_files() returns unicode strings which doesn&#39;t make DataFlow happy. So str().</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_glob_files</span> <span class="o">+=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_util</span><span class="o">.</span><span class="n">glob_files</span><span class="p">(</span><span class="n">file</span><span class="p">)]</span>
+    
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_glob_files</span>
+      
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span>  
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The size of the schema. If the underlying data source changes, it may be outdated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="mi">0</span>
+      <span class="k">for</span> <span class="n">csv_file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">line</span> <span class="k">else</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">_util</span><span class="o">.</span><span class="n">open_local_or_gcs</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
+    
+<div class="viewcode-block" id="CsvDataSet.sample"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.CsvDataSet.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Samples data into a Pandas DataFrame.</span>
+<span class="sd">    Args:</span>
+<span class="sd">      n: number of sampled counts.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A dataframe containing sampled data.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if n is larger than number of rows.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">row_total_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">row_counts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+      <span class="k">with</span> <span class="n">_util</span><span class="o">.</span><span class="n">open_local_or_gcs</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">num_lines</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">row_total_count</span> <span class="o">+=</span> <span class="n">num_lines</span>
+        <span class="n">row_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">num_lines</span><span class="p">)</span>
+
+    <span class="n">names</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">:</span>
+      <span class="n">_MAPPINGS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;FLOAT&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+        <span class="s1">&#39;INTEGER&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+        <span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span>
+        <span class="s1">&#39;BOOLEAN&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span>
+      <span class="p">}</span>
+      <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">]</span>
+      <span class="n">dtype</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]:</span> <span class="n">_MAPPINGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="nb">object</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">}</span>
+    
+    <span class="n">skip_count</span> <span class="o">=</span> <span class="n">row_total_count</span> <span class="o">-</span> <span class="n">n</span>
+    <span class="c1"># Get all skipped indexes. These will be distributed into each file.</span>
+    <span class="c1"># Note that random.sample will raise Exception if skip_count is greater than rows count.</span>
+    <span class="n">skip_all</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">row_total_count</span><span class="p">),</span> <span class="n">skip_count</span><span class="p">))</span>
+    <span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">row_count</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="n">row_counts</span><span class="p">):</span>
+      <span class="n">skip</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">skip_all</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">row_count</span><span class="p">]</span>
+      <span class="n">skip_all</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">-</span> <span class="n">row_count</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">skip_all</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">row_count</span><span class="p">]</span>
+      <span class="k">with</span> <span class="n">_util</span><span class="o">.</span><span class="n">open_local_or_gcs</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">skip</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BigQueryDataSet"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.BigQueryDataSet">[docs]</a><span class="k">class</span> <span class="nc">BigQueryDataSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;DataSet based on BigQuery table or query.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">      sql: A SQL query string, or a SQL Query module defined with &#39;%%bq query --name [query_name]&#39;</span>
+<span class="sd">      table: A table name in the form of &#39;dataset.table or project.dataset.table&#39;.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      ValueError if both sql and table are set, or both are None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">sql</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">sql</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;One and only one of sql and table should be set.&#39;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_query</span> <span class="o">=</span> <span class="n">sql</span><span class="o">.</span><span class="n">_expanded_sql</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">)</span> <span class="k">else</span> <span class="n">sql</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">=</span> <span class="n">table</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span>
+
+  <span class="k">def</span> <span class="nf">_get_source</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">return</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
+    <span class="k">return</span> <span class="s1">&#39;`&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span> <span class="o">+</span> <span class="s1">&#39;`&#39;</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="s1">&#39;SELECT * FROM </span><span class="si">%s</span><span class="s1"> LIMIT 1&#39;</span> <span class="o">%</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">())</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">schema</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span>
+
+  <span class="nd">@property</span>
+  <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The size of the schema. If the underlying data source changes, it may be outdated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="s1">&#39;SELECT COUNT(*) FROM </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">())</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span><span class="o">.</span><span class="n">result</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
+
+<div class="viewcode-block" id="BigQueryDataSet.sample"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.BigQueryDataSet.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Samples data into a Pandas DataFrame. Note that it calls BigQuery so it will</span>
+<span class="sd">       incur cost.</span>
+<span class="sd">    Args:</span>
+<span class="sd">      n: number of sampled counts. Note that the number of counts returned is approximated.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A dataframe containing sampled data.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if n is larger than number of rows.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="s1">&#39;select count(*) from </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">_get_source</span><span class="p">())</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span><span class="o">.</span><span class="n">result</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">total</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;sample larger than population&#39;</span><span class="p">)</span>
+    <span class="n">sampling</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Sampling</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">percent</span><span class="o">=</span><span class="n">n</span><span class="o">*</span><span class="mf">100.0</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">total</span><span class="p">))</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">source</span> <span class="o">=</span> <span class="s1">&#39;SELECT * FROM `</span><span class="si">%s</span><span class="s1">`&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_table</span>
+    <span class="n">sample</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sampling</span><span class="o">=</span><span class="n">sampling</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">df</span></div></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

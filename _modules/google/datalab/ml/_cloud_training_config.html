@@ -1,0 +1,279 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab.ml._cloud_training_config &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.datalab.ml._cloud_training_config</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.datalab.ml._cloud_training_config</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Google Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+
+<span class="n">_CloudTrainingConfig</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;CloudConfig&quot;</span><span class="p">,</span> 
+    <span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;scale_tier&#39;</span><span class="p">,</span> <span class="s1">&#39;master_type&#39;</span><span class="p">,</span> <span class="s1">&#39;worker_type&#39;</span><span class="p">,</span>
+     <span class="s1">&#39;parameter_server_type&#39;</span><span class="p">,</span> <span class="s1">&#39;worker_count&#39;</span><span class="p">,</span> <span class="s1">&#39;parameter_server_count&#39;</span><span class="p">])</span>
+<span class="n">_CloudTrainingConfig</span><span class="o">.</span><span class="fm">__new__</span><span class="o">.</span><span class="vm">__defaults__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;BASIC&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CloudTrainingConfig"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.CloudTrainingConfig">[docs]</a><span class="k">class</span> <span class="nc">CloudTrainingConfig</span><span class="p">(</span><span class="n">_CloudTrainingConfig</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A config namedtuple containing cloud specific configurations for CloudML training.</span>
+<span class="sd">    </span>
+<span class="sd">    Fields:</span>
+<span class="sd">      region: the region of the training job to be submitted. For example, &quot;us-central1&quot;.</span>
+<span class="sd">          Run &quot;gcloud compute regions list&quot; to get a list of regions.</span>
+<span class="sd">      scale_tier: Specifies the machine types, the number of replicas for workers and</span>
+<span class="sd">          parameter servers. For example, &quot;STANDARD_1&quot;. See</span>
+<span class="sd">          https://cloud.google.com/ml/reference/rest/v1beta1/projects.jobs#scaletier</span>
+<span class="sd">          for list of accepted values.</span>
+<span class="sd">      master_type: specifies the type of virtual machine to use for your training</span>
+<span class="sd">          job&#39;s master worker. Must set this value when scale_tier is set to CUSTOM.</span>
+<span class="sd">          See the link in &quot;scale_tier&quot;.</span>
+<span class="sd">      worker_type: specifies the type of virtual machine to use for your training</span>
+<span class="sd">          job&#39;s worker nodes. Must set this value when scale_tier is set to CUSTOM.</span>
+<span class="sd">      parameter_server_type: specifies the type of virtual machine to use for your training</span>
+<span class="sd">          job&#39;s parameter server. Must set this value when scale_tier is set to CUSTOM.</span>
+<span class="sd">      worker_count: the number of worker replicas to use for the training job. Each</span>
+<span class="sd">          replica in the cluster will be of the type specified in &quot;worker_type&quot;.</span>
+<span class="sd">          Must set this value when scale_tier is set to CUSTOM.</span>
+<span class="sd">      parameter_server_count: the number of parameter server replicas to use. Each</span>
+<span class="sd">          replica in the cluster will be of the type specified in &quot;parameter_server_type&quot;.</span>
+<span class="sd">          Must set this value when scale_tier is set to CUSTOM.  </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,388 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab.ml._summary &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.datalab.ml._summary</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.datalab.ml._summary</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Google Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">tensorflow.core.util</span> <span class="k">import</span> <span class="n">event_pb2</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.lib.io</span> <span class="k">import</span> <span class="n">tf_record</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_util</span> 
+
+
+<div class="viewcode-block" id="Summary"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Summary">[docs]</a><span class="k">class</span> <span class="nc">Summary</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents TensorFlow summary events from files under specified directories.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initializes an instance of a Summary.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      path: a list of paths to directories which hold TensorFlow events files.</span>
+<span class="sd">            Can be local path or GCS paths. Wild cards allowed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">paths</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">basestring</span><span class="p">)</span> <span class="k">else</span> <span class="n">paths</span>
+
+  <span class="k">def</span> <span class="nf">_glob_events_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
+    <span class="n">event_files</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+        <span class="n">event_files</span> <span class="o">+=</span> <span class="n">_util</span><span class="o">.</span><span class="n">glob_files</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;*.tfevents.*&#39;</span><span class="p">))</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="n">_util</span><span class="o">.</span><span class="n">glob_files</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="nb">dir</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+          <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="nb">dir</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="s1">&#39;*.tfevents.*&#39;</span><span class="p">):</span>
+              <span class="n">event_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">event_files</span>
+
+<div class="viewcode-block" id="Summary.list_events"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Summary.list_events">[docs]</a>  <span class="k">def</span> <span class="nf">list_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all scalar events in the directory.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A dictionary. Key is the name of a event. Value is a set of dirs that contain that event.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">event_dir_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">event_file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_glob_events_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_paths</span><span class="p">):</span>
+      <span class="nb">dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">event_file</span><span class="p">)</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">tf_record</span><span class="o">.</span><span class="n">tf_record_iterator</span><span class="p">(</span><span class="n">event_file</span><span class="p">):</span>
+          <span class="n">event</span> <span class="o">=</span> <span class="n">event_pb2</span><span class="o">.</span><span class="n">Event</span><span class="o">.</span><span class="n">FromString</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+          <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+          <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">simple_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value</span><span class="o">.</span><span class="n">tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+              <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="n">event_dir_dict</span><span class="p">:</span>
+              <span class="n">event_dir_dict</span><span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">event_dir_dict</span><span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span>
+      <span class="k">except</span><span class="p">:</span>
+        <span class="c1"># It seems current TF (1.0) has a bug when iterating events from a file near the end.</span>
+        <span class="c1"># For now just catch and pass.</span>
+        <span class="c1"># print(&#39;Error in iterating events from file &#39; + event_file)</span>
+        <span class="k">continue</span>
+    <span class="k">return</span> <span class="n">event_dir_dict</span></div>
+  
+
+<div class="viewcode-block" id="Summary.get_events"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Summary.get_events">[docs]</a>  <span class="k">def</span> <span class="nf">get_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_names</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get all events as pandas DataFrames given a list of names.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      event_names: A list of events to get.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      A list with the same length as event_names. Each element is a dictionary</span>
+<span class="sd">          {dir1: DataFrame1, dir2: DataFrame2, ...}.</span>
+<span class="sd">          Multiple directories may contain events with the same name, but they are different</span>
+<span class="sd">          events (i.e. &#39;loss&#39; under trains_set/, and &#39;loss&#39; under eval_set/.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">event_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">event_names</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_names</span><span class="p">,</span> <span class="n">basestring</span><span class="p">)</span> <span class="k">else</span> <span class="n">event_names</span>
+
+    <span class="n">all_events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_events</span><span class="p">()</span>
+    <span class="n">dirs_to_look</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">event</span><span class="p">,</span> <span class="n">dirs</span> <span class="ow">in</span> <span class="n">all_events</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="k">if</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">event_names</span><span class="p">:</span>
+        <span class="n">dirs_to_look</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+
+    <span class="n">ret_events</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">event_names</span><span class="p">))]</span>
+    <span class="k">for</span> <span class="nb">dir</span> <span class="ow">in</span> <span class="n">dirs_to_look</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">event_file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_glob_events_files</span><span class="p">([</span><span class="nb">dir</span><span class="p">]):</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">tf_record</span><span class="o">.</span><span class="n">tf_record_iterator</span><span class="p">(</span><span class="n">event_file</span><span class="p">):</span>
+            <span class="n">event</span> <span class="o">=</span> <span class="n">event_pb2</span><span class="o">.</span><span class="n">Event</span><span class="o">.</span><span class="n">FromString</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">wall_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+              <span class="k">continue</span>
+
+            <span class="n">event_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">wall_time</span><span class="p">)</span>  
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+              <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">tag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">event_names</span> <span class="ow">or</span> <span class="n">value</span><span class="o">.</span><span class="n">simple_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+              <span class="n">index</span> <span class="o">=</span> <span class="n">event_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+              <span class="n">dir_event_dict</span> <span class="o">=</span> <span class="n">ret_events</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+              <span class="k">if</span> <span class="nb">dir</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dir_event_dict</span><span class="p">:</span>
+                <span class="n">dir_event_dict</span><span class="p">[</span><span class="nb">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                    <span class="p">[[</span><span class="n">event_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">simple_value</span><span class="p">]],</span>
+                    <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;step&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">])</span>
+              <span class="k">else</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">dir_event_dict</span><span class="p">[</span><span class="nb">dir</span><span class="p">]</span>
+                <span class="c1"># Append a row.</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)]</span> <span class="o">=</span> <span class="p">[</span><span class="n">event_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">simple_value</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+          <span class="c1"># It seems current TF (1.0) has a bug when iterating events from a file near the end.</span>
+          <span class="c1"># For now just catch and pass.</span>
+          <span class="c1"># print(&#39;Error in iterating events from file &#39; + event_file)</span>
+          <span class="k">continue</span>
+
+    <span class="k">for</span> <span class="n">dir_event_dict</span> <span class="ow">in</span> <span class="n">ret_events</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">dir_event_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ret_events</span></div>
+
+<div class="viewcode-block" id="Summary.plot"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Summary.plot">[docs]</a>  <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_names</span><span class="p">,</span> <span class="n">x_axis</span><span class="o">=</span><span class="s1">&#39;step&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Plots a list of events. Each event (a dir+event_name) is represetented as a line</span>
+<span class="sd">       in the graph.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      event_names: A list of events to plot. Each event_name may correspond to multiple events,</span>
+<span class="sd">          each in a different directory.</span>
+<span class="sd">      x_axis: whether to use step or time as x axis.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">event_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">event_names</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event_names</span><span class="p">,</span> <span class="n">basestring</span><span class="p">)</span> <span class="k">else</span> <span class="n">event_names</span>
+    <span class="n">events_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="n">event_names</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">event_name</span><span class="p">,</span> <span class="n">dir_event_dict</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">event_names</span><span class="p">,</span> <span class="n">events_list</span><span class="p">):</span>
+      <span class="k">for</span> <span class="nb">dir</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">dir_event_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">event_name</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="nb">dir</span>
+        <span class="n">x_column</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">x_axis</span> <span class="o">==</span> <span class="s1">&#39;step&#39;</span> <span class="k">else</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_column</span><span class="p">,</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div></div>
+
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

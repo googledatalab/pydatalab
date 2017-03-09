@@ -1,0 +1,433 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>datalab Commands &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="prev" title="datalab.storage Module" href="datalab.storage.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>datalab Commands</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/datalab Commands.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="datalab-commands">
+<h1>datalab Commands<a class="headerlink" href="#datalab-commands" title="Permalink to this headline">¶</a></h1>
+<dl class="attribute">
+<dt>
+<code class="descname">%monitoring</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">monitoring</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="nb">list</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">Monitoring</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;%monitoring &lt;command&gt; -h&quot;</span>
+<span class="k">for</span> <span class="n">help</span> <span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="nb">list</span><span class="p">}</span>      <span class="n">commands</span>
+    <span class="nb">list</span>      <span class="n">List</span> <span class="n">the</span> <span class="n">metrics</span> <span class="ow">or</span> <span class="n">resource</span> <span class="n">types</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">monitored</span> <span class="n">project</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%extension</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="o">%</span><span class="n">extension</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="n">mathjax</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">Load</span> <span class="n">an</span> <span class="n">extension</span> <span class="n">into</span> <span class="n">Datalab</span><span class="o">.</span> <span class="n">Currently</span> <span class="n">only</span> <span class="n">mathjax</span> <span class="ow">is</span> <span class="n">supported</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">mathjax</span><span class="p">}</span>   <span class="n">commands</span>
+    <span class="n">mathjax</span>   <span class="n">Enabled</span> <span class="n">MathJaX</span> <span class="n">support</span> <span class="ow">in</span> <span class="n">Datalab</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%pymodule</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pymodule</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NAME</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">n</span> <span class="n">NAME</span><span class="p">,</span> <span class="o">--</span><span class="n">name</span> <span class="n">NAME</span>  <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">python</span> <span class="n">module</span> <span class="n">to</span> <span class="n">create</span> <span class="ow">and</span> <span class="kn">import</span>
+<span class="nn">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%projects</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">projects</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="nb">list</span><span class="p">,</span><span class="nb">set</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="nb">list</span><span class="p">,</span><span class="nb">set</span><span class="p">}</span>  <span class="n">commands</span>
+    <span class="nb">list</span>      <span class="n">List</span> <span class="n">available</span> <span class="n">projects</span><span class="o">.</span>
+    <span class="nb">set</span>       <span class="n">Set</span> <span class="n">the</span> <span class="n">default</span> <span class="n">project</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%sql</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="o">%%</span><span class="n">sql</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">m</span> <span class="n">MODULE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">d</span> <span class="p">{</span><span class="n">legacy</span><span class="p">,</span><span class="n">standard</span><span class="p">}]</span> <span class="p">[</span><span class="o">-</span><span class="n">b</span> <span class="n">BILLING</span><span class="p">]</span>
+
+<span class="n">Create</span> <span class="n">a</span> <span class="n">named</span> <span class="n">SQL</span> <span class="n">module</span> <span class="k">with</span> <span class="n">one</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">queries</span><span class="o">.</span>
+
+<span class="n">The</span> <span class="n">cell</span> <span class="n">body</span> <span class="n">should</span> <span class="n">contain</span> <span class="n">an</span> <span class="n">optional</span> <span class="n">initial</span> <span class="n">part</span> <span class="n">defining</span> <span class="n">the</span> <span class="n">default</span>
+<span class="n">values</span> <span class="k">for</span> <span class="n">the</span> <span class="n">variables</span><span class="p">,</span> <span class="k">if</span> <span class="nb">any</span><span class="p">,</span> <span class="n">using</span> <span class="n">Python</span> <span class="n">code</span><span class="p">,</span> <span class="n">followed</span> <span class="n">by</span> <span class="n">one</span> <span class="ow">or</span> <span class="n">more</span>
+<span class="n">queries</span><span class="o">.</span>
+
+<span class="n">Queries</span> <span class="n">should</span> <span class="n">start</span> <span class="k">with</span> <span class="s1">&#39;DEFINE QUERY &lt;name&gt;&#39;</span> <span class="ow">in</span> <span class="n">order</span> <span class="n">to</span> <span class="n">bind</span> <span class="n">them</span> <span class="n">to</span>
+<span class="o">&lt;</span><span class="n">module</span> <span class="n">name</span><span class="o">&gt;.&lt;</span><span class="n">query</span> <span class="n">name</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">notebook</span> <span class="p">(</span><span class="k">as</span> <span class="n">datalab</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">SqlStament</span> <span class="n">instances</span><span class="p">)</span><span class="o">.</span>
+<span class="n">The</span> <span class="n">final</span> <span class="n">query</span> <span class="n">can</span> <span class="n">optionally</span> <span class="n">omit</span> <span class="s1">&#39;DEFINE QUERY &lt;name&gt;&#39;</span><span class="p">,</span> <span class="k">as</span> <span class="n">using</span> <span class="n">the</span> <span class="n">module</span>
+<span class="n">name</span> <span class="ow">in</span> <span class="n">places</span> <span class="n">where</span> <span class="n">a</span> <span class="n">SqlStatement</span> <span class="ow">is</span> <span class="n">expected</span> <span class="n">will</span> <span class="n">resolve</span> <span class="n">to</span> <span class="n">the</span> <span class="n">final</span> <span class="n">query</span>
+<span class="ow">in</span> <span class="n">the</span> <span class="n">module</span><span class="o">.</span>
+
+<span class="n">Queries</span> <span class="n">can</span> <span class="n">refer</span> <span class="n">to</span> <span class="n">variables</span> <span class="k">with</span> <span class="s1">&#39;$&lt;name&gt;&#39;</span><span class="p">,</span> <span class="k">as</span> <span class="n">well</span> <span class="k">as</span> <span class="n">refer</span> <span class="n">to</span> <span class="n">other</span> <span class="n">queries</span>
+<span class="n">within</span> <span class="n">the</span> <span class="n">same</span> <span class="n">module</span><span class="p">,</span> <span class="n">making</span> <span class="n">it</span> <span class="n">easy</span> <span class="n">to</span> <span class="n">compose</span> <span class="n">nested</span> <span class="n">queries</span> <span class="ow">and</span> <span class="n">test</span> <span class="n">their</span>
+<span class="n">parts</span><span class="o">.</span>
+
+<span class="n">The</span> <span class="n">Python</span> <span class="n">code</span> <span class="n">defining</span> <span class="n">the</span> <span class="n">variable</span> <span class="n">default</span> <span class="n">values</span> <span class="n">can</span> <span class="n">assign</span> <span class="n">scalar</span> <span class="ow">or</span> <span class="nb">list</span><span class="o">/</span><span class="nb">tuple</span> <span class="n">values</span> <span class="n">to</span>
+<span class="n">variables</span><span class="p">,</span> <span class="ow">or</span> <span class="n">one</span> <span class="n">of</span> <span class="n">the</span> <span class="n">special</span> <span class="n">functions</span> <span class="s1">&#39;datestring&#39;</span> <span class="ow">and</span> <span class="s1">&#39;source&#39;</span><span class="o">.</span>
+
+<span class="n">When</span> <span class="n">a</span> <span class="n">variable</span> <span class="k">with</span> <span class="n">a</span> <span class="s1">&#39;datestring&#39;</span> <span class="n">default</span> <span class="ow">is</span> <span class="n">expanded</span> <span class="n">it</span> <span class="n">will</span> <span class="n">expand</span> <span class="n">to</span> <span class="n">a</span> <span class="n">formatted</span>
+<span class="n">string</span> <span class="n">based</span> <span class="n">on</span> <span class="n">the</span> <span class="n">current</span> <span class="n">date</span><span class="p">,</span> <span class="k">while</span> <span class="n">a</span> <span class="s1">&#39;source&#39;</span> <span class="n">default</span> <span class="n">will</span> <span class="n">expand</span> <span class="n">to</span> <span class="n">a</span> <span class="n">table</span> <span class="n">whose</span>
+<span class="n">name</span> <span class="ow">is</span> <span class="n">based</span> <span class="n">on</span> <span class="n">the</span> <span class="n">current</span> <span class="n">date</span><span class="o">.</span>
+
+<span class="n">datestring</span><span class="p">()</span> <span class="n">takes</span> <span class="n">two</span> <span class="n">named</span> <span class="n">arguments</span><span class="p">,</span> <span class="s1">&#39;format&#39;</span> <span class="ow">and</span> <span class="s1">&#39;offset&#39;</span><span class="o">.</span> <span class="n">The</span> <span class="n">former</span> <span class="ow">is</span> <span class="n">a</span>
+<span class="nb">format</span> <span class="n">string</span> <span class="n">that</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">same</span> <span class="k">as</span> <span class="k">for</span> <span class="n">Python</span><span class="s1">&#39;s time.strftime function. The latter</span>
+<span class="ow">is</span> <span class="n">a</span> <span class="n">string</span> <span class="n">containing</span> <span class="n">a</span> <span class="n">comma</span><span class="o">-</span><span class="n">separated</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">expressions</span> <span class="n">such</span> <span class="k">as</span> <span class="o">-</span><span class="mi">1</span><span class="n">y</span><span class="p">,</span> <span class="o">+</span><span class="mi">2</span><span class="n">m</span><span class="p">,</span>
+<span class="n">etc</span><span class="p">;</span> <span class="n">these</span> <span class="n">are</span> <span class="n">offsets</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">time</span> <span class="n">of</span> <span class="n">expansion</span> <span class="n">that</span> <span class="n">are</span> <span class="n">applied</span> <span class="ow">in</span> <span class="n">order</span><span class="o">.</span> <span class="n">The</span>
+<span class="n">suffix</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span> <span class="n">correspond</span> <span class="n">to</span> <span class="n">units</span> <span class="n">of</span> <span class="n">years</span><span class="p">,</span> <span class="n">months</span><span class="p">,</span> <span class="n">days</span><span class="p">,</span> <span class="n">hours</span> <span class="ow">and</span>
+<span class="n">minutes</span><span class="p">,</span> <span class="k">while</span> <span class="n">the</span> <span class="o">+</span><span class="n">n</span> <span class="ow">or</span> <span class="o">-</span><span class="n">n</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">units</span> <span class="n">to</span> <span class="n">add</span> <span class="ow">or</span> <span class="n">subtract</span> <span class="kn">from</span>
+<span class="nn">the</span> <span class="n">time</span> <span class="n">of</span> <span class="n">expansion</span><span class="o">.</span> <span class="n">Three</span> <span class="n">special</span> <span class="n">values</span> <span class="s1">&#39;now&#39;</span><span class="p">,</span> <span class="s1">&#39;today&#39;</span> <span class="ow">and</span> <span class="s1">&#39;yesterday&#39;</span> <span class="n">are</span>
+<span class="n">also</span> <span class="n">supported</span><span class="p">;</span> <span class="s1">&#39;today&#39;</span> <span class="ow">and</span> <span class="s1">&#39;yesterday&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">midnight</span> <span class="n">UTC</span> <span class="n">on</span> <span class="n">the</span> <span class="n">current</span> <span class="n">date</span>
+<span class="ow">or</span> <span class="n">previous</span> <span class="n">days</span> <span class="n">date</span><span class="o">.</span>
+
+<span class="n">source</span><span class="p">()</span> <span class="n">can</span> <span class="n">take</span> <span class="n">a</span> <span class="s1">&#39;name&#39;</span> <span class="n">argument</span> <span class="k">for</span> <span class="n">a</span> <span class="n">fixed</span> <span class="n">table</span> <span class="n">name</span><span class="p">,</span> <span class="ow">or</span> <span class="s1">&#39;format&#39;</span> <span class="ow">and</span> <span class="s1">&#39;offset&#39;</span>
+<span class="n">arguments</span> <span class="n">similar</span> <span class="n">to</span> <span class="n">datestring</span><span class="p">(),</span> <span class="n">but</span> <span class="n">unlike</span> <span class="n">datestring</span><span class="p">()</span> <span class="n">will</span> <span class="n">resolve</span> <span class="n">to</span> <span class="n">a</span> <span class="n">Table</span>
+<span class="k">with</span> <span class="n">the</span> <span class="n">specified</span> <span class="n">name</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">m</span> <span class="n">MODULE</span><span class="p">,</span> <span class="o">--</span><span class="n">module</span> <span class="n">MODULE</span>
+                        <span class="n">The</span> <span class="n">name</span> <span class="k">for</span> <span class="n">this</span> <span class="n">SQL</span> <span class="n">module</span>
+  <span class="o">-</span><span class="n">d</span> <span class="p">{</span><span class="n">legacy</span><span class="p">,</span><span class="n">standard</span><span class="p">},</span> <span class="o">--</span><span class="n">dialect</span> <span class="p">{</span><span class="n">legacy</span><span class="p">,</span><span class="n">standard</span><span class="p">}</span>
+                        <span class="n">BigQuery</span> <span class="n">SQL</span> <span class="n">dialect</span>
+  <span class="o">-</span><span class="n">b</span> <span class="n">BILLING</span><span class="p">,</span> <span class="o">--</span><span class="n">billing</span> <span class="n">BILLING</span>
+                        <span class="n">BigQuery</span> <span class="n">billing</span> <span class="n">tier</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%bigquery</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">bigquery</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
+                <span class="p">{</span><span class="n">sample</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="n">dryrun</span><span class="p">,</span><span class="n">udf</span><span class="p">,</span><span class="n">execute</span><span class="p">,</span><span class="n">pipeline</span><span class="p">,</span><span class="n">table</span><span class="p">,</span><span class="n">schema</span><span class="p">,</span><span class="n">datasets</span><span class="p">,</span><span class="n">tables</span><span class="p">,</span><span class="n">extract</span><span class="p">,</span><span class="n">load</span><span class="p">}</span>
+                <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">BigQuery</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;%bigquery &lt;command&gt; -h&quot;</span> <span class="k">for</span>
+<span class="n">help</span> <span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">sample</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="n">dryrun</span><span class="p">,</span><span class="n">udf</span><span class="p">,</span><span class="n">execute</span><span class="p">,</span><span class="n">pipeline</span><span class="p">,</span><span class="n">table</span><span class="p">,</span><span class="n">schema</span><span class="p">,</span><span class="n">datasets</span><span class="p">,</span><span class="n">tables</span><span class="p">,</span><span class="n">extract</span><span class="p">,</span><span class="n">load</span><span class="p">}</span>
+                        <span class="n">commands</span>
+    <span class="n">sample</span>              <span class="n">Display</span> <span class="n">a</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span>
+                        <span class="n">query</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span> <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span>
+                        <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">query</span><span class="p">,</span> <span class="k">if</span> <span class="o">-</span><span class="n">q</span><span class="o">/--</span><span class="n">query</span> <span class="n">was</span>
+                        <span class="n">used</span><span class="p">,</span> <span class="ow">or</span> <span class="n">it</span> <span class="n">can</span> <span class="n">contain</span> <span class="n">SQL</span> <span class="k">for</span> <span class="n">a</span> <span class="n">query</span><span class="o">.</span>
+    <span class="n">create</span>              <span class="n">Create</span> <span class="n">a</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">table</span><span class="o">.</span>
+    <span class="n">delete</span>              <span class="n">Delete</span> <span class="n">a</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">table</span><span class="o">.</span>
+    <span class="n">dryrun</span>              <span class="n">Execute</span> <span class="n">a</span> <span class="n">dry</span> <span class="n">run</span> <span class="n">of</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">display</span>
+                        <span class="n">approximate</span> <span class="n">usage</span> <span class="n">statistics</span>
+    <span class="n">udf</span>                 <span class="n">Create</span> <span class="n">a</span> <span class="n">named</span> <span class="n">Javascript</span> <span class="n">BigQuery</span> <span class="n">UDF</span>
+    <span class="n">execute</span>             <span class="n">Execute</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">optionally</span> <span class="n">send</span> <span class="n">the</span>
+                        <span class="n">results</span> <span class="n">to</span> <span class="n">a</span> <span class="n">named</span> <span class="n">table</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span>
+                        <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span> <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span>
+                        <span class="n">query</span><span class="o">.</span>
+    <span class="n">pipeline</span>            <span class="n">Define</span> <span class="n">a</span> <span class="n">deployable</span> <span class="n">pipeline</span> <span class="n">based</span> <span class="n">on</span> <span class="n">a</span> <span class="n">BigQuery</span>
+                        <span class="n">query</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span> <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span>
+                        <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">query</span><span class="o">.</span>
+    <span class="n">table</span>               <span class="n">View</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span><span class="o">.</span>
+    <span class="n">schema</span>              <span class="n">View</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span> <span class="ow">or</span> <span class="n">view</span> <span class="n">schema</span><span class="o">.</span>
+    <span class="n">datasets</span>            <span class="n">List</span> <span class="n">the</span> <span class="n">datasets</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">project</span><span class="o">.</span>
+    <span class="n">tables</span>              <span class="n">List</span> <span class="n">the</span> <span class="n">tables</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">project</span> <span class="ow">or</span> <span class="n">dataset</span><span class="o">.</span>
+    <span class="n">extract</span>             <span class="n">Extract</span> <span class="n">BigQuery</span> <span class="n">query</span> <span class="n">results</span> <span class="ow">or</span> <span class="n">table</span> <span class="n">to</span> <span class="n">GCS</span><span class="o">.</span>
+    <span class="n">load</span>                <span class="n">Load</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">GCS</span> <span class="n">into</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%storage</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">storage</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="n">copy</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="nb">list</span><span class="p">,</span><span class="n">read</span><span class="p">,</span><span class="n">view</span><span class="p">,</span><span class="n">write</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">storage</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">torage &lt;command&gt; -h&quot;</span> <span class="k">for</span>
+<span class="n">help</span> <span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">copy</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="nb">list</span><span class="p">,</span><span class="n">read</span><span class="p">,</span><span class="n">view</span><span class="p">,</span><span class="n">write</span><span class="p">}</span>
+                        <span class="n">commands</span>
+    <span class="n">copy</span>                <span class="n">Copy</span> <span class="n">one</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">GCS</span> <span class="n">objects</span> <span class="n">to</span> <span class="n">a</span> <span class="n">different</span> <span class="n">location</span><span class="o">.</span>
+    <span class="n">create</span>              <span class="n">Create</span> <span class="n">one</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">GCS</span> <span class="n">buckets</span><span class="o">.</span>
+    <span class="n">delete</span>              <span class="n">Delete</span> <span class="n">one</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">GCS</span> <span class="n">buckets</span> <span class="ow">or</span> <span class="n">objects</span><span class="o">.</span>
+    <span class="nb">list</span>                <span class="n">List</span> <span class="n">buckets</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">project</span><span class="p">,</span> <span class="ow">or</span> <span class="n">contents</span> <span class="n">of</span> <span class="n">a</span> <span class="n">bucket</span><span class="o">.</span>
+    <span class="n">read</span>                <span class="n">Read</span> <span class="n">the</span> <span class="n">contents</span> <span class="n">of</span> <span class="n">a</span> <span class="n">storage</span> <span class="nb">object</span> <span class="n">into</span> <span class="n">a</span> <span class="n">Python</span>
+                        <span class="n">variable</span><span class="o">.</span>
+    <span class="n">view</span>                <span class="n">View</span> <span class="n">the</span> <span class="n">contents</span> <span class="n">of</span> <span class="n">a</span> <span class="n">storage</span> <span class="nb">object</span><span class="o">.</span>
+    <span class="n">write</span>               <span class="n">Write</span> <span class="n">the</span> <span class="n">value</span> <span class="n">of</span> <span class="n">a</span> <span class="n">Python</span> <span class="n">variable</span> <span class="n">to</span> <span class="n">a</span> <span class="n">storage</span>
+                        <span class="nb">object</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="datalab.storage.html" class="btn btn-neutral" title="datalab.storage Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

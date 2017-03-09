@@ -1,0 +1,929 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab.ml Module &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="google.datalab.stackdriver.monitoring Module" href="google.datalab.stackdriver.monitoring.html"/>
+        <link rel="prev" title="google.datalab.data Module" href="google.datalab.data.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>google.datalab.ml Module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/google.datalab.ml.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-google.datalab.ml">
+<span id="google-datalab-ml-module"></span><h1>google.datalab.ml Module<a class="headerlink" href="#module-google.datalab.ml" title="Permalink to this headline">¶</a></h1>
+<p>CloudML Helper Library.</p>
+<dl class="class">
+<dt id="google.datalab.ml.Job">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">Job</code><span class="sig-paren">(</span><em>name</em>, <em>context=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_job.html#Job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a Cloud ML job.</p>
+<p>Initializes an instance of a CloudML Job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> &#8211; the name of the job. It can be an operation full name
+(&#8220;projects/[project_id]/jobs/[operation_name]&#8221;) or just [operation_name].</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="google.datalab.ml.Job.submit_training">
+<em class="property">static </em><code class="descname">submit_training</code><span class="sig-paren">(</span><em>job_request</em>, <em>job_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_job.html#Job.submit_training"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Job.submit_training" title="Permalink to this definition">¶</a></dt>
+<dd><p>Submit a training job.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>job_request</strong> &#8211; <p>the arguments of the training job in a dict. For example,
+{</p>
+<blockquote>
+<div>&#8216;package_uris&#8217;:  &#8216;gs://my-bucket/iris/trainer-0.1.tar.gz&#8217;,
+&#8216;python_module&#8217;: &#8216;trainer.task&#8217;,
+&#8216;scale_tier&#8217;: &#8216;BASIC&#8217;,
+&#8216;region&#8217;: &#8216;us-central1&#8217;,
+&#8216;args&#8217;: {<blockquote>
+<div>&#8216;train_data_paths&#8217;: [&#8216;gs://mubucket/data/features_train&#8217;],
+&#8216;eval_data_paths&#8217;: [&#8216;gs://mubucket/data/features_eval&#8217;],
+&#8216;metadata_path&#8217;: &#8216;gs://mubucket/data/metadata.yaml&#8217;,
+&#8216;output_path&#8217;: &#8216;gs://mubucket/data/mymodel/&#8217;,</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}
+If &#8216;args&#8217; is present in job_request and is a dict, it will be expanded to
+&#8211;key value or &#8211;key list_item_0 &#8211;key list_item_1, ...</p>
+</li>
+<li><strong>job_id</strong> &#8211; id for the training job. If None, an id based on timestamp will be generated.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A Job object representing the cloud training job.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.Jobs">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">Jobs</code><span class="sig-paren">(</span><em>filter=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_job.html#Jobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of Cloud ML jobs for a project.</p>
+<p>Initializes an instance of a CloudML Job list that is iteratable (&#8220;for job in jobs()&#8221;).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filter</strong> &#8211; filter string for retrieving jobs, such as &#8220;state=FAILED&#8221;</li>
+<li><strong>context</strong> &#8211; an optional Context object providing project_id and credentials.</li>
+<li><strong>api</strong> &#8211; an optional CloudML API client.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.ml.Jobs.get_iterator">
+<code class="descname">get_iterator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_job.html#Jobs.get_iterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Jobs.get_iterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get iterator of jobs so it can be used as &#8220;for model in Jobs().get_iterator()&#8221;.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.Summary">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">Summary</code><span class="sig-paren">(</span><em>paths</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_summary.html#Summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents TensorFlow summary events from files under specified directories.</p>
+<p>Initializes an instance of a Summary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; a list of paths to directories which hold TensorFlow events files.
+Can be local path or GCS paths. Wild cards allowed.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.ml.Summary.get_events">
+<code class="descname">get_events</code><span class="sig-paren">(</span><em>event_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_summary.html#Summary.get_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Summary.get_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all events as pandas DataFrames given a list of names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>event_names</strong> &#8211; A list of events to get.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
+<dt>A list with the same length as event_names. Each element is a dictionary</dt>
+<dd>{dir1: DataFrame1, dir2: DataFrame2, ...}.
+Multiple directories may contain events with the same name, but they are different
+events (i.e. &#8216;loss&#8217; under trains_set/, and &#8216;loss&#8217; under eval_set/.)</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.Summary.list_events">
+<code class="descname">list_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_summary.html#Summary.list_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Summary.list_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all scalar events in the directory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A dictionary. Key is the name of a event. Value is a set of dirs that contain that event.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.Summary.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>event_names</em>, <em>x_axis='step'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_summary.html#Summary.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Summary.plot" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Plots a list of events. Each event (a dir+event_name) is represetented as a line</dt>
+<dd>in the graph.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>event_names</strong> &#8211; A list of events to plot. Each event_name may correspond to multiple events,
+each in a different directory.</li>
+<li><strong>x_axis</strong> &#8211; whether to use step or time as x axis.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.TensorBoard">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">TensorBoard</code><a class="reference internal" href="_modules/google/datalab/ml/_tensorboard.html#TensorBoard"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.TensorBoard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start, shutdown, and list TensorBoard instances.</p>
+<dl class="staticmethod">
+<dt id="google.datalab.ml.TensorBoard.list">
+<em class="property">static </em><code class="descname">list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_tensorboard.html#TensorBoard.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.TensorBoard.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List running TensorBoard instances.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.ml.TensorBoard.start">
+<em class="property">static </em><code class="descname">start</code><span class="sig-paren">(</span><em>logdir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_tensorboard.html#TensorBoard.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.TensorBoard.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start a TensorBoard instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>logdir</strong> &#8211; the logdir to run TensorBoard on.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if the instance cannot be started.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.ml.TensorBoard.stop">
+<em class="property">static </em><code class="descname">stop</code><span class="sig-paren">(</span><em>pid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_tensorboard.html#TensorBoard.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.TensorBoard.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shut down a specific process.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>pid</strong> &#8211; the pid of the process to shutdown.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.CsvDataSet">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">CsvDataSet</code><span class="sig-paren">(</span><em>file_pattern</em>, <em>schema=None</em>, <em>schema_file=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_dataset.html#CsvDataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.CsvDataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>DataSet based on CSV files and schema.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>file_pattern</strong> &#8211; A list of CSV files. or a string. Can contain wildcards in
+file names. Can be local or GCS path.</li>
+<li><strong>schema</strong> &#8211; <p>A BigQuery schema object in the form of
+[{&#8216;name&#8217;: &#8216;col1&#8217;, &#8216;type&#8217;: &#8216;STRING&#8217;},</p>
+<blockquote>
+<div>{&#8216;name&#8217;: &#8216;col2&#8217;, &#8216;type&#8217;: &#8216;INTEGER&#8217;}]</div></blockquote>
+<p>or a single string in of the form &#8216;col1:STRING,col2:INTEGER,col3:FLOAT&#8217;.</p>
+</li>
+<li><strong>schema_file</strong> &#8211; A JSON serialized schema file. If schema is None, it will try to load from
+schema_file if not None.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raise:</dt>
+<dd>ValueError if both schema and schema_file are None.</dd>
+</dl>
+<dl class="attribute">
+<dt id="google.datalab.ml.CsvDataSet.input_files">
+<code class="descname">input_files</code><a class="headerlink" href="#google.datalab.ml.CsvDataSet.input_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the file list that was given to this class without globing files.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.CsvDataSet.sample">
+<code class="descname">sample</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_dataset.html#CsvDataSet.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.CsvDataSet.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Samples data into a Pandas DataFrame.
+:param n: number of sampled counts.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A dataframe containing sampled data.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if n is larger than number of rows.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.ml.CsvDataSet.size">
+<code class="descname">size</code><a class="headerlink" href="#google.datalab.ml.CsvDataSet.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The size of the schema. If the underlying data source changes, it may be outdated.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.BigQueryDataSet">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">BigQueryDataSet</code><span class="sig-paren">(</span><em>sql=None</em>, <em>table=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_dataset.html#BigQueryDataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.BigQueryDataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>DataSet based on BigQuery table or query.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; A SQL query string, or a SQL Query module defined with &#8216;%%bq query &#8211;name [query_name]&#8217;</li>
+<li><strong>table</strong> &#8211; A table name in the form of &#8216;dataset.table or project.dataset.table&#8217;.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">ValueError if both sql and table are set, or both are None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.ml.BigQueryDataSet.sample">
+<code class="descname">sample</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_dataset.html#BigQueryDataSet.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.BigQueryDataSet.sample" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Samples data into a Pandas DataFrame. Note that it calls BigQuery so it will</dt>
+<dd>incur cost.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>n</strong> &#8211; number of sampled counts. Note that the number of counts returned is approximated.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A dataframe containing sampled data.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if n is larger than number of rows.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="google.datalab.ml.BigQueryDataSet.size">
+<code class="descname">size</code><a class="headerlink" href="#google.datalab.ml.BigQueryDataSet.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The size of the schema. If the underlying data source changes, it may be outdated.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.Models">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">Models</code><span class="sig-paren">(</span><em>project_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#Models"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Models" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of Cloud ML models for a project.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>project_id</strong> &#8211; project_id of the models. If not provided, default project_id will be used.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.ml.Models.create">
+<code class="descname">create</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#Models.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Models.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model_name</strong> &#8211; the short name of the model, such as &#8220;iris&#8221;.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">If successful, returns informaiton of the model, such as
+{u&#8217;regions&#8217;: [u&#8217;us-central1&#8217;], u&#8217;name&#8217;: u&#8217;projects/myproject/models/mymodel&#8217;}</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">If the model creation failed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.Models.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#Models.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Models.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model_name</strong> &#8211; the name of the model. It can be a model full name
+(&#8220;projects/[project_id]/models/[model_name]&#8221;) or just [model_name].</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.Models.describe">
+<code class="descname">describe</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#Models.describe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Models.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print information of a specified model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model_name</strong> &#8211; the name of the model to print details on.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.Models.get_iterator">
+<code class="descname">get_iterator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#Models.get_iterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Models.get_iterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get iterator of models so it can be used as &#8220;for model in Models().get_iterator()&#8221;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.Models.get_model_details">
+<code class="descname">get_model_details</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#Models.get_model_details"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Models.get_model_details" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details of the specified model from CloudML Service.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model_name</strong> &#8211; the name of the model. It can be a model full name
+(&#8220;projects/[project_id]/models/[model_name]&#8221;) or just [model_name].</li>
+<li><strong>Returns</strong> &#8211; a dictionary of the model details.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.Models.list">
+<code class="descname">list</code><span class="sig-paren">(</span><em>count=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#Models.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.Models.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List models under the current project in a table view.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>count</strong> &#8211; upper limit of the number of models to list.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">Exception if it is called in a non-IPython environment.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.ModelVersions">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">ModelVersions</code><span class="sig-paren">(</span><em>model_name</em>, <em>project_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#ModelVersions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ModelVersions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a list of versions for a Cloud ML model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model_name</strong> &#8211; the name of the model. It can be a model full name
+(&#8220;projects/[project_id]/models/[model_name]&#8221;) or just [model_name].</li>
+<li><strong>project_id</strong> &#8211; project_id of the models. If not provided and model_name is not a full name
+(not including project_id), default project_id will be used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="google.datalab.ml.ModelVersions.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>version_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#ModelVersions.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ModelVersions.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a version of model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>version_name</strong> &#8211; the name of the version in short form, such as &#8220;v1&#8221;.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.ModelVersions.deploy">
+<code class="descname">deploy</code><span class="sig-paren">(</span><em>version_name</em>, <em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#ModelVersions.deploy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ModelVersions.deploy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deploy a model version to the cloud.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>version_name</strong> &#8211; the name of the version in short form, such as &#8220;v1&#8221;.</li>
+<li><strong>path</strong> &#8211; the Google Cloud Storage path (gs://...) which contains the model files.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Raises: Exception if the path is invalid or does not contain expected files.</dt>
+<dd>Exception if the service returns invalid response.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.ModelVersions.describe">
+<code class="descname">describe</code><span class="sig-paren">(</span><em>version_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#ModelVersions.describe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ModelVersions.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print information of a specified model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>version</strong> &#8211; the name of the version in short form, such as &#8220;v1&#8221;.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.ModelVersions.get_iterator">
+<code class="descname">get_iterator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#ModelVersions.get_iterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ModelVersions.get_iterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get iterator of versions so it can be used as
+&#8220;for v in ModelVersions(model_name).get_iterator()&#8221;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.ModelVersions.get_version_details">
+<code class="descname">get_version_details</code><span class="sig-paren">(</span><em>version_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#ModelVersions.get_version_details"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ModelVersions.get_version_details" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details of a version.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>version</strong> &#8211; the name of the version in short form, such as &#8220;v1&#8221;.</td>
+</tr>
+</tbody>
+</table>
+<p>Returns: a dictionary containing the version details.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.ModelVersions.list">
+<code class="descname">list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#ModelVersions.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ModelVersions.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>List versions under the current model in a table view.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">Exception if it is called in a non-IPython environment.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.ModelVersions.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>version_name</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_cloud_models.html#ModelVersions.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ModelVersions.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get prediction results from features instances.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>version_name</strong> &#8211; the name of the version used for prediction.</li>
+<li><strong>data</strong> &#8211; typically a list of instance to be submitted for prediction. The format of the
+instance depends on the model. For example, structured data model may require
+a csv line for each instance.
+Note that online prediction only works on models that take one placeholder value,
+such as a string encoding a csv line.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>A list of prediction results for given instances. Each element is a dictionary representing</dt>
+<dd><p class="first last">output mapping from the graph.</p>
+</dd>
+<dt>An example:</dt>
+<dd><dl class="first last docutils">
+<dt>[{&#8220;predictions&#8221;: 1, &#8220;score&#8221;: [0.00078, 0.71406, 0.28515]},</dt>
+<dd><p class="first last">{&#8220;predictions&#8221;: 1, &#8220;score&#8221;: [0.00244, 0.99634, 0.00121]}]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.ConfusionMatrix">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">ConfusionMatrix</code><span class="sig-paren">(</span><em>cm</em>, <em>labels</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_confusion_matrix.html#ConfusionMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ConfusionMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a confusion matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cm</strong> &#8211; a 2-dimensional matrix with row index being target, column index being predicted,
+and values being count.</li>
+<li><strong>labels</strong> &#8211; the labels whose order matches the row/column indexes.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="google.datalab.ml.ConfusionMatrix.from_bigquery">
+<em class="property">static </em><code class="descname">from_bigquery</code><span class="sig-paren">(</span><em>sql</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_confusion_matrix.html#ConfusionMatrix.from_bigquery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ConfusionMatrix.from_bigquery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a ConfusionMatrix from a BigQuery table or query.
+:param sql: Can be one of:</p>
+<blockquote>
+<div>A SQL query string.
+A Bigquery table string.
+A Query object defined with &#8216;%%bq query &#8211;name [query_name]&#8217;.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query results</strong><strong> or </strong><strong>table must include &quot;target&quot;</strong><strong>, </strong><strong>&quot;predicted&quot; columns.</strong> (<em>The</em>) &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A ConfusionMatrix that can be plotted.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">ValueError if query results or table does not include &#8216;target&#8217; or &#8216;predicted&#8217; columns.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="google.datalab.ml.ConfusionMatrix.from_csv">
+<em class="property">static </em><code class="descname">from_csv</code><span class="sig-paren">(</span><em>input_csv</em>, <em>headers=None</em>, <em>schema_file=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_confusion_matrix.html#ConfusionMatrix.from_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ConfusionMatrix.from_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a ConfusionMatrix from a csv file.
+:param input_csv: Path to a Csv file (with no header). Can be local or GCS path.
+:param headers: Csv headers. If present, it must include &#8216;target&#8217; and &#8216;predicted&#8217;.
+:param schema_file: Path to a JSON file containing BigQuery schema. Used if &#8220;headers&#8221; is None.</p>
+<blockquote>
+<div>If present, it must include &#8216;target&#8217; and &#8216;predicted&#8217; columns.</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A ConfusionMatrix that can be plotted.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><em>ValueError if both headers and schema_file are None, or it does not include &#8216;target&#8217;</em> &#8211; or &#8216;predicted&#8217; columns.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="google.datalab.ml.ConfusionMatrix.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_confusion_matrix.html#ConfusionMatrix.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ConfusionMatrix.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the confusion matrix.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.FeatureSliceView">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">FeatureSliceView</code><a class="reference internal" href="_modules/google/datalab/ml/_feature_slice_view.html#FeatureSliceView"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.FeatureSliceView" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents A feature slice view.</p>
+<dl class="method">
+<dt id="google.datalab.ml.FeatureSliceView.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_feature_slice_view.html#FeatureSliceView.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.FeatureSliceView.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a featire slice view on given data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> &#8211; <dl class="docutils">
+<dt>Can be one of:</dt>
+<dd>A string of sql query.
+A sql query module defined by &#8220;%%sql &#8211;module module_name&#8221;.
+A pandas DataFrame.</dd>
+<dt>Regardless of data type, it must include the following columns:</dt>
+<dd>&#8220;feature&#8221;: identifies a slice of features. For example: &#8220;petal_length:4.0-4.2&#8221;.
+&#8220;count&#8221;: number of instances in that slice of features.</dd>
+</dl>
+<p>All other columns are viewed as metrics for its feature slice. At least one is required.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="google.datalab.ml.CloudTrainingConfig">
+<em class="property">class </em><code class="descclassname">google.datalab.ml.</code><code class="descname">CloudTrainingConfig</code><a class="reference internal" href="_modules/google/datalab/ml/_cloud_training_config.html#CloudTrainingConfig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.CloudTrainingConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>A config namedtuple containing cloud specific configurations for CloudML training.</p>
+<dl class="docutils">
+<dt>Fields:</dt>
+<dd><dl class="first last docutils">
+<dt>region: the region of the training job to be submitted. For example, &#8220;us-central1&#8221;.</dt>
+<dd>Run &#8220;gcloud compute regions list&#8221; to get a list of regions.</dd>
+<dt>scale_tier: Specifies the machine types, the number of replicas for workers and</dt>
+<dd>parameter servers. For example, &#8220;STANDARD_1&#8221;. See
+<a class="reference external" href="https://cloud.google.com/ml/reference/rest/v1beta1/projects.jobs#scaletier">https://cloud.google.com/ml/reference/rest/v1beta1/projects.jobs#scaletier</a>
+for list of accepted values.</dd>
+<dt>master_type: specifies the type of virtual machine to use for your training</dt>
+<dd>job&#8217;s master worker. Must set this value when scale_tier is set to CUSTOM.
+See the link in &#8220;scale_tier&#8221;.</dd>
+<dt>worker_type: specifies the type of virtual machine to use for your training</dt>
+<dd>job&#8217;s worker nodes. Must set this value when scale_tier is set to CUSTOM.</dd>
+<dt>parameter_server_type: specifies the type of virtual machine to use for your training</dt>
+<dd>job&#8217;s parameter server. Must set this value when scale_tier is set to CUSTOM.</dd>
+<dt>worker_count: the number of worker replicas to use for the training job. Each</dt>
+<dd>replica in the cluster will be of the type specified in &#8220;worker_type&#8221;.
+Must set this value when scale_tier is set to CUSTOM.</dd>
+<dt>parameter_server_count: the number of parameter server replicas to use. Each</dt>
+<dd>replica in the cluster will be of the type specified in &#8220;parameter_server_type&#8221;.
+Must set this value when scale_tier is set to CUSTOM.</dd>
+</dl>
+</dd>
+</dl>
+<p>Create new instance of CloudConfig(region, scale_tier, master_type, worker_type, parameter_server_type, worker_count, parameter_server_count)</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="google.datalab.stackdriver.monitoring.html" class="btn btn-neutral float-right" title="google.datalab.stackdriver.monitoring Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="google.datalab.data.html" class="btn btn-neutral" title="google.datalab.data Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

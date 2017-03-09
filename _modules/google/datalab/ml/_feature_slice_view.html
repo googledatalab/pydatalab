@@ -1,0 +1,320 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab.ml._feature_slice_view &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.datalab.ml._feature_slice_view</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.datalab.ml._feature_slice_view</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="k">import</span> <span class="n">ModuleType</span>
+
+<span class="kn">import</span> <span class="nn">google.datalab</span> <span class="k">as</span> <span class="nn">datalab</span>
+<span class="kn">import</span> <span class="nn">google.datalab.bigquery</span> <span class="k">as</span> <span class="nn">bq</span>
+
+
+<div class="viewcode-block" id="FeatureSliceView"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.FeatureSliceView">[docs]</a><span class="k">class</span> <span class="nc">FeatureSliceView</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents A feature slice view.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">_get_lantern_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Feature slice view browser expects data in the format of:</span>
+<span class="sd">          {&quot;metricValues&quot;: {&quot;count&quot;: 12, &quot;accuracy&quot;: 1.0}, &quot;feature&quot;: &quot;species:Iris-setosa&quot;}</span>
+<span class="sd">          {&quot;metricValues&quot;: {&quot;count&quot;: 11, &quot;accuracy&quot;: 0.72}, &quot;feature&quot;: &quot;species:Iris-versicolor&quot;}</span>
+<span class="sd">          ...</span>
+<span class="sd">        This function converts a DataFrame to such format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;count&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;feature&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;No &quot;count&quot; or &quot;feature&quot; found in data.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Need at least one metrics column.&#39;</span><span class="p">)</span>      
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Data is empty&#39;</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+      <span class="n">metric_values</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+      <span class="n">feature</span> <span class="o">=</span> <span class="n">metric_values</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;feature&#39;</span><span class="p">)</span>
+      <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;feature&#39;</span><span class="p">:</span> <span class="n">feature</span><span class="p">,</span> <span class="s1">&#39;metricValues&#39;</span><span class="p">:</span> <span class="n">metric_values</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">data</span>
+  
+<div class="viewcode-block" id="FeatureSliceView.plot"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.FeatureSliceView.plot">[docs]</a>  <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Plots a featire slice view on given data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      data: Can be one of:</span>
+<span class="sd">            A string of sql query.</span>
+<span class="sd">            A sql query module defined by &quot;%%sql --module module_name&quot;.</span>
+<span class="sd">            A pandas DataFrame.</span>
+<span class="sd">          Regardless of data type, it must include the following columns:</span>
+<span class="sd">            &quot;feature&quot;: identifies a slice of features. For example: &quot;petal_length:4.0-4.2&quot;.</span>
+<span class="sd">            &quot;count&quot;: number of instances in that slice of features.</span>
+<span class="sd">          All other columns are viewed as metrics for its feature slice. At least one is required.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="kn">import</span> <span class="nn">IPython</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bq</span><span class="o">.</span><span class="n">Query</span><span class="p">):</span>
+      <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_lantern_format</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_lantern_format</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;data needs to be a sql query, or a pandas DataFrame.&#39;</span><span class="p">)</span>
+      
+    <span class="n">HTML_TEMPLATE</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&lt;link rel=&quot;import&quot; href=&quot;/nbextensions/gcpdatalab/extern/lantern-browser.html&quot; &gt;</span>
+<span class="s2">        &lt;lantern-browser id=&quot;</span><span class="si">{html_id}</span><span class="s2">&quot;&gt;&lt;/lantern-browser&gt;</span>
+<span class="s2">        &lt;script&gt;</span>
+<span class="s2">        var browser = document.querySelector(&#39;#</span><span class="si">{html_id}</span><span class="s2">&#39;);</span>
+<span class="s2">        browser.metrics = </span><span class="si">{metrics}</span><span class="s2">;</span>
+<span class="s2">        browser.data = </span><span class="si">{data}</span><span class="s2">;</span>
+<span class="s2">        browser.sourceType = &#39;colab&#39;;</span>
+<span class="s2">        browser.weightedExamplesColumn = &#39;count&#39;;</span>
+<span class="s2">        browser.calibrationPlotUriFn = function(s) {{ return &#39;/&#39; + s; }}</span>
+<span class="s2">        &lt;/script&gt;&quot;&quot;&quot;</span>
+    <span class="c1"># Serialize the data and list of metrics names to JSON string.</span>
+    <span class="n">metrics_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;metricValues&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="n">data_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">([{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">elem</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()}</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">data</span><span class="p">])</span>
+    <span class="n">html_id</span> <span class="o">=</span> <span class="s1">&#39;l&#39;</span> <span class="o">+</span> <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">commands</span><span class="o">.</span><span class="n">Html</span><span class="o">.</span><span class="n">next_id</span><span class="p">()</span>
+    <span class="n">html</span> <span class="o">=</span> <span class="n">HTML_TEMPLATE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">html_id</span><span class="o">=</span><span class="n">html_id</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="n">metrics_str</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_str</span><span class="p">)</span>
+    <span class="n">IPython</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">display</span><span class="p">(</span><span class="n">IPython</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="n">html</span><span class="p">))</span></div></div>
+
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab Commands &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="datalab.bigquery Module" href="datalab.bigquery.html"/>
+        <link rel="prev" title="google.datalab.storage Module" href="google.datalab.storage.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>google.datalab Commands</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/google.datalab Commands.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="google-datalab-commands">
+<h1>google.datalab Commands<a class="headerlink" href="#google-datalab-commands" title="Permalink to this headline">¶</a></h1>
+<dl class="attribute">
+<dt>
+<code class="descname">%sd</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="o">%</span><span class="n">sd</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="n">monitoring</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">Stackdriver</span> <span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">d &lt;stackdriver_product&gt;</span>
+<span class="o">-</span><span class="n">h</span><span class="s2">&quot; for help on a specific Stackdriver product.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">monitoring</span><span class="p">}</span>  <span class="n">commands</span>
+    <span class="n">monitoring</span>  <span class="n">Execute</span> <span class="n">Stackdriver</span> <span class="n">monitoring</span> <span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;sd</span>
+                <span class="n">monitoring</span> <span class="o">&lt;</span><span class="n">command</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">h</span><span class="s2">&quot; for help on a specific command</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>    <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%chart</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="o">%</span><span class="n">chart</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
+              <span class="p">{</span><span class="n">annotation</span><span class="p">,</span><span class="n">area</span><span class="p">,</span><span class="n">bars</span><span class="p">,</span><span class="n">bubbles</span><span class="p">,</span><span class="n">calendar</span><span class="p">,</span><span class="n">candlestick</span><span class="p">,</span><span class="n">columns</span><span class="p">,</span><span class="n">combo</span><span class="p">,</span><span class="n">gauge</span><span class="p">,</span><span class="n">geo</span><span class="p">,</span><span class="n">heatmap</span><span class="p">,</span><span class="n">histogram</span><span class="p">,</span><span class="n">line</span><span class="p">,</span><span class="nb">map</span><span class="p">,</span><span class="n">org</span><span class="p">,</span><span class="n">paged_table</span><span class="p">,</span><span class="n">pie</span><span class="p">,</span><span class="n">sankey</span><span class="p">,</span><span class="n">scatter</span><span class="p">,</span><span class="n">stepped_area</span><span class="p">,</span><span class="n">table</span><span class="p">,</span><span class="n">timeline</span><span class="p">,</span><span class="n">treemap</span><span class="p">}</span>
+              <span class="o">...</span>
+
+<span class="n">Generate</span> <span class="n">an</span> <span class="n">inline</span> <span class="n">chart</span> <span class="n">using</span> <span class="n">Google</span> <span class="n">Charts</span> <span class="n">using</span> <span class="n">the</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Query</span><span class="p">,</span>
+<span class="n">dataframe</span><span class="p">,</span> <span class="ow">or</span> <span class="nb">list</span><span class="o">.</span> <span class="n">Numerous</span> <span class="n">types</span> <span class="n">of</span> <span class="n">charts</span> <span class="n">are</span> <span class="n">supported</span><span class="o">.</span> <span class="n">Options</span> <span class="k">for</span> <span class="n">the</span>
+<span class="n">charts</span> <span class="n">can</span> <span class="n">be</span> <span class="n">specified</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">cell</span> <span class="n">body</span> <span class="n">using</span> <span class="n">YAML</span> <span class="ow">or</span> <span class="n">JSON</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">annotation</span><span class="p">,</span><span class="n">area</span><span class="p">,</span><span class="n">bars</span><span class="p">,</span><span class="n">bubbles</span><span class="p">,</span><span class="n">calendar</span><span class="p">,</span><span class="n">candlestick</span><span class="p">,</span><span class="n">columns</span><span class="p">,</span><span class="n">combo</span><span class="p">,</span><span class="n">gauge</span><span class="p">,</span><span class="n">geo</span><span class="p">,</span><span class="n">heatmap</span><span class="p">,</span><span class="n">histogram</span><span class="p">,</span><span class="n">line</span><span class="p">,</span><span class="nb">map</span><span class="p">,</span><span class="n">org</span><span class="p">,</span><span class="n">paged_table</span><span class="p">,</span><span class="n">pie</span><span class="p">,</span><span class="n">sankey</span><span class="p">,</span><span class="n">scatter</span><span class="p">,</span><span class="n">stepped_area</span><span class="p">,</span><span class="n">table</span><span class="p">,</span><span class="n">timeline</span><span class="p">,</span><span class="n">treemap</span><span class="p">}</span>
+                        <span class="n">commands</span>
+    <span class="n">annotation</span>          <span class="n">Generate</span> <span class="n">a</span> <span class="n">annotation</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">area</span>                <span class="n">Generate</span> <span class="n">a</span> <span class="n">area</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">bars</span>                <span class="n">Generate</span> <span class="n">a</span> <span class="n">bars</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">bubbles</span>             <span class="n">Generate</span> <span class="n">a</span> <span class="n">bubbles</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">calendar</span>            <span class="n">Generate</span> <span class="n">a</span> <span class="n">calendar</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">candlestick</span>         <span class="n">Generate</span> <span class="n">a</span> <span class="n">candlestick</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">columns</span>             <span class="n">Generate</span> <span class="n">a</span> <span class="n">columns</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">combo</span>               <span class="n">Generate</span> <span class="n">a</span> <span class="n">combo</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">gauge</span>               <span class="n">Generate</span> <span class="n">a</span> <span class="n">gauge</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">geo</span>                 <span class="n">Generate</span> <span class="n">a</span> <span class="n">geo</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">heatmap</span>             <span class="n">Generate</span> <span class="n">a</span> <span class="n">heatmap</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">histogram</span>           <span class="n">Generate</span> <span class="n">a</span> <span class="n">histogram</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">line</span>                <span class="n">Generate</span> <span class="n">a</span> <span class="n">line</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="nb">map</span>                 <span class="n">Generate</span> <span class="n">a</span> <span class="nb">map</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">org</span>                 <span class="n">Generate</span> <span class="n">a</span> <span class="n">org</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">paged_table</span>         <span class="n">Generate</span> <span class="n">a</span> <span class="n">paged_table</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">pie</span>                 <span class="n">Generate</span> <span class="n">a</span> <span class="n">pie</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">sankey</span>              <span class="n">Generate</span> <span class="n">a</span> <span class="n">sankey</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">scatter</span>             <span class="n">Generate</span> <span class="n">a</span> <span class="n">scatter</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">stepped_area</span>        <span class="n">Generate</span> <span class="n">a</span> <span class="n">stepped_area</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">table</span>               <span class="n">Generate</span> <span class="n">a</span> <span class="n">table</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">timeline</span>            <span class="n">Generate</span> <span class="n">a</span> <span class="n">timeline</span> <span class="n">chart</span><span class="o">.</span>
+    <span class="n">treemap</span>             <span class="n">Generate</span> <span class="n">a</span> <span class="n">treemap</span> <span class="n">chart</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%csv</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">csv</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="n">view</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">view</span><span class="p">}</span>      <span class="n">commands</span>
+    <span class="n">view</span>      <span class="n">Browse</span> <span class="n">CSV</span> <span class="n">files</span> <span class="n">without</span> <span class="n">providing</span> <span class="n">a</span> <span class="n">schema</span><span class="o">.</span> <span class="n">Each</span> <span class="n">value</span> <span class="ow">is</span>
+              <span class="n">considered</span> <span class="n">string</span> <span class="nb">type</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%datalab</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="o">%</span><span class="n">datalab</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="n">config</span><span class="p">,</span><span class="n">project</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">operations</span> <span class="n">that</span> <span class="n">apply</span> <span class="n">to</span> <span class="n">multiple</span> <span class="n">Datalab</span> <span class="n">APIs</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">atalab</span>
+<span class="o">&lt;</span><span class="n">command</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">h</span><span class="s2">&quot; for help on a specific command.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">config</span><span class="p">,</span><span class="n">project</span><span class="p">}</span>  <span class="n">commands</span>
+    <span class="n">config</span>          <span class="n">List</span> <span class="ow">or</span> <span class="nb">set</span> <span class="n">API</span><span class="o">-</span><span class="n">specific</span> <span class="n">configurations</span><span class="o">.</span>
+    <span class="n">project</span>         <span class="n">Get</span> <span class="ow">or</span> <span class="nb">set</span> <span class="n">the</span> <span class="n">default</span> <span class="n">project</span> <span class="n">ID</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>        <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%bq</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="o">%</span><span class="n">bq</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
+           <span class="p">{</span><span class="n">datasets</span><span class="p">,</span><span class="n">tables</span><span class="p">,</span><span class="n">query</span><span class="p">,</span><span class="n">execute</span><span class="p">,</span><span class="n">extract</span><span class="p">,</span><span class="n">sample</span><span class="p">,</span><span class="n">dryrun</span><span class="p">,</span><span class="n">udf</span><span class="p">,</span><span class="n">datasource</span><span class="p">,</span><span class="n">load</span><span class="p">}</span>
+           <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">BigQuery</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;%bq &lt;command&gt; -h&quot;</span> <span class="k">for</span> <span class="n">help</span>
+<span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">datasets</span><span class="p">,</span><span class="n">tables</span><span class="p">,</span><span class="n">query</span><span class="p">,</span><span class="n">execute</span><span class="p">,</span><span class="n">extract</span><span class="p">,</span><span class="n">sample</span><span class="p">,</span><span class="n">dryrun</span><span class="p">,</span><span class="n">udf</span><span class="p">,</span><span class="n">datasource</span><span class="p">,</span><span class="n">load</span><span class="p">}</span>
+                        <span class="n">commands</span>
+    <span class="n">datasets</span>            <span class="n">Operations</span> <span class="n">on</span> <span class="n">BigQuery</span> <span class="n">datasets</span>
+    <span class="n">tables</span>              <span class="n">Operations</span> <span class="n">on</span> <span class="n">BigQuery</span> <span class="n">tables</span>
+    <span class="n">query</span>               <span class="n">Create</span> <span class="ow">or</span> <span class="n">execute</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span> <span class="n">query</span> <span class="nb">object</span><span class="p">,</span>
+                        <span class="n">optionally</span> <span class="n">using</span> <span class="n">other</span> <span class="n">SQL</span> <span class="n">objects</span><span class="p">,</span> <span class="n">UDFs</span><span class="p">,</span> <span class="ow">or</span> <span class="n">external</span>
+                        <span class="n">datasources</span><span class="o">.</span> <span class="n">If</span> <span class="n">a</span> <span class="n">query</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">specified</span><span class="p">,</span> <span class="n">the</span>
+                        <span class="n">query</span> <span class="ow">is</span> <span class="n">executed</span><span class="o">.</span>
+    <span class="n">execute</span>             <span class="n">Execute</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">optionally</span> <span class="n">send</span> <span class="n">the</span>
+                        <span class="n">results</span> <span class="n">to</span> <span class="n">a</span> <span class="n">named</span> <span class="n">table</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span>
+                        <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span> <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span>
+                        <span class="n">query</span><span class="o">.</span>
+    <span class="n">extract</span>             <span class="n">Extract</span> <span class="n">a</span> <span class="n">query</span> <span class="ow">or</span> <span class="n">table</span> <span class="n">into</span> <span class="n">file</span> <span class="p">(</span><span class="n">local</span> <span class="ow">or</span> <span class="n">GCS</span><span class="p">)</span>
+    <span class="n">sample</span>              <span class="n">Display</span> <span class="n">a</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span>
+                        <span class="n">query</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span> <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span>
+                        <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">query</span><span class="p">,</span> <span class="k">if</span> <span class="o">-</span><span class="n">q</span><span class="o">/--</span><span class="n">query</span> <span class="n">was</span>
+                        <span class="n">used</span><span class="p">,</span> <span class="ow">or</span> <span class="n">it</span> <span class="n">can</span> <span class="n">contain</span> <span class="n">SQL</span> <span class="k">for</span> <span class="n">a</span> <span class="n">query</span><span class="o">.</span>
+    <span class="n">dryrun</span>              <span class="n">Execute</span> <span class="n">a</span> <span class="n">dry</span> <span class="n">run</span> <span class="n">of</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">display</span>
+                        <span class="n">approximate</span> <span class="n">usage</span> <span class="n">statistics</span>
+    <span class="n">udf</span>                 <span class="n">Create</span> <span class="n">a</span> <span class="n">named</span> <span class="n">Javascript</span> <span class="n">BigQuery</span> <span class="n">UDF</span>
+    <span class="n">datasource</span>          <span class="n">Create</span> <span class="n">a</span> <span class="n">named</span> <span class="n">Javascript</span> <span class="n">BigQuery</span> <span class="n">external</span> <span class="n">data</span>
+                        <span class="n">source</span>
+    <span class="n">load</span>                <span class="n">Load</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">GCS</span> <span class="n">into</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span><span class="o">.</span> <span class="n">If</span> <span class="n">creating</span>
+                        <span class="n">a</span> <span class="n">new</span> <span class="n">table</span><span class="p">,</span> <span class="n">a</span> <span class="n">schema</span> <span class="n">should</span> <span class="n">be</span> <span class="n">specified</span> <span class="ow">in</span> <span class="n">YAML</span> <span class="ow">or</span>
+                        <span class="n">JSON</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">cell</span> <span class="n">body</span><span class="p">,</span> <span class="n">otherwise</span> <span class="n">the</span> <span class="n">schema</span> <span class="ow">is</span>
+                        <span class="n">inferred</span> <span class="kn">from</span> <span class="nn">existing</span> <span class="n">table</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%gcs</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="o">%</span><span class="n">gcs</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="n">copy</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="nb">list</span><span class="p">,</span><span class="n">read</span><span class="p">,</span><span class="n">view</span><span class="p">,</span><span class="n">write</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">Google</span> <span class="n">Cloud</span> <span class="n">Storage</span> <span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;</span><span class="si">%g</span><span class="s2">cs &lt;command&gt;</span>
+<span class="o">-</span><span class="n">h</span><span class="s2">&quot; for help on a specific command.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="n">copy</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="nb">list</span><span class="p">,</span><span class="n">read</span><span class="p">,</span><span class="n">view</span><span class="p">,</span><span class="n">write</span><span class="p">}</span>
+                        <span class="n">commands</span>
+    <span class="n">copy</span>                <span class="n">Copy</span> <span class="n">one</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">Google</span> <span class="n">Cloud</span> <span class="n">Storage</span> <span class="n">objects</span> <span class="n">to</span> <span class="n">a</span>
+                        <span class="n">different</span> <span class="n">location</span><span class="o">.</span>
+    <span class="n">create</span>              <span class="n">Create</span> <span class="n">one</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">Google</span> <span class="n">Cloud</span> <span class="n">Storage</span> <span class="n">buckets</span><span class="o">.</span>
+    <span class="n">delete</span>              <span class="n">Delete</span> <span class="n">one</span> <span class="ow">or</span> <span class="n">more</span> <span class="n">Google</span> <span class="n">Cloud</span> <span class="n">Storage</span> <span class="n">buckets</span> <span class="ow">or</span>
+                        <span class="n">objects</span><span class="o">.</span>
+    <span class="nb">list</span>                <span class="n">List</span> <span class="n">buckets</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">project</span><span class="p">,</span> <span class="ow">or</span> <span class="n">contents</span> <span class="n">of</span> <span class="n">a</span> <span class="n">bucket</span><span class="o">.</span>
+    <span class="n">read</span>                <span class="n">Read</span> <span class="n">the</span> <span class="n">contents</span> <span class="n">of</span> <span class="n">a</span> <span class="n">Google</span> <span class="n">Cloud</span> <span class="n">Storage</span> <span class="nb">object</span>
+                        <span class="n">into</span> <span class="n">a</span> <span class="n">Python</span> <span class="n">variable</span><span class="o">.</span>
+    <span class="n">view</span>                <span class="n">View</span> <span class="n">the</span> <span class="n">contents</span> <span class="n">of</span> <span class="n">a</span> <span class="n">Google</span> <span class="n">Cloud</span> <span class="n">Storage</span> <span class="nb">object</span><span class="o">.</span>
+    <span class="n">write</span>               <span class="n">Write</span> <span class="n">the</span> <span class="n">value</span> <span class="n">of</span> <span class="n">a</span> <span class="n">Python</span> <span class="n">variable</span> <span class="n">to</span> <span class="n">a</span> <span class="n">Google</span> <span class="n">Cloud</span>
+                        <span class="n">Storage</span> <span class="nb">object</span><span class="o">.</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="datalab.bigquery.html" class="btn btn-neutral float-right" title="datalab.bigquery Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="google.datalab.storage.html" class="btn btn-neutral" title="google.datalab.storage Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,504 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>google.datalab.ml._cloud_models &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>google.datalab.ml._cloud_models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for google.datalab.ml._cloud_models</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2016 Google Inc. All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except</span>
+<span class="c1"># in compliance with the License. You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1"># http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software distributed under the License</span>
+<span class="c1"># is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express</span>
+<span class="c1"># or implied. See the License for the specific language governing permissions and limitations under</span>
+<span class="c1"># the License.</span>
+
+<span class="sd">&quot;&quot;&quot;Implements Cloud ML Model Operations&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">googleapiclient</span> <span class="k">import</span> <span class="n">discovery</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">import</span> <span class="nn">google.datalab</span> <span class="k">as</span> <span class="nn">datalab</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_util</span>
+
+<div class="viewcode-block" id="Models"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Models">[docs]</a><span class="k">class</span> <span class="nc">Models</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents a list of Cloud ML models for a project.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">      project_id: project_id of the models. If not provided, default project_id will be used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">project_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">project_id</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span><span class="o">.</span><span class="n">project_id</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span> <span class="o">=</span> <span class="n">project_id</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_credentials</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span><span class="o">.</span><span class="n">credentials</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_api</span> <span class="o">=</span> <span class="n">discovery</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s1">&#39;ml&#39;</span><span class="p">,</span> <span class="s1">&#39;v1&#39;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_credentials</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">_retrieve_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page_token</span><span class="p">,</span> <span class="n">page_size</span><span class="p">):</span>
+    <span class="n">list_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">list</span><span class="p">(</span>
+        <span class="n">parent</span><span class="o">=</span><span class="s1">&#39;projects/&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span><span class="p">,</span> <span class="n">pageToken</span><span class="o">=</span><span class="n">page_token</span><span class="p">,</span> <span class="n">pageSize</span><span class="o">=</span><span class="n">page_size</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="n">list_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;models&#39;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">page_token</span> <span class="o">=</span> <span class="n">list_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nextPageToken&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">models</span><span class="p">,</span> <span class="n">page_token</span>
+
+<div class="viewcode-block" id="Models.get_iterator"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Models.get_iterator">[docs]</a>  <span class="k">def</span> <span class="nf">get_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get iterator of models so it can be used as &quot;for model in Models().get_iterator()&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">Iterator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_retrieve_models</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Models.get_model_details"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Models.get_model_details">[docs]</a>  <span class="k">def</span> <span class="nf">get_model_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get details of the specified model from CloudML Service.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      model_name: the name of the model. It can be a model full name</span>
+<span class="sd">          (&quot;projects/[project_id]/models/[model_name]&quot;) or just [model_name].</span>
+<span class="sd">      Returns: a dictionary of the model details.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">full_name</span> <span class="o">=</span> <span class="n">model_name</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;projects/&#39;</span><span class="p">):</span>
+      <span class="n">full_name</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;projects/</span><span class="si">%s</span><span class="s1">/models/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span><span class="p">,</span> <span class="n">model_name</span><span class="p">))</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">full_name</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Models.create"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Models.create">[docs]</a>  <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      model_name: the short name of the model, such as &quot;iris&quot;.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      If successful, returns informaiton of the model, such as</span>
+<span class="sd">      {u&#39;regions&#39;: [u&#39;us-central1&#39;], u&#39;name&#39;: u&#39;projects/myproject/models/mymodel&#39;}</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      If the model creation failed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">model_name</span><span class="p">}</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="s1">&#39;projects/&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span>
+    <span class="c1"># Model creation is instant. If anything goes wrong, Exception will be thrown.</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Models.delete"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Models.delete">[docs]</a>  <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete a model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      model_name: the name of the model. It can be a model full name</span>
+<span class="sd">          (&quot;projects/[project_id]/models/[model_name]&quot;) or just [model_name].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">full_name</span> <span class="o">=</span> <span class="n">model_name</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;projects/&#39;</span><span class="p">):</span>
+      <span class="n">full_name</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;projects/</span><span class="si">%s</span><span class="s1">/models/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span><span class="p">,</span> <span class="n">model_name</span><span class="p">))</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">full_name</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid response from service. &quot;name&quot; is not found.&#39;</span><span class="p">)</span>
+    <span class="n">_util</span><span class="o">.</span><span class="n">wait_for_long_running_operation</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Models.list"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Models.list">[docs]</a>  <span class="k">def</span> <span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List models under the current project in a table view.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      count: upper limit of the number of models to list.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if it is called in a non-IPython environment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">IPython</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Add range(count) to loop so it will stop either it reaches count, or iteration</span>
+    <span class="c1"># on self is exhausted. &quot;self&quot; is iterable (see __iter__() method).</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">count</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_iterator</span><span class="p">()):</span>
+      <span class="n">element</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">model</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]}</span>
+      <span class="k">if</span> <span class="s1">&#39;defaultVersion&#39;</span> <span class="ow">in</span> <span class="n">model</span><span class="p">:</span>
+        <span class="n">version_short_name</span> <span class="o">=</span> <span class="n">model</span><span class="p">[</span><span class="s1">&#39;defaultVersion&#39;</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">element</span><span class="p">[</span><span class="s1">&#39;defaultVersion&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">version_short_name</span>
+      <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+    <span class="n">IPython</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">display</span><span class="p">(</span>
+        <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">commands</span><span class="o">.</span><span class="n">render_dictionary</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;defaultVersion&#39;</span><span class="p">]))</span></div>
+    
+<div class="viewcode-block" id="Models.describe"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.Models.describe">[docs]</a>  <span class="k">def</span> <span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print information of a specified model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      model_name: the name of the model to print details on.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="n">model_yaml</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model_details</span><span class="p">(</span><span class="n">model_name</span><span class="p">),</span> <span class="n">default_flow_style</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="n">model_yaml</span></div></div>
+    
+
+<div class="viewcode-block" id="ModelVersions"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.ModelVersions">[docs]</a><span class="k">class</span> <span class="nc">ModelVersions</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Represents a list of versions for a Cloud ML model.&quot;&quot;&quot;</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">project_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">      model_name: the name of the model. It can be a model full name</span>
+<span class="sd">          (&quot;projects/[project_id]/models/[model_name]&quot;) or just [model_name].</span>
+<span class="sd">      project_id: project_id of the models. If not provided and model_name is not a full name</span>
+<span class="sd">          (not including project_id), default project_id will be used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">project_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span><span class="o">.</span><span class="n">project_id</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_credentials</span> <span class="o">=</span> <span class="n">datalab</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span><span class="o">.</span><span class="n">credentials</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_api</span> <span class="o">=</span> <span class="n">discovery</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s1">&#39;ml&#39;</span><span class="p">,</span> <span class="s1">&#39;v1&#39;</span><span class="p">,</span> <span class="n">credentials</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_credentials</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;projects/&#39;</span><span class="p">):</span>
+      <span class="n">model_name</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;projects/</span><span class="si">%s</span><span class="s1">/models/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span><span class="p">,</span> <span class="n">model_name</span><span class="p">))</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_full_model_name</span> <span class="o">=</span> <span class="n">model_name</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_model_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_model_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">_retrieve_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page_token</span><span class="p">,</span> <span class="n">page_size</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_model_name</span>
+    <span class="n">list_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">versions</span><span class="p">()</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span>
+        <span class="n">pageToken</span><span class="o">=</span><span class="n">page_token</span><span class="p">,</span> <span class="n">pageSize</span><span class="o">=</span><span class="n">page_size</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="n">versions</span> <span class="o">=</span> <span class="n">list_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;versions&#39;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">page_token</span> <span class="o">=</span> <span class="n">list_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nextPageToken&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">versions</span><span class="p">,</span> <span class="n">page_token</span>
+
+<div class="viewcode-block" id="ModelVersions.get_iterator"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.ModelVersions.get_iterator">[docs]</a>  <span class="k">def</span> <span class="nf">get_iterator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get iterator of versions so it can be used as</span>
+<span class="sd">       &quot;for v in ModelVersions(model_name).get_iterator()&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">Iterator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_retrieve_versions</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ModelVersions.get_version_details"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.ModelVersions.get_version_details">[docs]</a>  <span class="k">def</span> <span class="nf">get_version_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get details of a version.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      version: the name of the version in short form, such as &quot;v1&quot;.</span>
+<span class="sd">    Returns: a dictionary containing the version details.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/versions/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_model_name</span><span class="p">,</span> <span class="n">version_name</span><span class="p">))</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">versions</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ModelVersions.deploy"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.ModelVersions.deploy">[docs]</a>  <span class="k">def</span> <span class="nf">deploy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version_name</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deploy a model version to the cloud.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      version_name: the name of the version in short form, such as &quot;v1&quot;.</span>
+<span class="sd">      path: the Google Cloud Storage path (gs://...) which contains the model files.</span>
+
+<span class="sd">    Raises: Exception if the path is invalid or does not contain expected files.</span>
+<span class="sd">            Exception if the service returns invalid response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid path. Only Google Cloud Storage path (gs://...) is accepted.&#39;</span><span class="p">)</span>
+
+    <span class="c1"># If there is no &quot;export.meta&quot; or&quot;saved_model.pb&quot; under path but there is</span>
+    <span class="c1"># path/model/export.meta or path/model/saved_model.pb, then append /model to the path.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">datalab</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">Object</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;export.meta&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span>
+        <span class="ow">not</span> <span class="n">datalab</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">Object</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;saved_model.pb&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">()):</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">datalab</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">Object</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;export.meta&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span>
+          <span class="n">datalab</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">Object</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;saved_model.pb&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">exists</span><span class="p">()):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Cannot find export.meta or saved_model.pb, but continue with deployment anyway.&#39;</span><span class="p">)</span>
+
+    <span class="n">body</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_name</span><span class="p">}</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="s1">&#39;projects/&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+      <span class="c1"># Trying to create an already existing model gets an error. Ignore it.</span>
+      <span class="k">pass</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">version_name</span><span class="p">,</span>
+      <span class="s1">&#39;deployment_uri&#39;</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span>
+      <span class="s1">&#39;runtime_version&#39;</span><span class="p">:</span> <span class="s1">&#39;1.0&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">versions</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">,</span>
+                   <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_model_name</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid response from service. &quot;name&quot; is not found.&#39;</span><span class="p">)</span>
+    <span class="n">_util</span><span class="o">.</span><span class="n">wait_for_long_running_operation</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ModelVersions.delete"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.ModelVersions.delete">[docs]</a>  <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Delete a version of model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      version_name: the name of the version in short form, such as &quot;v1&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/versions/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_model_name</span><span class="p">,</span> <span class="n">version_name</span><span class="p">))</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">models</span><span class="p">()</span><span class="o">.</span><span class="n">versions</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid response from service. &quot;name&quot; is not found.&#39;</span><span class="p">)</span>
+    <span class="n">_util</span><span class="o">.</span><span class="n">wait_for_long_running_operation</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ModelVersions.predict"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.ModelVersions.predict">[docs]</a>  <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version_name</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get prediction results from features instances.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      version_name: the name of the version used for prediction.</span>
+<span class="sd">      data: typically a list of instance to be submitted for prediction. The format of the</span>
+<span class="sd">          instance depends on the model. For example, structured data model may require</span>
+<span class="sd">          a csv line for each instance.</span>
+<span class="sd">          Note that online prediction only works on models that take one placeholder value,</span>
+<span class="sd">          such as a string encoding a csv line.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      A list of prediction results for given instances. Each element is a dictionary representing</span>
+<span class="sd">          output mapping from the graph.</span>
+<span class="sd">      An example:</span>
+<span class="sd">        [{&quot;predictions&quot;: 1, &quot;score&quot;: [0.00078, 0.71406, 0.28515]},</span>
+<span class="sd">         {&quot;predictions&quot;: 1, &quot;score&quot;: [0.00244, 0.99634, 0.00121]}]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">full_version_name</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">/versions/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_model_name</span><span class="p">,</span> <span class="n">version_name</span><span class="p">))</span>
+    <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api</span><span class="o">.</span><span class="n">projects</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;instances&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">},</span>
+                                           <span class="n">name</span><span class="o">=</span><span class="n">full_version_name</span><span class="p">)</span>
+    <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;user-agent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;GoogleCloudDataLab/1.0&#39;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;predictions&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid response from service. Cannot find &quot;predictions&quot; in response.&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;predictions&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="ModelVersions.describe"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.ModelVersions.describe">[docs]</a>  <span class="k">def</span> <span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print information of a specified model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      version: the name of the version in short form, such as &quot;v1&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">version_yaml</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_version_details</span><span class="p">(</span><span class="n">version_name</span><span class="p">),</span>
+                                  <span class="n">default_flow_style</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="n">version_yaml</span></div>
+
+<div class="viewcode-block" id="ModelVersions.list"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.ModelVersions.list">[docs]</a>  <span class="k">def</span> <span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List versions under the current model in a table view.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">      Exception if it is called in a non-IPython environment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="kn">import</span> <span class="nn">IPython</span>
+
+    <span class="c1"># &quot;self&quot; is iterable (see __iter__() method).</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> 
+             <span class="s1">&#39;deploymentUri&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">[</span><span class="s1">&#39;deploymentUri&#39;</span><span class="p">],</span> <span class="s1">&#39;createTime&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">[</span><span class="s1">&#39;createTime&#39;</span><span class="p">]}</span>
+            <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_iterator</span><span class="p">()]</span>
+    <span class="n">IPython</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">display</span><span class="p">(</span>
+        <span class="n">datalab</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">commands</span><span class="o">.</span><span class="n">render_dictionary</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;deploymentUri&#39;</span><span class="p">,</span> <span class="s1">&#39;createTime&#39;</span><span class="p">]))</span> </div></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
