@@ -168,20 +168,44 @@
 <h1>datalab Commands<a class="headerlink" href="#datalab-commands" title="Permalink to this headline">¶</a></h1>
 <dl class="attribute">
 <dt>
-<code class="descname">%monitoring</code></dt>
+<code class="descname">%bigquery</code></dt>
 <dd></dd></dl>
 
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">monitoring</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="nb">list</span><span class="p">}</span> <span class="o">...</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">bigquery</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
+                <span class="p">{</span><span class="n">sample</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="n">dryrun</span><span class="p">,</span><span class="n">udf</span><span class="p">,</span><span class="n">execute</span><span class="p">,</span><span class="n">pipeline</span><span class="p">,</span><span class="n">table</span><span class="p">,</span><span class="n">schema</span><span class="p">,</span><span class="n">datasets</span><span class="p">,</span><span class="n">tables</span><span class="p">,</span><span class="n">extract</span><span class="p">,</span><span class="n">load</span><span class="p">}</span>
+                <span class="o">...</span>
 
-<span class="n">Execute</span> <span class="n">various</span> <span class="n">Monitoring</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;%monitoring &lt;command&gt; -h&quot;</span>
-<span class="k">for</span> <span class="n">help</span> <span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">BigQuery</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;%bigquery &lt;command&gt; -h&quot;</span> <span class="k">for</span>
+<span class="n">help</span> <span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
 
 <span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
-  <span class="p">{</span><span class="nb">list</span><span class="p">}</span>      <span class="n">commands</span>
-    <span class="nb">list</span>      <span class="n">List</span> <span class="n">the</span> <span class="n">metrics</span> <span class="ow">or</span> <span class="n">resource</span> <span class="n">types</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">monitored</span> <span class="n">project</span><span class="o">.</span>
+  <span class="p">{</span><span class="n">sample</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="n">dryrun</span><span class="p">,</span><span class="n">udf</span><span class="p">,</span><span class="n">execute</span><span class="p">,</span><span class="n">pipeline</span><span class="p">,</span><span class="n">table</span><span class="p">,</span><span class="n">schema</span><span class="p">,</span><span class="n">datasets</span><span class="p">,</span><span class="n">tables</span><span class="p">,</span><span class="n">extract</span><span class="p">,</span><span class="n">load</span><span class="p">}</span>
+                        <span class="n">commands</span>
+    <span class="n">sample</span>              <span class="n">Display</span> <span class="n">a</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span>
+                        <span class="n">query</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span> <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span>
+                        <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">query</span><span class="p">,</span> <span class="k">if</span> <span class="o">-</span><span class="n">q</span><span class="o">/--</span><span class="n">query</span> <span class="n">was</span>
+                        <span class="n">used</span><span class="p">,</span> <span class="ow">or</span> <span class="n">it</span> <span class="n">can</span> <span class="n">contain</span> <span class="n">SQL</span> <span class="k">for</span> <span class="n">a</span> <span class="n">query</span><span class="o">.</span>
+    <span class="n">create</span>              <span class="n">Create</span> <span class="n">a</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">table</span><span class="o">.</span>
+    <span class="n">delete</span>              <span class="n">Delete</span> <span class="n">a</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">table</span><span class="o">.</span>
+    <span class="n">dryrun</span>              <span class="n">Execute</span> <span class="n">a</span> <span class="n">dry</span> <span class="n">run</span> <span class="n">of</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">display</span>
+                        <span class="n">approximate</span> <span class="n">usage</span> <span class="n">statistics</span>
+    <span class="n">udf</span>                 <span class="n">Create</span> <span class="n">a</span> <span class="n">named</span> <span class="n">Javascript</span> <span class="n">BigQuery</span> <span class="n">UDF</span>
+    <span class="n">execute</span>             <span class="n">Execute</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">optionally</span> <span class="n">send</span> <span class="n">the</span>
+                        <span class="n">results</span> <span class="n">to</span> <span class="n">a</span> <span class="n">named</span> <span class="n">table</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span>
+                        <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span> <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span>
+                        <span class="n">query</span><span class="o">.</span>
+    <span class="n">pipeline</span>            <span class="n">Define</span> <span class="n">a</span> <span class="n">deployable</span> <span class="n">pipeline</span> <span class="n">based</span> <span class="n">on</span> <span class="n">a</span> <span class="n">BigQuery</span>
+                        <span class="n">query</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span> <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span>
+                        <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">query</span><span class="o">.</span>
+    <span class="n">table</span>               <span class="n">View</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span><span class="o">.</span>
+    <span class="n">schema</span>              <span class="n">View</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span> <span class="ow">or</span> <span class="n">view</span> <span class="n">schema</span><span class="o">.</span>
+    <span class="n">datasets</span>            <span class="n">List</span> <span class="n">the</span> <span class="n">datasets</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">project</span><span class="o">.</span>
+    <span class="n">tables</span>              <span class="n">List</span> <span class="n">the</span> <span class="n">tables</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">project</span> <span class="ow">or</span> <span class="n">dataset</span><span class="o">.</span>
+    <span class="n">extract</span>             <span class="n">Extract</span> <span class="n">BigQuery</span> <span class="n">query</span> <span class="n">results</span> <span class="ow">or</span> <span class="n">table</span> <span class="n">to</span> <span class="n">GCS</span><span class="o">.</span>
+    <span class="n">load</span>                <span class="n">Load</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">GCS</span> <span class="n">into</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span><span class="o">.</span>
 
 <span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
-  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
 <span class="kc">None</span>
 </pre></div>
 </div>
@@ -205,15 +229,21 @@
 </div>
 <dl class="attribute">
 <dt>
-<code class="descname">%pymodule</code></dt>
+<code class="descname">%monitoring</code></dt>
 <dd></dd></dl>
 
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pymodule</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NAME</span><span class="p">]</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">monitoring</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">{</span><span class="nb">list</span><span class="p">}</span> <span class="o">...</span>
+
+<span class="n">Execute</span> <span class="n">various</span> <span class="n">Monitoring</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;%monitoring &lt;command&gt; -h&quot;</span>
+<span class="k">for</span> <span class="n">help</span> <span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
+
+<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="p">{</span><span class="nb">list</span><span class="p">}</span>      <span class="n">commands</span>
+    <span class="nb">list</span>      <span class="n">List</span> <span class="n">the</span> <span class="n">metrics</span> <span class="ow">or</span> <span class="n">resource</span> <span class="n">types</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">monitored</span> <span class="n">project</span><span class="o">.</span>
 
 <span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
-  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
-  <span class="o">-</span><span class="n">n</span> <span class="n">NAME</span><span class="p">,</span> <span class="o">--</span><span class="n">name</span> <span class="n">NAME</span>  <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">python</span> <span class="n">module</span> <span class="n">to</span> <span class="n">create</span> <span class="ow">and</span> <span class="kn">import</span>
-<span class="nn">None</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="kc">None</span>
 </pre></div>
 </div>
 <dl class="attribute">
@@ -231,6 +261,19 @@
 <span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
   <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>  <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
 <span class="kc">None</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt>
+<code class="descname">%pymodule</code></dt>
+<dd></dd></dl>
+
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pymodule</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">n</span> <span class="n">NAME</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+  <span class="o">-</span><span class="n">n</span> <span class="n">NAME</span><span class="p">,</span> <span class="o">--</span><span class="n">name</span> <span class="n">NAME</span>  <span class="n">the</span> <span class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span class="n">python</span> <span class="n">module</span> <span class="n">to</span> <span class="n">create</span> <span class="ow">and</span> <span class="kn">import</span>
+<span class="nn">None</span>
 </pre></div>
 </div>
 <dl class="attribute">
@@ -285,49 +328,6 @@
                         <span class="n">BigQuery</span> <span class="n">SQL</span> <span class="n">dialect</span>
   <span class="o">-</span><span class="n">b</span> <span class="n">BILLING</span><span class="p">,</span> <span class="o">--</span><span class="n">billing</span> <span class="n">BILLING</span>
                         <span class="n">BigQuery</span> <span class="n">billing</span> <span class="n">tier</span>
-</pre></div>
-</div>
-<dl class="attribute">
-<dt>
-<code class="descname">%bigquery</code></dt>
-<dd></dd></dl>
-
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">bigquery</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
-                <span class="p">{</span><span class="n">sample</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="n">dryrun</span><span class="p">,</span><span class="n">udf</span><span class="p">,</span><span class="n">execute</span><span class="p">,</span><span class="n">pipeline</span><span class="p">,</span><span class="n">table</span><span class="p">,</span><span class="n">schema</span><span class="p">,</span><span class="n">datasets</span><span class="p">,</span><span class="n">tables</span><span class="p">,</span><span class="n">extract</span><span class="p">,</span><span class="n">load</span><span class="p">}</span>
-                <span class="o">...</span>
-
-<span class="n">Execute</span> <span class="n">various</span> <span class="n">BigQuery</span><span class="o">-</span><span class="n">related</span> <span class="n">operations</span><span class="o">.</span> <span class="n">Use</span> <span class="s2">&quot;%bigquery &lt;command&gt; -h&quot;</span> <span class="k">for</span>
-<span class="n">help</span> <span class="n">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="o">.</span>
-
-<span class="n">positional</span> <span class="n">arguments</span><span class="p">:</span>
-  <span class="p">{</span><span class="n">sample</span><span class="p">,</span><span class="n">create</span><span class="p">,</span><span class="n">delete</span><span class="p">,</span><span class="n">dryrun</span><span class="p">,</span><span class="n">udf</span><span class="p">,</span><span class="n">execute</span><span class="p">,</span><span class="n">pipeline</span><span class="p">,</span><span class="n">table</span><span class="p">,</span><span class="n">schema</span><span class="p">,</span><span class="n">datasets</span><span class="p">,</span><span class="n">tables</span><span class="p">,</span><span class="n">extract</span><span class="p">,</span><span class="n">load</span><span class="p">}</span>
-                        <span class="n">commands</span>
-    <span class="n">sample</span>              <span class="n">Display</span> <span class="n">a</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span>
-                        <span class="n">query</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span> <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span>
-                        <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">query</span><span class="p">,</span> <span class="k">if</span> <span class="o">-</span><span class="n">q</span><span class="o">/--</span><span class="n">query</span> <span class="n">was</span>
-                        <span class="n">used</span><span class="p">,</span> <span class="ow">or</span> <span class="n">it</span> <span class="n">can</span> <span class="n">contain</span> <span class="n">SQL</span> <span class="k">for</span> <span class="n">a</span> <span class="n">query</span><span class="o">.</span>
-    <span class="n">create</span>              <span class="n">Create</span> <span class="n">a</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">table</span><span class="o">.</span>
-    <span class="n">delete</span>              <span class="n">Delete</span> <span class="n">a</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="n">table</span><span class="o">.</span>
-    <span class="n">dryrun</span>              <span class="n">Execute</span> <span class="n">a</span> <span class="n">dry</span> <span class="n">run</span> <span class="n">of</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">display</span>
-                        <span class="n">approximate</span> <span class="n">usage</span> <span class="n">statistics</span>
-    <span class="n">udf</span>                 <span class="n">Create</span> <span class="n">a</span> <span class="n">named</span> <span class="n">Javascript</span> <span class="n">BigQuery</span> <span class="n">UDF</span>
-    <span class="n">execute</span>             <span class="n">Execute</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">SQL</span> <span class="n">query</span> <span class="ow">and</span> <span class="n">optionally</span> <span class="n">send</span> <span class="n">the</span>
-                        <span class="n">results</span> <span class="n">to</span> <span class="n">a</span> <span class="n">named</span> <span class="n">table</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span>
-                        <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span> <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span>
-                        <span class="n">query</span><span class="o">.</span>
-    <span class="n">pipeline</span>            <span class="n">Define</span> <span class="n">a</span> <span class="n">deployable</span> <span class="n">pipeline</span> <span class="n">based</span> <span class="n">on</span> <span class="n">a</span> <span class="n">BigQuery</span>
-                        <span class="n">query</span><span class="o">.</span> <span class="n">The</span> <span class="n">cell</span> <span class="n">can</span> <span class="n">optionally</span> <span class="n">contain</span> <span class="n">arguments</span> <span class="k">for</span>
-                        <span class="n">expanding</span> <span class="n">variables</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">query</span><span class="o">.</span>
-    <span class="n">table</span>               <span class="n">View</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span><span class="o">.</span>
-    <span class="n">schema</span>              <span class="n">View</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span> <span class="ow">or</span> <span class="n">view</span> <span class="n">schema</span><span class="o">.</span>
-    <span class="n">datasets</span>            <span class="n">List</span> <span class="n">the</span> <span class="n">datasets</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">project</span><span class="o">.</span>
-    <span class="n">tables</span>              <span class="n">List</span> <span class="n">the</span> <span class="n">tables</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">project</span> <span class="ow">or</span> <span class="n">dataset</span><span class="o">.</span>
-    <span class="n">extract</span>             <span class="n">Extract</span> <span class="n">BigQuery</span> <span class="n">query</span> <span class="n">results</span> <span class="ow">or</span> <span class="n">table</span> <span class="n">to</span> <span class="n">GCS</span><span class="o">.</span>
-    <span class="n">load</span>                <span class="n">Load</span> <span class="n">data</span> <span class="kn">from</span> <span class="nn">GCS</span> <span class="n">into</span> <span class="n">a</span> <span class="n">BigQuery</span> <span class="n">table</span><span class="o">.</span>
-
-<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
-  <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
-<span class="kc">None</span>
 </pre></div>
 </div>
 <dl class="attribute">

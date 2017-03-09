@@ -1,20 +1,44 @@
 datalab Commands
 =======================
 
-.. attribute:: %monitoring
+.. attribute:: %bigquery
 .. parsed-literal::
 
-  usage: monitoring [-h] {list} ...
+  usage: bigquery [-h]
+                  {sample,create,delete,dryrun,udf,execute,pipeline,table,schema,datasets,tables,extract,load}
+                  ...
   
-  Execute various Monitoring-related operations. Use "%monitoring <command> -h"
-  for help on a specific command.
+  Execute various BigQuery-related operations. Use "%bigquery <command> -h" for
+  help on a specific command.
   
   positional arguments:
-    {list}      commands
-      list      List the metrics or resource types in a monitored project.
+    {sample,create,delete,dryrun,udf,execute,pipeline,table,schema,datasets,tables,extract,load}
+                          commands
+      sample              Display a sample of the results of a BigQuery SQL
+                          query. The cell can optionally contain arguments for
+                          expanding variables in the query, if -q/--query was
+                          used, or it can contain SQL for a query.
+      create              Create a dataset or table.
+      delete              Delete a dataset or table.
+      dryrun              Execute a dry run of a BigQuery query and display
+                          approximate usage statistics
+      udf                 Create a named Javascript BigQuery UDF
+      execute             Execute a BigQuery SQL query and optionally send the
+                          results to a named table. The cell can optionally
+                          contain arguments for expanding variables in the
+                          query.
+      pipeline            Define a deployable pipeline based on a BigQuery
+                          query. The cell can optionally contain arguments for
+                          expanding variables in the query.
+      table               View a BigQuery table.
+      schema              View a BigQuery table or view schema.
+      datasets            List the datasets in a BigQuery project.
+      tables              List the tables in a BigQuery project or dataset.
+      extract             Extract BigQuery query results or table to GCS.
+      load                Load data from GCS into a BigQuery table.
   
   optional arguments:
-    -h, --help  show this help message and exit
+    -h, --help            show this help message and exit
   None
 
 .. attribute:: %extension
@@ -32,14 +56,20 @@ datalab Commands
     -h, --help  show this help message and exit
   None
 
-.. attribute:: %pymodule
+.. attribute:: %monitoring
 .. parsed-literal::
 
-  usage: pymodule [-h] [-n NAME]
+  usage: monitoring [-h] {list} ...
+  
+  Execute various Monitoring-related operations. Use "%monitoring <command> -h"
+  for help on a specific command.
+  
+  positional arguments:
+    {list}      commands
+      list      List the metrics or resource types in a monitored project.
   
   optional arguments:
-    -h, --help            show this help message and exit
-    -n NAME, --name NAME  the name of the python module to create and import
+    -h, --help  show this help message and exit
   None
 
 .. attribute:: %projects
@@ -54,6 +84,16 @@ datalab Commands
   
   optional arguments:
     -h, --help  show this help message and exit
+  None
+
+.. attribute:: %pymodule
+.. parsed-literal::
+
+  usage: pymodule [-h] [-n NAME]
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    -n NAME, --name NAME  the name of the python module to create and import
   None
 
 .. attribute:: %sql
@@ -106,46 +146,6 @@ datalab Commands
                           BigQuery SQL dialect
     -b BILLING, --billing BILLING
                           BigQuery billing tier
-
-.. attribute:: %bigquery
-.. parsed-literal::
-
-  usage: bigquery [-h]
-                  {sample,create,delete,dryrun,udf,execute,pipeline,table,schema,datasets,tables,extract,load}
-                  ...
-  
-  Execute various BigQuery-related operations. Use "%bigquery <command> -h" for
-  help on a specific command.
-  
-  positional arguments:
-    {sample,create,delete,dryrun,udf,execute,pipeline,table,schema,datasets,tables,extract,load}
-                          commands
-      sample              Display a sample of the results of a BigQuery SQL
-                          query. The cell can optionally contain arguments for
-                          expanding variables in the query, if -q/--query was
-                          used, or it can contain SQL for a query.
-      create              Create a dataset or table.
-      delete              Delete a dataset or table.
-      dryrun              Execute a dry run of a BigQuery query and display
-                          approximate usage statistics
-      udf                 Create a named Javascript BigQuery UDF
-      execute             Execute a BigQuery SQL query and optionally send the
-                          results to a named table. The cell can optionally
-                          contain arguments for expanding variables in the
-                          query.
-      pipeline            Define a deployable pipeline based on a BigQuery
-                          query. The cell can optionally contain arguments for
-                          expanding variables in the query.
-      table               View a BigQuery table.
-      schema              View a BigQuery table or view schema.
-      datasets            List the datasets in a BigQuery project.
-      tables              List the tables in a BigQuery project or dataset.
-      extract             Extract BigQuery query results or table to GCS.
-      load                Load data from GCS into a BigQuery table.
-  
-  optional arguments:
-    -h, --help            show this help message and exit
-  None
 
 .. attribute:: %storage
 .. parsed-literal::

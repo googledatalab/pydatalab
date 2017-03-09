@@ -1,21 +1,46 @@
 google.datalab Commands
 =======================
 
-.. attribute:: %sd
+.. attribute:: %bq
 .. parsed-literal::
 
-  usage: %sd [-h] {monitoring} ...
+  usage: %bq [-h]
+             {datasets,tables,query,execute,extract,sample,dryrun,udf,datasource,load}
+             ...
   
-  Execute various Stackdriver related operations. Use "%sd <stackdriver_product>
-  -h" for help on a specific Stackdriver product.
+  Execute various BigQuery-related operations. Use "%bq <command> -h" for help
+  on a specific command.
   
   positional arguments:
-    {monitoring}  commands
-      monitoring  Execute Stackdriver monitoring related operations. Use "sd
-                  monitoring <command> -h" for help on a specific command
+    {datasets,tables,query,execute,extract,sample,dryrun,udf,datasource,load}
+                          commands
+      datasets            Operations on BigQuery datasets
+      tables              Operations on BigQuery tables
+      query               Create or execute a BigQuery SQL query object,
+                          optionally using other SQL objects, UDFs, or external
+                          datasources. If a query name is not specified, the
+                          query is executed.
+      execute             Execute a BigQuery SQL query and optionally send the
+                          results to a named table. The cell can optionally
+                          contain arguments for expanding variables in the
+                          query.
+      extract             Extract a query or table into file (local or GCS)
+      sample              Display a sample of the results of a BigQuery SQL
+                          query. The cell can optionally contain arguments for
+                          expanding variables in the query, if -q/--query was
+                          used, or it can contain SQL for a query.
+      dryrun              Execute a dry run of a BigQuery query and display
+                          approximate usage statistics
+      udf                 Create a named Javascript BigQuery UDF
+      datasource          Create a named Javascript BigQuery external data
+                          source
+      load                Load data from GCS into a BigQuery table. If creating
+                          a new table, a schema should be specified in YAML or
+                          JSON in the cell body, otherwise the schema is
+                          inferred from existing table.
   
   optional arguments:
-    -h, --help    show this help message and exit
+    -h, --help            show this help message and exit
   None
 
 .. attribute:: %chart
@@ -91,48 +116,6 @@ google.datalab Commands
     -h, --help        show this help message and exit
   None
 
-.. attribute:: %bq
-.. parsed-literal::
-
-  usage: %bq [-h]
-             {datasets,tables,query,execute,extract,sample,dryrun,udf,datasource,load}
-             ...
-  
-  Execute various BigQuery-related operations. Use "%bq <command> -h" for help
-  on a specific command.
-  
-  positional arguments:
-    {datasets,tables,query,execute,extract,sample,dryrun,udf,datasource,load}
-                          commands
-      datasets            Operations on BigQuery datasets
-      tables              Operations on BigQuery tables
-      query               Create or execute a BigQuery SQL query object,
-                          optionally using other SQL objects, UDFs, or external
-                          datasources. If a query name is not specified, the
-                          query is executed.
-      execute             Execute a BigQuery SQL query and optionally send the
-                          results to a named table. The cell can optionally
-                          contain arguments for expanding variables in the
-                          query.
-      extract             Extract a query or table into file (local or GCS)
-      sample              Display a sample of the results of a BigQuery SQL
-                          query. The cell can optionally contain arguments for
-                          expanding variables in the query, if -q/--query was
-                          used, or it can contain SQL for a query.
-      dryrun              Execute a dry run of a BigQuery query and display
-                          approximate usage statistics
-      udf                 Create a named Javascript BigQuery UDF
-      datasource          Create a named Javascript BigQuery external data
-                          source
-      load                Load data from GCS into a BigQuery table. If creating
-                          a new table, a schema should be specified in YAML or
-                          JSON in the cell body, otherwise the schema is
-                          inferred from existing table.
-  
-  optional arguments:
-    -h, --help            show this help message and exit
-  None
-
 .. attribute:: %gcs
 .. parsed-literal::
 
@@ -158,5 +141,22 @@ google.datalab Commands
   
   optional arguments:
     -h, --help            show this help message and exit
+  None
+
+.. attribute:: %sd
+.. parsed-literal::
+
+  usage: %sd [-h] {monitoring} ...
+  
+  Execute various Stackdriver related operations. Use "%sd <stackdriver_product>
+  -h" for help on a specific Stackdriver product.
+  
+  positional arguments:
+    {monitoring}  commands
+      monitoring  Execute Stackdriver monitoring related operations. Use "sd
+                  monitoring <command> -h" for help on a specific command
+  
+  optional arguments:
+    -h, --help    show this help message and exit
   None
 
