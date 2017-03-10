@@ -52,13 +52,13 @@ class Query(object):
       """
     self._sql = sql
     self._udfs = {}
-    self._subqueries = {}
-    self._data_sources = {}
+    self._subqueries = []
+    self._data_sources = []
     self._env = env or {}
 
     # Validate given list or dictionary of objects that they are of correct type
     # and add them to the target dictionary
-    def _expand_objects(obj_container, obj_type, target_dict):
+    def _expand_objects(obj_container, obj_type, target_list):
       for item in obj_container:
         # for a list of objects, we should find these objects in the given environment
         if isinstance(obj_container, list):
@@ -75,7 +75,7 @@ class Query(object):
         else:
           raise Exception('Unexpected container for type %s. Expected a list or dictionary' % obj_type)
 
-        target_dict[item] = value
+        target_list.append((item, value))
 
     if subqueries:
       _expand_objects(subqueries, Query, self._subqueries)
@@ -124,20 +124,25 @@ class Query(object):
       The expanded SQL string of this object
     """
 
+    # use lists to preserve the order of subqueries, bigquery will not like listing subqueries
+    # out of order if they depend on each other. for example. the following will be rejected:
+    # WITH q2 as (SELECT * FROM q1),
+    #      q1 as (SELECT * FROM mytable),
+    # SELECT * FROM q2
+    # so when we're getting the dependencies, use recursion into a list to maintain the order
     udfs = {}
-    subqueries = {}
+    subqueries = []
     expanded_sql = ''
 
     def _recurse_subqueries(query):
       """Recursively scan subqueries and add their pieces to global scope udfs and subqueries
       """
       if query._subqueries:
-        subqueries.update(query._subqueries)
+        for subquery in query._subqueries:
+          _recurse_subqueries(subquery[1])
+        subqueries.extend([s for s in query._subqueries if s not in subqueries])
       if query._udfs:
         udfs.update(query._udfs)
-      if query._subqueries:
-        for subquery in query._subqueries:
-          _recurse_subqueries(query._subqueries[subquery])
 
     subqueries_sql = udfs_sql = ''
     _recurse_subqueries(self)
@@ -146,10 +151,13 @@ class Query(object):
       expanded_sql += '\n'.join([udfs[udf]._expanded_sql() for udf in udfs])
       expanded_sql += '\n'
 
+    def _indent_query(subquery):
+      return '  ' + subquery._sql.replace('\n', '\n  ')
+
     if subqueries:
       expanded_sql += 'WITH ' + \
-                      ',\n'.join(['%s AS (%s)' % (sq, subqueries[sq]._sql) for sq in subqueries])
-      expanded_sql += '\n'
+                      '\n),\n'.join(['%s AS (\n%s' % (sq[0], _indent_query(sq[1])) for sq in subqueries])
+      expanded_sql += '\n)\n\n'
 
     expanded_sql += sampling(self._sql) if sampling else self._sql
 
@@ -184,7 +192,7 @@ class Query(object):
   @property
   def subqueries(self):
     """ Get a dictionary of subqueries referenced by the query."""
-    return self._subqueries
+    return dict(self._subqueries)
 
   @property
   def data_sources(self):
