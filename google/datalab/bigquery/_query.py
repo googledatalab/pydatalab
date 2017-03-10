@@ -51,7 +51,7 @@ class Query(object):
       Exception if expansion of any variables failed.
       """
     self._sql = sql
-    self._udfs = {}
+    self._udfs = []
     self._subqueries = []
     self._data_sources = []
     self._env = env or {}
@@ -130,7 +130,7 @@ class Query(object):
     #      q1 as (SELECT * FROM mytable),
     # SELECT * FROM q2
     # so when we're getting the dependencies, use recursion into a list to maintain the order
-    udfs = {}
+    udfs = []
     subqueries = []
     expanded_sql = ''
 
@@ -142,7 +142,7 @@ class Query(object):
           _recurse_subqueries(subquery[1])
         subqueries.extend([s for s in query._subqueries if s not in subqueries])
       if query._udfs:
-        udfs.update(query._udfs)
+        udfs.extend([u for u in query._udfs if u not in udfs])
 
     subqueries_sql = udfs_sql = ''
     _recurse_subqueries(self)
@@ -187,7 +187,7 @@ class Query(object):
   @property
   def udfs(self):
     """ Get a dictionary of UDFs referenced by the query."""
-    return self._udfs
+    return dict(self._udfs)
 
   @property
   def subqueries(self):
