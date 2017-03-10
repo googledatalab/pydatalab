@@ -24,6 +24,7 @@ except ImportError:
 
 import json
 
+import datalab.utils.commands
 import google.datalab.data
 import google.datalab.utils
 
@@ -41,17 +42,30 @@ def _get_chart_data(line, cell_body=''):
     fields = metadata.get('fields', '*')
     first_row = int(metadata.get('first', 0))
     count = int(metadata.get('count', -1))
+    legacy = metadata.get('legacy', None)
+
+    # Both legacy and non-legacy table viewer calls this magic for new pages of data.
+    # Need to find their own data source --- one under datalab.utils.commands._utils
+    # and the other under google.datalab.utils.commands._utils.
+    if legacy is not None:
+      data_source = datalab.utils.commands._utils._data_sources
+    else:
+      data_source = _utils._data_sources
 
     source_index = int(source_index)
-    if source_index >= len(_utils._data_sources):  # Can happen after e.g. kernel restart
+    if source_index >= len(data_source):  # Can happen after e.g. kernel restart
       # TODO(gram): get kernel restart events in charting.js and disable any refresh timers.
       print('No source %d' % source_index)
       return IPython.core.display.JSON({'data': {}})
-    source = _utils._data_sources[source_index]
+    source = data_source[source_index]
     schema = None
 
     controls = metadata['controls'] if 'controls' in metadata else {}
-    data, _ = _utils.get_data(source, fields, controls, first_row, count, schema)
+    if legacy is not None:
+      data, _ = datalab.utils.commands.get_data(
+          source, fields, controls, first_row, count, schema)
+    else:
+      data, _ = _utils.get_data(source, fields, controls, first_row, count, schema)
   except Exception as e:
     google.datalab.utils.print_exception_with_last_stack(e)
     print('Failed with exception %s' % e)
