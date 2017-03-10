@@ -30,7 +30,9 @@ import datalab.utils
 from . import _utils
 
 
-@IPython.core.magic.register_cell_magic
+# Disable the magic here because another one with same name is available under
+# google.datalab namespace.
+# @IPython.core.magic.register_cell_magic
 def _get_chart_data(line, cell_body=''):
 
   refresh = 0

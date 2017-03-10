@@ -140,6 +140,11 @@ class Table(object):
     return self._name_parts
 
   @property
+  def full_name(self):
+    """The full name of the table in the form of project.dataset.table."""
+    return self._full_name
+
+  @property
   def job(self):
     """ For tables resulting from executing queries, the job that created the table.
 
