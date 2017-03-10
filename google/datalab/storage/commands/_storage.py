@@ -60,7 +60,7 @@ def gcs(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  parser = google.datalab.utils.commands.CommandParser(prog='gcs', description="""
+  parser = google.datalab.utils.commands.CommandParser(prog='%gcs', description="""
 Execute various Google Cloud Storage related operations. Use "%gcs <command> -h"
 for help on a specific command.
 """)
