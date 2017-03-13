@@ -48,13 +48,13 @@ class FeatureSliceView(object):
 
     Args:
       data: Can be one of:
-            A string of sql query.
-            A sql query module defined by "%%sql --module module_name".
-            A pandas DataFrame.
-          Regardless of data type, it must include the following columns:
-            "feature": identifies a slice of features. For example: "petal_length:4.0-4.2".
-            "count": number of instances in that slice of features.
-          All other columns are viewed as metrics for its feature slice. At least one is required.
+          A string of sql query.
+          A sql query module defined by "%%sql --module module_name".
+          A pandas DataFrame.
+        Regardless of data type, it must include the following columns:
+          "feature": identifies a slice of features. For example: "petal_length:4.0-4.2".
+          "count": number of instances in that slice of features.
+        All other columns are viewed as metrics for its feature slice. At least one is required.
     """    
     import IPython
 
