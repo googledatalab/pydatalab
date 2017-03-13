@@ -197,7 +197,7 @@ class Query(object):
   @property
   def data_sources(self):
     """ Get a dictionary of external data sources referenced by the query."""
-    return self._data_sources
+    return dict(self._data_sources)
 
   def dry_run(self, context=None, query_params=None):
     """Dry run a query, to check the validity of the query and return some useful statistics.
@@ -218,7 +218,7 @@ class Query(object):
     api = _api.Api(context)
     try:
       query_result = api.jobs_insert_query(self.sql, dry_run=True,
-                                           table_definitions=self._data_sources,
+                                           table_definitions=self.data_sources,
                                            query_params=query_params)
     except Exception as e:
       raise e
@@ -263,7 +263,7 @@ class Query(object):
                                            append=append, overwrite=overwrite, batch=batch,
                                            use_cache=output_options.use_cache,
                                            allow_large_results=output_options.allow_large_results,
-                                           table_definitions=self._data_sources,
+                                           table_definitions=self.data_sources,
                                            query_params=query_params)
     except Exception as e:
       raise e

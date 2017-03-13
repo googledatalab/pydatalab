@@ -43,6 +43,15 @@ class TestCases(unittest.TestCase):
     self.assertEqual(q.udfs, {'testudf': udf})
     self.assertEqual(q._sql, sql)
 
+    with self.assertRaises(Exception) as error:
+      q = TestCases._create_query(sql, data_sources=['test_datasource'])
+    test_datasource = TestCases._create_data_source('gs://test/path')
+    env = {'test_datasource': test_datasource}
+    q = TestCases._create_query(sql, env=env, data_sources=['test_datasource'])
+    self.assertIsNotNone(q)
+    self.assertEqual(q.data_sources, {'test_datasource': test_datasource})
+    self.assertEqual(q._sql, sql)
+
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
   @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
   @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
@@ -199,6 +208,10 @@ q1 AS (
   @staticmethod
   def _create_udf(name, code, return_type):
     return google.datalab.bigquery.UDF(name, code, return_type)
+
+  @staticmethod
+  def _create_data_source(source):
+    return google.datalab.bigquery.ExternalDataSource(source=source)
 
   @staticmethod
   def _create_context():
