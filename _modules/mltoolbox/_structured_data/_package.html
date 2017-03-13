@@ -1,0 +1,1068 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mltoolbox._structured_data._package &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mltoolbox.regression.linear.html">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mltoolbox.image.classification.html">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>mltoolbox._structured_data._package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mltoolbox._structured_data._package</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Google Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Provides interface for Datalab.</span>
+
+<span class="sd">  Datalab will look for functions with the below names:</span>
+<span class="sd">     local_preprocess</span>
+<span class="sd">     local_train</span>
+<span class="sd">     local_predict</span>
+<span class="sd">     cloud_preprocess</span>
+<span class="sd">     cloud_train</span>
+<span class="sd">     cloud_predict</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">StringIO</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.lib.io</span> <span class="k">import</span> <span class="n">file_io</span>
+
+<span class="c1"># Note that subpackages of _structured_data are locally imported.</span>
+<span class="c1"># This is because this part of the mltoolbox is packaged up during training</span>
+<span class="c1"># and batch prediction. This package depends on datafow, but the trainer</span>
+<span class="c1"># workers should not need it; therefore at training time, a package cannot</span>
+<span class="c1"># import apache_beam.</span>
+
+<span class="c1"># Likewise, datalab packages are locally imported. This is because TF and</span>
+<span class="c1"># dataflow workers should not need it.</span>
+
+
+<span class="n">_TF_GS_URL</span> <span class="o">=</span> <span class="s1">&#39;gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinux1_x86_64.whl&#39;</span>
+<span class="n">_PROTOBUF_GS_URL</span> <span class="o">=</span> <span class="s1">&#39;gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">_default_project</span><span class="p">():</span>
+  <span class="kn">from</span> <span class="nn">google.datalab</span> <span class="k">import</span> <span class="n">Context</span>
+  <span class="k">return</span> <span class="n">Context</span><span class="o">.</span><span class="n">default</span><span class="p">()</span><span class="o">.</span><span class="n">project_id</span>
+
+<span class="k">def</span> <span class="nf">_is_in_IPython</span><span class="p">():</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">IPython</span>
+    <span class="k">return</span> <span class="kc">True</span>
+  <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+<span class="k">def</span> <span class="nf">_assert_gcs_files</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Check files starts wtih gs://.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    files: string to file path, or list of file paths.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">files</span><span class="p">]</span>
+
+  <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;gs://&#39;</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;File </span><span class="si">%s</span><span class="s1"> is not a gcs path&#39;</span> <span class="o">%</span> <span class="n">f</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_package_to_staging</span><span class="p">(</span><span class="n">staging_package_url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Repackage this package from local installed location and copy it to GCS.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      staging_package_url: GCS path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">google.datalab.ml</span> <span class="k">as</span> <span class="nn">ml</span>
+
+    <span class="c1"># Find the package root. __file__ is under [package_root]/mltoolbox/_structured_data/this_file</span>
+    <span class="n">package_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;../../&#39;</span><span class="p">))</span>
+    <span class="n">setup_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;master_setup.py&#39;</span><span class="p">))</span>
+    <span class="n">tar_gz_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">staging_package_url</span><span class="p">,</span> <span class="s1">&#39;staging&#39;</span><span class="p">,</span> <span class="s1">&#39;trainer.tar.gz&#39;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Building package and uploading to </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">tar_gz_path</span><span class="p">)</span>
+    <span class="n">ml</span><span class="o">.</span><span class="n">package_and_copy</span><span class="p">(</span><span class="n">package_root</span><span class="p">,</span> <span class="n">setup_path</span><span class="p">,</span> <span class="n">tar_gz_path</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tar_gz_path</span>
+
+
+<span class="k">def</span> <span class="nf">_wait_and_kill</span><span class="p">(</span><span class="n">pid_to_wait</span><span class="p">,</span> <span class="n">pids_to_kill</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; Helper function.</span>
+
+<span class="sd">      Wait for a process to finish if it exists, and then try to kill a list of</span>
+<span class="sd">      processes.</span>
+
+<span class="sd">      Used by local_train</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    pid_to_wait: the process to wait for.</span>
+<span class="sd">    pids_to_kill: a list of processes to kill after the process of pid_to_wait finishes.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="c1"># cloud workers don&#39;t have psutil</span>
+  <span class="kn">import</span> <span class="nn">psutil</span>
+  <span class="k">if</span> <span class="n">psutil</span><span class="o">.</span><span class="n">pid_exists</span><span class="p">(</span><span class="n">pid_to_wait</span><span class="p">):</span>
+    <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="n">pid_to_wait</span><span class="p">)</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+  <span class="k">for</span> <span class="n">pid_to_kill</span> <span class="ow">in</span> <span class="n">pids_to_kill</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">psutil</span><span class="o">.</span><span class="n">pid_exists</span><span class="p">(</span><span class="n">pid_to_kill</span><span class="p">):</span>
+      <span class="n">p</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">pid</span><span class="o">=</span><span class="n">pid_to_kill</span><span class="p">)</span>
+      <span class="n">p</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+      <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Analyze</span>
+<span class="c1"># ==============================================================================</span>
+
+<div class="viewcode-block" id="analyze"><a class="viewcode-back" href="../../../mltoolbox.regression.linear.html#mltoolbox.classification.dnn.analyze">[docs]</a><span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">project_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Blocking version of analyze_async. See documentation of analyze_async.&quot;&quot;&quot;</span>
+  <span class="n">job</span> <span class="o">=</span> <span class="n">analyze_async</span><span class="p">(</span>
+      <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+      <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+      <span class="n">cloud</span><span class="o">=</span><span class="n">cloud</span><span class="p">,</span>
+      <span class="n">project_id</span><span class="o">=</span><span class="n">project_id</span><span class="p">)</span>
+  <span class="n">job</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Analyze: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">state</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="analyze_async"><a class="viewcode-back" href="../../../mltoolbox.regression.linear.html#mltoolbox.classification.dnn.analyze_async">[docs]</a><span class="k">def</span> <span class="nf">analyze_async</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">project_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Analyze data locally or in the cloud with BigQuery.</span>
+
+<span class="sd">  Produce analysis used by training. This can take a while, even for small</span>
+<span class="sd">  datasets. For small datasets, it may be faster to use local_analysis.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    output_dir: The output directory to use.</span>
+<span class="sd">    dataset: only CsvDataSet is supported currently.</span>
+<span class="sd">    cloud: If False, runs analysis locally with Pandas. If Ture, runs analysis</span>
+<span class="sd">        in the cloud with BigQuery.</span>
+<span class="sd">    project_id: Uses BigQuery with this project id. Default is datalab&#39;s </span>
+<span class="sd">        default project id.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A google.datalab.utils.Job object that can be used to query state from or wait.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="kn">import</span> <span class="nn">google.datalab.utils</span> <span class="k">as</span> <span class="nn">du</span>
+  <span class="n">fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="p">:</span> <span class="n">_analyze</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">cloud</span><span class="p">,</span> <span class="n">project_id</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">du</span><span class="o">.</span><span class="n">LambdaJob</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  </div>
+
+<span class="k">def</span> <span class="nf">_analyze</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">project_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="kn">import</span> <span class="nn">google.datalab.ml</span> <span class="k">as</span> <span class="nn">ml</span>
+  <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">preprocess</span> 
+
+  <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">ml</span><span class="o">.</span><span class="n">CsvDataSet</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Only CsvDataSet is supported&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CsvDataSet should be built with a file pattern, not a &#39;</span>
+                     <span class="s1">&#39;list of files.&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">project_id</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cloud</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;project_id only needed if cloud is True&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">cloud</span><span class="p">:</span>
+    <span class="n">_assert_gcs_files</span><span class="p">([</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+
+  <span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="c1"># write the schema file.</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">schema_file_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">tmp_dir</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.json&#39;</span><span class="p">,</span>
+                                           <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;schema&#39;</span><span class="p">)</span>    
+    <span class="n">file_io</span><span class="o">.</span><span class="n">write_string_to_file</span><span class="p">(</span><span class="n">schema_file_path</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">schema</span><span class="p">))</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;preprocess&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;--input-file-pattern=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s1">&#39;--output-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">output_dir</span><span class="p">,</span>
+            <span class="s1">&#39;--schema-file=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">schema_file_path</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">cloud</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Track BigQuery status at&#39;</span><span class="p">)</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;https://bigquery.cloud.google.com/queries/</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_default_project</span><span class="p">())</span>
+      <span class="n">preprocess</span><span class="o">.</span><span class="n">cloud_preprocess</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="n">preprocess</span><span class="o">.</span><span class="n">local_preprocess</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+  <span class="k">finally</span><span class="p">:</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">tmp_dir</span><span class="p">)</span>
+
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Train</span>
+<span class="c1"># ==============================================================================</span>
+<span class="k">def</span> <span class="nf">train_async</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span>
+          <span class="n">eval_dataset</span><span class="p">,</span>
+          <span class="n">analysis_dir</span><span class="p">,</span>
+          <span class="n">output_dir</span><span class="p">,</span>
+          <span class="n">features</span><span class="p">,</span>
+          <span class="n">model_type</span><span class="p">,</span>
+          <span class="n">max_steps</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+          <span class="n">num_epochs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">train_batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+          <span class="n">eval_batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+          <span class="n">min_eval_frequency</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+          <span class="n">top_n</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">layer_sizes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+          <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">,</span>
+          <span class="n">job_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># cloud param</span>
+          <span class="n">job_name_prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="c1"># cloud param</span>
+          <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># cloud param</span>
+          <span class="p">):</span>
+  <span class="c1"># NOTE: if you make a chane go this doc string, you MUST COPY it 4 TIMES in </span>
+  <span class="c1"># mltoolbox.{classification|regression}.{dnn|linear}, but you must remove</span>
+  <span class="c1"># the model_type parameter, and maybe change the layer_sizes and top_n</span>
+  <span class="c1"># parameters!</span>
+  <span class="c1"># Datalab does some tricky things and messing with train.__doc__ will</span>
+  <span class="c1"># not work!</span>
+  <span class="sd">&quot;&quot;&quot;Train model locally or in the cloud.</span>
+
+<span class="sd">  Local Training:</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    train_dataset: CsvDataSet</span>
+<span class="sd">    eval_dataset: CsvDataSet</span>
+<span class="sd">    analysis_dir:  The output directory from local_analysis</span>
+<span class="sd">    output_dir:  Output directory of training.</span>
+<span class="sd">    features: file path or features object. Example:</span>
+<span class="sd">        {</span>
+<span class="sd">          &quot;col_A&quot;: {&quot;transform&quot;: &quot;scale&quot;, &quot;default&quot;: 0.0},</span>
+<span class="sd">          &quot;col_B&quot;: {&quot;transform&quot;: &quot;scale&quot;,&quot;value&quot;: 4},</span>
+<span class="sd">          # Note col_C is missing, so default transform used.</span>
+<span class="sd">          &quot;col_D&quot;: {&quot;transform&quot;: &quot;hash_one_hot&quot;, &quot;hash_bucket_size&quot;: 4},</span>
+<span class="sd">          &quot;col_target&quot;: {&quot;transform&quot;: &quot;target&quot;},</span>
+<span class="sd">          &quot;col_key&quot;: {&quot;transform&quot;: &quot;key&quot;}</span>
+<span class="sd">        }</span>
+<span class="sd">        The keys correspond to the columns in the input files as defined by the</span>
+<span class="sd">        schema file during preprocessing. Some notes</span>
+<span class="sd">        1) The &quot;key&quot; and &quot;target&quot; transforms are required.</span>
+<span class="sd">        2) Default values are optional. These are used if the input data has</span>
+<span class="sd">           missing values during training and prediction. If not supplied for a</span>
+<span class="sd">           column, the default value for a numerical column is that column&#39;s</span>
+<span class="sd">           mean vlaue, and for a categorical column the empty string is used.</span>
+<span class="sd">        3) For numerical colums, the following transforms are supported:</span>
+<span class="sd">           i) {&quot;transform&quot;: &quot;identity&quot;}: does nothing to the number. (default)</span>
+<span class="sd">           ii) {&quot;transform&quot;: &quot;scale&quot;}: scales the colum values to -1, 1.</span>
+<span class="sd">           iii) {&quot;transform&quot;: &quot;scale&quot;, &quot;value&quot;: a}: scales the colum values</span>
+<span class="sd">              to -a, a.</span>
+
+<span class="sd">           For categorical colums, the following transforms are supported:</span>
+<span class="sd">          i) {&quot;transform&quot;: &quot;one_hot&quot;}: A one-hot vector using the full</span>
+<span class="sd">              vocabulary is used. (default)</span>
+<span class="sd">          ii) {&quot;transform&quot;: &quot;embedding&quot;, &quot;embedding_dim&quot;: d}: Each label is</span>
+<span class="sd">              embedded into an d-dimensional space.</span>
+<span class="sd">    model_type: One of &#39;linear_classification&#39;, &#39;linear_regression&#39;,</span>
+<span class="sd">        &#39;dnn_classification&#39;, &#39;dnn_regression&#39;.</span>
+<span class="sd">    max_steps: Int. Number of training steps to perform.</span>
+<span class="sd">    num_epochs: Maximum number of training data epochs on which to train.</span>
+<span class="sd">        The training job will run for max_steps or num_epochs, whichever occurs</span>
+<span class="sd">        first.</span>
+<span class="sd">    train_batch_size: number of rows to train on in one step.</span>
+<span class="sd">    eval_batch_size: number of rows to eval in one step. One pass of the eval</span>
+<span class="sd">        dataset is done. If eval_batch_size does not perfectly divide the numer</span>
+<span class="sd">        of eval instances, the last fractional batch is not used.</span>
+<span class="sd">    min_eval_frequency: Minimum number of training steps between evaluations.</span>
+<span class="sd">    top_n: Int. For classification problems, the output graph will contain the</span>
+<span class="sd">        labels and scores for the top n classes with a default of n=1. Use</span>
+<span class="sd">        None for regression problems.</span>
+<span class="sd">    layer_sizes: List. Represents the layers in the connected DNN.</span>
+<span class="sd">        If the model type is DNN, this must be set. Example [10, 3, 2], this</span>
+<span class="sd">        will create three DNN layers where the first layer will have 10 nodes,</span>
+<span class="sd">        the middle layer will have 3 nodes, and the laster layer will have 2</span>
+<span class="sd">        nodes.</span>
+<span class="sd">    learning_rate: tf.train.AdamOptimizer&#39;s learning rate,</span>
+<span class="sd">    epsilon: tf.train.AdamOptimizer&#39;s epsilon value.</span>
+
+<span class="sd">  Cloud Training:</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    All local training arguments are valid for cloud training. Cloud training</span>
+<span class="sd">    contains two additional args:</span>
+
+<span class="sd">    cloud: A CloudTrainingConfig object.</span>
+<span class="sd">    job_name: Training job name. A default will be picked if None. </span>
+<span class="sd">    job_name_prefix: If job_name is None, the job will be named </span>
+<span class="sd">        &#39;&lt;job_name_prefix&gt;_&lt;timestamp&gt;&#39;.   </span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A google.datalab.utils.Job object that can be used to query state from or wait.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="kn">import</span> <span class="nn">google.datalab.utils</span> <span class="k">as</span> <span class="nn">du</span>
+  
+  <span class="k">if</span> <span class="n">model_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;linear_classification&#39;</span><span class="p">,</span> <span class="s1">&#39;linear_regression&#39;</span><span class="p">,</span>
+      <span class="s1">&#39;dnn_classification&#39;</span><span class="p">,</span> <span class="s1">&#39;dnn_regression&#39;</span><span class="p">]:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unknown model_type </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model_type</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">cloud</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">cloud_train</span><span class="p">(</span>
+        <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+        <span class="n">eval_dataset</span><span class="o">=</span><span class="n">eval_dataset</span><span class="p">,</span>
+        <span class="n">analysis_dir</span><span class="o">=</span><span class="n">analysis_dir</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+        <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+        <span class="n">model_type</span><span class="o">=</span><span class="n">model_type</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+        <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span>
+        <span class="n">train_batch_size</span><span class="o">=</span><span class="n">train_batch_size</span><span class="p">,</span>
+        <span class="n">eval_batch_size</span><span class="o">=</span><span class="n">eval_batch_size</span><span class="p">,</span>
+        <span class="n">min_eval_frequency</span><span class="o">=</span><span class="n">min_eval_frequency</span><span class="p">,</span>
+        <span class="n">top_n</span><span class="o">=</span><span class="n">top_n</span><span class="p">,</span>
+        <span class="n">layer_sizes</span><span class="o">=</span><span class="n">layer_sizes</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
+        <span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">,</span>
+        <span class="n">job_name</span><span class="o">=</span><span class="n">job_name</span><span class="p">,</span>
+        <span class="n">job_name_prefix</span><span class="o">=</span><span class="n">job_name_prefix</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">cloud</span><span class="p">,</span>      
+    <span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">fn</span><span class="p">():</span>
+      <span class="k">return</span> <span class="n">local_train</span><span class="p">(</span>
+          <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+          <span class="n">eval_dataset</span><span class="o">=</span><span class="n">eval_dataset</span><span class="p">,</span>
+          <span class="n">analysis_dir</span><span class="o">=</span><span class="n">analysis_dir</span><span class="p">,</span>
+          <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+          <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+          <span class="n">model_type</span><span class="o">=</span><span class="n">model_type</span><span class="p">,</span>
+          <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+          <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span>
+          <span class="n">train_batch_size</span><span class="o">=</span><span class="n">train_batch_size</span><span class="p">,</span>
+          <span class="n">eval_batch_size</span><span class="o">=</span><span class="n">eval_batch_size</span><span class="p">,</span>
+          <span class="n">min_eval_frequency</span><span class="o">=</span><span class="n">min_eval_frequency</span><span class="p">,</span>
+          <span class="n">top_n</span><span class="o">=</span><span class="n">top_n</span><span class="p">,</span>
+          <span class="n">layer_sizes</span><span class="o">=</span><span class="n">layer_sizes</span><span class="p">,</span>
+          <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
+          <span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">du</span><span class="o">.</span><span class="n">LambdaJob</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>  
+
+<span class="k">def</span> <span class="nf">local_train</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span>
+                <span class="n">eval_dataset</span><span class="p">,</span>
+                <span class="n">analysis_dir</span><span class="p">,</span>
+                <span class="n">output_dir</span><span class="p">,</span>
+                <span class="n">features</span><span class="p">,</span>
+                <span class="n">model_type</span><span class="p">,</span>
+                <span class="n">max_steps</span><span class="p">,</span>
+                <span class="n">num_epochs</span><span class="p">,</span>
+                <span class="n">train_batch_size</span><span class="p">,</span>
+                <span class="n">eval_batch_size</span><span class="p">,</span>
+                <span class="n">min_eval_frequency</span><span class="p">,</span>
+                <span class="n">top_n</span><span class="p">,</span>
+                <span class="n">layer_sizes</span><span class="p">,</span>
+                <span class="n">learning_rate</span><span class="p">,</span>
+                <span class="n">epsilon</span><span class="p">):</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">eval_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CsvDataSets must be built with a file pattern, not list &#39;</span>
+                     <span class="s1">&#39;of files.&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">file_io</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;output_dir already exist. Use a new output path.&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">eval_dataset</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="n">eval_batch_size</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Eval batch size must be smaller than the eval data size.&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="c1"># Make a features file.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">file_io</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
+      <span class="n">file_io</span><span class="o">.</span><span class="n">recursive_create_dir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">features_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s1">&#39;features_file.json&#39;</span><span class="p">)</span>
+    <span class="n">file_io</span><span class="o">.</span><span class="n">write_string_to_file</span><span class="p">(</span>
+        <span class="n">features_file</span><span class="p">,</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">features</span><span class="p">))</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">features_file</span> <span class="o">=</span> <span class="n">features</span>
+
+  <span class="k">def</span> <span class="nf">_get_abs_path</span><span class="p">(</span><span class="n">input_path</span><span class="p">):</span>
+    <span class="n">cur_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="n">full_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cur_path</span><span class="p">,</span> <span class="n">input_path</span><span class="p">))</span>
+    <span class="c1"># put path in quotes as it could contain spaces.</span>
+    <span class="k">return</span> <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="n">full_path</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span>
+
+  <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cd </span><span class="si">%s</span><span class="s1"> &amp;&amp;&#39;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
+          <span class="s1">&#39;python -m trainer.task&#39;</span><span class="p">,</span>
+          <span class="s1">&#39;--train-data-paths=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">train_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+          <span class="s1">&#39;--eval-data-paths=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">eval_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+          <span class="s1">&#39;--job-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">),</span>
+          <span class="s1">&#39;--preprocess-output-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">analysis_dir</span><span class="p">),</span>
+          <span class="s1">&#39;--transforms-file=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">features_file</span><span class="p">),</span>
+          <span class="s1">&#39;--model-type=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model_type</span><span class="p">,</span>
+          <span class="s1">&#39;--max-steps=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">max_steps</span><span class="p">),</span>
+          <span class="s1">&#39;--train-batch-size=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">train_batch_size</span><span class="p">),</span>
+          <span class="s1">&#39;--eval-batch-size=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">eval_batch_size</span><span class="p">),</span>
+          <span class="s1">&#39;--min-eval-frequency=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">min_eval_frequency</span><span class="p">),</span>
+          <span class="s1">&#39;--learning-rate=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">),</span>
+          <span class="s1">&#39;--epsilon=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">epsilon</span><span class="p">)]</span>
+  <span class="k">if</span> <span class="n">num_epochs</span><span class="p">:</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--num-epochs=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_epochs</span><span class="p">))</span>
+  <span class="k">if</span> <span class="n">top_n</span><span class="p">:</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--top-n=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">top_n</span><span class="p">))</span>
+  <span class="k">if</span> <span class="n">layer_sizes</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">layer_sizes</span><span class="p">)):</span>
+      <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--layer-size</span><span class="si">%s</span><span class="s1">=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">layer_sizes</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
+
+  <span class="n">monitor_process</span> <span class="o">=</span> <span class="kc">None</span>
+  <span class="k">try</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">),</span>
+                         <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                         <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+                         <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">)</span>
+    <span class="n">pids_to_kill</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">pid</span><span class="p">]</span>
+
+    <span class="c1">#script -&gt; name = datalab_structured_data._package</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="s1">&#39;import </span><span class="si">%s</span><span class="s1">; </span><span class="si">%s</span><span class="s1">._wait_and_kill(</span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> \
+          <span class="p">(</span><span class="vm">__name__</span><span class="p">,</span> <span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()),</span> <span class="nb">str</span><span class="p">(</span><span class="n">pids_to_kill</span><span class="p">))</span>
+    <span class="n">monitor_process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="n">script</span><span class="p">])</span>
+
+    <span class="k">while</span> <span class="n">p</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">line</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;INFO:tensorflow:global&#39;</span><span class="p">)</span> <span class="ow">or</span>
+          <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;INFO:tensorflow:loss&#39;</span><span class="p">)</span> <span class="ow">or</span>
+          <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;INFO:tensorflow:Saving dict&#39;</span><span class="p">)):</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+  <span class="k">finally</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">monitor_process</span><span class="p">:</span>
+      <span class="n">monitor_process</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+      <span class="n">monitor_process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+  
+
+<span class="k">def</span> <span class="nf">cloud_train</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span>
+                <span class="n">eval_dataset</span><span class="p">,</span>
+                <span class="n">analysis_dir</span><span class="p">,</span>
+                <span class="n">output_dir</span><span class="p">,</span>
+                <span class="n">features</span><span class="p">,</span>
+                <span class="n">model_type</span><span class="p">,</span>
+                <span class="n">max_steps</span><span class="p">,</span>
+                <span class="n">num_epochs</span><span class="p">,</span>
+                <span class="n">train_batch_size</span><span class="p">,</span>
+                <span class="n">eval_batch_size</span><span class="p">,</span>
+                <span class="n">min_eval_frequency</span><span class="p">,</span>
+                <span class="n">top_n</span><span class="p">,</span>
+                <span class="n">layer_sizes</span><span class="p">,</span>
+                <span class="n">learning_rate</span><span class="p">,</span>
+                <span class="n">epsilon</span><span class="p">,</span>
+                <span class="n">job_name</span><span class="p">,</span>
+                <span class="n">job_name_prefix</span><span class="p">,</span>
+                <span class="n">config</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Train model using CloudML.</span>
+
+<span class="sd">  See local_train() for a description of the args.</span>
+<span class="sd">  Args:</span>
+<span class="sd">    config: A CloudTrainingConfig object.</span>
+<span class="sd">    job_name: Training job name. A default will be picked if None.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="kn">import</span> <span class="nn">google.datalab.ml</span> <span class="k">as</span> <span class="nn">ml</span>
+
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">eval_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;CsvDataSets must be built with a file pattern, not list &#39;</span>
+                     <span class="s1">&#39;of files.&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">file_io</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;output_dir already exist. Use a new output path.&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="c1"># Make a features file.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">file_io</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
+      <span class="n">file_io</span><span class="o">.</span><span class="n">recursive_create_dir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+    <span class="n">features_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s1">&#39;features_file.json&#39;</span><span class="p">)</span>
+    <span class="n">file_io</span><span class="o">.</span><span class="n">write_string_to_file</span><span class="p">(</span>
+        <span class="n">features_file</span><span class="p">,</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">features</span><span class="p">))</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">features_file</span> <span class="o">=</span> <span class="n">features</span>
+
+  <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">ml</span><span class="o">.</span><span class="n">CloudTrainingConfig</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;cloud should be an instance of &#39;</span>
+                     <span class="s1">&#39;google.datalab.ml.CloudTrainingConfig for cloud training.&#39;</span><span class="p">)</span>
+
+  <span class="n">_assert_gcs_files</span><span class="p">([</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">train_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+      <span class="n">eval_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">features_file</span><span class="p">,</span>
+      <span class="n">analysis_dir</span><span class="p">])</span>
+
+  <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;--train-data-paths=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">train_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+          <span class="s1">&#39;--eval-data-paths=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">eval_dataset</span><span class="o">.</span><span class="n">input_files</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+          <span class="s1">&#39;--preprocess-output-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">analysis_dir</span><span class="p">,</span>
+          <span class="s1">&#39;--transforms-file=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">features_file</span><span class="p">,</span>
+          <span class="s1">&#39;--model-type=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model_type</span><span class="p">,</span>
+          <span class="s1">&#39;--max-steps=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">max_steps</span><span class="p">),</span>
+          <span class="s1">&#39;--train-batch-size=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">train_batch_size</span><span class="p">),</span>
+          <span class="s1">&#39;--eval-batch-size=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">eval_batch_size</span><span class="p">),</span>
+          <span class="s1">&#39;--min-eval-frequency=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">min_eval_frequency</span><span class="p">),</span>
+          <span class="s1">&#39;--learning-rate=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">learning_rate</span><span class="p">),</span>
+          <span class="s1">&#39;--epsilon=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">epsilon</span><span class="p">)]</span>
+  <span class="k">if</span> <span class="n">num_epochs</span><span class="p">:</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--num-epochs=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">num_epochs</span><span class="p">))</span>
+  <span class="k">if</span> <span class="n">top_n</span><span class="p">:</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--top-n=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">top_n</span><span class="p">))</span>
+  <span class="k">if</span> <span class="n">layer_sizes</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">layer_sizes</span><span class="p">)):</span>
+      <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;--layer-size</span><span class="si">%s</span><span class="s1">=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">layer_sizes</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
+
+  <span class="n">job_request</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;package_uris&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">_package_to_staging</span><span class="p">(</span><span class="n">output_dir</span><span class="p">),</span> <span class="n">_TF_GS_URL</span><span class="p">,</span> <span class="n">_PROTOBUF_GS_URL</span><span class="p">],</span>
+    <span class="s1">&#39;python_module&#39;</span><span class="p">:</span> <span class="s1">&#39;mltoolbox._structured_data.trainer.task&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;job_dir&#39;</span><span class="p">:</span> <span class="n">output_dir</span><span class="p">,</span>
+    <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="n">args</span>
+  <span class="p">}</span>
+  <span class="n">job_request</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">_asdict</span><span class="p">()))</span>
+
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">job_name</span><span class="p">:</span>
+    <span class="n">job_name</span> <span class="o">=</span> <span class="n">job_name_prefix</span> <span class="ow">or</span> <span class="s1">&#39;structured_data_train&#39;</span>
+    <span class="n">job_name</span> <span class="o">+=</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%y%m</span><span class="si">%d</span><span class="s1">_%H%M%S&#39;</span><span class="p">)</span>
+  <span class="n">job</span> <span class="o">=</span> <span class="n">ml</span><span class="o">.</span><span class="n">Job</span><span class="o">.</span><span class="n">submit_training</span><span class="p">(</span><span class="n">job_request</span><span class="p">,</span> <span class="n">job_name</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Job request send. View status of job at&#39;</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;https://console.developers.google.com/ml/jobs?project=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span>
+        <span class="n">_default_project</span><span class="p">())</span>
+
+  <span class="k">return</span> <span class="n">job</span>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Predict</span>
+<span class="c1"># ==============================================================================</span>
+
+<div class="viewcode-block" id="predict"><a class="viewcode-back" href="../../../mltoolbox.regression.linear.html#mltoolbox.classification.dnn.predict">[docs]</a><span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">training_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+  <span class="n">cloud</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Runs prediction locally or on the cloud.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    data: List of csv strings or a Pandas DataFrame that match the model schema.</span>
+<span class="sd">    training_dir: local path to the trained output folder.</span>
+<span class="sd">    model_name: deployed model name</span>
+<span class="sd">    model_version: depoyed model version</span>
+<span class="sd">    cloud: bool. If False, does local prediction and data and training_dir</span>
+<span class="sd">        must be set. If True, does cloud prediction and data, model_name, </span>
+<span class="sd">        and model_version must be set.</span>
+
+
+<span class="sd">  For cloud prediction, the model must be created. This can be done by running</span>
+<span class="sd">  two gcloud commands::</span>
+<span class="sd">    1) gcloud beta ml models create NAME</span>
+<span class="sd">    2) gcloud beta ml versions create VERSION --model NAME --origin gs://BUCKET/training_dir/model</span>
+<span class="sd">  or these datalab commands:</span>
+<span class="sd">    1) import google.datalab as datalab</span>
+<span class="sd">      model = datalab.ml.ModelVersions(MODEL_NAME)</span>
+<span class="sd">      model.deploy(version_name=VERSION, path=&#39;gs://BUCKET/training_dir/model&#39;)</span>
+<span class="sd">  Note that the model must be on GCS.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    Pandas DataFrame.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">if</span> <span class="n">cloud</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">model_version</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">model_name</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;model_version or model_name is not set&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">training_dir</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;training_dir not needed when cloud is True&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cloud_predict</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">model_version</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">training_dir</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;training_dir is not set&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">model_version</span> <span class="ow">or</span> <span class="n">model_name</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;model_name and model_version not needed when cloud is &#39;</span>
+                       <span class="s1">&#39;False.&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">local_predict</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">local_predict</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Runs local prediction on the prediction graph.</span>
+
+<span class="sd">  Runs local prediction and returns the result in a Pandas DataFrame. For</span>
+<span class="sd">  running prediction on a large dataset or saving the results, run</span>
+<span class="sd">  local_batch_prediction or batch_prediction. Input data should fully match</span>
+<span class="sd">  the schema that was used at training, except the target column should not</span>
+<span class="sd">  exist.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    training_dir: local path to the trained output folder.</span>
+<span class="sd">    data: List of csv strings or a Pandas DataFrame that match the model schema.</span>
+
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="c1">#from . import predict as predict_module</span>
+  <span class="kn">from</span> <span class="nn">.prediction</span> <span class="k">import</span> <span class="n">predict</span> <span class="k">as</span> <span class="n">predict_module</span>
+
+  <span class="c1"># Save the instances to a file, call local batch prediction, and return it</span>
+  <span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
+  <span class="n">_</span><span class="p">,</span> <span class="n">input_file_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">tmp_dir</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span>
+                                        <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;input&#39;</span><span class="p">)</span>
+
+  <span class="k">try</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+      <span class="n">data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">input_file_path</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_file_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+          <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">model_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">file_io</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="n">model_dir</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;training_dir should contain the folder model&#39;</span><span class="p">)</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;predict.py&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;--predict-data=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">input_file_path</span><span class="p">,</span>
+           <span class="s1">&#39;--trained-model-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model_dir</span><span class="p">,</span>
+           <span class="s1">&#39;--output-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">tmp_dir</span><span class="p">,</span>
+           <span class="s1">&#39;--output-format=csv&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;--batch-size=16&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;--mode=prediction&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;--no-shard-files&#39;</span><span class="p">]</span>
+
+    <span class="c1">#runner_results = predict_module.predict.main(cmd)</span>
+    <span class="n">runner_results</span> <span class="o">=</span> <span class="n">predict_module</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+    <span class="n">runner_results</span><span class="o">.</span><span class="n">wait_until_finish</span><span class="p">()</span>
+
+    <span class="c1"># Read the header file.</span>
+    <span class="n">schema_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_dir</span><span class="p">,</span> <span class="s1">&#39;csv_schema.json&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">schema_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+      <span class="n">schema</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+    <span class="c1"># Print any errors to the screen.</span>
+    <span class="n">errors_file</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_dir</span><span class="p">,</span> <span class="s1">&#39;errors*&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">errors_file</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">errors_file</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Warning: there are errors. See below:&#39;</span><span class="p">)</span>
+      <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">errors_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="c1"># Read the predictions data.</span>
+    <span class="n">prediction_file</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmp_dir</span><span class="p">,</span> <span class="s1">&#39;predictions*&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prediction_file</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s1">&#39;Prediction results not found&#39;</span><span class="p">)</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">prediction_file</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                              <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                              <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="n">col</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">schema</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">predictions</span>
+  <span class="k">finally</span><span class="p">:</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">tmp_dir</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">cloud_predict</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">model_version</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Use Online prediction.</span>
+
+<span class="sd">  Runs online prediction in the cloud and prints the results to the screen. For</span>
+<span class="sd">  running prediction on a large dataset or saving the results, run</span>
+<span class="sd">  local_batch_prediction or batch_prediction.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    model_name: deployed model name</span>
+<span class="sd">    model_version: depoyed model version</span>
+<span class="sd">    data: List of csv strings or a Pandas DataFrame that match the model schema.</span>
+
+<span class="sd">  Before using this, the model must be created. This can be done by running</span>
+<span class="sd">  two gcloud commands:</span>
+<span class="sd">  1) gcloud beta ml models create NAME</span>
+<span class="sd">  2) gcloud beta ml versions create VERSION --model NAME \</span>
+<span class="sd">      --origin gs://BUCKET/training_dir/model</span>
+<span class="sd">  or these datalab commands:</span>
+<span class="sd">  1) import google.datalab as datalab</span>
+<span class="sd">     model = datalab.ml.ModelVersions(MODEL_NAME)</span>
+<span class="sd">     model.deploy(version_name=VERSION,</span>
+<span class="sd">                  path=&#39;gs://BUCKET/training_dir/model&#39;)</span>
+<span class="sd">  Note that the model must be on GCS.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="kn">import</span> <span class="nn">google.datalab.ml</span> <span class="k">as</span> <span class="nn">ml</span>
+
+  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+    <span class="c1"># write the df to csv.</span>
+    <span class="n">string_buffer</span> <span class="o">=</span> <span class="n">StringIO</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">string_buffer</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="n">string_buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="c1">#remove empty strings</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">input_data</span> <span class="k">if</span> <span class="n">line</span><span class="p">]</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">input_data</span> <span class="o">=</span> <span class="n">data</span>
+
+  <span class="n">predictions</span> <span class="o">=</span> <span class="n">ml</span><span class="o">.</span><span class="n">ModelVersions</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">model_version</span><span class="p">,</span> <span class="n">input_data</span><span class="p">)</span>
+
+  <span class="c1"># Convert predictions into a dataframe</span>
+  <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">predictions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">predictions</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+      <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+  <span class="k">return</span> <span class="n">df</span>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Batch predict</span>
+<span class="c1"># ==============================================================================</span>
+
+<div class="viewcode-block" id="batch_predict"><a class="viewcode-back" href="../../../mltoolbox.regression.linear.html#mltoolbox.classification.dnn.batch_predict">[docs]</a><span class="k">def</span> <span class="nf">batch_predict</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="n">prediction_input_file</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span>
+                  <span class="n">mode</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">shard_files</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+                  <span class="n">cloud</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Blocking versoin of batch_predict. </span>
+
+<span class="sd">  See documentation of batch_prediction_async.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">job</span> <span class="o">=</span> <span class="n">batch_predict_async</span><span class="p">(</span>
+      <span class="n">training_dir</span><span class="o">=</span><span class="n">training_dir</span><span class="p">,</span>
+      <span class="n">prediction_input_file</span><span class="o">=</span><span class="n">prediction_input_file</span><span class="p">,</span> 
+      <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+      <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> 
+      <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> 
+      <span class="n">shard_files</span><span class="o">=</span><span class="n">shard_files</span><span class="p">,</span> 
+      <span class="n">output_format</span><span class="o">=</span><span class="n">output_format</span><span class="p">,</span>
+      <span class="n">cloud</span><span class="o">=</span><span class="n">cloud</span><span class="p">)</span>
+  <span class="n">job</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Batch predict: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">state</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="batch_predict_async"><a class="viewcode-back" href="../../../mltoolbox.regression.linear.html#mltoolbox.classification.dnn.batch_predict_async">[docs]</a><span class="k">def</span> <span class="nf">batch_predict_async</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="n">prediction_input_file</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span>
+                  <span class="n">mode</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">shard_files</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+                  <span class="n">cloud</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Local and cloud batch prediction.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    training_dir: The output folder of training.</span>
+<span class="sd">    prediction_input_file: csv file pattern to a file. File must be on GCS if </span>
+<span class="sd">        running cloud prediction</span>
+<span class="sd">    output_dir: output location to save the results. Must be a GSC path if </span>
+<span class="sd">        running cloud prediction.</span>
+<span class="sd">    mode: &#39;evaluation&#39; or &#39;prediction&#39;. If &#39;evaluation&#39;, the input data must</span>
+<span class="sd">        contain a target column. If &#39;prediction&#39;, the input data must not</span>
+<span class="sd">        contain a target column.</span>
+<span class="sd">    batch_size: Int. How many instances to run in memory at once. Larger values</span>
+<span class="sd">        mean better performace but more memeory consumed.</span>
+<span class="sd">    shard_files: If False, the output files are not shardded.</span>
+<span class="sd">    output_format: csv or json. Json file are json-newlined.</span>
+<span class="sd">    cloud: If ture, does cloud batch prediction. If False, runs batch prediction</span>
+<span class="sd">        locally.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A google.datalab.utils.Job object that can be used to query state from or wait.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="kn">import</span> <span class="nn">google.datalab.utils</span> <span class="k">as</span> <span class="nn">du</span>
+  <span class="k">if</span> <span class="n">cloud</span><span class="p">:</span>
+    <span class="n">runner_results</span> <span class="o">=</span> <span class="n">cloud_batch_predict</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span>
+        <span class="n">prediction_input_file</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shard_files</span><span class="p">,</span>
+        <span class="n">output_format</span><span class="p">)</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="n">du</span><span class="o">.</span><span class="n">DataflowJob</span><span class="p">(</span><span class="n">runner_results</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">runner_results</span> <span class="o">=</span> <span class="n">local_batch_predict</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span>
+        <span class="n">prediction_input_file</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shard_files</span><span class="p">,</span> 
+        <span class="n">output_format</span><span class="p">)</span>
+    <span class="n">job</span> <span class="o">=</span> <span class="n">du</span><span class="o">.</span><span class="n">LambdaJob</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">runner_results</span><span class="o">.</span><span class="n">wait_until_finish</span><span class="p">(),</span>
+        <span class="n">job_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">job</span></div>
+
+
+<span class="k">def</span> <span class="nf">local_batch_predict</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="n">prediction_input_file</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span>
+                        <span class="n">mode</span><span class="p">,</span>
+                        <span class="n">batch_size</span><span class="p">,</span> <span class="n">shard_files</span><span class="p">,</span> <span class="n">output_format</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;See batch_predict&quot;&quot;&quot;</span>
+  <span class="c1">#from . import predict as predict_module</span>
+  <span class="kn">from</span> <span class="nn">.prediction</span> <span class="k">import</span> <span class="n">predict</span> <span class="k">as</span> <span class="n">predict_module</span>
+
+  <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;evaluation&#39;</span><span class="p">:</span>
+    <span class="n">model_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="s1">&#39;evaluation_model&#39;</span><span class="p">)</span>
+  <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;prediction&#39;</span><span class="p">:</span>
+    <span class="n">model_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;mode must be evaluation or prediction&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">file_io</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="n">model_dir</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Model folder </span><span class="si">%s</span><span class="s1"> does not exist&#39;</span> <span class="o">%</span> <span class="n">model_dir</span><span class="p">)</span>
+
+  <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;predict.py&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;--predict-data=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">prediction_input_file</span><span class="p">,</span>
+         <span class="s1">&#39;--trained-model-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model_dir</span><span class="p">,</span>
+         <span class="s1">&#39;--output-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">output_dir</span><span class="p">,</span>
+         <span class="s1">&#39;--output-format=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">output_format</span><span class="p">,</span>
+         <span class="s1">&#39;--batch-size=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">batch_size</span><span class="p">),</span>
+         <span class="s1">&#39;--shard-files&#39;</span> <span class="k">if</span> <span class="n">shard_files</span> <span class="k">else</span> <span class="s1">&#39;--no-shard-files&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;--has-target&#39;</span> <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;evaluation&#39;</span> <span class="k">else</span> <span class="s1">&#39;--no-has-target&#39;</span>
+         <span class="p">]</span>
+
+  <span class="c1">#return predict_module.predict.main(cmd)</span>
+  <span class="k">return</span> <span class="n">predict_module</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+
+
+
+<span class="k">def</span> <span class="nf">cloud_batch_predict</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="n">prediction_input_file</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span>
+                        <span class="n">mode</span><span class="p">,</span>
+                        <span class="n">batch_size</span><span class="p">,</span> <span class="n">shard_files</span><span class="p">,</span> <span class="n">output_format</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;See batch_predict&quot;&quot;&quot;</span>
+  <span class="c1">#from . import predict as predict_module</span>
+  <span class="kn">from</span> <span class="nn">.prediction</span> <span class="k">import</span> <span class="n">predict</span> <span class="k">as</span> <span class="n">predict_module</span>
+
+  <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;evaluation&#39;</span><span class="p">:</span>
+    <span class="n">model_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="s1">&#39;evaluation_model&#39;</span><span class="p">)</span>
+  <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;prediction&#39;</span><span class="p">:</span>
+    <span class="n">model_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">training_dir</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;mode must be evaluation or prediction&#39;</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">file_io</span><span class="o">.</span><span class="n">file_exists</span><span class="p">(</span><span class="n">model_dir</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Model folder </span><span class="si">%s</span><span class="s1"> does not exist&#39;</span> <span class="o">%</span> <span class="n">model_dir</span><span class="p">)</span>
+
+  <span class="n">_assert_gcs_files</span><span class="p">([</span><span class="n">training_dir</span><span class="p">,</span> <span class="n">prediction_input_file</span><span class="p">,</span>
+      <span class="n">output_dir</span><span class="p">])</span>
+
+  <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;predict.py&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;--cloud&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;--project-id=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_default_project</span><span class="p">(),</span>
+         <span class="s1">&#39;--predict-data=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">prediction_input_file</span><span class="p">,</span>
+         <span class="s1">&#39;--trained-model-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model_dir</span><span class="p">,</span>
+         <span class="s1">&#39;--output-dir=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">output_dir</span><span class="p">,</span>
+         <span class="s1">&#39;--output-format=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">output_format</span><span class="p">,</span>
+         <span class="s1">&#39;--batch-size=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">batch_size</span><span class="p">),</span>
+         <span class="s1">&#39;--shard-files&#39;</span> <span class="k">if</span> <span class="n">shard_files</span> <span class="k">else</span> <span class="s1">&#39;--no-shard-files&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;--extra-package=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_TF_GS_URL</span><span class="p">,</span>
+         <span class="s1">&#39;--extra-package=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_PROTOBUF_GS_URL</span><span class="p">,</span>
+         <span class="s1">&#39;--extra-package=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_package_to_staging</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+         <span class="p">]</span>
+
+  <span class="k">return</span> <span class="n">predict_module</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

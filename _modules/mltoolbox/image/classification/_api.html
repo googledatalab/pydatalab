@@ -1,0 +1,394 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mltoolbox.image.classification._api &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.linear.html">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.image.classification.html">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>mltoolbox.image.classification._api</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mltoolbox.image.classification._api</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2017 Google Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+
+<span class="sd">&quot;&quot;&quot;Face functions for image classification.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_local</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">_cloud</span>
+
+
+<div class="viewcode-block" id="preprocess_async"><a class="viewcode-back" href="../../../../mltoolbox.image.classification.html#mltoolbox.image.classification.preprocess_async">[docs]</a><span class="k">def</span> <span class="nf">preprocess_async</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">eval_dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Preprocess data. Produce output that can be used by training efficiently.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    train_dataset: training data source to preprocess. Can be CsvDataset or BigQueryDataSet.</span>
+<span class="sd">        If eval_dataset is None, the pipeline will randomly split train_dataset into</span>
+<span class="sd">        train/eval set with 7:3 ratio.</span>
+<span class="sd">    output_dir: The output directory to use. Preprocessing will create a sub directory under</span>
+<span class="sd">        it for each run, and also update &quot;latest&quot; file which points to the latest preprocessed</span>
+<span class="sd">        directory. Users are responsible for cleanup. Can be local or GCS path.</span>
+<span class="sd">    eval_dataset: evaluation data source to preprocess. Can be CsvDataset or BigQueryDataSet.</span>
+<span class="sd">        If specified, it will be used for evaluation during training, and train_dataset will be</span>
+<span class="sd">        completely used for training.</span>
+<span class="sd">    checkpoint: the Inception checkpoint to use. If None, a default checkpoint is used.</span>
+<span class="sd">    cloud: a DataFlow pipeline option dictionary such as {&#39;num_workers&#39;: 3}. If anything but</span>
+<span class="sd">        not None, it will run in cloud. Otherwise, it runs locally.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A google.datalab.utils.Job object that can be used to query state from or wait.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">if</span> <span class="n">cloud</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_local</span><span class="o">.</span><span class="n">Local</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">eval_dataset</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cloud</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="n">cloud</span> <span class="o">=</span> <span class="p">{}</span>
+  <span class="k">return</span> <span class="n">_cloud</span><span class="o">.</span><span class="n">Cloud</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">eval_dataset</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">,</span> <span class="n">cloud</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="preprocess"><a class="viewcode-back" href="../../../../mltoolbox.image.classification.html#mltoolbox.image.classification.preprocess">[docs]</a><span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">eval_dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Blocking version of preprocess_async(). The only difference is that it blocks the caller</span>
+<span class="sd">     until the job finishes, and it does not have a return value.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">job</span> <span class="o">=</span> <span class="n">preprocess_async</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">eval_dataset</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">,</span> <span class="n">cloud</span><span class="p">)</span>
+  <span class="n">job</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+  <span class="nb">print</span> <span class="n">job</span><span class="o">.</span><span class="n">state</span></div>
+
+
+<div class="viewcode-block" id="train_async"><a class="viewcode-back" href="../../../../mltoolbox.image.classification.html#mltoolbox.image.classification.train_async">[docs]</a><span class="k">def</span> <span class="nf">train_async</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Train model. The output can be used for batch prediction or online deployment.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    input_dir: A directory path containing preprocessed results. Can be local or GCS path.</span>
+<span class="sd">    batch_size: size of batch used for training.</span>
+<span class="sd">    max_steps: number of steps to train.</span>
+<span class="sd">    output_dir: The output directory to use. Can be local or GCS path.</span>
+<span class="sd">    checkpoint: the Inception checkpoint to use. If None, a default checkpoint is used.</span>
+<span class="sd">    cloud: a google.datalab.ml.CloudTrainingConfig object to let it run in cloud.</span>
+<span class="sd">        If None, it runs locally.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A google.datalab.utils.Job object that can be used to query state from or wait.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="k">if</span> <span class="n">cloud</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_local</span><span class="o">.</span><span class="n">Local</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">_cloud</span><span class="o">.</span><span class="n">Cloud</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">,</span> <span class="n">cloud</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="train"><a class="viewcode-back" href="../../../../mltoolbox.image.classification.html#mltoolbox.image.classification.train">[docs]</a><span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Blocking version of train_async(). The only difference is that it blocks the caller</span>
+<span class="sd">     until the job finishes, and it does not have a return value.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="n">job</span> <span class="o">=</span> <span class="n">train_async</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">checkpoint</span><span class="p">,</span> <span class="n">cloud</span><span class="p">)</span>
+  <span class="n">job</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+  <span class="nb">print</span> <span class="n">job</span><span class="o">.</span><span class="n">state</span></div>
+
+
+<div class="viewcode-block" id="predict"><a class="viewcode-back" href="../../../../mltoolbox.image.classification.html#mltoolbox.image.classification.predict">[docs]</a><span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">image_files</span><span class="p">,</span> <span class="n">resize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_image</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Predict using an model in a local or GCS directory (offline), or a deployed model (online).</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    model: if cloud is None, a local or GCS directory of a trained model. Otherwise, it specifies</span>
+<span class="sd">        a deployed model identified by model.version, such as &quot;imagemodel.v1&quot;.</span>
+<span class="sd">    image_files: The paths to the image files to predict labels. Can be local or GCS paths.</span>
+<span class="sd">    resize: Whether to resize the image to a reasonable size (300x300) before prediction.</span>
+<span class="sd">    show_image: Whether to show images in the results.</span>
+<span class="sd">    cloud: if None, predicts with offline model locally. Otherwise, predict with a deployed online model.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A pandas DataFrame including the prediction results.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Predicting...&#39;</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">cloud</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">_local</span><span class="o">.</span><span class="n">Local</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">image_files</span><span class="p">,</span> <span class="n">resize</span><span class="p">,</span> <span class="n">show_image</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">_cloud</span><span class="o">.</span><span class="n">Cloud</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">image_files</span><span class="p">,</span> <span class="n">resize</span><span class="p">,</span> <span class="n">show_image</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="batch_predict_async"><a class="viewcode-back" href="../../../../mltoolbox.image.classification.html#mltoolbox.image.classification.batch_predict_async">[docs]</a><span class="k">def</span> <span class="nf">batch_predict_async</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">model_dir</span><span class="p">,</span> <span class="n">output_csv</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_bq_table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Batch prediction with an offline model.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    dataset: CsvDataSet or BigQueryDataSet for batch prediction input. Can contain either</span>
+<span class="sd">        one column &#39;image_url&#39;, or two columns with another being &#39;label&#39;.</span>
+<span class="sd">    model_dir: The directory of a trained inception model. Can be local or GCS paths.</span>
+<span class="sd">    output_csv: The output csv file for prediction results. If specified,</span>
+<span class="sd">        it will also output a csv schema file with the name output_csv + &#39;.schema.json&#39;.</span>
+<span class="sd">    output_bq_table: if specified, the output BigQuery table for prediction results.</span>
+<span class="sd">        output_csv and output_bq_table can both be set.</span>
+<span class="sd">    cloud: a DataFlow pipeline option dictionary such as {&#39;num_workers&#39;: 3}. If anything but</span>
+<span class="sd">        not None, it will run in cloud. Otherwise, it runs locally.</span>
+<span class="sd">        If specified, it must include &#39;temp_location&#39; with value being a GCS path, because cloud</span>
+<span class="sd">        run requires a staging GCS directory.</span>
+
+<span class="sd">  Raises:</span>
+<span class="sd">    ValueError if both output_csv and output_bq_table are None, or if cloud is not None</span>
+<span class="sd">        but it does not include &#39;temp_location&#39;.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A google.datalab.utils.Job object that can be used to query state from or wait.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">if</span> <span class="n">cloud</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_local</span><span class="o">.</span><span class="n">Local</span><span class="o">.</span><span class="n">batch_predict</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">model_dir</span><span class="p">,</span> <span class="n">output_csv</span><span class="p">,</span> <span class="n">output_bq_table</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cloud</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="n">cloud</span> <span class="o">=</span> <span class="p">{}</span>
+  <span class="k">return</span> <span class="n">_cloud</span><span class="o">.</span><span class="n">Cloud</span><span class="o">.</span><span class="n">batch_predict</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">model_dir</span><span class="p">,</span> <span class="n">output_csv</span><span class="p">,</span> <span class="n">output_bq_table</span><span class="p">,</span> <span class="n">cloud</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="batch_predict"><a class="viewcode-back" href="../../../../mltoolbox.image.classification.html#mltoolbox.image.classification.batch_predict">[docs]</a><span class="k">def</span> <span class="nf">batch_predict</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">model_dir</span><span class="p">,</span> <span class="n">output_csv</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_bq_table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Blocking version of batch_predict_async(). The only difference is that it blocks the caller</span>
+<span class="sd">     until the job finishes, and it does not have a return value.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="n">job</span> <span class="o">=</span> <span class="n">batch_predict_async</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">model_dir</span><span class="p">,</span> <span class="n">output_csv</span><span class="p">,</span> <span class="n">output_bq_table</span><span class="p">,</span> <span class="n">cloud</span><span class="p">)</span>
+  <span class="n">job</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+  <span class="nb">print</span> <span class="n">job</span><span class="o">.</span><span class="n">state</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,387 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mltoolbox.image.classification &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="datalab.bigquery Module" href="datalab.bigquery.html"/>
+        <link rel="prev" title="mltoolbox.regression.linear" href="mltoolbox.regression.linear.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.regression.linear.html">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>mltoolbox.image.classification</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/mltoolbox.image.classification.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-mltoolbox.image.classification">
+<span id="mltoolbox-image-classification"></span><h1>mltoolbox.image.classification<a class="headerlink" href="#module-mltoolbox.image.classification" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="mltoolbox.image.classification.preprocess">
+<code class="descclassname">mltoolbox.image.classification.</code><code class="descname">preprocess</code><span class="sig-paren">(</span><em>train_dataset</em>, <em>output_dir</em>, <em>eval_dataset=None</em>, <em>checkpoint=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/image/classification/_api.html#preprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.image.classification.preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocking version of preprocess_async(). The only difference is that it blocks the caller
+until the job finishes, and it does not have a return value.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.image.classification.preprocess_async">
+<code class="descclassname">mltoolbox.image.classification.</code><code class="descname">preprocess_async</code><span class="sig-paren">(</span><em>train_dataset</em>, <em>output_dir</em>, <em>eval_dataset=None</em>, <em>checkpoint=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/image/classification/_api.html#preprocess_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.image.classification.preprocess_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preprocess data. Produce output that can be used by training efficiently.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>train_dataset</strong> &#8211; training data source to preprocess. Can be CsvDataset or BigQueryDataSet.
+If eval_dataset is None, the pipeline will randomly split train_dataset into
+train/eval set with 7:3 ratio.</li>
+<li><strong>output_dir</strong> &#8211; The output directory to use. Preprocessing will create a sub directory under
+it for each run, and also update &#8220;latest&#8221; file which points to the latest preprocessed
+directory. Users are responsible for cleanup. Can be local or GCS path.</li>
+<li><strong>eval_dataset</strong> &#8211; evaluation data source to preprocess. Can be CsvDataset or BigQueryDataSet.
+If specified, it will be used for evaluation during training, and train_dataset will be
+completely used for training.</li>
+<li><strong>checkpoint</strong> &#8211; the Inception checkpoint to use. If None, a default checkpoint is used.</li>
+<li><strong>cloud</strong> &#8211; a DataFlow pipeline option dictionary such as {&#8216;num_workers&#8217;: 3}. If anything but
+not None, it will run in cloud. Otherwise, it runs locally.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A google.datalab.utils.Job object that can be used to query state from or wait.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.image.classification.train">
+<code class="descclassname">mltoolbox.image.classification.</code><code class="descname">train</code><span class="sig-paren">(</span><em>input_dir</em>, <em>batch_size</em>, <em>max_steps</em>, <em>output_dir</em>, <em>checkpoint=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/image/classification/_api.html#train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.image.classification.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocking version of train_async(). The only difference is that it blocks the caller
+until the job finishes, and it does not have a return value.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.image.classification.train_async">
+<code class="descclassname">mltoolbox.image.classification.</code><code class="descname">train_async</code><span class="sig-paren">(</span><em>input_dir</em>, <em>batch_size</em>, <em>max_steps</em>, <em>output_dir</em>, <em>checkpoint=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/image/classification/_api.html#train_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.image.classification.train_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train model. The output can be used for batch prediction or online deployment.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_dir</strong> &#8211; A directory path containing preprocessed results. Can be local or GCS path.</li>
+<li><strong>batch_size</strong> &#8211; size of batch used for training.</li>
+<li><strong>max_steps</strong> &#8211; number of steps to train.</li>
+<li><strong>output_dir</strong> &#8211; The output directory to use. Can be local or GCS path.</li>
+<li><strong>checkpoint</strong> &#8211; the Inception checkpoint to use. If None, a default checkpoint is used.</li>
+<li><strong>cloud</strong> &#8211; a google.datalab.ml.CloudTrainingConfig object to let it run in cloud.
+If None, it runs locally.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A google.datalab.utils.Job object that can be used to query state from or wait.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.image.classification.predict">
+<code class="descclassname">mltoolbox.image.classification.</code><code class="descname">predict</code><span class="sig-paren">(</span><em>model</em>, <em>image_files</em>, <em>resize=False</em>, <em>show_image=True</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/image/classification/_api.html#predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.image.classification.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict using an model in a local or GCS directory (offline), or a deployed model (online).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>model</strong> &#8211; if cloud is None, a local or GCS directory of a trained model. Otherwise, it specifies
+a deployed model identified by model.version, such as &#8220;imagemodel.v1&#8221;.</li>
+<li><strong>image_files</strong> &#8211; The paths to the image files to predict labels. Can be local or GCS paths.</li>
+<li><strong>resize</strong> &#8211; Whether to resize the image to a reasonable size (300x300) before prediction.</li>
+<li><strong>show_image</strong> &#8211; Whether to show images in the results.</li>
+<li><strong>cloud</strong> &#8211; if None, predicts with offline model locally. Otherwise, predict with a deployed online model.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A pandas DataFrame including the prediction results.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.image.classification.batch_predict">
+<code class="descclassname">mltoolbox.image.classification.</code><code class="descname">batch_predict</code><span class="sig-paren">(</span><em>dataset</em>, <em>model_dir</em>, <em>output_csv=None</em>, <em>output_bq_table=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/image/classification/_api.html#batch_predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.image.classification.batch_predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocking version of batch_predict_async(). The only difference is that it blocks the caller
+until the job finishes, and it does not have a return value.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.image.classification.batch_predict_async">
+<code class="descclassname">mltoolbox.image.classification.</code><code class="descname">batch_predict_async</code><span class="sig-paren">(</span><em>dataset</em>, <em>model_dir</em>, <em>output_csv=None</em>, <em>output_bq_table=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/image/classification/_api.html#batch_predict_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.image.classification.batch_predict_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch prediction with an offline model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> &#8211; CsvDataSet or BigQueryDataSet for batch prediction input. Can contain either
+one column &#8216;image_url&#8217;, or two columns with another being &#8216;label&#8217;.</li>
+<li><strong>model_dir</strong> &#8211; The directory of a trained inception model. Can be local or GCS paths.</li>
+<li><strong>output_csv</strong> &#8211; The output csv file for prediction results. If specified,
+it will also output a csv schema file with the name output_csv + &#8216;.schema.json&#8217;.</li>
+<li><strong>output_bq_table</strong> &#8211; if specified, the output BigQuery table for prediction results.
+output_csv and output_bq_table can both be set.</li>
+<li><strong>cloud</strong> &#8211; a DataFlow pipeline option dictionary such as {&#8216;num_workers&#8217;: 3}. If anything but
+not None, it will run in cloud. Otherwise, it runs locally.
+If specified, it must include &#8216;temp_location&#8217; with value being a GCS path, because cloud
+run requires a staging GCS directory.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><em>ValueError if both output_csv and output_bq_table are None, or if cloud is not None</em> &#8211; but it does not include &#8216;temp_location&#8217;.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A google.datalab.utils.Job object that can be used to query state from or wait.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="datalab.bigquery.html" class="btn btn-neutral float-right" title="datalab.bigquery Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="mltoolbox.regression.linear.html" class="btn btn-neutral" title="mltoolbox.regression.linear" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

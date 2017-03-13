@@ -1,0 +1,386 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mltoolbox.classification.dnn._classification_dnn &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../../search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="../../../../index.html"/>
+        <link rel="up" title="Module code" href="../../../index.html"/> 
+
+  
+  <script src="../../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.linear.html">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.image.classification.html">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>mltoolbox.classification.dnn._classification_dnn</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mltoolbox.classification.dnn._classification_dnn</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">mltoolbox._structured_data</span> <span class="k">import</span> <span class="n">train_async</span> <span class="k">as</span> <span class="n">core_train</span>
+
+<div class="viewcode-block" id="train"><a class="viewcode-back" href="../../../../mltoolbox.classification.dnn.html#mltoolbox.classification.dnn.train">[docs]</a><span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span>
+          <span class="n">eval_dataset</span><span class="p">,</span>
+          <span class="n">analysis_dir</span><span class="p">,</span>
+          <span class="n">output_dir</span><span class="p">,</span>
+          <span class="n">features</span><span class="p">,</span>
+          <span class="n">layer_sizes</span><span class="p">,</span>
+          <span class="n">max_steps</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+          <span class="n">num_epochs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">train_batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+          <span class="n">eval_batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+          <span class="n">min_eval_frequency</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+          <span class="n">top_n</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+          <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">,</span>
+          <span class="n">job_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+          <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+          <span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Blocking version of train_async. See documentation for train_async.&quot;&quot;&quot;</span>
+  <span class="n">job</span> <span class="o">=</span> <span class="n">train_async</span><span class="p">(</span>
+      <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+      <span class="n">eval_dataset</span><span class="o">=</span><span class="n">eval_dataset</span><span class="p">,</span>
+      <span class="n">analysis_dir</span><span class="o">=</span><span class="n">analysis_dir</span><span class="p">,</span>
+      <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+      <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+      <span class="n">layer_sizes</span><span class="o">=</span><span class="n">layer_sizes</span><span class="p">,</span>
+      <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+      <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span>
+      <span class="n">train_batch_size</span><span class="o">=</span><span class="n">train_batch_size</span><span class="p">,</span>
+      <span class="n">eval_batch_size</span><span class="o">=</span><span class="n">eval_batch_size</span><span class="p">,</span>
+      <span class="n">min_eval_frequency</span><span class="o">=</span><span class="n">min_eval_frequency</span><span class="p">,</span>
+      <span class="n">top_n</span><span class="o">=</span><span class="n">top_n</span><span class="p">,</span>
+      <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
+      <span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">,</span>
+      <span class="n">job_name</span><span class="o">=</span><span class="n">job_name</span><span class="p">,</span> 
+      <span class="n">cloud</span><span class="o">=</span><span class="n">cloud</span><span class="p">,</span> 
+      <span class="p">)</span>
+  <span class="n">job</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Training: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">state</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="train_async"><a class="viewcode-back" href="../../../../mltoolbox.classification.dnn.html#mltoolbox.classification.dnn.train_async">[docs]</a><span class="k">def</span> <span class="nf">train_async</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span>
+          <span class="n">eval_dataset</span><span class="p">,</span>
+          <span class="n">analysis_dir</span><span class="p">,</span>
+          <span class="n">output_dir</span><span class="p">,</span>
+          <span class="n">features</span><span class="p">,</span>
+          <span class="n">layer_sizes</span><span class="p">,</span>
+          <span class="n">max_steps</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+          <span class="n">num_epochs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">train_batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+          <span class="n">eval_batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+          <span class="n">min_eval_frequency</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+          <span class="n">top_n</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+          <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+          <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">,</span>
+          <span class="n">job_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+          <span class="n">cloud</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+          <span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Train model locally or in the cloud.</span>
+
+<span class="sd">  Local Training:</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    train_dataset: CsvDataSet</span>
+<span class="sd">    eval_dataset: CsvDataSet</span>
+<span class="sd">    analysis_dir:  The output directory from local_analysis</span>
+<span class="sd">    output_dir:  Output directory of training.</span>
+<span class="sd">    features: file path or features object. Example:</span>
+<span class="sd">        {</span>
+<span class="sd">          &quot;col_A&quot;: {&quot;transform&quot;: &quot;scale&quot;, &quot;default&quot;: 0.0},</span>
+<span class="sd">          &quot;col_B&quot;: {&quot;transform&quot;: &quot;scale&quot;,&quot;value&quot;: 4},</span>
+<span class="sd">          # Note col_C is missing, so default transform used.</span>
+<span class="sd">          &quot;col_D&quot;: {&quot;transform&quot;: &quot;hash_one_hot&quot;, &quot;hash_bucket_size&quot;: 4},</span>
+<span class="sd">          &quot;col_target&quot;: {&quot;transform&quot;: &quot;target&quot;},</span>
+<span class="sd">          &quot;col_key&quot;: {&quot;transform&quot;: &quot;key&quot;}</span>
+<span class="sd">        }</span>
+<span class="sd">        The keys correspond to the columns in the input files as defined by the</span>
+<span class="sd">        schema file during preprocessing. Some notes</span>
+<span class="sd">        1) The &quot;key&quot; and &quot;target&quot; transforms are required.</span>
+<span class="sd">        2) Default values are optional. These are used if the input data has</span>
+<span class="sd">           missing values during training and prediction. If not supplied for a</span>
+<span class="sd">           column, the default value for a numerical column is that column&#39;s</span>
+<span class="sd">           mean vlaue, and for a categorical column the empty string is used.</span>
+<span class="sd">        3) For numerical colums, the following transforms are supported:</span>
+<span class="sd">           i) {&quot;transform&quot;: &quot;identity&quot;}: does nothing to the number. (default)</span>
+<span class="sd">           ii) {&quot;transform&quot;: &quot;scale&quot;}: scales the colum values to -1, 1.</span>
+<span class="sd">           iii) {&quot;transform&quot;: &quot;scale&quot;, &quot;value&quot;: a}: scales the colum values</span>
+<span class="sd">              to -a, a.</span>
+
+<span class="sd">           For categorical colums, the following transforms are supported:</span>
+<span class="sd">          i) {&quot;transform&quot;: &quot;one_hot&quot;}: A one-hot vector using the full</span>
+<span class="sd">              vocabulary is used. (default)</span>
+<span class="sd">          ii) {&quot;transform&quot;: &quot;embedding&quot;, &quot;embedding_dim&quot;: d}: Each label is</span>
+<span class="sd">              embedded into an d-dimensional space.</span>
+<span class="sd">    max_steps: Int. Number of training steps to perform.</span>
+<span class="sd">    num_epochs: Maximum number of training data epochs on which to train.</span>
+<span class="sd">        The training job will run for max_steps or num_epochs, whichever occurs</span>
+<span class="sd">        first.</span>
+<span class="sd">    train_batch_size: number of rows to train on in one step.</span>
+<span class="sd">    eval_batch_size: number of rows to eval in one step. One pass of the eval</span>
+<span class="sd">        dataset is done. If eval_batch_size does not perfectly divide the numer</span>
+<span class="sd">        of eval instances, the last fractional batch is not used.</span>
+<span class="sd">    min_eval_frequency: Minimum number of training steps between evaluations.</span>
+<span class="sd">    top_n: Int. For classification problems, the output graph will contain the</span>
+<span class="sd">        labels and scores for the top n classes with a default of n=1. Use</span>
+<span class="sd">        None for regression problems.</span>
+<span class="sd">    layer_sizes: List. Represents the layers in the connected DNN.</span>
+<span class="sd">        If the model type is DNN, this must be set. Example [10, 3, 2], this</span>
+<span class="sd">        will create three DNN layers where the first layer will have 10 nodes,</span>
+<span class="sd">        the middle layer will have 3 nodes, and the laster layer will have 2</span>
+<span class="sd">        nodes.</span>
+<span class="sd">    learning_rate: tf.train.AdamOptimizer&#39;s learning rate,</span>
+<span class="sd">    epsilon: tf.train.AdamOptimizer&#39;s epsilon value.</span>
+
+<span class="sd">  Cloud Training:</span>
+
+<span class="sd">  All local training arguments are valid for cloud training. Cloud training</span>
+<span class="sd">  contains two additional args:</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    cloud: A CloudTrainingConfig object.</span>
+<span class="sd">    job_name: Training job name. A default will be picked if None.    </span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    Datalab job</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">return</span> <span class="n">core_train</span><span class="p">(</span>
+      <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+      <span class="n">eval_dataset</span><span class="o">=</span><span class="n">eval_dataset</span><span class="p">,</span>
+      <span class="n">analysis_dir</span><span class="o">=</span><span class="n">analysis_dir</span><span class="p">,</span>
+      <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+      <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+      <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;dnn_classification&#39;</span><span class="p">,</span> <span class="c1">#</span>
+      <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+      <span class="n">num_epochs</span><span class="o">=</span><span class="n">num_epochs</span><span class="p">,</span>
+      <span class="n">train_batch_size</span><span class="o">=</span><span class="n">train_batch_size</span><span class="p">,</span>
+      <span class="n">eval_batch_size</span><span class="o">=</span><span class="n">eval_batch_size</span><span class="p">,</span>
+      <span class="n">min_eval_frequency</span><span class="o">=</span><span class="n">min_eval_frequency</span><span class="p">,</span>
+      <span class="n">top_n</span><span class="o">=</span><span class="n">top_n</span><span class="p">,</span>
+      <span class="n">layer_sizes</span><span class="o">=</span><span class="n">layer_sizes</span><span class="p">,</span>
+      <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
+      <span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">,</span>
+      <span class="n">job_name</span><span class="o">=</span><span class="n">job_name</span><span class="p">,</span>
+      <span class="n">job_name_prefix</span><span class="o">=</span><span class="s1">&#39;mltoolbox_classification_dnn&#39;</span><span class="p">,</span>
+      <span class="n">cloud</span><span class="o">=</span><span class="n">cloud</span><span class="p">,</span>      
+  <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -95,6 +95,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.linear.html">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.image.classification.html">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
@@ -199,15 +206,16 @@
 
   <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_pattern</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">schema_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">      file_pattern: A list of CSV files. or a string. Can contain wildcards in</span>
-<span class="sd">          file names. Can be local or GCS path.</span>
-<span class="sd">      schema: A BigQuery schema object in the form of </span>
-<span class="sd">          [{&#39;name&#39;: &#39;col1&#39;, &#39;type&#39;: &#39;STRING&#39;},</span>
-<span class="sd">           {&#39;name&#39;: &#39;col2&#39;, &#39;type&#39;: &#39;INTEGER&#39;}]</span>
-<span class="sd">          or a single string in of the form &#39;col1:STRING,col2:INTEGER,col3:FLOAT&#39;.</span>
+<span class="sd">        file names. Can be local or GCS path.</span>
+<span class="sd">      schema: A BigQuery schema object in the form of</span>
+<span class="sd">        [{&#39;name&#39;: &#39;col1&#39;, &#39;type&#39;: &#39;STRING&#39;},</span>
+<span class="sd">        {&#39;name&#39;: &#39;col2&#39;, &#39;type&#39;: &#39;INTEGER&#39;}]</span>
+<span class="sd">        or a single string in of the form &#39;col1:STRING,col2:INTEGER,col3:FLOAT&#39;.</span>
 <span class="sd">      schema_file: A JSON serialized schema file. If schema is None, it will try to load from</span>
-<span class="sd">          schema_file if not None.</span>
+<span class="sd">        schema_file if not None.</span>
 <span class="sd">    Raise:</span>
 <span class="sd">      ValueError if both schema and schema_file are None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -358,6 +366,7 @@
 <div class="viewcode-block" id="BigQueryDataSet.sample"><a class="viewcode-back" href="../../../../google.datalab.ml.html#google.datalab.ml.BigQueryDataSet.sample">[docs]</a>  <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Samples data into a Pandas DataFrame. Note that it calls BigQuery so it will</span>
 <span class="sd">       incur cost.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">      n: number of sampled counts. Note that the number of counts returned is approximated.</span>
 <span class="sd">    Returns:</span>

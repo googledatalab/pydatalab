@@ -7,8 +7,6 @@ google.datalab namespace
 Contents:
 
 .. toctree::
-   :maxdepth: 4
-
    google.datalab
    google.datalab.bigquery
    google.datalab.data
@@ -17,6 +15,14 @@ Contents:
    google.datalab.storage
    google.datalab Commands
 
+ML Toolbox:
+
+.. toctree::
+   mltoolbox.classification.dnn
+   mltoolbox.classification.linear
+   mltoolbox.regression.dnn
+   mltoolbox.regression.linear
+   mltoolbox.image.classification
 
 datalab namespace
 #################
@@ -26,8 +32,6 @@ Please note, this namespace is planned to be phased out. You are strongly encour
 Contents:
 
 .. toctree::
-   :maxdepth: 4
-
    datalab.bigquery
    datalab.context
    datalab.data

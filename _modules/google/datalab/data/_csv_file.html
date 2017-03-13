@@ -95,6 +95,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.linear.html">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.image.classification.html">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
@@ -296,13 +303,14 @@
 
 <div class="viewcode-block" id="CsvFile.sample_to"><a class="viewcode-back" href="../../../../google.datalab.data.html#google.datalab.data.CsvFile.sample_to">[docs]</a>  <span class="k">def</span> <span class="nf">sample_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">skip_header_rows</span><span class="p">,</span> <span class="n">strategy</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Sample rows from GCS or local file and save results to target file.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">      count: number of rows to sample. If strategy is &quot;BIGQUERY&quot;, it is used as approximate number.</span>
 <span class="sd">      skip_header_rows: whether to skip first row when reading from source.</span>
 <span class="sd">      strategy: can be &quot;LOCAL&quot; or &quot;BIGQUERY&quot;. If local, the sampling happens in local memory,</span>
-<span class="sd">        and number of resulting rows matches count. If BigQuery, sampling is done</span>
-<span class="sd">        with BigQuery in cloud, and the number of resulting rows will be approximated to</span>
-<span class="sd">        count.</span>
+<span class="sd">          and number of resulting rows matches count. If BigQuery, sampling is done</span>
+<span class="sd">          with BigQuery in cloud, and the number of resulting rows will be approximated to</span>
+<span class="sd">          count.</span>
 <span class="sd">      target: The target file path, can be GCS or local path.</span>
 <span class="sd">    Raises:</span>
 <span class="sd">      Exception if strategy is &quot;BIGQUERY&quot; but source is not a GCS path.</span>

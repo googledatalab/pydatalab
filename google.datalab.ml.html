@@ -96,6 +96,13 @@
 <li class="toctree-l1"><a class="reference internal" href="google.datalab Commands.html">google.datalab Commands</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.regression.linear.html">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.image.classification.html">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data Module</a></li>
@@ -379,12 +386,10 @@ each in a different directory.</li>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>file_pattern</strong> &#8211; A list of CSV files. or a string. Can contain wildcards in
 file names. Can be local or GCS path.</li>
-<li><strong>schema</strong> &#8211; <p>A BigQuery schema object in the form of
-[{&#8216;name&#8217;: &#8216;col1&#8217;, &#8216;type&#8217;: &#8216;STRING&#8217;},</p>
-<blockquote>
-<div>{&#8216;name&#8217;: &#8216;col2&#8217;, &#8216;type&#8217;: &#8216;INTEGER&#8217;}]</div></blockquote>
-<p>or a single string in of the form &#8216;col1:STRING,col2:INTEGER,col3:FLOAT&#8217;.</p>
-</li>
+<li><strong>schema</strong> &#8211; A BigQuery schema object in the form of
+[{&#8216;name&#8217;: &#8216;col1&#8217;, &#8216;type&#8217;: &#8216;STRING&#8217;},
+{&#8216;name&#8217;: &#8216;col2&#8217;, &#8216;type&#8217;: &#8216;INTEGER&#8217;}]
+or a single string in of the form &#8216;col1:STRING,col2:INTEGER,col3:FLOAT&#8217;.</li>
 <li><strong>schema_file</strong> &#8211; A JSON serialized schema file. If schema is None, it will try to load from
 schema_file if not None.</li>
 </ul>
@@ -741,21 +746,25 @@ and values being count.</li>
 <dl class="staticmethod">
 <dt id="google.datalab.ml.ConfusionMatrix.from_bigquery">
 <em class="property">static </em><code class="descname">from_bigquery</code><span class="sig-paren">(</span><em>sql</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_confusion_matrix.html#ConfusionMatrix.from_bigquery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ConfusionMatrix.from_bigquery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a ConfusionMatrix from a BigQuery table or query.
-:param sql: Can be one of:</p>
-<blockquote>
-<div>A SQL query string.
-A Bigquery table string.
-A Query object defined with &#8216;%%bq query &#8211;name [query_name]&#8217;.</div></blockquote>
+<dd><p>Create a ConfusionMatrix from a BigQuery table or query.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>query results</strong><strong> or </strong><strong>table must include &quot;target&quot;</strong><strong>, </strong><strong>&quot;predicted&quot; columns.</strong> (<em>The</em>) &#8211; </td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sql</strong> &#8211; Can be one of:
+A SQL query string.
+A Bigquery table string.
+A Query object defined with &#8216;%%bq query &#8211;name [query_name]&#8217;.</li>
+<li><strong>query results</strong><strong> or </strong><strong>table must include &quot;target&quot;</strong><strong>, </strong><strong>&quot;predicted&quot; columns.</strong> (<em>The</em>) &#8211; </li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A ConfusionMatrix that can be plotted.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A ConfusionMatrix that can be plotted.</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">ValueError if query results or table does not include &#8216;target&#8217; or &#8216;predicted&#8217; columns.</td>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">ValueError if query results or table does not include &#8216;target&#8217; or &#8216;predicted&#8217; columns.</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -764,19 +773,24 @@ A Query object defined with &#8216;%%bq query &#8211;name [query_name]&#8217;.</
 <dl class="staticmethod">
 <dt id="google.datalab.ml.ConfusionMatrix.from_csv">
 <em class="property">static </em><code class="descname">from_csv</code><span class="sig-paren">(</span><em>input_csv</em>, <em>headers=None</em>, <em>schema_file=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/google/datalab/ml/_confusion_matrix.html#ConfusionMatrix.from_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#google.datalab.ml.ConfusionMatrix.from_csv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a ConfusionMatrix from a csv file.
-:param input_csv: Path to a Csv file (with no header). Can be local or GCS path.
-:param headers: Csv headers. If present, it must include &#8216;target&#8217; and &#8216;predicted&#8217;.
-:param schema_file: Path to a JSON file containing BigQuery schema. Used if &#8220;headers&#8221; is None.</p>
-<blockquote>
-<div>If present, it must include &#8216;target&#8217; and &#8216;predicted&#8217; columns.</div></blockquote>
+<dd><p>Create a ConfusionMatrix from a csv file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A ConfusionMatrix that can be plotted.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_csv</strong> &#8211; Path to a Csv file (with no header). Can be local or GCS path.</li>
+<li><strong>headers</strong> &#8211; Csv headers. If present, it must include &#8216;target&#8217; and &#8216;predicted&#8217;.</li>
+<li><strong>schema_file</strong> &#8211; Path to a JSON file containing BigQuery schema. Used if &#8220;headers&#8221; is None.
+If present, it must include &#8216;target&#8217; and &#8216;predicted&#8217; columns.</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><em>ValueError if both headers and schema_file are None, or it does not include &#8216;target&#8217;</em> &#8211; or &#8216;predicted&#8217; columns.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A ConfusionMatrix that can be plotted.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><em>ValueError if both headers and schema_file are None, or it does not include &#8216;target&#8217;</em> &#8211; or &#8216;predicted&#8217; columns.</p>
+</td>
 </tr>
 </tbody>
 </table>

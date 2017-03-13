@@ -1,0 +1,467 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mltoolbox.regression.linear &mdash; Google Cloud Datalab  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Google Cloud Datalab  documentation" href="index.html"/>
+        <link rel="next" title="mltoolbox.image.classification" href="mltoolbox.image.classification.html"/>
+        <link rel="prev" title="mltoolbox.regression.dnn" href="mltoolbox.regression.dnn.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Google Cloud Datalab
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.html">google.datalab Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.bigquery.html">google.datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.data.html">google.datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.ml.html">google.datalab.ml Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.stackdriver.monitoring.html">google.datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab.storage.html">google.datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.datalab Commands.html">google.datalab Commands</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mltoolbox.image.classification.html">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="datalab.bigquery.html">datalab.bigquery Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.context.html">datalab.context Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.data.html">datalab.data Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.stackdriver.monitoring.html">datalab.stackdriver.monitoring Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab.storage.html">datalab.storage Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datalab Commands.html">datalab Commands</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Google Cloud Datalab</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>mltoolbox.regression.linear</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/mltoolbox.regression.linear.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-mltoolbox.regression.linear">
+<span id="mltoolbox-regression-linear"></span><h1>mltoolbox.regression.linear<a class="headerlink" href="#module-mltoolbox.regression.linear" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="mltoolbox.regression.linear.analyze">
+<code class="descclassname">mltoolbox.regression.linear.</code><code class="descname">analyze</code><span class="sig-paren">(</span><em>output_dir</em>, <em>dataset</em>, <em>cloud=False</em>, <em>project_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/_structured_data/_package.html#analyze"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.regression.linear.analyze" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocking version of analyze_async. See documentation of analyze_async.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.regression.linear.analyze_async">
+<code class="descclassname">mltoolbox.regression.linear.</code><code class="descname">analyze_async</code><span class="sig-paren">(</span><em>output_dir</em>, <em>dataset</em>, <em>cloud=False</em>, <em>project_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/_structured_data/_package.html#analyze_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.regression.linear.analyze_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Analyze data locally or in the cloud with BigQuery.</p>
+<p>Produce analysis used by training. This can take a while, even for small
+datasets. For small datasets, it may be faster to use local_analysis.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>output_dir</strong> &#8211; The output directory to use.</li>
+<li><strong>dataset</strong> &#8211; only CsvDataSet is supported currently.</li>
+<li><strong>cloud</strong> &#8211; If False, runs analysis locally with Pandas. If Ture, runs analysis
+in the cloud with BigQuery.</li>
+<li><strong>project_id</strong> &#8211; Uses BigQuery with this project id. Default is datalab&#8217;s
+default project id.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A google.datalab.utils.Job object that can be used to query state from or wait.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.regression.linear.batch_predict">
+<code class="descclassname">mltoolbox.regression.linear.</code><code class="descname">batch_predict</code><span class="sig-paren">(</span><em>training_dir</em>, <em>prediction_input_file</em>, <em>output_dir</em>, <em>mode</em>, <em>batch_size=16</em>, <em>shard_files=True</em>, <em>output_format='csv'</em>, <em>cloud=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/_structured_data/_package.html#batch_predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.regression.linear.batch_predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocking versoin of batch_predict.</p>
+<p>See documentation of batch_prediction_async.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.regression.linear.batch_predict_async">
+<code class="descclassname">mltoolbox.regression.linear.</code><code class="descname">batch_predict_async</code><span class="sig-paren">(</span><em>training_dir</em>, <em>prediction_input_file</em>, <em>output_dir</em>, <em>mode</em>, <em>batch_size=16</em>, <em>shard_files=True</em>, <em>output_format='csv'</em>, <em>cloud=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/_structured_data/_package.html#batch_predict_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.regression.linear.batch_predict_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Local and cloud batch prediction.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>training_dir</strong> &#8211; The output folder of training.</li>
+<li><strong>prediction_input_file</strong> &#8211; csv file pattern to a file. File must be on GCS if
+running cloud prediction</li>
+<li><strong>output_dir</strong> &#8211; output location to save the results. Must be a GSC path if
+running cloud prediction.</li>
+<li><strong>mode</strong> &#8211; &#8216;evaluation&#8217; or &#8216;prediction&#8217;. If &#8216;evaluation&#8217;, the input data must
+contain a target column. If &#8216;prediction&#8217;, the input data must not
+contain a target column.</li>
+<li><strong>batch_size</strong> &#8211; Int. How many instances to run in memory at once. Larger values
+mean better performace but more memeory consumed.</li>
+<li><strong>shard_files</strong> &#8211; If False, the output files are not shardded.</li>
+<li><strong>output_format</strong> &#8211; csv or json. Json file are json-newlined.</li>
+<li><strong>cloud</strong> &#8211; If ture, does cloud batch prediction. If False, runs batch prediction
+locally.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A google.datalab.utils.Job object that can be used to query state from or wait.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.regression.linear.predict">
+<code class="descclassname">mltoolbox.regression.linear.</code><code class="descname">predict</code><span class="sig-paren">(</span><em>data</em>, <em>training_dir=None</em>, <em>model_name=None</em>, <em>model_version=None</em>, <em>cloud=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/_structured_data/_package.html#predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.regression.linear.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs prediction locally or on the cloud.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> &#8211; List of csv strings or a Pandas DataFrame that match the model schema.</li>
+<li><strong>training_dir</strong> &#8211; local path to the trained output folder.</li>
+<li><strong>model_name</strong> &#8211; deployed model name</li>
+<li><strong>model_version</strong> &#8211; depoyed model version</li>
+<li><strong>cloud</strong> &#8211; bool. If False, does local prediction and data and training_dir
+must be set. If True, does cloud prediction and data, model_name,
+and model_version must be set.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>For cloud prediction, the model must be created. This can be done by running
+two gcloud commands:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mi">1</span><span class="p">)</span> <span class="n">gcloud</span> <span class="n">beta</span> <span class="n">ml</span> <span class="n">models</span> <span class="n">create</span> <span class="n">NAME</span>
+<span class="mi">2</span><span class="p">)</span> <span class="n">gcloud</span> <span class="n">beta</span> <span class="n">ml</span> <span class="n">versions</span> <span class="n">create</span> <span class="n">VERSION</span> <span class="o">--</span><span class="n">model</span> <span class="n">NAME</span> <span class="o">--</span><span class="n">origin</span> <span class="n">gs</span><span class="p">:</span><span class="o">//</span><span class="n">BUCKET</span><span class="o">/</span><span class="n">training_dir</span><span class="o">/</span><span class="n">model</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>or these datalab commands:</dt>
+<dd><ol class="first arabic simple">
+<li>import google.datalab as datalab</li>
+</ol>
+<blockquote class="last">
+<div>model = datalab.ml.ModelVersions(MODEL_NAME)
+model.deploy(version_name=VERSION, path=&#8217;gs://BUCKET/training_dir/model&#8217;)</div></blockquote>
+</dd>
+</dl>
+<p>Note that the model must be on GCS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Pandas DataFrame.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.regression.linear.train">
+<code class="descclassname">mltoolbox.regression.linear.</code><code class="descname">train</code><span class="sig-paren">(</span><em>train_dataset</em>, <em>eval_dataset</em>, <em>analysis_dir</em>, <em>output_dir</em>, <em>features</em>, <em>max_steps=5000</em>, <em>num_epochs=None</em>, <em>train_batch_size=100</em>, <em>eval_batch_size=16</em>, <em>min_eval_frequency=100</em>, <em>learning_rate=0.01</em>, <em>epsilon=0.0005</em>, <em>job_name=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/regression/linear/_regression_linear.html#train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.regression.linear.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocking version of train_async. See documentation for train_async.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mltoolbox.regression.linear.train_async">
+<code class="descclassname">mltoolbox.regression.linear.</code><code class="descname">train_async</code><span class="sig-paren">(</span><em>train_dataset</em>, <em>eval_dataset</em>, <em>analysis_dir</em>, <em>output_dir</em>, <em>features</em>, <em>max_steps=5000</em>, <em>num_epochs=None</em>, <em>train_batch_size=100</em>, <em>eval_batch_size=16</em>, <em>min_eval_frequency=100</em>, <em>learning_rate=0.01</em>, <em>epsilon=0.0005</em>, <em>job_name=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/regression/linear/_regression_linear.html#train_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.regression.linear.train_async" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train model locally or in the cloud.</p>
+<p>Local Training:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>train_dataset</strong> &#8211; CsvDataSet</li>
+<li><strong>eval_dataset</strong> &#8211; CsvDataSet</li>
+<li><strong>analysis_dir</strong> &#8211; The output directory from local_analysis</li>
+<li><strong>output_dir</strong> &#8211; Output directory of training.</li>
+<li><strong>features</strong> &#8211; <p>file path or features object. Example:
+{</p>
+<blockquote>
+<div>&#8220;col_A&#8221;: {&#8220;transform&#8221;: &#8220;scale&#8221;, &#8220;default&#8221;: 0.0},
+&#8220;col_B&#8221;: {&#8220;transform&#8221;: &#8220;scale&#8221;,&#8221;value&#8221;: 4},
+# Note col_C is missing, so default transform used.
+&#8220;col_D&#8221;: {&#8220;transform&#8221;: &#8220;hash_one_hot&#8221;, &#8220;hash_bucket_size&#8221;: 4},
+&#8220;col_target&#8221;: {&#8220;transform&#8221;: &#8220;target&#8221;},
+&#8220;col_key&#8221;: {&#8220;transform&#8221;: &#8220;key&#8221;}</div></blockquote>
+<p>}
+The keys correspond to the columns in the input files as defined by the
+schema file during preprocessing. Some notes
+1) The &#8220;key&#8221; and &#8220;target&#8221; transforms are required.
+2) Default values are optional. These are used if the input data has</p>
+<blockquote>
+<div>missing values during training and prediction. If not supplied for a
+column, the default value for a numerical column is that column&#8217;s
+mean vlaue, and for a categorical column the empty string is used.</div></blockquote>
+<ol class="arabic" start="3">
+<li>For numerical colums, the following transforms are supported:
+i) {&#8220;transform&#8221;: &#8220;identity&#8221;}: does nothing to the number. (default)
+ii) {&#8220;transform&#8221;: &#8220;scale&#8221;}: scales the colum values to -1, 1.
+iii) {&#8220;transform&#8221;: &#8220;scale&#8221;, &#8220;value&#8221;: a}: scales the colum values<blockquote>
+<div>to -a, a.</div></blockquote>
+<p>For categorical colums, the following transforms are supported:</p>
+</li>
+</ol>
+<blockquote>
+<div><ol class="lowerroman">
+<li><dl class="first docutils">
+<dt>{&#8220;transform&#8221;: &#8220;one_hot&#8221;}: A one-hot vector using the full</dt>
+<dd>vocabulary is used. (default)</dd>
+</dl>
+</li>
+<li>{&#8220;transform&#8221;: &#8220;embedding&#8221;, &#8220;embedding_dim&#8221;: d}: Each label is
+embedded into an d-dimensional space.</li>
+</ol>
+</div></blockquote>
+</li>
+<li><strong>max_steps</strong> &#8211; Int. Number of training steps to perform.</li>
+<li><strong>num_epochs</strong> &#8211; Maximum number of training data epochs on which to train.
+The training job will run for max_steps or num_epochs, whichever occurs
+first.</li>
+<li><strong>train_batch_size</strong> &#8211; number of rows to train on in one step.</li>
+<li><strong>eval_batch_size</strong> &#8211; number of rows to eval in one step. One pass of the eval
+dataset is done. If eval_batch_size does not perfectly divide the numer
+of eval instances, the last fractional batch is not used.</li>
+<li><strong>min_eval_frequency</strong> &#8211; Minimum number of training steps between evaluations.</li>
+<li><strong>learning_rate</strong> &#8211; tf.train.AdamOptimizer&#8217;s learning rate,</li>
+<li><strong>epsilon</strong> &#8211; tf.train.AdamOptimizer&#8217;s epsilon value.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Cloud Training:</p>
+<p>All local training arguments are valid for cloud training. Cloud training
+contains two additional args:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cloud</strong> &#8211; A CloudTrainingConfig object.</li>
+<li><strong>job_name</strong> &#8211; Training job name. A default will be picked if None.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Datalab job</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="mltoolbox.image.classification.html" class="btn btn-neutral float-right" title="mltoolbox.image.classification" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="mltoolbox.regression.dnn.html" class="btn btn-neutral" title="mltoolbox.regression.dnn" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Google, Inc..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

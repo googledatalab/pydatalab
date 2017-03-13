@@ -95,6 +95,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../google.datalab Commands.html">google.datalab Commands</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.dnn.html">mltoolbox.classification.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.classification.linear.html">mltoolbox.classification.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.dnn.html">mltoolbox.regression.dnn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.regression.linear.html">mltoolbox.regression.linear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mltoolbox.image.classification.html">mltoolbox.image.classification</a></li>
+</ul>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.bigquery.html">datalab.bigquery Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.context.html">datalab.context Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../datalab.data.html">datalab.data Module</a></li>
@@ -215,13 +222,13 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">      data: Can be one of:</span>
-<span class="sd">            A string of sql query.</span>
-<span class="sd">            A sql query module defined by &quot;%%sql --module module_name&quot;.</span>
-<span class="sd">            A pandas DataFrame.</span>
-<span class="sd">          Regardless of data type, it must include the following columns:</span>
-<span class="sd">            &quot;feature&quot;: identifies a slice of features. For example: &quot;petal_length:4.0-4.2&quot;.</span>
-<span class="sd">            &quot;count&quot;: number of instances in that slice of features.</span>
-<span class="sd">          All other columns are viewed as metrics for its feature slice. At least one is required.</span>
+<span class="sd">          A string of sql query.</span>
+<span class="sd">          A sql query module defined by &quot;%%sql --module module_name&quot;.</span>
+<span class="sd">          A pandas DataFrame.</span>
+<span class="sd">        Regardless of data type, it must include the following columns:</span>
+<span class="sd">          &quot;feature&quot;: identifies a slice of features. For example: &quot;petal_length:4.0-4.2&quot;.</span>
+<span class="sd">          &quot;count&quot;: number of instances in that slice of features.</span>
+<span class="sd">        All other columns are viewed as metrics for its feature slice. At least one is required.</span>
 <span class="sd">    &quot;&quot;&quot;</span>    
     <span class="kn">import</span> <span class="nn">IPython</span>
 
