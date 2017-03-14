@@ -174,6 +174,11 @@
             
   <div class="section" id="module-mltoolbox.image.classification">
 <span id="mltoolbox-image-classification"></span><h1>mltoolbox.image.classification<a class="headerlink" href="#module-mltoolbox.image.classification" title="Permalink to this headline">¶</a></h1>
+<p>Single label image classification solution. Typical usage is:</p>
+<p>Run preprocess() or preprocess_async() to preprocess data for training.
+Run train() or train_async() to train models.
+Run predict(), batch_predict(), batch_predict_async() to perform predictions.</p>
+<p>The trained model can also be deployed online with google.datalab.ml.ModelVersions.deploy() call.</p>
 <dl class="function">
 <dt id="mltoolbox.image.classification.preprocess">
 <code class="descclassname">mltoolbox.image.classification.</code><code class="descname">preprocess</code><span class="sig-paren">(</span><em>train_dataset</em>, <em>output_dir</em>, <em>eval_dataset=None</em>, <em>checkpoint=None</em>, <em>cloud=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mltoolbox/image/classification/_api.html#preprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mltoolbox.image.classification.preprocess" title="Permalink to this definition">¶</a></dt>
