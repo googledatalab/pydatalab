@@ -1,14 +1,18 @@
+sudo: required
+
+dist: trusty
+
 language: python
+
 python:
   - 2.7
-  - 3.5
-
+  - 3.4
 
 before_install:
   - sudo apt-get install -y python-setuptools
-  - uname -r
-  - sudo apt-get update
-  - yes N | sudo apt-get upgrade -qq gcc g++  #tcpdump asks for yes
+  #- uname -r
+  #- sudo apt-get update
+  #- yes N | sudo apt-get upgrade -qq gcc g++  #tcpdump asks for yes
   #- sudo apt-get upgrade -qq libstdc++6
   #- sudo apt-get install libstdc++6  # Needed by tensorflow.
   - strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX
@@ -16,6 +20,11 @@ before_install:
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
   - pip install -U pip
   - pip install -U setuptools
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.0.0-cp27-none-linux_x86_64.whl;
+    elif [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
+      pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.0.0-cp34-cp34m-linux_x86_64.whl;
+    fi
   - pip install .
   - pip install solutionbox/structured_data/
   - pip install solutionbox/image_classification/
