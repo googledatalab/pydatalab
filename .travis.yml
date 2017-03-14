@@ -3,9 +3,12 @@ python:
   - 2.7
   - 3.5
 
+compiler:
+  - gcc-4.8  # default was 4.6
+
 before_install:
   - sudo apt-get install -y python-setuptools
-  - sudo apt-get install libstdc++6  # Needed by tensorflow.
+  #- sudo apt-get install libstdc++6  # Needed by tensorflow.
   - strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX
   - npm install -g typescript
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
