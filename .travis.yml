@@ -7,7 +7,7 @@ python:
 before_install:
   - sudo apt-get install -y python-setuptools
   - sudo apt-get update
-  - sudo apt-get upgrade -qq gcc==4.8 g++==4.8
+  - yes | sudo apt-get upgrade -qq gcc==4.8 g++==4.8  #tcpdump asks for yes
   #- sudo apt-get upgrade -qq libstdc++6
   #- sudo apt-get install libstdc++6  # Needed by tensorflow.
   - strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX
