@@ -129,6 +129,7 @@ class Csv(object):
 
   def sample_to(self, count, skip_header_rows, strategy, target):
     """Sample rows from GCS or local file and save results to target file.
+
     Args:
       count: number of rows to sample. If strategy is "BIGQUERY", it is used as approximate number.
       skip_header_rows: whether to skip first row when reading from source.

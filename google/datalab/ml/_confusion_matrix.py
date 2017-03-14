@@ -39,6 +39,7 @@ class ConfusionMatrix(object):
   @staticmethod
   def from_csv(input_csv, headers=None, schema_file=None):
     """Create a ConfusionMatrix from a csv file.
+
     Args:
       input_csv: Path to a Csv file (with no header). Can be local or GCS path.
       headers: Csv headers. If present, it must include 'target' and 'predicted'.
@@ -77,6 +78,7 @@ class ConfusionMatrix(object):
   @staticmethod
   def from_bigquery(sql):
     """Create a ConfusionMatrix from a BigQuery table or query.
+
     Args:
       sql: Can be one of:
           A SQL query string.

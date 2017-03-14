@@ -234,7 +234,9 @@ def train_async(train_dataset,
   # not work!
   """Train model locally or in the cloud.
 
-  Args for local training:
+  Local Training:
+
+  Args:
     train_dataset: CsvDataSet
     eval_dataset: CsvDataSet
     analysis_dir:  The output directory from local_analysis
@@ -288,7 +290,9 @@ def train_async(train_dataset,
     learning_rate: tf.train.AdamOptimizer's learning rate,
     epsilon: tf.train.AdamOptimizer's epsilon value.
 
-  Args for cloud training:
+  Cloud Training:
+
+  Args:
     All local training arguments are valid for cloud training. Cloud training
     contains two additional args:
 
@@ -545,15 +549,13 @@ def predict(data, training_dir=None, model_name=None, model_version=None,
 
 
   For cloud prediction, the model must be created. This can be done by running
-  two gcloud commands:
-  1) gcloud beta ml models create NAME
-  2) gcloud beta ml versions create VERSION --model NAME \
-      --origin gs://BUCKET/training_dir/model
+  two gcloud commands::
+    1) gcloud beta ml models create NAME
+    2) gcloud beta ml versions create VERSION --model NAME --origin gs://BUCKET/training_dir/model
   or these datalab commands:
-  1) import google.datalab as datalab
-     model = datalab.ml.ModelVersions(MODEL_NAME)
-     model.deploy(version_name=VERSION,
-                  path='gs://BUCKET/training_dir/model')
+    1) import google.datalab as datalab
+      model = datalab.ml.ModelVersions(MODEL_NAME)
+      model.deploy(version_name=VERSION, path='gs://BUCKET/training_dir/model')
   Note that the model must be on GCS.
 
   Returns:
