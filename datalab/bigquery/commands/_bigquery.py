@@ -944,7 +944,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
                 rowNumberCell: 'gchart-table-rownumcell'
               }}
             }},
-            {{source_index: {source_index}, fields: '{fields}'}},
+            {{source_index: {source_index}, fields: '{fields}', legacy: 'true'}},
             0,
             {total_rows});
         }}
