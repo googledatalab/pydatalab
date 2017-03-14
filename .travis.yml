@@ -6,7 +6,10 @@ python:
 
 before_install:
   - sudo apt-get install -y python-setuptools
-  - sudo apt-get upgrade gcc==4.8
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update
+  - sudo apt-get install gcc-4.9 g++-4.9
+  - sudo apt-get install libstdc++6
   #- sudo apt-get install libstdc++6  # Needed by tensorflow.
   - strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX
   - npm install -g typescript
