@@ -137,7 +137,7 @@ def make_preprocess_schema(filename, problem_type):
 def run_preprocess(output_dir, csv_filename, schema_filename):
   preprocess_script = os.path.abspath(
       os.path.join(os.path.dirname(__file__), 
-                   '../preprocess/local_preprocess.py'))
+                   '../mltoolbox/_structured_data/preprocess/local_preprocess.py'))
 
   cmd = ['python', preprocess_script,
          '--output-dir', output_dir,
@@ -177,12 +177,10 @@ def run_training(
   # Gcloud has the fun bug that you have to be in the parent folder of task.py
   # when you call it. So cd there first.
   task_parent_folder = os.path.abspath(
-      os.path.join(os.path.dirname(__file__), '..'))
+      os.path.join(os.path.dirname(__file__), 
+      '../mltoolbox/_structured_data'))
   cmd = ['cd %s &&' % task_parent_folder,
-         'gcloud beta ml local train',
-         '--module-name=trainer.task',
-         '--package-path=trainer',
-         '--',
+         'python -m trainer.task',
          '--train-data-paths=%s' % train_data_paths,
          '--eval-data-paths=%s' % eval_data_paths,
          '--job-dir=%s' % output_path,

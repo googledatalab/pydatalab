@@ -10,6 +10,8 @@ before_install:
   - pip install -U pip
   - pip install -U setuptools
   - pip install .
+  - pip install solutionbox/structured_data/
+  - pip install solutionbox/image_classification/
 
 script: python ./tests/main.py
 

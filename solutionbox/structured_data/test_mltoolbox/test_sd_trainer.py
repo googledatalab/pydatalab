@@ -20,6 +20,7 @@ import tempfile
 import unittest
 
 import e2e_functions
+import output_functions
 
 
 class TestTrainer(unittest.TestCase):
@@ -29,6 +30,17 @@ class TestTrainer(unittest.TestCase):
   produce analysis. Training is then ran, and the output is collected and the
   accuracy/loss values are inspected.
   """
+  def __init__(self, *args, **kwargs):
+    super(TestTrainer, self).__init__(*args, **kwargs)
+
+    # Allow this class to be subclassed for quick tests that only care about
+    # training working, not model loss/accuracy.
+    self._max_steps = 2500
+    self._check_model_loss = True
+
+    # Print test output. Set to false for a silent test.
+    self._silent_output = False
+
 
   def setUp(self):
     self._test_dir = tempfile.mkdtemp()
@@ -46,10 +58,10 @@ class TestTrainer(unittest.TestCase):
 
     self._transforms_filename = os.path.join(self._test_dir, 'features.json')
 
-
   def tearDown(self):
-    print('TestTrainer: removing test dir ' + self._test_dir)
-    shutil.rmtree(self._test_dir)
+    with output_functions.captured_output(silent_output=self._silent_output):
+      print('TestTrainer: removing test dir ' + self._test_dir)
+      shutil.rmtree(self._test_dir)
 
 
   def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
@@ -85,7 +97,7 @@ class TestTrainer(unittest.TestCase):
         output_path=self._train_output,
         preprocess_output_dir=self._preprocess_output,
         transforms_file=self._transforms_filename,
-        max_steps=2500,
+        max_steps=self._max_steps,
         model_type=model_type + '_' + problem_type,
         extra_args=extra_args)
     self._training_screen_output = output
@@ -101,20 +113,26 @@ class TestTrainer(unittest.TestCase):
       accuracy: float. Eval accuracy should be > than this number.
       loss: flaot. Eval loss should be < than this number.
     """
-    # Print the last line of training output which has the loss value.
+    # Find the last training loss line in the output
     lines = self._training_screen_output.splitlines()
     last_line = None
     for line in lines:
       if line.startswith('INFO:tensorflow:Loss for final step:'):
         print(line)
-      if line.startswith('INFO:tensorflow:Saving dict for global step 2500'):
+      if line.startswith('INFO:tensorflow:Saving dict for global step %d' 
+                          % self._max_steps):
         last_line = line
         break
+
     if not last_line:
       print('Skipping _check_training_screen_output as could not find last eval'
             ' line')
       return
     print(last_line)
+
+    if not self._check_model_loss:
+      print('Skipping model loss/accuracy checks')
+      return
 
     # supports positive numbers (int, real) with exponential form support.
     positive_number_re = re.compile('[+]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?')
@@ -127,7 +145,7 @@ class TestTrainer(unittest.TestCase):
     step_num = positive_number_re.findall(saving_num[0])
     # step_num == ['2500']
     self.assertEqual(len(step_num), 1)
-    self.assertEqual(int(step_num[0]), 2500)
+    self.assertEqual(int(step_num[0]), self._max_steps)
 
     # Check the accuracy
     if accuracy is not None:
@@ -152,7 +170,10 @@ class TestTrainer(unittest.TestCase):
 
 
   def _check_train_files(self):
-    model_folder = os.path.join(self._train_output, 'model')
+    self._check_savedmodel(os.path.join(self._train_output, 'model'))
+    self._check_savedmodel(os.path.join(self._train_output, 'evaluation_model'))
+
+  def _check_savedmodel(self, model_folder):
     self.assertTrue(
         os.path.isfile(os.path.join(model_folder, 'saved_model.pb')))
     self.assertTrue(
@@ -164,85 +185,92 @@ class TestTrainer(unittest.TestCase):
 
 
   def testRegressionDnn(self):
-    print('\n\nTesting Regression DNN')
+    with output_functions.captured_output(silent_output=self._silent_output):
+      print('\n\nTesting Regression DNN')
 
-    transforms = {
-        "num1": {"transform": "scale"},
-        "num2": {"transform": "scale","value": 4},
-        "str1": {"transform": "one_hot"},
-        "str2": {"transform": "embedding", "embedding_dim": 3},
-        "target": {"transform": "target"},
-        "key": {"transform": "key"},
-    }
+      transforms = {
+          "num1": {"transform": "scale"},
+          "num2": {"transform": "scale","value": 4},
+          "str1": {"transform": "one_hot"},
+          "str2": {"transform": "embedding", "embedding_dim": 3},
+          "target": {"transform": "target"},
+          "key": {"transform": "key"},
+      }
 
-    extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
-    self._run_training(problem_type='regression', 
-                       model_type='dnn',
-                       transforms=transforms,
-                       extra_args=extra_args)
+      extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
+      self._run_training(problem_type='regression', 
+                         model_type='dnn',
+                         transforms=transforms,
+                         extra_args=extra_args)
 
-    self._check_training_screen_output(loss=20)
-    self._check_train_files()
+      self._check_training_screen_output(loss=20)
+      self._check_train_files()
 
 
   def testRegressionLinear(self):
-    print('\n\nTesting Regression Linear')
+    with output_functions.captured_output(silent_output=self._silent_output):
+      print('\n\nTesting Regression Linear')
 
-    transforms = {
-        "num1": {"transform": "scale"},
-        "num2": {"transform": "scale","value": 4},
-        "str1": {"transform": "one_hot"},
-        "str2": {"transform": "embedding", "embedding_dim": 3},
-        "target": {"transform": "target"},
-        "key": {"transform": "key"},
-    }
+      transforms = {
+          "num1": {"transform": "scale"},
+          "num2": {"transform": "scale","value": 4},
+          "str1": {"transform": "one_hot"},
+          "str2": {"transform": "embedding", "embedding_dim": 3},
+          "target": {"transform": "target"},
+          "key": {"transform": "key"},
+      }
 
-    self._run_training(problem_type='regression', 
-                       model_type='linear',
-                       transforms=transforms)
+      self._run_training(problem_type='regression', 
+                         model_type='linear',
+                         transforms=transforms)
 
-    self._check_training_screen_output(loss=20)
-    self._check_train_files()
+      self._check_training_screen_output(loss=20)
+      self._check_train_files()
 
 
   def testClassificationDnn(self):
-    print('\n\nTesting classification DNN')
+    with output_functions.captured_output(silent_output=self._silent_output):
+      print('\n\nTesting classification DNN')
 
-    transforms = {
-        "num1": {"transform": "scale"},
-        "num2": {"transform": "scale","value": 4},
-        "str1": {"transform": "one_hot"},
-        "str2": {"transform": "embedding", "embedding_dim": 3},
-        "target": {"transform": "target"},
-        "key": {"transform": "key"},
-    }
+      transforms = {
+          "num1": {"transform": "scale"},
+          "num2": {"transform": "scale","value": 4},
+          "str1": {"transform": "one_hot"},
+          "str2": {"transform": "embedding", "embedding_dim": 3},
+          "target": {"transform": "target"},
+          "key": {"transform": "key"},
+      }
 
-    extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
-    self._run_training(problem_type='classification', 
-                       model_type='dnn',
-                       transforms=transforms,
-                       extra_args=extra_args)
+      extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
+      self._run_training(problem_type='classification', 
+                         model_type='dnn',
+                         transforms=transforms,
+                         extra_args=extra_args)
 
-    self._check_training_screen_output(accuracy=0.70, loss=0.10)
-    self._check_train_files()
+      self._check_training_screen_output(accuracy=0.70, loss=0.10)
+      self._check_train_files()
 
 
   def testClassificationLinear(self):
-    print('\n\nTesting classification Linear')
+    with output_functions.captured_output(silent_output=self._silent_output):
+      print('\n\nTesting classification Linear')
 
-    transforms = {
-        "num1": {"transform": "scale"},
-        "num2": {"transform": "scale","value": 4},
-        "str1": {"transform": "one_hot"},
-        "str2": {"transform": "embedding", "embedding_dim": 3},
-        "target": {"transform": "target"},
-        "key": {"transform": "key"},
-    }
+      transforms = {
+          "num1": {"transform": "scale"},
+          "num2": {"transform": "scale","value": 4},
+          "str1": {"transform": "one_hot"},
+          "str2": {"transform": "embedding", "embedding_dim": 3},
+          "target": {"transform": "target"},
+          "key": {"transform": "key"},
+      }
 
-    self._run_training(problem_type='classification', 
-                       model_type='linear',
-                       transforms=transforms)
+      self._run_training(problem_type='classification', 
+                         model_type='linear',
+                         transforms=transforms)
 
-    self._check_training_screen_output(accuracy=0.70, loss=0.2)
-    self._check_train_files()
+      self._check_training_screen_output(accuracy=0.70, loss=0.2)
+      self._check_train_files()
 
+
+if __name__ == '__main__':
+    unittest.main()

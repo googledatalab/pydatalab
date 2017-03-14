@@ -37,6 +37,7 @@ import kernel.commands_tests
 import kernel.html_tests
 import kernel.storage_tests
 import kernel.utils_tests
+import mltoolbox_structured_data.traininglib_tests
 import stackdriver.commands.monitoring_tests
 import stackdriver.monitoring.group_tests
 import stackdriver.monitoring.metric_tests
@@ -72,6 +73,7 @@ _TEST_MODULES = [
     kernel.html_tests,
     kernel.storage_tests,
     kernel.utils_tests,
+    mltoolbox_structured_data.traininglib_tests,
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,
     stackdriver.monitoring.metric_tests,
