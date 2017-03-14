@@ -25,6 +25,7 @@ before_install:
     elif [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
       pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.0.0-cp34-cp34m-linux_x86_64.whl;
     fi
+  - pip install -U protobuf==3.0.0  #v3.1.0 has the "python: double free or corruption" bug.
   - pip install .
   - pip install solutionbox/structured_data/
   - pip install solutionbox/image_classification/
