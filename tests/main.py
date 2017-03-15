@@ -38,6 +38,7 @@ import kernel.html_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import mltoolbox_structured_data.traininglib_tests
+import mltoolbox_structured_data.dl_interface_tests
 import stackdriver.commands.monitoring_tests
 import stackdriver.monitoring.group_tests
 import stackdriver.monitoring.metric_tests
@@ -73,6 +74,7 @@ _TEST_MODULES = [
     kernel.html_tests,
     kernel.storage_tests,
     kernel.utils_tests,
+    mltoolbox_structured_data.dl_interface_tests,
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,
     stackdriver.monitoring.metric_tests,
@@ -90,8 +92,8 @@ _TEST_MODULES = [
 
 # mltoolbox is not part of the datalab install, but it should still be tested.
 # mltoolbox does not work with python 3.
-if sys.version_info.major == 2:
-    _TEST_MODULES.append(mltoolbox_structured_data.traininglib_tests)
+#if sys.version_info.major == 2:
+#    _TEST_MODULES.append(mltoolbox_structured_data.traininglib_tests)
 
 if __name__ == '__main__':
   suite = unittest.TestSuite()

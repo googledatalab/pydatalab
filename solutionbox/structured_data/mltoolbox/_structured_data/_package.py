@@ -62,13 +62,6 @@ def _default_project():
   from google.datalab import Context
   return Context.default().project_id
 
-def _is_in_IPython():
-  try:
-    import IPython
-    return True
-  except ImportError:
-    return False
-
 def _assert_gcs_files(files):
   """Check files starts wtih gs://.
 
