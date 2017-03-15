@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import json
 import os
 import re
@@ -19,8 +22,8 @@ import shutil
 import tempfile
 import unittest
 
-import e2e_functions
-import output_functions
+from . import e2e_functions
+from . import output_functions
 
 
 class TestTrainer(unittest.TestCase):
