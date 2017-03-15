@@ -33,7 +33,7 @@ def sd(line, cell=None):
   Returns:
     The results of executing the cell.
   """
-  parser = google.datalab.utils.commands.CommandParser(prog='sd', description=(
+  parser = google.datalab.utils.commands.CommandParser(prog='%sd', description=(
       'Execute various Stackdriver related operations. Use "%sd '
       '<stackdriver_product> -h" for help on a specific Stackdriver product.'))
 

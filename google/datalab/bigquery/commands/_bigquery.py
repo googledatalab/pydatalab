@@ -736,7 +736,7 @@ def _table_cell(args, cell_body):
 
     tables = []
     for dataset in datasets:
-      tables.extend([str(table) for table in dataset if fnmatch.fnmatch(str(table), filter_)])
+      tables.extend([table.full_name for table in dataset if fnmatch.fnmatch(table.full_name, filter_)])
 
     return _render_list(tables)
 
@@ -880,7 +880,7 @@ def _create_bigquery_parser():
   for the handlers that bind the cell contents and thus must recreate this parser for each
   cell upon execution.
   """
-  parser = google.datalab.utils.commands.CommandParser(prog='bq', description="""
+  parser = google.datalab.utils.commands.CommandParser(prog='%bq', description="""
 Execute various BigQuery-related operations. Use "%bq <command> -h"
 for help on a specific command.
   """)
@@ -992,7 +992,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   # TODO(gram): rework this to use google.datalab.utils.commands.chart_html
 
   if not table.exists():
-    raise Exception('Table %s does not exist' % str(table))
+    raise Exception('Table %s does not exist' % table.full_name)
 
   _HTML_TEMPLATE = u"""
     <div class="bqtv" id="{div_id}">{static_table}</div>
@@ -1047,7 +1047,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     fields = google.datalab.utils.commands.get_field_list(fields, table.schema)
   div_id = google.datalab.utils.commands.Html.next_id()
   meta_count = ('rows: %d' % table.length) if table.length >= 0 else ''
-  meta_name = str(table) if table.job is None else ('job: %s' % table.job.id)
+  meta_name = table.full_name if table.job is None else ('job: %s' % table.job.id)
   if table.job:
     if table.job.cache_hit:
       meta_cost = 'cached'
@@ -1076,7 +1076,7 @@ def _table_viewer(table, rows_per_page=25, fields=None):
                                static_table=google.datalab.utils.commands.HtmlBuilder.render_chart_data(data),
                                meta_data=meta_data,
                                chart_style=chart,
-                               source_index=google.datalab.utils.commands.get_data_source_index(str(table)),
+                               source_index=google.datalab.utils.commands.get_data_source_index(table.full_name),
                                fields=','.join(fields),
                                total_rows=total_count,
                                rows_per_page=rows_per_page,

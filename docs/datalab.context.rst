@@ -1,8 +1,5 @@
-datalab.context package
-=======================
-
-Module contents
----------------
+datalab.context Module
+======================
 
 .. autoclass:: datalab.context.Context
     :members:

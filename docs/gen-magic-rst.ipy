@@ -1,38 +1,44 @@
 import subprocess, pkgutil, importlib, sys
 from cStringIO import StringIO
 
-
-IGNORED_MAGICS = []
-
 # import submodules
-submodules = [s for _,s,_ in pkgutil.iter_modules(['../datalab'])]
+datalab_submodules = ['datalab.' + s + '.commands' for _,s,_ in pkgutil.iter_modules(['../datalab'])]
+google_submodules = ['google.datalab.' + s + '.commands' for _,s,_ in pkgutil.iter_modules(['../google/datalab'])]
 
-for m in submodules:
-  name = 'datalab.' + m + '.commands'
-  try:
-    importlib.import_module(name)
-  except:
-    sys.stderr.write('WARNING, could not find module ' + name + '. Ignoring..\n')
+def generate_magic_docs(submodules, header, dir, ignored_magics=None):
+  if not ignored_magics:
+    ignored_magics = []
+  for m in submodules:
+    try:
+      importlib.import_module(m)
+    except:
+      sys.stderr.write('WARNING, could not find module ' + m + '. Ignoring..\n')
 
-magic_regex = "find ../datalab -name '*.py' -exec perl -e '$f=join(\"\",<>); print \"$1\n\" if $f=~/register_line_cell_magic\ndef ([^\(]+)/m' {} \;"
-magics = subprocess.check_output(magic_regex, shell=True)
+  magic_regex = "find " + dir + " -name '*.py' -exec perl -e '$f=join(\"\",<>); print \"$1\n\" if $f=~/register_line_cell_magic\ndef ([^\(]+)/m' {} \;"
+  magics = subprocess.check_output(magic_regex, shell=True)
 
-reSTfile = open('datalab.magics.rst', 'w')
-indent = '\n  '
+  reSTfile = open(header + '.rst', 'w')
+  indent = '\n  '
 
-reSTfile.write('datalab.magics\n')
-reSTfile.write('=================\n\n')
+  reSTfile.write(header + '\n')
+  reSTfile.write('=======================\n\n')
 
-for m in magics.split():
-  if m in IGNORED_MAGICS:
-    sys.stderr.write('Ignoring magic ' + m + '\n')
-  else:
-    reSTfile.write('.. attribute:: ' + m + '\n')
-    reSTfile.write('.. parsed-literal::\n')
-    # hijack stdout since the ipython kernel call writes to stdout/err directly
-    # and does not return its output
-    tmpStdout, sys.stdout = sys.stdout, StringIO()
-    get_ipython().magic(m + ' -h')
-    resultout = sys.stdout.getvalue().splitlines()
-    sys.stdout = tmpStdout
-    reSTfile.writelines(indent + indent.join(resultout) + '\n\n')
+  for m in sorted(magics.split()):
+    if m in ignored_magics:
+      sys.stderr.write('Ignoring magic ' + m + '\n')
+    else:
+      print('working on magic: '+ m)
+      reSTfile.write('.. attribute:: %' + m + '\n')
+      reSTfile.write('.. parsed-literal::\n')
+      # hijack stdout since the ipython kernel call writes to stdout/err directly
+      # and does not return its output
+      tmpStdout, sys.stdout = sys.stdout, StringIO()
+      get_ipython().magic(m + ' -h')
+      resultout = sys.stdout.getvalue().splitlines()
+      sys.stdout = tmpStdout
+      reSTfile.writelines(indent + indent.join(resultout) + '\n\n')
+
+
+generate_magic_docs(datalab_submodules, 'datalab Commands', '../datalab', ignored_magics=['chart', 'csv']);
+generate_magic_docs(google_submodules, 'google.datalab Commands', '../google');
+

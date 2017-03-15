@@ -19,6 +19,7 @@ from builtins import str
 from past.builtins import basestring
 from builtins import object
 
+import copy
 import datetime
 import json
 import urllib.request, urllib.parse, urllib.error
@@ -123,9 +124,12 @@ class Http(object):
     if method is None:
       method = 'GET'
 
-    # Authorize with credentials if given.
     http = Http.http
+
+    # Authorize with credentials if given.
     if credentials is not None:
+      # Make a copy of the shared http instance before we modify it.
+      http = copy.copy(http)
       http = credentials.authorize(http)
     if stats is not None:
       stats['duration'] = datetime.datetime.utcnow()

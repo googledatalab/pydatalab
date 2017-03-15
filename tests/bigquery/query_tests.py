@@ -31,7 +31,7 @@ class TestCases(unittest.TestCase):
     env = {'subquery': sq}
     q = TestCases._create_query(sql, env=env, subqueries=['subquery'])
     self.assertIsNotNone(q)
-    self.assertEqual(q._subqueries, {'subquery': sq})
+    self.assertEqual(q.subqueries, {'subquery': sq})
     self.assertEqual(q._sql, sql)
 
     with self.assertRaises(Exception) as error:
@@ -40,7 +40,16 @@ class TestCases(unittest.TestCase):
     env = {'testudf': udf}
     q = TestCases._create_query(sql, env=env, udfs=['testudf'])
     self.assertIsNotNone(q)
-    self.assertEqual(q._udfs, {'testudf': udf})
+    self.assertEqual(q.udfs, {'testudf': udf})
+    self.assertEqual(q._sql, sql)
+
+    with self.assertRaises(Exception) as error:
+      q = TestCases._create_query(sql, data_sources=['test_datasource'])
+    test_datasource = TestCases._create_data_source('gs://test/path')
+    env = {'test_datasource': test_datasource}
+    q = TestCases._create_query(sql, env=env, data_sources=['test_datasource'])
+    self.assertIsNotNone(q)
+    self.assertEqual(q.data_sources, {'test_datasource': test_datasource})
     self.assertEqual(q._sql, sql)
 
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
@@ -130,19 +139,66 @@ class TestCases(unittest.TestCase):
     # test direct subquery expansion
     q1 = TestCases._create_query('SELECT * FROM test_table', name='q1', env=env)
     q2 = TestCases._create_query('SELECT * FROM q1', name='q2', subqueries=['q1'], env=env)
-    self.assertEqual('WITH q1 AS (SELECT * FROM test_table)\nSELECT * FROM q1', q2.sql)
+    self.assertEqual('''\
+WITH q1 AS (
+  SELECT * FROM test_table
+)
+
+SELECT * FROM q1''', q2.sql)
 
     # test recursive, second level subquery expansion
     q3 = TestCases._create_query('SELECT * FROM q2', name='q3', subqueries=['q2'], env=env)
     # subquery listing order is random, try both possibilities
-    expected_sql1 = 'WITH q1 AS (%s),\nq2 AS (%s)\n%s' % (q1._sql, q2._sql, q3._sql)
-    expected_sql2 = 'WITH q2 AS (%s),\nq1 AS (%s)\n%s' % (q2._sql, q1._sql, q3._sql)
+    expected_sql1 = '''\
+WITH q1 AS (
+  %s
+),
+q2 AS (
+  %s
+)
+
+%s''' % (q1._sql, q2._sql, q3._sql)
+    expected_sql2 = '''\
+WITH q2 AS (
+  %s
+),
+q1 AS (
+  %s
+)
+
+%s''' % (q2._sql, q1._sql, q3._sql)
 
     self.assertTrue((expected_sql1 == q3.sql) or (expected_sql2 == q3.sql))
+
+  #@mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  def test_subquery_expansion_order(self):
+    env = {}
+    snps = TestCases._create_query('SELECT * FROM test_table', name='snps', env=env)
+    windows = TestCases._create_query('SELECT * FROM snps', subqueries=['snps'], name='windows',
+                                      env=env)
+    titv = TestCases._create_query('SELECT * FROM snps, windows', subqueries=['snps', 'windows'],
+                                   env=env)
+
+    # make sure snps appears before windows in the expanded sql of titv
+    snps_pos, windows_pos = titv.sql.find('snps AS'), titv.sql.find('windows AS')
+    self.assertNotEqual(snps_pos, -1, 'Could not find snps definition in expanded sql')
+    self.assertNotEqual(windows_pos, -1, 'Could not find windows definition in expanded sql')
+    self.assertLess(snps_pos, windows_pos)
+
+    # reverse the order they're referenced in titv, and make sure snps still appears before windows
+    titv = TestCases._create_query('SELECT * FROM snps, windows', subqueries=['windows', 'snps'],
+                                   env=env)
+    snps_pos, windows_pos = titv.sql.find('snps AS'), titv.sql.find('windows AS')
+    self.assertNotEqual(snps_pos, -1, 'Could not find snps definition in expanded sql')
+    self.assertNotEqual(windows_pos, -1, 'Could not find windows definition in expanded sql')
+    self.assertLess(snps_pos, windows_pos)
+
 
   @staticmethod
   def _create_query(sql='SELECT * ...', name=None, env=None, udfs=None, data_sources=None,
                     subqueries=None):
+    if env is None:
+      env = {}
     q = google.datalab.bigquery.Query(sql, env=env, udfs=udfs, data_sources=data_sources,
                                       subqueries=subqueries)
     if name:
@@ -152,6 +208,10 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_udf(name, code, return_type):
     return google.datalab.bigquery.UDF(name, code, return_type)
+
+  @staticmethod
+  def _create_data_source(source):
+    return google.datalab.bigquery.ExternalDataSource(source=source)
 
   @staticmethod
   def _create_context():

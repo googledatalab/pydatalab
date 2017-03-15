@@ -32,15 +32,16 @@ class CsvDataSet(object):
 
   def __init__(self, file_pattern, schema=None, schema_file=None):
     """
+
     Args:
       file_pattern: A list of CSV files. or a string. Can contain wildcards in
-          file names. Can be local or GCS path.
-      schema: A BigQuery schema object in the form of 
-          [{'name': 'col1', 'type': 'STRING'},
-           {'name': 'col2', 'type': 'INTEGER'}]
-          or a single string in of the form 'col1:STRING,col2:INTEGER,col3:FLOAT'.
+        file names. Can be local or GCS path.
+      schema: A BigQuery schema object in the form of
+        [{'name': 'col1', 'type': 'STRING'},
+        {'name': 'col2', 'type': 'INTEGER'}]
+        or a single string in of the form 'col1:STRING,col2:INTEGER,col3:FLOAT'.
       schema_file: A JSON serialized schema file. If schema is None, it will try to load from
-          schema_file if not None.
+        schema_file if not None.
     Raise:
       ValueError if both schema and schema_file are None.
     """
@@ -191,6 +192,7 @@ class BigQueryDataSet(object):
   def sample(self, n):
     """Samples data into a Pandas DataFrame. Note that it calls BigQuery so it will
        incur cost.
+
     Args:
       n: number of sampled counts. Note that the number of counts returned is approximated.
     Returns:

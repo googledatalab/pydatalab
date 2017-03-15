@@ -88,7 +88,12 @@ class TestCases(unittest.TestCase):
     self.assertIsNotNone(q2)
     self.assertEqual(q2.udfs, {})
     self.assertEqual({'q1': q1}, q2.subqueries)
-    expected_sql = 'WITH q1 AS (%s)\n%s' % (q1_body, q2_body)
+    expected_sql = '''\
+WITH q1 AS (
+  %s
+)
+
+%s''' % (q1_body, q2_body)
     self.assertEqual(q2_body, q2._sql)
     self.assertEqual(expected_sql, q2.sql)
 
