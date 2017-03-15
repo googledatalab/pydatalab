@@ -40,7 +40,7 @@ class TestTrainer(unittest.TestCase):
     self._max_steps = 2500
     self._check_model_loss = True
 
-    # Print test output. Set to false for a silent test.
+    # Print test output. Set to true for a silent test.
     self._silent_output = False
 
 
