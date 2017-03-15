@@ -15,9 +15,11 @@
 
 import glob
 import json
+import logging
 import os
 import shutil
 import subprocess
+import sys
 import filecmp
 import tempfile
 import unittest
@@ -28,6 +30,19 @@ import e2e_functions
 
 
 class TestPreprocess(unittest.TestCase):
+  """Tests preprocessing.
+
+  Runs analysis on a test dataset. Checks that the expected files are made.
+  """
+  def __init__(self, *args, **kwargs):
+    super(TestPreprocess, self).__init__(*args, **kwargs)
+
+    # Log everything
+    self._logger = logging.getLogger('TestStructuredDataLogger')
+    self._logger.setLevel(logging.DEBUG)
+    if not self._logger.handlers:
+      self._logger.addHandler(logging.StreamHandler(stream=sys.stdout))
+
 
   def setUp(self):
     self._test_dir = tempfile.mkdtemp()
@@ -38,7 +53,7 @@ class TestPreprocess(unittest.TestCase):
     self._preprocess_output = os.path.join(self._test_dir, 'pout')
 
   def tearDown(self):
-    print('TestPreprocess: removing test dir: ' + self._test_dir)
+    self._logger.debug('TestPreprocess: removing test dir: ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
   
@@ -58,7 +73,8 @@ class TestPreprocess(unittest.TestCase):
     e2e_functions.run_preprocess(
         output_dir=self._preprocess_output,
         csv_filename=self._csv_filename,
-        schema_filename=self._schema_filename)
+        schema_filename=self._schema_filename,
+        logger=self._logger)
 
 
     schema_file = os.path.join(self._preprocess_output, 'schema.json')

@@ -1,4 +1,9 @@
+sudo: required
+
+dist: trusty
+
 language: python
+
 python:
   - 2.7
   - 3.5
@@ -10,6 +15,10 @@ before_install:
   - pip install -U pip
   - pip install -U setuptools
   - pip install .
+  - pip install solutionbox/structured_data/
+  - pip install solutionbox/image_classification/  
+  - pip install -U tensorflow==1.0.0
+  - pip install -U protobuf==3.1.0  #v3.2.0 has the "python: double free or corruption" bug.
 
 script: python ./tests/main.py
 

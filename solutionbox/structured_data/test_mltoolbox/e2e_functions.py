@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from __future__ import absolute_import
 
 import os
 import random
@@ -24,7 +24,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
   """Writes csv data for preprocessing and training.
 
   Args:
-    filename: writes data to csv file.
+    filename: writes data to local csv file.
     num_rows: how many rows of data will be generated.
     problem_type: 'classification' or 'regression'. Changes the target value.
     keep_target: if false, the csv file will have an empty column ',,' for the 
@@ -85,7 +85,7 @@ def make_preprocess_schema(filename, problem_type):
   Writes a json file.
 
   Args:
-    filename: output file path
+    filename: local output file path
     problem_type: regression or classification
   """
   schema = [
@@ -134,17 +134,25 @@ def make_preprocess_schema(filename, problem_type):
     f.write(json.dumps(schema))
 
 
-def run_preprocess(output_dir, csv_filename, schema_filename):
+def run_preprocess(output_dir, csv_filename, schema_filename, logger):
+  """Run preprocess via subprocess call to local_preprocess.py
+
+  Args:
+    output_dir: local or gcs folder to write output to
+    csv_filename: local or gcs file to do analysis on
+    schema_filename: local or gcs file path to schema file
+    logger: python logging object
+  """
   preprocess_script = os.path.abspath(
       os.path.join(os.path.dirname(__file__), 
-                   '../preprocess/local_preprocess.py'))
+                   '../mltoolbox/_structured_data/preprocess/local_preprocess.py'))
 
   cmd = ['python', preprocess_script,
          '--output-dir', output_dir,
          '--input-file-pattern', csv_filename,
          '--schema-file', schema_filename
   ]
-  print('Going to run command: %s' % ' '.join(cmd))
+  logger.debug('Going to run command: %s' % ' '.join(cmd))
   subprocess.check_call(cmd) #, stderr=open(os.devnull, 'wb'))
 
 
@@ -156,17 +164,19 @@ def run_training(
       transforms_file,
       max_steps,
       model_type,
+      logger,
       extra_args=[]):
-  """Runs Training via gcloud beta ml local train.
+  """Runs Training via subprocess call to python -m
 
   Args:
-    train_data_paths: training csv files
-    eval_data_paths: eval csv files
-    output_path: folder to write output to
-    preprocess_output_dir: output location of preprocessing
-    transforms_file: path to transforms file
+    train_data_paths: local or gcs training csv files
+    eval_data_paths: local or gcs eval csv files
+    output_path: local or gcs folder to write output to
+    preprocess_output_dir: local or gcs output location of preprocessing
+    transforms_file: local or gcs path to transforms file
     max_steps: max training steps
     model_type: {dnn,linear}_{regression,classification}
+    logger: python logging object
     extra_args: array of strings, passed to the trainer.
 
   Returns:
@@ -177,12 +187,10 @@ def run_training(
   # Gcloud has the fun bug that you have to be in the parent folder of task.py
   # when you call it. So cd there first.
   task_parent_folder = os.path.abspath(
-      os.path.join(os.path.dirname(__file__), '..'))
+      os.path.join(os.path.dirname(__file__), 
+      '../mltoolbox/_structured_data'))
   cmd = ['cd %s &&' % task_parent_folder,
-         'gcloud beta ml local train',
-         '--module-name=trainer.task',
-         '--package-path=trainer',
-         '--',
+         'python -m trainer.task',
          '--train-data-paths=%s' % train_data_paths,
          '--eval-data-paths=%s' % eval_data_paths,
          '--job-dir=%s' % output_path,
@@ -192,7 +200,7 @@ def run_training(
          '--train-batch-size=100',
          '--eval-batch-size=10',
          '--max-steps=%s' % max_steps] + extra_args
-  print('Going to run command: %s' % ' '.join(cmd))
+  logger.debug('Going to run command: %s' % ' '.join(cmd))
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
   _, err = sp.communicate()
   return err
