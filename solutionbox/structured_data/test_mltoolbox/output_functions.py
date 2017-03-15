@@ -15,7 +15,7 @@ from __future__ import unicode_literals
 import sys
 
 from contextlib import contextmanager
-from StringIO import StringIO
+from io import BytesIO
 
 
 @contextmanager
@@ -23,7 +23,7 @@ def captured_output(silent_output=False):
   """Allows redirecting stdour and stderr to a string buffer.
 
   Usage:
-    with captured_output() as (stdout_str, stderr_str):
+    with captured_output() as (stdout, stderr):
       print('hello world')
 
 
@@ -32,7 +32,7 @@ def captured_output(silent_output=False):
         redirected.
   """
   if silent_output:
-    new_out, new_err = StringIO(), StringIO()
+    new_out, new_err = BytesIO(), BytesIO()
     old_out, old_err = sys.stdout, sys.stderr
     try:
         sys.stdout, sys.stderr = new_out, new_err
