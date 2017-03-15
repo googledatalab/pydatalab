@@ -10,7 +10,6 @@ python:
 
 before_install:
   - sudo apt-get install -y python-setuptools
-  - strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX
   - npm install -g typescript
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
   - pip install -U pip
@@ -20,8 +19,6 @@ before_install:
   - pip install solutionbox/image_classification/  
   - pip install -U tensorflow==1.0.0
   - pip install -U protobuf==3.1.0  #v3.2.0 has the "python: double free or corruption" bug.
-  - pip freeze  # log what is installed
-
 
 script: python ./tests/main.py
 

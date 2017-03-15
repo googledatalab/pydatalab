@@ -134,7 +134,15 @@ def make_preprocess_schema(filename, problem_type):
     f.write(json.dumps(schema))
 
 
-def run_preprocess(output_dir, csv_filename, schema_filename):
+def run_preprocess(output_dir, csv_filename, schema_filename, logger):
+  """Run preprocess via subprocess call to local_preprocess.py
+
+  Args:
+    output_dir: folder to write output to
+    csv_filename: file to do analysis on
+    schema_filename: file path to schema file
+    logger: python logging object
+  """
   preprocess_script = os.path.abspath(
       os.path.join(os.path.dirname(__file__), 
                    '../mltoolbox/_structured_data/preprocess/local_preprocess.py'))
@@ -144,7 +152,7 @@ def run_preprocess(output_dir, csv_filename, schema_filename):
          '--input-file-pattern', csv_filename,
          '--schema-file', schema_filename
   ]
-  print('Going to run command: %s' % ' '.join(cmd))
+  logger.debug('Going to run command: %s' % ' '.join(cmd))
   subprocess.check_call(cmd) #, stderr=open(os.devnull, 'wb'))
 
 
@@ -156,8 +164,9 @@ def run_training(
       transforms_file,
       max_steps,
       model_type,
+      logger,
       extra_args=[]):
-  """Runs Training via gcloud beta ml local train.
+  """Runs Training via subprocess call to python -m
 
   Args:
     train_data_paths: training csv files
@@ -167,6 +176,7 @@ def run_training(
     transforms_file: path to transforms file
     max_steps: max training steps
     model_type: {dnn,linear}_{regression,classification}
+    logger: python logging object
     extra_args: array of strings, passed to the trainer.
 
   Returns:
@@ -190,7 +200,7 @@ def run_training(
          '--train-batch-size=100',
          '--eval-batch-size=10',
          '--max-steps=%s' % max_steps] + extra_args
-  print('Going to run command: %s' % ' '.join(cmd))
+  logger.debug('Going to run command: %s' % ' '.join(cmd))
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
   _, err = sp.communicate()
   return err

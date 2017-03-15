@@ -11,6 +11,7 @@
 # the License.
 from __future__ import absolute_import
 
+import logging
 import os
 import sys
 
@@ -35,8 +36,8 @@ class TestCoreTrainingLib(sdtraining.TestTrainer):
 
     # Test that training works, not that the model is good.
     self._max_steps = 50  
-    self._check_model_loss = False
+    self._check_model_fit = False
 
-    # Don't print anything. Set to false for debugging.
-    self._silent_output = True
+    # Don't print debugging info as no other test does.
+    self._logger.setLevel(logging.INFO)
   
