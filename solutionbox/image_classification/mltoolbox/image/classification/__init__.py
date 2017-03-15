@@ -10,5 +10,14 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+"""
+Single label image classification solution. Typical usage is:
+
+Run preprocess() or preprocess_async() to preprocess data for training.
+Run train() or train_async() to train models.
+Run predict(), batch_predict(), batch_predict_async() to perform predictions.
+
+The trained model can also be deployed online with google.datalab.ml.ModelVersions.deploy() call.
+"""
 
 from ._api import preprocess,preprocess_async,train,train_async,predict,batch_predict,batch_predict_async

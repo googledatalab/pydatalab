@@ -56,7 +56,9 @@ def train_async(train_dataset,
           ):
   """Train model locally or in the cloud.
 
-  Args for local training:
+  Local Training:
+
+  Args:
     train_dataset: CsvDataSet
     eval_dataset: CsvDataSet
     analysis_dir:  The output directory from local_analysis
@@ -105,10 +107,12 @@ def train_async(train_dataset,
     learning_rate: tf.train.AdamOptimizer's learning rate,
     epsilon: tf.train.AdamOptimizer's epsilon value.
 
-  Args for cloud training:
-    All local training arguments are valid for cloud training. Cloud training
-    contains two additional args:
+  Cloud Training:
 
+  All local training arguments are valid for cloud training. Cloud training
+  contains two additional args:
+
+  Args:
     cloud: A CloudTrainingConfig object.
     job_name: Training job name. A default will be picked if None.    
     
