@@ -24,7 +24,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
   """Writes csv data for preprocessing and training.
 
   Args:
-    filename: writes data to csv file.
+    filename: writes data to local csv file.
     num_rows: how many rows of data will be generated.
     problem_type: 'classification' or 'regression'. Changes the target value.
     keep_target: if false, the csv file will have an empty column ',,' for the 
@@ -85,7 +85,7 @@ def make_preprocess_schema(filename, problem_type):
   Writes a json file.
 
   Args:
-    filename: output file path
+    filename: local output file path
     problem_type: regression or classification
   """
   schema = [
@@ -138,9 +138,9 @@ def run_preprocess(output_dir, csv_filename, schema_filename, logger):
   """Run preprocess via subprocess call to local_preprocess.py
 
   Args:
-    output_dir: folder to write output to
-    csv_filename: file to do analysis on
-    schema_filename: file path to schema file
+    output_dir: local or gcs folder to write output to
+    csv_filename: local or gcs file to do analysis on
+    schema_filename: local or gcs file path to schema file
     logger: python logging object
   """
   preprocess_script = os.path.abspath(
@@ -169,11 +169,11 @@ def run_training(
   """Runs Training via subprocess call to python -m
 
   Args:
-    train_data_paths: training csv files
-    eval_data_paths: eval csv files
-    output_path: folder to write output to
-    preprocess_output_dir: output location of preprocessing
-    transforms_file: path to transforms file
+    train_data_paths: local or gcs training csv files
+    eval_data_paths: local or gcs eval csv files
+    output_path: local or gcs folder to write output to
+    preprocess_output_dir: local or gcs output location of preprocessing
+    transforms_file: local or gcs path to transforms file
     max_steps: max training steps
     model_type: {dnn,linear}_{regression,classification}
     logger: python logging object
