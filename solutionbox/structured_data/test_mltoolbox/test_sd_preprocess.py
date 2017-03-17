@@ -18,13 +18,10 @@ import json
 import logging
 import os
 import shutil
-import subprocess
 import sys
 import filecmp
 import tempfile
 import unittest
-
-import tensorflow as tf
 
 import e2e_functions
 

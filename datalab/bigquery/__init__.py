@@ -29,6 +29,9 @@ from ._udf import UDF
 from ._utils import TableName, DatasetName
 from ._view import View
 
+__all__ = ['CSVOptions', 'Dataset', 'Datasets', 'Dialect', 'FederatedTable', 'Query', 'QueryJob',
+           'QueryResultsTable', 'QueryStats', 'Sampling', 'Schema', 'Table', 'TableMetadata',
+           'UDF', 'TableName', 'DatasetName', 'View']
 
 def wait_any(jobs, timeout=None):
   """ Return when at least one of the specified jobs has completed or timeout expires.

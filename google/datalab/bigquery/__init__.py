@@ -27,3 +27,6 @@ from ._udf import UDF
 from ._utils import TableName, DatasetName
 from ._view import View
 
+__all__ = ['CSVOptions', 'Dataset', 'Datasets', 'ExternalDataSource', 'Query', 'QueryOutput',
+           'QueryResultsTable', 'QueryStats', 'Sampling', 'Schema', 'SchemaField', 'Table',
+           'TableMetadata', 'UDF', 'TableName', 'DatasetName', 'View']

@@ -14,3 +14,5 @@
 from __future__ import absolute_import
 
 from . import _projects
+
+__all__ = ['_projects']

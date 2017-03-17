@@ -13,12 +13,7 @@
 # To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
 
 import datetime
-import sys
 from setuptools import setup
-
-if sys.version_info[0] == 2:
-  import platform
-  import pip
 
 minor = datetime.datetime.now().strftime("%y%m%d%H%M")
 version = '1.0.' + minor

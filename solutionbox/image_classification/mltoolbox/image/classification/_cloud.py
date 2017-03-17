@@ -18,16 +18,13 @@
 
 import apache_beam as beam
 import base64
-import collections
 import datetime
 import logging
 import os
 import urllib
 
-from . import _model
 from . import _predictor
 from . import _preprocess
-from . import _trainer
 from . import _util
 
 
