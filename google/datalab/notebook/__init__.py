@@ -20,3 +20,4 @@ except ImportError:
 def _jupyter_nbextension_paths():
   return [dict(section="notebook", src="static", dest="gcpdatalab")]
 
+__all__ = ['_']

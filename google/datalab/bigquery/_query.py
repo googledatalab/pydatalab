@@ -22,7 +22,6 @@ import google.datalab.utils
 from ._query_output import QueryOutput
 from . import _api
 from . import _query_job
-from . import _sampling
 from . import _udf
 from . import _utils
 from . import _external_data_source

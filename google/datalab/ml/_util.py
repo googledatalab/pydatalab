@@ -14,7 +14,6 @@
 
 
 from apache_beam.io import gcsio
-import datetime
 import glob
 from googleapiclient import discovery
 import logging

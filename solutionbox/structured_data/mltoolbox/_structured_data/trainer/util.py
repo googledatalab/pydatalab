@@ -17,7 +17,6 @@ import json
 import multiprocessing
 import os
 import math
-from StringIO import StringIO
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io

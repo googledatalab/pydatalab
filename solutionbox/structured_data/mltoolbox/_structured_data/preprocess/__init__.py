@@ -14,3 +14,5 @@
 # ==============================================================================
 import cloud_preprocess
 import local_preprocess
+
+__all__ = ['cloud_preprocess', 'local_preprocess']

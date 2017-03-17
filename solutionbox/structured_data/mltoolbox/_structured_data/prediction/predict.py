@@ -138,8 +138,7 @@ class RunGraphDoFn(beam.DoFn):
 
   def start_bundle(self, element=None):
     from tensorflow.python.saved_model import tag_constants
-    from tensorflow.contrib.session_bundle import bundle_shim  
-    import json
+    from tensorflow.contrib.session_bundle import bundle_shim
 
     self._session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(self._trained_model_dir, tags=[tag_constants.SERVING])
     signature = meta_graph.signature_def['serving_default']

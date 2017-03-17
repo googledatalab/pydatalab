@@ -31,7 +31,6 @@ try:
 except ImportError:
   pass
 import sys
-import types
 import yaml
 
 import google.datalab.data

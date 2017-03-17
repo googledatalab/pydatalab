@@ -4,7 +4,9 @@ Every function can run locally or use Google Cloud Platform.
 """
 
 from ._classification_linear import train, train_async
-from mltoolbox._structured_data import (analyze, analyze_async,
-                                        predict,
-                                        batch_predict, batch_predict_async)
-from mltoolbox._structured_data.__version__ import __version__ as __version__
+from mltoolbox._structured_data import analyze, analyze_async, predict, batch_predict, \
+    batch_predict_async
+from mltoolbox._structured_data.__version__ import __version__
+
+__all__ = ['train', 'train_async', 'analyze', 'analyze_async', 'predict', 'batch_predict',
+           'batch_predict_async', '__version__']

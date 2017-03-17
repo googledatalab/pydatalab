@@ -21,9 +21,7 @@ import apache_beam as beam
 from apache_beam.io import fileio
 from apache_beam.io import tfrecordio
 from apache_beam.metrics import Metrics
-from apache_beam.utils.pipeline_options import PipelineOptions
 import cStringIO
-import csv
 import logging
 import os
 from PIL import Image

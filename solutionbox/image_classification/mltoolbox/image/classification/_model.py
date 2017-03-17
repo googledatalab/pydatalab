@@ -17,9 +17,7 @@
 """
 
 from enum import Enum
-import json
 import logging
-import os
 import tensorflow as tf
 from tensorflow.contrib import layers
 from tensorflow.python.ops import control_flow_ops

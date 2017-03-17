@@ -17,14 +17,7 @@
 """
 
 import apache_beam as beam
-import collections
-import csv
 import datetime
-import json
-import logging
-import os
-import tensorflow as tf
-import yaml
 
 
 from . import _model

@@ -12,11 +12,9 @@
 
 # A copy of this file must be made in datalab_structured_data/setup.py
 
-import datetime
 import os
 import re
-from setuptools import setup, find_packages
-
+from setuptools import setup
 
 
 # The version is saved in an __init__ file.

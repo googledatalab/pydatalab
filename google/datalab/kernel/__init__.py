@@ -19,9 +19,9 @@ import requests as _requests
 
 try:
   import IPython as _IPython
-  import IPython.core.magic as _magic
+  import IPython.core.magic as _magic # noqa
   import IPython.core.interactiveshell as _shell
-  from IPython import get_ipython
+  from IPython import get_ipython # noqa
 except ImportError:
   raise Exception('This package requires an IPython notebook installation')
 

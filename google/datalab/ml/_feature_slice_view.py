@@ -12,7 +12,6 @@
 
 import json
 import pandas as pd
-from types import ModuleType
 
 import google.datalab as datalab
 import google.datalab.bigquery as bq
