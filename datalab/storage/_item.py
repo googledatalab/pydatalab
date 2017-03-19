@@ -260,7 +260,7 @@ class Items(object):
       Exception if there was an error requesting information about the item.
     """
     try:
-      _ = self._api.objects_get(self._bucket, key)
+      self._api.objects_get(self._bucket, key)
     except datalab.utils.RequestException as e:
       if e.status == 404:
         return False

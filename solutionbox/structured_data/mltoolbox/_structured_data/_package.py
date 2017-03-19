@@ -53,6 +53,9 @@ _TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinu
 _PROTOBUF_GS_URL = 'gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl'
 
 
+class FileNotFoundError(IOError):
+    pass
+
 def _default_project():
   from google.datalab import Context
   return Context.default().project_id
@@ -584,6 +587,10 @@ def local_predict(training_dir, data):
   Args:
     training_dir: local path to the trained output folder.
     data: List of csv strings or a Pandas DataFrame that match the model schema.
+
+  Raises:
+    ValueError: if training_dir does not contain the folder 'model'.
+    FileNotFoundError: if the prediction data is not found.
 
   """
   #from . import predict as predict_module

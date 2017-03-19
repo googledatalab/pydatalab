@@ -37,13 +37,13 @@ class TestCases(unittest.TestCase):
 
   def test_udf_expansion(self):
     sql = 'SELECT * FROM udf(source)'
-    udf = datalab.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf', 'code')
+    udf = google.datalab.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf', 'code')
     context = TestCases._create_context()
-    query = datalab.bigquery.Query(sql, udf=udf, context=context)
+    query = google.datalab.bigquery.Query(sql, udf=udf, context=context)
     self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
 
     # Alternate form
-    query = datalab.bigquery.Query(sql, udfs=[udf], context=context)
+    query = google.datalab.bigquery.Query(sql, udfs=[udf], context=context)
     self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
 
   @staticmethod

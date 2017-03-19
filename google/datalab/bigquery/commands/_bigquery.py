@@ -410,7 +410,6 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
-  env = google.datalab.utils.commands.notebook_environment()
   query = None
   table = None
   view = None
@@ -692,8 +691,7 @@ def _dataset_line(args):
 
   elif args['command'] == 'create':
     try:
-      google.datalab.bigquery.Dataset(args['name']).create(friendly_name=args['friendly'],
-                                                    description=cell_body)
+      google.datalab.bigquery.Dataset(args['name']).create(friendly_name=args['friendly'])
     except Exception as e:
       print('Failed to create dataset %s: %s' % (args['name'], e))
 
@@ -785,7 +783,7 @@ def _extract_cell(args, cell_body):
   Args:
     args: the arguments following '%bigquery extract'.
   """
-  env = google.datalab.utils.commands.notebook_environment()
+
   query = google.datalab.utils.commands.get_notebook_item(args['query'])
   query_params = _get_query_parameters(args, cell_body)
 
@@ -795,7 +793,7 @@ def _extract_cell(args, cell_body):
       if not source:
         raise Exception('Could not find table %s' % args['table'])
     elif args['view']:
-      source = datalab.utils.commands.get_notebook_item(args['view'])
+      source = google.datalab.utils.commands.get_notebook_item(args['view'])
       if not source:
         raise Exception('Could not find view %' % args['view'])
 

@@ -25,8 +25,8 @@ class TestCases(unittest.TestCase):
 
   def test_parameter_validation(self):
     sql = 'SELECT * FROM table'
-    with self.assertRaises(Exception) as error:
-      q = TestCases._create_query(sql, subqueries=['subquery'])
+    with self.assertRaises(Exception):
+      TestCases._create_query(sql, subqueries=['subquery'])
     sq = TestCases._create_query()
     env = {'subquery': sq}
     q = TestCases._create_query(sql, env=env, subqueries=['subquery'])
@@ -34,8 +34,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual(q.subqueries, {'subquery': sq})
     self.assertEqual(q._sql, sql)
 
-    with self.assertRaises(Exception) as error:
-      q = TestCases._create_query(sql, udfs=['udf'])
+    with self.assertRaises(Exception):
+      TestCases._create_query(sql, udfs=['udf'])
     udf = TestCases._create_udf('test_udf', 'code', 'TYPE')
     env = {'testudf': udf}
     q = TestCases._create_query(sql, env=env, udfs=['testudf'])
@@ -43,8 +43,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual(q.udfs, {'testudf': udf})
     self.assertEqual(q._sql, sql)
 
-    with self.assertRaises(Exception) as error:
-      q = TestCases._create_query(sql, data_sources=['test_datasource'])
+    with self.assertRaises(Exception):
+      TestCases._create_query(sql, data_sources=['test_datasource'])
     test_datasource = TestCases._create_data_source('gs://test/path')
     env = {'test_datasource': test_datasource}
     q = TestCases._create_query(sql, env=env, data_sources=['test_datasource'])
@@ -123,15 +123,15 @@ class TestCases(unittest.TestCase):
 
     with self.assertRaises(Exception) as error:
       context = TestCases._create_context()
-      _ = q.execute(context=context).result()
+      q.execute(context=context).result()
     self.assertEqual('Unexpected response from server', str(error.exception))
 
   def test_nested_subquery_expansion(self):
     # test expanding subquery and udf validation
-    with self.assertRaises(Exception) as error:
+    with self.assertRaises(Exception):
       TestCases._create_query('SELECT * FROM subquery', subqueries=['subquery'])
 
-    with self.assertRaises(Exception) as error:
+    with self.assertRaises(Exception):
       TestCases._create_query('SELECT test_udf(field1) FROM test_table', udfs=['test_udf'])
 
     env = {}
@@ -173,8 +173,8 @@ q1 AS (
   #@mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
   def test_subquery_expansion_order(self):
     env = {}
-    snps = TestCases._create_query('SELECT * FROM test_table', name='snps', env=env)
-    windows = TestCases._create_query('SELECT * FROM snps', subqueries=['snps'], name='windows',
+    TestCases._create_query('SELECT * FROM test_table', name='snps', env=env)
+    TestCases._create_query('SELECT * FROM snps', subqueries=['snps'], name='windows',
                                       env=env)
     titv = TestCases._create_query('SELECT * FROM snps, windows', subqueries=['snps', 'windows'],
                                    env=env)

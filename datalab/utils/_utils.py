@@ -109,7 +109,7 @@ def is_http_running_on(port):
     conn.connect()
     conn.close()
     return True
-  except Exception as e:
+  except Exception:
     return False
 
 

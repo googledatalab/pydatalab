@@ -56,6 +56,10 @@ PG_CLASSIFICATION_FIRST_SCORE = 'score'
 PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
 
+
+class NotFittedError(ValueError):
+    pass
+
 # ==============================================================================
 # Functions for saving the exported graphs.
 # ==============================================================================
@@ -473,7 +477,7 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
   # 1) num -> do nothing (identity, default)
   # 2) num -> scale to -1, 1 (scale)
   # 3) num -> scale to -a, a (scale with value parameter)
-  with tf.name_scope('numerical_feature_preprocess') as scope:
+  with tf.name_scope('numerical_feature_preprocess'):
     if train_config['numerical_columns']:
       numerical_analysis_file = os.path.join(preprocess_output_dir,
                                              NUMERICAL_ANALYSIS)
@@ -507,7 +511,7 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
 
   # Do target transform if it exists.
   if target is not None:
-    with tf.name_scope('target_feature_preprocess') as scope:
+    with tf.name_scope('target_feature_preprocess'):
       if target_name in train_config['categorical_columns']:
         labels = train_config['vocab_stats'][target_name]['labels']
         table = tf.contrib.lookup.string_to_index_table_from_tensor(labels)
@@ -516,7 +520,7 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
 
   # Do categorical transforms. Only apply vocab mapping. The real
   # transforms are done with tf learn column features.
-  with tf.name_scope('categorical_feature_preprocess') as scope:
+  with tf.name_scope('categorical_feature_preprocess'):
     for name in train_config['categorical_columns']:
       if name == key_name or name == target_name:
         continue

@@ -63,7 +63,7 @@ class TestCases(unittest.TestCase):
     schema_master = google.datalab.bigquery.Schema(master)
 
     with self.assertRaises(Exception) as error1:
-      _ = google.datalab.bigquery.Schema.from_data(variant1)
+      google.datalab.bigquery.Schema.from_data(variant1)
     if sys.version_info[0] == 3:
       self.assertEquals('Cannot create a schema from heterogeneous list [3, 2.0, True, ' +
                         '[\'cow\', \'horse\', [0, []]]]; perhaps you meant to use ' +

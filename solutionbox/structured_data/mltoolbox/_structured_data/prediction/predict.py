@@ -305,48 +305,41 @@ class FormatAndSave(beam.PTransform):
     tf_graph_predictions, errors = datasets
 
     if self._output_format == 'json':
-      _ = (
-          tf_graph_predictions 
-          | 'Write Raw JSON'
-          >> beam.io.textio.WriteToText(
-              os.path.join(self._output_dir, 'predictions'),
-              file_name_suffix='.json',
-              coder=RawJsonCoder(),
-              shard_name_template=self._shard_name_template))
+      (tf_graph_predictions |
+       'Write Raw JSON' >>
+       beam.io.textio.WriteToText(os.path.join(self._output_dir, 'predictions'),
+                                  file_name_suffix='.json',
+                                  coder=RawJsonCoder(),
+                                  shard_name_template=self._shard_name_template))
     elif self._output_format == 'csv':
       # make a csv header file 
       header = [col['name'] for col in self._schema]
       csv_coder = CSVCoder(header)
-      _ = (
-          tf_graph_predictions.pipeline
-          | 'Make CSV Header'
-          >> beam.Create([json.dumps(self._schema, indent=2)])
-          | 'Write CSV Schema File'
-          >> beam.io.textio.WriteToText(
-              os.path.join(self._output_dir, 'csv_schema'),
-              file_name_suffix='.json',
-              shard_name_template=''))   
+      (tf_graph_predictions.pipeline |
+       'Make CSV Header' >>
+       beam.Create([json.dumps(self._schema, indent=2)]) |
+       'Write CSV Schema File' >>
+       beam.io.textio.WriteToText(os.path.join(self._output_dir, 'csv_schema'),
+                                  file_name_suffix='.json',
+                                  shard_name_template=''))
      
       # Write the csv predictions
-      _ = (
-          tf_graph_predictions 
-          | 'Write CSV'
-          >> beam.io.textio.WriteToText(
-              os.path.join(self._output_dir, 'predictions'),
-              file_name_suffix='.csv',
-              coder=csv_coder,
-              shard_name_template=self._shard_name_template))
+      (tf_graph_predictions |
+       'Write CSV'
+       >> beam.io.textio.WriteToText(os.path.join(self._output_dir, 'predictions'),
+                                     file_name_suffix='.csv',
+                                     coder=csv_coder,
+                                     shard_name_template=self._shard_name_template))
     else:
       raise ValueError('FormatAndSave: unknown format %s', self._output_format)
 
 
     # Write the errors to a text file.
-    _ = (errors
-         | 'Write Errors'
-         >> beam.io.textio.WriteToText(
-             os.path.join(self._output_dir, 'errors'),
-             file_name_suffix='.txt',
-             shard_name_template=self._shard_name_template))    
+    (errors |
+     'Write Errors' >>
+     beam.io.textio.WriteToText(os.path.join(self._output_dir, 'errors'),
+                                file_name_suffix='.txt',
+                                shard_name_template=self._shard_name_template))
 
 
 def make_prediction_pipeline(pipeline, args):
@@ -359,21 +352,21 @@ def make_prediction_pipeline(pipeline, args):
     pipeline: the pipeline
     args: command line args
   """
-  predicted_values, errors = (
-      pipeline
-      | 'Read CSV Files'
-      >> beam.io.ReadFromText(str(args.predict_data),  # DF bug: DF does not work with unicode strings
-                              strip_trailing_newlines=True)
-      | 'Batch Input'
-      >> beam.ParDo(EmitAsBatchDoFn(args.batch_size))
-      | 'Run TF Graph on Batches'
-      >> (beam.ParDo(RunGraphDoFn(args.trained_model_dir))
-          .with_outputs('errors', main='main')))
 
-  _ = (
-    (predicted_values, errors)
-    | 'Format and Save'
-    >> FormatAndSave(args))
+  # DF bug: DF does not work with unicode strings
+  predicted_values, errors = (
+      pipeline |
+      'Read CSV Files' >>
+      beam.io.ReadFromText(str(args.predict_data),
+                           strip_trailing_newlines=True) |
+      'Batch Input' >>
+      beam.ParDo(EmitAsBatchDoFn(args.batch_size)) |
+      'Run TF Graph on Batches' >>
+      beam.ParDo(RunGraphDoFn(args.trained_model_dir)).with_outputs('errors', main='main'))
+
+  ((predicted_values, errors) |
+   'Format and Save' >>
+   FormatAndSave(args))
 
 
 def main(argv=None):

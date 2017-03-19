@@ -69,7 +69,7 @@ class TestCases(unittest.TestCase):
 
   def test_parse_invalid_name(self):
     with self.assertRaises(Exception):
-      _ = TestCases._create_dataset('today@')
+      TestCases._create_dataset('today@')
 
   @mock.patch('datalab.bigquery._api.Api.datasets_get')
   def test_dataset_exists(self, mock_api_datasets_get):
@@ -88,7 +88,7 @@ class TestCases(unittest.TestCase):
 
     ds = TestCases._create_dataset('requestlogs')
     with self.assertRaises(Exception):
-      _ = ds.create()
+      ds.create()
 
   @mock.patch('datalab.bigquery._api.Api.datasets_insert')
   @mock.patch('datalab.bigquery._api.Api.datasets_get')
@@ -121,7 +121,7 @@ class TestCases(unittest.TestCase):
     mock_api_datasets_get.side_effect = datalab.utils.RequestException(404, None)
     ds = TestCases._create_dataset('requestlogs')
     with self.assertRaises(Exception):
-      _ = ds.delete()
+      ds.delete()
 
   @mock.patch('datalab.bigquery._api.Api.tables_list')
   def test_tables_list(self, mock_api_tables_list):

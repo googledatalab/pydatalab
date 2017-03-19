@@ -136,7 +136,7 @@ class TestCases(unittest.TestCase):
     args = {'s': 200}
 
     with self.assertRaises(Exception) as error:
-      _ = datalab.data.SqlStatement.format(query, args)
+      datalab.data.SqlStatement.format(query, args)
 
     e = error.exception
     self.assertEqual('Unsatisfied dependency $status', str(e))
@@ -145,7 +145,7 @@ class TestCases(unittest.TestCase):
     query = 'SELECT time FROM [logs.today] WHERE status == $0'
 
     with self.assertRaises(Exception) as error:
-      _ = datalab.data.SqlStatement.format(query, {})
+      datalab.data.SqlStatement.format(query, {})
 
     e = error.exception
     self.assertEqual(
@@ -159,19 +159,19 @@ class TestCases(unittest.TestCase):
     self.assertEquals('SELECT 3 as x', query1.sql)
 
     with self.assertRaises(Exception) as e:
-      _ = datalab.data.SqlStatement.format(query3)[0]
+      datalab.data.SqlStatement.format(query3)[0]
     self.assertEquals('Unsatisfied dependency $query2', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = datalab.data.SqlStatement.format(query3, {'query1': query1})
+      datalab.data.SqlStatement.format(query3, {'query1': query1})
     self.assertEquals('Unsatisfied dependency $query2', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = datalab.data.SqlStatement.format(query3, {'query2': query2})
+      datalab.data.SqlStatement.format(query3, {'query2': query2})
     self.assertEquals('Unsatisfied dependency $query1', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = datalab.data.SqlStatement.format(query3, {'query1': query1, 'query2': query2})
+      datalab.data.SqlStatement.format(query3, {'query1': query1, 'query2': query2})
     self.assertEquals('Unsatisfied dependency $count', str(e.exception))
 
     formatted_query =\
@@ -193,15 +193,15 @@ class TestCases(unittest.TestCase):
     args = {'query1': query1, 'query2': query2, 'query3': query3}
 
     with self.assertRaises(Exception) as e:
-      _ = datalab.data.SqlStatement.format('SELECT * FROM $query1', args)
+      datalab.data.SqlStatement.format('SELECT * FROM $query1', args)
     self.assertEquals('Circular dependency in $query1', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = datalab.data.SqlStatement.format('SELECT * FROM $query2', args)
+      datalab.data.SqlStatement.format('SELECT * FROM $query2', args)
     self.assertEquals('Circular dependency in $query2', str(e.exception))
 
     with self.assertRaises(Exception) as e:
-      _ = datalab.data.SqlStatement.format('SELECT * FROM $query3', args)
+      datalab.data.SqlStatement.format('SELECT * FROM $query3', args)
     self.assertEquals('Circular dependency in $query3', str(e.exception))
 
   def test_module_reference(self):
@@ -210,7 +210,7 @@ class TestCases(unittest.TestCase):
     m.__dict__[datalab.data._utils._SQL_MODULE_LAST] =\
         datalab.data.SqlStatement('SELECT * FROM $q1 LIMIT 10')
     with self.assertRaises(Exception) as e:
-      _ = datalab.data.SqlStatement.format('SELECT * FROM $s', {'s': m})
+      datalab.data.SqlStatement.format('SELECT * FROM $s', {'s': m})
     self.assertEquals('Unsatisfied dependency $q1', str(e.exception))
 
     formatted_query = datalab.data.SqlStatement.format('SELECT * FROM $s', {'s': m, 'q1': m.q1})

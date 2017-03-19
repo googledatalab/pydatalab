@@ -143,7 +143,6 @@ class Query(object):
       if query._udfs:
         udfs.extend([u for u in query._udfs if u not in udfs])
 
-    subqueries_sql = udfs_sql = ''
     _recurse_subqueries(self)
 
     if udfs:
@@ -286,7 +285,7 @@ class Query(object):
     # Otherwise, build an async Job that waits on the query execution then carries out
     # the specific export operation
     else:
-      export_job = export_args = export_kwargs = None
+      export_args = export_kwargs = None
       if output_options.type == 'file':
         if output_options.file_path.startswith('gs://'):
           export_func = execute_job.result().extract

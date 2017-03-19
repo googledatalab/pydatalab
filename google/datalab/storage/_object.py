@@ -280,7 +280,7 @@ class Objects(object):
       Exception if there was an error requesting information about the object.
     """
     try:
-      _ = self._api.objects_get(self._bucket, key)
+      self._api.objects_get(self._bucket, key)
     except google.datalab.utils.RequestException as e:
       if e.status == 404:
         return False

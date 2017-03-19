@@ -17,7 +17,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-from google.datalab.utils._utils import *
+from google.datalab.utils import _utils as du
 
 
 class Context(object):
@@ -66,7 +66,7 @@ class Context(object):
     """ Set the project_id for the context. """
     self._project_id = project_id
     if self == Context._global_context:
-      save_project_id(self._project_id)
+      du.save_project_id(self._project_id)
 
   @property
   def config(self):
@@ -85,7 +85,7 @@ class Context(object):
   def _is_signed_in():
     """ If the user has signed in or it is on GCE VM with default credential."""
     try:
-      get_credentials()
+      du.get_credentials()
       return True
     except Exception:
       return False
@@ -111,8 +111,8 @@ class Context(object):
     Returns:
       An initialized and shared instance of a Context object.
     """
-    credentials = get_credentials()
-    project = get_default_project_id()
+    credentials = du.get_credentials()
+    project = du.get_default_project_id()
     if Context._global_context is None:  
       config = Context._get_default_config()
       Context._global_context = Context(project, credentials, config)
