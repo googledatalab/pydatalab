@@ -29,9 +29,10 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import google.datalab
-import google.datalab.storage
-import google.datalab.storage.commands
+
+import google.datalab  # noqa
+import google.datalab.storage  # noqa
+import google.datalab.storage.commands  # noqa
 
 
 class TestCases(unittest.TestCase):
@@ -70,7 +71,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual(['gs://foo', 'gs://bar'], objects)
 
     objects = google.datalab.storage.commands._storage._expand_list(['gs://foo/*', 'gs://bar'])
-    self.assertEqual(['gs://foo/object1', 'gs://foo/object2', 'gs://foo/object3', 'gs://bar'], objects)
+    self.assertEqual(['gs://foo/object1', 'gs://foo/object2', 'gs://foo/object3', 'gs://bar'],
+                     objects)
 
     objects = google.datalab.storage.commands._storage._expand_list(['gs://bar/o*'])
     self.assertEqual(['gs://bar/object1', 'gs://bar/object3'], objects)
@@ -120,7 +122,8 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.storage.commands._storage._gcs_copy', autospec=True)
   def test_gcs_copy_magic(self, mock_gcs_copy):
-    google.datalab.storage.commands._storage.gcs('copy --source gs://foo/object1 --destination gs://foo/bar1')
+    google.datalab.storage.commands._storage.gcs('copy --source gs://foo/object1 '
+                                                 '--destination gs://foo/bar1')
     mock_gcs_copy.assert_called_with({
         'source': ['gs://foo/object1'],
         'destination': 'gs://foo/bar1',

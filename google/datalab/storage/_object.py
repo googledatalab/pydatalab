@@ -300,7 +300,8 @@ class Objects(object):
     objects = list_info.get('items', [])
     if len(objects):
       try:
-        objects = [Object(self._bucket, info['name'], info, context=self._context) for info in objects]
+        objects = [Object(self._bucket, info['name'], info, context=self._context)
+                   for info in objects]
       except KeyError:
         raise Exception('Unexpected response from server')
 

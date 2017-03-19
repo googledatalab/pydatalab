@@ -423,9 +423,10 @@ class Query(object):
       An exception if the query was malformed.
     """
     try:
-      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports, dry_run=True,
-                                                 table_definitions=self._external_tables, dialect=dialect,
-                                                 billing_tier=billing_tier)
+      query_result = self._api.jobs_insert_query(self._sql, self._code, self._imports,
+                                                 dry_run=True,
+                                                 table_definitions=self._external_tables,
+                                                 dialect=dialect, billing_tier=billing_tier)
     except Exception as e:
       raise e
     return query_result['statistics']['query']

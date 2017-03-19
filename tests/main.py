@@ -17,7 +17,8 @@ import sys
 import unittest
 
 # Set up the path so that we can import our google.datalab.* packages.
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../google.datalab')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             '../../google.datalab')))  # noqa
 
 import bigquery.api_tests
 import bigquery.dataset_tests

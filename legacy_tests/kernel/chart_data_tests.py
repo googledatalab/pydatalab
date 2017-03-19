@@ -20,6 +20,8 @@ import unittest
 import IPython.core.display
 import IPython.core.magic
 
+import datalab.utils.commands
+
 
 def noop_decorator(func):
   return func
@@ -29,8 +31,6 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
-
-import datalab.utils.commands
 
 
 class TestCases(unittest.TestCase):

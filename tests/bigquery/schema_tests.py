@@ -26,7 +26,8 @@ class TestCases(unittest.TestCase):
   def test_schema_from_dataframe(self):
     df = TestCases._create_data_frame()
     result = google.datalab.bigquery.Schema.from_data(df)
-    self.assertEqual(google.datalab.bigquery.Schema.from_data(TestCases._create_inferred_schema()), result)
+    self.assertEqual(google.datalab.bigquery.Schema.from_data(TestCases._create_inferred_schema()),
+                     result)
 
   def test_schema_from_data(self):
     variant1 = [

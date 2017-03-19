@@ -315,7 +315,8 @@ def _split_cell(cell, module):
       if select_match:
         # Avoid matching if previous token was '(' or if Standard SQL is found
         # TODO: handle the possibility of comments immediately preceding SELECT
-        select_match = len(prior_content) == 0 or (prior_content[-1] != '(' and not standard_sql_re.match(prior_content))
+        select_match = len(prior_content) == 0 or\
+                       (prior_content[-1] != '(' and not standard_sql_re.match(prior_content))
       if standard_sql_match:
         standard_sql_match = len(prior_content) == 0 or not standard_sql_re.match(prior_content)
 

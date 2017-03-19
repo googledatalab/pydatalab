@@ -100,7 +100,8 @@ def predict(model, image_files, resize=False, show_image=True, cloud=None):
     image_files: The paths to the image files to predict labels. Can be local or GCS paths.
     resize: Whether to resize the image to a reasonable size (300x300) before prediction.
     show_image: Whether to show images in the results.
-    cloud: if None, predicts with offline model locally. Otherwise, predict with a deployed online model.
+    cloud: if None, predicts with offline model locally. Otherwise, predict with a deployed online
+        model.
 
   Returns:
     A pandas DataFrame including the prediction results.

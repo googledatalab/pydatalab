@@ -21,7 +21,8 @@ import datalab.data
 class TestCases(unittest.TestCase):
 
   def test_sql_tokenizer(self):
-    query = "SELECT * FROM function(SELECT * FROM [table])  -- a comment\nWHERE x>0 AND y == 'cat'/*\nmulti-line comment */LIMIT 10"
+    query = "SELECT * FROM function(SELECT * FROM [table])  -- a comment\n" \
+            "WHERE x>0 AND y == 'cat'/*\nmulti-line comment */LIMIT 10"
     tokens = datalab.data.tokenize(query)
     # Make sure we get all the content
     self.assertEquals(''.join(tokens), query)

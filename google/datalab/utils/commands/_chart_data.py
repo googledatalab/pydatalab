@@ -75,4 +75,5 @@ def _get_chart_data(line, cell_body=''):
   # for datetimes, but it is strictly wrong. The correct way below may have issues if the
   # chart has datetimes though so test this.
   return IPython.core.display.JSON({'data': data, 'refresh_interval': refresh, 'options': options})
-  # return IPython.core.display.JSON(json.dumps({'data': data}, cls=google.datalab.utils.JSONEncoder))
+  # return IPython.core.display.JSON(json.dumps({'data': data},
+  #                                             cls=google.datalab.utils.JSONEncoder))

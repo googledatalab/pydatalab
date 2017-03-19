@@ -364,7 +364,9 @@ def _create_cell(args, cell_body):
       print('Failed to create %s: no schema specified' % args['name'])
     else:
       try:
-        record = datalab.utils.commands.parse_config(cell_body, datalab.utils.commands.notebook_environment(), as_dict=False)
+        record = datalab.utils.commands.parse_config(cell_body,
+                                                     datalab.utils.commands.notebook_environment(),
+                                                     as_dict=False)
         schema = datalab.bigquery.Schema(record)
         datalab.bigquery.Table(args['name']).create(schema=schema, overwrite=args['overwrite'])
       except Exception as e:
@@ -968,7 +970,8 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     meta_cost = ''
     meta_time = ''
 
-  data, total_count = datalab.utils.commands.get_data(table, fields, first_row=0, count=rows_per_page)
+  data, total_count = datalab.utils.commands.get_data(table, fields, first_row=0,
+                                                      count=rows_per_page)
 
   if total_count < 0:
     # The table doesn't have a length metadata property but may still be small if we fetched less
@@ -982,10 +985,12 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   meta_data = '(%s)' % (', '.join([entry for entry in meta_entries if len(entry)]))
 
   return _HTML_TEMPLATE.format(div_id=div_id,
-                               static_table=datalab.utils.commands.HtmlBuilder.render_chart_data(data),
+                               static_table=
+                               datalab.utils.commands.HtmlBuilder.render_chart_data(data),
                                meta_data=meta_data,
                                chart_style=chart,
-                               source_index=datalab.utils.commands.get_data_source_index(str(table)),
+                               source_index=
+                               datalab.utils.commands.get_data_source_index(str(table)),
                                fields=','.join(fields),
                                total_rows=total_count,
                                rows_per_page=rows_per_page,

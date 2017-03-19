@@ -109,7 +109,7 @@ def run_numerical_categorical_analysis(args, schema_list):
 
             # if empty, skip
             if not parsed_line[col_name].strip():
-              continue;
+              continue
 
             numerical_results[col_name]['min'] = (
               min(numerical_results[col_name]['min'],

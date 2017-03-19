@@ -20,6 +20,10 @@ import unittest
 import IPython
 import IPython.core.magic
 
+import datalab.context
+import datalab.storage
+import datalab.storage.commands
+
 
 def noop_decorator(func):
   return func
@@ -28,10 +32,6 @@ IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
-
-import datalab.context
-import datalab.storage
-import datalab.storage.commands
 
 
 class TestCases(unittest.TestCase):
@@ -120,7 +120,8 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('datalab.storage.commands._storage._storage_copy', autospec=True)
   def test_storage_copy_magic(self, mock_storage_copy):
-    datalab.storage.commands._storage.storage('copy --source gs://foo/item1 --destination gs://foo/bar1')
+    datalab.storage.commands._storage.storage('copy --source gs://foo/item1 '
+                                              '--destination gs://foo/bar1')
     mock_storage_copy.assert_called_with({
         'source': ['gs://foo/item1'],
         'destination': 'gs://foo/bar1',

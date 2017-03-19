@@ -31,7 +31,7 @@ def wait_for_long_running_operation(operation_full_name):
   api = discovery.build('ml', 'v1', credentials=datalab.context.Context.default().credentials)
   while True:
     response = api.projects().operations().get(name=operation_full_name).execute()
-    if 'done' not in response or response['done'] != True:
+    if 'done' not in response or response['done'] is not True:
       time.sleep(3)
     else:
       if 'error' in response:

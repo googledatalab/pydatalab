@@ -115,7 +115,7 @@ class CsvFile(object):
     df = self.browse(1, None)
     # read each column as STRING because we only want to sample rows.
     schema_train = bq.Schema([{'name': name, 'type': 'STRING'} for name in df.keys()])
-    options = bq.CSVOptions(skip_leading_rows=(1 if skip_header_rows == True else 0))
+    options = bq.CSVOptions(skip_leading_rows=(1 if skip_header_rows is True else 0))
     return bq.ExternalDataSource(self.path,
                                  csv_options=options,
                                  schema=schema_train,
@@ -160,10 +160,10 @@ class CsvFile(object):
         google.datalab.utils.gcs_copy_file(self.path, local_file)
       with open(local_file) as f:
         row_count = sum(1 for line in f)
-      start_row = 1 if skip_header_rows == True else 0
-      skip_count = row_count - count - 1 if skip_header_rows == True else row_count - count
+      start_row = 1 if skip_header_rows is True else 0
+      skip_count = row_count - count - 1 if skip_header_rows is True else row_count - count
       skip = sorted(random.sample(xrange(start_row, row_count), skip_count))
-      header_row = 0 if skip_header_rows == True else None
+      header_row = 0 if skip_header_rows is True else None
       df = pd.read_csv(local_file, skiprows=skip, header=header_row, delimiter=self._delimiter)
       if self.path.startswith('gs://'):
         os.remove(local_file)

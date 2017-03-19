@@ -43,7 +43,8 @@ class TestCases(unittest.TestCase):
     self.assertEqual('/projects/a/datasets/b/tables/cd/data',
                      google.datalab.bigquery._api.Api._TABLEDATA_PATH % name)
     name = google.datalab.bigquery._utils.DatasetName('a', 'b')
-    self.assertEqual('/projects/a/datasets/b', google.datalab.bigquery._api.Api._DATASETS_PATH % name)
+    self.assertEqual('/projects/a/datasets/b',
+                     google.datalab.bigquery._api.Api._DATASETS_PATH % name)
 
   def test_parse_full_name(self):
     table = TestCases._create_table('test.requestlogs.today')

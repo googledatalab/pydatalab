@@ -167,7 +167,8 @@ def _expand_list(names):
         # Expand possible key values.
         if bucket not in items and key[:1] == '*':
           # We need the full list; cache a copy for efficiency.
-          items[bucket] = [item.metadata.name for item in list(datalab.storage.Bucket(bucket).items())]
+          items[bucket] = [item.metadata.name
+                           for item in list(datalab.storage.Bucket(bucket).items())]
         # If we have a cached copy use it
         if bucket in items:
           candidates = items[bucket]

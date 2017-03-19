@@ -14,11 +14,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from future import standard_library
-standard_library.install_aliases()
+standard_library.install_aliases()  # noqa
 from builtins import object
 
 import google.datalab
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import google.datalab.utils
 
 
@@ -64,7 +66,8 @@ class Api(object):
     data = {'name': bucket}
 
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
-    return google.datalab.utils.Http.request(url, args=args, data=data, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, args=args, data=data,
+                                             credentials=self._credentials)
 
   def buckets_delete(self, bucket):
     """Issues a request to delete a bucket.
@@ -257,7 +260,8 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return google.datalab.utils.Http.request(url, method='PATCH', data=info, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, method='PATCH', data=info,
+                                             credentials=self._credentials)
 
   @staticmethod
   def _escape_key(key):

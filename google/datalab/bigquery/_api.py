@@ -150,8 +150,8 @@ class Api(object):
           priority, more expensive).
       allow_large_results: whether to allow large results (slower with some restrictions but
           can handle big jobs).
-      table_definitions: a dictionary of ExternalDataSource names and objects for any external tables
-          referenced in the query.
+      table_definitions: a dictionary of ExternalDataSource names and objects for any external
+          tables referenced in the query.
       query_params: a dictionary containing query parameter types and values, passed to BigQuery.
     Returns:
       A parsed result object.

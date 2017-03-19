@@ -30,7 +30,8 @@ IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
 
-import google.datalab.utils.commands
+
+import google.datalab.utils.commands  # noqa
 
 
 class TestCases(unittest.TestCase):

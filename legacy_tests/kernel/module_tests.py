@@ -20,6 +20,8 @@ import unittest
 import IPython
 import IPython.core.magic
 
+import datalab.utils.commands
+
 
 def noop_decorator(func):
   return func
@@ -28,8 +30,6 @@ IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
-
-import datalab.utils.commands
 
 
 class TestCases(unittest.TestCase):

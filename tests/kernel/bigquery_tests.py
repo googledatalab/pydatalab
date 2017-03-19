@@ -29,10 +29,11 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import google.datalab
-import google.datalab.bigquery
-import google.datalab.bigquery.commands
-import google.datalab.utils.commands
+
+import google.datalab  # noqa
+import google.datalab.bigquery  # noqa
+import google.datalab.bigquery.commands  # noqa
+import google.datalab.utils.commands  # noqa
 
 
 class TestCases(unittest.TestCase):

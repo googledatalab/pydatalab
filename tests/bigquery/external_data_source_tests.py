@@ -112,7 +112,8 @@ class TestCases(unittest.TestCase):
     options = google.datalab.bigquery.CSVOptions(skip_leading_rows=1)
     sql = 'SELECT * FROM weight'
 
-    weight = google.datalab.bigquery.ExternalDataSource(table_uri, schema=schema, csv_options=options)
+    weight = google.datalab.bigquery.ExternalDataSource(table_uri, schema=schema,
+                                                        csv_options=options)
     q = google.datalab.bigquery.Query(sql, data_sources={'weight': weight})
     q.execute_async()
 

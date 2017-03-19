@@ -48,7 +48,8 @@ class TestCases(unittest.TestCase):
     self._check_name_parts(dataset)
 
   def test_parse_named_tuple_name(self):
-    dataset = TestCases._create_dataset(google.datalab.bigquery._utils.DatasetName('test', 'requestlogs'))
+    dataset = TestCases._create_dataset(google.datalab.bigquery._utils.DatasetName('test',
+                                                                                   'requestlogs'))
     self._check_name_parts(dataset)
 
   def test_parse_tuple_full_name(self):
@@ -153,7 +154,8 @@ class TestCases(unittest.TestCase):
       ]
     }
     mock_dataset_get_info.return_value = {}
-    datasets = [dataset for dataset in google.datalab.bigquery.Datasets(TestCases._create_context())]
+    datasets = [dataset
+                for dataset in google.datalab.bigquery.Datasets(TestCases._create_context())]
     self.assertEqual(2, len(datasets))
     self.assertEqual('p.d1', str(datasets[0]))
     self.assertEqual('p.d2', str(datasets[1]))

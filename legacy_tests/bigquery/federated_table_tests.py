@@ -112,7 +112,8 @@ class TestCases(unittest.TestCase):
     options = datalab.bigquery.CSVOptions(skip_leading_rows=1)
     sql = 'SELECT * FROM weight'
 
-    weight = datalab.bigquery.FederatedTable.from_storage(table_uri, schema=schema, csv_options=options)
+    weight = datalab.bigquery.FederatedTable.from_storage(table_uri, schema=schema,
+                                                          csv_options=options)
     q = datalab.bigquery.Query(sql, data_sources={'weight': weight}, context=self._create_context())
     q.execute_async()
 
@@ -159,7 +160,8 @@ class TestCases(unittest.TestCase):
     weight1 = datalab.bigquery.FederatedTable.from_storage(table_uri1, schema=schema,
                                                        csv_options=options)
     weight2 = datalab.bigquery.FederatedTable.from_storage(table_uri2, schema=schema)
-    q = datalab.bigquery.Query(sql, weight1=weight1, weight2=weight2, context=self._create_context())
+    q = datalab.bigquery.Query(sql, weight1=weight1, weight2=weight2,
+                               context=self._create_context())
     q.execute_async()
 
     table_definition1 = self._get_table_definition(table_uri1, skip_rows=1)

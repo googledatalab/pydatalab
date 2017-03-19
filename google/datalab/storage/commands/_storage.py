@@ -73,8 +73,8 @@ for help on a specific command.
   #
   # This is despite 'name' being identified as writable in the storage API docs.
   # The alternative would be to use a copy/delete.
-  copy_parser = parser.subcommand('copy',
-                                  'Copy one or more Google Cloud Storage objects to a different location.')
+  copy_parser = parser.subcommand('copy','Copy one or more Google Cloud Storage objects to a '
+                                         'different location.')
   copy_parser.add_argument('-s', '--source', help='The name of the object(s) to copy', nargs='+')
   copy_parser.add_argument('-d', '--destination', required=True,
       help='The copy destination. For multiple source objects this must be a bucket.')
@@ -86,7 +86,8 @@ for help on a specific command.
                              nargs='+')
   create_parser.set_defaults(func=_gcs_create)
 
-  delete_parser = parser.subcommand('delete', 'Delete one or more Google Cloud Storage buckets or objects.')
+  delete_parser = parser.subcommand('delete', 'Delete one or more Google Cloud Storage buckets or '
+                                              'objects.')
   delete_parser.add_argument('-b', '--bucket', nargs='*',
                              help='The name of the bucket(s) to remove')
   delete_parser.add_argument('-o', '--object', nargs='*',
@@ -100,8 +101,8 @@ for help on a specific command.
                      nargs='?')
   list_parser.set_defaults(func=_gcs_list)
 
-  read_parser = parser.subcommand('read',
-                                  'Read the contents of a Google Cloud Storage object into a Python variable.')
+  read_parser = parser.subcommand('read', 'Read the contents of a Google Cloud Storage object into '
+                                          'a Python variable.')
   read_parser.add_argument('-o', '--object', help='The name of the object to read',
                            required=True)
   read_parser.add_argument('-v', '--variable', required=True,
@@ -117,8 +118,8 @@ for help on a specific command.
                            required=True)
   view_parser.set_defaults(func=_gcs_view)
 
-  write_parser = parser.subcommand('write',
-                                   'Write the value of a Python variable to a Google Cloud Storage object.')
+  write_parser = parser.subcommand('write', 'Write the value of a Python variable to a Google '
+                                            'Cloud Storage object.')
   write_parser.add_argument('-v', '--variable', help='The name of the source Python variable',
                             required=True)
   write_parser.add_argument('-o', '--object', required=True,
@@ -163,7 +164,8 @@ def _expand_list(names):
         # Expand possible key values.
         if bucket not in objects and key[:1] == '*':
           # We need the full list; cache a copy for efficiency.
-          objects[bucket] = [obj.metadata.name for obj in list(google.datalab.storage.Bucket(bucket).objects())]
+          objects[bucket] = [obj.metadata.name
+                             for obj in list(google.datalab.storage.Bucket(bucket).objects())]
         # If we have a cached copy use it
         if bucket in objects:
           candidates = objects[bucket]

@@ -72,7 +72,8 @@ class Query(object):
             raise Exception('Expected type: %s, found: %s.' % (obj_type, type(value)))
 
         else:
-          raise Exception('Unexpected container for type %s. Expected a list or dictionary' % obj_type)
+          raise Exception('Unexpected container for type %s. Expected a list or dictionary'
+                          % obj_type)
 
         target_list.append((item, value))
 
@@ -154,7 +155,8 @@ class Query(object):
 
     if subqueries:
       expanded_sql += 'WITH ' + \
-                      '\n),\n'.join(['%s AS (\n%s' % (sq[0], _indent_query(sq[1])) for sq in subqueries])
+                      '\n),\n'.join(['%s AS (\n%s' % (sq[0], _indent_query(sq[1]))
+                                     for sq in subqueries])
       expanded_sql += '\n)\n\n'
 
     expanded_sql += sampling(self._sql) if sampling else self._sql
@@ -241,7 +243,7 @@ class Query(object):
     """
 
     # Default behavior is to execute to a table
-    if output_options == None:
+    if output_options is None:
       output_options = QueryOutput.table()
 
     # First, execute the query into a table, using a temporary one if no name is specified

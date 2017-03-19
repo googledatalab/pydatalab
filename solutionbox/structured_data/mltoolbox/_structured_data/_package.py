@@ -159,7 +159,7 @@ def analyze_async(output_dir, dataset, cloud=False, project_id=None):
     A google.datalab.utils.Job object that can be used to query state from or wait.
   """
   import google.datalab.utils as du
-  fn = lambda : _analyze(output_dir, dataset, cloud, project_id)
+  fn = lambda: _analyze(output_dir, dataset, cloud, project_id)  # noqa
   return du.LambdaJob(fn, job_id=None)
 
 def _analyze(output_dir, dataset, cloud=False, project_id=None):

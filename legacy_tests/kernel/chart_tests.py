@@ -18,6 +18,8 @@ import unittest
 import IPython.core.display
 import IPython.core.magic
 
+import datalab.utils.commands
+
 
 def noop_decorator(func):
   return func
@@ -28,15 +30,14 @@ IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
 
-import datalab.utils.commands
-
 
 class TestCases(unittest.TestCase):
 
   def test_chart_cell(self):
     t = [{'country': 'US', 'quantity': 100}, {'country': 'ZA', 'quantity': 50}]
     IPython.get_ipython().user_ns = {}
-    chart = datalab.utils.commands._chart._chart_cell({'chart': 'geo', 'data': t, 'fields': None}, '')
+    chart = datalab.utils.commands._chart._chart_cell({'chart': 'geo', 'data': t, 'fields': None},
+                                                      '')
     self.assertTrue(chart.find('charts.render(') > 0)
     self.assertTrue(chart.find('\'geo\'') > 0)
     self.assertTrue(chart.find('"fields": "*"') > 0)

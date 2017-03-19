@@ -140,7 +140,8 @@ class RunGraphDoFn(beam.DoFn):
     from tensorflow.python.saved_model import tag_constants
     from tensorflow.contrib.session_bundle import bundle_shim
 
-    self._session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(self._trained_model_dir, tags=[tag_constants.SERVING])
+    self._session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(
+        self._trained_model_dir, tags=[tag_constants.SERVING])
     signature = meta_graph.signature_def['serving_default']
 
     # get the mappings between aliases and tensor names
@@ -273,7 +274,8 @@ class FormatAndSave(beam.PTransform):
       from tensorflow.contrib.session_bundle import bundle_shim
       from tensorflow.core.framework import types_pb2
 
-      session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(args.trained_model_dir, tags=[tag_constants.SERVING])
+      session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(
+          args.trained_model_dir, tags=[tag_constants.SERVING])
       signature = meta_graph.signature_def['serving_default']
 
       self._schema = []

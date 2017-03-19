@@ -30,9 +30,10 @@ IPython.core.magic.register_line_magic = mock.Mock()
 IPython.core.magic.register_cell_magic = mock.Mock()
 IPython.get_ipython = mock.Mock()
 
-import google.datalab
-import google.datalab.bigquery
-import google.datalab.utils.commands
+
+import google.datalab  # noqa
+import google.datalab.bigquery  # noqa
+import google.datalab.utils.commands  # noqa
 
 
 class TestCases(unittest.TestCase):
@@ -147,10 +148,10 @@ class TestCases(unittest.TestCase):
       [51, 52, '53', True, 0.6, dt.datetime(2000, 1, 6)],
     ]
 
-    self._test_get_data(test_data, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-         google.datalab.utils.commands._utils._get_data_from_list_of_lists)
-    self._test_get_data(test_data, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-         google.datalab.utils.commands._utils.get_data)
+    self._test_get_data(test_data, TestCases._get_expected_cols(), TestCases._get_expected_rows(),
+                        6, google.datalab.utils.commands._utils._get_data_from_list_of_lists)
+    self._test_get_data(test_data, TestCases._get_expected_cols(), TestCases._get_expected_rows(),
+                        6, google.datalab.utils.commands._utils.get_data)
 
   def test_get_data_from_dataframe(self):
     df = pandas.DataFrame(self._get_test_data_as_list_of_dicts())

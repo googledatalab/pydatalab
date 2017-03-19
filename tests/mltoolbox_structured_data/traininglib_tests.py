@@ -15,7 +15,10 @@ import logging
 import os
 import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../solutionbox/structured_data/')))
+# Set up the path so that we can import local packages.
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             '../../solutionbox/structured_data/')))  # noqa
+
 import test_mltoolbox.test_sd_trainer as sdtraining
 
 

@@ -67,7 +67,7 @@ class Summary(object):
           for value in event.summary.value:
             if value.simple_value is None or value.tag is None:
               continue
-            if not value.tag in event_dir_dict:
+            if value.tag not in event_dir_dict:
               event_dir_dict[value.tag] = set()
             event_dir_dict[value.tag].add(dir)
       except:
