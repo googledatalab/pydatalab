@@ -135,4 +135,3 @@ def tokenize(sql):
     A list of strings corresponding to the groups above.
   """
   return list(_next_token(sql))
-

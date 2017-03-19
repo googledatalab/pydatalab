@@ -82,4 +82,3 @@ class ExternalDataSource(object):
     if self._schema:
       json['schema'] = {'fields': self._schema._bq_schema}
     return json
-

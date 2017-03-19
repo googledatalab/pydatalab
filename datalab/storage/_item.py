@@ -289,4 +289,3 @@ class Items(object):
 
   def __iter__(self):
     return iter(datalab.utils.Iterator(self._retrieve_items))
-

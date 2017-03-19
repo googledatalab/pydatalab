@@ -115,7 +115,7 @@ def serving_from_csv_input(train_config, args, keep_target):
   return input_fn_utils.InputFnOps(features,
                                    target,
                                    {'csv_line': examples}
-  )    
+  )
 
 
 def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target=True):
@@ -140,12 +140,12 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
 
       # TODO(brandondutra): get the score of the target label too.
       probabilities = model_fn_ops.predictions['probabilities']
-      
+
       # get top k labels and their scores.
       (top_k_values, top_k_indices) = tf.nn.top_k(probabilities, k=args.top_n)
       top_k_labels = table.lookup(tf.to_int64(top_k_indices))
-   
-      # Write the top_k values using 2*top_k columns. 
+
+      # Write the top_k values using 2*top_k columns.
       num_digits = int(math.ceil(math.log(args.top_n, 10)))
       if num_digits == 0:
         num_digits = 1
@@ -160,7 +160,7 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
           label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
 
         label_tensor_name = (tf.squeeze(
-              tf.slice(top_k_labels, 
+              tf.slice(top_k_labels,
                        [0, i],
                        [tf.shape(top_k_labels)[0], 1])))
 
@@ -170,8 +170,8 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
           score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
 
         score_tensor_name = (tf.squeeze(
-            tf.slice(top_k_values, 
-                     [0, i], 
+            tf.slice(top_k_values,
+                     [0, i],
                      [tf.shape(top_k_values)[0], 1])))
 
         outputs.update({label_alias: label_tensor_name,
@@ -191,22 +191,22 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
   def export_fn(estimator, export_dir_base, checkpoint_path=None, eval_result=None):
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
-     
-      input_ops = serving_from_csv_input(train_config, args, keep_target)      
-      model_fn_ops = estimator._call_model_fn(input_ops.features, 
+
+      input_ops = serving_from_csv_input(train_config, args, keep_target)
+      model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
       output_fetch_tensors = make_output_tensors(
-          train_config=train_config, 
+          train_config=train_config,
           args=args,
           input_ops=input_ops,
           model_fn_ops=model_fn_ops,
-          keep_target=keep_target) 
+          keep_target=keep_target)
 
       signature_def_map = {
-        'serving_default': 
+        'serving_default':
             signature_def_utils.predict_signature_def(
-                input_ops.default_inputs, 
+                input_ops.default_inputs,
                 output_fetch_tensors)
       }
 
@@ -290,7 +290,7 @@ def parse_example_tensor(examples, train_config, keep_target):
   Args:
     examples: string tensor
     train_config: training config
-    keep_target: if true, the target column is expected to exist and it is 
+    keep_target: if true, the target column is expected to exist and it is
         returned in the features dict.
 
   Returns:
@@ -301,7 +301,7 @@ def parse_example_tensor(examples, train_config, keep_target):
   if keep_target:
     csv_header = train_config['csv_header']
   else:
-    csv_header = [name for name in train_config['csv_header'] 
+    csv_header = [name for name in train_config['csv_header']
                   if name != train_config['target_column']]
 
   # record_defaults are used by tf.decode_csv to insert defaults, and to infer
@@ -526,7 +526,7 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
         continue
       transform_config = train_config['transforms'].get(name, {})
       transform_name = transform_config.get('transform', None)
-      
+
       if is_dnn_model(model_type):
         if (transform_name == 'embedding' or
             transform_name == 'one_hot' or
@@ -567,10 +567,9 @@ def _scale_tensor(tensor, range_min, range_max, scale_min, scale_max):
     return tensor
 
   float_tensor = tf.to_float(tensor)
-  scaled_tensor = tf.divide(
-      (tf.subtract(float_tensor, range_min)
-       * tf.constant(float(scale_max - scale_min))),
-      tf.constant(float(range_max - range_min)))
+  scaled_tensor = tf.divide((tf.subtract(float_tensor, range_min) *
+                             tf.constant(float(scale_max - scale_min))),
+                            tf.constant(float(range_max - range_min)))
   shifted_tensor = scaled_tensor + tf.constant(float(scale_min))
 
   return shifted_tensor
@@ -611,7 +610,7 @@ def _tflearn_features(train_config, args):
       # for linear
       # 1) string -> sparse_column_with_hash_bucket (embedding)
       # 2) string -> make int -> sparse_column_with_integerized_feature (one_hot, default)
-      # It is unfortunate that tf.layers has different feature transforms if the 
+      # It is unfortunate that tf.layers has different feature transforms if the
       # model is linear or DNN. This pacakge should not expose to the user that
       # we are using tf.layers. It is crazy that DNN models support more feature
       # types (like string -> hash sparse column -> embedding)
@@ -729,8 +728,8 @@ def merge_metadata(preprocess_output_dir, transforms_file):
   result_dict['categorical_columns'] = []
   result_dict['numerical_columns'] = []
   result_dict['transforms'] = {}
-  result_dict['csv_defaults'] = {}  
-  result_dict['vocab_stats'] = {}  
+  result_dict['csv_defaults'] = {}
+  result_dict['vocab_stats'] = {}
 
   # get key column.
   for name, trans_config in transforms.iteritems():
@@ -831,13 +830,13 @@ def validate_metadata(train_config):
   # Check there are no missing columns. sorted_colums has two copies of the
   # target column because the target column is also listed in
   # categorical_columns or numerical_columns.
-  sorted_columns = sorted(train_config['csv_header']
-                          + [train_config['target_column']])
+  sorted_columns = sorted(train_config['csv_header'] +
+                          [train_config['target_column']])
 
-  sorted_columns2 = sorted(train_config['categorical_columns']
-                           + train_config['numerical_columns']
-                           + [train_config['key_column']]
-                           + [train_config['target_column']])
+  sorted_columns2 = sorted(train_config['categorical_columns'] +
+                           train_config['numerical_columns'] +
+                           [train_config['key_column']] +
+                           [train_config['target_column']])
   if sorted_columns2 != sorted_columns:
     raise ValueError('Each csv header must be a numerical/categorical type, a '
                      ' key, or a target.')

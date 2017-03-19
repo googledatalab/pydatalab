@@ -57,7 +57,7 @@ class Job(datalab.Job):
     job_yaml = yaml.safe_dump(self._info, default_flow_style=False)
     print job_yaml
 
-  @staticmethod 
+  @staticmethod
   def submit_training(job_request, job_id=None):
     """Submit a training job.
 
@@ -95,13 +95,13 @@ class Job(datalab.Job):
           args.append('--' + str(k))
           args.append(str(v))
       new_job_request['args'] = args
-    
+
     if job_id is None:
       job_id = datetime.datetime.now().strftime('%y%m%d_%H%M%S')
       if 'python_module' in new_job_request:
         job_id = new_job_request['python_module'].replace('.', '_') + \
             '_' + job_id
-        
+
     job = {
         'job_id': job_id,
         'training_input': new_job_request,

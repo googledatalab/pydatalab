@@ -252,4 +252,3 @@ class Job(object):
       else:
         concurrent.futures.wait(futures, timeout=Job._POLL_INTERVAL_SECONDS,
                                 return_when=return_when)
-

@@ -152,7 +152,7 @@ def analyze_async(output_dir, dataset, cloud=False, project_id=None):
     dataset: only CsvDataSet is supported currently.
     cloud: If False, runs analysis locally with Pandas. If Ture, runs analysis
         in the cloud with BigQuery.
-    project_id: Uses BigQuery with this project id. Default is datalab's 
+    project_id: Uses BigQuery with this project id. Default is datalab's
         default project id.
 
   Returns:
@@ -160,11 +160,11 @@ def analyze_async(output_dir, dataset, cloud=False, project_id=None):
   """
   import google.datalab.utils as du
   fn = lambda : _analyze(output_dir, dataset, cloud, project_id)
-  return du.LambdaJob(fn, job_id=None)  
+  return du.LambdaJob(fn, job_id=None)
 
 def _analyze(output_dir, dataset, cloud=False, project_id=None):
   import google.datalab.ml as ml
-  from . import preprocess 
+  from . import preprocess
 
   if not isinstance(dataset, ml.CsvDataSet):
     raise ValueError('Only CsvDataSet is supported')
@@ -184,7 +184,7 @@ def _analyze(output_dir, dataset, cloud=False, project_id=None):
   try:
     # write the schema file.
     _, schema_file_path = tempfile.mkstemp(dir=tmp_dir, suffix='.json',
-                                           prefix='schema')    
+                                           prefix='schema')
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
     args = ['preprocess',
@@ -224,7 +224,7 @@ def train_async(train_dataset,
           job_name_prefix='', # cloud param
           cloud=None, # cloud param
           ):
-  # NOTE: if you make a chane go this doc string, you MUST COPY it 4 TIMES in 
+  # NOTE: if you make a chane go this doc string, you MUST COPY it 4 TIMES in
   # mltoolbox.{classification|regression}.{dnn|linear}, but you must remove
   # the model_type parameter, and maybe change the layer_sizes and top_n
   # parameters!
@@ -295,15 +295,15 @@ def train_async(train_dataset,
     contains two additional args:
 
     cloud: A CloudTrainingConfig object.
-    job_name: Training job name. A default will be picked if None. 
-    job_name_prefix: If job_name is None, the job will be named 
-        '<job_name_prefix>_<timestamp>'.   
+    job_name: Training job name. A default will be picked if None.
+    job_name_prefix: If job_name is None, the job will be named
+        '<job_name_prefix>_<timestamp>'.
 
   Returns:
     A google.datalab.utils.Job object that can be used to query state from or wait.
   """
   import google.datalab.utils as du
-  
+
   if model_type not in ['linear_classification', 'linear_regression',
       'dnn_classification', 'dnn_regression']:
     raise ValueError('Unknown model_type %s' % model_type)
@@ -327,7 +327,7 @@ def train_async(train_dataset,
         epsilon=epsilon,
         job_name=job_name,
         job_name_prefix=job_name_prefix,
-        config=cloud,      
+        config=cloud,
     )
   else:
     def fn():
@@ -347,7 +347,7 @@ def train_async(train_dataset,
           layer_sizes=layer_sizes,
           learning_rate=learning_rate,
           epsilon=epsilon)
-    return du.LambdaJob(fn, job_id=None)  
+    return du.LambdaJob(fn, job_id=None)
 
 def local_train(train_dataset,
                 eval_dataset,
@@ -436,7 +436,7 @@ def local_train(train_dataset,
     if monitor_process:
       monitor_process.kill()
       monitor_process.wait()
-  
+
 
 def cloud_train(train_dataset,
                 eval_dataset,
@@ -532,7 +532,7 @@ def cloud_train(train_dataset,
 # Predict
 # ==============================================================================
 
-def predict(data, training_dir=None, model_name=None, model_version=None, 
+def predict(data, training_dir=None, model_name=None, model_version=None,
   cloud=False):
   """Runs prediction locally or on the cloud.
 
@@ -542,7 +542,7 @@ def predict(data, training_dir=None, model_name=None, model_version=None,
     model_name: deployed model name
     model_version: depoyed model version
     cloud: bool. If False, does local prediction and data and training_dir
-        must be set. If True, does cloud prediction and data, model_name, 
+        must be set. If True, does cloud prediction and data, model_name,
         and model_version must be set.
 
 
@@ -704,17 +704,17 @@ def cloud_predict(model_name, model_version, data):
 def batch_predict(training_dir, prediction_input_file, output_dir,
                   mode, batch_size=16, shard_files=True, output_format='csv',
                   cloud=False):
-  """Blocking versoin of batch_predict. 
+  """Blocking versoin of batch_predict.
 
   See documentation of batch_prediction_async.
   """
   job = batch_predict_async(
       training_dir=training_dir,
-      prediction_input_file=prediction_input_file, 
+      prediction_input_file=prediction_input_file,
       output_dir=output_dir,
-      mode=mode, 
-      batch_size=batch_size, 
-      shard_files=shard_files, 
+      mode=mode,
+      batch_size=batch_size,
+      shard_files=shard_files,
       output_format=output_format,
       cloud=cloud)
   job.wait()
@@ -728,9 +728,9 @@ def batch_predict_async(training_dir, prediction_input_file, output_dir,
 
   Args:
     training_dir: The output folder of training.
-    prediction_input_file: csv file pattern to a file. File must be on GCS if 
+    prediction_input_file: csv file pattern to a file. File must be on GCS if
         running cloud prediction
-    output_dir: output location to save the results. Must be a GSC path if 
+    output_dir: output location to save the results. Must be a GSC path if
         running cloud prediction.
     mode: 'evaluation' or 'prediction'. If 'evaluation', the input data must
         contain a target column. If 'prediction', the input data must not
@@ -753,7 +753,7 @@ def batch_predict_async(training_dir, prediction_input_file, output_dir,
     job = du.DataflowJob(runner_results)
   else:
     runner_results = local_batch_predict(training_dir,
-        prediction_input_file, output_dir, mode, batch_size, shard_files, 
+        prediction_input_file, output_dir, mode, batch_size, shard_files,
         output_format)
     job = du.LambdaJob(lambda: runner_results.wait_until_finish(),
         job_id=None)
@@ -828,4 +828,3 @@ def cloud_batch_predict(training_dir, prediction_input_file, output_dir,
          ]
 
   return predict_module.main(cmd)
-

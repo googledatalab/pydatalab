@@ -271,4 +271,3 @@ class Trainer(object):
     self.sv.summary_computed(session,
                              session.run(self.summary_op), self.global_step)
     self.sv.summary_writer.flush()
-

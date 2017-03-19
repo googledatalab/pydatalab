@@ -85,7 +85,7 @@ def run_numerical_categorical_analysis(args, schema_list):
 
   # initialize the results
   def _init_numerical_results():
-    return {'min': float('inf'), 
+    return {'min': float('inf'),
             'max': float('-inf'),
             'count': 0,
             'sum': 0.0}
@@ -112,10 +112,10 @@ def run_numerical_categorical_analysis(args, schema_list):
               continue;
 
             numerical_results[col_name]['min'] = (
-              min(numerical_results[col_name]['min'], 
+              min(numerical_results[col_name]['min'],
                   float(parsed_line[col_name])))
             numerical_results[col_name]['max'] = (
-              max(numerical_results[col_name]['max'], 
+              max(numerical_results[col_name]['max'],
                   float(parsed_line[col_name])))
             numerical_results[col_name]['count'] += 1
             numerical_results[col_name]['sum'] += float(parsed_line[col_name])
@@ -152,7 +152,7 @@ def run_analysis(args):
   run_numerical_categorical_analysis(args, schema_list)
 
   # Also save a copy of the schema in the output folder.
-  file_io.copy(args.schema_file, 
+  file_io.copy(args.schema_file,
                os.path.join(args.output_dir, SCHEMA_FILE),
                overwrite=True)
 

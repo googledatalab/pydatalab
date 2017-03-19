@@ -309,4 +309,3 @@ class Objects(object):
 
   def __iter__(self):
     return iter(google.datalab.utils.Iterator(self._retrieve_objects))
-

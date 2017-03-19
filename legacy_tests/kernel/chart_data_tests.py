@@ -75,5 +75,3 @@ class TestCases(unittest.TestCase):
     self.assertEquals({"data": {"rows": [],
                       "cols": [{"type": "string", "id": "country", "label": "country"}]},
                       "refresh_interval": 0, "options": {}}, data)
-
-

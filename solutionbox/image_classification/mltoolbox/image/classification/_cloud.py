@@ -63,7 +63,7 @@ class Cloud(object):
     _preprocess.configure_pipeline(p, train_dataset, eval_dataset, checkpoint,
         output_dir, job_name)
     # suppress DataFlow warnings about wheel package as extra package.
-    logger = logging.getLogger()		
+    logger = logging.getLogger()
     logger.setLevel(logging.ERROR)
     original_level = logger.getEffectiveLevel()
     try:
@@ -86,7 +86,7 @@ class Cloud(object):
 
     import google.datalab.ml as ml
     if checkpoint is None:
-      checkpoint = _util._DEFAULT_CHECKPOINT_GSURL    
+      checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
     staging_package_url = _util.repackage_to_staging(output_dir)
     job_args = {
       'input_dir': input_dir,
@@ -177,7 +177,7 @@ class Cloud(object):
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     p = beam.Pipeline('DataflowRunner', options=opts)
     _predictor.configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table)
-    logger = logging.getLogger()		
+    logger = logging.getLogger()
     logger.setLevel(logging.ERROR)
     original_level = logger.getEffectiveLevel()
     try:

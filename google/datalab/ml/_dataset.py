@@ -61,11 +61,11 @@ class CsvDataSet(object):
     else:
       with _util.open_local_or_gcs(schema_file, 'r') as f:
         self._schema = json.load(f)
-        
+
     if isinstance(file_pattern, basestring):
       file_pattern = [file_pattern]
     self._input_files = file_pattern
-    
+
     self._glob_files = []
     self._size = None
 
@@ -81,12 +81,12 @@ class CsvDataSet(object):
       for file in self._input_files:
         # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
         self._glob_files += [str(x) for x in _util.glob_files(file)]
-    
+
     return self._glob_files
-      
+
   @property
   def schema(self):
-    return self._schema  
+    return self._schema
 
   @property
   def size(self):
@@ -98,7 +98,7 @@ class CsvDataSet(object):
         self._size += sum(1 if line else 0 for line in _util.open_local_or_gcs(csv_file, 'r'))
 
     return self._size
-    
+
   def sample(self, n):
     """ Samples data into a Pandas DataFrame.
     Args:
@@ -127,7 +127,7 @@ class CsvDataSet(object):
       }
       names = [x['name'] for x in self._schema]
       dtype = {x['name']: _MAPPINGS.get(x['type'], object) for x in self._schema}
-    
+
     skip_count = row_total_count - n
     # Get all skipped indexes. These will be distributed into each file.
     # Note that random.sample will raise Exception if skip_count is greater than rows count.

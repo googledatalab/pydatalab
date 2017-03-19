@@ -85,4 +85,3 @@ class UDF(object):
                         implementation=implementation,
                         inputs=str(input_fields),
                         outputs=str(output_fields))
-

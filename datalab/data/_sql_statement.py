@@ -210,4 +210,3 @@ class SqlStatement(object):
       elif dollar:
         raise Exception('Invalid sql; $ with no following $ or identifier: %s.' % sql)
     return dependencies
-

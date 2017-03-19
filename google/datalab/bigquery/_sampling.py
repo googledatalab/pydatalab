@@ -143,4 +143,3 @@ class Sampling(object):
       return Sampling.sorted(fields=fields, field_name=key_field, ascending=ascending, count=count)
     else:
       raise Exception('Unsupported sampling method: %s' % method)
-

@@ -46,7 +46,7 @@ class TensorBoard(object):
       running_list.append({'pid': p.pid, 'logdir': args.logdir, 'port': args.port})
     return pd.DataFrame(running_list)
 
-  
+
   @staticmethod
   def start(logdir):
     """Start a TensorBoard instance.

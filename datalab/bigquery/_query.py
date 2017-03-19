@@ -540,4 +540,3 @@ class Query(object):
     # Do the import here to avoid circular dependencies at top-level.
     from . import _view
     return _view.View(view_name, self._context).create(self._sql)
-

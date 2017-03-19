@@ -122,5 +122,3 @@ class SqlModule(object):
     """
     sql, args = SqlModule.get_sql_statement_with_environment(sql, args)
     return _sql_statement.SqlStatement.format(sql._sql, args)
-
-

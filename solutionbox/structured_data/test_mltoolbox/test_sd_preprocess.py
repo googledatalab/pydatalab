@@ -53,7 +53,7 @@ class TestPreprocess(unittest.TestCase):
     self._logger.debug('TestPreprocess: removing test dir: ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
-  
+
   def _make_test_data(self, problem_type):
     """Makes input files to run preprocessing on.
 
@@ -90,7 +90,7 @@ class TestPreprocess(unittest.TestCase):
     self.assertEqual(sorted(expected_numerical_keys), sorted(analysis.keys()))
 
     # Check that the vocab files are made
-    expected_vocab_files = ['vocab_str1.csv', 'vocab_str2.csv', 
+    expected_vocab_files = ['vocab_str1.csv', 'vocab_str2.csv',
                             'vocab_str3.csv', 'vocab_key.csv']
     if problem_type == 'classification':
       expected_vocab_files.append('vocab_target.csv')

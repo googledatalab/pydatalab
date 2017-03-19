@@ -113,7 +113,7 @@ class Context(object):
     """
     credentials = du.get_credentials()
     project = du.get_default_project_id()
-    if Context._global_context is None:  
+    if Context._global_context is None:
       config = Context._get_default_config()
       Context._global_context = Context(project, credentials, config)
     else:

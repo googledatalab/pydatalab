@@ -68,7 +68,7 @@ def package_and_copy(package_root_dir, setup_py, output_tar_path):
   previous_cwd = os.getcwd()
   os.chdir(package_root_dir)
   try:
-    # Repackage. 
+    # Repackage.
     sdist = ['python', dest_setup_py, 'sdist', '--format=gztar', '-d', tempdir]
     subprocess.check_call(sdist)
 

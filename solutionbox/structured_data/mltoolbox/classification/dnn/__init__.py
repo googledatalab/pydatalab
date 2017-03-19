@@ -25,4 +25,3 @@ from mltoolbox._structured_data.__version__ import __version__
 
 __all__ = ['train', 'train_async', 'analyze', 'analyze_async', 'predict', 'batch_predict',
            'batch_predict_async', '__version__']
-

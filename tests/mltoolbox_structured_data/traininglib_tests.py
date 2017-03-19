@@ -23,10 +23,10 @@ class TestCoreTrainingLib(sdtraining.TestTrainer):
   """Wraps the training tests in the structured data package.
 
   Four problems/models are built:
-  	regression + dnn model
-  	regression + linear model
-  	classification + dnn model
-  	classification + linear model
+    regression + dnn model
+    regression + linear model
+    classification + dnn model
+    classification + linear model
 
   These tests take about 30 seconds to run.
   """
@@ -35,9 +35,8 @@ class TestCoreTrainingLib(sdtraining.TestTrainer):
     super(TestCoreTrainingLib, self).__init__(*args, **kwargs)
 
     # Test that training works, not that the model is good.
-    self._max_steps = 50  
+    self._max_steps = 50
     self._check_model_fit = False
 
     # Don't print debugging info as no other test does.
     self._logger.setLevel(logging.INFO)
-  

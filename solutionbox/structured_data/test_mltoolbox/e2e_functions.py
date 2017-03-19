@@ -27,7 +27,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
     filename: writes data to local csv file.
     num_rows: how many rows of data will be generated.
     problem_type: 'classification' or 'regression'. Changes the target value.
-    keep_target: if false, the csv file will have an empty column ',,' for the 
+    keep_target: if false, the csv file will have an empty column ',,' for the
         target.
   """
   random.seed(12321)
@@ -98,7 +98,7 @@ def make_preprocess_schema(filename, problem_type):
           "mode": "REQUIRED",
           "name": "target",
           "type": ("STRING" if problem_type == 'classification' else "FLOAT")
-      },        
+      },
       {
           "mode": "NULLABLE",
           "name": "num1",
@@ -128,7 +128,7 @@ def make_preprocess_schema(filename, problem_type):
           "mode": "NULLABLE",
           "name": "str3",
           "type": "STRING"
-      }  
+      }
   ]
   with open(filename, 'w') as f:
     f.write(json.dumps(schema))
@@ -144,7 +144,7 @@ def run_preprocess(output_dir, csv_filename, schema_filename, logger):
     logger: python logging object
   """
   preprocess_script = os.path.abspath(
-      os.path.join(os.path.dirname(__file__), 
+      os.path.join(os.path.dirname(__file__),
                    '../mltoolbox/_structured_data/preprocess/local_preprocess.py'))
 
   cmd = ['python', preprocess_script,
@@ -187,7 +187,7 @@ def run_training(
   # Gcloud has the fun bug that you have to be in the parent folder of task.py
   # when you call it. So cd there first.
   task_parent_folder = os.path.abspath(
-      os.path.join(os.path.dirname(__file__), 
+      os.path.join(os.path.dirname(__file__),
       '../mltoolbox/_structured_data'))
   cmd = ['cd %s &&' % task_parent_folder,
          'python -m trainer.task',
@@ -215,4 +215,3 @@ if __name__ == '__main__':
   make_csv_data('raw_eval_classification.csv', 1000, 'classification', True)
   make_csv_data('raw_predict_classification.csv', 100, 'classification', False)
   make_preprocess_schema('schema_classification.json', 'classification')
-

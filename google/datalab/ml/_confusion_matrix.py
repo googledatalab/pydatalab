@@ -98,7 +98,7 @@ class ConfusionMatrix(object):
       sql = '(' + sql + ')' # query, not a table name
     else:
       sql = '`' + sql + '`' # table name
-     
+
     query = bq.Query(
         'SELECT target, predicted, count(*) as count FROM %s group by target, predicted' % sql)
     df = query.execute().result().to_dataframe()
@@ -123,4 +123,3 @@ class ConfusionMatrix(object):
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-  

@@ -154,4 +154,3 @@ class QueryOutput(object):
   @property
   def dataframe_max_rows(self):
     return self._dataframe_max_rows
-

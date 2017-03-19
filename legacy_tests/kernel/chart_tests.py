@@ -40,7 +40,7 @@ class TestCases(unittest.TestCase):
     self.assertTrue(chart.find('charts.render(') > 0)
     self.assertTrue(chart.find('\'geo\'') > 0)
     self.assertTrue(chart.find('"fields": "*"') > 0)
-    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0 or 
+    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0 or
                     chart.find('{"c": [{"v": 100}, {"v": "US"}]}') > 0)
     self.assertTrue(chart.find('{"c": [{"v": "ZA"}, {"v": 50}]}') > 0 or
                     chart.find('{"c": [{"v": 50}, {"v": "ZA"}]}') > 0)

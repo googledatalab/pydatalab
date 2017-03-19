@@ -59,7 +59,7 @@ def parse_arguments(argv):
                       help='Input CSV file names. May contain a file pattern')
 
   # If using bigquery table
-  # TODO(brandondutra): maybe also support an sql input, so the table can be 
+  # TODO(brandondutra): maybe also support an sql input, so the table can be
   # ad-hoc.
   parser.add_argument('--bigquery-table',
                       type=str,
@@ -112,7 +112,7 @@ def run_numerical_analysis(table, schema_list, args):
   """Find min/max values for the numerical columns and writes a json file.
 
   Args:
-    table: Reference to FederatedTable (if bigquery_table is false) or a 
+    table: Reference to FederatedTable (if bigquery_table is false) or a
         regular Table (otherwise)
     schema_list: Bigquery schema json object
     args: the command line args
@@ -168,7 +168,7 @@ def run_categorical_analysis(table, schema_list, args):
   ...
 
   Args:
-    table: Reference to FederatedTable (if bigquery_table is false) or a 
+    table: Reference to FederatedTable (if bigquery_table is false) or a
         regular Table (otherwise)
     schema_list: Bigquery schema json object
     args: the command line args
@@ -203,10 +203,10 @@ def run_categorical_analysis(table, schema_list, args):
             ORDER BY
               {name}
       """.format(name=name, table=table_name)
-      out_file = os.path.join(args.output_dir, 
+      out_file = os.path.join(args.output_dir,
                               CATEGORICAL_ANALYSIS_FILE % name)
 
-      # extract_async seems to have a bug and sometimes hangs. So get the 
+      # extract_async seems to have a bug and sometimes hangs. So get the
       # results direclty.
       if args.bigquery_table:
         df = bq.Query(sql).execute().result().to_dataframe()

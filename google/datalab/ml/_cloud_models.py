@@ -111,16 +111,16 @@ class Models(object):
 
     IPython.display.display(
         datalab.utils.commands.render_dictionary(data, ['name', 'defaultVersion']))
-    
+
   def describe(self, model_name):
     """Print information of a specified model.
 
     Args:
       model_name: the name of the model to print details on.
-    """    
+    """
     model_yaml = yaml.safe_dump(self.get_model_details(model_name), default_flow_style=False)
     print model_yaml
-    
+
 
 class ModelVersions(object):
   """Represents a list of versions for a Cloud ML model."""
@@ -261,12 +261,12 @@ class ModelVersions(object):
 
     Raises:
       Exception if it is called in a non-IPython environment.
-    """    
+    """
     import IPython
 
     # "self" is iterable (see __iter__() method).
-    data = [{'name': version['name'].split()[-1], 
+    data = [{'name': version['name'].split()[-1],
              'deploymentUri': version['deploymentUri'], 'createTime': version['createTime']}
             for version in self.get_iterator()]
     IPython.display.display(
-        datalab.utils.commands.render_dictionary(data, ['name', 'deploymentUri', 'createTime'])) 
+        datalab.utils.commands.render_dictionary(data, ['name', 'deploymentUri', 'createTime']))

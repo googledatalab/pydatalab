@@ -40,8 +40,8 @@ def parse_arguments(argv):
                       action='store_true',
                       help='Run preprocessing on the cloud.')
   parser.add_argument('--job-name',
-                      default=('mltoolbox-batch-prediction-'
-                          + datetime.datetime.now().strftime('%Y%m%d%H%M%S')),
+                      default=('mltoolbox-batch-prediction-' +
+                               datetime.datetime.now().strftime('%Y%m%d%H%M%S')),
                       help='Dataflow job name. Must be unique over all jobs.')
   parser.add_argument('--extra-package',
                       default=[],
@@ -81,12 +81,12 @@ def parse_arguments(argv):
                       choices=['csv', 'json'],
                       default='csv',
                       help="""
-      The output results. 
-        raw_json: produces a newline file where each line is json. No 
+      The output results.
+        raw_json: produces a newline file where each line is json. No
             post processing is performed and the output matches what the trained
             model produces.
         csv: produces a csv file without a header row and a header csv file.
-            For classification problems, the vector of probabalities for each 
+            For classification problems, the vector of probabalities for each
             target class is split into individual csv columns.""")
 
   args, _ = parser.parse_known_args(args=argv[1:])
@@ -145,9 +145,9 @@ class RunGraphDoFn(beam.DoFn):
 
     # get the mappings between aliases and tensor names
     # for both inputs and outputs
-    self._input_alias_map = {friendly_name: tensor_info_proto.name 
+    self._input_alias_map = {friendly_name: tensor_info_proto.name
         for (friendly_name, tensor_info_proto) in signature.inputs.items() }
-    self._output_alias_map = {friendly_name: tensor_info_proto.name 
+    self._output_alias_map = {friendly_name: tensor_info_proto.name
         for (friendly_name, tensor_info_proto) in signature.outputs.items() }
     self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
 
@@ -163,7 +163,7 @@ class RunGraphDoFn(beam.DoFn):
       element: list of strings, representing one batch input to the TF graph.
     """
     import collections
-    import apache_beam as beam   
+    import apache_beam as beam
 
     num_in_batch = 0
     try:
@@ -172,7 +172,7 @@ class RunGraphDoFn(beam.DoFn):
       feed_dict = collections.defaultdict(list)
       for line in element:
 
-        # Remove trailing newline. 
+        # Remove trailing newline.
         if line.endswith('\n'):
           line = line[:-1]
 
@@ -184,7 +184,7 @@ class RunGraphDoFn(beam.DoFn):
                                        feed_dict=feed_dict)
 
       # ex batch_result for batch_size > 1:
-      # (array([value1, value2, ..., value_batch_size]), 
+      # (array([value1, value2, ..., value_batch_size]),
       #  array([[a1, b1, c1]], ..., [a_batch_size, b_batch_size, c_batch_size]]),
       #  ...)
       # ex batch_result for batch_size == 1:
@@ -209,7 +209,7 @@ class RunGraphDoFn(beam.DoFn):
           predictions[self._aliases[i]] =  value
         yield predictions
 
-    except Exception as e:  # pylint: disable=broad-except   
+    except Exception as e:  # pylint: disable=broad-except
       yield beam.pvalue.SideOutputValue('errors',
                                         (str(e), element))
 
@@ -271,8 +271,8 @@ class FormatAndSave(beam.PTransform):
     if self._output_format == 'csv':
       from tensorflow.python.saved_model import tag_constants
       from tensorflow.contrib.session_bundle import bundle_shim
-      from tensorflow.core.framework import types_pb2  
-    
+      from tensorflow.core.framework import types_pb2
+
       session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(args.trained_model_dir, tags=[tag_constants.SERVING])
       signature = meta_graph.signature_def['serving_default']
 
@@ -290,8 +290,8 @@ class FormatAndSave(beam.PTransform):
           bq_type = 'INTEGER'
         else:
           bq_type = 'STRING'
-          
-        self._schema.append({'mode': 'NULLABLE', 
+
+        self._schema.append({'mode': 'NULLABLE',
                              'name': friendly_name,
                              'type': bq_type})
       session.close()
@@ -312,7 +312,7 @@ class FormatAndSave(beam.PTransform):
                                   coder=RawJsonCoder(),
                                   shard_name_template=self._shard_name_template))
     elif self._output_format == 'csv':
-      # make a csv header file 
+      # make a csv header file
       header = [col['name'] for col in self._schema]
       csv_coder = CSVCoder(header)
       (tf_graph_predictions.pipeline |
@@ -322,14 +322,14 @@ class FormatAndSave(beam.PTransform):
        beam.io.textio.WriteToText(os.path.join(self._output_dir, 'csv_schema'),
                                   file_name_suffix='.json',
                                   shard_name_template=''))
-     
+
       # Write the csv predictions
       (tf_graph_predictions |
-       'Write CSV'
-       >> beam.io.textio.WriteToText(os.path.join(self._output_dir, 'predictions'),
-                                     file_name_suffix='.csv',
-                                     coder=csv_coder,
-                                     shard_name_template=self._shard_name_template))
+       'Write CSV' >>
+       beam.io.textio.WriteToText(os.path.join(self._output_dir, 'predictions'),
+                                  file_name_suffix='.csv',
+                                  coder=csv_coder,
+                                  shard_name_template=self._shard_name_template))
     else:
       raise ValueError('FormatAndSave: unknown format %s', self._output_format)
 
@@ -345,7 +345,7 @@ class FormatAndSave(beam.PTransform):
 def make_prediction_pipeline(pipeline, args):
   """Builds the prediction pipeline.
 
-  Reads the csv files, prepends a ',' if the target column is missing, run 
+  Reads the csv files, prepends a ',' if the target column is missing, run
   prediction, and then prints the formated results to a file.
 
   Args:
@@ -376,7 +376,7 @@ def main(argv=None):
     options = {
         'staging_location': os.path.join(args.output_dir, 'tmp', 'staging'),
         'temp_location': os.path.join(args.output_dir, 'tmp', 'staging'),
-        'job_name': args.job_name, 
+        'job_name': args.job_name,
         'project': args.project_id,
         'no_save_main_session': True,
         'extra_packages': args.extra_package,

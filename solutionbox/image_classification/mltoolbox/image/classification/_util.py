@@ -206,11 +206,14 @@ def get_sources_from_dataset(p, dataset, mode):
   if type(dataset) is CsvDataSet:
     source_list = []
     for ii, input_path in enumerate(dataset.files):
-      source_list.append(p | 'Read from Csv %d (%s)' % (ii, mode) >> 
+      source_list.append(p | 'Read from Csv %d (%s)' % (ii, mode) >>
           beam.io.ReadFromText(input_path, strip_trailing_newlines=True))
-    return (source_list | 'Flatten Sources (%s)' % mode >> beam.Flatten()
-        | 'Create Dict from Csv (%s)' % mode >>
-          beam.Map(lambda line: csv.DictReader([line], fieldnames=['image_url', 'label']).next()))
+    return (source_list |
+            'Flatten Sources (%s)' % mode >>
+            beam.Flatten() |
+            'Create Dict from Csv (%s)' % mode >>
+            beam.Map(lambda line: csv.DictReader([line], fieldnames=['image_url',
+                                                                     'label']).next()))
   elif type(dataset) is BigQueryDataSet:
     bq_source = (beam.io.BigQuerySource(table=dataset.table) if dataset.table is not None else
                  beam.io.BigQuerySource(query=dataset.query))

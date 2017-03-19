@@ -22,7 +22,7 @@ import pandas as pd
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record
 
-from . import _util 
+from . import _util
 
 
 class Summary(object):
@@ -76,7 +76,7 @@ class Summary(object):
         # print('Error in iterating events from file ' + event_file)
         continue
     return event_dir_dict
-  
+
 
   def get_events(self, event_names):
     """Get all events as pandas DataFrames given a list of names.
@@ -107,7 +107,7 @@ class Summary(object):
             if event.summary is None or event.wall_time is None or event.summary.value is None:
               continue
 
-            event_time = datetime.datetime.fromtimestamp(event.wall_time)  
+            event_time = datetime.datetime.fromtimestamp(event.wall_time)
             for value in event.summary.value:
               if value.tag not in event_names or value.simple_value is None:
                 continue
@@ -152,4 +152,3 @@ class Summary(object):
         plt.plot(x_column, df['value'], label=label)
     plt.legend(loc='best')
     plt.show()
-

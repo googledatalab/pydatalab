@@ -58,7 +58,7 @@ class TestTrainer(unittest.TestCase):
     self._csv_train_filename = os.path.join(self._test_dir, 'train_csv_data.csv')
     self._csv_eval_filename = os.path.join(self._test_dir, 'eval_csv_data.csv')
     self._schema_filename = os.path.join(self._test_dir, 'schema.json')
-    self._input_features_filename = os.path.join(self._test_dir, 
+    self._input_features_filename = os.path.join(self._test_dir,
                                                  'input_features_file.json')
 
     self._transforms_filename = os.path.join(self._test_dir, 'features.json')
@@ -126,7 +126,7 @@ class TestTrainer(unittest.TestCase):
     lines = self._training_screen_output.splitlines()
     last_line = None
     for line in lines:
-      if line.startswith('INFO:tensorflow:Saving dict for global step %d' 
+      if line.startswith('INFO:tensorflow:Saving dict for global step %d'
                           % self._max_steps):
         last_line = line
         break
@@ -200,7 +200,7 @@ class TestTrainer(unittest.TestCase):
     }
 
     extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
-    self._run_training(problem_type='regression', 
+    self._run_training(problem_type='regression',
                        model_type='dnn',
                        transforms=transforms,
                        extra_args=extra_args)
@@ -221,7 +221,7 @@ class TestTrainer(unittest.TestCase):
         "key": {"transform": "key"},
     }
 
-    self._run_training(problem_type='regression', 
+    self._run_training(problem_type='regression',
                        model_type='linear',
                        transforms=transforms)
 
@@ -242,7 +242,7 @@ class TestTrainer(unittest.TestCase):
     }
 
     extra_args = ['--layer-size1=10', '--layer-size2=10', '--layer-size3=5']
-    self._run_training(problem_type='classification', 
+    self._run_training(problem_type='classification',
                        model_type='dnn',
                        transforms=transforms,
                        extra_args=extra_args)
@@ -263,7 +263,7 @@ class TestTrainer(unittest.TestCase):
         "key": {"transform": "key"},
     }
 
-    self._run_training(problem_type='classification', 
+    self._run_training(problem_type='classification',
                        model_type='linear',
                        transforms=transforms)
 

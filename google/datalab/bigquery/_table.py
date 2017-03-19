@@ -848,4 +848,3 @@ class Table(object):
                       (str(begin), str(end)))
 
     return Table("%s@%s-%s" % (self._full_name, str(start), str(stop)), context=self._context)
-
