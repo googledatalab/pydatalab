@@ -55,7 +55,7 @@ class Job(datalab.Job):
   def describe(self):
     self._refresh_state()
     job_yaml = yaml.safe_dump(self._info, default_flow_style=False)
-    print job_yaml
+    print(job_yaml)
 
   @staticmethod
   def submit_training(job_request, job_id=None):

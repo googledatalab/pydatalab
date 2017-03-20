@@ -23,6 +23,7 @@ import csv
 import os
 import pandas as pd
 import random
+import sys
 
 try:
     from StringIO import StringIO
@@ -141,6 +142,10 @@ class Csv(object):
     """
     # TODO(qimingj) Add unit test
     # Read data from source into DataFrame.
+
+    if sys.version_info.major > 2:
+      xrange = range  # for python 3 compatibility
+
     if strategy == 'BIGQUERY':
       import datalab.bigquery as bq
       if not self.path.startswith('gs://'):

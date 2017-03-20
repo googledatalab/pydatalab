@@ -76,6 +76,10 @@ def _assert_gcs_files(files):
   Args:
     files: string to file path, or list of file paths.
   """
+
+  if sys.version_info.major > 2:
+    basestring = (str, bytes)  # for python 3 compatibility
+
   if isinstance(files, basestring):
     files = [files]
 

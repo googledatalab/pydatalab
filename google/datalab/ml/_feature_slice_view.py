@@ -12,6 +12,7 @@
 
 import json
 import pandas as pd
+import sys
 
 import google.datalab as datalab
 import google.datalab.bigquery as bq
@@ -56,6 +57,9 @@ class FeatureSliceView(object):
         All other columns are viewed as metrics for its feature slice. At least one is required.
     """
     import IPython
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
 
     if isinstance(data, basestring):
       data = bq.Query(data)

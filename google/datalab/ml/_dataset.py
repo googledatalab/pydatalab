@@ -21,6 +21,7 @@ import json
 import numpy as np
 import pandas as pd
 import random
+import sys
 
 import google.datalab.bigquery as bq
 
@@ -61,6 +62,9 @@ class CsvDataSet(object):
     else:
       with _util.open_local_or_gcs(schema_file, 'r') as f:
         self._schema = json.load(f)
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
 
     if isinstance(file_pattern, basestring):
       file_pattern = [file_pattern]
@@ -107,6 +111,10 @@ class CsvDataSet(object):
     Raises:
       Exception if n is larger than number of rows.
     """
+
+    if sys.version_info.major > 2:
+      xrange = range  # for python 3 compatibility
+
     row_total_count = 0
     row_counts = []
     for file in self.files:

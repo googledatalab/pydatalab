@@ -120,7 +120,7 @@ class Models(object):
       model_name: the name of the model to print details on.
     """
     model_yaml = yaml.safe_dump(self.get_model_details(model_name), default_flow_style=False)
-    print model_yaml
+    print(model_yaml)
 
 
 class ModelVersions(object):
@@ -257,7 +257,7 @@ class ModelVersions(object):
     """
     version_yaml = yaml.safe_dump(self.get_version_details(version_name),
                                   default_flow_style=False)
-    print version_yaml
+    print(version_yaml)
 
   def list(self):
     """List versions under the current model in a table view.

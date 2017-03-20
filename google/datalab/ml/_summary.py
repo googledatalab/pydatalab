@@ -18,6 +18,8 @@ import fnmatch
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+import sys
+
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record
 
@@ -34,6 +36,10 @@ class Summary(object):
       path: a list of paths to directories which hold TensorFlow events files.
             Can be local path or GCS paths. Wild cards allowed.
     """
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
+
     self._paths = [paths] if isinstance(paths, basestring) else paths
 
   def _glob_events_files(self, paths):
@@ -88,6 +94,10 @@ class Summary(object):
           Multiple directories may contain events with the same name, but they are different
           events (i.e. 'loss' under trains_set/, and 'loss' under eval_set/.)
     """
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
+
     event_names = [event_names] if isinstance(event_names, basestring) else event_names
 
     all_events = self.list_events()
@@ -141,6 +151,10 @@ class Summary(object):
           each in a different directory.
       x_axis: whether to use step or time as x axis.
     """
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
+
     event_names = [event_names] if isinstance(event_names, basestring) else event_names
     events_list = self.get_events(event_names)
     for event_name, dir_event_dict in zip(event_names, events_list):

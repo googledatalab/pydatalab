@@ -23,6 +23,7 @@ import csv
 import os
 import pandas as pd
 import random
+import sys
 
 try:
     from StringIO import StringIO
@@ -139,6 +140,10 @@ class CsvFile(object):
     Raises:
       Exception if strategy is "BIGQUERY" but source is not a GCS path.
     """
+
+    if sys.version_info.major > 2:
+      xrange = range  # for python 3 compatibility
+
     # TODO(qimingj) Add unit test
     # Read data from source into DataFrame.
     if strategy == 'BIGQUERY':
