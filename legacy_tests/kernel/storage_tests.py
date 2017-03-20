@@ -28,6 +28,7 @@ import datalab.storage.commands
 def noop_decorator(func):
   return func
 
+
 IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator

@@ -80,10 +80,7 @@ class Projects(object):
     projects = list_info.get('projects', [])
     if len(projects):
       try:
-        projects = [Project(self._api,
-                             info['projectId'],
-                             info['projectNumber'],
-                             info['name'])
+        projects = [Project(self._api, info['projectId'], info['projectNumber'], info['name'])
                     for info in projects if info['lifecycleState'] == 'ACTIVE']
       except KeyError:
         raise Exception('Unexpected response from server.')

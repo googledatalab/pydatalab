@@ -548,6 +548,8 @@ def inception_v3(inputs,
       end_points['Logits'] = logits
       end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
   return logits, end_points
+
+
 inception_v3.default_image_size = 299
 
 
@@ -615,10 +617,8 @@ def inception_v3_arg_scope(weight_decay=0.00004,
   # Set weight_decay for weights in Conv and FC layers.
   with slim.arg_scope([slim.conv2d, slim.fully_connected],
                       weights_regularizer=slim.l2_regularizer(weight_decay)):
-    with slim.arg_scope(
-        [slim.conv2d],
-        weights_initializer=tf.truncated_normal_initializer(stddev=stddev),
-        activation_fn=tf.nn.relu,
-        normalizer_fn=slim.batch_norm,
-        normalizer_params=batch_norm_params) as sc:
+    with slim.arg_scope([slim.conv2d],
+                        weights_initializer=tf.truncated_normal_initializer(stddev=stddev),
+                        activation_fn=tf.nn.relu, normalizer_fn=slim.batch_norm,
+                        normalizer_params=batch_norm_params) as sc:
       return sc

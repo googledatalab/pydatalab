@@ -37,8 +37,7 @@ using YAML or JSON.
                      'combo', 'gauge', 'geo', 'heatmap', 'histogram', 'line', 'map', 'org',
                      'paged_table', 'pie', 'sankey', 'scatter', 'stepped_area', 'table',
                      'timeline', 'treemap']:
-    subparser = parser.subcommand(chart_type,
-        'Generate a %s chart.' % chart_type)
+    subparser = parser.subcommand(chart_type, 'Generate a %s chart.' % chart_type)
     subparser.add_argument('-f', '--fields',
                            help='The field(s) to include in the chart')
     subparser.add_argument('-d', '--data',

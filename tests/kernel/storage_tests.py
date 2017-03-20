@@ -24,6 +24,7 @@ import IPython.core.magic
 def noop_decorator(func):
   return func
 
+
 IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
@@ -95,7 +96,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.storage._api.Api.objects_get', autospec=True)
   @mock.patch('google.datalab.Context.default')
   def test_gcs_copy(self, mock_context_default, mock_api_objects_get, mock_bucket_objects,
-                        mock_gcs_object_copy_to):
+                    mock_gcs_object_copy_to):
     context = TestCases._create_context()
     mock_context_default.return_value = context
     # Mock API for getting objects in a bucket.
@@ -162,8 +163,8 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.storage._api.Api.buckets_delete', autospec=True)
   @mock.patch('google.datalab.Context.default')
   def test_gcs_delete(self, mock_context_default, mock_api_bucket_delete,
-                          mock_api_objects_delete, mock_bucket_objects, mock_api_objects_get,
-                          mock_api_buckets_get):
+                      mock_api_objects_delete, mock_bucket_objects, mock_api_objects_get,
+                      mock_api_buckets_get):
     context = TestCases._create_context()
     mock_context_default.return_value = context
     # Mock API for getting objects in a bucket.

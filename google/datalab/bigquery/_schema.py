@@ -73,6 +73,7 @@ class SchemaField(object):
     if item == 'description':
       return self.description
 
+
 class Schema(list):
   """Represents the schema of a BigQuery table as a flattened list of objects representing fields.
 
@@ -242,7 +243,7 @@ class Schema(list):
           raise Exception(('Cannot create a schema from heterogeneous list %s; perhaps you meant ' +
                           'to use Schema.from_record?') % str(source))
       elif isinstance(source[0], list) and \
-          all([isinstance(l, list) and len(l) == len(source[0]) for l in source]):
+              all([isinstance(l, list) and len(l) == len(source[0]) for l in source]):
         # A list of lists all of the same length; treat first entry as a list record.
         bq_schema = Schema._from_record(source[0])
       else:

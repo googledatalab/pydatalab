@@ -69,7 +69,6 @@ class CsvDataSet(object):
     self._glob_files = []
     self._size = None
 
-
   @property
   def input_files(self):
     """Returns the file list that was given to this class without globing files."""
@@ -204,7 +203,7 @@ class BigQueryDataSet(object):
                      self._get_source()).execute().result()[0].values()[0]
     if n > total:
       raise ValueError('sample larger than population')
-    sampling = bq.Sampling.random(percent=n*100.0/float(total))
+    sampling = bq.Sampling.random(percent=n * 100.0 / float(total))
     if self._query is not None:
       source = self._query
     else:

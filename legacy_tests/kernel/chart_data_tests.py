@@ -26,6 +26,7 @@ import datalab.utils.commands
 def noop_decorator(func):
   return func
 
+
 IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
@@ -53,8 +54,8 @@ class TestCases(unittest.TestCase):
       'count': 1
     }))
     self.assertEquals({"data": {"rows": [{"c": [{"v": "ZA"}]}],
-                      "cols": [{"type": "string", "id": "country", "label": "country"}]},
-                      "refresh_interval": 0, "options": {}}, data)
+                                "cols": [{"type": "string", "id": "country", "label": "country"}]},
+                       "refresh_interval": 0, "options": {}}, data)
 
     data = datalab.utils.commands._chart_data._get_chart_data('', json.dumps({
       'source_index': ds,
@@ -63,8 +64,8 @@ class TestCases(unittest.TestCase):
       'count': 1
     }))
     self.assertEquals({"data": {"rows": [],
-                      "cols": [{"type": "string", "id": "country", "label": "country"}]},
-                      "refresh_interval": 0, "options": {}}, data)
+                                "cols": [{"type": "string", "id": "country", "label": "country"}]},
+                       "refresh_interval": 0, "options": {}}, data)
 
     data = datalab.utils.commands._chart_data._get_chart_data('', json.dumps({
       'source_index': ds,
@@ -73,5 +74,5 @@ class TestCases(unittest.TestCase):
       'count': 0
     }))
     self.assertEquals({"data": {"rows": [],
-                      "cols": [{"type": "string", "id": "country", "label": "country"}]},
+                                "cols": [{"type": "string", "id": "country", "label": "country"}]},
                       "refresh_interval": 0, "options": {}}, data)

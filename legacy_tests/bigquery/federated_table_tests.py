@@ -158,7 +158,7 @@ class TestCases(unittest.TestCase):
 
     options = datalab.bigquery.CSVOptions(skip_leading_rows=1)
     weight1 = datalab.bigquery.FederatedTable.from_storage(table_uri1, schema=schema,
-                                                       csv_options=options)
+                                                           csv_options=options)
     weight2 = datalab.bigquery.FederatedTable.from_storage(table_uri2, schema=schema)
     q = datalab.bigquery.Query(sql, weight1=weight1, weight2=weight2,
                                context=self._create_context())

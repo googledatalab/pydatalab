@@ -78,10 +78,7 @@ class UDF(object):
     # Build the JS from the individual bits with proper escaping of the implementation
     if support_code is None:
       support_code = ''
-    return ('{code}\n{name}={implementation};\n' +
-            'bigquery.defineFunction(\'{name}\', {inputs}, {outputs}, {name});')\
-                .format(code=support_code,
-                        name=name,
-                        implementation=implementation,
-                        inputs=str(input_fields),
-                        outputs=str(output_fields))
+    return ('{code}\n{name}={implementation};\nbigquery.defineFunction(\'{name}\', {inputs}, '
+            '{outputs}, {name});').format(code=support_code, name=name,
+                                          implementation=implementation, inputs=str(input_fields),
+                                          outputs=str(output_fields))

@@ -196,6 +196,6 @@ class TestCases(unittest.TestCase):
     # Patch get_info so we don't have to mock it everywhere else.
     orig = google.datalab.bigquery.Dataset._get_info
     google.datalab.bigquery.Dataset._get_info = mock.Mock(return_value=metadata)
-    ds =  google.datalab.bigquery.Dataset(name, context=TestCases._create_context())
+    ds = google.datalab.bigquery.Dataset(name, context=TestCases._create_context())
     google.datalab.bigquery.Dataset._get_info = orig
     return ds

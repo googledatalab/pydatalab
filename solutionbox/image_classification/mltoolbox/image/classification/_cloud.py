@@ -31,6 +31,7 @@ from . import _util
 _TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinux1_x86_64.whl'
 _PROTOBUF_GS_URL = 'gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl'
 
+
 class Cloud(object):
   """Class for cloud training, preprocessing and prediction."""
 
@@ -60,8 +61,7 @@ class Cloud(object):
 
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     p = beam.Pipeline('DataflowRunner', options=opts)
-    _preprocess.configure_pipeline(p, train_dataset, eval_dataset, checkpoint,
-        output_dir, job_name)
+    _preprocess.configure_pipeline(p, train_dataset, eval_dataset, checkpoint, output_dir, job_name)
     # suppress DataFlow warnings about wheel package as extra package.
     logger = logging.getLogger()
     logger.setLevel(logging.ERROR)
@@ -187,7 +187,7 @@ class Cloud(object):
     if (_util.is_in_IPython()):
       import IPython
       dataflow_url = ('https://console.developers.google.com/dataflow?project=%s' %
-                     _util.default_project())
+                      _util.default_project())
       html = 'Job "%s" submitted.' % job_name
       html += ('<p>Click <a href="%s" target="_blank">here</a> to track batch prediction job. <br/>'
                % dataflow_url)

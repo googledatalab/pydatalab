@@ -46,7 +46,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
       map3 = {'car': 5, 'truck': 10, 'van': 15, 'bike': 20, 'train': 25, 'drone': 30}
 
       # Build some model.
-      t = 0.5 + 0.5*num1 -2.5*num2 + num3
+      t = 0.5 + 0.5 * num1 - 2.5 * num2 + num3
       t += map1[str1] + map2[str2] + map3[str3]
 
       if problem_type == 'classification':
@@ -151,21 +151,21 @@ def run_preprocess(output_dir, csv_filename, schema_filename, logger):
          '--output-dir', output_dir,
          '--input-file-pattern', csv_filename,
          '--schema-file', schema_filename
-  ]
+         ]
   logger.debug('Going to run command: %s' % ' '.join(cmd))
-  subprocess.check_call(cmd) #, stderr=open(os.devnull, 'wb'))
+  subprocess.check_call(cmd)  # , stderr=open(os.devnull, 'wb'))
 
 
 def run_training(
-      train_data_paths,
-      eval_data_paths,
-      output_path,
-      preprocess_output_dir,
-      transforms_file,
-      max_steps,
-      model_type,
-      logger,
-      extra_args=[]):
+        train_data_paths,
+        eval_data_paths,
+        output_path,
+        preprocess_output_dir,
+        transforms_file,
+        max_steps,
+        model_type,
+        logger,
+        extra_args=[]):
   """Runs Training via subprocess call to python -m
 
   Args:
@@ -186,9 +186,8 @@ def run_training(
 
   # Gcloud has the fun bug that you have to be in the parent folder of task.py
   # when you call it. So cd there first.
-  task_parent_folder = os.path.abspath(
-      os.path.join(os.path.dirname(__file__),
-      '../mltoolbox/_structured_data'))
+  task_parent_folder = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                    '../mltoolbox/_structured_data'))
   cmd = ['cd %s &&' % task_parent_folder,
          'python -m trainer.task',
          '--train-data-paths=%s' % train_data_paths,
@@ -204,6 +203,7 @@ def run_training(
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
   _, err = sp.communicate()
   return err
+
 
 if __name__ == '__main__':
   make_csv_data('raw_train_regression.csv', 5000, 'regression', True)

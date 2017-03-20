@@ -37,6 +37,7 @@ def start_server(cluster, task):
       job_name=task.type,
       task_index=task.index)
 
+
 class Evaluator(object):
   """Loads variables from latest checkpoint and performs model evaluation."""
 
@@ -51,7 +52,6 @@ class Evaluator(object):
     self.eval_data_paths = data_paths
     self.batch_size = batch_size
     self.model = model
-
 
   def _data_size(self, data_paths):
     n = 0
@@ -81,8 +81,7 @@ class Evaluator(object):
         saver=self.saver)
 
     last_checkpoint = tf.train.latest_checkpoint(self.checkpoint_path)
-    with self.sv.managed_session(
-        master='', start_standard_services=False) as session:
+    with self.sv.managed_session(master='', start_standard_services=False) as session:
       self.sv.saver.restore(session, last_checkpoint)
 
       if not self.batch_of_examples:
@@ -100,7 +99,6 @@ class Evaluator(object):
       self.summary_writer.add_summary(summary, global_step)
       self.summary_writer.flush()
       return metric_values
-
 
 
 class Trainer(object):

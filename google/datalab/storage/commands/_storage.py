@@ -73,11 +73,12 @@ for help on a specific command.
   #
   # This is despite 'name' being identified as writable in the storage API docs.
   # The alternative would be to use a copy/delete.
-  copy_parser = parser.subcommand('copy','Copy one or more Google Cloud Storage objects to a '
-                                         'different location.')
+  copy_parser = parser.subcommand('copy', 'Copy one or more Google Cloud Storage objects to a '
+                                          'different location.')
   copy_parser.add_argument('-s', '--source', help='The name of the object(s) to copy', nargs='+')
   copy_parser.add_argument('-d', '--destination', required=True,
-      help='The copy destination. For multiple source objects this must be a bucket.')
+                           help='The copy destination. For multiple source objects this must be a '
+                                'bucket.')
   copy_parser.set_defaults(func=_gcs_copy)
 
   create_parser = parser.subcommand('create', 'Create one or more Google Cloud Storage buckets.')
@@ -97,8 +98,8 @@ for help on a specific command.
   list_parser = parser.subcommand('list', 'List buckets in a project, or contents of a bucket.')
   list_parser.add_argument('-p', '--project', help='The project associated with the objects')
   list_parser.add_argument('-o', '--objects',
-                     help='List objects under the given Google Cloud Storage path',
-                     nargs='?')
+                           help='List objects under the given Google Cloud Storage path',
+                           nargs='?')
   list_parser.set_defaults(func=_gcs_list)
 
   read_parser = parser.subcommand('read', 'Read the contents of a Google Cloud Storage object into '
@@ -214,7 +215,7 @@ def _gcs_copy(args, _):
     destination_key = target_key if target_key else source_key
     try:
       google.datalab.storage.Object(source_bucket, source_key).copy_to(destination_key,
-                                                          bucket=destination_bucket)
+                                                                       bucket=destination_bucket)
     except Exception as e:
       errs.append("Couldn't copy %s to %s: %s" %
                   (source, target, _extract_gcs_api_response_error(str(e))))
@@ -267,10 +268,12 @@ def _gcs_delete(args, _):
   if errs:
     raise Exception('\n'.join(errs))
 
+
 def _make_context(project_id=None):
   default_context = google.datalab.Context.default()
   project_id = project_id or default_context.project_id
   return google.datalab.Context(project_id, default_context.credentials)
+
 
 def _gcs_list_buckets(project, pattern):
   """ List all Google Cloud Storage buckets that match a pattern. """

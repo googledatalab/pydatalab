@@ -55,8 +55,9 @@ class TestCases(unittest.TestCase):
     self._check_name_parts(table)
 
   def test_parse_dict_full_name(self):
-    table = TestCases._create_table({'project_id': 'test', 'dataset_id': 'requestlogs',
-                                'table_id': 'today'})
+    table = TestCases._create_table({'project_id': 'test',
+                                     'dataset_id': 'requestlogs',
+                                     'table_id': 'today'})
     self._check_name_parts(table)
 
   def test_parse_dict_local_name(self):
@@ -64,8 +65,8 @@ class TestCases(unittest.TestCase):
     self._check_name_parts(table)
 
   def test_parse_named_tuple_name(self):
-    table = TestCases._create_table(google.datalab.bigquery._utils.TableName('test',
-                                                                      'requestlogs', 'today', ''))
+    table = TestCases._create_table(google.datalab.bigquery._utils.TableName('test', 'requestlogs',
+                                                                             'today', ''))
     self._check_name_parts(table)
 
   def test_parse_tuple_full_name(self):
@@ -542,7 +543,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual({'foo': 'b@r', 'bar': '2001-02-03'}, row)
 
   def test_encode_dict_as_row_time(self):
-    when = dt.time(1,2,3,4)
+    when = dt.time(1, 2, 3, 4)
     row = google.datalab.bigquery.Table._encode_dict_as_row({'fo@o': 'b@r', 'b+ar': when}, {})
     self.assertEqual({'foo': 'b@r', 'bar': '01:02:03.000004'}, row)
 

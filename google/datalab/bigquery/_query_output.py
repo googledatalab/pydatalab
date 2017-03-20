@@ -12,6 +12,7 @@
 
 """Implements BigQuery output type functionality."""
 
+
 class QueryOutput(object):
 
   @staticmethod

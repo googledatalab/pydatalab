@@ -177,7 +177,7 @@ def get_credentials():
     cred_file = get_config_dir() + '/credentials'
     if os.path.exists(cred_file):
       with open(cred_file) as f:
-        creds= json.loads(f.read())
+        creds = json.loads(f.read())
       # Use the first gcloud one we find
       for entry in creds['data']:
         if entry['key']['type'] == 'google-cloud-sdk':

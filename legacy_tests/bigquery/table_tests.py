@@ -56,7 +56,7 @@ class TestCases(unittest.TestCase):
 
   def test_parse_dict_full_name(self):
     table = TestCases._create_table({'project_id': 'test', 'dataset_id': 'requestlogs',
-                                'table_id': 'today'})
+                                     'table_id': 'today'})
     self._check_name_parts(table)
 
   def test_parse_dict_local_name(self):

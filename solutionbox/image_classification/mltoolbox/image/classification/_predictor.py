@@ -33,9 +33,9 @@ def _load_tf_model(model_dir):
       model_dir, tags=[tag_constants.SERVING])
   signature = meta_graph.signature_def['serving_default']
   inputs = {friendly_name: tensor_info_proto.name
-      for (friendly_name, tensor_info_proto) in signature.inputs.items() }
+            for (friendly_name, tensor_info_proto) in signature.inputs.items()}
   outputs = {friendly_name: tensor_info_proto.name
-      for (friendly_name, tensor_info_proto) in signature.outputs.items() }
+             for (friendly_name, tensor_info_proto) in signature.outputs.items()}
   return session, inputs, outputs
 
 
@@ -173,8 +173,8 @@ class MakeCsvLineDoFn(beam.DoFn):
 
     line = StringIO.StringIO()
     if len(element) == 5:
-      csv.DictWriter(line,
-          ['image_url', 'target', 'predicted', 'target_prob', 'predicted_prob']).writerow(element)
+      csv.DictWriter(line, ['image_url', 'target', 'predicted', 'target_prob',
+                            'predicted_prob']).writerow(element)
     else:
       csv.DictWriter(line, ['image_url', 'predicted', 'predicted_prob']).writerow(element)
     yield line.getvalue()
@@ -220,5 +220,5 @@ def configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table):
     # BigQuery sink takes schema in the form of 'field1:type1,field2:type2...'
     bq_schema_string = ','.join(x['name'] + ':' + x['type'] for x in output_schema)
     sink = beam.io.BigQuerySink(output_bq_table, schema=bq_schema_string,
-        write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE)
+                                write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE)
     results | 'Write BQ Results' >> beam.io.Write(sink)

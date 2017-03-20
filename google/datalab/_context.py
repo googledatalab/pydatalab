@@ -98,7 +98,6 @@ class Context(object):
       'bigquery_billing_tier': None
     }
 
-
   @staticmethod
   def default():
     """Retrieves a default Context object, creating it if necessary.

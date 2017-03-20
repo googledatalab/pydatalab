@@ -80,7 +80,7 @@ class FeatureSliceView(object):
         </script>"""
     # Serialize the data and list of metrics names to JSON string.
     metrics_str = str(map(str, data[0]['metricValues'].keys()))
-    data_str = str([{str(k): json.dumps(v) for k,v in elem.iteritems()} for elem in data])
+    data_str = str([{str(k): json.dumps(v) for k, v in elem.iteritems()} for elem in data])
     html_id = 'l' + datalab.utils.commands.Html.next_id()
     html = HTML_TEMPLATE.format(html_id=html_id, metrics=metrics_str, data=data_str)
     IPython.display.display(IPython.display.HTML(html))

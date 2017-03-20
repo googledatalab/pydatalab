@@ -101,7 +101,6 @@ def parse_arguments(argv):
     if not args.predict_data.startswith('gs://'):
       raise ValueError('--predict-data needs to be a GCS path.')
 
-
   return args
 
 
@@ -147,15 +146,13 @@ class RunGraphDoFn(beam.DoFn):
     # get the mappings between aliases and tensor names
     # for both inputs and outputs
     self._input_alias_map = {friendly_name: tensor_info_proto.name
-        for (friendly_name, tensor_info_proto) in signature.inputs.items() }
+                             for (friendly_name, tensor_info_proto) in signature.inputs.items()}
     self._output_alias_map = {friendly_name: tensor_info_proto.name
-        for (friendly_name, tensor_info_proto) in signature.outputs.items() }
+                              for (friendly_name, tensor_info_proto) in signature.outputs.items()}
     self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
-
 
   def finish_bundle(self, element=None):
     self._session.close()
-
 
   def process(self, element):
     """Run batch prediciton on a TF graph.
@@ -198,8 +195,7 @@ class RunGraphDoFn(beam.DoFn):
         for result in zip(*batch_result):
           predictions = {}
           for name, value in zip(self._aliases, result):
-            predictions[name] = (value.tolist() if getattr(value, 'tolist', None)
-                                else value)
+            predictions[name] = (value.tolist() if getattr(value, 'tolist', None) else value)
           yield predictions
       else:
         predictions = {}
@@ -207,7 +203,7 @@ class RunGraphDoFn(beam.DoFn):
           value = batch_result[i]
           value = (value.tolist() if getattr(value, 'tolist', None)
                    else value)
-          predictions[self._aliases[i]] =  value
+          predictions[self._aliases[i]] = value
         yield predictions
 
     except Exception as e:  # pylint: disable=broad-except
@@ -335,7 +331,6 @@ class FormatAndSave(beam.PTransform):
     else:
       raise ValueError('FormatAndSave: unknown format %s', self._output_format)
 
-
     # Write the errors to a text file.
     (errors |
      'Write Errors' >>
@@ -400,6 +395,7 @@ def main(argv=None):
 
   runner_results = p.run()
   return runner_results
+
 
 if __name__ == '__main__':
   runner_results = main()

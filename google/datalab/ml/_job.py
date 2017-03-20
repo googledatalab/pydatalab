@@ -86,7 +86,7 @@ class Job(datalab.Job):
     if 'args' in job_request and isinstance(job_request['args'], dict):
       job_args = job_request['args']
       args = []
-      for k,v in job_args.iteritems():
+      for k, v in job_args.iteritems():
         if isinstance(v, list):
           for item in v:
             args.append('--' + str(k))

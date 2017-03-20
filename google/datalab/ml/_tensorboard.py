@@ -41,11 +41,10 @@ class TensorBoard(object):
       if p.name() != 'tensorboard':
         continue
       cmd_args = p.cmdline()
-      del cmd_args[0:2] # remove 'python' and 'tensorboard'
+      del cmd_args[0:2]  # remove 'python' and 'tensorboard'
       args = parser.parse_args(cmd_args)
       running_list.append({'pid': p.pid, 'logdir': args.logdir, 'port': args.port})
     return pd.DataFrame(running_list)
-
 
   @staticmethod
   def start(logdir):

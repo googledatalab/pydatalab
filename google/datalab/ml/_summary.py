@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-
 import datetime
 import fnmatch
 import matplotlib.pyplot as plt
@@ -76,7 +75,6 @@ class Summary(object):
         # print('Error in iterating events from file ' + event_file)
         continue
     return event_dir_dict
-
 
   def get_events(self, event_names):
     """Get all events as pandas DataFrames given a list of names.

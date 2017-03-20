@@ -170,12 +170,11 @@ q1 AS (
 
     self.assertTrue((expected_sql1 == q3.sql) or (expected_sql2 == q3.sql))
 
-  #@mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
+  # @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
   def test_subquery_expansion_order(self):
     env = {}
     TestCases._create_query('SELECT * FROM test_table', name='snps', env=env)
-    TestCases._create_query('SELECT * FROM snps', subqueries=['snps'], name='windows',
-                                      env=env)
+    TestCases._create_query('SELECT * FROM snps', subqueries=['snps'], name='windows', env=env)
     titv = TestCases._create_query('SELECT * FROM snps, windows', subqueries=['snps', 'windows'],
                                    env=env)
 
@@ -192,7 +191,6 @@ q1 AS (
     self.assertNotEqual(snps_pos, -1, 'Could not find snps definition in expanded sql')
     self.assertNotEqual(windows_pos, -1, 'Could not find windows definition in expanded sql')
     self.assertLess(snps_pos, windows_pos)
-
 
   @staticmethod
   def _create_query(sql='SELECT * ...', name=None, env=None, udfs=None, data_sources=None,

@@ -129,7 +129,6 @@ def run_numerical_categorical_analysis(args, schema_list):
       del numerical_results[col_name]['count']
       numerical_results[col_name]['mean'] = mean
 
-
   # Write the numerical_results to a json file.
   file_io.write_string_to_file(
       os.path.join(args.output_dir, NUMERICAL_ANALYSIS_FILE),

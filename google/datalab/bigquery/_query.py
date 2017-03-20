@@ -293,26 +293,26 @@ class Query(object):
           export_func = execute_job.result().extract
           export_args = [output_options.file_path]
           export_kwargs = {
-                            'format': output_options.file_format,
-                            'csv_delimiter': output_options.csv_delimiter,
-                            'csv_header': output_options.csv_header,
-                            'compress': output_options.compress_file
-                          }
+            'format': output_options.file_format,
+            'csv_delimiter': output_options.csv_delimiter,
+            'csv_header': output_options.csv_header,
+            'compress': output_options.compress_file
+          }
         else:
           export_func = execute_job.result().to_file
           export_args = [output_options.file_path]
           export_kwargs = {
-                            'format': output_options.file_format,
-                            'csv_delimiter': output_options.csv_delimiter,
-                            'csv_header': output_options.csv_header
-                          }
+            'format': output_options.file_format,
+            'csv_delimiter': output_options.csv_delimiter,
+            'csv_header': output_options.csv_header
+          }
       elif output_options.type == 'dataframe':
         export_func = execute_job.result().to_dataframe
         export_args = []
         export_kwargs = {
-                          'start_row': output_options.dataframe_start_row,
-                          'max_rows': output_options.dataframe_max_rows
-                        }
+          'start_row': output_options.dataframe_start_row,
+          'max_rows': output_options.dataframe_max_rows
+        }
 
       # Perform the export operation with the specified parameters
       export_func = google.datalab.utils.async_function(export_func)

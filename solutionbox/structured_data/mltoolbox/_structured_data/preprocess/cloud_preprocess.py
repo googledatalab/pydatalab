@@ -126,7 +126,6 @@ def run_numerical_analysis(table, schema_list, args):
     if col_type == 'integer' or col_type == 'float':
       numerical_columns.append(col_schema['name'])
 
-
   # Run the numerical analysis
   if numerical_columns:
     sys.stdout.write('Running numerical analysis...')
@@ -136,8 +135,7 @@ def run_numerical_analysis(table, schema_list, args):
          'avg({name}) as avg_{name} ').format(name=name)
         for name in numerical_columns]
     if args.bigquery_table:
-      sql = 'SELECT  %s from `%s`' % (', '.join(max_min),
-                                    parse_table_name(args.bigquery_table))
+      sql = 'SELECT  %s from `%s`' % (', '.join(max_min), parse_table_name(args.bigquery_table))
       numerical_results = bq.Query(sql).execute().result().to_dataframe()
     else:
       sql = 'SELECT  %s from csv_table' % ', '.join(max_min)
@@ -149,7 +147,7 @@ def run_numerical_analysis(table, schema_list, args):
     for name in numerical_columns:
       results_dict[name] = {'max': numerical_results.iloc[0]['max_%s' % name],
                             'min': numerical_results.iloc[0]['min_%s' % name],
-                            'mean':numerical_results.iloc[0]['avg_%s' % name]}
+                            'mean': numerical_results.iloc[0]['avg_%s' % name]}
 
     file_io.write_string_to_file(
         os.path.join(args.output_dir, NUMERICAL_ANALYSIS_FILE),
@@ -174,7 +172,6 @@ def run_categorical_analysis(table, schema_list, args):
     args: the command line args
   """
   import google.datalab.bigquery as bq
-
 
   # Get list of categorical columns.
   categorical_columns = []
@@ -218,7 +215,6 @@ def run_categorical_analysis(table, schema_list, args):
       string_buff = StringIO.StringIO()
       df.to_csv(string_buff, index=False, header=False)
       file_io.write_string_to_file(out_file, string_buff.getvalue())
-
 
     sys.stdout.write('done.\n')
 

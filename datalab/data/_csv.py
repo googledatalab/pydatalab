@@ -53,12 +53,10 @@ class Csv(object):
     return self._path
 
   @staticmethod
-
   def _read_gcs_lines(path, max_lines=None):
     return datalab.storage.Item.from_url(path).read_lines(max_lines)
 
   @staticmethod
-
   def _read_local_lines(path, max_lines=None):
     lines = []
     for line in open(path):
@@ -150,7 +148,7 @@ class Csv(object):
       federated_table = self._create_federated_table(skip_header_rows)
       row_count = self._get_gcs_csv_row_count(federated_table)
       query = bq.Query('SELECT * from data', data_sources={'data': federated_table})
-      sampling = bq.Sampling.random(count*100/float(row_count))
+      sampling = bq.Sampling.random(count * 100 / float(row_count))
       sample = query.sample(sampling=sampling)
       df = sample.to_dataframe()
     elif strategy == 'LOCAL':

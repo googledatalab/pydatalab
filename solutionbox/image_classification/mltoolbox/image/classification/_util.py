@@ -186,11 +186,11 @@ def check_dataset(dataset, mode):
   names = [x['name'] for x in dataset.schema]
   types = [x['type'] for x in dataset.schema]
   if mode == 'train':
-    if (set(['image_url', 'label']) != set(names) or any (t != 'STRING' for t in types)):
+    if (set(['image_url', 'label']) != set(names) or any(t != 'STRING' for t in types)):
       raise ValueError('Invalid dataset. Expect only "image_url,label" STRING columns.')
   else:
-    if ((set(['image_url']) != set(names) and set(['image_url', 'label']) != set(names)) or
-        any (t != 'STRING' for t in types)):
+    if (set(['image_url']) != set(names) and set(['image_url', 'label']) != set(names)) or \
+            any(t != 'STRING' for t in types):
       raise ValueError('Invalid dataset. Expect only "image_url" or "image_url,label" ' +
                        'STRING columns.')
 
@@ -207,7 +207,7 @@ def get_sources_from_dataset(p, dataset, mode):
     source_list = []
     for ii, input_path in enumerate(dataset.files):
       source_list.append(p | 'Read from Csv %d (%s)' % (ii, mode) >>
-          beam.io.ReadFromText(input_path, strip_trailing_newlines=True))
+                         beam.io.ReadFromText(input_path, strip_trailing_newlines=True))
     return (source_list |
             'Flatten Sources (%s)' % mode >>
             beam.Flatten() |
@@ -281,9 +281,9 @@ def process_prediction_results(results, show_image):
     import IPython
     for image_url, image, label_and_score in results:
       IPython.display.display_html('<p style="font-size:28px">%s(%.5f)</p>' % label_and_score,
-          raw=True)
+                                   raw=True)
       IPython.display.display(IPython.display.Image(data=image))
-  result_dict = [{'image_url': url, 'label': r[0], 'score': r[1]} for url,_,r in results]
+  result_dict = [{'image_url': url, 'label': r[0], 'score': r[1]} for url, _, r in results]
   return pd.DataFrame(result_dict)
 
 

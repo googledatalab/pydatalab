@@ -95,9 +95,9 @@ class ConfusionMatrix(object):
 
     parts = sql.split('.')
     if len(parts) == 1 or len(parts) > 3 or any(' ' in x for x in parts):
-      sql = '(' + sql + ')' # query, not a table name
+      sql = '(' + sql + ')'  # query, not a table name
     else:
-      sql = '`' + sql + '`' # table name
+      sql = '`' + sql + '`'  # table name
 
     query = bq.Query(
         'SELECT target, predicted, count(*) as count FROM %s group by target, predicted' % sql)
@@ -106,7 +106,7 @@ class ConfusionMatrix(object):
     labels_count = len(labels)
     df['target'] = [labels.index(x) for x in df['target']]
     df['predicted'] = [labels.index(x) for x in df['predicted']]
-    cm = [[0]*labels_count for i in range(labels_count)]
+    cm = [[0] * labels_count for i in range(labels_count)]
     for index, row in df.iterrows():
       cm[row['target']][row['predicted']] = row['count']
     return ConfusionMatrix(cm, labels)

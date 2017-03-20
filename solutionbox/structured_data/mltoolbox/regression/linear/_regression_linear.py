@@ -1,5 +1,6 @@
 from mltoolbox._structured_data import train_async as core_train
 
+
 def train(train_dataset,
           eval_dataset,
           analysis_dir,
@@ -31,26 +32,26 @@ def train(train_dataset,
       epsilon=epsilon,
       job_name=job_name,
       cloud=cloud,
-      )
+  )
   job.wait()
   print('Training: ' + str(job.state))
 
 
 def train_async(train_dataset,
-          eval_dataset,
-          analysis_dir,
-          output_dir,
-          features,
-          max_steps=5000,
-          num_epochs=None,
-          train_batch_size=100,
-          eval_batch_size=16,
-          min_eval_frequency=100,
-          learning_rate=0.01,
-          epsilon=0.0005,
-          job_name=None,
-          cloud=None,
-          ):
+                eval_dataset,
+                analysis_dir,
+                output_dir,
+                features,
+                max_steps=5000,
+                num_epochs=None,
+                train_batch_size=100,
+                eval_batch_size=16,
+                min_eval_frequency=100,
+                learning_rate=0.01,
+                epsilon=0.0005,
+                job_name=None,
+                cloud=None,
+                ):
   """Train model locally or in the cloud.
 
   Local Training:

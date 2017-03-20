@@ -29,6 +29,7 @@ import datalab.utils.commands
 def noop_decorator(func):
   return func
 
+
 IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
@@ -41,19 +42,18 @@ class TestCases(unittest.TestCase):
   @mock.patch('datalab.context._context.Context.default')
   def test_udf_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
-    cell_body = \
-"""
-/**
- * @param {{word: string, corpus: string, word_count: integer}} r
- * @param function({{word: string, corpus: string, count: integer}}) emitFn
- */
-function(r, emitFn) {
-  if (r.word.match(/[shakespeare]/) !== null) {
-    var result = { word: r.word, corpus: r.corpus, count: r.word_count };
-    emitFn(result);
-  }
-}
-"""
+    cell_body = """
+    /**
+    * @param {{word: string, corpus: string, word_count: integer}} r
+    * @param function({{word: string, corpus: string, count: integer}}) emitFn
+    */
+    function(r, emitFn) {
+      if (r.word.match(/[shakespeare]/) !== null) {
+        var result = { word: r.word, corpus: r.corpus, count: r.word_count };
+        emitFn(result);
+      }
+    }
+    """
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
     datalab.bigquery.commands._bigquery._udf_cell({'module': 'word_filter'}, cell_body)

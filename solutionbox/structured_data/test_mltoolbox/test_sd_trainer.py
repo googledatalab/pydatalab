@@ -67,7 +67,6 @@ class TestTrainer(unittest.TestCase):
     self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
-
   def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
     """Runs training.
 
@@ -108,7 +107,6 @@ class TestTrainer(unittest.TestCase):
         extra_args=extra_args)
     self._training_screen_output = output
 
-
   def _check_training_screen_output(self, accuracy=None, loss=None):
     """Should be called after _run_training.
 
@@ -126,8 +124,7 @@ class TestTrainer(unittest.TestCase):
     lines = self._training_screen_output.splitlines()
     last_line = None
     for line in lines:
-      if line.startswith('INFO:tensorflow:Saving dict for global step %d'
-                          % self._max_steps):
+      if line.startswith('INFO:tensorflow:Saving dict for global step %d' % self._max_steps):
         last_line = line
         break
 
@@ -171,7 +168,6 @@ class TestTrainer(unittest.TestCase):
       self.assertEqual(len(loss_num), 1)
       self.assertLess(float(loss_num[0]), loss)
 
-
   def _check_train_files(self):
     self._check_savedmodel(os.path.join(self._train_output, 'model'))
     self._check_savedmodel(os.path.join(self._train_output, 'evaluation_model'))
@@ -186,13 +182,12 @@ class TestTrainer(unittest.TestCase):
     self.assertTrue(
         os.path.isfile(os.path.join(model_folder, 'assets.extra/features.json')))
 
-
   def testRegressionDnn(self):
     self._logger.debug('\n\nTesting Regression DNN')
 
     transforms = {
         "num1": {"transform": "scale"},
-        "num2": {"transform": "scale","value": 4},
+        "num2": {"transform": "scale", "value": 4},
         "str1": {"transform": "one_hot"},
         "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"},
@@ -208,13 +203,12 @@ class TestTrainer(unittest.TestCase):
     self._check_training_screen_output(loss=20)
     self._check_train_files()
 
-
   def testRegressionLinear(self):
     self._logger.debug('\n\nTesting Regression Linear')
 
     transforms = {
         "num1": {"transform": "scale"},
-        "num2": {"transform": "scale","value": 4},
+        "num2": {"transform": "scale", "value": 4},
         "str1": {"transform": "one_hot"},
         "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"},
@@ -228,13 +222,12 @@ class TestTrainer(unittest.TestCase):
     self._check_training_screen_output(loss=20)
     self._check_train_files()
 
-
   def testClassificationDnn(self):
     self._logger.debug('\n\nTesting classification DNN')
 
     transforms = {
         "num1": {"transform": "scale"},
-        "num2": {"transform": "scale","value": 4},
+        "num2": {"transform": "scale", "value": 4},
         "str1": {"transform": "one_hot"},
         "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"},
@@ -250,13 +243,12 @@ class TestTrainer(unittest.TestCase):
     self._check_training_screen_output(accuracy=0.70, loss=0.10)
     self._check_train_files()
 
-
   def testClassificationLinear(self):
     self._logger.debug('\n\nTesting classification Linear')
 
     transforms = {
         "num1": {"transform": "scale"},
-        "num2": {"transform": "scale","value": 4},
+        "num2": {"transform": "scale", "value": 4},
         "str1": {"transform": "one_hot"},
         "str2": {"transform": "embedding", "embedding_dim": 3},
         "target": {"transform": "target"},

@@ -90,6 +90,7 @@ def _recursive_copy(src_dir, dest_dir):
     else:
       file_io.copy(old_path, new_path, overwrite=True)
 
+
 def serving_from_csv_input(train_config, args, keep_target):
   """Read the input features from a placeholder csv string tensor."""
   examples = tf.placeholder(
@@ -115,7 +116,7 @@ def serving_from_csv_input(train_config, args, keep_target):
   return input_fn_utils.InputFnOps(features,
                                    target,
                                    {'csv_line': examples}
-  )
+                                   )
 
 
 def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target=True):
@@ -152,7 +153,7 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
       for i in range(0, args.top_n):
         # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
         # makes sorting the columns easy.
-        padded_i = str(i+1).zfill(num_digits)
+        padded_i = str(i + 1).zfill(num_digits)
 
         if i == 0:
           label_alias = PG_CLASSIFICATION_FIRST_LABEL
@@ -160,9 +161,7 @@ def make_output_tensors(train_config, args, input_ops, model_fn_ops, keep_target
           label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
 
         label_tensor_name = (tf.squeeze(
-              tf.slice(top_k_labels,
-                       [0, i],
-                       [tf.shape(top_k_labels)[0], 1])))
+            tf.slice(top_k_labels, [0, i], [tf.shape(top_k_labels)[0], 1])))
 
         if i == 0:
           score_alias = PG_CLASSIFICATION_FIRST_SCORE
@@ -204,10 +203,8 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
           keep_target=keep_target)
 
       signature_def_map = {
-        'serving_default':
-            signature_def_utils.predict_signature_def(
-                input_ops.default_inputs,
-                output_fetch_tensors)
+        'serving_default': signature_def_utils.predict_signature_def(input_ops.default_inputs,
+                                                                     output_fetch_tensors)
       }
 
       if not checkpoint_path:
@@ -221,7 +218,7 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
           export_dir_base)
 
       with tf_session.Session('') as session:
-        #variables.initialize_local_variables()
+        # variables.initialize_local_variables()
         variables.local_variables_initializer()
         data_flow_ops.tables_initializer()
         saver_for_restore = saver.Saver(
@@ -267,7 +264,6 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
       file_io.delete_recursively(final_dir)
     file_io.recursive_create_dir(final_dir)
     _recursive_copy(export_dir, final_dir)
-
 
     return export_dir
 
@@ -390,17 +386,17 @@ def get_estimator(output_dir, train_config, args):
 
   # Check the requested mode fits the preprocessed data.
   target_name = train_config['target_column']
-  if (is_classification_model(args.model_type) and
-      target_name not in train_config['categorical_columns']):
+  if is_classification_model(args.model_type) and target_name not in \
+          train_config['categorical_columns']:
     raise ValueError('When using a classification model, the target must be a '
                      'categorical variable.')
-  if (is_regression_model(args.model_type) and
-      target_name not in train_config['numerical_columns']):
+  if is_regression_model(args.model_type) and target_name not in \
+          train_config['numerical_columns']:
     raise ValueError('When using a regression model, the target must be a '
                      'numerical variable.')
 
   # Check layers used for dnn models.
-  if is_dnn_model(args.model_type)  and not args.layer_sizes:
+  if is_dnn_model(args.model_type) and not args.layer_sizes:
     raise ValueError('--layer-size* must be used with DNN models')
   if is_linear_model(args.model_type) and args.layer_sizes:
     raise ValueError('--layer-size* cannot be used with linear models')
@@ -516,7 +512,7 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
         labels = train_config['vocab_stats'][target_name]['labels']
         table = tf.contrib.lookup.string_to_index_table_from_tensor(labels)
         target = table.lookup(target)
-        #target = tf.contrib.lookup.string_to_index(target, labels)
+        # target = tf.contrib.lookup.string_to_index(target, labels)
 
   # Do categorical transforms. Only apply vocab mapping. The real
   # transforms are done with tf learn column features.
@@ -528,15 +524,12 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
       transform_name = transform_config.get('transform', None)
 
       if is_dnn_model(model_type):
-        if (transform_name == 'embedding' or
-            transform_name == 'one_hot' or
-            transform_name is None):
+        if transform_name == 'embedding' or transform_name == 'one_hot' or transform_name is None:
           map_vocab = True
         else:
           raise ValueError('Unknown transform %s' % transform_name)
       elif is_linear_model(model_type):
-        if (transform_name == 'one_hot' or
-            transform_name is None):
+        if (transform_name == 'one_hot' or transform_name is None):
           map_vocab = True
         elif transform_name == 'embedding':
           map_vocab = False
@@ -774,7 +767,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
 
     label_values = get_vocabulary(preprocess_output_dir, name)
     if name != result_dict['target_column'] and '' not in label_values:
-      label_values.append('') # append a 'missing' label.
+      label_values.append('')  # append a 'missing' label.
     n_classes = len(label_values)
     result_dict['vocab_stats'][name] = {'n_classes': n_classes,
                                         'labels': label_values}

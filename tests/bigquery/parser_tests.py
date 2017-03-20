@@ -25,7 +25,6 @@ class TestCases(unittest.TestCase):
     result = bq._parser.Parser.parse_row(schema, data)
     self.assertEqual(parsed, result)
 
-
   def test_non_nested_data(self):
 
     data = {u'f': [{u'v': u'1969'},
@@ -275,37 +274,36 @@ class TestCases(unittest.TestCase):
                    {u'v': u'true'},
                    {u'v': u'foo'},
                    {u'v':
-                        {u'f': [
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': u'2de950123456789abcdef01234451feaf8ce6ae'},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': None},
-                            {u'v': []},
-                            {u'v': None},
-                            {u'v': u'refs/heads/master'},
-                            {u'v': None},
-                            {u'v': u'1'},
-                            {u'v': [
-                                {u'v':
-                                     {u'f': [{u'v': u'2de958ab480eabe2501b343425b451feaf8ce6ae'},
-                                             {u'v': u'd+github@foo.com'},
-                                             {u'v': u'Foo tastes good.'},
-                                             {u'v': u'Foo Bar'}]}}]},
-                            {u'v': None},
-                            {u'v': None}]}},
+                       {u'f': [
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': u'2de950123456789abcdef01234451feaf8ce6ae'},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': None},
+                           {u'v': []},
+                           {u'v': None},
+                           {u'v': u'refs/heads/master'},
+                           {u'v': None},
+                           {u'v': u'1'},
+                           {u'v': [
+                               {u'v': {u'f': [{u'v': u'2de958ab480eabe2501b343425b451feaf8ce6ae'},
+                                              {u'v': u'd+github@foo.com'},
+                                              {u'v': u'Foo tastes good.'},
+                                              {u'v': u'Foo Bar'}]}}]},
+                           {u'v': None},
+                           {u'v': None}]}},
                    {u'v': u'https://github.com/compare/d3e91cb736...2de958ab48'},
                    {u'v': u'PushEvent'}]}
 
@@ -535,7 +533,7 @@ class TestCases(unittest.TestCase):
                                     {u'name': u'actor_email', u'type': u'STRING'},
                                     {u'name': u'message', u'type': u'STRING'},
                                     {u'name': u'actor_login', u'type': u'STRING'}],
-                                    u'mode': u'REPEATED',u'name': u'shas', u'type': u'RECORD'},
+                                    u'mode': u'REPEATED', u'name': u'shas', u'type': u'RECORD'},
                                 {u'fields': [{u'name': u'login', u'type': u'STRING'},
                                              {u'name': u'repos', u'type': u'INTEGER'},
                                              {u'name': u'followers', u'type': u'INTEGER'},

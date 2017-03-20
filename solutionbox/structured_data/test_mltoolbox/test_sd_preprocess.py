@@ -40,7 +40,6 @@ class TestPreprocess(unittest.TestCase):
     if not self._logger.handlers:
       self._logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
-
   def setUp(self):
     self._test_dir = tempfile.mkdtemp()
 
@@ -53,7 +52,6 @@ class TestPreprocess(unittest.TestCase):
     self._logger.debug('TestPreprocess: removing test dir: ' + self._test_dir)
     shutil.rmtree(self._test_dir)
 
-
   def _make_test_data(self, problem_type):
     """Makes input files to run preprocessing on.
 
@@ -63,7 +61,6 @@ class TestPreprocess(unittest.TestCase):
     e2e_functions.make_csv_data(self._csv_filename, 100, problem_type, True)
     e2e_functions.make_preprocess_schema(self._schema_filename, problem_type)
 
-
   def _test_preprocess(self, problem_type):
     self._make_test_data(problem_type)
 
@@ -72,7 +69,6 @@ class TestPreprocess(unittest.TestCase):
         csv_filename=self._csv_filename,
         schema_filename=self._schema_filename,
         logger=self._logger)
-
 
     schema_file = os.path.join(self._preprocess_output, 'schema.json')
     numerical_analysis_file = os.path.join(self._preprocess_output, 'stats.json')
@@ -100,18 +96,17 @@ class TestPreprocess(unittest.TestCase):
       self.assertTrue(os.path.exists(vocab_file))
       self.assertGreater(os.path.getsize(vocab_file), 0)
 
-    all_expected_files = (expected_vocab_files + ['stats.json',
-                         'schema.json'])
+    all_expected_files = (expected_vocab_files + ['stats.json', 'schema.json'])
     all_file_paths = glob.glob(os.path.join(self._preprocess_output, '*'))
     all_files = [os.path.basename(path) for path in all_file_paths]
     self.assertEqual(sorted(all_expected_files), sorted(all_files))
-
 
   def testRegression(self):
     self._test_preprocess('regression')
 
   def testClassification(self):
     self._test_preprocess('classification')
+
 
 if __name__ == '__main__':
     unittest.main()
