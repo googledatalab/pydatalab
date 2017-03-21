@@ -150,8 +150,8 @@ class Api(object):
           priority, more expensive).
       allow_large_results: whether to allow large results (slower with some restrictions but
           can handle big jobs).
-      table_definitions: a dictionary of ExternalDataSource names and objects for any external tables
-          referenced in the query.
+      table_definitions: a dictionary of ExternalDataSource names and objects for any external
+          tables referenced in the query.
       query_params: a dictionary containing query parameter types and values, passed to BigQuery.
     Returns:
       A parsed result object.
@@ -288,7 +288,7 @@ class Api(object):
     if delete_contents:
       args['deleteContents'] = True
     return google.datalab.utils.Http.request(url, method='DELETE', args=args,
-                                      credentials=self.credentials, raw_response=True)
+                                             credentials=self.credentials, raw_response=True)
 
   def datasets_update(self, dataset_name, dataset_info):
     """Updates the Dataset info.
@@ -299,7 +299,7 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._DATASETS_PATH % dataset_name)
     return google.datalab.utils.Http.request(url, method='PUT', data=dataset_info,
-                                  credentials=self.credentials)
+                                             credentials=self.credentials)
 
   def datasets_get(self, dataset_name):
     """Issues a request to retrieve information about a dataset.
@@ -492,8 +492,8 @@ class Api(object):
     if isinstance(destination, basestring):
       destination = [destination]
     data = {
-      # 'projectId': table_name.project_id, # Code sample shows this but it is not in job
-      # reference spec. Filed as b/19235843
+        # 'projectId': table_name.project_id, # Code sample shows this but it is not in job
+        # reference spec. Filed as b/19235843
         'kind': 'bigquery#job',
         'configuration': {
             'extract': {
@@ -521,4 +521,4 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name)
     return google.datalab.utils.Http.request(url, method='PUT', data=table_info,
-                                      credentials=self.credentials)
+                                             credentials=self.credentials)

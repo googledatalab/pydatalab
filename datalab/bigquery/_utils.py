@@ -168,5 +168,3 @@ def parse_table_name(name, project_id=None, dataset_id=None):
 
 def format_query_errors(errors):
   return '\n'.join(['%s: %s' % (error['reason'], error['message']) for error in errors])
-
-

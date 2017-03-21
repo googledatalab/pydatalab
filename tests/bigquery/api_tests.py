@@ -182,7 +182,8 @@ class TestCases(unittest.TestCase):
     }
     self.validate(mock_http_request, 'https://www.googleapis.com/bigquery/v2/projects/p/datasets/',
                   expected_data=expected_data)
-    api.datasets_insert(google.datalab.bigquery._utils.DatasetName('p', 'd'), 'FRIENDLY', 'DESCRIPTION')
+    api.datasets_insert(google.datalab.bigquery._utils.DatasetName('p', 'd'), 'FRIENDLY',
+                        'DESCRIPTION')
     expected_data = {
       'kind': 'bigquery#dataset',
       'datasetReference': {

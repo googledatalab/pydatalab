@@ -126,7 +126,7 @@ def get_experiment_fn(args):
         export_strategies=[export_strategy_target, export_strategy_notarget],
         min_eval_frequency=args.min_eval_frequency,
         eval_steps=None,
-        )
+    )
 
   # Return a function to create an Experiment.
   return get_experiment
@@ -214,12 +214,12 @@ def parse_arguments(argv):
   # Build a new parser so we catch unknown args and missing layer_sizes.
   parser = argparse.ArgumentParser()
   for i in range(num_layers):
-    parser.add_argument('--layer-size%s' % str(i+1), type=int, required=True)
+    parser.add_argument('--layer-size%s' % str(i + 1), type=int, required=True)
 
   layer_args = vars(parser.parse_args(args=remaining_args))
   layer_sizes = []
   for i in range(num_layers):
-    key = 'layer_size%s' % str(i+1)
+    key = 'layer_size%s' % str(i + 1)
     layer_sizes.append(layer_args[key])
 
   assert len(layer_sizes) == num_layers

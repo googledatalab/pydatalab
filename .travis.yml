@@ -22,7 +22,7 @@ before_install:
   - pip install flake8
 
 before_script:
-  - flake8 . --select=F401
+  - flake8 .
 
 script:
   - python ./tests/main.py

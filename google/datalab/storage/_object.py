@@ -280,7 +280,7 @@ class Objects(object):
       Exception if there was an error requesting information about the object.
     """
     try:
-      _ = self._api.objects_get(self._bucket, key)
+      self._api.objects_get(self._bucket, key)
     except google.datalab.utils.RequestException as e:
       if e.status == 404:
         return False
@@ -300,7 +300,8 @@ class Objects(object):
     objects = list_info.get('items', [])
     if len(objects):
       try:
-        objects = [Object(self._bucket, info['name'], info, context=self._context) for info in objects]
+        objects = [Object(self._bucket, info['name'], info, context=self._context)
+                   for info in objects]
       except KeyError:
         raise Exception('Unexpected response from server')
 
@@ -309,4 +310,3 @@ class Objects(object):
 
   def __iter__(self):
     return iter(google.datalab.utils.Iterator(self._retrieve_objects))
-

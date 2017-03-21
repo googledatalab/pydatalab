@@ -919,4 +919,3 @@ class Table(object):
     elif isinstance(fields, list):
       fields = ','.join(fields)
     return _query.Query('SELECT %s FROM %s' % (fields, self._repr_sql_()), context=self._context)
-

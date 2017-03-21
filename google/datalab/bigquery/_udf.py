@@ -100,4 +100,3 @@ class UDF(object):
           ');'
     return udf.format(name=name, params=params, return_type=return_type,
                       language=language, code=code, imports=imports)
-

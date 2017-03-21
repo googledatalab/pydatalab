@@ -21,6 +21,7 @@ import json
 import numpy as np
 import pandas as pd
 import random
+import sys
 
 import google.datalab.bigquery as bq
 
@@ -61,14 +62,16 @@ class CsvDataSet(object):
     else:
       with _util.open_local_or_gcs(schema_file, 'r') as f:
         self._schema = json.load(f)
-        
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
+
     if isinstance(file_pattern, basestring):
       file_pattern = [file_pattern]
     self._input_files = file_pattern
-    
+
     self._glob_files = []
     self._size = None
-
 
   @property
   def input_files(self):
@@ -81,12 +84,12 @@ class CsvDataSet(object):
       for file in self._input_files:
         # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
         self._glob_files += [str(x) for x in _util.glob_files(file)]
-    
+
     return self._glob_files
-      
+
   @property
   def schema(self):
-    return self._schema  
+    return self._schema
 
   @property
   def size(self):
@@ -98,7 +101,7 @@ class CsvDataSet(object):
         self._size += sum(1 if line else 0 for line in _util.open_local_or_gcs(csv_file, 'r'))
 
     return self._size
-    
+
   def sample(self, n):
     """ Samples data into a Pandas DataFrame.
     Args:
@@ -108,6 +111,10 @@ class CsvDataSet(object):
     Raises:
       Exception if n is larger than number of rows.
     """
+
+    if sys.version_info.major > 2:
+      xrange = range  # for python 3 compatibility
+
     row_total_count = 0
     row_counts = []
     for file in self.files:
@@ -127,7 +134,7 @@ class CsvDataSet(object):
       }
       names = [x['name'] for x in self._schema]
       dtype = {x['name']: _MAPPINGS.get(x['type'], object) for x in self._schema}
-    
+
     skip_count = row_total_count - n
     # Get all skipped indexes. These will be distributed into each file.
     # Note that random.sample will raise Exception if skip_count is greater than rows count.
@@ -204,7 +211,7 @@ class BigQueryDataSet(object):
                      self._get_source()).execute().result()[0].values()[0]
     if n > total:
       raise ValueError('sample larger than population')
-    sampling = bq.Sampling.random(percent=n*100.0/float(total))
+    sampling = bq.Sampling.random(percent=n * 100.0 / float(total))
     if self._query is not None:
       source = self._query
     else:

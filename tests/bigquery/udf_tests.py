@@ -26,24 +26,27 @@ class TestCases(unittest.TestCase):
     table = google.datalab.bigquery.Table('test:requestlogs.today', context=context)
 
     udf = self._create_udf()
-    query = google.datalab.bigquery.Query('SELECT * FROM foo($t)', t=table, udfs=[udf], context=context)
+    query = google.datalab.bigquery.Query('SELECT * FROM foo($t)', t=table, udfs=[udf],
+                                          context=context)
 
     expected_js = '\nfoo=function(r,emit) { emit({output1: r.field2, output2: r.field1 }); };\n' +\
                   'bigquery.defineFunction(\'foo\', ["field1", "field2"], ' +\
                   '[{"name": "output1", "type": "integer"}, ' +\
                   '{"name": "output2", "type": "string"}], foo);'
-    self.assertEqual(query.sql, 'SELECT * FROM (SELECT output1, output2 FROM foo(`test:requestlogs.today`))')
+    self.assertEqual(query.sql, 'SELECT * FROM '
+                                '(SELECT output1, output2 FROM foo(`test:requestlogs.today`))')
     self.assertEqual(udf._code, expected_js)
 
   def test_udf_expansion(self):
     sql = 'SELECT * FROM udf(source)'
-    udf = datalab.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf', 'code')
+    udf = google.datalab.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf',
+                                      'code')
     context = TestCases._create_context()
-    query = datalab.bigquery.Query(sql, udf=udf, context=context)
+    query = google.datalab.bigquery.Query(sql, udf=udf, context=context)
     self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
 
     # Alternate form
-    query = datalab.bigquery.Query(sql, udfs=[udf], context=context)
+    query = google.datalab.bigquery.Query(sql, udfs=[udf], context=context)
     self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
 
   @staticmethod

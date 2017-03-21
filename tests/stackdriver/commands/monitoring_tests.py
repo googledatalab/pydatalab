@@ -45,8 +45,8 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.stackdriver.commands._monitoring._render_dataframe')
   @mock.patch('google.datalab.stackdriver.monitoring.MetricDescriptors')
-  def test_monitoring_metrics_list(
-      self, mock_metric_descriptors, mock_render_dataframe, mock_context_default):
+  def test_monitoring_metrics_list(self, mock_metric_descriptors, mock_render_dataframe,
+                                   mock_context_default):
     METRIC_TYPES = ['compute.googleapis.com/instances/cpu/utilization',
                     'compute.googleapis.com/instances/cpu/usage_time']
     DATAFRAME = pandas.DataFrame(METRIC_TYPES, columns=['Metric type'])
@@ -66,8 +66,8 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.stackdriver.commands._monitoring._render_dataframe')
   @mock.patch('google.datalab.stackdriver.monitoring.ResourceDescriptors')
-  def test_monitoring_resource_types_list(
-      self, mock_resource_descriptors, mock_render_dataframe, mock_context_default):
+  def test_monitoring_resource_types_list(self, mock_resource_descriptors, mock_render_dataframe,
+                                          mock_context_default):
     RESOURCE_TYPES = ['gce_instance', 'aws_ec2_instance']
     DATAFRAME = pandas.DataFrame(RESOURCE_TYPES, columns=['Resource type'])
     PATTERN = '*instance*'
@@ -86,8 +86,8 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.stackdriver.commands._monitoring._render_dataframe')
   @mock.patch('google.datalab.stackdriver.monitoring.Groups')
-  def test_monitoring_groups_list(
-      self, mock_groups, mock_render_dataframe, mock_context_default):
+  def test_monitoring_groups_list(self, mock_groups, mock_render_dataframe,
+                                  mock_context_default):
     GROUP_IDS = ['GROUP-205', 'GROUP-101']
     DATAFRAME = pandas.DataFrame(GROUP_IDS, columns=['Group ID'])
     PATTERN = 'GROUP-*'

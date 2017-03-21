@@ -44,4 +44,3 @@ def _extension(args, cell):
     # MathJax is now loaded by default for all notebooks
     return
   raise Exception('Unsupported extension %s' % ext)
-

@@ -123,8 +123,8 @@ class TestCases(unittest.TestCase):
   def _list_groups_get_result(context):
     client = gcm._utils.make_client(context=context)
     groups = []
-    for group_id, parent_id, display_name, filter_string, is_cluster in zip(
-        GROUP_IDS, PARENT_IDS, DISPLAY_NAMES, FILTER_STRINGS, IS_CLUSTERS):
+    for group_id, parent_id, display_name, filter_string, is_cluster in \
+            zip(GROUP_IDS, PARENT_IDS, DISPLAY_NAMES, FILTER_STRINGS, IS_CLUSTERS):
       group = client.group(group_id=group_id, display_name=display_name,
                            parent_id=parent_id, filter_string=filter_string,
                            is_cluster=is_cluster)

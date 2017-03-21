@@ -17,7 +17,8 @@ try:
 except ImportError:
   raise Exception('This package requires an IPython notebook installation')
 
+__all__ = ['_']
+
+
 def _jupyter_nbextension_paths():
   return [dict(section="notebook", src="static", dest="gcpdatalab")]
-
-__all__ = ['_']

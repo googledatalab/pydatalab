@@ -60,7 +60,7 @@ def _next_token(sql):
   """
   i = 0
 
-  # We use some lambda's to make the logic more clear. The start_* functions return
+  # We use def statements here to make the logic more clear. The start_* functions return
   # true if i is the index of the start of that construct, while the end_* functions
   # return true if i point to the first character beyond that construct or the end of the
   # content.
@@ -69,18 +69,38 @@ def _next_token(sql):
   # digits as a convenience to shrink the total number of tokens. If we needed numbers
   # later we would need a special handler for these much like strings.
 
-  start_multi_line_comment = lambda s, i: s[i] == '/' and i < len(s) - 1 and s[i + 1] == '*'
-  end_multi_line_comment = lambda s, i: s[i - 2] == '*' and s[i - 1] == '/'
-  start_single_line_comment = lambda s, i: s[i] == '-' and i < len(s) - 1 and s[i + 1] == '-'
-  end_single_line_comment = lambda s, i: s[i - 1] == '\n'
-  start_whitespace = lambda s, i: s[i].isspace()
-  end_whitespace = lambda s, i: not s[i].isspace()
-  start_number = lambda s, i: s[i].isdigit()
-  end_number = lambda s, i: not s[i].isdigit()
-  start_identifier = lambda s, i: s[i].isalpha() or s[i] == '_' or s[i] == '$'
-  end_identifier = lambda s, i: not(s[i].isalnum() or s[i] == '_')
-  start_string = lambda s, i: s[i] == '"' or s[i] == "'"
-  always_true = lambda s, i: True
+  def start_multi_line_comment(s, i):
+    return s[i] == '/' and i < len(s) - 1 and s[i + 1] == '*'
+
+  def end_multi_line_comment(s, i):
+    return s[i - 2] == '*' and s[i - 1] == '/'
+
+  def start_single_line_comment(s, i):
+    return s[i] == '-' and i < len(s) - 1 and s[i + 1] == '-'
+
+  def end_single_line_comment(s, i):
+    return s[i - 1] == '\n'
+
+  def start_whitespace(s, i):
+    return s[i].isspace()
+
+  def end_whitespace(s, i):
+    return not s[i].isspace()
+
+  def start_number(s, i):
+    return s[i].isdigit()
+
+  def end_number(s, i):
+    return not s[i].isdigit()
+
+  def start_identifier(s, i):
+    return s[i].isalpha() or s[i] == '_' or s[i] == '$'
+
+  def end_identifier(s, i):
+    return not(s[i].isalnum() or s[i] == '_')
+
+  def start_string(s, i):
+    return s[i] == '"' or s[i] == "'"
 
   while i < len(sql):
     start = i
@@ -99,13 +119,13 @@ def _next_token(sql):
     elif start_string(sql, i):
       # Special handling here as we need to check for escaped closing quotes.
       quote = sql[i]
-      end_checker = always_true
+      end_checker = True
       i += 1
       while i < len(sql) and sql[i] != quote:
         i += 2 if sql[i] == '\\' else 1
     else:
       # We return single characters for everything else
-      end_checker = always_true
+      end_checker = True
 
     i += 1
     while i < len(sql) and not end_checker(sql, i):
@@ -135,4 +155,3 @@ def tokenize(sql):
     A list of strings corresponding to the groups above.
   """
   return list(_next_token(sql))
-

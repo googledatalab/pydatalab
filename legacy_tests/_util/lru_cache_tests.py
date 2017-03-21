@@ -22,7 +22,7 @@ class TestCases(unittest.TestCase):
   def test_cache_no_entry(self):
     cache = LRUCache(3)
     with self.assertRaises(KeyError):
-      _ = cache['a']
+      cache['a']
 
   def test_cache_lookup(self):
     cache = LRUCache(4)
@@ -41,15 +41,15 @@ class TestCases(unittest.TestCase):
       self.assertEqual(x, cache[x])
 
     with self.assertRaises(KeyError):
-      _ = cache['a']
+      cache['a']
 
-    _ = cache['b']
-    _ = cache['d']
+    cache['b']
+    cache['d']
     # 'c' should be LRU now
     cache['e'] = 'e'
 
     with self.assertRaises(KeyError):
-      _ = cache['c']
+      cache['c']
 
     for x in ['b', 'd', 'e']:
       self.assertEqual(x, cache[x])

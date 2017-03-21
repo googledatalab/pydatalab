@@ -75,6 +75,7 @@ def main(_):
   else:
     raise ValueError('invalid task_type %s' % (task.type,))
 
+
 if __name__ == '__main__':
   logging.basicConfig(level=logging.INFO)
   tf.app.run()

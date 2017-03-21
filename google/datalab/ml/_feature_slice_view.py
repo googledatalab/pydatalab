@@ -12,6 +12,7 @@
 
 import json
 import pandas as pd
+import sys
 
 import google.datalab as datalab
 import google.datalab.bigquery as bq
@@ -27,11 +28,11 @@ class FeatureSliceView(object):
           ...
         This function converts a DataFrame to such format.
     """
-    
+
     if ('count' not in df) or ('feature' not in df):
       raise Exception('No "count" or "feature" found in data.')
     if len(df.columns) < 3:
-      raise Exception('Need at least one metrics column.')      
+      raise Exception('Need at least one metrics column.')
     if len(df) == 0:
       raise Exception('Data is empty')
 
@@ -41,7 +42,7 @@ class FeatureSliceView(object):
       feature = metric_values.pop('feature')
       data.append({'feature': feature, 'metricValues': metric_values})
     return data
-  
+
   def plot(self, data):
     """ Plots a featire slice view on given data.
 
@@ -54,8 +55,11 @@ class FeatureSliceView(object):
           "feature": identifies a slice of features. For example: "petal_length:4.0-4.2".
           "count": number of instances in that slice of features.
         All other columns are viewed as metrics for its feature slice. At least one is required.
-    """    
+    """
     import IPython
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
 
     if isinstance(data, basestring):
       data = bq.Query(data)
@@ -67,7 +71,7 @@ class FeatureSliceView(object):
       data = self._get_lantern_format(data)
     else:
       raise Exception('data needs to be a sql query, or a pandas DataFrame.')
-      
+
     HTML_TEMPLATE = """<link rel="import" href="/nbextensions/gcpdatalab/extern/lantern-browser.html" >
         <lantern-browser id="{html_id}"></lantern-browser>
         <script>
@@ -80,8 +84,7 @@ class FeatureSliceView(object):
         </script>"""
     # Serialize the data and list of metrics names to JSON string.
     metrics_str = str(map(str, data[0]['metricValues'].keys()))
-    data_str = str([{str(k): json.dumps(v) for k,v in elem.iteritems()} for elem in data])
+    data_str = str([{str(k): json.dumps(v) for k, v in elem.iteritems()} for elem in data])
     html_id = 'l' + datalab.utils.commands.Html.next_id()
     html = HTML_TEMPLATE.format(html_id=html_id, metrics=metrics_str, data=data_str)
     IPython.display.display(IPython.display.HTML(html))
-

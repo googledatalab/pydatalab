@@ -46,8 +46,7 @@ class Local(object):
     }
     opts = beam.pipeline.PipelineOptions(flags=[], **options)
     p = beam.Pipeline('DirectRunner', options=opts)
-    _preprocess.configure_pipeline(p, train_dataset, eval_dataset,
-        checkpoint, output_dir, job_id)
+    _preprocess.configure_pipeline(p, train_dataset, eval_dataset, checkpoint, output_dir, job_id)
     job = LambdaJob(lambda: p.run().wait_until_finish(), job_id)
     return job
 

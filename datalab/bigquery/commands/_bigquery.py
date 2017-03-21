@@ -68,9 +68,10 @@ def _create_delete_subparser(parser):
 
 def _create_sample_subparser(parser):
   sample_parser = parser.subcommand('sample',
-      'Display a sample of the results of a BigQuery SQL query.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query,\n' +
-      'if -q/--query was used, or it can contain SQL for a query.')
+                                    'Display a sample of the results of a BigQuery SQL query.\nThe '
+                                    'cell can optionally contain arguments for expanding variables '
+                                    'in the query,\nif -q/--query was used, or it can contain SQL '
+                                    'for a query.')
   group = sample_parser.add_mutually_exclusive_group()
   group.add_argument('-q', '--query', help='the name of the query to sample')
   group.add_argument('-t', '--table', help='the name of the table to sample')
@@ -104,11 +105,12 @@ def _create_udf_subparser(parser):
 
 def _create_dry_run_subparser(parser):
   dry_run_parser = parser.subcommand('dryrun',
-      'Execute a dry run of a BigQuery query and display approximate usage statistics')
+                                     'Execute a dry run of a BigQuery query and display '
+                                     'approximate usage statistics')
   dry_run_parser.add_argument('-q', '--query',
                               help='The name of the query to be dry run')
   dry_run_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'])
+                              choices=['legacy', 'standard'])
   dry_run_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   dry_run_parser.add_argument('-v', '--verbose',
                               help='Show the expanded SQL that is being executed',
@@ -118,12 +120,13 @@ def _create_dry_run_subparser(parser):
 
 def _create_execute_subparser(parser):
   execute_parser = parser.subcommand('execute',
-      'Execute a BigQuery SQL query and optionally send the results to a named table.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query.')
+                                     'Execute a BigQuery SQL query and optionally send the results '
+                                     'to a named table.\nThe cell can optionally contain arguments '
+                                     'for expanding variables in the query.')
   execute_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                               action='store_true')
   execute_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'])
+                              choices=['legacy', 'standard'])
   execute_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   execute_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                               choices=['create', 'append', 'overwrite'])
@@ -139,13 +142,14 @@ def _create_execute_subparser(parser):
 
 def _create_pipeline_subparser(parser):
   pipeline_parser = parser.subcommand('pipeline',
-      'Define a deployable pipeline based on a BigQuery query.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query.')
+                                      'Define a deployable pipeline based on a BigQuery query.\n'
+                                      'The cell can optionally contain arguments for expanding '
+                                      'variables in the query.')
   pipeline_parser.add_argument('-n', '--name', help='The pipeline name')
   pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                                action='store_true')
   pipeline_parser.add_argument('-d', '--dialect', help='BigQuery SQL dialect',
-                             choices=['legacy', 'standard'])
+                               choices=['legacy', 'standard'])
   pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   pipeline_parser.add_argument('-m', '--mode', help='The table creation mode', default='create',
                                choices=['create', 'append', 'overwrite'])
@@ -233,8 +237,8 @@ def _create_load_subparser(parser):
   load_parser.add_argument('-q', '--quote', default='"',
                            help='The quoted field delimiter for CVS (default ")')
   load_parser.add_argument('-i', '--infer',
-                           help='Whether to attempt to infer the schema from source; ' +
-                               'if false the table must already exist',
+                           help='Whether to attempt to infer the schema from source; '
+                                'if false the table must already exist',
                            action='store_true')
   load_parser.add_argument('-S', '--source', help='The URL of the GCS source(s)')
   load_parser.add_argument('-D', '--destination', help='The destination table name')
@@ -309,22 +313,20 @@ def _sample_cell(args, cell_body):
   if method == 'random':
     sampling = datalab.bigquery.Sampling.random(percent=args['percent'], count=count)
   elif method == 'hashed':
-    sampling = datalab.bigquery.Sampling.hashed(field_name=args['field'],
-                                            percent=args['percent'],
-                                            count=count)
+    sampling = datalab.bigquery.Sampling.hashed(field_name=args['field'], percent=args['percent'],
+                                                count=count)
   elif method == 'sorted':
     ascending = args['order'] == 'ascending'
     sampling = datalab.bigquery.Sampling.sorted(args['field'],
-                                            ascending=ascending,
-                                            count=count)
+                                                ascending=ascending,
+                                                count=count)
   elif method == 'limit':
     sampling = datalab.bigquery.Sampling.default(count=count)
   else:
     sampling = datalab.bigquery.Sampling.default(count=count)
 
   if query:
-    results = query.sample(sampling=sampling, dialect=args['dialect'],
-                           billing_tier=args['billing'])
+    results = query.sample(sampling=sampling, dialect=args['dialect'], billing_tier=args['billing'])
   elif view:
     results = view.sample(sampling=sampling)
   else:
@@ -364,7 +366,9 @@ def _create_cell(args, cell_body):
       print('Failed to create %s: no schema specified' % args['name'])
     else:
       try:
-        record = datalab.utils.commands.parse_config(cell_body, datalab.utils.commands.notebook_environment(), as_dict=False)
+        record = datalab.utils.commands.parse_config(cell_body,
+                                                     datalab.utils.commands.notebook_environment(),
+                                                     as_dict=False)
         schema = datalab.bigquery.Schema(record)
         datalab.bigquery.Table(args['name']).create(schema=schema, overwrite=args['overwrite'])
       except Exception as e:
@@ -418,7 +422,7 @@ def _dryrun_cell(args, cell_body):
     print(query.sql)
   result = query.execute_dry_run(dialect=args['dialect'], billing_tier=args['billing'])
   return datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
-                                              is_cached=result['cacheHit'])
+                                                  is_cached=result['cacheHit'])
 
 
 def _udf_cell(args, js):
@@ -537,7 +541,7 @@ def _pipeline_cell(args, cell_body):
     print(query.sql)
     result = query.execute_dry_run()
     return datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
-                                                is_cached=result['cacheHit'])
+                                                    is_cached=result['cacheHit'])
   if args['action'] == 'run':
     return query.execute(args['target'], table_mode=args['mode'], use_cache=not args['nocache'],
                          allow_large_results=args['large'], dialect=args['dialect'],
@@ -749,9 +753,9 @@ def _load_cell(args, schema):
   # to be able to do it. Alternatively we can drop the --infer argument and force the user
   # to use a pre-existing table or supply a JSON schema.
   csv_options = datalab.bigquery.CSVOptions(delimiter=args['delimiter'],
-                                        skip_leading_rows=args['skip'],
-                                        allow_jagged_rows=not args['strict'],
-                                        quote=args['quote'])
+                                            skip_leading_rows=args['skip'],
+                                            allow_jagged_rows=not args['strict'],
+                                            quote=args['quote'])
   job = table.load(args['source'],
                    mode=args['mode'],
                    source_format=('CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
@@ -968,7 +972,8 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     meta_cost = ''
     meta_time = ''
 
-  data, total_count = datalab.utils.commands.get_data(table, fields, first_row=0, count=rows_per_page)
+  data, total_count = datalab.utils.commands.get_data(table, fields, first_row=0,
+                                                      count=rows_per_page)
 
   if total_count < 0:
     # The table doesn't have a length metadata property but may still be small if we fetched less
@@ -982,10 +987,12 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   meta_data = '(%s)' % (', '.join([entry for entry in meta_entries if len(entry)]))
 
   return _HTML_TEMPLATE.format(div_id=div_id,
-                               static_table=datalab.utils.commands.HtmlBuilder.render_chart_data(data),
+                               static_table=datalab.utils.commands.HtmlBuilder
+                               .render_chart_data(data),
                                meta_data=meta_data,
                                chart_style=chart,
-                               source_index=datalab.utils.commands.get_data_source_index(str(table)),
+                               source_index=datalab.utils.commands
+                               .get_data_source_index(str(table)),
                                fields=','.join(fields),
                                total_rows=total_count,
                                rows_per_page=rows_per_page,
@@ -1042,5 +1049,6 @@ def _register_html_formatters():
   except TypeError:
     # For when running unit tests
     pass
+
 
 _register_html_formatters()

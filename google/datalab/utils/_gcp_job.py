@@ -42,4 +42,3 @@ class GCPJob(_job.Job):
     """Returns a representation for the job for showing in the notebook.
     """
     return 'Job %s/%s %s' % (self._context.project_id, self._job_id, self.state)
-

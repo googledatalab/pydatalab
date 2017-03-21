@@ -20,6 +20,7 @@ import google.datalab as datalab
 
 from . import _util
 
+
 class Models(object):
   """Represents a list of Cloud ML models for a project."""
 
@@ -111,16 +112,16 @@ class Models(object):
 
     IPython.display.display(
         datalab.utils.commands.render_dictionary(data, ['name', 'defaultVersion']))
-    
+
   def describe(self, model_name):
     """Print information of a specified model.
 
     Args:
       model_name: the name of the model to print details on.
-    """    
+    """
     model_yaml = yaml.safe_dump(self.get_model_details(model_name), default_flow_style=False)
-    print model_yaml
-    
+    print(model_yaml)
+
 
 class ModelVersions(object):
   """Represents a list of versions for a Cloud ML model."""
@@ -145,7 +146,8 @@ class ModelVersions(object):
   def _retrieve_versions(self, page_token, page_size):
     parent = self._full_model_name
     list_info = self._api.projects().models().versions().list(parent=parent,
-        pageToken=page_token, pageSize=page_size).execute()
+                                                              pageToken=page_token,
+                                                              pageSize=page_size).execute()
     versions = list_info.get('versions', [])
     page_token = list_info.get('nextPageToken', None)
     return versions, page_token
@@ -181,10 +183,11 @@ class ModelVersions(object):
 
     # If there is no "export.meta" or"saved_model.pb" under path but there is
     # path/model/export.meta or path/model/saved_model.pb, then append /model to the path.
-    if (not datalab.storage.Object.from_url(os.path.join(path, 'export.meta')).exists() and
-        not datalab.storage.Object.from_url(os.path.join(path, 'saved_model.pb')).exists()):
-      if (datalab.storage.Object.from_url(os.path.join(path, 'model', 'export.meta')).exists() or
-          datalab.storage.Object.from_url(os.path.join(path, 'model', 'saved_model.pb')).exists()):
+    if not datalab.storage.Object.from_url(os.path.join(path, 'export.meta')).exists() and not \
+            datalab.storage.Object.from_url(os.path.join(path, 'saved_model.pb')).exists():
+      if datalab.storage.Object.from_url(os.path.join(path, 'model', 'export.meta')).exists() or \
+              datalab.storage.Object.from_url(os.path.join(path, 'model',
+                                                           'saved_model.pb')).exists():
         path = os.path.join(path, 'model')
       else:
         print('Cannot find export.meta or saved_model.pb, but continue with deployment anyway.')
@@ -201,8 +204,8 @@ class ModelVersions(object):
       'deployment_uri': path,
       'runtime_version': '1.0',
     }
-    response = self._api.projects().models().versions().create(body=body,
-                   parent=self._full_model_name).execute()
+    response = self._api.projects().models().versions().create(
+      body=body, parent=self._full_model_name).execute()
     if 'name' not in response:
       raise Exception('Invalid response from service. "name" is not found.')
     _util.wait_for_long_running_operation(response['name'])
@@ -254,19 +257,19 @@ class ModelVersions(object):
     """
     version_yaml = yaml.safe_dump(self.get_version_details(version_name),
                                   default_flow_style=False)
-    print version_yaml
+    print(version_yaml)
 
   def list(self):
     """List versions under the current model in a table view.
 
     Raises:
       Exception if it is called in a non-IPython environment.
-    """    
+    """
     import IPython
 
     # "self" is iterable (see __iter__() method).
-    data = [{'name': version['name'].split()[-1], 
+    data = [{'name': version['name'].split()[-1],
              'deploymentUri': version['deploymentUri'], 'createTime': version['createTime']}
             for version in self.get_iterator()]
     IPython.display.display(
-        datalab.utils.commands.render_dictionary(data, ['name', 'deploymentUri', 'createTime'])) 
+        datalab.utils.commands.render_dictionary(data, ['name', 'deploymentUri', 'createTime']))

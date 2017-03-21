@@ -354,8 +354,8 @@ def validate_config(config, required_keys, optional_keys=None):
     raise Exception('config is not dict type')
   invalid_keys = set(config) - set(required_keys + optional_keys)
   if len(invalid_keys) > 0:
-    raise Exception('Invalid config with unexpected keys "%s"'
-        % ', '.join(e for e in invalid_keys))
+    raise Exception('Invalid config with unexpected keys '
+                    '"%s"' % ', '.join(e for e in invalid_keys))
   missing_keys = set(required_keys) - set(config)
   if len(missing_keys) > 0:
     raise Exception('Invalid config with missing keys "%s"' % ', '.join(missing_keys))
@@ -405,8 +405,8 @@ def validate_config_value(value, possible_values):
     Exception if the value is not one of possible values.
   """
   if value not in possible_values:
-    raise Exception('Invalid config value "%s". Possible values are %s'
-        % (value, ', '.join(e for e in possible_values)))
+    raise Exception('Invalid config value "%s". Possible values are '
+                    '%s' % (value, ', '.join(e for e in possible_values)))
 
 
 # For chart and table HTML viewers, we use a list of table names and reference

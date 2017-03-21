@@ -21,20 +21,21 @@ import unittest
 import IPython
 import IPython.core.magic
 
-
-def noop_decorator(func):
-  return func
-
-IPython.core.magic.register_line_cell_magic = noop_decorator
-IPython.core.magic.register_line_magic = noop_decorator
-IPython.core.magic.register_cell_magic = noop_decorator
-IPython.get_ipython = mock.Mock()
-
 import datalab.bigquery
 import datalab.context
 import datalab.data
 import datalab.data.commands
 import datalab.utils.commands
+
+
+def noop_decorator(func):
+  return func
+
+
+IPython.core.magic.register_line_cell_magic = noop_decorator
+IPython.core.magic.register_line_magic = noop_decorator
+IPython.core.magic.register_cell_magic = noop_decorator
+IPython.get_ipython = mock.Mock()
 
 
 class TestCases(unittest.TestCase):
@@ -73,20 +74,19 @@ class TestCases(unittest.TestCase):
 
     sql_string_list = ['SELECT 3 AS x',
                        'WITH q1 as (SELECT "1")\nSELECT * FROM q1',
+                       'INSERT DataSet.Table (Id, Description)\nVALUES(100,"TestDesc")',
+                       'INSERT DataSet.Table (Id, Description)\n'
+                       'SELECT * FROM UNNEST([(200,"TestDesc2"),(300,"TestDesc3")])'
                        'INSERT DataSet.Table (Id, Description)\n' +
-                           'VALUES(100,"TestDesc")',
+                       'WITH w as (SELECT ARRAY<STRUCT<Id int64, Description string>>\n' +
+                       '[(400, "TestDesc4"),(500, "TestDesc5")] col)\n' +
+                       'SELECT Id, Description FROM w, UNNEST(w.col)'
                        'INSERT DataSet.Table (Id, Description)\n' +
-                           'SELECT * FROM UNNEST([(200,"TestDesc2"),(300,"TestDesc3")])'
-                       'INSERT DataSet.Table (Id, Description)\n' +
-                           'WITH w as (SELECT ARRAY<STRUCT<Id int64, Description string>>\n' +
-                           '[(400, "TestDesc4"),(500, "TestDesc5")] col)\n' +
-                           'SELECT Id, Description FROM w, UNNEST(w.col)'
-                       'INSERT DataSet.Table (Id, Description)\n' +
-                           'VALUES (600,\n' +
-                           '(SELECT Description FROM DataSet.Table WHERE Id = 400))',
+                       'VALUES (600,\n' +
+                       '(SELECT Description FROM DataSet.Table WHERE Id = 400))',
                        'DELETE FROM DataSet.Table WHERE DESCRIPTION IS NULL'
                        'DELETE FROM DataSet.Table\n' +
-                           'WHERE Id NOT IN (100, 200, 300)'
+                       'WHERE Id NOT IN (100, 200, 300)'
                        ]
     for i in range(0, len(sql_string_list)):
         m = imp.new_module('m')

@@ -63,7 +63,7 @@ class TestCases(unittest.TestCase):
     schema_master = datalab.bigquery.Schema(master)
 
     with self.assertRaises(Exception) as error1:
-      _ = datalab.bigquery.Schema.from_data(variant1)
+      datalab.bigquery.Schema.from_data(variant1)
     if sys.version_info[0] == 3:
       self.assertEquals('Cannot create a schema from heterogeneous list [3, 2.0, True, ' +
                         '[\'cow\', \'horse\', [0, []]]]; perhaps you meant to use ' +
@@ -73,7 +73,7 @@ class TestCases(unittest.TestCase):
                         '[u\'cow\', u\'horse\', [0, []]]]; perhaps you meant to use ' +
                         'Schema.from_record?', str(error1.exception))
     with self.assertRaises(Exception) as error2:
-      _ = datalab.bigquery.Schema.from_data(variant2)
+      datalab.bigquery.Schema.from_data(variant2)
     if sys.version_info[0] == 3:
       self.assertEquals('Cannot create a schema from dict OrderedDict([(\'Column1\', 3), ' +
                         '(\'Column2\', 2.0), (\'Column3\', True), (\'Column4\', ' +

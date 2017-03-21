@@ -23,6 +23,7 @@ import csv
 import os
 import pandas as pd
 import random
+import sys
 
 try:
     from StringIO import StringIO
@@ -53,12 +54,10 @@ class Csv(object):
     return self._path
 
   @staticmethod
-
   def _read_gcs_lines(path, max_lines=None):
     return datalab.storage.Item.from_url(path).read_lines(max_lines)
 
   @staticmethod
-
   def _read_local_lines(path, max_lines=None):
     lines = []
     for line in open(path):
@@ -115,7 +114,7 @@ class Csv(object):
     df = self.browse(1, None)
     # read each column as STRING because we only want to sample rows.
     schema_train = bq.Schema([{'name': name, 'type': 'STRING'} for name in df.keys()])
-    options = bq.CSVOptions(skip_leading_rows=(1 if skip_header_rows == True else 0))
+    options = bq.CSVOptions(skip_leading_rows=(1 if skip_header_rows is True else 0))
     return bq.FederatedTable.from_storage(self.path,
                                           csv_options=options,
                                           schema=schema_train,
@@ -143,6 +142,10 @@ class Csv(object):
     """
     # TODO(qimingj) Add unit test
     # Read data from source into DataFrame.
+
+    if sys.version_info.major > 2:
+      xrange = range  # for python 3 compatibility
+
     if strategy == 'BIGQUERY':
       import datalab.bigquery as bq
       if not self.path.startswith('gs://'):
@@ -150,7 +153,7 @@ class Csv(object):
       federated_table = self._create_federated_table(skip_header_rows)
       row_count = self._get_gcs_csv_row_count(federated_table)
       query = bq.Query('SELECT * from data', data_sources={'data': federated_table})
-      sampling = bq.Sampling.random(count*100/float(row_count))
+      sampling = bq.Sampling.random(count * 100 / float(row_count))
       sample = query.sample(sampling=sampling)
       df = sample.to_dataframe()
     elif strategy == 'LOCAL':
@@ -160,10 +163,10 @@ class Csv(object):
         datalab.utils.gcs_copy_file(self.path, local_file)
       with open(local_file) as f:
         row_count = sum(1 for line in f)
-      start_row = 1 if skip_header_rows == True else 0
-      skip_count = row_count - count - 1 if skip_header_rows == True else row_count - count
+      start_row = 1 if skip_header_rows is True else 0
+      skip_count = row_count - count - 1 if skip_header_rows is True else row_count - count
       skip = sorted(random.sample(xrange(start_row, row_count), skip_count))
-      header_row = 0 if skip_header_rows == True else None
+      header_row = 0 if skip_header_rows is True else None
       df = pd.read_csv(local_file, skiprows=skip, header=header_row, delimiter=self._delimiter)
       if self.path.startswith('gs://'):
         os.remove(local_file)

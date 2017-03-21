@@ -17,7 +17,8 @@ import sys
 import unittest
 
 # Set up the path so that we can import our google.datalab.* packages.
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../google.datalab')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             '../../google.datalab')))  # noqa
 
 import bigquery.api_tests
 import bigquery.dataset_tests
@@ -28,7 +29,7 @@ import bigquery.query_tests
 import bigquery.sampling_tests
 import bigquery.schema_tests
 import bigquery.table_tests
-#import bigquery.udf_tests
+# import bigquery.udf_tests
 import bigquery.view_tests
 import kernel.bigquery_tests
 import kernel.chart_data_tests
@@ -56,14 +57,14 @@ import _util.util_tests
 _TEST_MODULES = [
     bigquery.api_tests,
     bigquery.dataset_tests,
-    #bigquery.external_data_source_tests, # TODO: enable external data source tests
+    # bigquery.external_data_source_tests, # TODO: enable external data source tests
     bigquery.jobs_tests,
     bigquery.parser_tests,
     bigquery.query_tests,
     bigquery.sampling_tests,
     bigquery.schema_tests,
     bigquery.table_tests,
-    #bigquery.udf_tests, # TODO: enable UDF tests once new implementation is done
+    # bigquery.udf_tests, # TODO: enable UDF tests once new implementation is done
     bigquery.view_tests,
     bigquery.sampling_tests,
     kernel.bigquery_tests,

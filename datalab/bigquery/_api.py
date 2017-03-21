@@ -306,7 +306,7 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._DATASETS_PATH % dataset_name)
     return datalab.utils.Http.request(url, method='PUT', data=dataset_info,
-                                  credentials=self._credentials)
+                                      credentials=self._credentials)
 
   def datasets_get(self, dataset_name):
     """Issues a request to retrieve information about a dataset.
@@ -433,8 +433,8 @@ class Api(object):
     url = Api._ENDPOINT + (Api._TABLES_PATH % table_name) + "/insertAll"
 
     data = {
-      'kind': 'bigquery#tableDataInsertAllRequest',
-      'rows': rows
+        'kind': 'bigquery#tableDataInsertAllRequest',
+        'rows': rows
     }
 
     return datalab.utils.Http.request(url, data=data, credentials=self._credentials)
@@ -498,8 +498,8 @@ class Api(object):
     if isinstance(destination, basestring):
       destination = [destination]
     data = {
-      # 'projectId': table_name.project_id, # Code sample shows this but it is not in job
-      # reference spec. Filed as b/19235843
+        # 'projectId': table_name.project_id, # Code sample shows this but it is not in job
+        # reference spec. Filed as b/19235843
         'kind': 'bigquery#job',
         'configuration': {
             'extract': {

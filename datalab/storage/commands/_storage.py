@@ -77,7 +77,8 @@ for help on a specific command.
                                   'Copy one or more GCS objects to a different location.')
   copy_parser.add_argument('-s', '--source', help='The name of the object(s) to copy', nargs='+')
   copy_parser.add_argument('-d', '--destination', required=True,
-      help='The copy destination. For multiple source items this must be a bucket.')
+                           help='The copy destination. For multiple source items this must be a '
+                                'bucket.')
   copy_parser.set_defaults(func=_storage_copy)
 
   create_parser = parser.subcommand('create', 'Create one or more GCS buckets.')
@@ -167,7 +168,8 @@ def _expand_list(names):
         # Expand possible key values.
         if bucket not in items and key[:1] == '*':
           # We need the full list; cache a copy for efficiency.
-          items[bucket] = [item.metadata.name for item in list(datalab.storage.Bucket(bucket).items())]
+          items[bucket] = [item.metadata.name
+                           for item in list(datalab.storage.Bucket(bucket).items())]
         # If we have a cached copy use it
         if bucket in items:
           candidates = items[bucket]
@@ -216,7 +218,7 @@ def _storage_copy(args, _):
     destination_key = target_key if target_key else source_key
     try:
       datalab.storage.Item(source_bucket, source_key).copy_to(destination_key,
-                                                          bucket=destination_bucket)
+                                                              bucket=destination_bucket)
     except Exception as e:
       errs.append("Couldn't copy %s to %s: %s" %
                   (source, target, _extract_storage_api_response_error(str(e))))

@@ -12,6 +12,7 @@
 
 """Implements BigQuery output type functionality."""
 
+
 class QueryOutput(object):
 
   @staticmethod
@@ -154,4 +155,3 @@ class QueryOutput(object):
   @property
   def dataframe_max_rows(self):
     return self._dataframe_max_rows
-

@@ -33,9 +33,9 @@ def _load_tf_model(model_dir):
       model_dir, tags=[tag_constants.SERVING])
   signature = meta_graph.signature_def['serving_default']
   inputs = {friendly_name: tensor_info_proto.name
-      for (friendly_name, tensor_info_proto) in signature.inputs.items() }
+            for (friendly_name, tensor_info_proto) in signature.inputs.items()}
   outputs = {friendly_name: tensor_info_proto.name
-      for (friendly_name, tensor_info_proto) in signature.outputs.items() }
+             for (friendly_name, tensor_info_proto) in signature.outputs.items()}
   return session, inputs, outputs
 
 
@@ -93,7 +93,7 @@ class UnbatchDoFn(beam.DoFn):
 
 class LoadImagesDoFn(beam.DoFn):
   """A DoFn that reads image from url."""
-  
+
   def process(self, element):
     with _util.open_local_or_gcs(element['image_url'], 'r') as ff:
       image_bytes = ff.read()
@@ -155,7 +155,7 @@ class ProcessResultsDoFn(beam.DoFn):
       'image_url': image_url,
       'predicted': prediction,
       # Convert to float from np.float32 because BigQuery Sink can only handle intrinsic types.
-      'predicted_prob': float(predicted_prob)  
+      'predicted_prob': float(predicted_prob)
     }
     if target is not None:
       target_prob = scores[labels.index(target)] if target in labels else 0.0
@@ -172,11 +172,11 @@ class MakeCsvLineDoFn(beam.DoFn):
     import StringIO
 
     line = StringIO.StringIO()
-    if len(element) == 5:    
-      csv.DictWriter(line, 
-          ['image_url', 'target', 'predicted', 'target_prob', 'predicted_prob']).writerow(element)
+    if len(element) == 5:
+      csv.DictWriter(line, ['image_url', 'target', 'predicted', 'target_prob',
+                            'predicted_prob']).writerow(element)
     else:
-      csv.DictWriter(line, ['image_url', 'predicted', 'predicted_prob']).writerow(element)   
+      csv.DictWriter(line, ['image_url', 'predicted', 'predicted_prob']).writerow(element)
     yield line.getvalue()
 
 
@@ -198,26 +198,27 @@ def configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table):
         {'name': 'predicted', 'type': 'STRING'},
         {'name': 'predicted_prob', 'type': 'FLOAT'},
     ]
-  results = (data
-      | 'Load Images' >> beam.ParDo(LoadImagesDoFn())
-      | 'Batch Inputs' >> beam.ParDo(EmitAsBatchDoFn(20))
-      | 'Batch Predict' >> beam.ParDo(PredictBatchDoFn(model_dir))
-      | 'Unbatch' >> beam.ParDo(UnbatchDoFn())
-      | 'Process Results' >> beam.ParDo(ProcessResultsDoFn()))
+  results = (data |
+             'Load Images' >> beam.ParDo(LoadImagesDoFn()) |
+             'Batch Inputs' >> beam.ParDo(EmitAsBatchDoFn(20)) |
+             'Batch Predict' >> beam.ParDo(PredictBatchDoFn(model_dir)) |
+             'Unbatch' >> beam.ParDo(UnbatchDoFn()) |
+             'Process Results' >> beam.ParDo(ProcessResultsDoFn()))
 
   if output_csv is not None:
     schema_file = output_csv + '.schema.json'
-    results_save = (results
-        | 'Prepare For Output' >> beam.ParDo(MakeCsvLineDoFn())
-        | 'Write Csv Results' >> beam.io.textio.WriteToText(output_csv, shard_name_template=''))
-    (results_save 
-        | beam.transforms.combiners.Sample.FixedSizeGlobally('Sample One', 1)
-        | 'Serialize Schema' >> beam.Map(lambda path: json.dumps(output_schema))
-        | 'Write Schema' >> beam.io.textio.WriteToText(schema_file, shard_name_template=''))
+    results_save = (results |
+                    'Prepare For Output' >> beam.ParDo(MakeCsvLineDoFn()) |
+                    'Write Csv Results' >> beam.io.textio.WriteToText(output_csv,
+                                                                      shard_name_template=''))
+    (results_save |
+     beam.transforms.combiners.Sample.FixedSizeGlobally('Sample One', 1) |
+     'Serialize Schema' >> beam.Map(lambda path: json.dumps(output_schema)) |
+     'Write Schema' >> beam.io.textio.WriteToText(schema_file, shard_name_template=''))
+
   if output_bq_table is not None:
     # BigQuery sink takes schema in the form of 'field1:type1,field2:type2...'
     bq_schema_string = ','.join(x['name'] + ':' + x['type'] for x in output_schema)
     sink = beam.io.BigQuerySink(output_bq_table, schema=bq_schema_string,
-        write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE)
+                                write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE)
     results | 'Write BQ Results' >> beam.io.Write(sink)
-  

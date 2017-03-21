@@ -226,7 +226,7 @@ class Buckets(object):
       Exception if there was an error requesting information about the bucket.
     """
     try:
-      _ = self._api.buckets_get(name)
+      self._api.buckets_get(name)
     except datalab.utils.RequestException as e:
       if e.status == 404:
         return False

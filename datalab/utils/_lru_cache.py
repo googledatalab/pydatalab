@@ -100,4 +100,3 @@ class LRUCache(object):
     if key in self._cache:
       return self._cache[key]['value']
     return value
-

@@ -71,6 +71,7 @@ class Sampling(object):
     projection = Sampling._create_projection(fields)
     return lambda sql: 'SELECT %s FROM (%s) ORDER BY %s%s LIMIT %d' % (projection, sql, field_name,
                                                                        direction, count)
+
   @staticmethod
   def hashed(field_name, percent, fields=None, count=0):
     """Provides a sampling strategy based on hashing and selecting a percentage of data.
@@ -85,6 +86,7 @@ class Sampling(object):
     """
     if field_name is None:
       raise Exception('Hash field must be specified')
+
     def _hashed_sampling(sql):
       projection = Sampling._create_projection(fields)
       sql = 'SELECT %s FROM (%s) WHERE MOD(FARM_FINGERPRINT(CAST(%s AS STRING)), 100) < %d' % \
@@ -143,4 +145,3 @@ class Sampling(object):
       return Sampling.sorted(fields=fields, field_name=key_field, ascending=ascending, count=count)
     else:
       raise Exception('Unsupported sampling method: %s' % method)
-

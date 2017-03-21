@@ -109,7 +109,7 @@ def _create_dataset_subparser(parser):
   # %%bq datasets create
   create_parser = sub_commands.add_parser('create', help='Create a dataset.')
   create_parser.add_argument('-n', '--name', help='The name of the dataset to create.',
-                                     required=True)
+                             required=True)
   create_parser.add_argument('-f', '--friendly', help='The friendly name of the dataset.')
 
   # %%bq datasets delete
@@ -125,20 +125,18 @@ def _create_table_subparser(parser):
   sub_commands = table_parser.add_subparsers(dest='command')
 
   # %%bq tables list
-  list_parser = sub_commands.add_parser('list', help='List the tables in a BigQuery project or dataset.')
-  list_parser.add_argument('-p', '--project',
-                             help='The project whose tables should be listed')
-  list_parser.add_argument('-d', '--dataset',
-                             help='The dataset to restrict to')
+  list_parser = sub_commands.add_parser('list',
+                                        help='List the tables in a BigQuery project or dataset.')
+  list_parser.add_argument('-p', '--project', help='The project whose tables should be listed')
+  list_parser.add_argument('-d', '--dataset', help='The dataset to restrict to')
   list_parser.add_argument('-f', '--filter',
-                             help='Optional wildcard filter string used to limit the results')
+                           help='Optional wildcard filter string used to limit the results')
 
   # %%bq tables create
   create_parser = sub_commands.add_parser('create', help='Create a table.')
-  create_parser.add_argument('-n', '--name', help='The name of the table to create.',
-                                   required=True)
+  create_parser.add_argument('-n', '--name', help='The name of the table to create.', required=True)
   create_parser.add_argument('-o', '--overwrite', help='Overwrite table if it exists.',
-                                   action='store_true')
+                             action='store_true')
 
   # %%bq tables describe
   describe_parser = sub_commands.add_parser('describe', help='View a table\'s schema')
@@ -146,27 +144,27 @@ def _create_table_subparser(parser):
 
   # %%bq tables delete
   delete_parser = sub_commands.add_parser('delete', help='Delete a table.')
-  delete_parser.add_argument('-n', '--name', help='The name of the table to delete.',
-                                   required=True)
+  delete_parser.add_argument('-n', '--name', help='The name of the table to delete.', required=True)
 
   # %%bq tables view
   delete_parser = sub_commands.add_parser('view', help='View a table.')
-  delete_parser.add_argument('-n', '--name', help='The name of the table to view.',
-                                   required=True)
+  delete_parser.add_argument('-n', '--name', help='The name of the table to view.', required=True)
 
   return table_parser
 
 
 def _create_sample_subparser(parser):
-  sample_parser = parser.subcommand('sample', help='Display a sample of the results of a ' +
-      'BigQuery SQL query. The cell can optionally contain arguments for expanding variables in ' +
-      'the query, if -q/--query was used, or it can contain SQL for a query.')
+  sample_parser = parser.subcommand('sample',
+                                    help='Display a sample of the results of a BigQuery SQL query. '
+                                         'The cell can optionally contain arguments for expanding '
+                                         'variables in the query, if -q/--query was used, or it '
+                                         'can contain SQL for a query.')
   group = sample_parser.add_mutually_exclusive_group()
   group.add_argument('-q', '--query', help='the name of the query object to sample')
   group.add_argument('-t', '--table', help='the name of the table object to sample')
   group.add_argument('-v', '--view', help='the name of the view object to sample')
   sample_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
-                              action='store_true')
+                             action='store_true')
   sample_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   sample_parser.add_argument('-m', '--method', help='The type of sampling to use',
                              choices=['limit', 'random', 'hashed', 'sorted'], default='limit')
@@ -196,48 +194,55 @@ def _create_udf_subparser(parser):
 
 
 def _create_datasource_subparser(parser):
-  datasource_parser = parser.subcommand('datasource', 'Create a named Javascript BigQuery external data source')
+  datasource_parser = parser.subcommand('datasource',
+                                        'Create a named Javascript BigQuery external data source')
   datasource_parser.add_argument('-n', '--name', help='The name for this data source',
                                  required=True)
-  datasource_parser.add_argument('-p', '--paths', help='URL(s) of the data objects, can include ' + \
-                                 'a wildcard "*" at the end', required=True, nargs='+')
-  datasource_parser.add_argument('-f', '--format', help='The format of the table\'s data. ' + \
-                                 'CSV or JSON, default CSV', default='CSV')
+  datasource_parser.add_argument('-p', '--paths',
+                                 help='URL(s) of the data objects, can include a wildcard "*" at '
+                                      'the end',
+                                 required=True, nargs='+')
+  datasource_parser.add_argument('-f', '--format',
+                                 help='The format of the table\'s data. CSV or JSON, default CSV',
+                                 default='CSV')
   datasource_parser.add_argument('-c', '--compressed', help='Whether the data is compressed',
                                  action='store_true')
   return datasource_parser
 
 
 def _create_dryrun_subparser(parser):
-  dryrun_parser = parser.subcommand('dryrun',
-      'Execute a dry run of a BigQuery query and display approximate usage statistics')
-  dryrun_parser.add_argument('-q', '--query',
-                              help='The name of the query to be dry run')
+  dryrun_parser = parser.subcommand('dryrun', 'Execute a dry run of a BigQuery query and display '
+                                              'approximate usage statistics')
+  dryrun_parser.add_argument('-q', '--query', help='The name of the query to be dry run')
   dryrun_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
-  dryrun_parser.add_argument('-v', '--verbose',
-                              help='Show the expanded SQL that is being executed',
-                              action='store_true')
+  dryrun_parser.add_argument('-v', '--verbose', help='Show the expanded SQL that is being executed',
+                             action='store_true')
   return dryrun_parser
 
 
 def _create_query_subparser(parser):
-  query_parser = parser.subcommand('query',
-      'Create or execute a BigQuery SQL query object, optionally using other SQL objects, UDFs, ' + \
-              'or external datasources. If a query name is not specified, the query is executed.')
+  query_parser = parser.subcommand('query', 'Create or execute a BigQuery SQL query object, '
+                                            'optionally using other SQL objects, UDFs, or external '
+                                            'datasources. If a query name is not specified, the '
+                                            'query is executed.')
   query_parser.add_argument('-n', '--name', help='The name of this SQL query object')
   query_parser.add_argument('--udfs', help='List of UDFs to reference in the query body', nargs='+')
-  query_parser.add_argument('--datasources', help='List of external datasources to reference in the query body',
+  query_parser.add_argument('--datasources',
+                            help='List of external datasources to reference in the query body',
                             nargs='+')
-  query_parser.add_argument('--subqueries', help='List of subqueries to reference in the query body', nargs='+')
+  query_parser.add_argument('--subqueries',
+                            help='List of subqueries to reference in the query body',
+                            nargs='+')
   query_parser.add_argument('-v', '--verbose', help='Show the expanded SQL that is being executed',
                             action='store_true')
   return query_parser
 
 
 def _create_execute_subparser(parser):
-  execute_parser = parser.subcommand('execute',
-      'Execute a BigQuery SQL query and optionally send the results to a named table.\n' +
-      'The cell can optionally contain arguments for expanding variables in the query.')
+  execute_parser = parser.subcommand('execute', 'Execute a BigQuery SQL query and optionally send '
+                                                'the results to a named table.\nThe cell can '
+                                                'optionally contain arguments for expanding '
+                                                'variables in the query.')
   execute_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                               action='store_true')
   execute_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
@@ -284,14 +289,16 @@ def _create_extract_subparser(parser):
 
 
 def _create_load_subparser(parser):
-  load_parser = parser.subcommand('load', 'Load data from GCS into a BigQuery table. If creating a new ' +
-                                          'table, a schema should be specified in YAML or JSON in the cell ' +
-                                          'body, otherwise the schema is inferred from existing table.')
+  load_parser = parser.subcommand('load', 'Load data from GCS into a BigQuery table. If creating a '
+                                          'new table, a schema should be specified in YAML or JSON '
+                                          'in the cell body, otherwise the schema is inferred from '
+                                          'existing table.')
   load_parser.add_argument('-m', '--mode', help='One of create (default), append or overwrite',
                            choices=['create', 'append', 'overwrite'], default='create')
   load_parser.add_argument('-f', '--format', help='The source format', choices=['json', 'csv'],
                            default='csv')
-  load_parser.add_argument('--skip', help='The number of initial lines to skip; useful for CSV headers',
+  load_parser.add_argument('--skip',
+                           help='The number of initial lines to skip; useful for CSV headers',
                            type=int, default=0)
   load_parser.add_argument('-s', '--strict', help='Whether to reject bad values and jagged lines',
                            action='store_true')
@@ -357,6 +364,7 @@ def _get_query_argument(args, cell, env):
   else:
     raise Exception('Expected a query object, got %s.' % type(item))
 
+
 def _get_query_parameters(args, cell_body):
   """Extract query parameters from cell body if provided
   Also validates the cell body schema using jsonschema to catch errors before sending the http
@@ -398,6 +406,7 @@ def _get_query_parameters(args, cell_body):
   else:
     return {}
 
+
 def _sample_cell(args, cell_body):
   """Implements the BigQuery sample magic for sampling queries
   The supported sytanx is:
@@ -410,7 +419,6 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
-  env = google.datalab.utils.commands.notebook_environment()
   query = None
   table = None
   view = None
@@ -437,9 +445,8 @@ def _sample_cell(args, cell_body):
   fields = args['fields'].split(',') if args['fields'] else None
   count = int(args['count']) if args['count'] else None
   percent = int(args['percent']) if args['percent'] else None
-  sampling=Sampling._auto(method=args['method'], fields=fields, count=count,
-                          percent=percent, key_field=args['key_field'],
-                          ascending=args['order']=='ascending')
+  sampling = Sampling._auto(method=args['method'], fields=fields, count=count, percent=percent,
+                            key_field=args['key_field'], ascending=(args['order'] == 'ascending'))
 
   context = _construct_context_for_args(args)
 
@@ -523,7 +530,8 @@ def _udf_cell(args, cell_body):
   return_type = return_type[0]
 
   # Finally build the UDF object
-  udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, params, args['language'], imports)
+  udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, params, args['language'],
+                                    imports)
   google.datalab.utils.commands.notebook_environment()[udf_name] = udf
 
 
@@ -544,9 +552,8 @@ def _datasource_cell(args, cell_body):
   compressed = args['compressed'] or False
 
   # Get the source schema from the cell body
-  record = google.datalab.utils.commands.parse_config(cell_body,
-                                   google.datalab.utils.commands.notebook_environment(),
-                                   as_dict=False)
+  record = google.datalab.utils.commands.parse_config(
+      cell_body, google.datalab.utils.commands.notebook_environment(), as_dict=False)
 
   jsonschema.validate(record, table_schema_schema)
   schema = google.datalab.bigquery.Schema(record['schema'])
@@ -662,7 +669,8 @@ def _get_table(name):
 
 def _render_table(data, fields=None):
   """ Helper to render a list of dictionaries as an HTML display object. """
-  return IPython.core.display.HTML(google.datalab.utils.commands.HtmlBuilder.render_table(data, fields))
+  return IPython.core.display.HTML(google.datalab.utils.commands.HtmlBuilder.render_table(data,
+                                                                                          fields))
 
 
 def _render_list(data):
@@ -692,8 +700,7 @@ def _dataset_line(args):
 
   elif args['command'] == 'create':
     try:
-      google.datalab.bigquery.Dataset(args['name']).create(friendly_name=args['friendly'],
-                                                    description=cell_body)
+      google.datalab.bigquery.Dataset(args['name']).create(friendly_name=args['friendly'])
     except Exception as e:
       print('Failed to create dataset %s: %s' % (args['name'], e))
 
@@ -735,7 +742,8 @@ def _table_cell(args, cell_body):
 
     tables = []
     for dataset in datasets:
-      tables.extend([table.full_name for table in dataset if fnmatch.fnmatch(table.full_name, filter_)])
+      tables.extend([table.full_name
+                     for table in dataset if fnmatch.fnmatch(table.full_name, filter_)])
 
     return _render_list(tables)
 
@@ -744,13 +752,12 @@ def _table_cell(args, cell_body):
       print('Failed to create %s: no schema specified' % args['name'])
     else:
       try:
-        record = google.datalab.utils.commands.parse_config(cell_body,
-                                         google.datalab.utils.commands.notebook_environment(),
-                                         as_dict=False)
+        record = google.datalab.utils.commands.parse_config(
+            cell_body, google.datalab.utils.commands.notebook_environment(), as_dict=False)
         jsonschema.validate(record, table_schema_schema)
         schema = google.datalab.bigquery.Schema(record['schema'])
         google.datalab.bigquery.Table(args['name']).create(schema=schema,
-                                                    overwrite=args['overwrite'])
+                                                           overwrite=args['overwrite'])
       except Exception as e:
         print('Failed to create table %s: %s' % (args['name'], e))
 
@@ -776,6 +783,7 @@ def _table_cell(args, cell_body):
       raise Exception('Could not find table %s' % name)
     return table
 
+
 def _extract_cell(args, cell_body):
   """Implements the BigQuery extract magic used to extract query or table data to GCS.
 
@@ -785,7 +793,7 @@ def _extract_cell(args, cell_body):
   Args:
     args: the arguments following '%bigquery extract'.
   """
-  env = google.datalab.utils.commands.notebook_environment()
+
   query = google.datalab.utils.commands.get_notebook_item(args['query'])
   query_params = _get_query_parameters(args, cell_body)
 
@@ -795,14 +803,14 @@ def _extract_cell(args, cell_body):
       if not source:
         raise Exception('Could not find table %s' % args['table'])
     elif args['view']:
-      source = datalab.utils.commands.get_notebook_item(args['view'])
+      source = google.datalab.utils.commands.get_notebook_item(args['view'])
       if not source:
         raise Exception('Could not find view %' % args['view'])
 
     job = source.extract(args['path'],
-                      format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
-                      csv_delimiter=args['delimiter'], csv_header=args['header'],
-                      compress=args['compress'], use_cache=not args['nocache'])
+                         format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
+                         csv_delimiter=args['delimiter'], csv_header=args['header'],
+                         compress=args['compress'], use_cache=not args['nocache'])
   elif query:
     output_options = QueryOutput.file(path=args['path'], format=args['format'],
                                       csv_delimiter=args['delimiter'],
@@ -850,9 +858,9 @@ def _load_cell(args, cell_body):
     raise Exception('Table does not exist, and no schema specified in cell; cannot load')
 
   csv_options = google.datalab.bigquery.CSVOptions(delimiter=args['delimiter'],
-                                        skip_leading_rows=args['skip'],
-                                        allow_jagged_rows=not args['strict'],
-                                        quote=args['quote'])
+                                                   skip_leading_rows=args['skip'],
+                                                   allow_jagged_rows=not args['strict'],
+                                                   quote=args['quote'])
   job = table.load(args['path'],
                    mode=args['mode'],
                    source_format=('csv' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
@@ -943,7 +951,8 @@ def bq(line, cell=None):
     # We likely have variables to expand; get the appropriate context.
     namespace = google.datalab.utils.commands.notebook_environment()
 
-  return google.datalab.utils.commands.handle_magic_line(line, cell, _bigquery_parser, namespace=namespace)
+  return google.datalab.utils.commands.handle_magic_line(line, cell, _bigquery_parser,
+                                                         namespace=namespace)
 
 
 def _dispatch_handler(args, cell, parser, handler, cell_required=False, cell_prohibited=False):
@@ -1051,14 +1060,16 @@ def _table_viewer(table, rows_per_page=25, fields=None):
     if table.job.cache_hit:
       meta_cost = 'cached'
     else:
-      bytes = google.datalab.bigquery._query_stats.QueryStats._size_formatter(table.job.bytes_processed)
+      bytes = google.datalab.bigquery._query_stats.QueryStats._size_formatter(
+        table.job.bytes_processed)
       meta_cost = '%s processed' % bytes
     meta_time = 'time: %.1fs' % table.job.total_time
   else:
     meta_cost = ''
     meta_time = ''
 
-  data, total_count = google.datalab.utils.commands.get_data(table, fields, first_row=0, count=rows_per_page)
+  data, total_count = google.datalab.utils.commands.get_data(table, fields, first_row=0,
+                                                             count=rows_per_page)
 
   if total_count < 0:
     # The table doesn't have a length metadata property but may still be small if we fetched less
@@ -1072,10 +1083,12 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   meta_data = '(%s)' % (', '.join([entry for entry in meta_entries if len(entry)]))
 
   return _HTML_TEMPLATE.format(div_id=div_id,
-                               static_table=google.datalab.utils.commands.HtmlBuilder.render_chart_data(data),
+                               static_table=google.datalab.utils.commands.HtmlBuilder
+                               .render_chart_data(data),
                                meta_data=meta_data,
                                chart_style=chart,
-                               source_index=google.datalab.utils.commands.get_data_source_index(table.full_name),
+                               source_index=google.datalab.utils.commands
+                               .get_data_source_index(table.full_name),
                                fields=','.join(fields),
                                total_rows=total_count,
                                rows_per_page=rows_per_page,
@@ -1125,12 +1138,14 @@ def _register_html_formatters():
     html_formatter = ipy.display_formatter.formatters['text/html']
 
     html_formatter.for_type_by_name('google.datalab.bigquery._query', 'Query', _repr_html_query)
-    html_formatter.for_type_by_name('google.datalab.bigquery._query_results_table', 'QueryResultsTable',
-                                    _repr_html_query_results_table)
+    html_formatter.for_type_by_name('google.datalab.bigquery._query_results_table',
+                                    'QueryResultsTable', _repr_html_query_results_table)
     html_formatter.for_type_by_name('google.datalab.bigquery._table', 'Table', _repr_html_table)
-    html_formatter.for_type_by_name('google.datalab.bigquery._schema', 'Schema', _repr_html_table_schema)
+    html_formatter.for_type_by_name('google.datalab.bigquery._schema', 'Schema',
+                                    _repr_html_table_schema)
   except TypeError:
     # For when running unit tests
     pass
+
 
 _register_html_formatters()

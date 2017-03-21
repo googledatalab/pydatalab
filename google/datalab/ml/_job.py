@@ -16,6 +16,7 @@
 import google.datalab as datalab
 from googleapiclient import discovery
 import yaml
+import datetime
 
 
 class Job(datalab.Job):
@@ -54,9 +55,9 @@ class Job(datalab.Job):
   def describe(self):
     self._refresh_state()
     job_yaml = yaml.safe_dump(self._info, default_flow_style=False)
-    print job_yaml
+    print(job_yaml)
 
-  @staticmethod 
+  @staticmethod
   def submit_training(job_request, job_id=None):
     """Submit a training job.
 
@@ -85,7 +86,7 @@ class Job(datalab.Job):
     if 'args' in job_request and isinstance(job_request['args'], dict):
       job_args = job_request['args']
       args = []
-      for k,v in job_args.iteritems():
+      for k, v in job_args.iteritems():
         if isinstance(v, list):
           for item in v:
             args.append('--' + str(k))
@@ -94,13 +95,13 @@ class Job(datalab.Job):
           args.append('--' + str(k))
           args.append(str(v))
       new_job_request['args'] = args
-    
+
     if job_id is None:
       job_id = datetime.datetime.now().strftime('%y%m%d_%H%M%S')
       if 'python_module' in new_job_request:
         job_id = new_job_request['python_module'].replace('.', '_') + \
             '_' + job_id
-        
+
     job = {
         'job_id': job_id,
         'training_input': new_job_request,

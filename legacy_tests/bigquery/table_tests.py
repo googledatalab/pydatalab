@@ -56,7 +56,7 @@ class TestCases(unittest.TestCase):
 
   def test_parse_dict_full_name(self):
     table = TestCases._create_table({'project_id': 'test', 'dataset_id': 'requestlogs',
-                                'table_id': 'today'})
+                                     'table_id': 'today'})
     self._check_name_parts(table)
 
   def test_parse_dict_local_name(self):
@@ -86,7 +86,7 @@ class TestCases(unittest.TestCase):
 
   def test_parse_invalid_name(self):
     with self.assertRaises(Exception):
-      _ = TestCases._create_table('today@')
+      TestCases._create_table('today@')
 
   @mock.patch('datalab.bigquery._api.Api.tables_get')
   def test_table_metadata(self, mock_api_tables_get):
@@ -137,7 +137,7 @@ class TestCases(unittest.TestCase):
     t = TestCases._create_table('test:requestlogs.today')
 
     with self.assertRaises(Exception) as error:
-      _ = t.schema
+      t.schema
     self.assertEqual('Unexpected table response: missing schema', str(error.exception))
 
   @mock.patch('datalab.bigquery._api.Api.tables_list')
@@ -220,7 +220,7 @@ class TestCases(unittest.TestCase):
 
     mock_api_tables_insert.return_value = {}
     with self.assertRaises(Exception) as error:
-      _ = TestCases._create_table_with_schema(schema)
+      TestCases._create_table_with_schema(schema)
     self.assertEqual('Table test:testds.testTable0 could not be created as it already exists',
                      str(error.exception))
 
@@ -547,18 +547,18 @@ class TestCases(unittest.TestCase):
                      str(error.exception))
 
     with self.assertRaises(Exception) as error:
-      _ = tbl2.window(dt.timedelta(hours=-2), 0)
+      tbl2.window(dt.timedelta(hours=-2), 0)
     self.assertEqual('Cannot use window() on an already decorated table',
                      str(error.exception))
 
     with self.assertRaises(Exception) as error:
-      _ = tbl.snapshot(dt.timedelta(days=-8))
+      tbl.snapshot(dt.timedelta(days=-8))
     self.assertEqual(
         'Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
         str(error.exception))
 
     with self.assertRaises(Exception) as error:
-      _ = tbl.snapshot(dt.timedelta(days=-8))
+      tbl.snapshot(dt.timedelta(days=-8))
     self.assertEqual(
         'Invalid snapshot relative when argument: must be within 7 days: -8 days, 0:00:00',
         str(error.exception))
@@ -567,7 +567,7 @@ class TestCases(unittest.TestCase):
     self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
 
     with self.assertRaises(Exception) as error:
-      _ = tbl.snapshot(dt.timedelta(days=1))
+      tbl.snapshot(dt.timedelta(days=1))
     self.assertEqual('Invalid snapshot relative when argument: 1 day, 0:00:00',
                      str(error.exception))
 
@@ -576,18 +576,17 @@ class TestCases(unittest.TestCase):
     self.assertEqual('Invalid snapshot when argument type: 1000',
                      str(error.exception))
 
-    _ = dt.datetime.utcnow() - dt.timedelta(1)
     self.assertEquals('test:testds.testTable0@-86400000', str(tbl2))
 
     when = dt.datetime.utcnow() + dt.timedelta(1)
     with self.assertRaises(Exception) as error:
-      _ = tbl.snapshot(when)
+      tbl.snapshot(when)
     self.assertEqual('Invalid snapshot absolute when argument: %s' % when,
                      str(error.exception))
 
     when = dt.datetime.utcnow() - dt.timedelta(8)
     with self.assertRaises(Exception) as error:
-      _ = tbl.snapshot(when)
+      tbl.snapshot(when)
     self.assertEqual('Invalid snapshot absolute when argument: %s' % when,
                      str(error.exception))
 
@@ -606,37 +605,15 @@ class TestCases(unittest.TestCase):
                      str(error.exception))
 
     with self.assertRaises(Exception) as error:
-      _ = tbl2.snapshot(-400000)
+      tbl2.snapshot(-400000)
     self.assertEqual('Cannot use snapshot() on an already decorated table',
                      str(error.exception))
 
     with self.assertRaises(Exception) as error:
-      _ = tbl.window(dt.timedelta(0), dt.timedelta(hours=-1))
+      tbl.window(dt.timedelta(0), dt.timedelta(hours=-1))
     self.assertEqual(
         'window: Between arguments: begin must be before end: 0:00:00, -1 day, 23:00:00',
         str(error.exception))
-
-  @mock.patch('datalab.bigquery._api.Api.tables_get')
-  @mock.patch('datalab.bigquery._api.Api.table_update')
-  def test_table_update(self, mock_api_table_update, mock_api_tables_get):
-    schema = self._create_inferred_schema()
-    info = {'schema': {'fields': schema}, 'friendlyName': 'casper',
-            'description': 'ghostly logs',
-            'expirationTime': calendar.timegm(dt.datetime(2020, 1, 1).utctimetuple()) * 1000}
-    mock_api_tables_get.return_value = info
-    tbl = datalab.bigquery.Table('testds.testTable0', context=TestCases._create_context())
-    new_name = 'aziraphale'
-    new_description = 'demon duties'
-    new_schema = [{'name': 'injected', 'type': 'FLOAT'}]
-    new_schema.extend(schema)
-    new_expiry = dt.datetime(2030, 1, 1)
-    tbl.update(new_name, new_description, new_expiry, new_schema)
-    name, info = mock_api_table_update.call_args[0]
-    self.assertEqual(tbl.name, name)
-    self.assertEqual(new_name, tbl.metadata.friendly_name)
-    self.assertEqual(new_description, tbl.metadata.description)
-    self.assertEqual(new_expiry, tbl.metadata.expires_on)
-    self.assertEqual(len(new_schema), len(tbl.schema))
 
   @mock.patch('datalab.bigquery._api.Api.tables_get')
   @mock.patch('datalab.bigquery._api.Api.table_update')

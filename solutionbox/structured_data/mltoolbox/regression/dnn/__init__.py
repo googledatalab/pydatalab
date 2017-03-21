@@ -13,7 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-"""This module contains functions for regression problems modeled as a fully connected feedforward deep neural network.
+"""This module contains functions for regression problems modeled as a fully connected
+feedforward deep neural network.
 
 Every function can run locally or use Google Cloud Platform.
 """

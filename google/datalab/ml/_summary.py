@@ -13,16 +13,17 @@
 # limitations under the License.
 
 
-
 import datetime
 import fnmatch
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+import sys
+
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record
 
-from . import _util 
+from . import _util
 
 
 class Summary(object):
@@ -35,6 +36,10 @@ class Summary(object):
       path: a list of paths to directories which hold TensorFlow events files.
             Can be local path or GCS paths. Wild cards allowed.
     """
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
+
     self._paths = [paths] if isinstance(paths, basestring) else paths
 
   def _glob_events_files(self, paths):
@@ -67,7 +72,7 @@ class Summary(object):
           for value in event.summary.value:
             if value.simple_value is None or value.tag is None:
               continue
-            if not value.tag in event_dir_dict:
+            if value.tag not in event_dir_dict:
               event_dir_dict[value.tag] = set()
             event_dir_dict[value.tag].add(dir)
       except:
@@ -76,7 +81,6 @@ class Summary(object):
         # print('Error in iterating events from file ' + event_file)
         continue
     return event_dir_dict
-  
 
   def get_events(self, event_names):
     """Get all events as pandas DataFrames given a list of names.
@@ -90,6 +94,10 @@ class Summary(object):
           Multiple directories may contain events with the same name, but they are different
           events (i.e. 'loss' under trains_set/, and 'loss' under eval_set/.)
     """
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
+
     event_names = [event_names] if isinstance(event_names, basestring) else event_names
 
     all_events = self.list_events()
@@ -107,7 +115,7 @@ class Summary(object):
             if event.summary is None or event.wall_time is None or event.summary.value is None:
               continue
 
-            event_time = datetime.datetime.fromtimestamp(event.wall_time)  
+            event_time = datetime.datetime.fromtimestamp(event.wall_time)
             for value in event.summary.value:
               if value.tag not in event_names or value.simple_value is None:
                 continue
@@ -143,6 +151,10 @@ class Summary(object):
           each in a different directory.
       x_axis: whether to use step or time as x axis.
     """
+
+    if sys.version_info.major > 2:
+      basestring = (str, bytes)  # for python 3 compatibility
+
     event_names = [event_names] if isinstance(event_names, basestring) else event_names
     events_list = self.get_events(event_names)
     for event_name, dir_event_dict in zip(event_names, events_list):
@@ -152,4 +164,3 @@ class Summary(object):
         plt.plot(x_column, df['value'], label=label)
     plt.legend(loc='best')
     plt.show()
-

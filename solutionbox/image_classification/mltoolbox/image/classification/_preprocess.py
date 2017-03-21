@@ -296,32 +296,32 @@ class SaveFeatures(beam.PTransform):
     self._file_path_prefix = file_path_prefix
 
   def expand(self, features):
-    return (features
-            | 'Write to %s' % self._file_path_prefix.replace('/', '_')
-            >> tfrecordio.WriteToTFRecord(
-                file_path_prefix=self._file_path_prefix,
-                file_name_suffix='.tfrecord.gz',
-                shard_name_template=fileio.DEFAULT_SHARD_NAME_TEMPLATE,
-                coder=ExampleProtoCoder(),
-                compression_type=fileio.CompressionTypes.AUTO))
+    return (features |
+            'Write to %s' % self._file_path_prefix.replace('/', '_') >>
+            tfrecordio.WriteToTFRecord(file_path_prefix=self._file_path_prefix,
+                                       file_name_suffix='.tfrecord.gz',
+                                       shard_name_template=fileio.DEFAULT_SHARD_NAME_TEMPLATE,
+                                       coder=ExampleProtoCoder(),
+                                       compression_type=fileio.CompressionTypes.AUTO))
 
 
 def _labels_pipeline(sources):
-  labels = (sources 
-      | 'Flatten Sources for labels' >> beam.Flatten()
-      | 'Parse input for labels' >> beam.Map(lambda x: str(x['label']))
-      | 'Combine labels' >> beam.transforms.combiners.Count.PerElement()
-      | 'Get labels' >> beam.Map(lambda label_count: label_count[0]))
+  labels = (sources |
+            'Flatten Sources for labels' >> beam.Flatten() |
+            'Parse input for labels' >> beam.Map(lambda x: str(x['label'])) |
+            'Combine labels' >> beam.transforms.combiners.Count.PerElement() |
+            'Get labels' >> beam.Map(lambda label_count: label_count[0]))
   return labels
 
 
 def _transformation_pipeline(source, checkpoint, labels, mode):
-  transformed = (source
-      | 'Extract label ids(%s)' % mode >> beam.ParDo(ExtractLabelIdsDoFn(),
-                                          beam.pvalue.AsIter(labels))
-      | 'Read and convert to JPEG(%s)' % mode >> beam.ParDo(ReadImageAndConvertToJpegDoFn())
-      | 'Embed and make TFExample(%s)' % mode >> 
-        beam.ParDo(TFExampleFromImageDoFn(checkpoint)))
+  transformed = (source |
+                 'Extract label ids(%s)' % mode >>
+                 beam.ParDo(ExtractLabelIdsDoFn(), beam.pvalue.AsIter(labels)) |
+                 'Read and convert to JPEG(%s)' % mode >>
+                 beam.ParDo(ReadImageAndConvertToJpegDoFn()) |
+                 'Embed and make TFExample(%s)' % mode >>
+                 beam.ParDo(TFExampleFromImageDoFn(checkpoint)))
   return transformed
 
 
@@ -340,13 +340,15 @@ def configure_pipeline(p, dataset_train, dataset_eval, checkpoint_path, output_d
   else:
     # Split train/eval.
     train_preprocessed, eval_preprocessed = (train_preprocessed |
-        'Random Partition' >> beam.Partition(TrainEvalSplitPartitionFn(), 2))
+                                             'Random Partition' >>
+                                             beam.Partition(TrainEvalSplitPartitionFn(), 2))
 
   output_train_path = os.path.join(output_dir, job_id, 'train')
   output_eval_path = os.path.join(output_dir, job_id, 'eval')
   labels_file = os.path.join(output_dir, job_id, 'labels')
-  labels_save = (labels 
-      | 'Write labels' >> beam.io.textio.WriteToText(labels_file, shard_name_template=''))
+  labels_save = (labels |
+                 'Write labels' >>
+                 beam.io.textio.WriteToText(labels_file, shard_name_template=''))
   train_save = train_preprocessed | 'Save train to disk' >> SaveFeatures(output_train_path)
   eval_save = eval_preprocessed | 'Save eval to disk' >> SaveFeatures(output_eval_path)
   # Make sure we write "latest" file after train and eval data are successfully written.
@@ -355,4 +357,3 @@ def configure_pipeline(p, dataset_train, dataset_eval, checkpoint_path, output_d
       beam.transforms.combiners.Sample.FixedSizeGlobally('Fixed One', 1) |
       beam.Map(lambda path: job_id) |
       'WriteLatest' >> beam.io.textio.WriteToText(output_latest_file, shard_name_template=''))
-

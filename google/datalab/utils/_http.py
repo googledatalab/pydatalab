@@ -14,7 +14,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from future import standard_library
-standard_library.install_aliases()
+standard_library.install_aliases()  # noqa
 from builtins import str
 from past.builtins import basestring
 from builtins import object
@@ -22,7 +22,9 @@ from builtins import object
 import copy
 import datetime
 import json
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import httplib2
 import logging
 
