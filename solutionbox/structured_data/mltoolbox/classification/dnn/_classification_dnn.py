@@ -1,5 +1,6 @@
 from mltoolbox._structured_data import train_async as core_train
 
+
 def train(train_dataset,
           eval_dataset,
           analysis_dir,
@@ -14,8 +15,8 @@ def train(train_dataset,
           top_n=None,
           learning_rate=0.01,
           epsilon=0.0005,
-          job_name=None, 
-          cloud=None, 
+          job_name=None,
+          cloud=None,
           ):
   """Blocking version of train_async. See documentation for train_async."""
   job = train_async(
@@ -33,30 +34,30 @@ def train(train_dataset,
       top_n=top_n,
       learning_rate=learning_rate,
       epsilon=epsilon,
-      job_name=job_name, 
-      cloud=cloud, 
-      )
+      job_name=job_name,
+      cloud=cloud,
+  )
   job.wait()
   print('Training: ' + str(job.state))
 
 
 def train_async(train_dataset,
-          eval_dataset,
-          analysis_dir,
-          output_dir,
-          features,
-          layer_sizes,
-          max_steps=5000,
-          num_epochs=None,
-          train_batch_size=100,
-          eval_batch_size=16,
-          min_eval_frequency=100,
-          top_n=None,
-          learning_rate=0.01,
-          epsilon=0.0005,
-          job_name=None, 
-          cloud=None, 
-          ):
+                eval_dataset,
+                analysis_dir,
+                output_dir,
+                features,
+                layer_sizes,
+                max_steps=5000,
+                num_epochs=None,
+                train_batch_size=100,
+                eval_batch_size=16,
+                min_eval_frequency=100,
+                top_n=None,
+                learning_rate=0.01,
+                epsilon=0.0005,
+                job_name=None,
+                cloud=None,
+                ):
   """Train model locally or in the cloud.
 
   Local Training:
@@ -120,7 +121,7 @@ def train_async(train_dataset,
 
   Args:
     cloud: A CloudTrainingConfig object.
-    job_name: Training job name. A default will be picked if None.    
+    job_name: Training job name. A default will be picked if None.
 
   Returns:
     Datalab job
@@ -131,7 +132,7 @@ def train_async(train_dataset,
       analysis_dir=analysis_dir,
       output_dir=output_dir,
       features=features,
-      model_type='dnn_classification', #
+      model_type='dnn_classification',
       max_steps=max_steps,
       num_epochs=num_epochs,
       train_batch_size=train_batch_size,
@@ -143,5 +144,5 @@ def train_async(train_dataset,
       epsilon=epsilon,
       job_name=job_name,
       job_name_prefix='mltoolbox_classification_dnn',
-      cloud=cloud,      
+      cloud=cloud,
   )

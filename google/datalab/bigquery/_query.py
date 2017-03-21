@@ -72,7 +72,8 @@ class Query(object):
             raise Exception('Expected type: %s, found: %s.' % (obj_type, type(value)))
 
         else:
-          raise Exception('Unexpected container for type %s. Expected a list or dictionary' % obj_type)
+          raise Exception('Unexpected container for type %s. Expected a list or dictionary'
+                          % obj_type)
 
         target_list.append((item, value))
 
@@ -143,7 +144,6 @@ class Query(object):
       if query._udfs:
         udfs.extend([u for u in query._udfs if u not in udfs])
 
-    subqueries_sql = udfs_sql = ''
     _recurse_subqueries(self)
 
     if udfs:
@@ -155,7 +155,8 @@ class Query(object):
 
     if subqueries:
       expanded_sql += 'WITH ' + \
-                      '\n),\n'.join(['%s AS (\n%s' % (sq[0], _indent_query(sq[1])) for sq in subqueries])
+                      '\n),\n'.join(['%s AS (\n%s' % (sq[0], _indent_query(sq[1]))
+                                     for sq in subqueries])
       expanded_sql += '\n)\n\n'
 
     expanded_sql += sampling(self._sql) if sampling else self._sql
@@ -242,7 +243,7 @@ class Query(object):
     """
 
     # Default behavior is to execute to a table
-    if output_options == None:
+    if output_options is None:
       output_options = QueryOutput.table()
 
     # First, execute the query into a table, using a temporary one if no name is specified
@@ -286,32 +287,32 @@ class Query(object):
     # Otherwise, build an async Job that waits on the query execution then carries out
     # the specific export operation
     else:
-      export_job = export_args = export_kwargs = None
+      export_args = export_kwargs = None
       if output_options.type == 'file':
         if output_options.file_path.startswith('gs://'):
           export_func = execute_job.result().extract
           export_args = [output_options.file_path]
           export_kwargs = {
-                            'format': output_options.file_format,
-                            'csv_delimiter': output_options.csv_delimiter,
-                            'csv_header': output_options.csv_header,
-                            'compress': output_options.compress_file
-                          }
+            'format': output_options.file_format,
+            'csv_delimiter': output_options.csv_delimiter,
+            'csv_header': output_options.csv_header,
+            'compress': output_options.compress_file
+          }
         else:
           export_func = execute_job.result().to_file
           export_args = [output_options.file_path]
           export_kwargs = {
-                            'format': output_options.file_format,
-                            'csv_delimiter': output_options.csv_delimiter,
-                            'csv_header': output_options.csv_header
-                          }
+            'format': output_options.file_format,
+            'csv_delimiter': output_options.csv_delimiter,
+            'csv_header': output_options.csv_header
+          }
       elif output_options.type == 'dataframe':
         export_func = execute_job.result().to_dataframe
         export_args = []
         export_kwargs = {
-                          'start_row': output_options.dataframe_start_row,
-                          'max_rows': output_options.dataframe_max_rows
-                        }
+          'start_row': output_options.dataframe_start_row,
+          'max_rows': output_options.dataframe_max_rows
+        }
 
       # Perform the export operation with the specified parameters
       export_func = google.datalab.utils.async_function(export_func)

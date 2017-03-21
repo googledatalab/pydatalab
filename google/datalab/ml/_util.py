@@ -25,13 +25,14 @@ import time
 
 import datalab.context
 
+
 # TODO: Create an Operation class.
 def wait_for_long_running_operation(operation_full_name):
   print('Waiting for operation "%s"' % operation_full_name)
   api = discovery.build('ml', 'v1', credentials=datalab.context.Context.default().credentials)
   while True:
     response = api.projects().operations().get(name=operation_full_name).execute()
-    if 'done' not in response or response['done'] != True:
+    if 'done' not in response or response['done'] is not True:
       time.sleep(3)
     else:
       if 'error' in response:
@@ -68,7 +69,7 @@ def package_and_copy(package_root_dir, setup_py, output_tar_path):
   previous_cwd = os.getcwd()
   os.chdir(package_root_dir)
   try:
-    # Repackage. 
+    # Repackage.
     sdist = ['python', dest_setup_py, 'sdist', '--format=gztar', '-d', tempdir]
     subprocess.check_call(sdist)
 

@@ -18,9 +18,12 @@ import unittest
 import IPython.core.display
 import IPython.core.magic
 
+import datalab.utils.commands
+
 
 def noop_decorator(func):
   return func
+
 
 IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
@@ -28,23 +31,21 @@ IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
 
-import datalab.utils.commands
-
 
 class TestCases(unittest.TestCase):
 
   def test_chart_cell(self):
     t = [{'country': 'US', 'quantity': 100}, {'country': 'ZA', 'quantity': 50}]
     IPython.get_ipython().user_ns = {}
-    chart = datalab.utils.commands._chart._chart_cell({'chart': 'geo', 'data': t, 'fields': None}, '')
+    chart = datalab.utils.commands._chart._chart_cell({'chart': 'geo', 'data': t, 'fields': None},
+                                                      '')
     self.assertTrue(chart.find('charts.render(') > 0)
     self.assertTrue(chart.find('\'geo\'') > 0)
     self.assertTrue(chart.find('"fields": "*"') > 0)
-    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0 or 
+    self.assertTrue(chart.find('{"c": [{"v": "US"}, {"v": 100}]}') > 0 or
                     chart.find('{"c": [{"v": 100}, {"v": "US"}]}') > 0)
     self.assertTrue(chart.find('{"c": [{"v": "ZA"}, {"v": 50}]}') > 0 or
                     chart.find('{"c": [{"v": 50}, {"v": "ZA"}]}') > 0)
-
 
   def test_chart_magic(self):
     # TODO(gram): complete this test

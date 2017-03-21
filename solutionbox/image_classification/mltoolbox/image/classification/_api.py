@@ -56,7 +56,7 @@ def preprocess(train_dataset, output_dir, eval_dataset=None, checkpoint=None, cl
   """
   job = preprocess_async(train_dataset, output_dir, eval_dataset, checkpoint, cloud)
   job.wait()
-  print job.state
+  print(job.state)
 
 
 def train_async(input_dir, batch_size, max_steps, output_dir, checkpoint=None, cloud=None):
@@ -88,7 +88,7 @@ def train(input_dir, batch_size, max_steps, output_dir, checkpoint=None, cloud=N
 
   job = train_async(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud)
   job.wait()
-  print job.state
+  print(job.state)
 
 
 def predict(model, image_files, resize=False, show_image=True, cloud=None):
@@ -100,7 +100,8 @@ def predict(model, image_files, resize=False, show_image=True, cloud=None):
     image_files: The paths to the image files to predict labels. Can be local or GCS paths.
     resize: Whether to resize the image to a reasonable size (300x300) before prediction.
     show_image: Whether to show images in the results.
-    cloud: if None, predicts with offline model locally. Otherwise, predict with a deployed online model.
+    cloud: if None, predicts with offline model locally. Otherwise, predict with a deployed online
+        model.
 
   Returns:
     A pandas DataFrame including the prediction results.
@@ -152,4 +153,4 @@ def batch_predict(dataset, model_dir, output_csv=None, output_bq_table=None, clo
 
   job = batch_predict_async(dataset, model_dir, output_csv, output_bq_table, cloud)
   job.wait()
-  print job.state
+  print(job.state)

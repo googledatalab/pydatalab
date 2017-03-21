@@ -67,14 +67,14 @@ setup(
   ],
   license="Apache Software License",
   classifiers=[
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Development Status :: 4 - Beta",
-        "Environment :: Other Environment",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: Apache Software License",
-        "Operating System :: OS Independent",
-        "Topic :: Software Development :: Libraries :: Python Modules"
+      "Programming Language :: Python",
+      "Programming Language :: Python :: 2",
+      "Development Status :: 4 - Beta",
+      "Environment :: Other Environment",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: Apache Software License",
+      "Operating System :: OS Independent",
+      "Topic :: Software Development :: Libraries :: Python Modules"
   ],
   long_description="""\
 Support package for Google Cloud Datalab. This provides cell magics and Python APIs

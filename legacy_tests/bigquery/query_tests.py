@@ -91,7 +91,7 @@ class TestCases(unittest.TestCase):
     q = TestCases._create_query()
 
     with self.assertRaises(Exception) as error:
-      _ = q.results()
+      q.results()
     self.assertEqual('Unexpected response from server', str(error.exception))
 
   def test_udf_expansion(self):

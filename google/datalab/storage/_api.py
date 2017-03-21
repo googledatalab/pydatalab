@@ -14,11 +14,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from future import standard_library
-standard_library.install_aliases()
+standard_library.install_aliases()  # noqa
 from builtins import object
 
 import google.datalab
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import google.datalab.utils
 
 
@@ -64,7 +66,8 @@ class Api(object):
     data = {'name': bucket}
 
     url = Api._ENDPOINT + (Api._BUCKET_PATH % '')
-    return google.datalab.utils.Http.request(url, args=args, data=data, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, args=args, data=data,
+                                             credentials=self._credentials)
 
   def buckets_delete(self, bucket):
     """Issues a request to delete a bucket.
@@ -76,7 +79,7 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._BUCKET_PATH % bucket)
     google.datalab.utils.Http.request(url, method='DELETE', credentials=self._credentials,
-                               raw_response=True)
+                                      raw_response=True)
 
   def buckets_get(self, bucket, projection='noAcl'):
     """Issues a request to retrieve information about a bucket.
@@ -140,7 +143,7 @@ class Api(object):
       headers['Range'] = header
     url = Api._DOWNLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
     return google.datalab.utils.Http.request(url, args=args, headers=headers,
-                                      credentials=self._credentials, raw_response=True)
+                                             credentials=self._credentials, raw_response=True)
 
   def object_upload(self, bucket, key, content, content_type):
     """Writes text content to the object.
@@ -158,7 +161,7 @@ class Api(object):
 
     url = Api._UPLOAD_ENDPOINT + (Api._OBJECT_PATH % (bucket, ''))
     return google.datalab.utils.Http.request(url, args=args, data=content, headers=headers,
-                                      credentials=self._credentials, raw_response=True)
+                                             credentials=self._credentials, raw_response=True)
 
   def objects_copy(self, source_bucket, source_key, target_bucket, target_key):
     """Updates the metadata associated with an object.
@@ -188,7 +191,7 @@ class Api(object):
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
     google.datalab.utils.Http.request(url, method='DELETE', credentials=self._credentials,
-                               raw_response=True)
+                                      raw_response=True)
 
   def objects_get(self, bucket, key, projection='noAcl'):
     """Issues a request to retrieve information about an object.
@@ -257,7 +260,8 @@ class Api(object):
       Exception if there is an error performing the operation.
     """
     url = Api._ENDPOINT + (Api._OBJECT_PATH % (bucket, Api._escape_key(key)))
-    return google.datalab.utils.Http.request(url, method='PATCH', data=info, credentials=self._credentials)
+    return google.datalab.utils.Http.request(url, method='PATCH', data=info,
+                                             credentials=self._credentials)
 
   @staticmethod
   def _escape_key(key):

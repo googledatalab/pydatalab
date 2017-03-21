@@ -236,7 +236,6 @@ class Model(object):
     tensors.metric_updates = loss_updates + accuracy_updates
     tensors.metric_values = [loss_op, accuracy_op]
     return tensors
-    
 
   def build_train_graph(self, data_paths, batch_size):
     return self.build_graph(data_paths, batch_size, GraphMod.TRAIN)

@@ -14,15 +14,16 @@
 
 from collections import namedtuple
 
-_CloudTrainingConfig = namedtuple("CloudConfig", 
-    ['region', 'scale_tier', 'master_type', 'worker_type',
-     'parameter_server_type', 'worker_count', 'parameter_server_count'])
+_CloudTrainingConfig = namedtuple("CloudConfig",
+                                  ['region', 'scale_tier', 'master_type', 'worker_type',
+                                   'parameter_server_type', 'worker_count',
+                                   'parameter_server_count'])
 _CloudTrainingConfig.__new__.__defaults__ = ('BASIC', None, None, None, None, None)
 
 
 class CloudTrainingConfig(_CloudTrainingConfig):
     """A config namedtuple containing cloud specific configurations for CloudML training.
-    
+
     Fields:
       region: the region of the training job to be submitted. For example, "us-central1".
           Run "gcloud compute regions list" to get a list of regions.
@@ -42,6 +43,6 @@ class CloudTrainingConfig(_CloudTrainingConfig):
           Must set this value when scale_tier is set to CUSTOM.
       parameter_server_count: the number of parameter server replicas to use. Each
           replica in the cluster will be of the type specified in "parameter_server_type".
-          Must set this value when scale_tier is set to CUSTOM.  
+          Must set this value when scale_tier is set to CUSTOM.
     """
     pass

@@ -48,7 +48,8 @@ class TestCases(unittest.TestCase):
     self._check_name_parts(dataset)
 
   def test_parse_named_tuple_name(self):
-    dataset = TestCases._create_dataset(google.datalab.bigquery._utils.DatasetName('test', 'requestlogs'))
+    dataset = TestCases._create_dataset(google.datalab.bigquery._utils.DatasetName('test',
+                                                                                   'requestlogs'))
     self._check_name_parts(dataset)
 
   def test_parse_tuple_full_name(self):
@@ -69,7 +70,7 @@ class TestCases(unittest.TestCase):
 
   def test_parse_invalid_name(self):
     with self.assertRaises(Exception):
-      _ = TestCases._create_dataset('today@')
+      TestCases._create_dataset('today@')
 
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
   def test_dataset_exists(self, mock_api_datasets_get):
@@ -88,7 +89,7 @@ class TestCases(unittest.TestCase):
 
     ds = TestCases._create_dataset('requestlogs')
     with self.assertRaises(Exception):
-      _ = ds.create()
+      ds.create()
 
   @mock.patch('google.datalab.bigquery._api.Api.datasets_insert')
   @mock.patch('google.datalab.bigquery._api.Api.datasets_get')
@@ -121,7 +122,7 @@ class TestCases(unittest.TestCase):
     mock_api_datasets_get.side_effect = google.datalab.utils.RequestException(404, None)
     ds = TestCases._create_dataset('requestlogs')
     with self.assertRaises(Exception):
-      _ = ds.delete()
+      ds.delete()
 
   @mock.patch('google.datalab.bigquery._api.Api.tables_list')
   def test_tables_list(self, mock_api_tables_list):
@@ -153,7 +154,8 @@ class TestCases(unittest.TestCase):
       ]
     }
     mock_dataset_get_info.return_value = {}
-    datasets = [dataset for dataset in google.datalab.bigquery.Datasets(TestCases._create_context())]
+    datasets = [dataset
+                for dataset in google.datalab.bigquery.Datasets(TestCases._create_context())]
     self.assertEqual(2, len(datasets))
     self.assertEqual('p.d1', str(datasets[0]))
     self.assertEqual('p.d2', str(datasets[1]))
@@ -194,6 +196,6 @@ class TestCases(unittest.TestCase):
     # Patch get_info so we don't have to mock it everywhere else.
     orig = google.datalab.bigquery.Dataset._get_info
     google.datalab.bigquery.Dataset._get_info = mock.Mock(return_value=metadata)
-    ds =  google.datalab.bigquery.Dataset(name, context=TestCases._create_context())
+    ds = google.datalab.bigquery.Dataset(name, context=TestCases._create_context())
     google.datalab.bigquery.Dataset._get_info = orig
     return ds

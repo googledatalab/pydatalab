@@ -41,4 +41,3 @@ class Api(object):
   def project_get(self, projectId):
     url = Api._ENDPOINT + (Api._PROJECT_PATH % projectId)
     return datalab.utils.Http.request(url, credentials=self._credentials)
-

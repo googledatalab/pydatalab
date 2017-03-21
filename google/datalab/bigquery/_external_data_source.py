@@ -21,7 +21,7 @@ from . import _csv_options
 class ExternalDataSource(object):
 
   def __init__(self, source, source_format='csv', csv_options=None, ignore_unknown_values=False,
-                   max_bad_records=0, compressed=False, schema=None):
+               max_bad_records=0, compressed=False, schema=None):
 
     """ Create an external table for a GCS object.
 
@@ -82,4 +82,3 @@ class ExternalDataSource(object):
     if self._schema:
       json['schema'] = {'fields': self._schema._bq_schema}
     return json
-

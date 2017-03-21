@@ -46,9 +46,10 @@ def projects(line, cell=None):
 def _list_line(args, _):
   # TODO(gram): should we use a paginated table?
   filter_ = args['filter'] if args['filter'] else '*'
-  data = [{'id': project.id, 'name': project.name} for project in datalab.context.Projects()
-                       if fnmatch.fnmatch(project.id, filter_)]
-  return IPython.core.display.HTML(datalab.utils.commands.HtmlBuilder.render_table(data, ['id', 'name']))
+  data = [{'id': project.id, 'name': project.name}
+          for project in datalab.context.Projects() if fnmatch.fnmatch(project.id, filter_)]
+  return IPython.core.display.HTML(datalab.utils.commands.HtmlBuilder.render_table(data, ['id',
+                                                                                          'name']))
 
 
 def _set_line(args, _):

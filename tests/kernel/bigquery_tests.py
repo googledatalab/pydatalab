@@ -24,15 +24,17 @@ import IPython.core.magic
 def noop_decorator(func):
   return func
 
+
 IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import google.datalab
-import google.datalab.bigquery
-import google.datalab.bigquery.commands
-import google.datalab.utils.commands
+
+import google.datalab  # noqa
+import google.datalab.bigquery  # noqa
+import google.datalab.bigquery.commands  # noqa
+import google.datalab.utils.commands  # noqa
 
 
 class TestCases(unittest.TestCase):
@@ -41,14 +43,13 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.Context.default')
   def test_udf_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
-    cell_body = \
-"""
-  // @param word STRING
-  // @param corpus STRING
-  // @returns INTEGER
-  re = new RegExp(word, 'g');
-  return corpus.match(re || []).length;
-"""
+    cell_body = """
+    // @param word STRING
+    // @param corpus STRING
+    // @returns INTEGER
+    re = new RegExp(word, 'g');
+    return corpus.match(re || []).length;
+    """
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
     google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences',
@@ -72,7 +73,8 @@ class TestCases(unittest.TestCase):
     # test query creation
     q1_body = 'SELECT * FROM test_table'
     google.datalab.bigquery.commands._bigquery._query_cell({'name': 'q1', 'udfs': None,
-                                                'datasources': None, 'subqueries': None}, q1_body)
+                                                            'datasources': None,
+                                                            'subqueries': None}, q1_body)
     q1 = env['q1']
     self.assertIsNotNone(q1)
     self.assertEqual(q1.udfs, {})
@@ -83,7 +85,8 @@ class TestCases(unittest.TestCase):
     # test subquery reference and expansion
     q2_body = 'SELECT * FROM q1'
     google.datalab.bigquery.commands._bigquery._query_cell({'name': 'q2', 'udfs': None,
-                                                'datasources': None, 'subqueries': ['q1']}, q2_body)
+                                                            'datasources': None,
+                                                            'subqueries': ['q1']}, q2_body)
     q2 = env['q2']
     self.assertIsNotNone(q2)
     self.assertEqual(q2.udfs, {})

@@ -105,16 +105,11 @@ class HtmlBuilder(object):
     if not items:
       return
 
-    if datatype == 'dict':
-      getter = lambda obj, attribute: obj.get(attribute, None)
-    elif datatype == 'chartdata':
+    if datatype == 'chartdata':
       if not attributes:
         attributes = [items['cols'][i]['label'] for i in range(0, len(items['cols']))]
       items = items['rows']
       indices = {attributes[i]: i for i in range(0, len(attributes))}
-      getter = lambda obj, attribute: obj['c'][indices[attribute]]['v']
-    else:
-      getter = lambda obj, attribute: obj.__getattribute__(attribute)
 
     num_segments = len(self._segments)
     self._segments.append('<table>')
@@ -137,7 +132,14 @@ class HtmlBuilder(object):
         self._segments.append('<td>%s</td>' % HtmlBuilder._format(o))
       else:
         for attr in attributes:
-          self._segments.append('<td>%s</td>' % HtmlBuilder._format(getter(o, attr), nbsp=True))
+          if datatype == 'dict':
+            self._segments.append('<td>%s</td>' % HtmlBuilder._format(o.get(attr, None), nbsp=True))
+          elif datatype == 'chartdata':
+            self._segments.append('<td>%s</td>' % HtmlBuilder._format(o['c'][indices[attr]]['v'],
+                                                                      nbsp=True))
+          else:
+            self._segments.append('<td>%s</td>' % HtmlBuilder._format(o.__getattribute__(attr),
+                                                                      nbsp=True))
       self._segments.append('</tr>')
 
     self._segments.append('</table>')

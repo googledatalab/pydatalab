@@ -37,6 +37,6 @@ class LambdaJob(_job.Job):
     """
     return 'Job %s %s' % (self._job_id, self.state)
 
-  #TODO: ShellJob, once we need it, should inherit on LambdaJob:
-  #      import subprocess
-  #      LambdaJob(subprocess.check_output, id, command_line, shell=True)
+    # TODO: ShellJob, once we need it, should inherit on LambdaJob:
+    #      import subprocess
+    #      LambdaJob(subprocess.check_output, id, command_line, shell=True)

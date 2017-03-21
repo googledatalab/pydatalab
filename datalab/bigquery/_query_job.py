@@ -109,4 +109,3 @@ class QueryJob(_job.Job):
     if self.failed:
       raise Exception('Query failed: %s' % str(self.errors))
     return self._table
-

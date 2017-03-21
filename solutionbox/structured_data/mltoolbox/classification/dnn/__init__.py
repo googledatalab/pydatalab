@@ -13,7 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-"""This module contains functions for classification problems modeled as a fully connected feedforward deep neural network.
+"""This module contains functions for classification problems modeled as a fully connected
+feedforward deep neural network.
 
 Every function can run locally or use Google Cloud Platform.
 """
@@ -25,4 +26,3 @@ from mltoolbox._structured_data.__version__ import __version__
 
 __all__ = ['train', 'train_async', 'analyze', 'analyze_async', 'predict', 'batch_predict',
            'batch_predict_async', '__version__']
-
