@@ -16,21 +16,15 @@ Note that the calls to do analysis, training, and prediction are all mocked.
 from __future__ import absolute_import
 from __future__ import print_function
 
-
-import logging
 import os
 import sys
-
-import shutil
-import sys
-import tempfile
 import unittest
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../solutionbox/structured_data/')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                '../../solutionbox/structured_data/')))
 
-#import mltoolbox._structured_data as core_sd
-import mltoolbox._structured_data._package as core_sd
-import google.datalab.ml as dlml
+import mltoolbox._structured_data._package as core_sd  # noqa: E402
+import google.datalab.ml as dlml  # noqa: E402
 
 
 class TestAnalyze(unittest.TestCase):
@@ -45,28 +39,28 @@ class TestAnalyze(unittest.TestCase):
     self.assertIn('Only CsvDataSet is supported', job.fatal_error.message)
 
     # CsvDataSet does not have one file/pattern
-    #TODO(brandondutra) remove this restriction
+    # TODO(brandondutra) remove this restriction
     job = core_sd.analyze_async(
-        'some_dir', 
+        'some_dir',
         dlml.CsvDataSet(
             file_pattern=['file1.txt', 'file2.txt'],
             schema='col1:STRING,col2:INTEGER,col3:FLOAT')).wait()
-    self.assertIn('should be built with a file pattern', 
-                  job.fatal_error.message)    
+    self.assertIn('should be built with a file pattern',
+                  job.fatal_error.message)
 
     # Passing project id but cloud is false
     job = core_sd.analyze_async(
-        'some_dir', 
+        'some_dir',
         dlml.CsvDataSet(
             file_pattern=['file1.txt'],
             schema='col1:STRING,col2:INTEGER,col3:FLOAT'),
         project_id='project_id').wait()
-    self.assertIn('project_id only needed if cloud is True',  
-                  job.fatal_error.message)  
+    self.assertIn('project_id only needed if cloud is True',
+                  job.fatal_error.message)
 
     # Use cloud but local output folder
     job = core_sd.analyze_async(
-        'some_dir', 
+        'some_dir',
         dlml.CsvDataSet(
             file_pattern=['gs://file1.txt'],
             schema='col1:STRING,col2:INTEGER,col3:FLOAT'),
@@ -76,18 +70,18 @@ class TestAnalyze(unittest.TestCase):
 
     # Use cloud, but local files
     job = core_sd.analyze_async(
-        'gs://some_dir', 
+        'gs://some_dir',
         dlml.CsvDataSet(
             file_pattern=['file1.txt'],
             schema='col1:STRING,col2:INTEGER,col3:FLOAT'),
         project_id='project_id',
         cloud=True).wait()
-    self.assertIn('File file1.txt is not a gcs path', job.fatal_error.message)  
+    self.assertIn('File file1.txt is not a gcs path', job.fatal_error.message)
 
   def test_unsupported_schema(self):
     """Test supported schema values.
 
-    Note that not all valid BQ schema values are valid/used in the structured 
+    Note that not all valid BQ schema values are valid/used in the structured
     data package
     """
 
@@ -97,7 +91,7 @@ class TestAnalyze(unittest.TestCase):
       schema = 'col_name:%s' % col_type
 
       job = core_sd.analyze_async(
-        'some_dir', 
+        'some_dir',
         dlml.CsvDataSet(
             file_pattern=['file1.txt'],
             schema=schema),
@@ -105,9 +99,8 @@ class TestAnalyze(unittest.TestCase):
       self.assertIn('Schema contains an unsupported type %s.' % col_type,
                     job.fatal_error.message)
 
-
       job = core_sd.analyze_async(
-        'gs://some_dir', 
+        'gs://some_dir',
         dlml.CsvDataSet(
             file_pattern=['gs://file1.txt'],
             schema=schema),
@@ -119,10 +112,10 @@ class TestAnalyze(unittest.TestCase):
     pass
 
   def test_categorical_data_with_numerical_schema(self):
-    pass  
+    pass
 
   def test_extra_columns_local(self):
-    pass 
+    pass
     # test more cols than schema
     # test more schema than cols?
 

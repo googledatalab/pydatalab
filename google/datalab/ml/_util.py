@@ -16,7 +16,6 @@
 from googleapiclient import discovery
 from tensorflow.python.lib.io import file_io as tfio
 
-import logging
 import os
 import shutil
 import subprocess
