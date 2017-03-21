@@ -28,13 +28,13 @@ from __future__ import division
 from __future__ import print_function
 
 import datetime
+import io
 import os
 import shutil
 import sys
 import tempfile
 import json
 import glob
-import StringIO
 import subprocess
 import pandas as pd
 from tensorflow.python.lib.io import file_io
@@ -665,7 +665,7 @@ def cloud_predict(model_name, model_version, data):
 
   if isinstance(data, pd.DataFrame):
     # write the df to csv.
-    string_buffer = StringIO.StringIO()
+    string_buffer = io.StringIO()
     data.to_csv(string_buffer, header=None, index=False)
     input_data = string_buffer.getvalue().split('\n')
 
