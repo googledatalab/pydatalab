@@ -249,7 +249,7 @@ def run_analysis(args):
   for col_schema in schema_list:
     col_type = col_schema['type'].lower()
     if col_type != 'string' and col_type != 'integer' and col_type != 'float':
-      raise ValueError('Unknown schema type %s' % col_type)
+      raise ValueError('Schema contains an unsupported type %s.' % col_type)
 
   run_numerical_analysis(table, schema_list, args)
   run_categorical_analysis(table, schema_list, args)
