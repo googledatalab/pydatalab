@@ -37,8 +37,6 @@ from . import _job
 from . import _parser
 from . import _schema
 from . import _utils
-from ._query_output import QueryOutput
-from ._sampling import Sampling
 
 
 class TableMetadata(object):

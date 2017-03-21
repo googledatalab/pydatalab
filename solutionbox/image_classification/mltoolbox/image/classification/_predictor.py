@@ -20,9 +20,7 @@ import apache_beam as beam
 import collections
 import json
 import os
-import tensorflow as tf
 
-from . import _model
 from . import _util
 
 
@@ -108,8 +106,6 @@ class PredictBatchDoFn(beam.DoFn):
   """A DoFn that does batch prediction."""
 
   def __init__(self, model_dir):
-    import os
-
     self._model_dir = model_dir
     self._session = None
     self._tf_inputs = None

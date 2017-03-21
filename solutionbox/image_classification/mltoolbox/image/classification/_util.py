@@ -31,7 +31,7 @@ _DEFAULT_CHECKPOINT_GSURL = 'gs://cloud-ml-data/img/flower_photos/inception_v3_2
 
 def is_in_IPython():
   try:
-    import IPython
+    import IPython # noqa
     return True
   except ImportError:
     return False

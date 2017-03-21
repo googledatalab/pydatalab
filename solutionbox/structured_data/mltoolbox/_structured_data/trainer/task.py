@@ -16,15 +16,12 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import json
 import os
 import re
 import sys
-import math
 
 from . import util
 import tensorflow as tf
-from tensorflow.contrib import metrics as metrics_lib
 
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.python.lib.io import file_io

@@ -20,4 +20,8 @@ Run predict(), batch_predict(), batch_predict_async() to perform predictions.
 The trained model can also be deployed online with google.datalab.ml.ModelVersions.deploy() call.
 """
 
-from ._api import preprocess,preprocess_async,train,train_async,predict,batch_predict,batch_predict_async
+from ._api import preprocess, preprocess_async, train, train_async, predict, batch_predict, \
+    batch_predict_async
+
+__all__ = ['preprocess', 'preprocess_async', 'train', 'train_async', 'predict', 'batch_predict',
+           'batch_predict_async']

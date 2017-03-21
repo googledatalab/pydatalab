@@ -15,3 +15,5 @@ from __future__ import absolute_import
 
 from ._bucket import Bucket, Buckets
 from ._object import Object, Objects
+
+__all__ = ['Bucket', 'Buckets', 'Object', 'Objects']

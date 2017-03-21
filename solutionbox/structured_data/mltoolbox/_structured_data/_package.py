@@ -28,20 +28,15 @@ from __future__ import division
 from __future__ import print_function
 
 import datetime
-import logging
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
-import urllib
 import json
 import glob
 import StringIO
 import subprocess
-import uuid
 import pandas as pd
-import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
 # Note that subpackages of _structured_data are locally imported.

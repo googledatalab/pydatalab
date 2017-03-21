@@ -20,3 +20,6 @@ from ._metric import MetricDescriptors
 from ._query import Query
 from ._query_metadata import QueryMetadata
 from ._resource import ResourceDescriptors
+
+__all__ = ['Aligner', 'Reducer', 'Groups', 'MetricDescriptors', 'Query', 'QueryMetadata',
+           'ResourceDescriptors']

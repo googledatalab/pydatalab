@@ -20,7 +20,6 @@ import google.datalab
 
 from . import _query
 from . import _table
-from ._query_output import QueryOutput
 
 # Query import is at end to avoid issues with circular dependencies.
 
