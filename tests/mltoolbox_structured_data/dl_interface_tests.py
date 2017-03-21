@@ -28,7 +28,8 @@ import unittest
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../solutionbox/structured_data/')))
 
-import mltoolbox._structured_data as core_sd
+#import mltoolbox._structured_data as core_sd
+import mltoolbox._structured_data._package as core_sd
 import google.datalab.ml as dlml
 
 
@@ -39,7 +40,6 @@ class TestAnalyze(unittest.TestCase):
 
     Test for things like using local files when requesting a cloud run.
     """
-
     # not a CsvDataSet
     job = core_sd.analyze_async('some_dir', 'some_file.txt').wait()
     self.assertIn('Only CsvDataSet is supported', job.fatal_error.message)
@@ -90,10 +90,9 @@ class TestAnalyze(unittest.TestCase):
     Note that not all valid BQ schema values are valid/used in the structured 
     data package
     """
-    
-    #TODO(brandon) look here
-    print('brandon, fix this list')
-    unsupported_col_types = ['boolean', 'record', 'junk']
+
+    unsupported_col_types = ['bytes', 'boolean', 'timestamp', 'date', 'time',
+                             'datetime', 'record']
     for col_type in unsupported_col_types:
       schema = 'col_name:%s' % col_type
 

@@ -15,6 +15,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 
 import argparse
@@ -146,7 +147,8 @@ def run_analysis(args):
   """Builds an analysis files for training."""
 
   # Read the schema and input feature types
-  schema_list = json.loads(file_io.read_file_to_string(args.schema_file))
+  schema_list = json.loads(
+      file_io.read_file_to_string(args.schema_file).decode())
 
   run_numerical_categorical_analysis(args, schema_list)
 

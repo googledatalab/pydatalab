@@ -59,7 +59,7 @@ class FileNotFoundError(IOError):
 
 def _default_project():
   from google.datalab import Context
-  return Context.default().project_id
+  return Context.default().project_id.decode()
 
 
 def _assert_gcs_files(files):
@@ -70,9 +70,11 @@ def _assert_gcs_files(files):
   """
 
   if sys.version_info.major > 2:
-    basestring = (str, bytes)  # for python 3 compatibility
+    string_type = (str, bytes)  # for python 3 compatibility
+  else:
+    string_type = basestring
 
-  if isinstance(files, basestring):
+  if isinstance(files, string_type):
     files = [files]
 
   for f in files:

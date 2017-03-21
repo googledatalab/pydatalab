@@ -13,9 +13,9 @@
 # limitations under the License.
 
 
-from apache_beam.io import gcsio
-import glob
 from googleapiclient import discovery
+from tensorflow.python.lib.io import file_io as tfio
+
 import logging
 import os
 import shutil
@@ -88,23 +88,9 @@ def package_and_copy(package_root_dir, setup_py, output_tar_path):
 
 def open_local_or_gcs(path, mode):
   """Opens the given path."""
-
-  if path.startswith('gs://'):
-    try:
-      return gcsio.GcsIO().open(path, mode)
-    except Exception as e:  # pylint: disable=broad-except
-      # Currently we retry exactly once, to work around flaky gcs calls.
-      logging.error('Retrying after exception reading gcs file: %s', e)
-      time.sleep(10)
-      return gcsio.GcsIO().open(path, mode)
-  else:
-    return open(path, mode)
+  return tfio.FileIO(path, mode)
 
 
 def glob_files(path):
   """Glob the given path."""
-
-  if path.startswith('gs://'):
-    return gcsio.GcsIO().glob(path)
-  else:
-    return glob.glob(path)
+  return tfio.get_matching_files(path)
