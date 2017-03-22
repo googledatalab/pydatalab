@@ -15,6 +15,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
+import six
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -114,6 +115,12 @@ class TestAnalyze(unittest.TestCase):
 
 class TestFunctionSignature(unittest.TestCase):
 
+  def _argspec(self, fn_obj):
+    if six.PY2:
+      return inspect.getargspec(fn_obj)
+    else:
+      return inspect.getfullargspec(fn_obj)
+
   def test_same_analysis(self):
     """Test that there is only one analyze function"""
     self.assertIs(core_sd.analyze, classlin.analyze)
@@ -130,10 +137,8 @@ class TestFunctionSignature(unittest.TestCase):
 
   def test_analysis_argspec(self):
     """Test all analyze functions have the same parameters"""
-    if sys.version_info.major > 2:
-      spec_fn = inspect.getfullargspec  # for python 3 compatibility
-    else:
-      spec_fn = inspect.getargspec
 
-    self.assertEqual(spec_fn(core_sd.analyze), spec_fn(core_sd.analyze_async))
-    self.assertEqual(spec_fn(core_sd.analyze), spec_fn(core_sd._analyze))
+    self.assertEqual(self._argspec(core_sd.analyze),
+                     self._argspec(core_sd.analyze_async))
+    self.assertEqual(self._argspec(core_sd.analyze),
+                     self._argspec(core_sd._analyze))

@@ -59,7 +59,7 @@ class FileNotFoundError(IOError):
 
 def _default_project():
   from google.datalab import Context
-  return Context.default().project_id.decode()
+  return Context.default().project_id
 
 
 def _assert_gcs_files(files):

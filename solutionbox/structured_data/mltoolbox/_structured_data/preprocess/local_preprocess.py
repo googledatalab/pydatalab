@@ -22,6 +22,7 @@ import argparse
 import collections
 import json
 import os
+import six
 import sys
 
 
@@ -136,12 +137,7 @@ def run_numerical_categorical_analysis(args, schema_list):
       json.dumps(numerical_results, indent=2, separators=(',', ': ')))
 
   # Write the vocab files. Each label is on its own line.
-  if sys.version_info.major > 2:
-    name_label_itr = categorical_results.items()
-  else:
-    name_label_itr = categorical_results.iteritems()
-
-  for name, unique_labels in name_label_itr:
+  for name, unique_labels in six.iteritems(categorical_results):
     labels = '\n'.join(list(unique_labels))
     file_io.write_string_to_file(
         os.path.join(args.output_dir, CATEGORICAL_ANALYSIS_FILE % name),
