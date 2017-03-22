@@ -66,7 +66,7 @@ class CsvDataSet(object):
     if sys.version_info.major > 2:
       string_type = (str, bytes)  # for python 3 compatibility
     else:
-      string_type = basestring  # noqa: F821
+      string_type = basestring  # noqa
 
     if isinstance(file_pattern, string_type):
       file_pattern = [file_pattern]
