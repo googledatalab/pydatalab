@@ -172,7 +172,6 @@ class TestLinearRegression(unittest.TestCase):
       self.assertEqual(len(schema), 2)
 
   def _cleanup(self):
-    print(self._test_dir)
     shutil.rmtree(self._test_dir)
 
   def test_e2e(self):
