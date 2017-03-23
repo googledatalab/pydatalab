@@ -14,12 +14,12 @@
 
 
 from googleapiclient import discovery
-from tensorflow.python.lib.io import file_io as tfio
 
 import os
 import shutil
 import subprocess
 import tempfile
+import tensorflow as tf
 import time
 
 import datalab.context
@@ -87,9 +87,9 @@ def package_and_copy(package_root_dir, setup_py, output_tar_path):
 
 def open_local_or_gcs(path, mode):
   """Opens the given path."""
-  return tfio.FileIO(path, mode)
+  return tf.gfile.Open(path, mode)
 
 
 def glob_files(path):
   """Glob the given path."""
-  return tfio.get_matching_files(path)
+  return tf.gfile.glob(path)
