@@ -77,6 +77,7 @@ _TEST_MODULES = [
     kernel.storage_tests,
     kernel.utils_tests,
     mltoolbox_structured_data.dl_interface_tests,
+    mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,
     stackdriver.monitoring.metric_tests,
@@ -96,7 +97,6 @@ _TEST_MODULES = [
 # mltoolbox does not work with python 3.
 if sys.version_info.major == 2:
   _TEST_MODULES.append(mltoolbox_structured_data.traininglib_tests)
-  _TEST_MODULES.append(mltoolbox_structured_data.sd_e2e_tests)
 
 if __name__ == '__main__':
   suite = unittest.TestSuite()
