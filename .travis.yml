@@ -14,7 +14,7 @@ before_install:
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
   - pip install -U pip
   - pip install -U setuptools
-  - pip install -U google-cloud-dataflow==0.5.5
+  - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install -U google-cloud-dataflow==0.5.5; fi
   - pip install .
   - pip install solutionbox/structured_data/
   - pip install solutionbox/image_classification/  
