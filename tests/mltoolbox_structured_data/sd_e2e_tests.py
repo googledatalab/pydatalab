@@ -25,6 +25,7 @@ sys.path.append(
 
 import test_mltoolbox.test_datalab_e2e as e2e
 
+
 class TestLinearRegression(e2e.TestLinearRegression):
   """Test linear regression works e2e locally.
   """
