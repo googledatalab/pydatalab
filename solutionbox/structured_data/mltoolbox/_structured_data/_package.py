@@ -28,13 +28,13 @@ from __future__ import division
 from __future__ import print_function
 
 import datetime
+import io
 import os
 import shutil
 import sys
 import tempfile
 import json
 import glob
-import StringIO
 import subprocess
 import pandas as pd
 from tensorflow.python.lib.io import file_io
@@ -62,14 +62,6 @@ def _default_project():
   return Context.default().project_id
 
 
-def _is_in_IPython():
-  try:
-    import IPython # noqa
-    return True
-  except ImportError:
-    return False
-
-
 def _assert_gcs_files(files):
   """Check files starts wtih gs://.
 
@@ -78,9 +70,11 @@ def _assert_gcs_files(files):
   """
 
   if sys.version_info.major > 2:
-    basestring = (str, bytes)  # for python 3 compatibility
+    string_type = (str, bytes)  # for python 3 compatibility
+  else:
+    string_type = basestring  # noqa
 
-  if isinstance(files, basestring):
+  if isinstance(files, string_type):
     files = [files]
 
   for f in files:
@@ -685,7 +679,7 @@ def cloud_predict(model_name, model_version, data):
 
   if isinstance(data, pd.DataFrame):
     # write the df to csv.
-    string_buffer = StringIO.StringIO()
+    string_buffer = io.StringIO()
     data.to_csv(string_buffer, header=None, index=False)
     input_data = string_buffer.getvalue().split('\n')
 

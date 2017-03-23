@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import cloud_preprocess
-import local_preprocess
+from __future__ import absolute_import
+
+from . import cloud_preprocess
+from . import local_preprocess
 
 __all__ = ['cloud_preprocess', 'local_preprocess']

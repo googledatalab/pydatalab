@@ -22,6 +22,7 @@ except ImportError:
     import httplib
 
 import pytz
+import six
 import subprocess
 import socket
 import traceback
@@ -224,7 +225,12 @@ def get_default_project_id():
     stdout, _ = proc.communicate()
     value = stdout.strip()
     if proc.poll() == 0 and value:
-      return value
+      if isinstance(value, six.string_types):
+        return value
+      else:
+        # Hope it's a utf-8 string encoded in bytes. Otherwise an exception will
+        # be thrown and config.json will be checked.
+        return value.decode()
   except:
     pass
 

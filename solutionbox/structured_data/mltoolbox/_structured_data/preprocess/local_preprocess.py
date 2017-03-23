@@ -15,12 +15,14 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 
 import argparse
 import collections
 import json
 import os
+import six
 import sys
 
 
@@ -135,7 +137,7 @@ def run_numerical_categorical_analysis(args, schema_list):
       json.dumps(numerical_results, indent=2, separators=(',', ': ')))
 
   # Write the vocab files. Each label is on its own line.
-  for name, unique_labels in categorical_results.iteritems():
+  for name, unique_labels in six.iteritems(categorical_results):
     labels = '\n'.join(list(unique_labels))
     file_io.write_string_to_file(
         os.path.join(args.output_dir, CATEGORICAL_ANALYSIS_FILE % name),
@@ -146,7 +148,8 @@ def run_analysis(args):
   """Builds an analysis files for training."""
 
   # Read the schema and input feature types
-  schema_list = json.loads(file_io.read_file_to_string(args.schema_file))
+  schema_list = json.loads(
+      file_io.read_file_to_string(args.schema_file).decode())
 
   run_numerical_categorical_analysis(args, schema_list)
 

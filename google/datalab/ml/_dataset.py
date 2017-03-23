@@ -64,9 +64,11 @@ class CsvDataSet(object):
         self._schema = json.load(f)
 
     if sys.version_info.major > 2:
-      basestring = (str, bytes)  # for python 3 compatibility
+      string_type = (str, bytes)  # for python 3 compatibility
+    else:
+      string_type = basestring  # noqa
 
-    if isinstance(file_pattern, basestring):
+    if isinstance(file_pattern, string_type):
       file_pattern = [file_pattern]
     self._input_files = file_pattern
 

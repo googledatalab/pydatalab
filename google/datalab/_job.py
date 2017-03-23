@@ -32,7 +32,7 @@ class JobError(Exception):
     self.reason = reason
 
   def __str__(self):
-    return self.message
+    return '%s %s %s' % (self.message, self.reason, self.location)
 
 
 class Job(object):

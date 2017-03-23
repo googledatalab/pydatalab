@@ -17,9 +17,9 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import io
 import json
 import os
-import StringIO
 import sys
 
 
@@ -212,7 +212,7 @@ def run_categorical_analysis(table, schema_list, args):
         df = query.execute().result().to_dataframe()
 
       # Write the results to a file.
-      string_buff = StringIO.StringIO()
+      string_buff = io.StringIO()
       df.to_csv(string_buff, index=False, header=False)
       file_io.write_string_to_file(out_file, string_buff.getvalue())
 
@@ -235,7 +235,8 @@ def run_analysis(args):
     table = bq.Table(args.bigquery_table)
     schema_list = table.schema._bq_schema
   else:
-    schema_list = json.loads(file_io.read_file_to_string(args.schema_file))
+    schema_list = json.loads(
+        file_io.read_file_to_string(args.schema_file).decode())
     table = bq.ExternalDataSource(
         source=args.input_file_pattern,
         schema=bq.Schema(schema_list))
@@ -244,7 +245,7 @@ def run_analysis(args):
   for col_schema in schema_list:
     col_type = col_schema['type'].lower()
     if col_type != 'string' and col_type != 'integer' and col_type != 'float':
-      raise ValueError('Unknown schema type %s' % col_type)
+      raise ValueError('Schema contains an unsupported type %s.' % col_type)
 
   run_numerical_analysis(table, schema_list, args)
   run_categorical_analysis(table, schema_list, args)
