@@ -244,3 +244,20 @@ def get_default_project_id():
   if os.getenv('PROJECT_ID') is not None:
     return os.getenv('PROJECT_ID')
   return None
+
+
+def python_portable_string(string, encoding='utf-8'):
+  """Converts bytes into a string type.
+
+  Valid string types are retuned without modification. So in Python 2, type str
+  and unicode are not converted.
+
+  In Python 3, type bytes is converted to type str (unicode)
+  """
+  if isinstance(string, six.string_types):
+    return string
+
+  if six.PY3:
+    return string.decode(encoding)
+
+  raise ValueError('Unsupported type %s' % str(type(string)))

@@ -60,8 +60,7 @@ class CsvDataSet(object):
             raise ValueError('invalid schema string "%s"' % x)
           self._schema.append({'name': parts[0].strip(), 'type': parts[1].strip()})
     else:
-      with _util.open_local_or_gcs(schema_file, 'r') as f:
-        self._schema = json.load(f)
+      self._schema = json.loads(_util.read_file_to_string(schema_file))
 
     if sys.version_info.major > 2:
       string_type = (str, bytes)  # for python 3 compatibility
