@@ -14,6 +14,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import logging
 import os
 import sys
 
@@ -22,4 +23,13 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__),
                     '../../solutionbox/structured_data/')))  # noqa
 
-from test_mltoolbox.test_datalab_e2e import *  # noqa
+import test_mltoolbox.test_datalab_e2e as e2e
+
+class TestLinearRegression(e2e.TestLinearRegression):
+  """Test linear regression works e2e locally.
+  """
+  def __init__(self, *args, **kwargs):
+    super(TestLinearRegression, self).__init__(*args, **kwargs)
+
+    # Don't print debugging info
+    self._logger.setLevel(logging.INFO)
