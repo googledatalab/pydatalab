@@ -73,10 +73,8 @@ def _recursive_copy(src_dir, dest_dir):
     dest_dir: gcs or local path.
   When called, dest_dir should exist.
   """
-  if not isinstance(src_dir, six.string_types):
-    src_dir = src_dir.decode()
-  if not isinstance(dest_dir, six.string_types):
-    dest_dir = dest_dir.decode()
+  src_dir = python_portable_string(src_dir)
+  dest_dir = python_portable_string(dest_dir)
 
   file_io.recursive_create_dir(dest_dir)
   for file_name in file_io.list_directory(src_dir):
@@ -251,7 +249,7 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
 
     # only keep the last 3 models
     saved_model_export_utils.garbage_collect_exports(
-        export_dir_base.decode(),
+        python_portable_string(export_dir_base),
         exports_to_keep=3)
 
     # save the last model to the model folder.
@@ -672,7 +670,8 @@ def get_vocabulary(preprocess_output_dir, name):
     raise ValueError('File %s not found in %s' %
                      (CATEGORICAL_ANALYSIS % name, preprocess_output_dir))
 
-  labels = file_io.read_file_to_string(vocab_file).decode().split('\n')
+  labels = python_portable_string(
+      file_io.read_file_to_string(vocab_file)).split('\n')
   label_values = [x for x in labels if x]  # remove empty lines
 
   return label_values
