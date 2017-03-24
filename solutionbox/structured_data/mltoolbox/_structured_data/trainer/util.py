@@ -17,6 +17,7 @@ import json
 import multiprocessing
 import os
 import math
+import six
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
@@ -65,14 +66,6 @@ class NotFittedError(ValueError):
 # ==============================================================================
 
 
-def _copy_all(src_files, dest_dir):
-  # file_io.copy does not copy files into folders directly.
-  for src_file in src_files:
-    file_name = os.path.basename(src_file)
-    new_file_location = os.path.join(dest_dir, file_name)
-    file_io.copy(src_file, new_file_location, overwrite=True)
-
-
 def _recursive_copy(src_dir, dest_dir):
   """Copy the contents of src_dir into the folder dest_dir.
   Args:
@@ -80,6 +73,9 @@ def _recursive_copy(src_dir, dest_dir):
     dest_dir: gcs or local path.
   When called, dest_dir should exist.
   """
+  src_dir = python_portable_string(src_dir)
+  dest_dir = python_portable_string(dest_dir)
+
   file_io.recursive_create_dir(dest_dir)
   for file_name in file_io.list_directory(src_dir):
     old_path = os.path.join(src_dir, file_name)
@@ -252,7 +248,9 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
           gfile.Copy(source, dest_absolute)
 
     # only keep the last 3 models
-    saved_model_export_utils.garbage_collect_exports(export_dir_base, exports_to_keep=3)
+    saved_model_export_utils.garbage_collect_exports(
+        python_portable_string(export_dir_base),
+        exports_to_keep=3)
 
     # save the last model to the model folder.
     # export_dir_base = A/B/intermediate_models/
@@ -482,7 +480,8 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
                          (NUMERICAL_ANALYSIS, preprocess_output_dir))
 
       numerical_anlysis = json.loads(
-          file_io.read_file_to_string(numerical_analysis_file))
+          python_portable_string(
+              file_io.read_file_to_string(numerical_analysis_file)))
 
       for name in train_config['numerical_columns']:
         if name == target_name or name == key_name:
@@ -671,7 +670,8 @@ def get_vocabulary(preprocess_output_dir, name):
     raise ValueError('File %s not found in %s' %
                      (CATEGORICAL_ANALYSIS % name, preprocess_output_dir))
 
-  labels = file_io.read_file_to_string(vocab_file).split('\n')
+  labels = python_portable_string(
+      file_io.read_file_to_string(vocab_file)).split('\n')
   label_values = [x for x in labels if x]  # remove empty lines
 
   return label_values
@@ -709,10 +709,13 @@ def merge_metadata(preprocess_output_dir, transforms_file):
                                         NUMERICAL_ANALYSIS)
   schema_file = os.path.join(preprocess_output_dir, SCHEMA_FILE)
 
-  numerical_anlysis = json.loads(file_io.read_file_to_string(
-      numerical_anlysis_file))
-  schema = json.loads(file_io.read_file_to_string(schema_file))
-  transforms = json.loads(file_io.read_file_to_string(transforms_file))
+  numerical_anlysis = json.loads(
+      python_portable_string(
+          file_io.read_file_to_string(numerical_anlysis_file)))
+  schema = json.loads(
+      python_portable_string(file_io.read_file_to_string(schema_file)))
+  transforms = json.loads(
+      python_portable_string(file_io.read_file_to_string(transforms_file)))
 
   result_dict = {}
   result_dict['csv_header'] = [col_schema['name'] for col_schema in schema]
@@ -725,7 +728,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
   result_dict['vocab_stats'] = {}
 
   # get key column.
-  for name, trans_config in transforms.iteritems():
+  for name, trans_config in six.iteritems(transforms):
     if trans_config.get('transform', None) == 'key':
       result_dict['key_column'] = name
       break
@@ -734,7 +737,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
 
   # get target column.
   result_dict['target_column'] = schema[0]['name']
-  for name, trans_config in transforms.iteritems():
+  for name, trans_config in six.iteritems(transforms):
     if trans_config.get('transform', None) == 'target':
       result_dict['target_column'] = name
       break
@@ -756,7 +759,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
       raise ValueError('Unsupported schema type %s' % col_type)
 
   # Get the transforms.
-  for name, trans_config in transforms.iteritems():
+  for name, trans_config in six.iteritems(transforms):
     if name != result_dict['target_column'] and name != result_dict['key_column']:
       result_dict['transforms'][name] = trans_config
 
@@ -849,3 +852,22 @@ def is_regression_model(model_type):
 
 def is_classification_model(model_type):
   return model_type.endswith('_classification')
+
+
+# Note that this function exists in google.datalab.utils, but that is not
+# installed on the training workers.
+def python_portable_string(string, encoding='utf-8'):
+  """Converts bytes into a string type.
+
+  Valid string types are retuned without modification. So in Python 2, type str
+  and unicode are not converted.
+
+  In Python 3, type bytes is converted to type str (unicode)
+  """
+  if isinstance(string, six.string_types):
+    return string
+
+  if six.PY3:
+    return string.decode(encoding)
+
+  raise ValueError('Unsupported type %s' % str(type(string)))

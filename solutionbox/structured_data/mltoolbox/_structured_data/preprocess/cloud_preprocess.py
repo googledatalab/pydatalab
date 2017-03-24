@@ -17,9 +17,9 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import io
 import json
 import os
+import six
 import sys
 
 
@@ -212,7 +212,7 @@ def run_categorical_analysis(table, schema_list, args):
         df = query.execute().result().to_dataframe()
 
       # Write the results to a file.
-      string_buff = io.StringIO()
+      string_buff = six.StringIO()
       df.to_csv(string_buff, index=False, header=False)
       file_io.write_string_to_file(out_file, string_buff.getvalue())
 

@@ -178,8 +178,10 @@ class TestLinearRegression(unittest.TestCase):
     try:
       self._make_test_files()
       self._run_analyze()
+      self._run_train()
       if six.PY2:
-        self._run_train()
+        # Dataflow is only supported by python 2. Prediction assumes Dataflow
+        # is installed.
         self._run_predict()
         self._run_batch_prediction(
             os.path.join(self._batch_predict_output, 'with_target'),
