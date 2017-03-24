@@ -22,7 +22,9 @@ import shutil
 import six
 import sys
 import tempfile
+import unittest
 
+from . import e2e_functions
 from tensorflow.python.lib.io import file_io
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -31,9 +33,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 import mltoolbox.regression.linear as reglinear  # noqa: E402
 import google.datalab.ml as dlml  # noqa: E402
-import unittest  # noqa: E402
-
-from . import e2e_functions  # noqa: E402
 
 
 class TestLinearRegression(unittest.TestCase):

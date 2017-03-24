@@ -21,9 +21,9 @@ import sys
 # Set up the path so that we can import local packages.
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__),
-                    '../../solutionbox/structured_data/')))  # noqa
+                    '../../solutionbox/structured_data/')))
 
-import test_mltoolbox.test_datalab_e2e as e2e
+import test_mltoolbox.test_datalab_e2e as e2e  # noqa
 
 
 class TestLinearRegression(e2e.TestLinearRegression):
