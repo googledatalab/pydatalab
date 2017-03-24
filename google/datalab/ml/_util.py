@@ -23,6 +23,7 @@ import tensorflow as tf
 import time
 
 import datalab.context
+import google.datalab.utils as dlutils
 
 
 # TODO: Create an Operation class.
@@ -85,6 +86,12 @@ def package_and_copy(package_root_dir, setup_py, output_tar_path):
     shutil.rmtree(tempdir)
 
 
+def read_file_to_string(path):
+  """Read a file into a string."""
+  bytes_string = tf.gfile.Open(path, 'r').read()
+  return dlutils.python_portable_string(bytes_string)
+
+
 def open_local_or_gcs(path, mode):
   """Opens the given path."""
   return tf.gfile.Open(path, mode)
@@ -92,4 +99,4 @@ def open_local_or_gcs(path, mode):
 
 def glob_files(path):
   """Glob the given path."""
-  return tf.gfile.glob(path)
+  return tf.gfile.Glob(path)
