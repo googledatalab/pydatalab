@@ -17,6 +17,7 @@ import json
 import multiprocessing
 import os
 import math
+import six
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
@@ -482,7 +483,8 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
                          (NUMERICAL_ANALYSIS, preprocess_output_dir))
 
       numerical_anlysis = json.loads(
-          file_io.read_file_to_string(numerical_analysis_file))
+          python_portable_string(
+              file_io.read_file_to_string(numerical_analysis_file)))
 
       for name in train_config['numerical_columns']:
         if name == target_name or name == key_name:
@@ -709,10 +711,13 @@ def merge_metadata(preprocess_output_dir, transforms_file):
                                         NUMERICAL_ANALYSIS)
   schema_file = os.path.join(preprocess_output_dir, SCHEMA_FILE)
 
-  numerical_anlysis = json.loads(file_io.read_file_to_string(
-      numerical_anlysis_file))
-  schema = json.loads(file_io.read_file_to_string(schema_file))
-  transforms = json.loads(file_io.read_file_to_string(transforms_file))
+  numerical_anlysis = json.loads(
+      python_portable_string(
+          file_io.read_file_to_string(numerical_anlysis_file)))
+  schema = json.loads(
+      python_portable_string(file_io.read_file_to_string(schema_file)))
+  transforms = json.loads(
+      python_portable_string(file_io.read_file_to_string(transforms_file)))
 
   result_dict = {}
   result_dict['csv_header'] = [col_schema['name'] for col_schema in schema]
@@ -849,3 +854,22 @@ def is_regression_model(model_type):
 
 def is_classification_model(model_type):
   return model_type.endswith('_classification')
+
+
+# Note that this function exists in google.datalab.utils, but that is not
+# installed on the training workers.
+def python_portable_string(string, encoding='utf-8'):
+  """Converts bytes into a string type.
+
+  Valid string types are retuned without modification. So in Python 2, type str
+  and unicode are not converted.
+
+  In Python 3, type bytes is converted to type str (unicode)
+  """
+  if isinstance(string, six.string_types):
+    return string
+
+  if six.PY3:
+    return string.decode(encoding)
+
+  raise ValueError('Unsupported type %s' % str(type(string)))
