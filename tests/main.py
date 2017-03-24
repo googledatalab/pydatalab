@@ -76,7 +76,7 @@ _TEST_MODULES = [
     kernel.html_tests,
     kernel.storage_tests,
     kernel.utils_tests,
-    mltoolbox_structured_data.dl_interface_tests,    
+    mltoolbox_structured_data.dl_interface_tests,
     mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
     mltoolbox_structured_data.traininglib_tests,
     stackdriver.commands.monitoring_tests,
