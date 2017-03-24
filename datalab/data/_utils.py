@@ -102,6 +102,9 @@ def _next_token(sql):
   def start_string(s, i):
     return s[i] == '"' or s[i] == "'"
 
+  def always_true(s, i):
+    return True
+
   while i < len(sql):
     start = i
     if start_multi_line_comment(sql, i):
@@ -119,13 +122,13 @@ def _next_token(sql):
     elif start_string(sql, i):
       # Special handling here as we need to check for escaped closing quotes.
       quote = sql[i]
-      end_checker = True
+      end_checker = always_true
       i += 1
       while i < len(sql) and sql[i] != quote:
         i += 2 if sql[i] == '\\' else 1
     else:
       # We return single characters for everything else
-      end_checker = True
+      end_checker = always_true
 
     i += 1
     while i < len(sql) and not end_checker(sql, i):
