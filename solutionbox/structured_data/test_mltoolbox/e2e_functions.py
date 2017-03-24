@@ -17,6 +17,7 @@ from __future__ import absolute_import
 import os
 import random
 import json
+import six
 import subprocess
 
 
@@ -202,6 +203,10 @@ def run_training(
   logger.debug('Going to run command: %s' % ' '.join(cmd))
   sp = subprocess.Popen(' '.join(cmd), shell=True, stderr=subprocess.PIPE)
   _, err = sp.communicate()
+
+  if not six.PY2:
+    err = err.decode()
+
   return err
 
 

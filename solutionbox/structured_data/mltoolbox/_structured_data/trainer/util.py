@@ -65,15 +65,6 @@ class NotFittedError(ValueError):
 # Functions for saving the exported graphs.
 # ==============================================================================
 
-
-def _copy_all(src_files, dest_dir):
-  # file_io.copy does not copy files into folders directly.
-  for src_file in src_files:
-    file_name = os.path.basename(src_file)
-    new_file_location = os.path.join(dest_dir, file_name)
-    file_io.copy(src_file, new_file_location, overwrite=True)
-
-
 def _recursive_copy(src_dir, dest_dir):
   """Copy the contents of src_dir into the folder dest_dir.
   Args:
@@ -81,6 +72,11 @@ def _recursive_copy(src_dir, dest_dir):
     dest_dir: gcs or local path.
   When called, dest_dir should exist.
   """
+  if not isinstance(src_dir, six.string_types):
+    src_dir = src_dir.decode()
+  if not isinstance(dest_dir, six.string_types):
+    dest_dir = dest_dir.decode()
+
   file_io.recursive_create_dir(dest_dir)
   for file_name in file_io.list_directory(src_dir):
     old_path = os.path.join(src_dir, file_name)
@@ -253,7 +249,9 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
           gfile.Copy(source, dest_absolute)
 
     # only keep the last 3 models
-    saved_model_export_utils.garbage_collect_exports(export_dir_base, exports_to_keep=3)
+    saved_model_export_utils.garbage_collect_exports(
+        export_dir_base.decode(),
+        exports_to_keep=3)
 
     # save the last model to the model folder.
     # export_dir_base = A/B/intermediate_models/
@@ -673,7 +671,7 @@ def get_vocabulary(preprocess_output_dir, name):
     raise ValueError('File %s not found in %s' %
                      (CATEGORICAL_ANALYSIS % name, preprocess_output_dir))
 
-  labels = file_io.read_file_to_string(vocab_file).split('\n')
+  labels = file_io.read_file_to_string(vocab_file).decode().split('\n')
   label_values = [x for x in labels if x]  # remove empty lines
 
   return label_values
@@ -730,7 +728,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
   result_dict['vocab_stats'] = {}
 
   # get key column.
-  for name, trans_config in transforms.iteritems():
+  for name, trans_config in six.iteritems(transforms):
     if trans_config.get('transform', None) == 'key':
       result_dict['key_column'] = name
       break
@@ -739,7 +737,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
 
   # get target column.
   result_dict['target_column'] = schema[0]['name']
-  for name, trans_config in transforms.iteritems():
+  for name, trans_config in six.iteritems(transforms):
     if trans_config.get('transform', None) == 'target':
       result_dict['target_column'] = name
       break
@@ -761,7 +759,7 @@ def merge_metadata(preprocess_output_dir, transforms_file):
       raise ValueError('Unsupported schema type %s' % col_type)
 
   # Get the transforms.
-  for name, trans_config in transforms.iteritems():
+  for name, trans_config in six.iteritems(transforms):
     if name != result_dict['target_column'] and name != result_dict['key_column']:
       result_dict['transforms'][name] = trans_config
 

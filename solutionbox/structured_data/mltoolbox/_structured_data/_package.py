@@ -35,6 +35,7 @@ import sys
 import tempfile
 import json
 import glob
+import six
 import subprocess
 import pandas as pd
 from tensorflow.python.lib.io import file_io
@@ -430,8 +431,13 @@ def local_train(train_dataset,
 
     while p.poll() is None:
       line = p.stdout.readline()
+
+      if not six.PY2:
+        line = line.decode()
+
       if (line.startswith('INFO:tensorflow:global') or line.startswith('INFO:tensorflow:loss') or
               line.startswith('INFO:tensorflow:Saving dict')):
+
         sys.stdout.write(line)
   finally:
     if monitor_process:
