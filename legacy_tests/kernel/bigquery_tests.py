@@ -20,11 +20,6 @@ import unittest
 import IPython
 import IPython.core.magic
 
-import datalab.bigquery
-import datalab.bigquery.commands
-import datalab.context
-import datalab.utils.commands
-
 
 def noop_decorator(func):
   return func
@@ -34,6 +29,12 @@ IPython.core.magic.register_line_cell_magic = noop_decorator
 IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
+
+
+import datalab.bigquery  # noqa
+import datalab.bigquery.commands  # noqa
+import datalab.context  # noqa
+import datalab.utils.commands  # noqa
 
 
 class TestCases(unittest.TestCase):
