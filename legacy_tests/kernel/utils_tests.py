@@ -31,9 +31,9 @@ IPython.core.magic.register_cell_magic = mock.Mock()
 IPython.get_ipython = mock.Mock()
 
 
-import datalab.bigquery  # noqa
-import datalab.context  # noqa
-import datalab.utils.commands  # noqa
+import datalab.bigquery  # noqa: E402
+import datalab.context  # noqa: E402
+import datalab.utils.commands  # noqa: E402
 
 
 class TestCases(unittest.TestCase):
