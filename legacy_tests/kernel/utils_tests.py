@@ -24,15 +24,16 @@ import unittest
 import IPython
 import IPython.core.magic
 
-import datalab.bigquery
-import datalab.context
-import datalab.utils.commands
-
 
 IPython.core.magic.register_line_cell_magic = mock.Mock()
 IPython.core.magic.register_line_magic = mock.Mock()
 IPython.core.magic.register_cell_magic = mock.Mock()
 IPython.get_ipython = mock.Mock()
+
+
+import datalab.bigquery  # noqa: E402
+import datalab.context  # noqa: E402
+import datalab.utils.commands  # noqa: E402
 
 
 class TestCases(unittest.TestCase):
