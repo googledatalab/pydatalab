@@ -12,13 +12,11 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
 import sys
 import unittest
 
-# Set up the path so that we can import our google.datalab.* packages.
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             '../../google.datalab')))  # noqa
+# For these tests to work locally, install the package with "pip install -e ."
+# from the parent folder and run "python tests/main.py"
 
 import bigquery.api_tests
 import bigquery.dataset_tests
