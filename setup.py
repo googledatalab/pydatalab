@@ -15,8 +15,7 @@
 import datetime
 from setuptools import setup
 
-minor = datetime.datetime.now().strftime("%y%m%d%H%M")
-version = '1.0.' + minor
+version = '1.0.0'
 
 setup(
   name='datalab',
