@@ -12,7 +12,6 @@
 
 # To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
 
-import datetime
 from setuptools import setup
 
 version = '1.0.0'
