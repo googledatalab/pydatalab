@@ -119,7 +119,7 @@ def _get_cols(fields, schema):
     'DATE': 'date',
     'TIME': 'timeofday',
     'DATETIME': 'datetime',
-    'TIMESTAMP': 'datetime'
+    'TIMESTAMP': 'timestamp'
   }
   cols = []
   for col in fields:
