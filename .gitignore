@@ -8,3 +8,7 @@ build
 .coverage
 dist
 datalab.magics.rst
+
+# Test files
+.tox/
+.cache/
