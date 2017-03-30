@@ -438,21 +438,82 @@ module Charting {
     }
 
     // Convert any string fields that are date type to JS Dates.
-    public static convertDates(data:any):void {
-      for (var i = 0; i < data.cols.length; i++) {
-        if (data.cols[i].type == 'date' || data.cols[i].type == 'datetime') {
-          var rows = data.rows;
-          for (var j = 0; j < rows.length; j++) {
-            rows[j].c[i].v = new Date(rows[j].c[i].v);
+    public convertDates(data:any):void {
+
+      // Format timestamps in the same way as in dataframes.
+      const timestampFormatter = new this.driver.chartModule.DateFormat({
+        'pattern' : 'yyyy-MM-dd HH:mm:ss',
+        'valueType' : 'datetime',
+        'timeZone' : 0
+      });
+      // Timestamp formatter with fractional seconds.
+      // BQ and python store time down to the microsecond, but javascript Date
+      // only stores it to the millisecond.
+      const timestampWithFractionalSecondsFormatter = new this.driver.chartModule.DateFormat({
+        'pattern' : 'yyyy-MM-dd HH:mm:ss.SSS',
+        'valueType' : 'datetime',
+        'timeZone' : 0
+      });
+
+      // Javascript has terrible support for timezones. When Date objects get converted to
+      // strings, it always applies the local timezone. But we want dates and times to be
+      // printed in UTC so that they match the output of dataframes and other conversions that
+      // are happening in the kernel, which we assume is running in UTC in a docker container.
+      // In order to make this work, we add an offset to our Date objects in an amount equal
+      // to the local timezone offset from UTC so that when those Dates get output as a local
+      // time they will appear as the right UTC time. This is made more confusing by the fact
+      // that date, datetime, and timeofday data types are civil time for which timezone
+      // should not even apply - but since we are passing them along as Date objects, we
+      // pull the same trick with them. We add the 'f' field, for use by Google Charts when
+      // displaying tables, to ensure we have the right string there, but when doing things
+      // like line graphs, that field is not used, so we have to use the Date-offset trick
+      // in order to get dates and times to display correctly as UTC in graphs.
+
+      function dateAsUtc(localDate:Date):Date {
+        const year    = localDate.getUTCFullYear();
+        const month   = localDate.getUTCMonth();
+        const day     = localDate.getUTCDate();
+        const hours   = localDate.getUTCHours();
+        const minutes = localDate.getUTCMinutes();
+        const seconds = localDate.getUTCSeconds();
+        const millis  = localDate.getUTCMilliseconds();
+        return new Date(year, month, day, hours, minutes, seconds, millis);
+      }
+
+      const rows = data.rows;
+      for (let col = 0; col < data.cols.length; col++) {
+        // date, datetime, and timeofday are civil times that are independent of timezone
+        if (data.cols[col].type == 'date' || data.cols[col].type == 'datetime') {
+          for (let row = 0; row < rows.length; row++) {
+            const v = rows[row].c[col].v;
+            rows[row].c[col].v = dateAsUtc(new Date(v));
+            rows[row].c[col].f = v;   // Display the string as-is to avoid timezone problems.
           }
-        } else if (data.cols[i].type == 'timeofday') {
-          var rows = data.rows;
-          for (var j = 0; j < rows.length; j++) {
-            var timeInSeconds = rows[j].c[i].v.split('.')[0];
-            rows[j].c[i].v = timeInSeconds.split(':').map(
+        } else if (data.cols[col].type == 'timeofday') {
+          for (let row = 0; row < rows.length; row++) {
+            const v = rows[row].c[col].v;
+            rows[row].c[col].f = v;  // Display the string as-is to avoid timezone problems.
+            const timeInSeconds = v.split('.')[0];
+            rows[row].c[col].v = timeInSeconds.split(':').map(
               function(n:string) {
                 return parseInt(n, 10);
               });
+          }
+        } else if (data.cols[col].type == 'timestamp') {
+          data.cols[col].type = 'datetime';
+          // Run through all the dates to determine how to format them.
+          let formatter = timestampFormatter;
+          for (let row = 0; row < rows.length; row++) {
+            const v = new Date(rows[row].c[col].v);
+            if (v.getTime() % 1000 != 0) {
+              formatter = timestampWithFractionalSecondsFormatter;
+              break;
+            }
+          }
+          for (let row = 0; row < rows.length; row++) {
+            const v = new Date(rows[row].c[col].v);   // Timestamp is sent back as UTC time string.
+            rows[row].c[col].f = formatter.formatValue(v);
+            rows[row].c[col].v = dateAsUtc(v);
           }
         }
       }
@@ -665,7 +726,7 @@ module Charting {
         console.log('No more refreshes for ' + this.refreshData.name);
       }
 
-      Chart.convertDates(data);
+      this.convertDates(data);
       var options = this.base_options;
       if (response.options) {
         // update any options. We need to make a copy so we don't break the base options.
@@ -910,7 +971,7 @@ module Charting {
         } else {
           chart = new Chart(driver, dom, controlIds, options, refreshData, refreshInterval, totalRows);
         }
-        Chart.convertDates(data);
+        chart.convertDates(data);
         chart.draw(data, options);
         // Do we need to do anything to prevent it getting GCed?
       });

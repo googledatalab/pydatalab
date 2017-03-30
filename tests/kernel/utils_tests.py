@@ -46,7 +46,7 @@ class TestCases(unittest.TestCase):
       {'type': 'string', 'id': 'Column3', 'label': 'Column3'},
       {'type': 'boolean', 'id': 'Column4', 'label': 'Column4'},
       {'type': 'number', 'id': 'Column5', 'label': 'Column5'},
-      {'type': 'datetime', 'id': 'Column6', 'label': 'Column6'}
+      {'type': 'timestamp', 'id': 'Column6', 'label': 'Column6'}
     ]
     return cols
 
