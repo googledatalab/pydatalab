@@ -507,6 +507,7 @@ module Charting {
             const v = new Date(rows[row].c[col].v);
             if (v.getTime() % 1000 != 0) {
               formatter = timestampWithFractionalSecondsFormatter;
+              break;
             }
           }
           for (let row = 0; row < rows.length; row++) {
