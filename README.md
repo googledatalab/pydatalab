@@ -1,4 +1,4 @@
-# datalab
+# datalab [![Build Status](https://travis-ci.org/googledatalab/pydatalab.svg?branch=master)](https://travis-ci.org/googledatalab/pydatalab)
 
 Google datalab Python package. Used in [Google Cloud Datalab]
 (https://github.com/GoogleCloudPlatform/datalab) and can be used
