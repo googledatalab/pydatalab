@@ -189,7 +189,7 @@ def _analyze(output_dir, dataset, cloud=False, project_id=None):
                                            prefix='schema')
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
-    #TODO(brandondutra) use project_id in the local preprocess function.
+    # TODO(brandondutra) use project_id in the local preprocess function.
     args = ['preprocess',
             '--input-file-pattern=%s' % dataset.input_files[0],
             '--output-dir=%s' % output_dir,
