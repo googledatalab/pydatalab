@@ -189,14 +189,17 @@ def _analyze(output_dir, dataset, cloud=False, project_id=None):
                                            prefix='schema')
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
+    #TODO(brandondutra) use project_id in the local preprocess function.
     args = ['preprocess',
             '--input-file-pattern=%s' % dataset.input_files[0],
             '--output-dir=%s' % output_dir,
             '--schema-file=%s' % schema_file_path]
 
     if cloud:
+      if not project_id:
+        project_id = _default_project()
       print('Track BigQuery status at')
-      print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
+      print('https://bigquery.cloud.google.com/queries/%s' % project_id)
       preprocess.cloud_preprocess.main(args)
     else:
       preprocess.local_preprocess.main(args)
