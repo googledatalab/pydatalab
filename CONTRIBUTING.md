@@ -20,6 +20,22 @@ frustration later on.
 All submissions, including submissions by project members, require review. We
 use Github pull requests for this purpose.
 
+### Running tests
+We use [`tox`](https://tox.readthedocs.io/) for running our tests. To run tests
+before sending out a pull request, just
+[install tox](https://http://tox.readthedocs.io/en/latest/install.html) and run
+
+```shell
+$ tox
+```
+
+to run tests under all supported environments. (This will skip any environments
+for which no interpreter is available.) `tox -l` will provide a list of all
+supported environments.
+
+`tox` will run all tests referenced by `tests/main.py` and
+`legacy_tests/main.py`.
+
 ### The small print
 Contributions made by corporations are covered by a different agreement than
 the one above, the
