@@ -52,6 +52,11 @@ class TestCases(unittest.TestCase):
     self.assertEqual(q.data_sources, {'test_datasource': test_datasource})
     self.assertEqual(q._sql, sql)
 
+  def test_query_with_udf_object(self):
+    udf = TestCases._create_udf('test_udf', 'udf body', 'TYPE')
+    q = TestCases._create_query('SELECT * FROM table', udfs={'test_udf': udf})
+    self.assertIn('udf body', q.sql)
+
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
   @mock.patch('google.datalab.bigquery._api.Api.jobs_insert_query')
   @mock.patch('google.datalab.bigquery._api.Api.jobs_query_results')
