@@ -108,7 +108,8 @@ class TestAnalyze(unittest.TestCase):
         dlml.CsvDataSet(
             file_pattern=['gs://file1.txt'],
             schema=schema),
-        cloud=True).wait()
+        cloud=True,
+        project_id='junk_project_id').wait()
       self.assertIn('Schema contains an unsupported type %s.' % col_type,
                     job.fatal_error.message)
 
