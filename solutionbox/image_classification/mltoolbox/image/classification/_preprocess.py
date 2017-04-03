@@ -354,6 +354,6 @@ def configure_pipeline(p, dataset_train, dataset_eval, checkpoint_path, output_d
   # Make sure we write "latest" file after train and eval data are successfully written.
   output_latest_file = os.path.join(output_dir, 'latest')
   ([eval_save, train_save, labels_save] | 'Wait for train eval saving' >> beam.Flatten() |
-      beam.transforms.combiners.Sample.FixedSizeGlobally('Fixed One', 1) |
+      'Fixed One' >> beam.transforms.combiners.Sample.FixedSizeGlobally(1) |
       beam.Map(lambda path: job_id) |
       'WriteLatest' >> beam.io.textio.WriteToText(output_latest_file, shard_name_template=''))
