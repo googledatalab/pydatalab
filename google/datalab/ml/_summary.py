@@ -38,9 +38,9 @@ class Summary(object):
     """
 
     if sys.version_info.major > 2:
-      basestring = (str, bytes)  # for python 3 compatibility
-
-    self._paths = [paths] if isinstance(paths, basestring) else paths
+      self._paths = [paths] if isinstance(paths, str) else paths
+    else:
+      self._paths = [paths] if isinstance(paths, basestring) else paths
 
   def _glob_events_files(self, paths):
     event_files = []

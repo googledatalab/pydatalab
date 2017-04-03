@@ -212,7 +212,7 @@ def configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table):
                     'Write Csv Results' >> beam.io.textio.WriteToText(output_csv,
                                                                       shard_name_template=''))
     (results_save |
-     beam.transforms.combiners.Sample.FixedSizeGlobally('Sample One', 1) |
+     'Sample One' >> beam.transforms.combiners.Sample.FixedSizeGlobally(1) |
      'Serialize Schema' >> beam.Map(lambda path: json.dumps(output_schema)) |
      'Write Schema' >> beam.io.textio.WriteToText(schema_file, shard_name_template=''))
 
