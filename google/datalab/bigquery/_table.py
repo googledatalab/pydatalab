@@ -103,8 +103,11 @@ class Table(object):
   # Allowed characters in a BigQuery table column name
   _VALID_COLUMN_NAME_CHARACTERS = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
-  # When fetching table contents, the max number of rows to fetch per HTTP request
+  # When fetching table contents for a range or iteration, use a small page size per request
   _DEFAULT_PAGE_SIZE = 1024
+  # When fetching the entire table, use the maximum number of rows. The BigQuery service
+  # is likely to return less rows than this if their encoded JSON size is larger than 10MB
+  _MAX_PAGE_SIZE = 100000
 
   # Milliseconds per week
   _MSEC_PER_WEEK = 7 * 24 * 3600 * 1000
@@ -595,20 +598,24 @@ class Table(object):
     Returns:
       A Pandas dataframe containing the table data.
     """
-    fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
+    fetcher = self._get_row_fetcher(start_row=start_row,
+                                    max_rows=max_rows,
+                                    page_size=self._MAX_PAGE_SIZE)
     count = 0
     page_token = None
-    df = None
+
+    # Collect results of page fetcher in separate dataframe objects, then
+    # concatenate them to reduce the amount of copying
+    df_list = []
+
     while True:
       page_rows, page_token = fetcher(page_token, count)
       if len(page_rows):
         count += len(page_rows)
-        if df is None:
-          df = pandas.DataFrame.from_records(page_rows)
-        else:
-          df = df.append(page_rows, ignore_index=True)
+        df_list.append(pandas.DataFrame.from_records(page_rows))
       if not page_token:
         break
+    df = pandas.concat(df_list, ignore_index=True, copy=False)
 
     # Need to reorder the dataframe to preserve column ordering
     ordered_fields = [field.name for field in self.schema]
