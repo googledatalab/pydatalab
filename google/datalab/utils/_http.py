@@ -143,13 +143,12 @@ class Http(object):
                                        method=method,
                                        body=data,
                                        headers=headers)
+      content = content.decode()
       if 200 <= response.status < 300:
         if raw_response:
           return content
-        if type(content) == str:
-          return json.loads(content)
         else:
-          return json.loads(str(content, encoding='UTF-8'))
+          return json.loads(content)
       else:
         raise RequestException(response.status, content)
     except ValueError:
