@@ -671,14 +671,14 @@ class TestCases(unittest.TestCase):
     tbl._api.tabledata_list = mock.Mock(return_value=results)
 
     # using Table.to_dataframe should use large pages to reduce traffic
-    df = tbl.to_dataframe()
+    tbl.to_dataframe()
     tbl._api.tabledata_list.assert_called_with(tbl.name, max_results=100000, start_index=0)
 
     # using Table.range or iterator should use smaller pages to reduce latency
-    _ = list(tbl.range(start_row=0))
+    list(tbl.range(start_row=0))
     tbl._api.tabledata_list.assert_called_with(tbl.name, max_results=1024, start_index=0)
 
-    _ = tbl[0]
+    tbl[0]
     tbl._api.tabledata_list.assert_called_with(tbl.name, max_results=1024, start_index=0)
 
   @staticmethod
