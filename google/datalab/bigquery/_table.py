@@ -106,7 +106,7 @@ class Table(object):
   # When fetching table contents for a range or iteration, use a small page size per request
   _DEFAULT_PAGE_SIZE = 1024
   # When fetching the entire table, use the maximum number of rows. The BigQuery service
-  # is likely to return less rows than this if their encoded JSON size is larger than 10MB
+  # will always return fewer rows than this if their encoded JSON size is larger than 10MB
   _MAX_PAGE_SIZE = 100000
 
   # Milliseconds per week
