@@ -414,7 +414,7 @@ class Table(object):
       return self._init_job_from_response(response)
     except Exception as e:
       raise google.datalab.JobError(location=traceback.format_exc(), message=str(e),
-                                          reason=str(type(e)))
+                                    reason=str(type(e)))
 
   def extract(self, destination, format='csv', csv_delimiter=None, csv_header=True, compress=False):
     """Exports the table to GCS; blocks until complete.
