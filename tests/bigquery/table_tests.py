@@ -504,12 +504,20 @@ class TestCases(unittest.TestCase):
     mock_api_tables_get.return_value = {}
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_table_extract.return_value = None
+
     tbl = google.datalab.bigquery.Table('testds.testTable0', context=self._create_context())
+    tbl._api.table_extract = mock.Mock(return_value={'jobReference': {'jobId': 'bar'}})
+
     job = tbl.extract('gs://foo')
-    self.assertIsNone(job)
-    mock_api_table_extract.return_value = {'jobReference': {'jobId': 'bar'}}
-    job = tbl.extract('gs://foo')
+    tbl._api.table_extract.assert_called_with(tbl.name, 'gs://foo', 'CSV', False, ',', True)
     self.assertEquals('bar', job.id)
+
+    tbl.extract('gs://foo', format='json')
+    tbl._api.table_extract.assert_called_with(tbl.name, 'gs://foo', 'NEWLINE_DELIMITED_JSON',
+                                              False, None, True)
+
+    tbl.extract('gs://foo', format='avro')
+    tbl._api.table_extract.assert_called_with(tbl.name, 'gs://foo', 'AVRO', False, None, True)
 
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
