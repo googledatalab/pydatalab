@@ -388,7 +388,7 @@ class Table(object):
       job = _job.Job(job_id=response['jobReference']['jobId'], context=self._context)
     return job
 
-  def extract_async(self, destination, format='csv', csv_delimiter=',', csv_header=True,
+  def extract_async(self, destination, format='csv', csv_delimiter=None, csv_header=True,
                     compress=False):
     """Starts a job to export the table to GCS.
 
@@ -406,15 +406,17 @@ class Table(object):
     format = format.upper()
     if format == 'JSON':
       format = 'NEWLINE_DELIMITED_JSON'
+    if format == 'CSV' and csv_delimiter is None:
+      csv_delimiter = ','
     try:
       response = self._api.table_extract(self._name_parts, destination, format, compress,
                                          csv_delimiter, csv_header)
       return self._init_job_from_response(response)
     except Exception as e:
-      raise google.datalab.utils.JobError(location=traceback.format_exc(), message=str(e),
-                                          reason=str(type(e)))
+      raise google.datalab.JobError(location=traceback.format_exc(), message=str(e),
+                                    reason=str(type(e)))
 
-  def extract(self, destination, format='csv', csv_delimiter=',', csv_header=True, compress=False):
+  def extract(self, destination, format='csv', csv_delimiter=None, csv_header=True, compress=False):
     """Exports the table to GCS; blocks until complete.
 
     Args:
