@@ -13,25 +13,11 @@ See
 [https://github.com/googledatalab/notebooks](https://github.com/googledatalab/notebooks)
 for samples of using this package.
 
-## Prerequisites
-
-You will need the [Typescript compiler](https://www.typescriptlang.org/)
-installed. In the future we should be installable from PyPI.
-
 ## Installation
 
-First:
+This package is available on PyPI as `datalab`:
 
-    git clone https://github.com/googledatalab/pydatalab.git
-    cd pydatalab
-
-Then do one of the folowing:
-
-    ./install-virtualenv.sh  # For use in Python virtual environments
-    ./install-no-virtualenv.sh  # For installing in a non-virtual environment
-
-You can ignore the message about running `jupyter nbextension enable`; it is
-not required.
+    pip install datalab
 
 ## Using in Jupyter
 
@@ -64,3 +50,23 @@ environment variable to the project name, or call
 
 You can read the Sphinx generated docs at:
 [http://googledatalab.github.io/pydatalab/](http://googledatalab.github.io/pydatalab/)
+
+## Development installation
+
+If you'd like to work on the package, it's useful to be able to install from
+source. You will need the
+[Typescript compiler](https://www.typescriptlang.org/) installed.
+
+First:
+
+    git clone https://github.com/googledatalab/pydatalab.git
+    cd pydatalab
+
+Then do one of the folowing:
+
+    ./install-virtualenv.sh  # For use in Python virtual environments
+    ./install-no-virtualenv.sh  # For installing in a non-virtual environment
+
+You can ignore the message about running `jupyter nbextension enable`; it is
+not required.
+
