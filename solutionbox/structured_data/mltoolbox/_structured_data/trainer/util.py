@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import csv
 import json
 import multiprocessing
 import os
@@ -537,7 +538,11 @@ def preprocess_input(features, target, train_config, preprocess_output_dir,
       if map_vocab:
         labels = train_config['vocab_stats'][name]['labels']
         table = tf.contrib.lookup.string_to_index_table_from_tensor(labels)
-        features[name] = table.lookup(features[name])
+
+        # TODO(brandondutra) yaqs/5113574563512320
+        sparse = tf.squeeze(features[name])
+        ss = tf.string_split(sparse, delimiter=' ')
+        features[name] = table.lookup(ss)
 
   return features, target
 
@@ -670,9 +675,8 @@ def get_vocabulary(preprocess_output_dir, name):
     raise ValueError('File %s not found in %s' %
                      (CATEGORICAL_ANALYSIS % name, preprocess_output_dir))
 
-  labels = python_portable_string(
-      file_io.read_file_to_string(vocab_file)).split('\n')
-  label_values = [x for x in labels if x]  # remove empty lines
+  with file_io.FileIO(vocab_file, 'r') as f:
+    label_values = [x[0] for x in csv.reader(f) if x[0]]
 
   return label_values
 

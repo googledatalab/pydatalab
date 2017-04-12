@@ -65,7 +65,7 @@ class TestTrainer(unittest.TestCase):
 
   def tearDown(self):
     self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
-    shutil.rmtree(self._test_dir)
+    #shutil.rmtree(self._test_dir)
 
   def _run_training(self, problem_type, model_type, transforms, extra_args=[]):
     """Runs training.
@@ -200,7 +200,7 @@ class TestTrainer(unittest.TestCase):
                        transforms=transforms,
                        extra_args=extra_args)
 
-    self._check_training_screen_output(loss=20)
+    self._check_training_screen_output(loss=2)
     self._check_train_files()
 
   def testRegressionLinear(self):
@@ -219,7 +219,7 @@ class TestTrainer(unittest.TestCase):
                        model_type='linear',
                        transforms=transforms)
 
-    self._check_training_screen_output(loss=20)
+    self._check_training_screen_output(loss=100)
     self._check_train_files()
 
   def testClassificationDnn(self):
@@ -240,7 +240,7 @@ class TestTrainer(unittest.TestCase):
                        transforms=transforms,
                        extra_args=extra_args)
 
-    self._check_training_screen_output(accuracy=0.70, loss=0.10)
+    self._check_training_screen_output(accuracy=0.70, loss=0.1)
     self._check_train_files()
 
   def testClassificationLinear(self):
@@ -259,7 +259,7 @@ class TestTrainer(unittest.TestCase):
                        model_type='linear',
                        transforms=transforms)
 
-    self._check_training_screen_output(accuracy=0.70, loss=0.2)
+    self._check_training_screen_output(accuracy=0.70, loss=0.1)
     self._check_train_files()
 
 
