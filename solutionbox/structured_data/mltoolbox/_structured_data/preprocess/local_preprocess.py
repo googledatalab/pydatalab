@@ -94,7 +94,7 @@ def run_numerical_categorical_analysis(args, schema_list):
             'sum': 0.0}
   numerical_results = collections.defaultdict(_init_numerical_results)
   categorical_results = collections.defaultdict(
-      lambda : collections.defaultdict(int))
+      lambda: collections.defaultdict(int))
 
   # for each file, update the numerical stats from that file, and update the set
   # of unique labels.
@@ -144,12 +144,12 @@ def run_numerical_categorical_analysis(args, schema_list):
 
   # Write the vocab files. Each label is on its own line.
   for name, label_count in six.iteritems(categorical_results):
-    #Lables is now the srting:
-    #label1,count
-    #label2,count
-    #...
-    #where label1 is the most frequent label, and label2 is the 2nd most, etc.
-    labels = '\n'.join(["%s,%d" % (label, count) 
+    # Lables is now the srting:
+    # label1,count
+    # label2,count
+    # ...
+    # where label1 is the most frequent label, and label2 is the 2nd most, etc.
+    labels = '\n'.join(["%s,%d" % (label, count)
                         for label, count in sorted(six.iteritems(label_count),
                                                    key=lambda x: x[1],
                                                    reverse=True)])

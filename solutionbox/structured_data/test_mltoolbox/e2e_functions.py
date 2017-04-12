@@ -40,7 +40,9 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
 
       str1 = random.choice(['red', 'blue', 'green', 'pink', 'yellow', 'brown', 'black'])
       str2 = random.choice(['abc', 'def', 'ghi', 'jkl', 'mno', 'pqr'])
-      str3_list = [random.choice(['car', 'truck', 'van', 'bike', 'train', 'drone']) for x in range(random.randint(1,3))]
+      str3_list = [
+          random.choice(['car', 'truck', 'van', 'bike', 'train', 'drone'])
+          for x in range(random.randint(1, 3))]
 
       map1 = {'red': 2, 'blue': 6, 'green': 4, 'pink': -5, 'yellow': -6, 'brown': -1, 'black': 7}
       map2 = {'abc': 10, 'def': 1, 'ghi': 1, 'jkl': 1, 'mno': 1, 'pqr': 1}
