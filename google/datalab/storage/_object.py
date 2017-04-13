@@ -16,6 +16,7 @@ from __future__ import unicode_literals
 from builtins import object
 
 import dateutil.parser
+import logging
 import time
 
 import google.datalab
@@ -29,6 +30,8 @@ from . import _api
 # In some polling operations, we sleep between API calls to avoid hammering the
 # server. This argument controls how long we sleep between API calls.
 _POLLING_SLEEP = 1
+# This argument controls how many times we'll poll before giving up.
+_MAX_POLL_ATTEMPTS = 30
 
 
 class ObjectMetadata(object):
@@ -157,13 +160,16 @@ class Object(object):
       except Exception as e:
         raise e
       if wait_for_deletion:
-        while True:
+        for _ in xrange(_MAX_POLL_ATTEMPTS):
           objects = Objects(self._bucket, prefix=self.key, delimiter='/',
                             context=self._context)
           if any(o.key == self.key for o in objects):
             time.sleep(_POLLING_SLEEP)
             continue
           break
+        else:
+          logging.error('Failed to see object deletion after %d attempts.',
+                        _MAX_POLL_ATTEMPTS)
 
   @property
   def metadata(self):
