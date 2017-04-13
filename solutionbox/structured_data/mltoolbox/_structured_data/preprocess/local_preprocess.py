@@ -110,8 +110,10 @@ def run_numerical_categorical_analysis(args, schema_list):
             split_strings = parsed_line[col_name].split(' ')
 
             for one_label in split_strings:
-              # add the label to the dict and increase its count.
-              categorical_results[col_name][one_label] += 1
+              # Filter out empty strings
+              if one_label
+                # add the label to the dict and increase its count.
+                categorical_results[col_name][one_label] += 1
           else:
             # numerical column.
 
@@ -144,7 +146,7 @@ def run_numerical_categorical_analysis(args, schema_list):
 
   # Write the vocab files. Each label is on its own line.
   for name, label_count in six.iteritems(categorical_results):
-    # Lables is now the srting:
+    # Labels is now the string:
     # label1,count
     # label2,count
     # ...

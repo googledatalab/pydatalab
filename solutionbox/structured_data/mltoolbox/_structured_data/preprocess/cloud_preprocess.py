@@ -197,6 +197,7 @@ def run_categorical_analysis(table, schema_list, args):
             SELECT word, COUNT(word) as word_count
             FROM SPLIT_TABLE
             CROSS JOIN UNNEST(SPLIT_TABLE.split_col) as word
+            WHERE LENGTH(word) > 0
             GROUP BY word
             ORDER BY word_count DESC
       """.format(name=name, table=table_name)
