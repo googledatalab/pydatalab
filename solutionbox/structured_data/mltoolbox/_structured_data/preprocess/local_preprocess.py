@@ -111,7 +111,7 @@ def run_numerical_categorical_analysis(args, schema_list):
 
             for one_label in split_strings:
               # Filter out empty strings
-              if one_label
+              if one_label:
                 # add the label to the dict and increase its count.
                 categorical_results[col_name][one_label] += 1
           else:
