@@ -37,7 +37,7 @@ class CsvDataSet(object):
     Args:
       file_pattern: A list of CSV files. or a string. Can contain wildcards in
         file names. Can be local or GCS path.
-      schema: A BigQuery schema object in the form of
+      schema: A google.datalab.bigquery.Schema object, or a json schema in the form of
         [{'name': 'col1', 'type': 'STRING'},
         {'name': 'col2', 'type': 'INTEGER'}]
         or a single string in of the form 'col1:STRING,col2:INTEGER,col3:FLOAT'.
@@ -50,7 +50,11 @@ class CsvDataSet(object):
       raise ValueError('schema and schema_file cannot both be None.')
 
     if schema is not None:
-      if isinstance(schema, list):
+      # This check needs to come before list check, because Schema
+      # is a subclass of list
+      if isinstance(schema, bq.Schema):
+        self._schema = schema._bq_schema
+      elif isinstance(schema, list):
         self._schema = schema
       else:
         self._schema = []
