@@ -17,12 +17,11 @@ from google.datalab import storage
 class StorageTest(unittest.TestCase):
 
   def setUp(self):
-    context = google.datalab.Context.default()
-    logging.info('Using project: %s', context.project_id)
-    self._context = context
+    self._context = google.datalab.Context.default()
+    logging.info('Using project: %s', self._context.project_id)
 
-    suffix = ''.join(random.choice(string.letters) for _ in range(8))
-    self._test_bucket_name = '-'.join((project_id, suffix)).lower()
+    suffix = ''.join(random.choice(string.lowercase) for _ in range(8))
+    self._test_bucket_name = '{}-{}'.format(self._context.project_id, suffix)
     logging.info('test bucket: %s', self._test_bucket_name)
 
   def test_object_deletion_consistency(self):
