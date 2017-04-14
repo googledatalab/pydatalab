@@ -160,7 +160,7 @@ class Object(object):
       except Exception as e:
         raise e
       if wait_for_deletion:
-        for _ in xrange(_MAX_POLL_ATTEMPTS):
+        for _ in range(_MAX_POLL_ATTEMPTS):
           objects = Objects(self._bucket, prefix=self.key, delimiter='/',
                             context=self._context)
           if any(o.key == self.key for o in objects):
