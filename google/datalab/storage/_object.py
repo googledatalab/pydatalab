@@ -16,6 +16,8 @@ from __future__ import unicode_literals
 from builtins import object
 
 import dateutil.parser
+import logging
+import time
 
 import google.datalab
 import google.datalab.utils
@@ -24,6 +26,12 @@ from . import _api
 
 # TODO(nikhilko): Read/write operations don't account for larger files, or non-textual content.
 #                 Use streaming reads into a buffer or StringIO or into a file handle.
+
+# In some polling operations, we sleep between API calls to avoid hammering the
+# server. This argument controls how long we sleep between API calls.
+_POLLING_SLEEP = 1
+# This argument controls how many times we'll poll before giving up.
+_MAX_POLL_ATTEMPTS = 30
 
 
 class ObjectMetadata(object):
@@ -136,8 +144,12 @@ class Object(object):
     except Exception as e:
       raise e
 
-  def delete(self):
+  def delete(self, wait_for_deletion=True):
     """Deletes this object from its bucket.
+
+    Args:
+      wait_for_deletion: If True, we poll until this object no longer appears in
+          objects.list operations for this bucket before returning.
 
     Raises:
       Exception if there was an error deleting the object.
@@ -147,6 +159,17 @@ class Object(object):
         self._api.objects_delete(self._bucket, self._key)
       except Exception as e:
         raise e
+      if wait_for_deletion:
+        for _ in range(_MAX_POLL_ATTEMPTS):
+          objects = Objects(self._bucket, prefix=self.key, delimiter='/',
+                            context=self._context)
+          if any(o.key == self.key for o in objects):
+            time.sleep(_POLLING_SLEEP)
+            continue
+          break
+        else:
+          logging.error('Failed to see object deletion after %d attempts.',
+                        _MAX_POLL_ATTEMPTS)
 
   @property
   def metadata(self):

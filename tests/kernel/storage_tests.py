@@ -156,6 +156,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual("Couldn't create gs://foo/bar: Invalid bucket name gs://foo/bar",
                      str(error.exception))
 
+  @mock.patch('google.datalab.storage._api.Api.objects_list', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.buckets_get', autospec=True)
   @mock.patch('google.datalab.storage._api.Api.objects_get', autospec=True)
   @mock.patch('google.datalab.storage._bucket.Bucket.objects', autospec=True)
@@ -164,7 +165,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.Context.default')
   def test_gcs_delete(self, mock_context_default, mock_api_bucket_delete,
                       mock_api_objects_delete, mock_bucket_objects, mock_api_objects_get,
-                      mock_api_buckets_get):
+                      mock_api_buckets_get, mock_api_objects_list):
     context = TestCases._create_context()
     mock_context_default.return_value = context
     # Mock API for getting objects in a bucket.
@@ -172,6 +173,8 @@ class TestCases(unittest.TestCase):
     # Mock API for getting object metadata.
     mock_api_objects_get.side_effect = TestCases._mock_api_objects_get()
     mock_api_buckets_get.side_effect = TestCases._mock_api_buckets_get()
+    # Mock API for listing objects in a bucket.
+    mock_api_objects_list.side_effect = {}
 
     with self.assertRaises(Exception) as error:
       google.datalab.storage.commands._storage._gcs_delete({
