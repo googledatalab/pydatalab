@@ -20,7 +20,6 @@ from __future__ import unicode_literals
 
 import argparse
 import collections
-import csv
 import json
 import os
 import six
@@ -93,27 +92,20 @@ def run_numerical_categorical_analysis(args, schema_list):
             'count': 0,
             'sum': 0.0}
   numerical_results = collections.defaultdict(_init_numerical_results)
-  categorical_results = collections.defaultdict(
-      lambda: collections.defaultdict(int))
+  categorical_results = collections.defaultdict(set)
 
   # for each file, update the numerical stats from that file, and update the set
   # of unique labels.
   for input_file in input_files:
     with file_io.FileIO(input_file, 'r') as f:
-      for line in csv.reader(f):
-        parsed_line = dict(zip(header, line))
+      for line in f:
+        parsed_line = dict(zip(header, line.strip().split(',')))
 
         for col_schema in schema_list:
           col_name = col_schema['name']
           col_type = col_schema['type']
           if col_type.lower() == 'string':
-            split_strings = parsed_line[col_name].split(' ')
-
-            for one_label in split_strings:
-              # Filter out empty strings
-              if one_label:
-                # add the label to the dict and increase its count.
-                categorical_results[col_name][one_label] += 1
+            categorical_results[col_name].update([parsed_line[col_name]])
           else:
             # numerical column.
 
@@ -145,16 +137,8 @@ def run_numerical_categorical_analysis(args, schema_list):
       json.dumps(numerical_results, indent=2, separators=(',', ': ')))
 
   # Write the vocab files. Each label is on its own line.
-  for name, label_count in six.iteritems(categorical_results):
-    # Labels is now the string:
-    # label1,count
-    # label2,count
-    # ...
-    # where label1 is the most frequent label, and label2 is the 2nd most, etc.
-    labels = '\n'.join(["%s,%d" % (label, count)
-                        for label, count in sorted(six.iteritems(label_count),
-                                                   key=lambda x: x[1],
-                                                   reverse=True)])
+  for name, unique_labels in six.iteritems(categorical_results):
+    labels = '\n'.join(list(unique_labels))
     file_io.write_string_to_file(
         os.path.join(args.output_dir, CATEGORICAL_ANALYSIS_FILE % name),
         labels)

@@ -160,9 +160,9 @@ def run_categorical_analysis(table, schema_list, args):
   """Find vocab values for the categorical columns and writes a csv file.
 
   The vocab files are in the from
-  label1,count
-  label2,count
-  label3,count
+  label1
+  label2
+  label3
   ...
 
   Args:
@@ -188,20 +188,18 @@ def run_categorical_analysis(table, schema_list, args):
       else:
         table_name = 'table_name'
 
-      # In non-legacy sql, the SPLIT function returns an array. To flatten the
-      # array in BQ, you have to cross join UNNEST the table with itself
       sql = """
-            WITH SPLIT_TABLE AS (
-              SELECT SPLIT({name}, ' ') as split_col FROM {table}
-            )
-            SELECT word, COUNT(word) as word_count
-            FROM SPLIT_TABLE
-            CROSS JOIN UNNEST(SPLIT_TABLE.split_col) as word
-            WHERE LENGTH(word) > 0
-            GROUP BY word
-            ORDER BY word_count DESC
+            SELECT
+              {name}
+            FROM
+              {table}
+            WHERE
+              {name} IS NOT NULL
+            GROUP BY
+              {name}
+            ORDER BY
+              {name}
       """.format(name=name, table=table_name)
-
       out_file = os.path.join(args.output_dir,
                               CATEGORICAL_ANALYSIS_FILE % name)
 

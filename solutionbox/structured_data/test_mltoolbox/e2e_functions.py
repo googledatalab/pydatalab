@@ -40,9 +40,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
 
       str1 = random.choice(['red', 'blue', 'green', 'pink', 'yellow', 'brown', 'black'])
       str2 = random.choice(['abc', 'def', 'ghi', 'jkl', 'mno', 'pqr'])
-      str3_list = [
-          random.choice(['car', 'truck', 'van', 'bike', 'train', 'drone'])
-          for x in range(random.randint(1, 3))]
+      str3 = random.choice(['car', 'truck', 'van', 'bike', 'train', 'drone'])
 
       map1 = {'red': 2, 'blue': 6, 'green': 4, 'pink': -5, 'yellow': -6, 'brown': -1, 'black': 7}
       map2 = {'abc': 10, 'def': 1, 'ghi': 1, 'jkl': 1, 'mno': 1, 'pqr': 1}
@@ -50,7 +48,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
 
       # Build some model.
       t = 0.5 + 0.5 * num1 - 2.5 * num2 + num3
-      t += map1[str1] + map2[str2] + sum([map3[x] for x in str3_list])
+      t += map1[str1] + map2[str2] + map3[str3]
 
       if problem_type == 'classification':
         if t < 0:
@@ -69,7 +67,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
             num3=num3,
             str1=str1,
             str2=str2,
-            str3=' '.join(str3_list))
+            str3=str3)
       else:
           csv_line = "{id},{num1},{num2},{num3},{str1},{str2},{str3}\n".format(
             id=i,
@@ -78,7 +76,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
             num3=num3,
             str1=str1,
             str2=str2,
-            str3=' '.join(str3_list))
+            str3=str3)
       f1.write(csv_line)
 
 
