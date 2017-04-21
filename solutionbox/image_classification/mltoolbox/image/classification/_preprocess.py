@@ -87,10 +87,11 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
   """
 
   def process(self, element):
-    uri, label_id = element
+    from tensorflow.python.lib.io import file_io as tf_file_io
 
+    uri, label_id = element
     try:
-      with _util.open_local_or_gcs(uri, mode='r') as f:
+      with tf_file_io.FileIO(uri, 'r') as f:
         img = Image.open(f).convert('RGB')
     # A variety of different calling libraries throw different exceptions here.
     # They all correspond to an unreadable file so we treat them equivalently.
