@@ -96,7 +96,7 @@ class Summary(object):
     """
 
     if ((sys.version_info.major > 2 and isinstance(event_names, str)) or
-        (sys.version_info.major <= 2 and isinstance(event_names, basestring))):
+           (sys.version_info.major <= 2 and isinstance(event_names, basestring))):
       event_names = [event_names]
 
     all_events = self.list_events()
@@ -152,7 +152,7 @@ class Summary(object):
     """
 
     if ((sys.version_info.major > 2 and isinstance(event_names, str)) or
-        (sys.version_info.major <= 2 and isinstance(event_names, basestring))):
+           (sys.version_info.major <= 2 and isinstance(event_names, basestring))):
       event_names = [event_names]
 
     events_list = self.get_events(event_names)

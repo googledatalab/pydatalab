@@ -58,7 +58,7 @@ class FeatureSliceView(object):
     """
     import IPython
 
-    if ((sys.version_info.major > 2 and isinstance(data, str)) or 
+    if ((sys.version_info.major > 2 and isinstance(data, str)) or
        (sys.version_info.major <= 2 and isinstance(data, basestring))):
       data = bq.Query(data)
 
