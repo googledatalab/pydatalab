@@ -95,10 +95,9 @@ class Summary(object):
           events (i.e. 'loss' under trains_set/, and 'loss' under eval_set/.)
     """
 
-    if sys.version_info.major > 2:
-      basestring = (str, bytes)  # for python 3 compatibility
-
-    event_names = [event_names] if isinstance(event_names, basestring) else event_names
+    if ((sys.version_info.major > 2 and isinstance(event_names, str)) or
+       (sys.version_info.major <= 2 and isinstance(event_names, basestring))):
+      event_names = [event_names]
 
     all_events = self.list_events()
     dirs_to_look = set()
@@ -152,10 +151,10 @@ class Summary(object):
       x_axis: whether to use step or time as x axis.
     """
 
-    if sys.version_info.major > 2:
-      basestring = (str, bytes)  # for python 3 compatibility
+    if ((sys.version_info.major > 2 and isinstance(event_names, str)) or
+       (sys.version_info.major <= 2 and isinstance(event_names, basestring))):
+      event_names = [event_names]
 
-    event_names = [event_names] if isinstance(event_names, basestring) else event_names
     events_list = self.get_events(event_names)
     for event_name, dir_event_dict in zip(event_names, events_list):
       for dir, df in dir_event_dict.iteritems():

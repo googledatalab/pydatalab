@@ -16,15 +16,13 @@
 """Cloud implementation for preprocessing, training and prediction for inception model.
 """
 
-import apache_beam as beam
+
 import base64
 import datetime
 import logging
 import os
 import urllib
 
-from . import _predictor
-from . import _preprocess
 from . import _util
 
 
@@ -39,7 +37,9 @@ class Cloud(object):
   def preprocess(train_dataset, output_dir, eval_dataset, checkpoint, pipeline_option):
     """Preprocess data in Cloud with DataFlow."""
 
+    import apache_beam as beam
     import google.datalab.utils
+    from . import _preprocess
 
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
@@ -154,7 +154,9 @@ class Cloud(object):
   def batch_predict(dataset, model_dir, output_csv, output_bq_table, pipeline_option):
     """Batch predict running in cloud."""
 
+    import apache_beam as beam
     import google.datalab.utils
+    from . import _predictor
 
     if output_csv is None and output_bq_table is None:
       raise ValueError('output_csv and output_bq_table cannot both be None.')

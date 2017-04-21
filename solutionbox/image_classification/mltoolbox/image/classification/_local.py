@@ -16,13 +16,11 @@
 """Local implementation for preprocessing, training and prediction for inception model.
 """
 
-import apache_beam as beam
+
 import datetime
 
 
 from . import _model
-from . import _predictor
-from . import _preprocess
 from . import _trainer
 from . import _util
 
@@ -34,7 +32,9 @@ class Local(object):
   def preprocess(train_dataset, output_dir, eval_dataset, checkpoint):
     """Preprocess data locally."""
 
+    import apache_beam as beam
     from google.datalab.utils import LambdaJob
+    from . import _preprocess
 
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
@@ -70,6 +70,8 @@ class Local(object):
   def predict(model_dir, image_files, resize, show_image):
     """Predict using an model in a local or GCS directory."""
 
+    from . import _predictor
+
     images = _util.load_images(image_files, resize=resize)
     labels_and_scores = _predictor.predict(model_dir, images)
     results = zip(image_files, images, labels_and_scores)
@@ -80,7 +82,9 @@ class Local(object):
   def batch_predict(dataset, model_dir, output_csv, output_bq_table):
     """Batch predict running locally."""
 
+    import apache_beam as beam
     from google.datalab.utils import LambdaJob
+    from . import _predictor
 
     if output_csv is None and output_bq_table is None:
       raise ValueError('output_csv and output_bq_table cannot both be None.')

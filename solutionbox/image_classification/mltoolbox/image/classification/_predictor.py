@@ -95,7 +95,9 @@ class LoadImagesDoFn(beam.DoFn):
   """A DoFn that reads image from url."""
 
   def process(self, element):
-    with _util.open_local_or_gcs(element['image_url'], 'r') as ff:
+    from tensorflow.python.lib.io import file_io as tf_file_io
+
+    with tf_file_io.FileIO(element['image_url'], 'r') as ff:
       image_bytes = ff.read()
     out_element = {'image_bytes': image_bytes}
     out_element.update(element)
