@@ -99,6 +99,9 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'psutil==4.3.0',
     'jsonschema==2.6.0',
   ],
+  dependency_links=[
+     "https://storage.googleapis.com/cloud-ml/sdk/cloudml.latest.tar.gz",
+    ],
   package_data={
     'google.datalab.notebook': [
         'static/bigquery.css',
