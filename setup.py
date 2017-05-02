@@ -86,7 +86,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'google-api-python-client==1.5.1',
     'seaborn==0.7.0',
     'plotly==1.12.5',
-    'httplib2==0.9.2',
+    'httplib2==0.10.3',
     'oauth2client==2.2.0',
     'pandas>=0.17.1',
     'pandas-profiling>=1.0.0a2',
