@@ -117,7 +117,7 @@ class Table(object):
 
     Args:
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
-        If a string, it must have the form '<project>:<dataset>.<table>' or '<dataset>.<table>'.
+        If a string, it must have the form '<project>.<dataset>.<table>' or '<dataset>.<table>'.
       context: an optional Context object providing project_id and credentials. If a specific
         project id or credentials are unspecified, the default ones configured at the global
         level are used.
