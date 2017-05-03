@@ -365,9 +365,9 @@ def _gcs_read(args, _):
 
 def _gcs_view(args, _):
   contents = _get_object_contents(args['object'])
-  if not isinstance(contents, basestring):
-    contents = str(contents)
-  lines = contents.split('\n')
+  if not isinstance(contents, basestring) or isinstance(contents, bytes):
+    contents = str(contents, encoding='UTF-8')
+  lines = contents.splitlines()
   head_count = args['head']
   tail_count = args['tail']
   if len(lines) > head_count + tail_count:
