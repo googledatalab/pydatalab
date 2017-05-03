@@ -609,6 +609,7 @@ class Table(object):
     # Collect results of page fetcher in separate dataframe objects, then
     # concatenate them to reduce the amount of copying
     df_list = []
+    df = None
 
     while True:
       page_rows, page_token = fetcher(page_token, count)
@@ -617,7 +618,8 @@ class Table(object):
         df_list.append(pandas.DataFrame.from_records(page_rows))
       if not page_token:
         break
-    df = pandas.concat(df_list, ignore_index=True, copy=False)
+    if df_list:
+      df = pandas.concat(df_list, ignore_index=True, copy=False)
 
     # Need to reorder the dataframe to preserve column ordering
     ordered_fields = [field.name for field in self.schema]
