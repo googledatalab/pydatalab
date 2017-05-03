@@ -367,7 +367,7 @@ def _gcs_view(args, _):
   contents = _get_object_contents(args['object'])
   if not isinstance(contents, basestring):
     contents = str(contents)
-  else if isinstance(contents, bytes)
+  elif isinstance(contents, bytes):
     contents = str(contents, encoding='UTF-8')
   lines = contents.splitlines()
   head_count = args['head']
