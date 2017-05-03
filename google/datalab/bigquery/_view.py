@@ -38,7 +38,7 @@ class View(object):
     Args:
       name: the name of the view either as a string or a 3-part tuple
           (projectid, datasetid, name). If a string, it must have the form
-          '<project>:<dataset>.<view>' or '<dataset>.<view>'.
+          '<project>.<dataset>.<view>' or '<dataset>.<view>'.
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global
           level are used.
