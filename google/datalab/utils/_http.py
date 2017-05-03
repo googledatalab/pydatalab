@@ -43,7 +43,10 @@ class RequestException(Exception):
     self.message = 'HTTP request failed'
     # Try extract a message from the body; swallow possible resulting ValueErrors and KeyErrors.
     try:
-      error = json.loads(content)['error']
+      if type(content) == str:
+        error = json.loads(content)['error']
+      else:
+        error = json.loads(str(content, encoding='UTF-8'))['error']
       if 'errors' in error:
         error = error['errors'][0]
       self.message += ': ' + error['message']
