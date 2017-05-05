@@ -26,6 +26,7 @@ import pandas as pd
 import six
 import tensorflow as tf
 import tensorflow_transform as tft
+import textwrap
 
 from tensorflow.contrib import lookup
 from tensorflow.python.lib.io import file_io
@@ -59,6 +60,11 @@ NUMERIC_TRANSFORMS = [IDENTITY_TRANSFORM, SCALE_TRANSFORM]
 CATEGORICAL_TRANSFORMS = [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM]
 TEXT_TRANSFORMS = [BOW_TRANSFORM, TFIDF_TRANSFORM]
 
+# If the features file is missing transforms, apply these.
+DEFAULT_NUMERIC_TRANSFORM = IDENTITY_TRANSFORM
+DEFAULT_CATEGORICAL_TRANSFORM = ONE_HOT_TRANSFORM
+
+# Schema values
 INTEGER_SCHEMA = 'integer'
 FLOAT_SCHEMA = 'float'
 STRING_SCHEMA = 'string'
@@ -69,7 +75,7 @@ def parse_arguments(argv):
   """Parse command line arguments.
 
   Args:
-    argv: list of command line arguments, includeing programe name.
+    argv: list of command line arguments, including program name.
 
   Returns:
     An argparse Namespace object.
@@ -78,7 +84,67 @@ def parse_arguments(argv):
     ValueError: for bad parameters
   """
   parser = argparse.ArgumentParser(
-      description='Runs analysis on structured data.')
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=textwrap.dedent("""\
+          Runs analysis on structured data and produces auxiliary files for
+          training. The output files can also be used by the Transform step
+          to materialize TF.Examples files, which for some problems can speed up
+          training.
+
+          Description of input files
+          --------------------------
+
+          1) If using csv files, the --csv-schema-file must be the file path to
+             a schema file. The format of this file must be a valid BigQuery
+             schema file, which is a JSON file containing a list of dicts.
+             Consider the example schema file below:
+
+             [
+                {"name": "column_name_1", "type": "integer"},
+                {"name": "column_name_2", "type": "float"},
+                {"name": "column_name_3", "type": "string"},
+                {"name": "column_name_4", "type": "string"},
+             ]
+
+             Note that the column names in the csv file much match the order
+             in the schema list. Also, we only support three BigQuery types (
+             integer, float, and string).
+
+             If instead of csv files, --bigquery-table is used, the schema file
+             does not have to be pass in as this program will extract it from
+             the table directly.
+
+          2) --features-file is a file path to a file describing the
+             transformations. Below is an example features file:
+
+             {
+                "column_name_1": {"transform": "scale"},
+                "column_name_3": {"transform": "target"},
+                "column_name_2": {"transform": "one_hot"},
+                "column_name_4": {"transform": "key"},
+             }
+
+             The format is of the dict is `name`: `transform-dict` where the
+             `name` must be a column name from the schema file. A list of
+             supported `transform-dict`s is below:
+
+             {"transform": "identity"}: does nothing (for numerical columns).
+             {"transform": "scale", "value": x}: scale a numerical column to
+                [-a, a]. If value is missing, x defaults to 1.
+             {"transform": "one_hot"}: makes a one-hot encoding of a string
+                column.
+             {"transform": "embedding", "embedding_dim": d}: makes an embedding
+                of a string column.
+             {"transform": "bag_of_words"}: bag of words transform for text
+                columns.
+             {"transform": "tfidf"}: TFIDF transform for text columns'
+             {"transform": "target"}: denotes what column is the target. If the
+                schema type of this column is string, a one_hot encoding is
+                automatically applied. If type is numerical, a identity transform
+                is automatically applied.
+             {"transform": "key"}: column contains metadata-like information
+                and is not included in the model.
+  """))
   parser.add_argument('--cloud',
                       action='store_true',
                       help='Analysis will use cloud services.')
@@ -96,18 +162,18 @@ def parse_arguments(argv):
   parser.add_argument('--csv-schema-file',
                       type=str,
                       required=False,
-                      help=('BigQuery json schema file'))
+                      help=('BigQuery json schema file path'))
 
   # If using bigquery table
   parser.add_argument('--bigquery-table',
                       type=str,
                       required=False,
-                      help=('project:dataset.table_name'))
+                      help=('project.dataset.table_name'))
 
   parser.add_argument('--features-file',
                       type=str,
                       required=True,
-                      help='File listing transforms to perform.')
+                      help='Features file path')
 
   args = parser.parse_args(args=argv[1:])
 
@@ -136,6 +202,21 @@ def parse_arguments(argv):
 # ------------------------------------------------------------------------------
 
 def make_scale_tito(min_x_value, max_x_value, output_min, output_max):
+  """Scale a column to [output_min, output_max].
+
+  Assumes the columns's range is [min_x_value, max_x_value]. If this is not
+  true at training or prediction time, the output value of this scale could be
+  outside the range [output_min, output_max].
+
+  Raises:
+    ValueError: if min_x_value = max_x_value, as the column is constant.
+  """
+
+  if round(min_x_value - max_x_value, 7) == 0:
+    # There is something wrong with the data.
+    # Why round to 7 places? It's the same as unittest's assertAlmostEqual.
+    raise ValueError('In make_scale_tito, min_x_value == max_x_value')
+
   def _scale(x):
     min_x_valuef = tf.to_float(min_x_value)
     max_x_valuef = tf.to_float(max_x_value)
@@ -170,6 +251,7 @@ def segment_indices(segment_ids, num_segments):
   Args:
     segment_ids: A 1-d tensor containing an non-decreasing sequence of
         non-negative integers with type `tf.int32` or `tf.int64`.
+    num_segments: number of segments. In above example, it is 3.
 
   Returns:
     A tensor containing the indices within each segment.
@@ -187,7 +269,7 @@ def get_term_count_per_doc(x, vocab_size):
   """Creates a SparseTensor with 1s at every doc/term pair index.
 
   Args:
-    x : a SparseTensor of int64 representing string indices in vocab.
+    x : a SparseTensor representing string indices in vocab.
 
   Returns:
     a SparseTensor with count at indices <doc_index_in_batch>,
@@ -198,7 +280,7 @@ def get_term_count_per_doc(x, vocab_size):
                          [1, 2],
                          [2, 1],
                          [3, 1]]),
-          values=array([3, 8, 9, 3, 4], dtype=int32),
+          values=array([3, 8, 9, 3, 4], dtype=int64),
           dense_shape=array([4, 3]))
         says the 2nd example/document (row index 1) has two tokens, and
         token 0 occures 8 times and token 2 occures 9 times.
@@ -210,7 +292,7 @@ def get_term_count_per_doc(x, vocab_size):
   expanded_values = tf.to_int64(tf.expand_dims(x.values, 1))
   next_index = tf.concat(
       [split_indices[0], split_indices[1], expanded_values], axis=1)
-  next_values = tf.ones_like(x.values)
+  next_values = tf.ones_like(x.values, dtype=tf.int64)
   vocab_size_as_tensor = tf.constant([vocab_size], dtype=tf.int64)
   next_shape = tf.concat(
       [x.dense_shape, vocab_size_as_tensor], 0)
@@ -240,6 +322,18 @@ def make_tfidf_tito(vocab, example_count, corpus_size, part):
     part: 'ids' or 'weights'. Returns the weights or ids of the transform.
 
   Returns:
+    A sparse tensor containing the ids or weights of the tfidf transform (see
+        the part parameter). The sparse tensor is in the form
+        SparseTensorValue(
+          indices=array([[0, 0],
+                         [1, 0],
+                         [1, 1],
+                         [1, 2],
+                         [2, 0],
+                         ...]),
+          values=1-D array or ids or weights)
+        Note that the index row match the batch size, and the index columns
+        are continuous. This format is expected by tf.layers.
 
   """
   def _tfidf(x):
@@ -252,17 +346,17 @@ def make_tfidf_tito(vocab, example_count, corpus_size, part):
     term_count_per_doc = get_term_count_per_doc(int_text, len(vocab) + 1)
 
     # Add one to the reduced term freqnencies to avoid dividing by zero.
-    example_count_with_oov = tf.to_double(tf.concat([example_count, [0]], 0))
-    idf = tf.log(tf.to_double(corpus_size) / (1.0 + example_count_with_oov))
+    example_count_with_oov = tf.to_float(tf.concat([example_count, [0]], 0))
+    idf = tf.log(tf.to_float(corpus_size) / (1.0 + example_count_with_oov))
 
-    dense_doc_sizes = tf.to_double(tf.sparse_reduce_sum(tf.SparseTensor(
+    dense_doc_sizes = tf.to_float(tf.sparse_reduce_sum(tf.SparseTensor(
         indices=int_text.indices,
         values=tf.ones_like(int_text.values),
         dense_shape=int_text.dense_shape), 1))
 
     idf_times_term_count = tf.multiply(
         tf.gather(idf, term_count_per_doc.indices[:, 1]),
-        tf.to_double(term_count_per_doc.values))
+        tf.to_float(term_count_per_doc.values))
     tfidf_weights = (
         idf_times_term_count / tf.gather(dense_doc_sizes,
                                          term_count_per_doc.indices[:, 0]))
@@ -326,21 +420,29 @@ def make_bag_of_words_tito(vocab, part):
 # ------------------------------------------------------------------------------
 
 
-def make_preprocessing_fn(args, features):
+def make_preprocessing_fn(output_dir, features):
+  """Makes a preprocessing function.
+
+  Args:
+    output_dir: folder path that contains the vocab and stats files.
+    features: the features dict
+
+  Returns:
+    a function
+  """
   def preprocessing_fn(inputs):
     """TFT preprocessing function.
 
     Args:
       inputs: dictionary of input `tensorflow_transform.Column`.
+
     Returns:
       A dictionary of `tensorflow_transform.Column` representing the transformed
           columns.
     """
-    stats = {}
-    if os.path.isfile(os.path.join(args.output_dir, STATS_FILE)):
-      stats = json.loads(
-          file_io.read_file_to_string(
-              os.path.join(args.output_dir, STATS_FILE)).decode())
+    stats = json.loads(
+      file_io.read_file_to_string(
+          os.path.join(output_dir, STATS_FILE)).decode())
 
     result = {}
     for name, transform in six.iteritems(features):
@@ -349,7 +451,7 @@ def make_preprocessing_fn(args, features):
       if transform_name == KEY_TRANSFORM:
         transform_name = 'identity'
       elif transform_name == TARGET_TRANSFORM:
-        if os.path.isfile(os.path.join(args.output_dir, VOCAB_ANALYSIS_FILE % name)):
+        if file_io.file_exists(os.path.join(output_dir, VOCAB_ANALYSIS_FILE % name)):
           transform_name = 'one_hot'
         else:
           transform_name = 'identity'
@@ -366,12 +468,13 @@ def make_preprocessing_fn(args, features):
       elif transform_name in [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM,
                               TFIDF_TRANSFORM, BOW_TRANSFORM]:
         vocab_str = file_io.read_file_to_string(
-            os.path.join(args.output_dir, VOCAB_ANALYSIS_FILE % name))
+            os.path.join(output_dir, VOCAB_ANALYSIS_FILE % name))
         vocab_pd = pd.read_csv(six.StringIO(vocab_str),
                                header=None,
-                               names=['vocab', 'count'])
+                               names=['vocab', 'count'],
+                               dtype=str)  # Prevent pd from converting numerical categories.
         vocab = vocab_pd['vocab'].tolist()
-        ex_count = vocab_pd['count'].tolist()
+        ex_count = vocab_pd['count'].astype(int).tolist()
 
         if transform_name == TFIDF_TRANSFORM:
           result[name + '_ids'] = tft.map(
@@ -394,10 +497,10 @@ def make_preprocessing_fn(args, features):
               make_bag_of_words_tito(vocab=vocab, part='weights'),
               inputs[name])
         else:
+          # ONE_HOT_TRANSFORM: making a dense vector is done at training
+          # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
           result[name] = tft.map(make_str_to_int_tito(vocab, len(vocab)),
                                  inputs[name])
-      elif transform_name == KEY_TRANSFORM:
-          result[name] = inputs[name]
       else:
         raise ValueError('unknown transform %s' % transform_name)
     return result
@@ -405,23 +508,26 @@ def make_preprocessing_fn(args, features):
   return preprocessing_fn
 
 
-def make_tft_input_schema(schema, args):
-  """Make a tft-stype schema file.
+def make_tft_input_schema(schema, output_dir):
+  """Make a TFT Schema object
 
-  In the tft tramework, this is where default values are recoreded for training.
+  In the tft framework, this is where default values are recoreded for training.
 
   Args:
-    schema: schema file
-    args: command line args
+    schema: schema list
+    output_dir: output folder
+
+  Returns:
+    TFT Schema object.
   """
   result = {}
 
   # stats file us used to get default values.
   stats = {}
-  if file_io.file_exists(os.path.join(args.output_dir, STATS_FILE)):
+  if file_io.file_exists(os.path.join(output_dir, STATS_FILE)):
     stats = json.loads(
         file_io.read_file_to_string(
-            os.path.join(args.output_dir, STATS_FILE)).decode())
+            os.path.join(output_dir, STATS_FILE)).decode())
 
   for col_schema in schema:
     col_type = col_schema['type'].lower()
@@ -448,18 +554,18 @@ def make_tft_input_schema(schema, args):
   return dataset_schema.from_feature_spec(result)
 
 
-def make_transform_graph(args, schema, features):
+def make_transform_graph(output_dir, schema, features):
   """Writes a tft transform fn, and metadata files.
 
   Args:
-    args: command line args
-    schema: schema file
-    features: features file
+    output_dir: output folder
+    schema: schema list
+    features: features dict
   """
 
-  tft_input_schema = make_tft_input_schema(schema, args)
+  tft_input_schema = make_tft_input_schema(schema, output_dir)
   tft_input_metadata = dataset_metadata.DatasetMetadata(schema=tft_input_schema)
-  preprocessing_fn = make_preprocessing_fn(args, features)
+  preprocessing_fn = make_preprocessing_fn(output_dir, features)
 
   # copy from /tft/beam/impl
   inputs, outputs = impl_helper.run_preprocessing_fn(
@@ -468,7 +574,7 @@ def make_transform_graph(args, schema, features):
   output_metadata = dataset_metadata.DatasetMetadata(
       schema=impl_helper.infer_feature_schema(outputs))
 
-  transform_fn_dir = os.path.join(args.output_dir, TRANSFORM_FN_DIR)
+  transform_fn_dir = os.path.join(output_dir, TRANSFORM_FN_DIR)
 
   # This writes the SavedModel
   impl_helper.make_transform_fn_def(
@@ -479,30 +585,51 @@ def make_transform_graph(args, schema, features):
 
   metadata_io.write_metadata(
       metadata=output_metadata,
-      path=os.path.join(args.output_dir, TRANSFORMED_METADATA_DIR))
+      path=os.path.join(output_dir, TRANSFORMED_METADATA_DIR))
   metadata_io.write_metadata(
       metadata=tft_input_metadata,
-      path=os.path.join(args.output_dir, RAW_METADATA_DIR))
+      path=os.path.join(output_dir, RAW_METADATA_DIR))
 
 
-def execute_sql(sql, table):
+def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
+                       features):
+  """Use BigQuery to analyze input date.
+
+  Only one of csv_file_pattern or bigquery_table should be non-None.
+
+  Args:
+    output_dir: output folder
+    csv_file_pattern: csv file path, may contain wildcards
+    bigquery_table: project_id.dataset_name.table_name
+    schema: schema list
+    features: features dict
+  """
+
+  def _execute_sql(sql, table):
+    """Runs a BigQuery job and dowloads the results into local memeory.
+
+    Args:
+      sql: a SQL string
+      table: bq.ExternalDataSource or bq.Table
+
+    Returns:
+      A Pandas dataframe.
+    """
+    import google.datalab.bigquery as bq
+    if isinstance(table, bq.ExternalDataSource):
+      query = bq.Query(sql, data_sources={'csv_table': table})
+    else:
+      query = bq.Query(sql)
+    return query.execute().result().to_dataframe()
+
   import google.datalab.bigquery as bq
-  if isinstance(table, bq.ExternalDataSource):
-    query = bq.Query(sql, data_sources={'csv_table': table})
-  else:
-    query = bq.Query(sql)
-  return query.execute().result().to_dataframe()
-
-
-def run_cloud_analysis(args, schema, features):
-  import google.datalab.bigquery as bq
-  if args.bigquery_table:
-    table_name = '`%s`' % args.bigquery_table
+  if bigquery_table:
+    table_name = '`%s`' % bigquery_table
     table = None
   else:
     table_name = 'csv_table'
     table = bq.ExternalDataSource(
-        source=args.csv_file_pattern,
+        source=csv_file_pattern,
         schema=bq.Schema(schema))
 
   numerical_vocab_stats = {}
@@ -532,15 +659,15 @@ def run_cloud_analysis(args, schema, features):
         # See the sections 'Flattening Arrays' and 'Filtering Arrays' at
         # https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays
         sql = ('WITH SplitTable AS '
-               '         (SELECT split({name}, \' \') as token_array FROM {table}), '
+               '         (SELECT SPLIT({name}, \' \') as token_array FROM {table}), '
                '     TokenTable AS '
                '         (SELECT ARRAY(SELECT DISTINCT x '
                '                       FROM UNNEST(token_array) AS x) AS unique_tokens_per_row '
                '          FROM SplitTable) '
-               'SELECT token, count(token) as token_count '
+               'SELECT token, COUNT(token) as token_count '
                'FROM TokenTable '
-               'CROSS JOIN unnest(TokenTable.unique_tokens_per_row) as token '
-               'WHERE length(token) > 0 '
+               'CROSS JOIN UNNEST(TokenTable.unique_tokens_per_row) as token '
+               'WHERE LENGTH(token) > 0 '
                'GROUP BY token '
                'ORDER BY token_count DESC, token ASC').format(name=col_name,
                                                               table=table_name)
@@ -553,13 +680,13 @@ def run_cloud_analysis(args, schema, features):
                'ORDER BY count DESC, token ASC').format(name=col_name,
                                                         table=table_name)
 
-      df = execute_sql(sql, table)
+      df = _execute_sql(sql, table)
 
       # Save the vocab
       string_buff = six.StringIO()
       df.to_csv(string_buff, index=False, header=False)
       file_io.write_string_to_file(
-          os.path.join(args.output_dir, VOCAB_ANALYSIS_FILE % col_name),
+          os.path.join(output_dir, VOCAB_ANALYSIS_FILE % col_name),
           string_buff.getvalue())
       numerical_vocab_stats[col_name] = {'vocab_size': len(df)}
 
@@ -571,7 +698,7 @@ def run_cloud_analysis(args, schema, features):
       sql = ('SELECT max({name}) as max_value, min({name}) as min_value, '
              'avg({name}) as avg_value from {table}').format(name=col_name,
                                                              table=table_name)
-      df = execute_sql(sql, table)
+      df = _execute_sql(sql, table)
       numerical_vocab_stats[col_name] = {'min': df.iloc[0]['min_value'],
                                          'max': df.iloc[0]['max_value'],
                                          'mean': df.iloc[0]['avg_value']}
@@ -582,31 +709,32 @@ def run_cloud_analysis(args, schema, features):
 
   # get num examples
   sql = 'SELECT count(*) as num_examples from {table}'.format(table=table_name)
-  df = execute_sql(sql, table)
+  df = _execute_sql(sql, table)
   num_examples = df.iloc[0]['num_examples']
 
   # Write the stats file.
   stats = {'column_stats': numerical_vocab_stats, 'num_examples': num_examples}
   file_io.write_string_to_file(
-      os.path.join(args.output_dir, STATS_FILE),
+      os.path.join(output_dir, STATS_FILE),
       json.dumps(stats, indent=2, separators=(',', ': ')))
 
 
-def run_local_analysis(args, schema, features):
-  """Use pandas analyze csv files.
+def run_local_analysis(output_dir, csv_file_pattern, schema, features):
+  """Use pandas to analyze csv files.
 
   Produces a stats file and vocab files.
 
   Args:
-    args: commmand line args
-    schema: BQ schema file
-    features: featurs file.
+    output_dir: output folder
+    csv_file_pattern: string, may contain wildcards
+    schema: BQ schema list
+    features: features dict
 
   Raises:
     ValueError: on unknown transfrorms/schemas
   """
   header = [column['name'] for column in schema]
-  input_files = file_io.get_matching_files(args.csv_file_pattern)
+  input_files = file_io.get_matching_files(csv_file_pattern)
 
   # initialize the results
   def _init_numerical_results():
@@ -644,6 +772,7 @@ def run_local_analysis(args, schema, features):
             split_strings = parsed_line[col_name].split(' ')
 
             # If a label is in the row N times, increase it's vocab count by 1.
+            # This is needed for TFIDF, but it's also an interesting stat.
             for one_label in set(split_strings):
               # Filter out empty strings
               if one_label:
@@ -681,13 +810,15 @@ def run_local_analysis(args, schema, features):
                                                    key=lambda x: x[1],
                                                    reverse=True)])
     file_io.write_string_to_file(
-        os.path.join(args.output_dir, VOCAB_ANALYSIS_FILE % name),
+        os.path.join(output_dir, VOCAB_ANALYSIS_FILE % name),
         labels)
 
     vocab_sizes[name] = {'vocab_size': len(label_count)}
 
   # Update numerical_results to just have min/min/mean
   for col_name in numerical_results:
+    if float(numerical_results[col_name]['count']) == 0:
+      raise ValueError('Column %s has a zero count' % col_name)
     mean = (numerical_results[col_name]['sum'] /
             float(numerical_results[col_name]['count']))
     del numerical_results[col_name]['sum']
@@ -698,11 +829,11 @@ def run_local_analysis(args, schema, features):
   numerical_results.update(vocab_sizes)
   stats = {'column_stats': numerical_results, 'num_examples': num_examples}
   file_io.write_string_to_file(
-      os.path.join(args.output_dir, STATS_FILE),
+      os.path.join(output_dir, STATS_FILE),
       json.dumps(stats, indent=2, separators=(',', ': ')))
 
 
-def check_schema_transform_match(schema, features):
+def check_schema_transforms_match(schema, features):
   """Checks that the transform and schema do not conflict.
 
   Args:
@@ -750,8 +881,8 @@ def expand_defaults(schema, features):
   the schema's type. The features dict is modified by this function call.
 
   Args:
-    schema: schema file
-    features: features file
+    schema: schema list
+    features: features dict
 
   Raises:
     ValueError: if transform cannot be applied given schema type.
@@ -775,9 +906,9 @@ def expand_defaults(schema, features):
     if schema_name not in six.iterkeys(features):
       # add the default transform to the features
       if schema_type in NUMERIC_SCHEMA:
-        features[schema_name] = {'transform': NUMERIC_TRANSFORMS[0]}
+        features[schema_name] = {'transform': DEFAULT_NUMERIC_TRANSFORM}
       elif schema_type == STRING_SCHEMA:
-        features[schema_name] = {'transform': CATEGORICAL_TRANSFORMS[0]}
+        features[schema_name] = {'transform': DEFAULT_CATEGORICAL_TRANSFORM}
       else:
         raise NotImplementedError('Unknown type %s' % schema_type)
 
@@ -795,19 +926,26 @@ def main(argv=None):
       file_io.read_file_to_string(args.features_file).decode())
 
   expand_defaults(schema, features)  # features are updated.
-  check_schema_transform_match(schema, features)
+  check_schema_transforms_match(schema, features)
 
   file_io.recursive_create_dir(args.output_dir)
 
   if args.cloud:
-    run_cloud_analysis(args, schema, features)
+    run_cloud_analysis(
+        output_dir=args.output_dir,
+        csv_file_pattern=args.csv_file_pattern,
+        bigquery_table=args.bigquery_table,
+        schema=schema,
+        features=features)
   else:
-    if not os.path.isdir(args.output_dir):
-      os.makedirs(args.output_dir)
-    run_local_analysis(args, schema, features)
+    run_local_analysis(
+        output_dir=args.output_dir,
+        csv_file_pattern=args.csv_file_pattern,
+        schema=schema,
+        features=features)
 
   # Also writes the transform fn and tft metadata.
-  make_transform_graph(args, schema, features)
+  make_transform_graph(args.output_dir, schema, features)
 
   # Save a copy of the schema and features in the output folder.
   file_io.write_string_to_file(

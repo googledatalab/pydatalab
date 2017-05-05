@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import collections
 import copy
 import json
 import math
@@ -70,37 +69,35 @@ class TestConfigFiles(unittest.TestCase):
        'col5': {'transform': 'identity'},
        'col6': {'transform': 'one_hot'}})
 
-  def test_check_schema_transform_match(self):
+  def test_check_schema_transforms_match(self):
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transform_match(
+      analyze_data.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'INTEGER'}],
          {'col1': {'transform': 'one_hot'}})
 
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transform_match(
+      analyze_data.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'FLOAT'}],
          {'col1': {'transform': 'embedding'}})
 
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transform_match(
+      analyze_data.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'STRING'}],
          {'col1': {'transform': 'scale'}})
 
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transform_match(
+      analyze_data.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'xxx'}],
          {'col1': {'transform': 'scale'}})
 
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transform_match(
+      analyze_data.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'INTEGER'}],
          {'col1': {'transform': 'xxx'}})
 
 
 class TestLocalAnalyze(unittest.TestCase):
   """Test local analyze functions."""
-
-  Args = collections.namedtuple('Args', ['csv_file_pattern', 'output_dir'])
 
   def test_numerics(self):
     output_folder = tempfile.mkdtemp()
@@ -111,7 +108,8 @@ class TestLocalAnalyze(unittest.TestCase):
         '\n'.join(['%s,%s' % (i, 10 * i + 0.5) for i in range(100)]))
 
       analyze_data.run_local_analysis(
-        self.Args(input_file_path, output_folder),
+        output_folder,
+        input_file_path,
         [{'name': 'col1', 'type': 'INTEGER'},
          {'name': 'col2', 'type': 'FLOAT'}],
         {'col1': {'transform': 'scale'},
@@ -144,7 +142,8 @@ class TestLocalAnalyze(unittest.TestCase):
         '\n'.join(csv_file))
 
       analyze_data.run_local_analysis(
-        self.Args(input_file_path, output_folder),
+        output_folder,
+        input_file_path,
         [{'name': 'color', 'type': 'STRING'},
          {'name': 'transport', 'type': 'STRING'}],
         {'color': {'transform': 'one_hot'},
@@ -192,7 +191,8 @@ class TestLocalAnalyze(unittest.TestCase):
         '\n'.join(csv_file))
 
       analyze_data.run_local_analysis(
-        self.Args(input_file_path, output_folder),
+        output_folder,
+        input_file_path,
         [{'name': 'col1', 'type': 'STRING'}, {'name': 'col2', 'type': 'STRING'}],
         {'col1': {'transform': 'bag_of_words'},
          'col2': {'transform': 'tfidf'}})
@@ -255,12 +255,13 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
       data = [{'col1': i, 'col2': 10 * i + 0.5} for i in range(100)]
       table.insert(data)
 
-      _Args = collections.namedtuple('Args', ['csv_file_pattern', 'output_dir', 'bigquery_table'])
       analyze_data.run_cloud_analysis(
-        _Args(None, output_folder, full_table_name),
-        schema,
-        {'col1': {'transform': 'scale'},
-         'col2': {'transform': 'identity'}})
+          output_dir=output_folder,
+          csv_file_pattern=None,
+          bigquery_table=full_table_name,
+          schema=schema,
+          features={'col1': {'transform': 'scale'},
+                    'col2': {'transform': 'identity'}})
 
       stats = json.loads(
           file_io.read_file_to_string(
@@ -284,8 +285,6 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
 class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
   """Test the analyze function using BigQuery from csv files that are on GCS."""
 
-  Args = collections.namedtuple('Args', ['csv_file_pattern', 'output_dir', 'bigquery_table'])
-
   @classmethod
   def setUpClass(cls):
     cls._bucket_root = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
@@ -306,11 +305,13 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       '\n'.join(['%s,%s' % (i, 10 * i + 0.5) for i in range(100)]))
 
     analyze_data.run_cloud_analysis(
-      self.Args(input_file_path, output_folder, None),
-      [{'name': 'col1', 'type': 'INTEGER'},
-       {'name': 'col2', 'type': 'FLOAT'}],
-      {'col1': {'transform': 'scale'},
-       'col2': {'transform': 'identity'}})
+        output_dir=output_folder,
+        csv_file_pattern=input_file_path,
+        bigquery_table=None,
+        schema=[{'name': 'col1', 'type': 'INTEGER'},
+                {'name': 'col2', 'type': 'FLOAT'}],
+        features={'col1': {'transform': 'scale'},
+                  'col2': {'transform': 'identity'}})
     stats = json.loads(
         file_io.read_file_to_string(
             os.path.join(output_folder, analyze_data.STATS_FILE)).decode())
@@ -339,11 +340,13 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       '\n'.join(csv_file))
 
     analyze_data.run_cloud_analysis(
-      self.Args(input_file_path, output_folder, None),
-      [{'name': 'color', 'type': 'STRING'},
-       {'name': 'transport', 'type': 'STRING'}],
-      {'color': {'transform': 'one_hot'},
-       'transport': {'transform': 'embedding'}})
+        output_dir=output_folder,
+        csv_file_pattern=input_file_path,
+        bigquery_table=None,
+        schema=[{'name': 'color', 'type': 'STRING'},
+                {'name': 'transport', 'type': 'STRING'}],
+        features={'color': {'transform': 'one_hot'},
+                  'transport': {'transform': 'embedding'}})
 
     stats = json.loads(
         file_io.read_file_to_string(
@@ -386,10 +389,13 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       '\n'.join(csv_file))
 
     analyze_data.run_cloud_analysis(
-      self.Args(input_file_path, output_folder, None),
-      [{'name': 'col1', 'type': 'STRING'}, {'name': 'col2', 'type': 'STRING'}],
-      {'col1': {'transform': 'bag_of_words'},
-       'col2': {'transform': 'tfidf'}})
+        output_dir=output_folder,
+        csv_file_pattern=input_file_path,
+        bigquery_table=None,
+        schema=[{'name': 'col1', 'type': 'STRING'},
+                {'name': 'col2', 'type': 'STRING'}],
+        features={'col1': {'transform': 'bag_of_words'},
+                  'col2': {'transform': 'tfidf'}})
 
     stats = json.loads(
         file_io.read_file_to_string(
@@ -419,8 +425,6 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 
 class TestGraphBuilding(unittest.TestCase):
   """Test the TITO functions work and can produce a working TF graph."""
-
-  Args = collections.namedtuple('Args', ['output_dir'])
 
   def _run_graph(self, model_path, predict_data):
     """Runs the preprocessing graph.
@@ -454,7 +458,7 @@ class TestGraphBuilding(unittest.TestCase):
                          'num2': {'max': 1.0, 'mean': 2.0, 'min': -1.0},
                          'num3': {'max': 10.0, 'mean': 2.0, 'min': 5.0}}}))
       analyze_data.make_transform_graph(
-        self.Args(output_folder),
+        output_folder,
         [{'name': 'num1', 'type': 'FLOAT'},
          {'name': 'num2', 'type': 'FLOAT'},
          {'name': 'num3', 'type': 'INTEGER'}],
@@ -482,6 +486,48 @@ class TestGraphBuilding(unittest.TestCase):
     finally:
       shutil.rmtree(output_folder)
 
+  def test_make_transform_graph_numerics_gcs(self):
+    """Input and output of this test is on GCS."""
+
+    output_folder = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
+    subprocess.check_call('gsutil mb %s' % output_folder, shell=True)
+    stats_file_path = os.path.join(output_folder, analyze_data.STATS_FILE)
+    try:
+      file_io.write_string_to_file(
+          stats_file_path,
+          json.dumps({'column_stats':
+                        {'num1': {'max': 10.0, 'mean': 9.5, 'min': 0.0},  # noqa
+                         'num2': {'max': 1.0, 'mean': 2.0, 'min': -1.0},
+                         'num3': {'max': 10.0, 'mean': 2.0, 'min': 5.0}}}))
+      analyze_data.make_transform_graph(
+        output_folder,
+        [{'name': 'num1', 'type': 'FLOAT'},
+         {'name': 'num2', 'type': 'FLOAT'},
+         {'name': 'num3', 'type': 'INTEGER'}],
+        {'num1': {'transform': 'identity'},
+         'num2': {'transform': 'scale', 'value': 10},
+         'num3': {'transform': 'scale'}})
+
+      model_path = os.path.join(output_folder, 'transform_fn')
+      self.assertTrue(file_io.file_exists(os.path.join(model_path, 'saved_model.pb')))
+
+      results = self._run_graph(model_path, {'num1': [5, 10, 15],
+                                             'num2': [-1, 1, 0.5],
+                                             'num3': [10, 5, 7]})
+
+      for result, expected_result in zip(results['num1'].tolist(), [5, 10, 15]):
+        self.assertAlmostEqual(result, expected_result)
+
+      for result, expected_result in zip(results['num2'].tolist(),
+                                         [-10, 10, 5]):
+        self.assertAlmostEqual(result, expected_result)
+
+      for result, expected_result in zip(results['num3'].tolist(),
+                                         [1, -1, (7.0 - 5) * 2.0 / 5.0 - 1]):
+        self.assertAlmostEqual(result, expected_result)
+    finally:
+      subprocess.check_call('gsutil -m rm -r %s' % output_folder, shell=True)
+
   def test_make_transform_graph_category(self):
     output_folder = tempfile.mkdtemp()
     try:
@@ -493,8 +539,12 @@ class TestGraphBuilding(unittest.TestCase):
           os.path.join(output_folder, analyze_data.VOCAB_ANALYSIS_FILE % 'cat2'),
           '\n'.join(['pizza,300', 'ice_cream,200', 'cookies,100']))
 
+      file_io.write_string_to_file(
+          os.path.join(output_folder, analyze_data.STATS_FILE),
+          json.dumps({}))  # stats file needed but unused.
+
       analyze_data.make_transform_graph(
-        self.Args(output_folder),
+        output_folder,
         [{'name': 'cat1', 'type': 'STRING'}, {'name': 'cat2', 'type': 'STRING'}],
         {'cat1': {'transform': 'one_hot'},
          'cat2': {'transform': 'embedding'}})
@@ -537,7 +587,7 @@ class TestGraphBuilding(unittest.TestCase):
           json.dumps({'num_examples': 4}))
 
       analyze_data.make_transform_graph(
-        self.Args(output_folder),
+        output_folder,
         [{'name': 'cat1', 'type': 'STRING'}],
         {'cat1': {'transform': 'tfidf'}})
 
@@ -595,10 +645,14 @@ class TestGraphBuilding(unittest.TestCase):
       file_io.write_string_to_file(
           os.path.join(output_folder,
                        analyze_data.VOCAB_ANALYSIS_FILE % 'cat1'),
-          '\n'.join(['red,x', 'blue,y', 'green,z']))
+          '\n'.join(['red,2', 'blue,2', 'green,1']))
+
+      file_io.write_string_to_file(
+          os.path.join(output_folder, analyze_data.STATS_FILE),
+          json.dumps({}))  # Stats file needed but unused.
 
       analyze_data.make_transform_graph(
-        self.Args(output_folder),
+        output_folder,
         [{'name': 'cat1', 'type': 'STRING'}],
         {'cat1': {'transform': 'bag_of_words'}})
 
