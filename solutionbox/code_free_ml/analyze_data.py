@@ -111,7 +111,7 @@ def parse_arguments(argv):
              integer, float, and string).
 
              If instead of csv files, --bigquery-table is used, the schema file
-             does not have to be pass in as this program will extract it from
+             is not needed as this program will extract it from
              the table directly.
 
           2) --features-file is a file path to a file describing the
@@ -124,7 +124,7 @@ def parse_arguments(argv):
                 "column_name_4": {"transform": "key"},
              }
 
-             The format is of the dict is `name`: `transform-dict` where the
+             The format of the dict is `name`: `transform-dict` where the
              `name` must be a column name from the schema file. A list of
              supported `transform-dict`s is below:
 
@@ -135,15 +135,19 @@ def parse_arguments(argv):
                 column.
              {"transform": "embedding", "embedding_dim": d}: makes an embedding
                 of a string column.
-             {"transform": "bag_of_words"}: bag of words transform for text
+             {"transform": "bag_of_words"}: bag of words transform for string
                 columns.
-             {"transform": "tfidf"}: TFIDF transform for text columns'
+             {"transform": "tfidf"}: TFIDF transform for string columns.
              {"transform": "target"}: denotes what column is the target. If the
                 schema type of this column is string, a one_hot encoding is
                 automatically applied. If type is numerical, a identity transform
                 is automatically applied.
              {"transform": "key"}: column contains metadata-like information
                 and is not included in the model.
+
+             Note that for tfidf and bag_of_words, the input string is assumed
+             to contain text separated by a space. So for example, the string
+             "a, b c." has three tokens 'a,', 'b', and 'c.'.
   """))
   parser.add_argument('--cloud',
                       action='store_true',
@@ -508,14 +512,14 @@ def make_preprocessing_fn(output_dir, features):
   return preprocessing_fn
 
 
-def make_tft_input_schema(schema, output_dir):
+def make_tft_input_schema(schema, stats_filepath):
   """Make a TFT Schema object
 
   In the tft framework, this is where default values are recoreded for training.
 
   Args:
     schema: schema list
-    output_dir: output folder
+    stats_filepath: file path to the stats file.
 
   Returns:
     TFT Schema object.
@@ -523,11 +527,7 @@ def make_tft_input_schema(schema, output_dir):
   result = {}
 
   # stats file us used to get default values.
-  stats = {}
-  if file_io.file_exists(os.path.join(output_dir, STATS_FILE)):
-    stats = json.loads(
-        file_io.read_file_to_string(
-            os.path.join(output_dir, STATS_FILE)).decode())
+  stats = json.loads(file_io.read_file_to_string(stats_filepath).decode())
 
   for col_schema in schema:
     col_type = col_schema['type'].lower()
@@ -563,7 +563,8 @@ def make_transform_graph(output_dir, schema, features):
     features: features dict
   """
 
-  tft_input_schema = make_tft_input_schema(schema, output_dir)
+  tft_input_schema = make_tft_input_schema(schema, os.path.join(output_dir,
+                                                                STATS_FILE))
   tft_input_metadata = dataset_metadata.DatasetMetadata(schema=tft_input_schema)
   preprocessing_fn = make_preprocessing_fn(output_dir, features)
 
