@@ -29,7 +29,6 @@ import random
 import sys
 import apache_beam as beam
 from apache_beam.metrics import Metrics
-from PIL import Image
 import six
 from tensorflow.python.lib.io import file_io
 from tensorflow_transform import coders
@@ -77,7 +76,7 @@ def parse_arguments(argv):
 
   parser.add_argument(
       '--csv-file-pattern',
-      required=True,
+      required=False,
       help='CSV data to encode as tf.example.')
   # If using bigquery table
   parser.add_argument(
@@ -132,8 +131,9 @@ def shuffle(pcoll):  # pylint: disable=invalid-name
 
 
 def prepare_image_transforms(element, features):
-  """Replace an images url with its jpeg bytes."""
-
+  """Replace an images url with its jpeg bytes as a web safe base64 string."""
+  from PIL import Image
+  import base64
   from tensorflow.python.lib.io import file_io as tf_file_io
 
   for name, transform in six.iteritems(features):
@@ -151,11 +151,11 @@ def prepare_image_transforms(element, features):
         return
 
       # Convert to desired format and output.
-      output = six.StringIO()
+      output = six.BytesIO()
       img.save(output, 'jpeg')
       image_bytes = output.getvalue()
 
-      element[name] = image_bytes
+      element[name] = base64.urlsafe_b64encode(image_bytes)
 
   return element
 
@@ -179,6 +179,7 @@ def preprocess(pipeline, args):
         column_names.remove(target_name)
         exclude_outputs = [target_name]
         del input_metadata.schema.column_schemas[target_name]
+        break
 
   if args.csv_file_pattern:
     coder = coders.CsvCoder(column_names, input_metadata.schema, delimiter=',')
@@ -193,7 +194,7 @@ def preprocess(pipeline, args):
     raw_data = (
         pipeline
         | 'ReadBiqQueryData'
-        >> beam.io.Read(beam.io.BigQuerySource(squery=query,
+        >> beam.io.Read(beam.io.BigQuerySource(query=query,
                                                use_standard_sql=True)))
 
   raw_data = (
@@ -228,18 +229,17 @@ def main(argv=None):
   args = parse_arguments(sys.argv if argv is None else argv)
   if args.cloud:
     pipeline_name = 'DataflowRunner'
-    options = {
-        'job_name': args.job_name,
-        'temp_location':
-            os.path.join(args.output_dir, 'tmp'),
-        'project':
-            args.project_id,
-    }
-
-    pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
   else:
     pipeline_name = 'DirectRunner'
-    pipeline_options = None
+
+  options = {
+      'job_name': args.job_name,
+      'temp_location':
+          os.path.join(args.output_dir, 'tmp'),
+      'project':
+          args.project_id,
+  }
+  pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
 
   temp_dir = os.path.join(args.output_dir, 'tmp')
   with beam.Pipeline(pipeline_name, options=pipeline_options) as p:
