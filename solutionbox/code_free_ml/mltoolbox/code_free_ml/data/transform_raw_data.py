@@ -134,6 +134,7 @@ def prepare_image_transforms(element, features):
   """Replace an images url with its jpeg bytes as a web safe base64 string."""
   from PIL import Image
   import base64
+  import six
   from tensorflow.python.lib.io import file_io as tf_file_io
 
   for name, transform in six.iteritems(features):
@@ -238,6 +239,7 @@ def main(argv=None):
           os.path.join(args.output_dir, 'tmp'),
       'project':
           args.project_id,
+      'save_main_session': True,
   }
   pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
 
