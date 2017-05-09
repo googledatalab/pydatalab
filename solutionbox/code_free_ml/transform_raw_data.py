@@ -30,6 +30,7 @@ import sys
 import apache_beam as beam
 from apache_beam.metrics import Metrics
 import six
+import textwrap
 from tensorflow.python.lib.io import file_io
 from tensorflow_transform import coders
 from tensorflow_transform.beam import impl as tft
@@ -60,11 +61,38 @@ def parse_arguments(argv):
     The parsed arguments as returned by argparse.ArgumentParser.
   """
   parser = argparse.ArgumentParser(
-      description='Runs Preprocessing on the Criteo model data.')
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=textwrap.dedent("""\
+          Runs preprocessing on raw data for TensorFlow training.
+
+          This script applies some transformations to raw data to improve
+          training performance. Some data transformations can be expensive
+          such as the tf-idf text column transformation. During training, the
+          same raw data row might be used multiply times to train a model. This
+          means the same transformations are applied to the same data row
+          multiple times. This can be very inefficient, so this script applies
+          partial transformations to the raw data and writes an intermediate 
+          preprocessed datasource to disk for training. 
+
+          Running this transformation step is required for two usage paths:
+            1) If the img_url_to_vec transform is used. This is because
+               preprocessing as image is expensive and TensorFlow cannot easily
+               read raw image files during training.
+            2) If the raw data is in BigQuery. TensorFlow cannot read from a 
+               BigQuery source.
+
+          Running this transformation step is recommended if a text transform is
+          used (like tf-idf or bag-of-words), and the text value for each row
+          is very long.
+
+          Running this transformation step may not have an interesting training
+          performance impact if the transforms are all simple like scaling
+          numerical values.""")
 
   parser.add_argument(
       '--project-id',
-      help='The project to which the job will be submitted.')
+      help='The project to which the job will be submitted. Only needed if '
+           '--cloud is used.')
   parser.add_argument(
       '--cloud',
       action='store_true',
@@ -77,14 +105,14 @@ def parse_arguments(argv):
   parser.add_argument(
       '--csv-file-pattern',
       required=False,
-      help='CSV data to encode as tf.example.')
+      help='CSV data to transform.')
   # If using bigquery table
   parser.add_argument(
       '--bigquery-table',
       type=str,
       required=False,
       help=('Must be in the form `project.dataset.table_name`. BigQuery '
-            'data to encode as tf.example'))
+            'data to transform'))
 
   parser.add_argument(
       '--analyze-output-dir',
@@ -197,6 +225,9 @@ def preprocess(pipeline, args):
         >> beam.io.Read(beam.io.BigQuerySource(query=query,
                                                use_standard_sql=True)))
 
+  # Note that prepare_image_transforms does not make embeddints, it justs reads
+  # the image files and converts them to base64 stings. tft.TransformDataset()
+  # will apply the saved model that makes the image embeddings.
   raw_data = (
       raw_data
       | 'PreprocessTransferredLearningTransformations'
@@ -227,6 +258,7 @@ def preprocess(pipeline, args):
 def main(argv=None):
   """Run Preprocessing as a Dataflow."""
   args = parse_arguments(sys.argv if argv is None else argv)
+  temp_dir = os.path.join(args.output_dir, 'tmp')
   if args.cloud:
     pipeline_name = 'DataflowRunner'
   else:
@@ -234,14 +266,12 @@ def main(argv=None):
 
   options = {
       'job_name': args.job_name,
-      'temp_location':
-          os.path.join(args.output_dir, 'tmp'),
-      'project':
-          args.project_id,
+      'temp_location': temp_dir,
+      'project': args.project_id,
   }
   pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
 
-  temp_dir = os.path.join(args.output_dir, 'tmp')
+  
   with beam.Pipeline(pipeline_name, options=pipeline_options) as p:
     with tft.Context(temp_dir=temp_dir):
       preprocess(
