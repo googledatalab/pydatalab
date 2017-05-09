@@ -87,7 +87,7 @@ def parse_arguments(argv):
 
           Running this transformation step may not have an interesting training
           performance impact if the transforms are all simple like scaling
-          numerical values.""")
+          numerical values."""))
 
   parser.add_argument(
       '--project-id',
