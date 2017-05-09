@@ -158,33 +158,49 @@ def shuffle(pcoll):  # pylint: disable=invalid-name
           | 'DropRandom' >> beam.FlatMap(lambda (k, vs): vs))
 
 
-def prepare_image_transforms(element, features):
-  """Replace an images url with its jpeg bytes as a web safe base64 string."""
+def image_transform_columns(features):
+  """Returns a list of columns that prepare_image_transforms() should run on.
+
+  Because of beam + pickle, IMAGE_URL_TO_VEC_TRANSFORM cannot be used inside of
+  a beam function, so we extract the columns prepare_image_transforms() should 
+  run on outside of beam.
+  """
+  img_cols = []
+  for name, transform in six.iteritems(features):
+    if transform['transform'] == IMAGE_URL_TO_VEC_TRANSFORM:
+      img_cols.append(name)
+
+  return img_cols
+
+def prepare_image_transforms(element, image_columns):
+  """Replace an images url with its jpeg bytes as a web safe base64 string.
+
+  Args: 
+  """
   from PIL import Image
   import base64
   import six
   from tensorflow.python.lib.io import file_io as tf_file_io
 
-  for name, transform in six.iteritems(features):
-    if transform['transform'] == IMAGE_URL_TO_VEC_TRANSFORM:
-      uri = element[name]
-      try:
-        with tf_file_io.FileIO(uri, 'r') as f:
-          img = Image.open(f).convert('RGB')
-      # A variety of different calling libraries throw different exceptions here.
-      # They all correspond to an unreadable file so we treat them equivalently.
-      # pylint: disable broad-except
-      except Exception as e:
-        logging.exception('Error processing image %s: %s', uri, str(e))
-        img_error_count.inc()
-        return
+  for name in image_columns:
+    uri = element[name]
+    try:
+      with tf_file_io.FileIO(uri, 'r') as f:
+        img = Image.open(f).convert('RGB')
+    # A variety of different calling libraries throw different exceptions here.
+    # They all correspond to an unreadable file so we treat them equivalently.
+    # pylint: disable broad-except
+    except Exception as e:
+      logging.exception('Error processing image %s: %s', uri, str(e))
+      img_error_count.inc()
+      return
 
-      # Convert to desired format and output.
-      output = six.BytesIO()
-      img.save(output, 'jpeg')
-      image_bytes = output.getvalue()
+    # Convert to desired format and output.
+    output = six.BytesIO()
+    img.save(output, 'jpeg')
+    image_bytes = output.getvalue()
 
-      element[name] = base64.urlsafe_b64encode(image_bytes)
+    element[name] = base64.urlsafe_b64encode(image_bytes)
 
   return element
 
@@ -229,11 +245,11 @@ def preprocess(pipeline, args):
   # Note that prepare_image_transforms does not make embeddints, it justs reads
   # the image files and converts them to base64 stings. tft.TransformDataset()
   # will apply the saved model that makes the image embeddings.
-
+  image_columns = image_transform_columns(features)
   raw_data = (
       raw_data
       | 'PreprocessTransferredLearningTransformations'
-      >> beam.Map(prepare_image_transforms, features))
+      >> beam.Map(prepare_image_transforms, image_columns))
 
   if args.shuffle:
     raw_data = raw_data | 'ShuffleData' >> shuffle()
@@ -271,7 +287,10 @@ def main(argv=None):
       'job_name': args.job_name,
       'temp_location': temp_dir,
       'project': args.project_id,
-      'save_main_session': True,
+      'setup_file':
+          os.path.abspath(os.path.join(
+              os.path.dirname(__file__),
+              'setup.py')),
   }
   pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
 
