@@ -87,7 +87,7 @@ def parse_arguments(argv):
 
           Running this transformation step may not have an interesting training
           performance impact if the transforms are all simple like scaling
-          numerical values.""")
+          numerical values."""))
 
   parser.add_argument(
       '--project-id',
@@ -229,6 +229,7 @@ def preprocess(pipeline, args):
   # Note that prepare_image_transforms does not make embeddints, it justs reads
   # the image files and converts them to base64 stings. tft.TransformDataset()
   # will apply the saved model that makes the image embeddings.
+
   raw_data = (
       raw_data
       | 'PreprocessTransferredLearningTransformations'
@@ -260,7 +261,7 @@ def main(argv=None):
   """Run Preprocessing as a Dataflow."""
   args = parse_arguments(sys.argv if argv is None else argv)
   temp_dir = os.path.join(args.output_dir, 'tmp')
-  
+
   if args.cloud:
     pipeline_name = 'DataflowRunner'
   else:
@@ -270,6 +271,7 @@ def main(argv=None):
       'job_name': args.job_name,
       'temp_location': temp_dir,
       'project': args.project_id,
+      'save_main_session': True,
   }
   pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
 
