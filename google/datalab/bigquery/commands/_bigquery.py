@@ -514,8 +514,8 @@ def _udf_cell(args, cell_body):
     raise Exception('Declaration must be of the form %%bq udf --name <variable name>')
 
   # Parse out parameters, return type, and imports
-  param_pattern = r'^\s*\/\/\s*@param\s+([<>\w]+)\s+([<>\w]+)\s*$'
-  returns_pattern = r'^\s*\/\/\s*@returns\s+([<>\w]+)\s*$'
+  param_pattern = r'^\s*\/\/\s*@param\s+([<>\w]+)\s+([<>\w,\s]+)\s*$'
+  returns_pattern = r'^\s*\/\/\s*@returns\s+([<>\w,\s]+)\s*$'
   import_pattern = r'^\s*\/\/\s*@import\s+(\S+)\s*$'
 
   params = re.findall(param_pattern, cell_body, re.MULTILINE)
