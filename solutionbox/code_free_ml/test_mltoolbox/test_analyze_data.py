@@ -7,6 +7,7 @@ import math
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import uuid
 import unittest
@@ -19,6 +20,10 @@ from tensorflow_transform import impl_helper
 
 import google.datalab as dl
 import google.datalab.bigquery as bq
+
+# To make 'import analyze_data' work without installing it.
+sys.path.append(os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data')))
 
 import analyze_data
 

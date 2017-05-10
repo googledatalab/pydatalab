@@ -1,38 +1,33 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-
+import base64
 import json
-
 import os
 import shutil
 import subprocess
 import tempfile
-import uuid
 import unittest
-
-import six
-import tensorflow as tf
-
+import uuid
 import apache_beam as beam
-import tensorflow_transform as tft
-from tensorflow_transform.beam import impl as tft_impl
+from PIL import Image
+import six
 
+import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
-
+import tensorflow_transform as tft
+from tensorflow_transform.beam import impl as tft_impl
+from tensorflow_transform.beam import tft_beam_io
 from tensorflow_transform.tf_metadata import dataset_metadata
 from tensorflow_transform.tf_metadata import dataset_schema
-from tensorflow_transform.beam import tft_beam_io
 from tensorflow_transform.tf_metadata import metadata_io
-import base64
 
 import google.datalab as dl
 import google.datalab.bigquery as bq
-import analyze_data
 
-
-from PIL import Image
+CODE_PATH = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data'))
 
 
 class TestTransformRawData(unittest.TestCase):
@@ -108,15 +103,14 @@ class TestTransformRawData(unittest.TestCase):
 
         metadata_io.write_metadata(
             metadata=input_metadata,
-            path=os.path.join(self.output_folder,
-                              analyze_data.RAW_METADATA_DIR))
+            path=os.path.join(self.output_folder, 'raw_metadata'))
 
   def test_local_csv_transform(self):
     """Test transfrom from local csv files."""
     try:
       self._create_test_data()
       tfex_dir = os.path.join(self.output_folder, 'test_results')
-      cmd = ['python transform_raw_data.py',
+      cmd = ['python ' + os.path.join(CODE_PATH, 'transform_raw_data.py'),
              '--csv-file-pattern=' + self.csv_input_filepath,
              '--analyze-output-dir=' + self.output_folder,
              '--output-filename-prefix=features',
@@ -145,6 +139,7 @@ class TestTransformRawData(unittest.TestCase):
       expected_image_bytes = img_file.getvalue()
 
       self.assertEqual(image_bytes, expected_image_bytes)
+
     finally:
       shutil.rmtree(self.output_folder)
 
@@ -152,6 +147,7 @@ class TestTransformRawData(unittest.TestCase):
     """Test transfrom locally, but the data comes from bigquery."""
     try:
       self._create_test_data()
+
 
       # Make a BQ table, and insert 1 row.
       project_id = dl.Context.default().project_id
@@ -165,7 +161,7 @@ class TestTransformRawData(unittest.TestCase):
       table.insert(data=[{'num_col': 23.0, 'img_col': self.img_filepath}])
 
       tfex_dir = os.path.join(self.output_folder, 'test_results')
-      cmd = ['python transform_raw_data.py',
+      cmd = ['python ' + os.path.join(CODE_PATH, 'transform_raw_data.py'),
              '--bigquery-table=%s.%s.%s' % (project_id, dataset_name, table_name),
              '--analyze-output-dir=' + self.output_folder,
              '--output-filename-prefix=features',
