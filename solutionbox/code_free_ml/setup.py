@@ -10,10 +10,6 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# A copy of this file must be made in datalab_structured_data/setup.py
-
-import os
-import re
 from setuptools import setup
 
 
