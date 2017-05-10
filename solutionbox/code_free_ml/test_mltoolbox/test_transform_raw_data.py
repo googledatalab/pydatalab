@@ -148,7 +148,6 @@ class TestTransformRawData(unittest.TestCase):
     try:
       self._create_test_data()
 
-
       # Make a BQ table, and insert 1 row.
       project_id = dl.Context.default().project_id
       dataset_name = 'test_transform_raw_data_%s' % uuid.uuid4().hex

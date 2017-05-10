@@ -25,7 +25,7 @@ import google.datalab.bigquery as bq
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data')))
 
-import analyze_data
+import analyze_data  # noqa: E303
 
 
 class TestConfigFiles(unittest.TestCase):
