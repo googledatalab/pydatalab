@@ -53,7 +53,12 @@ class TestCases(unittest.TestCase):
     mock_notebook_environment.return_value = env
 
     with self.assertRaises(Exception):
-      google.datalab.bigquery.commands._bigquery._udf_cell({'name': None, 'language': 'js'}, '')
+      google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'test_udf', 'language': 'js'},
+                                                           '')
+
+    with self.assertRaises(Exception):
+      google.datalab.bigquery.commands._bigquery._udf_cell({'name': None, 'language': 'js'},
+                                                           'test_cell_body')
 
     # no return type
     cell_body = """
