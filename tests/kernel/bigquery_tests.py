@@ -49,6 +49,36 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.Context.default')
   def test_udf_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
+    mock_default_context.return_value = TestCases._create_context()
+    mock_notebook_environment.return_value = env
+
+    with self.assertRaises(Exception):
+      google.datalab.bigquery.commands._bigquery._udf_cell({'name': None, 'language': 'js'}, '')
+
+    # no return type
+    cell_body = """
+    // @param word STRING
+    // @param corpus STRING
+    re = new RegExp(word, 'g');
+    return corpus.match(re || []).length;
+    """
+    with self.assertRaises(Exception):
+      google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences',
+                                                            'language': 'js'}, cell_body)
+
+    # too many return statements
+    cell_body = """
+    // @param word STRING
+    // @param corpus STRING
+    // @returns INTEGER
+    // @returns STRING
+    re = new RegExp(word, 'g');
+    return corpus.match(re || []).length;
+    """
+    with self.assertRaises(Exception):
+      google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences',
+                                                            'language': 'js'}, cell_body)
+
     cell_body = """
     // @param word STRING
     // @param corpus STRING
@@ -56,8 +86,6 @@ class TestCases(unittest.TestCase):
     re = new RegExp(word, 'g');
     return corpus.match(re || []).length;
     """
-    mock_default_context.return_value = TestCases._create_context()
-    mock_notebook_environment.return_value = env
     google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences',
                                                           'language': 'js'}, cell_body)
     udf = env['count_occurrences']
@@ -69,6 +97,22 @@ class TestCases(unittest.TestCase):
     self.assertEquals([], udf._imports)
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
+  def test_datasource_cell(self, mock_notebook_env):
+    env = {}
+    mock_notebook_env.return_value = env
+    args = {'name': 'test_ds', 'paths': 'test_path', 'format': None, 'compressed': None}
+    cell_body = {
+      'schema': [
+        {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
+        {'name': 'col1', 'type': 'STRING', 'mode': 'required', 'description': 'description1'}
+      ]
+    }
+    google.datalab.bigquery.commands._bigquery._datasource_cell(args, json.dumps(cell_body))
+    self.assertIsInstance(env['test_ds'], google.datalab.bigquery.ExternalDataSource)
+    self.assertEqual(env['test_ds']._source, ['test_path'])
+    self.assertEqual(env['test_ds']._source_format, 'csv')
+
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
   def test_query_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
@@ -76,8 +120,15 @@ class TestCases(unittest.TestCase):
     mock_notebook_environment.return_value = env
     IPython.get_ipython().user_ns = env
 
-    # test query creation
     q1_body = 'SELECT * FROM test_table'
+
+    # no query specified
+    with self.assertRaises(Exception):
+      google.datalab.bigquery.commands._bigquery._query_cell({'name': None, 'udfs': None,
+                                                              'datasources': None,
+                                                              'subqueries': None}, q1_body)
+
+    # test query creation
     google.datalab.bigquery.commands._bigquery._query_cell({'name': 'q1', 'udfs': None,
                                                             'datasources': None,
                                                             'subqueries': None}, q1_body)
@@ -105,6 +156,27 @@ WITH q1 AS (
 %s''' % (q1_body, q2_body)
     self.assertEqual(q2_body, q2._sql)
     self.assertEqual(expected_sql, q2.sql)
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Query.execute')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
+  def test_execute_cell(self, mock_get_notebook_item, mock_query_execute, mock_default_context):
+    args = {'query': 'test_query', 'verbose': None, 'to_dataframe': None, 'table': None,
+            'dataframe_start_row': None, 'dataframe_max_rows': None, 'nocache': None,
+            'mode': None, 'large': None}
+    cell_body = ''
+    mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
+    google.datalab.bigquery.commands._bigquery._execute_cell(args, cell_body)
+
+    args['to_dataframe'] = True
+    google.datalab.bigquery.commands._bigquery._execute_cell(args, cell_body)
+
+    # test --verbose
+    args['verbose'] = True
+    with mock.patch('sys.stdout', new=StringIO()) as mocked_stdout:
+      google.datalab.bigquery.commands._bigquery._execute_cell(args, cell_body)
+    self.assertEqual(mocked_stdout.getvalue(), 'test_sql\n')
+    args['verbose'] = False
 
   @staticmethod
   def _create_context():
@@ -179,6 +251,21 @@ WITH q1 AS (
     mock_get_notebook_item.return_value = None
     with self.assertRaises(Exception):
       google.datalab.bigquery.commands._bigquery._sample_cell(args, cell_body)
+
+  @mock.patch('google.datalab.bigquery.Query.dry_run')
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_query_argument')
+  def test_dry_run_cell(self, mock_get_query_argument, mock_context_default, mock_dry_run):
+    args = {'query': 'test_query'}
+    cell_body = ''
+    mock_get_query_argument.return_value = google.datalab.bigquery.Query('test_sql')
+
+    # test --verbose
+    args['verbose'] = True
+    with mock.patch('sys.stdout', new=StringIO()) as mocked_stdout:
+      google.datalab.bigquery.commands._bigquery._dryrun_cell(args, cell_body)
+    self.assertEqual(mocked_stdout.getvalue(), 'test_sql\n')
+    args['verbose'] = False
 
   def test_get_schema(self):
     # TODO(gram): complete this test
