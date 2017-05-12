@@ -81,7 +81,7 @@ query_params_schema = {
           'type': 'object',
           'properties': {
             'name': {'type': 'string'},
-            'type': {'type': 'string', 'enum': ['STRING', 'INT64']},
+            'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
             'value': {'type': ['string', 'integer']}
           },
           'required': ['name', 'type', 'value'],
@@ -463,7 +463,7 @@ def _sample_cell(args, cell_body):
                             query_params=query_params).result()
 
   if args['verbose']:
-    print(results.sql)
+    print(query.sql)
 
   if args['profile']:
     return google.datalab.utils.commands.profile_df(results)
