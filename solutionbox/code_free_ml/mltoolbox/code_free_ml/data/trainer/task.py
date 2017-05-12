@@ -120,7 +120,17 @@ def parse_arguments(argv):
                       action='store_true',
                       default=False,
                       help=('If used, input data is raw csv that needs '
-                            'transformation.'))  
+                            'transformation.'))
+  parser.add_argument('--serving-formats',
+                      type=str,
+                      help=('Lists the input format expected for the exported '
+                            'model and its name in the signature def map. The '
+                            'format is a comma separated list in the form '
+                            'name:format where name is used as a signature def '
+                            'and format is one of csv or json. Note that cloud '
+                            'prediction servies require the serving signature '
+                            'to be nambed serving_default'),
+                      default='serving_default:json,csv_input:csv')
 
   # HP parameters
   parser.add_argument('--learning-rate', type=float, default=0.01,
@@ -188,6 +198,12 @@ def parse_arguments(argv):
   assert len(layer_sizes) == num_layers
   args.layer_sizes = layer_sizes
 
+  # check some parameter errors.
+  for signature_format in args.serving_formats.split(','):
+    parts = signature_format.split(':')
+    if len(parts) != 2 or parts[1] not in ['csv', 'json']:
+      raise ValueError('Error in --serving-formats format')
+
   return args
 
 
@@ -209,6 +225,8 @@ def is_classification_model(model_type):
 def build_feature_columns(features, stats, model_type):
   feature_columns = []
   _is_dnn_model = is_dnn_model(model_type)
+  print('8'*1000)
+  print(model_type, _is_dnn_model)
 
   # Supported transforms:
   # for DNN
@@ -231,6 +249,8 @@ def build_feature_columns(features, stats, model_type):
           name,
           bucket_size=stats['column_stats'][name]['vocab_size'])
       if _is_dnn_model:
+        print('7'*100)
+        print(sparse)
         new_feature = tf.contrib.layers.one_hot_column(sparse)
       else:
         new_feature = sparse
@@ -257,7 +277,14 @@ def build_feature_columns(features, stats, model_type):
           #dtype=dtypes.float32
           )
       if _is_dnn_model:
-        new_feature = sparse_weights # TODO(brandondutra): is this correct? or need one-hot?
+        print('8'*100)
+        print(sparse_ids)
+        print(sparse_weights)
+        print(json.dumps(stats, indent=2))
+        new_feature = tf.contrib.layers.one_hot_column(sparse_ids)
+        #new_feature = tf.contrib.layers.embedding_column(sparse_weights, dimension=10)
+        #new_feature = sparse_weights
+        #continue
       else:
         new_feature = sparse_weights
     elif transform_name == TARGET_TRANSFORM or transform_name == KEY_TRANSFORM:
@@ -455,10 +482,11 @@ def build_csv_transforming_serving_input_fn(
 
 
   
-
+# This function is strongly based on
+# tensorflow/contrib/learn/python/learn/estimators/estimator.py:export_savedmodel()
 def make_export_strategy(
         args,
-        input_format,
+        serving_formats,
         keep_target,
         assets_extra,
         features,
@@ -467,9 +495,10 @@ def make_export_strategy(
 
   Args:
     args: command line args
-    input_format: model input data
-        'tfex': tf.example files of transformed data
-        'csv': csv files of raw data
+    serving_formats: String in the form name:format,name:format,... where name
+        is used as a signature def and format is one of csv or json. Note that
+        cloud prediction servies require the serving signature to be nambed
+        serving_default
     keep_target: If ture, target column is returned in prediction graph. Target
         column must also exist in input data
     assets_extra: other fiels to copy to the output folder
@@ -482,40 +511,60 @@ def make_export_strategy(
   key_name = get_key_name(features)
   raw_metadata = raw_metadata = metadata_io.read_metadata(
         os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
+
+  # parse the requested exported models.
+  serving_defs = {}
+  for key_value in serving_formats.split(','):
+    signature_name, signature_format = key_value.split(':')
+    serving_defs = {signature_name: signature_format}
+
+  csv_header = [col['name'] for col in schema]
+  if not keep_target:
+    csv_header.remove(target_name)
+
   def export_fn(estimator, export_dir_base, checkpoint_path=None, eval_result=None):
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
 
-      input_ops = None
-      if input_format == 'csv':
-        csv_header = [col['name'] for col in schema]
-        if not keep_target:
-          csv_header.remove(target_name)
-        input_ops= build_csv_transforming_serving_input_fn(
-            raw_metadata=raw_metadata,
-            transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
-            raw_keys=csv_header,
-            field_delim=",",
-            convert_scalars_to_vectors=True)()
-      elif input_format == 'tfex':
-        raise NotImplmentedError('tfx')
-      else:
-        raise ValueError('Unknown input_format parameter value')
+      # Build each signature def graph.
+      signature_def_map = {}
+      for signature_name, signature_format in six.iteritems(serving_defs):
+        input_ops = None
+        if signature_format == 'csv':
+          input_ops= build_csv_transforming_serving_input_fn(
+              raw_metadata=raw_metadata,
+              transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
+              raw_keys=csv_header,
+              field_delim=",",
+              convert_scalars_to_vectors=True)()
+        elif signature_format == 'json':
+          input_ops = input_fn_maker.build_default_transforming_serving_input_fn(
+              raw_metadata=raw_metadata,
+              transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
+              raw_label_keys=[target_name],
+              raw_feature_keys=csv_header,
+              convert_scalars_to_vectors=True)()       
+        else:
+          raise ValueError('Unknown input_format parameter value')
 
-      model_fn_ops = estimator._call_model_fn(input_ops.features,
-                                              None,
-                                              model_fn_lib.ModeKeys.INFER)
-      output_fetch_tensors = make_prediction_output_tensors(
-          args=args,
-          features=features,
-          input_ops=input_ops,
-          model_fn_ops=model_fn_ops,
-          keep_target=keep_target)
 
-      signature_def_map = {
-        'serving_default': signature_def_utils.predict_signature_def(input_ops.default_inputs,
-                                                                     output_fetch_tensors)
-      }
+        print('input_ops')
+        print(input_ops)
+        model_fn_ops = estimator._call_model_fn(input_ops.features,
+                                                None,
+                                                model_fn_lib.ModeKeys.INFER)
+        print('GOT HERE'*100)
+        output_fetch_tensors = make_prediction_output_tensors(
+            args=args,
+            features=features,
+            input_ops=input_ops,
+            model_fn_ops=model_fn_ops,
+            keep_target=keep_target)
+
+        signature_def_map.update({
+          signature_name: signature_def_utils.predict_signature_def(input_ops.default_inputs,
+                                                                    output_fetch_tensors)
+        })
 
       if not checkpoint_path:
         # Locate the latest checkpoint
@@ -854,21 +903,21 @@ def get_experiment_fn(args):
 
     export_strategy_csv_notarget = make_export_strategy(
         args=args,
-        input_format='csv',
+        serving_formats=args.serving_formats,
         keep_target=False,
         assets_extra=additional_assets,
         features=features,
         schema=schema)
     export_strategy_csv_target = make_export_strategy(
         args=args,
-        input_format='csv',
+        serving_formats=args.serving_formats,
         keep_target=True,
         assets_extra=additional_assets,
         features=features,
         schema=schema)
     
-    transformed_metadata = metadata_io.read_metadata(
-        os.path.join(args.analysis_output_dir, TRANSFORMED_METADATA_DIR))
+
+    # Build readers for training.
     if args.run_transforms:
       raw_metadata = metadata_io.read_metadata(
         os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
@@ -899,6 +948,9 @@ def get_experiment_fn(args):
           reader_num_threads=multiprocessing.cpu_count()
       )      
     else:
+      transformed_metadata = metadata_io.read_metadata(
+          os.path.join(args.analysis_output_dir, TRANSFORMED_METADATA_DIR))
+
       input_reader_for_train = input_fn_maker.build_training_input_fn(
           metadata=transformed_metadata,
           file_pattern=args.train_data_paths,
@@ -938,8 +990,6 @@ def get_experiment_fn(args):
 
   # Return a function to create an Experiment.
   return get_experiment
-
-
 
 
 
