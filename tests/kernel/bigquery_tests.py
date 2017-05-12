@@ -120,6 +120,7 @@ class TestCases(unittest.TestCase):
     mock_notebook_environment.return_value = env
     IPython.get_ipython().user_ns = env
 
+    # test query creation
     q1_body = 'SELECT * FROM test_table'
 
     # no query specified
@@ -267,22 +268,42 @@ WITH q1 AS (
     self.assertEqual(mocked_stdout.getvalue(), 'test_sql\n')
     args['verbose'] = False
 
-  def test_get_schema(self):
-    # TODO(gram): complete this test
-    pass
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.utils._utils.get_credentials')
+  @mock.patch('google.datalab.bigquery.Table.exists')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
+  def test_get_table(self, mock_get_notebook_item, mock_table_exists, mock_get_credentials,
+                     mock_default_context):
+    # test bad name
+    mock_get_notebook_item.return_value = None
+    mock_table_exists.return_value = False
+    t = google.datalab.bigquery.commands._bigquery._get_table('bad.name')
+    self.assertIsNone(t)
 
-  def test_get_table(self):
-    # TODO(gram): complete this test
-    pass
+    # test good table name
+    test_table_name = 'testproject.test.table'
+    mock_get_notebook_item.return_value = google.datalab.bigquery.Table(test_table_name)
+    t = google.datalab.bigquery.commands._bigquery._get_table(test_table_name)
+    self.assertEqual(t.full_name, test_table_name)
+
+    # test table name reference
+    mock_get_notebook_item.return_value = test_table_name
+    mock_table_exists.return_value = True
+    t = google.datalab.bigquery.commands._bigquery._get_table(test_table_name)
+    self.assertEqual(t.full_name, test_table_name)
+
+    self.assertIn(test_table_name, google.datalab.bigquery.commands._bigquery._table_cache)
 
   def test_table_viewer(self):
     # TODO(gram): complete this test
     pass
 
-  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils._utils.get_credentials')
-  def test_args_to_context(self, mock_get_credentials, mock_context_default):
-    mock_get_credentials.return_value = ''
+  @mock.patch('google.datalab.utils._utils.get_default_project_id')
+  @mock.patch('google.datalab.utils._utils.save_project_id')
+  def test_args_to_context(self, mock_save_project, mock_get_default_project, mock_get_credentials):
+    mock_get_credentials.return_value = 'test_creds'
+    mock_get_default_project.return_value = 'testproject'
 
     args = {'billing': 'billing_value'}
     default_context = google.datalab.Context.default()
@@ -295,6 +316,11 @@ WITH q1 AS (
 
     # make sure the right config object was passed
     self.assertEqual(c.config, {'bigquery_billing_tier': 'billing_value'})
+
+    default_context.config['test_prop'] = 'test_val'
+    c = google.datalab.bigquery.commands._bigquery._construct_context_for_args(args)
+    # make sure other properties in default context were copied
+    self.assertEqual(c.config, {'bigquery_billing_tier': 'billing_value', 'test_prop': 'test_val'})
 
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_get_query_argument(self, mock_get_notebook_item):
