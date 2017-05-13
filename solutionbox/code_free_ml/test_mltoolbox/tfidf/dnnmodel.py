@@ -97,7 +97,7 @@ def parse_arguments(argv):
                       help='tf.train.AdamOptimizer epsilon')
 
   # Training input parameters
-  parser.add_argument('--max-steps', type=int, default=5000,
+  parser.add_argument('--max-steps', type=int, default=1000,
                       help='Maximum number of training steps to perform.')
   parser.add_argument('--num-epochs',
                       type=int,
@@ -116,9 +116,6 @@ def parse_arguments(argv):
 
   return args
 
-
-
-
 def build_feature_columns():
   feature_columns = []
 
@@ -131,6 +128,11 @@ def build_feature_columns():
       )
 
   new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
+  #new_feature = tf.contrib.layers.one_hot_column(sparse_ids)
+  #new_feature = tf.contrib.layers.embedding_column(sparse_weights, dimension=2)
+  #new_feature = tf.contrib.layers.embedding_column(sparse_ids, dimension=2)
+  #new_feature = sparse_weights
+  #new_feature = sparse_ids
 
   feature_columns.append(new_feature)
   return feature_columns
@@ -155,6 +157,13 @@ def get_estimator(args):
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
             args.learning_rate, epsilon=args.epsilon))
+  #estimator = tf.contrib.learn.LinearClassifier(
+  #      feature_columns=feature_columns,
+  #      n_classes=3,
+  #      config=config,
+  #      model_dir=train_dir,
+  #      optimizer=tf.train.AdamOptimizer(
+  #          args.learning_rate, epsilon=args.epsilon))
   return estimator
 
 def gzip_reader_fn():
@@ -177,6 +186,10 @@ def get_experiment_fn(args):
     # Build readers for training.
     transformed_metadata = metadata_io.read_metadata(
         os.path.join(args.analysis_output_dir, TRANSFORMED_METADATA_DIR))
+    raw_metadata = metadata_io.read_metadata(
+        os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
+
+    export_strategy = make_export_strategy(args)
 
     input_reader_for_train = input_fn_maker.build_training_input_fn(
         metadata=transformed_metadata,
@@ -210,13 +223,93 @@ def get_experiment_fn(args):
         train_input_fn=input_reader_for_train,
         eval_input_fn=input_reader_for_eval,
         train_steps=args.max_steps,
-        export_strategies=None,
+        export_strategies=[export_strategy],
         min_eval_frequency=args.min_eval_frequency,
         eval_steps=None,
     )
 
   # Return a function to create an Experiment.
   return get_experiment
+
+
+def make_export_strategy(args):
+  """Makes prediction graph.
+
+  Args:
+    args: command line args
+  """
+  raw_metadata = raw_metadata = metadata_io.read_metadata(
+        os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
+
+
+  def export_fn(estimator, export_dir_base, checkpoint_path=None, eval_result=None):
+    with ops.Graph().as_default() as g:
+      contrib_variables.create_global_step(g)
+
+      # Build each signature def graph.
+      signature_def_map = {}
+      input_ops = input_fn_maker.build_default_transforming_serving_input_fn(
+              raw_metadata=raw_metadata,
+              transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
+              raw_label_keys=[TARGET_COL],
+              raw_feature_keys=[TARGET_COL, KEY_COL, TEXT_COL],
+              convert_scalars_to_vectors=True)()    
+
+      print('export fn ' + '1'*100)
+      print(input_ops)
+      for f in input_ops.features:
+        print(f, input_ops.features[f].get_shape())   
+      model_fn_ops = estimator._call_model_fn(input_ops.features,
+                                                None,
+                                                model_fn_lib.ModeKeys.INFER)
+      signature_def_map.update({
+          'serving_default': signature_def_utils.predict_signature_def(input_ops.default_inputs,
+                                                                    model_fn_ops.predictions)
+      })
+
+      if not checkpoint_path:
+        # Locate the latest checkpoint
+        checkpoint_path = saver.latest_checkpoint(estimator._model_dir)
+      if not checkpoint_path:
+        raise NotFittedError("Couldn't find trained model at %s."
+                             % estimator._model_dir)
+
+      export_dir = saved_model_export_utils.get_timestamped_export_dir(
+          export_dir_base)
+
+      with tf_session.Session('') as session:
+        # variables.initialize_local_variables()
+        variables.local_variables_initializer()
+        data_flow_ops.tables_initializer()
+        saver_for_restore = saver.Saver(
+            variables.global_variables(),
+            sharded=True)
+        saver_for_restore.restore(session, checkpoint_path)
+
+        init_op = control_flow_ops.group(
+            variables.local_variables_initializer(),
+            data_flow_ops.tables_initializer())
+
+        # Perform the export
+        builder = saved_model_builder.SavedModelBuilder(export_dir)
+        builder.add_meta_graph_and_variables(
+            session, [tag_constants.SERVING],
+            signature_def_map=signature_def_map,
+            assets_collection=ops.get_collection(
+                ops.GraphKeys.ASSET_FILEPATHS),
+            legacy_init_op=init_op)
+        builder.save(False)
+
+    # only keep the last 3 models
+    saved_model_export_utils.garbage_collect_exports(
+        export_dir_base,
+        exports_to_keep=3)
+
+    return export_dir
+
+  intermediate_dir = 'intermediate_models'
+
+  return export_strategy.ExportStrategy(intermediate_dir, export_fn)
 
 
 

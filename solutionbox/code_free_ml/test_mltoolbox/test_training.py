@@ -134,9 +134,8 @@ class TestTrainer(unittest.TestCase):
     self._features_filename = os.path.join(self._test_dir, 'features_file.json')
 
   def tearDown(self):
-    pass
-    #self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
-    #shutil.rmtree(self._test_dir)
+    self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
+    shutil.rmtree(self._test_dir)
 
   def _run_analyze(self, problem_type):
     features = {
@@ -241,7 +240,7 @@ class TestTrainer(unittest.TestCase):
     subprocess.check_call(' '.join(cmd), shell=True)
 
   
-  def xtestClassificationLinear(self):
+  def testClassificationLinear(self):
     self._logger.debug('\n\nTesting Classification Linear')
 
     problem_type='classification'
@@ -253,7 +252,7 @@ class TestTrainer(unittest.TestCase):
         extra_args=['--top-n=3'])
 
 
-  def xtestRegressionLinear(self):
+  def testRegressionLinear(self):
     self._logger.debug('\n\nTesting Regression Linear')
 
     problem_type='regression'
@@ -264,7 +263,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type,)
 
-  def testClassificationDNN(self):
+  def xtestClassificationDNN(self):
     self._logger.debug('\n\nTesting Classification DNN')
 
     problem_type='classification'

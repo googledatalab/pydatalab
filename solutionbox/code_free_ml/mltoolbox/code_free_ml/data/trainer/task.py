@@ -225,8 +225,6 @@ def is_classification_model(model_type):
 def build_feature_columns(features, stats, model_type):
   feature_columns = []
   _is_dnn_model = is_dnn_model(model_type)
-  print('8'*1000)
-  print(model_type, _is_dnn_model)
 
   # Supported transforms:
   # for DNN
@@ -249,8 +247,6 @@ def build_feature_columns(features, stats, model_type):
           name,
           bucket_size=stats['column_stats'][name]['vocab_size'])
       if _is_dnn_model:
-        print('7'*100)
-        print(sparse)
         new_feature = tf.contrib.layers.one_hot_column(sparse)
       else:
         new_feature = sparse
@@ -277,11 +273,7 @@ def build_feature_columns(features, stats, model_type):
           #dtype=dtypes.float32
           )
       if _is_dnn_model:
-        print('8'*100)
-        print(sparse_ids)
-        print(sparse_weights)
-        print(json.dumps(stats, indent=2))
-        new_feature = tf.contrib.layers.one_hot_column(sparse_ids)
+        new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
         #new_feature = tf.contrib.layers.embedding_column(sparse_weights, dimension=10)
         #new_feature = sparse_weights
         #continue
@@ -547,13 +539,9 @@ def make_export_strategy(
         else:
           raise ValueError('Unknown input_format parameter value')
 
-
-        print('input_ops')
-        print(input_ops)
         model_fn_ops = estimator._call_model_fn(input_ops.features,
                                                 None,
                                                 model_fn_lib.ModeKeys.INFER)
-        print('GOT HERE'*100)
         output_fetch_tensors = make_prediction_output_tensors(
             args=args,
             features=features,
