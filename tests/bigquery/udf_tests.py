@@ -39,6 +39,13 @@ OPTIONS (
 library="gcs://mylib"
 );\
 '''
+    self.assertEqual(udf.name, 'test_udf')
+    self.assertEqual(udf.code, code)
+    self.assertEqual(udf.imports, imports)
+
+    self.assertEqual(udf._language, language)
+    self.assertEqual(udf._repr_sql_(), udf._expanded_sql())
+    self.assertEqual(udf.__repr__(), 'BigQuery UDF - code:\n%s' % udf._code)
     self.assertEqual(udf._expanded_sql(), expected_sql)
 
     # bad return type
@@ -58,6 +65,12 @@ library="gcs://mylib"
     with self.assertRaises(TypeError):
       google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
     imports = ['gcs://mylib']
+
+    # imports in non-javascript
+    language = 'sql'
+    with self.assertRaisesRegexp(Exception, 'Imports are available for Javascript'):
+      google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
+    language = 'js'
 
   def test_query_with_udf(self):
     code = 'console.log("test");'

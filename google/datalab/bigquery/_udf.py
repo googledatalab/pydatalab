@@ -51,6 +51,9 @@ class UDF(object):
       raise TypeError('Argument params should be a dictionary of parameter names and types')
     if imports and not isinstance(imports, list):
       raise TypeError('Arguments imports should be a list of GCS string paths')
+    if imports and language != 'js':
+      raise Exception('Imports are available for Javascript UDFs only')
+
     self._name = name
     self._code = code
     self._return_type = return_type
@@ -89,9 +92,6 @@ class UDF(object):
       language: see list of supported languages in the BigQuery docs
       imports: a list of GCS paths containing further support code.
       """
-
-    if imports and language != 'js':
-      raise Exception('Imports are available for Javascript UDFs only')
 
     params = ','.join(['%s %s' % named_param for named_param in params.items()])
     imports = ','.join(['library="%s"' % i for i in imports])

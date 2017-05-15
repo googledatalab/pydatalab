@@ -103,6 +103,17 @@ class TestCases(unittest.TestCase):
     self.assertEquals({'word': 'STRING', 'corpus': 'STRING'}, udf._params)
     self.assertEquals([], udf._imports)
 
+    # param types with spaces (regression for pull request 373)
+    cell_body = """
+    // @param test_param ARRAY<STRUCT<index INT64, value STRING>>
+    // @returns INTEGER
+    """
+    google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences',
+                                                          'language': 'js'}, cell_body)
+    udf = env['count_occurrences']
+    self.assertIsNotNone(udf)
+    self.assertEquals({'test_param': 'ARRAY<STRUCT<index INT64, value STRING>>'}, udf._params)
+
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   def test_datasource_cell(self, mock_notebook_env):
     env = {}
