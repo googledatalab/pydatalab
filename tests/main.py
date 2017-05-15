@@ -18,6 +18,7 @@ import unittest
 # For these tests to work locally, install the package with "pip install -e ."
 # from the parent folder and run "python tests/main.py"
 
+import context_tests
 import bigquery.api_tests
 import bigquery.dataset_tests
 import bigquery.external_data_source_tests
@@ -56,6 +57,7 @@ import _util.util_tests
 
 
 _TEST_MODULES = [
+    context_tests,
     bigquery.api_tests,
     bigquery.dataset_tests,
     # bigquery.external_data_source_tests, # TODO: enable external data source tests

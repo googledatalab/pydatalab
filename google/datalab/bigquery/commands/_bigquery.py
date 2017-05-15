@@ -81,7 +81,7 @@ query_params_schema = {
           'type': 'object',
           'properties': {
             'name': {'type': 'string'},
-            'type': {'type': 'string', 'enum': ['STRING', 'INT64']},
+            'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
             'value': {'type': ['string', 'integer']}
           },
           'required': ['name', 'type', 'value'],
@@ -463,7 +463,7 @@ def _sample_cell(args, cell_body):
                             query_params=query_params).result()
 
   if args['verbose']:
-    print(results.sql)
+    print(query.sql)
 
   if args['profile']:
     return google.datalab.utils.commands.profile_df(results)
@@ -514,8 +514,8 @@ def _udf_cell(args, cell_body):
     raise Exception('Declaration must be of the form %%bq udf --name <variable name>')
 
   # Parse out parameters, return type, and imports
-  param_pattern = r'^\s*\/\/\s*@param\s+([<>\w]+)\s+([<>\w]+)\s*$'
-  returns_pattern = r'^\s*\/\/\s*@returns\s+([<>\w]+)\s*$'
+  param_pattern = r'^\s*\/\/\s*@param\s+([<>\w]+)\s+([<>\w,\s]+)\s*$'
+  returns_pattern = r'^\s*\/\/\s*@returns\s+([<>\w,\s]+)\s*$'
   import_pattern = r'^\s*\/\/\s*@import\s+(\S+)\s*$'
 
   params = re.findall(param_pattern, cell_body, re.MULTILINE)
