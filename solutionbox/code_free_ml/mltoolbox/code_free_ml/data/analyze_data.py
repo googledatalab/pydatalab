@@ -76,6 +76,7 @@ NUMERIC_SCHEMA = [INTEGER_SCHEMA, FLOAT_SCHEMA]
 INCEPTION_V3_CHECKPOINT = 'gs://cloud-ml-data/img/flower_photos/inception_v3_2016_08_28.ckpt'
 INCEPTION_EXCLUDED_VARIABLES = ['InceptionV3/AuxLogits', 'InceptionV3/Logits', 'global_step']
 
+
 def parse_arguments(argv):
   """Parse command line arguments.
 
@@ -469,12 +470,12 @@ def make_image_to_vec_tito(tmp_dir):
       _, end_points = inception_v3(inception_input, is_training=False)
 
     embeddings = end_points['PreLogits']
-    inception_embeddings = tf.squeeze(embeddings, [1, 2], name='SpatialSqueeze')  
+    inception_embeddings = tf.squeeze(embeddings, [1, 2], name='SpatialSqueeze')
     return inception_embeddings
 
   def _tito_from_checkpoint(tito_in, checkpoint, exclude):
     """ Create an all-constants tito function from an original tito function.
-    
+
     Given a tensor-in-tensor-out function which contains variables and a checkpoint path,
     create a new tensor-in-tensor-out function which includes only constants, and can be
     used in tft.map.
@@ -502,7 +503,7 @@ def make_image_to_vec_tito(tmp_dir):
                                         return_elements=[so.name])
       return tensors_out[0]
 
-    return _tito_out  
+    return _tito_out
 
   return _tito_from_checkpoint(_image_to_vec,
                                INCEPTION_V3_CHECKPOINT,

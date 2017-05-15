@@ -721,7 +721,7 @@ class TestGraphBuilding(unittest.TestCase):
     try:
       output_folder = tempfile.mkdtemp()
       stats_file_path = os.path.join(output_folder, analyze_data.STATS_FILE)
-      file_io.write_string_to_file(stats_file_path, json.dumps({'column_stats':{}}))
+      file_io.write_string_to_file(stats_file_path, json.dumps({'column_stats': {}}))
       analyze_data.make_transform_graph(
           output_folder,
           [{'name': 'img', 'type': 'STRING'}],
