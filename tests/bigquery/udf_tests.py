@@ -12,7 +12,6 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
 import google.datalab
@@ -21,44 +20,68 @@ import google.datalab.bigquery
 
 class TestCases(unittest.TestCase):
 
-  def test_sql_building(self):
-    context = self._create_context()
-    table = google.datalab.bigquery.Table('test:requestlogs.today', context=context)
+  def test_building_udf(self):
+    code = 'console.log("test");'
+    return_type = 'integer'
+    params = {'test_param': 'integer'}
+    language = 'js'
+    imports = ['gcs://mylib']
+    udf = google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
 
-    udf = self._create_udf()
-    query = google.datalab.bigquery.Query('SELECT * FROM foo($t)', t=table, udfs=[udf],
-                                          context=context)
+    expected_sql = '''\
+CREATE TEMPORARY FUNCTION test_udf (test_param integer)
+RETURNS integer
+LANGUAGE js
+AS """
+console.log("test");
+"""
+OPTIONS (
+library="gcs://mylib"
+);\
+'''
+    self.assertEqual(udf._expanded_sql(), expected_sql)
 
-    expected_js = '\nfoo=function(r,emit) { emit({output1: r.field2, output2: r.field1 }); };\n' +\
-                  'bigquery.defineFunction(\'foo\', ["field1", "field2"], ' +\
-                  '[{"name": "output1", "type": "integer"}, ' +\
-                  '{"name": "output2", "type": "string"}], foo);'
-    self.assertEqual(query.sql, 'SELECT * FROM '
-                                '(SELECT output1, output2 FROM foo(`test:requestlogs.today`))')
-    self.assertEqual(udf._code, expected_js)
+    # bad return type
+    return_type = ['integer']
+    with self.assertRaises(TypeError):
+      google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
+    return_type = 'integer'
 
-  def test_udf_expansion(self):
-    sql = 'SELECT * FROM udf(source)'
-    udf = google.datalab.bigquery.UDF('inputs', [('foo', 'string'), ('bar', 'integer')], 'udf',
-                                      'code')
-    context = TestCases._create_context()
-    query = google.datalab.bigquery.Query(sql, udf=udf, context=context)
-    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
+    # bad params
+    params = ['param1', 'param2']
+    with self.assertRaises(TypeError):
+      google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
+    params = {'param1': 'integer'}
 
-    # Alternate form
-    query = google.datalab.bigquery.Query(sql, udfs=[udf], context=context)
-    self.assertEquals('SELECT * FROM (SELECT foo, bar FROM udf(source))', query.sql)
+    # bad imports
+    imports = 'gcs://mylib'
+    with self.assertRaises(TypeError):
+      google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
+    imports = ['gcs://mylib']
 
-  @staticmethod
-  def _create_udf():
-    inputs = [('field1', 'string'), ('field2', 'integer')]
-    outputs = [('output1', 'integer'), ('output2', 'string')]
-    impl = 'function(r,emit) { emit({output1: r.field2, output2: r.field1 }); }'
-    udf = google.datalab.bigquery.UDF(inputs, outputs, 'foo', impl)
-    return udf
+  def test_query_with_udf(self):
+    code = 'console.log("test");'
+    return_type = 'integer'
+    params = {'test_param': 'integer'}
+    language = 'js'
+    imports = ''
+    udf = google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
+    sql = 'SELECT test_udf(col) FROM mytable'
+    expected_sql = '''\
+CREATE TEMPORARY FUNCTION test_udf (test_param integer)
+RETURNS integer
+LANGUAGE js
+AS """
+console.log("test");
+"""
+OPTIONS (
 
-  @staticmethod
-  def _create_context():
-    project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.Context(project_id, creds)
+);
+SELECT test_udf(col) FROM mytable\
+'''
+    query = google.datalab.bigquery.Query(sql, udfs={'udf': udf})
+    self.assertEquals(query.sql, expected_sql)
+
+    # Alternate form of passing the udf using notebook environment
+    query = google.datalab.bigquery.Query(sql, udfs=['udf'], env={'udf': udf})
+    self.assertEquals(query.sql, expected_sql)

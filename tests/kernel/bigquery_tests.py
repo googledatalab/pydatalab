@@ -100,7 +100,7 @@ class TestCases(unittest.TestCase):
     self.assertEquals('count_occurrences', udf._name)
     self.assertEquals('js', udf._language)
     self.assertEquals('INTEGER', udf._return_type)
-    self.assertEquals([('word', 'STRING'), ('corpus', 'STRING')], udf._params)
+    self.assertEquals({'word': 'STRING', 'corpus': 'STRING'}, udf._params)
     self.assertEquals([], udf._imports)
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
