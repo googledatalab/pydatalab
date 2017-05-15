@@ -127,11 +127,11 @@ def build_feature_columns():
       weight_column_name='str_tfidf_weights',
       )
 
-  #new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
+  new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
   #new_feature = tf.contrib.layers.one_hot_column(sparse_ids)
   #new_feature = tf.contrib.layers.embedding_column(sparse_weights, dimension=2)
   #new_feature = tf.contrib.layers.embedding_column(sparse_ids, dimension=2)
-  new_feature = sparse_weights
+  #new_feature = sparse_weights
   #new_feature = sparse_ids
 
   feature_columns.append(new_feature)
@@ -149,22 +149,91 @@ def get_estimator(args):
       save_checkpoints_secs=600)
 
   train_dir = os.path.join(args.job_dir, 'train')
-  #estimator = tf.contrib.learn.DNNClassifier(
-  #      feature_columns=feature_columns,
-  #      hidden_units=[10, 5],
-  #      n_classes=3,
-  #      config=config,
-  #      model_dir=train_dir,
-  #      optimizer=tf.train.AdamOptimizer(
-  #          args.learning_rate, epsilon=args.epsilon))
-  estimator = tf.contrib.learn.LinearClassifier(
+  estimator = tf.contrib.learn.DNNClassifier(
         feature_columns=feature_columns,
+        hidden_units=[10, 5],
         n_classes=3,
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
             args.learning_rate, epsilon=args.epsilon))
+  #estimator = tf.contrib.learn.LinearClassifier(
+  #      feature_columns=feature_columns,
+  #      n_classes=3,
+  #      config=config,
+  #      model_dir=train_dir,
+  #      optimizer=tf.train.AdamOptimizer(
+  #          args.learning_rate, epsilon=args.epsilon))
   return estimator
+
+
+def tfrecord_reader_fn(
+  raw_data_file_pattern,
+  training_batch_size,
+  reader_num_threads,
+        queue_capacity,
+        randomize_input,
+        num_epochs):
+  def reader():
+    if isinstance(raw_data_file_pattern, six.string_types):
+      filepath_list = [raw_data_file_pattern]
+    else:
+      filepath_list = raw_data_file_pattern
+
+    files = []
+    for path in filepath_list:
+      files.extend(file_io.get_matching_files(path))
+
+    filename_queue = tf.train.string_input_producer(
+        files, num_epochs=num_epochs, shuffle=randomize_input)
+
+    options = tf.python_io.TFRecordOptions(
+      compression_type=tf.python_io.TFRecordCompressionType.GZIP)
+    example_id, example_str = tf.TFRecordReader(options=options).read_up_to(
+      filename_queue, training_batch_size)
+
+    min_after_dequeue = 10
+    queue_capacity = (reader_num_threads + 3) * training_batch_size + min_after_dequeue
+    if randomize_input:
+      batch_example_id, batch_example_str = tf.train.shuffle_batch(
+          tensors=[example_id, example_str],
+          batch_size=training_batch_size,
+          capacity=queue_capacity,
+          min_after_dequeue=min_after_dequeue,
+          enqueue_many=True,
+          num_threads=reader_num_threads)
+
+    else:
+      batch_example_id, batch_example_str = tf.train.batch(
+          tensors=[example_id, example_str],
+          batch_size=training_batch_size,
+          capacity=queue_capacity,
+          enqueue_many=True,
+          num_threads=reader_num_threads)
+
+    feature_map = {
+            'key':
+                tf.FixedLenFeature(
+                    shape=[1], dtype=tf.int64, default_value=[0]),
+            # Some images may have no labels. For those, we assume a default
+            # label. So the number of labels is label_count+1 for the default
+            # label.
+            'target':
+                tf.FixedLenFeature(
+                    shape=[1], dtype=tf.int64,
+                    default_value=[0]),
+            'str_tfidf_ids':
+                tf.VarLenFeature(dtype=tf.int64),
+            'str_tfidf_weights':
+                tf.VarLenFeature(dtype=tf.float32)                
+        }
+    features = tf.parse_example(batch_example_str, features=feature_map)
+    input_fn_maker._convert_scalars_to_vectors(features)
+    labels =  features.pop('target')
+    return features, labels
+
+
+  return reader
 
 def gzip_reader_fn():
   return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
@@ -191,32 +260,47 @@ def get_experiment_fn(args):
 
     export_strategy = make_export_strategy(args)
 
-    input_reader_for_train = input_fn_maker.build_training_input_fn(
-        metadata=transformed_metadata,
-        file_pattern=args.train_data_paths,
+
+    input_reader_for_train = tfrecord_reader_fn(
+        raw_data_file_pattern=args.train_data_paths,
         training_batch_size=args.train_batch_size,
-        reader=gzip_reader_fn,
-        label_keys=[TARGET_COL],
-        feature_keys=None,  # extract all features
-        key_feature_name=None,  # None as we take care of the key column.
         reader_num_threads=multiprocessing.cpu_count(),
         queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
         randomize_input=True,
-        num_epochs=args.num_epochs,
-    )
-    input_reader_for_eval = input_fn_maker.build_training_input_fn(
-        metadata=transformed_metadata,
-        file_pattern=args.eval_data_paths,
+        num_epochs=args.num_epochs)
+    input_reader_for_eval = tfrecord_reader_fn(
+        raw_data_file_pattern=args.eval_data_paths,
         training_batch_size=args.eval_batch_size,
-        reader=gzip_reader_fn,
-        label_keys=[TARGET_COL],
-        feature_keys=None,  # extract all features
-        key_feature_name=None,  # None as we take care of the key column.
         reader_num_threads=multiprocessing.cpu_count(),
         queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
-        randomize_input=False,
-        num_epochs=1,
-    )
+        randomize_input=True,
+        num_epochs=1)   
+    #input_reader_for_train = input_fn_maker.build_training_input_fn(
+    #    metadata=transformed_metadata,
+    #    file_pattern=args.train_data_paths,
+    #    training_batch_size=args.train_batch_size,
+    #    reader=gzip_reader_fn,
+    #    label_keys=[TARGET_COL],
+    #    feature_keys=None,  # extract all features
+    #    key_feature_name=None,  # None as we take care of the key column.
+    #    reader_num_threads=multiprocessing.cpu_count(),
+    #    queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
+    #    randomize_input=True,
+    #    num_epochs=args.num_epochs,
+    #)
+    #input_reader_for_eval = input_fn_maker.build_training_input_fn(
+    #    metadata=transformed_metadata,
+    #    file_pattern=args.eval_data_paths,
+    #    training_batch_size=args.eval_batch_size,
+    #    reader=gzip_reader_fn,
+    #    label_keys=[TARGET_COL],
+    #    feature_keys=None,  # extract all features
+    #    key_feature_name=None,  # None as we take care of the key column.
+    #    reader_num_threads=multiprocessing.cpu_count(),
+    #    queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
+    #    randomize_input=False,
+    #    num_epochs=1,
+    #)
 
     return tf.contrib.learn.Experiment(
         estimator=estimator,

@@ -240,7 +240,7 @@ class TestTrainer(unittest.TestCase):
     subprocess.check_call(' '.join(cmd), shell=True)
 
   
-  def testClassificationLinear(self):
+  def xtestClassificationLinear(self):
     self._logger.debug('\n\nTesting Classification Linear')
 
     problem_type='classification'
@@ -252,7 +252,7 @@ class TestTrainer(unittest.TestCase):
         extra_args=['--top-n=3'])
 
 
-  def testRegressionLinear(self):
+  def xtestRegressionLinear(self):
     self._logger.debug('\n\nTesting Regression Linear')
 
     problem_type='regression'
@@ -263,14 +263,15 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type,)
 
-  def xtestClassificationDNN(self):
+  def testClassificationDNN(self):
     self._logger.debug('\n\nTesting Classification DNN')
 
     problem_type='classification'
     model_type='dnn'
     self._run_analyze(problem_type)
-    self._run_transform()
-    self._run_training_transform(
+    #self._run_transform()
+    #self._run_training_transform(
+    self._run_training_raw(
         problem_type=problem_type,
         model_type=model_type,
         extra_args=['--top-n=3',

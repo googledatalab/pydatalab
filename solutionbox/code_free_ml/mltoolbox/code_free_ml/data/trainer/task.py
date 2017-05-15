@@ -691,6 +691,8 @@ def build_csv_transforming_training_input_fn(raw_metadata,
 
     if isinstance(raw_data_file_pattern, six.string_types):
       filepath_list = [raw_data_file_pattern]
+    else:
+      filepath_list =  raw_data_file_pattern
 
     files = []
     for path in filepath_list:
