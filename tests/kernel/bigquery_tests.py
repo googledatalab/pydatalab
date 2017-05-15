@@ -52,11 +52,13 @@ class TestCases(unittest.TestCase):
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
 
-    with self.assertRaises(Exception):
+    # no cell body
+    with self.assertRaisesRegexp(Exception, 'UDF return type must be defined'):
       google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'test_udf', 'language': 'js'},
                                                            '')
 
-    with self.assertRaises(Exception):
+    # no name
+    with self.assertRaisesRegexp(Exception, 'Declaration must be of the form %%bq udf --name'):
       google.datalab.bigquery.commands._bigquery._udf_cell({'name': None, 'language': 'js'},
                                                            'test_cell_body')
 
@@ -67,7 +69,7 @@ class TestCases(unittest.TestCase):
     re = new RegExp(word, 'g');
     return corpus.match(re || []).length;
     """
-    with self.assertRaises(Exception):
+    with self.assertRaisesRegexp(Exception, 'UDF return type must be defined'):
       google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences',
                                                             'language': 'js'}, cell_body)
 
@@ -80,7 +82,7 @@ class TestCases(unittest.TestCase):
     re = new RegExp(word, 'g');
     return corpus.match(re || []).length;
     """
-    with self.assertRaises(Exception):
+    with self.assertRaisesRegexp(Exception, 'Found more than one return'):
       google.datalab.bigquery.commands._bigquery._udf_cell({'name': 'count_occurrences',
                                                             'language': 'js'}, cell_body)
 
