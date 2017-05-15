@@ -119,9 +119,10 @@ class TestCases(unittest.TestCase):
     self.assertEqual(env['test_ds']._source, ['test_path'])
     self.assertEqual(env['test_ds']._source_format, 'csv')
 
+  @mock.patch('google.datalab.bigquery.Query.execute')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_query_cell(self, mock_default_context, mock_notebook_environment):
+  def test_query_cell(self, mock_default_context, mock_notebook_environment, mock_query_execute):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
@@ -130,11 +131,11 @@ class TestCases(unittest.TestCase):
     # test query creation
     q1_body = 'SELECT * FROM test_table'
 
-    # no query specified
-    with self.assertRaises(Exception):
-      google.datalab.bigquery.commands._bigquery._query_cell({'name': None, 'udfs': None,
-                                                              'datasources': None,
-                                                              'subqueries': None}, q1_body)
+    # no query name specified. should execute
+    google.datalab.bigquery.commands._bigquery._query_cell({'name': None, 'udfs': None,
+                                                            'datasources': None,
+                                                            'subqueries': None}, q1_body)
+    mock_query_execute.assert_called_with()
 
     # test query creation
     google.datalab.bigquery.commands._bigquery._query_cell({'name': 'q1', 'udfs': None,
