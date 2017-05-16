@@ -50,7 +50,7 @@ class UDF(object):
     if params and not isinstance(params, dict):
       raise TypeError('Argument params should be a dictionary of parameter names and types')
     if imports and not isinstance(imports, list):
-      raise TypeError('Arguments imports should be a list of GCS string paths')
+      raise TypeError('Argument imports should be a list of GCS string paths')
     if imports and language != 'js':
       raise Exception('Imports are available for Javascript UDFs only')
 

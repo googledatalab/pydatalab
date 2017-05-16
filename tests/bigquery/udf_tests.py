@@ -20,13 +20,20 @@ import google.datalab.bigquery
 
 class TestCases(unittest.TestCase):
 
+  def _create_udf(self, name='test_udf', code='console.log("test");', return_type='integer',
+                  params=None, language='js', imports=None):
+    if params is None:
+      params = {'test_param': 'integer'}
+    if code is None:
+      code = 'test code;'
+    if imports is None:
+      imports = ['gcs://mylib']
+    return google.datalab.bigquery.UDF(name, code, return_type, params, language, imports)
+
   def test_building_udf(self):
     code = 'console.log("test");'
-    return_type = 'integer'
-    params = {'test_param': 'integer'}
-    language = 'js'
-    imports = ['gcs://mylib']
-    udf = google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
+    imports = ['gcs://test_lib']
+    udf = self._create_udf(code=code, imports=imports)
 
     expected_sql = '''\
 CREATE TEMPORARY FUNCTION test_udf (test_param integer)
@@ -36,41 +43,33 @@ AS """
 console.log("test");
 """
 OPTIONS (
-library="gcs://mylib"
+library="gcs://test_lib"
 );\
 '''
     self.assertEqual(udf.name, 'test_udf')
     self.assertEqual(udf.code, code)
     self.assertEqual(udf.imports, imports)
 
-    self.assertEqual(udf._language, language)
+    self.assertEqual(udf._language, 'js')
     self.assertEqual(udf._repr_sql_(), udf._expanded_sql())
     self.assertEqual(udf.__repr__(), 'BigQuery UDF - code:\n%s' % udf._code)
     self.assertEqual(udf._expanded_sql(), expected_sql)
 
-    # bad return type
-    return_type = ['integer']
-    with self.assertRaises(TypeError):
-      google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
-    return_type = 'integer'
+  def test_udf_bad_return_type(self):
+    with self.assertRaisesRegexp(TypeError, 'Argument return_type should be a string'):
+      self._create_udf(return_type=['integer'])
 
-    # bad params
-    params = ['param1', 'param2']
-    with self.assertRaises(TypeError):
-      google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
-    params = {'param1': 'integer'}
+  def test_udf_bad_params(self):
+    with self.assertRaisesRegexp(TypeError, 'Argument params should be a dictionary'):
+      self._create_udf(params=['param1', 'param2'])
 
-    # bad imports
-    imports = 'gcs://mylib'
-    with self.assertRaises(TypeError):
-      google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
-    imports = ['gcs://mylib']
+  def test_udf_bad_imports(self):
+    with self.assertRaisesRegexp(TypeError, 'Argument imports should be a list'):
+      self._create_udf(imports='gcs://mylib')
 
-    # imports in non-javascript
-    language = 'sql'
+  def test_udf_imports_non_js(self):
     with self.assertRaisesRegexp(Exception, 'Imports are available for Javascript'):
-      google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
-    language = 'js'
+      self._create_udf(language='sql')
 
   def test_query_with_udf(self):
     code = 'console.log("test");'
