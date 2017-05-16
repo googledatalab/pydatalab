@@ -1,0 +1,75 @@
+{
+  "feature": [
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": false,
+          "max": "9223372036854775807",
+          "min": "-9223372036854775808"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "key",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {
+            "intDefaultValue": "0"
+          }
+        }
+      },
+      "type": "INT"
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": false,
+          "max": "9223372036854775807",
+          "min": "-9223372036854775808"
+        }
+      },
+      "name": "str_tfidf_ids",
+      "parsingOptions": {
+        "tfOptions": {
+          "varLenFeature": {}
+        }
+      },
+      "type": "INT",
+      "valueCount": {}
+    },
+    {
+      "domain": {
+        "floats": {}
+      },
+      "name": "str_tfidf_weights",
+      "parsingOptions": {
+        "tfOptions": {
+          "varLenFeature": {}
+        }
+      },
+      "type": "FLOAT",
+      "valueCount": {}
+    },
+    {
+      "domain": {
+        "ints": {
+          "isCategorical": false,
+          "max": "9223372036854775807",
+          "min": "-9223372036854775808"
+        }
+      },
+      "fixedShape": {
+        "axis": []
+      },
+      "name": "target",
+      "parsingOptions": {
+        "tfOptions": {
+          "fixedLenFeature": {}
+        }
+      },
+      "type": "INT"
+    }
+  ],
+  "sparseFeature": []
+}

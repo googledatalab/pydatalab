@@ -1,0 +1,11 @@
+{
+  "column_stats": {
+    "str_tfidf": {
+      "vocab_size": 6
+    },
+    "target": {
+      "vocab_size": 3
+    }
+  },
+  "num_examples": 200
+}

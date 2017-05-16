@@ -54,20 +54,14 @@ def local_predict(args):
 
   # Don't predict the whole file, just the first batch_size many. 
   #with open(args.input_data[0]) as f:
+  ex = 
+  feed_dict = {}
 
-  feed_dict = {'key': [12,11],
-               'str_tfidf': ['bike train car', 'done pizzzzza'],
-               'target': ['101', '100']}
-  feed_placeholders = {}
-  for key in feed_dict:
-    feed_placeholders[input_alias_map[key]] = feed_dict[key]
-
-
-  print('feed_dict', feed_placeholders)
+  print('feed_dict', feed_dict)
 
   # run the graph.
   result = session.run(fetches=tensor_names,
-                       feed_dict=feed_placeholders)
+                       feed_dict=feed_dict)
 
   print('result ' + str(result))
   for row in zip(*result):
@@ -85,7 +79,7 @@ def get_args():
 
       
   parser.add_argument(
-      '--model-dir',
+      '--model_dir',
       dest='model_dir',
       help=('The path to the model where the tensorflow meta graph '
             'proto and checkpoint files are saved.'))

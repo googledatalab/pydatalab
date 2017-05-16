@@ -86,17 +86,29 @@ def make_coder(schema):
 
 def make_preprocessing_fn():
   def preprocessing_fn(inputs):
-    inputs_as_ints = tft.string_to_int(tft.map(tf.string_split, inputs['str_tfidf']))
+    tokens = tft.map(lambda x: tf.string_split(x, ' '), inputs['str_tfidf'])
+    indices = tft.string_to_int(tokens, num_oov_buckets=1)
+    weights = tft.tfidf_weights(indices, 6 + 1)
     result = {
         'key': inputs['key'],
-        'target': tft.string_to_int(inputs['str_tfidf']),
-        'str_tfidf_ids': inputs_as_ints,
-        'str_tfidf_weights': tft.tfidf_weights(inputs_as_ints, 6+1),
+        'target': tft.string_to_int(inputs['target']),
+        'str_tfidf_ids': indices,
+        'str_tfidf_weights': tft.map(tf.to_float, weights),
     }
     return result
 
   return preprocessing_fn
 
+
+# def to_example_string(row):
+#   example = tf.train.Example(features=tf.train.Features(feature={
+#         'str_tfidf_weights': _int64_feature(rows),
+#         'str_tfidf_ids': _int64_feature(cols),
+#         'target': _int64_feature(depth),
+#         'key': _int64_feature(int(labels[index])),
+#     }))
+#     writer.write(example.SerializeToString())
+#   writer.close()
 
 def preprocess(pipeline, training_data, eval_data, output_dir):
   """Run pre-processing step as a pipeline.
@@ -135,10 +147,6 @@ def preprocess(pipeline, training_data, eval_data, output_dir):
       (train_data, input_metadata)
       | 'AnalyzeAndTransform' >> tft_impl.AnalyzeAndTransformDataset(
           preprocessing_fn))
-
-  metadata_io.write_metadata(
-       metadata=train_metadata,
-       path=os.path.join(output_dir, 'bad_training_metadata'))
 
   _ = (transform_fn | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(output_dir))
 

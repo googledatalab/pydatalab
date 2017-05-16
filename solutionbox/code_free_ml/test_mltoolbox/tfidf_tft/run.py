@@ -1,20 +1,20 @@
 #! /bin/bash
 
-rm -fr aout && python ../../mltoolbox/code_free_ml/data/analyze_data.py --output-dir aout \
+rm -fr aout && python analyze_data.py --output-dir aout \
                        --csv-file-pattern ./train.csv \
                        --csv-schema-file schema.json \
                        --features-file features.json \
                        
 rm -fr exout
 
-python ../../mltoolbox/code_free_ml/data/transform_raw_data.py \
+python transform_raw_data.py \
                              --csv-file-pattern ./train.csv \
                              --analyze-output-dir aout \
                              --output-filename-prefix ftrain \
                              --output-dir exout  \
                              --target \
 
-python ../../mltoolbox/code_free_ml/data/transform_raw_data.py \
+python transform_raw_data.py \
                              --csv-file-pattern ./eval.csv \
                              --analyze-output-dir aout \
                              --output-filename-prefix feval \
