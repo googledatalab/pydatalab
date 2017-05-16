@@ -626,19 +626,6 @@ def _execute_cell(args, cell_body):
   return r.result()
 
 
-def _get_schema(name):
-  """ Given a variable or table name, get the Schema if it exists. """
-  item = google.datalab.utils.commands.get_notebook_item(name)
-  if not item:
-    item = _get_table(name)
-
-  if isinstance(item, google.datalab.bigquery.Schema):
-    return item
-  if hasattr(item, 'schema') and isinstance(item.schema, google.datalab.bigquery._schema.Schema):
-    return item.schema
-  return None
-
-
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
 _table_cache = google.datalab.utils.LRUCache(10)
