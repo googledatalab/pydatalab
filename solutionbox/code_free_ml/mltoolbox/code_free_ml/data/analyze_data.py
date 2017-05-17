@@ -56,6 +56,7 @@ BOW_TRANSFORM = 'bag_of_words'
 TFIDF_TRANSFORM = 'tfidf'
 KEY_TRANSFORM = 'key'
 TARGET_TRANSFORM = 'target'
+IMAGE_TRANSFORM = 'image_to_vec'
 
 # Transform collections
 NUMERIC_TRANSFORMS = [IDENTITY_TRANSFORM, SCALE_TRANSFORM]
@@ -796,6 +797,8 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       numerical_vocab_stats[col_name] = {'min': df.iloc[0]['min_value'],
                                          'max': df.iloc[0]['max_value'],
                                          'mean': df.iloc[0]['avg_value']}
+    elif transform == IMAGE_TRANSFORM:
+      pass
     elif transform == KEY_TRANSFORM:
       pass
     else:
@@ -886,6 +889,8 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
                   float(parsed_line[col_name])))
             numerical_results[col_name]['count'] += 1
             numerical_results[col_name]['sum'] += float(parsed_line[col_name])
+          elif transform == IMAGE_TRANSFORM:
+            pass
           elif transform == KEY_TRANSFORM:
             pass
           else:
@@ -957,7 +962,8 @@ def check_schema_transforms_match(schema, features):
         raise ValueError(
             'Transform %s not supported by schema %s' % (transform, col_type))
     elif col_type == STRING_SCHEMA:
-      if transform not in CATEGORICAL_TRANSFORMS + TEXT_TRANSFORMS:
+      if (transform not in CATEGORICAL_TRANSFORMS + TEXT_TRANSFORMS and
+         transform != IMAGE_TRANSFORM):
         raise ValueError(
             'Transform %s not supported by schema %s' % (transform, col_type))
     else:
