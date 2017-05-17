@@ -28,17 +28,12 @@ import tensorflow as tf
 import tensorflow_transform as tft
 import textwrap
 
-import apache_beam as beam
-
-
 from tensorflow.contrib import lookup
 from tensorflow.python.lib.io import file_io
 from tensorflow_transform import impl_helper
 from tensorflow_transform.tf_metadata import dataset_metadata
 from tensorflow_transform.tf_metadata import dataset_schema
 from tensorflow_transform.tf_metadata import metadata_io
-from tensorflow_transform.beam import impl as tft_impl
-from tensorflow_transform.beam import tft_beam_io
 
 # Files
 SCHEMA_FILE = 'schema.json'
@@ -206,11 +201,11 @@ def parse_arguments(argv):
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
-# start of end of TF.transform functions
+# start of Tensor In Tensor Out (TITO) fuctions
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
-def scale(x, min_x_value, max_x_value, output_min, output_max):
+def make_scale_tito(min_x_value, max_x_value, output_min, output_max):
   """Scale a column to [output_min, output_max].
 
   Assumes the columns's range is [min_x_value, max_x_value]. If this is not
@@ -234,122 +229,197 @@ def scale(x, min_x_value, max_x_value, output_min, output_max):
     return ((((tf.to_float(x) - min_x_valuef) * (output_maxf - output_minf)) /
             (max_x_valuef - min_x_valuef)) + output_minf)
 
-  return tft.api.map(_scale, x)
+  return _scale
 
 
-def string_to_int(x, vocab):
-  """Generates a vocabulary for `x` and maps it to an integer with this vocab.
-  Args:
-    x: A `Column` representing a string value or values.
-    vocab: list of strings.
-
-  Returns:
-    A `Column` where each string value is mapped to an integer where each unique
-    string value is mapped to a different integer and integers are consecutive
-    and starting from 0.
-  """
-
-  def _map_to_int(x):
-    """Maps string tensor into indexes using vocab.
-
-    Args:
-      x : a Tensor/SparseTensor of string.
-    Returns:
-      a Tensor/SparseTensor of indexes (int) of the same shape as x.
-    """
+def make_str_to_int_tito(vocab, default_value):
+  def _str_to_int(x):
     table = lookup.string_to_index_table_from_tensor(
-        vocab,
-        default_value=len(vocab))
+        vocab, num_oov_buckets=0,
+        default_value=default_value)
     return table.lookup(x)
+  return _str_to_int
 
-  return tft.api.map(_map_to_int, x)
 
-# TODO(brandondura): update this to not depend on tf layer's feature column 
-# 'sum' combiner in the future.
-def tfidf(x, reduced_term_freq, vocab_size, corpus_size):
-  """Maps the terms in x to their (1/doc_length) * inverse document frequency.
+def segment_indices(segment_ids, num_segments):
+  """Returns a tensor of indices within each segment.
+
+  segment_ids should be a sequence of non-decreasing non-negative integers that
+  define a set of segments, e.g. [0, 0, 1, 2, 2, 2] defines 3 segments of length
+  2, 1 and 3.  The return value is a tensor containing the indices within each
+  segment.
+
+  Example input: [0, 0, 1, 2, 2, 2]
+  Example output: [0, 1, 0, 0, 1, 2]
+
   Args:
-    x: A `Column` representing int64 values (most likely that are the result
-        of calling string_to_int on a tokenized string).
-    reduced_term_freq: A dense tensor of shape (vocab_size,) that represents
-        the count of the number of documents with each term.
-    corpus_size: A scalar count of the number of documents in the corpus
-    vocab_size: An int - the count of vocab used to turn the string into int64s
-        including any OOV buckets
+    segment_ids: A 1-d tensor containing an non-decreasing sequence of
+        non-negative integers with type `tf.int32` or `tf.int64`.
+    num_segments: number of segments. In above example, it is 3.
+
   Returns:
-    A `Column` where each int value is mapped to a double equal to
-    (1 if that term appears in that row, 0 otherwise / the number of terms in
-    that row) * the log of (the number of rows in `x` / (1 + the number of
-    rows in `x` where the term appears at least once))
-  NOTE:
-    This is intented to be used with the feature_column 'sum' combiner to arrive
-    at the true term frequncies.
+    A tensor containing the indices within each segment.
   """
+  segment_lengths = tf.unsorted_segment_sum(tf.ones_like(segment_ids),
+                                            segment_ids,
+                                            tf.to_int32(num_segments))
+  segment_starts = tf.gather(tf.concat([[0], tf.cumsum(segment_lengths)], 0),
+                             segment_ids)
+  return (tf.range(tf.size(segment_ids, out_type=segment_ids.dtype)) -
+          segment_starts)
 
-  def _map_to_vocab_range(x):
-    """Enforces that the vocab_ids in x are positive."""
-    return tf.SparseTensor(
-        indices=x.indices,
-        values=tf.mod(x.values, vocab_size),
-        dense_shape=x.dense_shape)
 
-  def _map_to_tfidf(x):
-    """Calculates the inverse document frequency of terms in the corpus.
-    Args:
-      x : a SparseTensor of int64 representing string indices in vocab.
-    Returns:
-      The tf*idf values
-    """
+def get_term_count_per_doc(x, vocab_size):
+  """Creates a SparseTensor with 1s at every doc/term pair index.
+
+  Args:
+    x : a SparseTensor representing string indices in vocab.
+
+  Returns:
+    a SparseTensor with count at indices <doc_index_in_batch>,
+        <term_index_in_vocab> for every term/doc pair. Example: the tensor
+        SparseTensorValue(
+          indices=array([[0, 0],
+                         [1, 0],
+                         [1, 2],
+                         [2, 1],
+                         [3, 1]]),
+          values=array([3, 8, 9, 3, 4], dtype=int64),
+          dense_shape=array([4, 3]))
+        says the 2nd example/document (row index 1) has two tokens, and
+        token 0 occures 8 times and token 2 occures 9 times.
+  """
+  # Construct intermediary sparse tensor with indices
+  # [<doc>, <term_index_in_doc>, <vocab_id>] and tf.ones values.
+  split_indices = tf.to_int64(
+      tf.split(x.indices, axis=1, num_or_size_splits=2))
+  expanded_values = tf.to_int64(tf.expand_dims(x.values, 1))
+  next_index = tf.concat(
+      [split_indices[0], split_indices[1], expanded_values], axis=1)
+  next_values = tf.ones_like(x.values, dtype=tf.int64)
+  vocab_size_as_tensor = tf.constant([vocab_size], dtype=tf.int64)
+  next_shape = tf.concat(
+      [x.dense_shape, vocab_size_as_tensor], 0)
+  next_tensor = tf.SparseTensor(
+      indices=tf.to_int64(next_index),
+      values=next_values,
+      dense_shape=next_shape)
+
+  # Take the intermediar tensor and reduce over the term_index_in_doc
+  # dimension. This produces a tensor with indices [<doc_id>, <term_id>]
+  # and values [count_of_term_in_doc] and shape batch x vocab_size
+  term_count_per_doc = tf.sparse_reduce_sum_sparse(next_tensor, 1)
+  return term_count_per_doc
+
+
+def make_tfidf_tito(vocab, example_count, corpus_size, part):
+  """Make Term Frequency - Inverse Document Frequency transfrom.
+
+  TF(term, doc) := count of 'term' in doc / numer of terms in doc
+  IDF(term) := log(corpus_size/(1 + number of documents that contain 'term'))
+
+  Args:
+    vocab: list of strings. Must include '' in the list.
+    example_count: example_count[i] is the number of examples that contain the
+      token vocab[i]
+    corpus_size: how many examples there are.
+    part: 'ids' or 'weights'. Returns the weights or ids of the transform.
+
+  Returns:
+    A sparse tensor containing the ids or weights of the tfidf transform (see
+        the part parameter). The sparse tensor is in the form
+        SparseTensorValue(
+          indices=array([[0, 0],
+                         [1, 0],
+                         [1, 1],
+                         [1, 2],
+                         [2, 0],
+                         ...]),
+          values=1-D array or ids or weights)
+        Note that the index row match the batch size, and the index columns
+        are continuous. This format is expected by tf.layers.
+
+  """
+  def _tfidf(x):
+    split = tf.string_split(x)
+    table = lookup.string_to_index_table_from_tensor(
+        vocab, num_oov_buckets=0,
+        default_value=len(vocab))
+    int_text = table.lookup(split)
+
+    term_count_per_doc = get_term_count_per_doc(int_text, len(vocab) + 1)
+
     # Add one to the reduced term freqnencies to avoid dividing by zero.
-    idf = tf.log(tf.to_double(corpus_size) / (
-        1.0 + tf.to_double(reduced_term_freq)))
+    example_count_with_oov = tf.to_float(tf.concat([example_count, [0]], 0))
+    idf = tf.log(tf.to_float(corpus_size) / (1.0 + example_count_with_oov))
 
-    dense_doc_sizes = tf.to_double(tf.sparse_reduce_sum(tf.SparseTensor(
-        indices=x.indices,
-        values=tf.ones_like(x.values),
-        dense_shape=x.dense_shape), 1))
+    dense_doc_sizes = tf.to_float(tf.sparse_reduce_sum(tf.SparseTensor(
+        indices=int_text.indices,
+        values=tf.ones_like(int_text.values),
+        dense_shape=int_text.dense_shape), 1))
 
-    # For every term in x, divide the idf by the doc size.
-    # The two gathers both result in shape <sum_doc_sizes>
-    idf_over_doc_size = (tf.gather(idf, x.values) /
-                         tf.gather(dense_doc_sizes, x.indices[:, 0]))
+    idf_times_term_count = tf.multiply(
+        tf.gather(idf, term_count_per_doc.indices[:, 1]),
+        tf.to_float(term_count_per_doc.values))
+    tfidf_weights = (
+        idf_times_term_count / tf.gather(dense_doc_sizes,
+                                         term_count_per_doc.indices[:, 0]))
 
-    return tf.SparseTensor(
-        indices=x.indices,
-        values=idf_over_doc_size,
-        dense_shape=x.dense_shape)
+    tfidf_ids = term_count_per_doc.indices[:, 1]
 
-  cleaned_input = tft.api.map(_map_to_vocab_range, x)
+    indices = tf.stack([term_count_per_doc.indices[:, 0],
+                        segment_indices(term_count_per_doc.indices[:, 0],
+                                        int_text.dense_shape[0])],
+                       1)
+    dense_shape = term_count_per_doc.dense_shape
 
-  weights = tft.api.map(_map_to_tfidf, cleaned_input)
-  return tft.api.map(tf.to_float, weights)
+    tfidf_st_weights = tf.SparseTensor(indices=indices,
+                                       values=tfidf_weights,
+                                       dense_shape=dense_shape)
+    tfidf_st_ids = tf.SparseTensor(indices=indices,
+                                   values=tfidf_ids,
+                                   dense_shape=dense_shape)
+
+    if part == 'ids':
+      return tfidf_st_ids
+    else:
+      return tfidf_st_weights
+
+  return _tfidf
 
 
-# TODO(brandondura): update this to not depend on tf layer's feature column 
-# 'sum' combiner in the future.
-def bag_of_words(x):
-  """Computes bag of words weights
-
-  Note the return type is a float sparse tensor, not a int sparse tensor. This
-  is so that the output types batch tfidf, and any downstream transformation
-  in tf layers during training can be applied to both.
-  """
+def make_bag_of_words_tito(vocab, part):
   def _bow(x):
-    """Comptue BOW weights. 
+    split = tf.string_split(x)
+    table = lookup.string_to_index_table_from_tensor(
+        vocab, num_oov_buckets=0,
+        default_value=len(vocab))
+    int_text = table.lookup(split)
 
-    As tf layer's sum combiner is used, the weights can be just ones. Tokens are
-    not summed together here.
-    """
-    return tf.SparseTensor(
-      indices=x.indices,
-      values=tf.to_float(tf.ones_like(x.values)),
-      dense_shape=x.dense_shape)
+    term_count_per_doc = get_term_count_per_doc(int_text, len(vocab) + 1)
 
-  return tft.api.map(_bow, x)
+    bow_weights = tf.to_float(term_count_per_doc.values)
+    bow_ids = term_count_per_doc.indices[:, 1]
+
+    indices = tf.stack([term_count_per_doc.indices[:, 0],
+                        segment_indices(term_count_per_doc.indices[:, 0],
+                                        int_text.dense_shape[0])],
+                       1)
+    dense_shape = term_count_per_doc.dense_shape
+
+    bow_st_weights = tf.SparseTensor(indices=indices, values=bow_weights, dense_shape=dense_shape)
+    bow_st_ids = tf.SparseTensor(indices=indices, values=bow_ids, dense_shape=dense_shape)
+
+    if part == 'ids':
+      return bow_st_ids
+    else:
+      return bow_st_weights
+
+  return _bow
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
-# end of TF.transform functions
+# end of Tensor In Tensor Out (TITO) fuctions
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
@@ -393,12 +463,12 @@ def make_preprocessing_fn(output_dir, features):
       if transform_name == 'identity':
         result[name] = inputs[name]
       elif transform_name == 'scale':
-        result[name] = scale(
-            inputs[name],
-            min_x_value=stats['column_stats'][name]['min'],
-            max_x_value=stats['column_stats'][name]['max'],
-            output_min=transform.get('value', 1) * (-1),
-            output_max=transform.get('value', 1))
+        result[name] = tft.map(
+            make_scale_tito(min_x_value=stats['column_stats'][name]['min'],
+                            max_x_value=stats['column_stats'][name]['max'],
+                            output_min=transform.get('value', 1) * (-1),
+                            output_max=transform.get('value', 1)),
+            inputs[name])
       elif transform_name in [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM,
                               TFIDF_TRANSFORM, BOW_TRANSFORM]:
         vocab_str = file_io.read_file_to_string(
@@ -411,27 +481,30 @@ def make_preprocessing_fn(output_dir, features):
         ex_count = vocab_pd['count'].astype(int).tolist()
 
         if transform_name == TFIDF_TRANSFORM:
-          tokens = tft.map(lambda x: tf.string_split(x, ' '), inputs[name])
-          ids = string_to_int(tokens, vocab)
-          weights = tfidf(
-              x=ids,
-              reduced_term_freq=ex_count + [0],
-              vocab_size=len(vocab)+1,
-              corpus_size=stats['num_examples'])
-
-          result[name + '_ids'] = ids
-          result[name + '_weights'] = weights
+          result[name + '_ids'] = tft.map(
+              make_tfidf_tito(vocab=vocab,
+                              example_count=ex_count,
+                              corpus_size=stats['num_examples'],
+                              part='ids'),
+              inputs[name])
+          result[name + '_weights'] = tft.map(
+              make_tfidf_tito(vocab=vocab,
+                              example_count=ex_count,
+                              corpus_size=stats['num_examples'],
+                              part='weights'),
+              inputs[name])
         elif transform_name == BOW_TRANSFORM:
-          tokens = tft.map(lambda x: tf.string_split(x, ' '), inputs[name])
-          ids = string_to_int(tokens, vocab)
-          weights = bag_of_words(x=ids)
-
-          result[name + '_ids'] = ids
-          result[name + '_weights'] = weights
+          result[name + '_ids'] = tft.map(
+              make_bag_of_words_tito(vocab=vocab, part='ids'),
+              inputs[name])
+          result[name + '_weights'] = tft.map(
+              make_bag_of_words_tito(vocab=vocab, part='weights'),
+              inputs[name])
         else:
           # ONE_HOT_TRANSFORM: making a dense vector is done at training
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
-          result[name] = string_to_int(inputs[name], vocab)
+          result[name] = tft.map(make_str_to_int_tito(vocab, len(vocab)),
+                                 inputs[name])
       else:
         raise ValueError('unknown transform %s' % transform_name)
     return result
@@ -495,49 +568,28 @@ def make_transform_graph(output_dir, schema, features):
   tft_input_metadata = dataset_metadata.DatasetMetadata(schema=tft_input_schema)
   preprocessing_fn = make_preprocessing_fn(output_dir, features)
 
-  # preprocessing_fn does not use any analyzer, so we can run a local beam job
-  # to properly make and write the transform function. 
-  temp_dir = os.path.join(output_dir, 'tmp')
-  with beam.Pipeline('DirectRunner', options=None) as p:
-    with tft_impl.Context(temp_dir=temp_dir):
+  # copy from /tft/beam/impl
+  inputs, outputs = impl_helper.run_preprocessing_fn(
+      preprocessing_fn=preprocessing_fn,
+      schema=tft_input_schema)
+  output_metadata = dataset_metadata.DatasetMetadata(
+      schema=impl_helper.infer_feature_schema(outputs))
 
-      # Not going to transform, so no data is needed.
-      train_data = p | beam.Create([]) 
+  transform_fn_dir = os.path.join(output_dir, TRANSFORM_FN_DIR)
 
-      transform_fn = (
-        (train_data, tft_input_metadata)
-        | 'BuildTransformFn' >> 
-        tft_impl.AnalyzeDataset(preprocessing_fn))
+  # This writes the SavedModel
+  impl_helper.make_transform_fn_def(
+      schema=tft_input_schema,
+      inputs=inputs,
+      outputs=outputs,
+      saved_model_dir=transform_fn_dir)
 
-      # Writes transformed_metadata and transfrom_fn folders
-      _ = (transform_fn | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(output_dir))
-
-      # Write the raw_metadata
-      metadata_io.write_metadata(
-        metadata=tft_input_metadata,
-        path=os.path.join(output_dir, RAW_METADATA_DIR))
-  # # copy from /tft/beam/impl
-  # inputs, outputs = impl_helper.run_preprocessing_fn(
-  #     preprocessing_fn=preprocessing_fn,
-  #     schema=tft_input_schema)
-  # output_metadata = dataset_metadata.DatasetMetadata(
-  #     schema=impl_helper.infer_feature_schema(outputs))
-
-  # transform_fn_dir = os.path.join(output_dir, TRANSFORM_FN_DIR)
-
-  # # This writes the SavedModel
-  # impl_helper.make_transform_fn_def(
-  #     schema=tft_input_schema,
-  #     inputs=inputs,
-  #     outputs=outputs,
-  #     saved_model_dir=transform_fn_dir)
-
-  # metadata_io.write_metadata(
-  #     metadata=output_metadata,
-  #     path=os.path.join(output_dir, TRANSFORMED_METADATA_DIR))
-  # metadata_io.write_metadata(
-  #     metadata=tft_input_metadata,
-  #     path=os.path.join(output_dir, RAW_METADATA_DIR))
+  metadata_io.write_metadata(
+      metadata=output_metadata,
+      path=os.path.join(output_dir, TRANSFORMED_METADATA_DIR))
+  metadata_io.write_metadata(
+      metadata=tft_input_metadata,
+      path=os.path.join(output_dir, RAW_METADATA_DIR))
 
 
 def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
@@ -904,6 +956,7 @@ def main(argv=None):
   file_io.write_string_to_file(
     os.path.join(args.output_dir, FEATURES_FILE),
     json.dumps(features, indent=2))
+
 
 if __name__ == '__main__':
   main()

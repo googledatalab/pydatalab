@@ -561,11 +561,11 @@ class TestGraphBuilding(unittest.TestCase):
                                              'cat2': ['pizza', '', 'extra']})
 
       for result, expected_result in zip(results['cat1'].tolist(), [0, 1, 2]):
-        self.assertAlmostEqual(result, expected_result)
+        self.assertEqual(result, expected_result)
 
       for result, expected_result in zip(results['cat2'].tolist(),
                                          [0, 3, 3]):
-        self.assertAlmostEqual(result, expected_result)
+        self.assertEqual(result, expected_result)
     finally:
       shutil.rmtree(output_folder)
 
@@ -610,28 +610,29 @@ class TestGraphBuilding(unittest.TestCase):
                     'brown blue']})   # doc 6
 
       # indices are in the form [doc id, vocab id]
-      expected_indices = [[0, 0],
-                          [1, 0], [1, 1],
+      expected_indices = [[0, 0], [0, 1], [0, 2],
+                          [1, 0], [1, 1], [1, 2],
                           [2, 0],
-                          [3, 0],
+                          [3, 0], [3, 1],
                           [5, 0],
                           [6, 0], [6, 1]]
-      expected_ids = [0, 0, 2, 1, 1, 3, 1, 3]  # Note in doc 6, it is blue, then brown.
+      expected_ids = [0, 0, 0, 0, 2, 0, 1, 1, 1, 3, 3, 1]
       self.assertEqual(results['cat1_ids'].indices.tolist(), expected_indices)
-      self.assertEqual(results['cat1_ids'].dense_shape.tolist(), [7, 4])
+      self.assertEqual(results['cat1_ids'].dense_shape.tolist(), [7, 3])
       self.assertEqual(results['cat1_ids'].values.tolist(), expected_ids)
 
       # Note, these are natural logs.
+      log_4_3 = math.log(4.0 / 3.0)
       expected_weights = [
-          math.log(4.0 / 3.0),  # doc 0
-          2.0 / 3.0 * math.log(4.0 / 3.0), 1.0 / 3.0 * math.log(2.0),  # doc 1
+          1.0 / 3.0 * log_4_3, 1.0 / 3.0 * log_4_3, 1.0 / 3.0 * log_4_3,  # doc 0
+          1.0 / 3.0 * log_4_3, 1.0 / 3.0 * math.log(2.0), 1.0 / 3.0 * log_4_3,  # doc 1
           math.log(4.0 / 3.0),  # doc 2
-          math.log(4.0 / 3.0),  # doc 3
+          1.0 / 2.0 * log_4_3, 1.0 / 2.0 * log_4_3,  # doc 3
           math.log(4.0),  # doc 5
-          1.0 / 2.0 * math.log(4.0 / 3.0), 1.0 / 2.0 * math.log(4.0)]  # doc 6
+          1.0 / 2.0 * math.log(4.0), 1.0 / 2.0 * log_4_3]  # doc 6
 
       self.assertEqual(results['cat1_weights'].indices.tolist(), expected_indices)
-      self.assertEqual(results['cat1_weights'].dense_shape.tolist(), [7, 4])
+      self.assertEqual(results['cat1_weights'].dense_shape.tolist(), [7, 3])
       self.assertEqual(results['cat1_weights'].values.size, len(expected_weights))
       for weight, expected_weight in zip(results['cat1_weights'].values.tolist(), expected_weights):
         self.assertAlmostEqual(weight, expected_weight)
@@ -676,24 +677,24 @@ class TestGraphBuilding(unittest.TestCase):
                     'brown blue']})   # doc 6
 
       # indices are in the form [doc id, vocab id]
-      expected_indices = [[0, 0],
-                          [1, 0], [1, 1],
+      expected_indices = [[0, 0], [0, 1], [0, 2],
+                          [1, 0], [1, 1], [1, 2],
                           [2, 0],
-                          [3, 0],
+                          [3, 0], [3, 1],
                           [5, 0],
                           [6, 0], [6, 1]]
 
       # Note in doc 6, is is blue, then brown.
-      # doc id            0  1  1  2  3  5  6  6
-      expected_ids =     [0, 0, 2, 1, 1, 3, 1, 3]  # noqa
-      expected_weights = [3, 2, 1, 1, 2, 1, 1, 1]
+      # doc id            0  0  0  1  1  1  2  3  3  5  6  6
+      expected_ids =     [0, 0, 0, 0, 2, 0, 1, 1, 1, 3, 3, 1] # noqa
+      expected_weights = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
       self.assertEqual(results['cat1_ids'].indices.tolist(), expected_indices)
-      self.assertEqual(results['cat1_ids'].dense_shape.tolist(), [7, 4])
+      self.assertEqual(results['cat1_ids'].dense_shape.tolist(), [7, 3])
       self.assertEqual(results['cat1_ids'].values.tolist(), expected_ids)
 
       self.assertEqual(results['cat1_weights'].indices.tolist(),
                        expected_indices)
-      self.assertEqual(results['cat1_weights'].dense_shape.tolist(), [7, 4])
+      self.assertEqual(results['cat1_weights'].dense_shape.tolist(), [7, 3])
       self.assertEqual(results['cat1_weights'].values.size,
                        len(expected_weights))
       for weight, exp_weight in zip(results['cat1_weights'].values.tolist(),

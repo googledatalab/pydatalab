@@ -44,10 +44,10 @@ def local_predict(args):
       for (friendly_name, tensor_info_proto) in signature.inputs.items() }
   output_alias_map = {friendly_name: tensor_info_proto.name 
       for (friendly_name, tensor_info_proto) in signature.outputs.items() }
+  print('\ninput_alias_map ' + str(input_alias_map))
+  print('\noutput_alias_map '+ str(output_alias_map))      
   aliases, tensor_names = zip(*output_alias_map.items())
 
-  print('\ninput_alias_map ' + str(input_alias_map))
-  print('\noutput_alias_map '+ str(output_alias_map))
 
   batch_size = 2
 

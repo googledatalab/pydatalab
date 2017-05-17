@@ -1,0 +1,11 @@
+{
+  "str_tfidf": {
+    "transform": "tfidf"
+  }, 
+  "target": {
+    "transform": "target"
+  }, 
+  "key": {
+    "transform": "key"
+  }
+}

@@ -9,8 +9,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
+import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
 
@@ -19,6 +21,8 @@ CODE_PATH = os.path.abspath(os.path.join(
 
 def make_csv_data(filename, num_rows, problem_type, keep_target=True):
   """Writes csv data for preprocessing and training.
+
+  There is one csv column for each supported transform.
 
   Args:
     filename: writes data to local csv file.
@@ -52,7 +56,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
       abc_map = {'abc': -1, 'def': -1, 'ghi': 1, 'jkl': 1, 'mno': 2, 'pqr': 1}
       transport_map = {'car': 5, 'truck': 10, 'van': 15, 'bike': 20, 'train': -25, 'drone': -30}
 
-      # Build some model.
+      # Build some model: t id the dependent variable
       t = 0.5 + 0.5 * num_id - 2.5 * num_scale
       t += color_map[str_one_hot]
       t += abc_map[str_embedding]
@@ -60,6 +64,8 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
       t += sum([transport_map[x]*0.5 for x in str_tfidf])
 
       if problem_type == 'classification':
+        # If you cange the weights above or add more columns, look at the new
+        # distribution of t values and try to divide them into 3 buckets.
         if t < -40:
           t = 100
         elif t < 0:
@@ -100,14 +106,18 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
 
 
 class TestTrainer(unittest.TestCase):
-  """Tests 
+  """Tests training.
+
+  Runs analysze_data and transform_raw_data on generated test data. Also loads
+  the exported graphs and checks they run. No validation of the test results is
+  done (i.e., the training loss is not checked).
   """
   def __init__(self, *args, **kwargs):
     super(TestTrainer, self).__init__(*args, **kwargs)
 
     # Allow this class to be subclassed for quick tests that only care about
     # training working, not model loss/accuracy.
-    self._max_steps = 2500
+    self._max_steps = 2000
     self._check_model_fit = True
 
     # Log everything
@@ -117,8 +127,8 @@ class TestTrainer(unittest.TestCase):
       self._logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
   def setUp(self):
-    #self._test_dir = tempfile.mkdtemp()
-    self._test_dir = './tmp'
+    self._test_dir = tempfile.mkdtemp()
+    #self._test_dir = './tmp'
     self._analysis_output = os.path.join(self._test_dir, 'analysis_output')
     self._transform_output = os.path.join(self._test_dir, 'transform_output')
     self._train_output = os.path.join(self._test_dir, 'train_output')
@@ -151,7 +161,7 @@ class TestTrainer(unittest.TestCase):
 
     schema = [
         {'name': 'key', 'type': 'integer'},
-        {'name': 'target', 'type': 'string'},
+        {'name': 'target', 'type': 'string' if problem_type == 'classification' else 'float'},
         {'name': 'num_id', 'type': 'integer'},
         {'name': 'num_scale', 'type': 'float'},
         {'name': 'str_one_hot', 'type': 'string'},
@@ -184,6 +194,8 @@ class TestTrainer(unittest.TestCase):
            '--output-dir=' + self._transform_output,
            '--target',
            '--shuffle']
+
+    self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
    
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
@@ -192,10 +204,12 @@ class TestTrainer(unittest.TestCase):
            '--output-filename-prefix=features_eval',
            '--output-dir=' + self._transform_output,
            '--target']
+
+    self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)   
 
   def _run_training_transform(self, problem_type, model_type, extra_args=[]):
-    """Runs training.
+    """Runs training starting with transformed tf.example files.
 
     Args:
       problem_type: 'regression' or 'classification'
@@ -212,12 +226,11 @@ class TestTrainer(unittest.TestCase):
            '--eval-batch-size=50',
            '--max-steps=' + str(self._max_steps)] + extra_args
 
-    print('gong to run\n\n\n')
-    print(' '.join(cmd))
+    self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
   def _run_training_raw(self, problem_type, model_type, extra_args=[]):
-    """Runs training.
+    """Runs training starting from raw csv data.
 
     Args:
       problem_type: 'regression' or 'classification'
@@ -227,7 +240,7 @@ class TestTrainer(unittest.TestCase):
     cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
            '--train-data-paths=' + self._csv_train_filename,
            '--eval-data-paths=' +  self._csv_eval_filename,
-           '--job-dir=' +  self._train_output + '_raw',           
+           '--job-dir=' +  self._train_output,           
            '--analysis-output-dir=' + self._analysis_output,
            '--model-type=%s_%s' % (model_type, problem_type),
            '--train-batch-size=100',
@@ -235,12 +248,67 @@ class TestTrainer(unittest.TestCase):
            '--max-steps=' + str(self._max_steps),
            '--run-transforms'] + extra_args
 
-    print('gong to run\n\n\n\n')
-    print(' '.join(cmd))
+    self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
-  
-  def xtestClassificationLinear(self):
+  def _check_model(self, problem_type, model_type):
+    """Checks that both exported prediction graphs work."""
+
+    for has_target in [True, False]:
+      if has_target:
+        model_path = os.path.join(self._train_output, 'evaluation_model')
+      else:
+        model_path = os.path.join(self._train_output, 'model')
+
+      self._logger.debug('Checking model %s %s at %s' % (problem_type, model_type, model_path))
+
+      # Check there is a saved model.
+      self.assertTrue(os.path.isfile(os.path.join(model_path, 'saved_model.pb')))
+
+      # Must create new graphs as multiple graphs are loaded into memory.
+      with tf.Graph().as_default(), tf.Session() as sess:
+        meta_graph_pb = tf.saved_model.loader.load(
+            sess=sess,
+            tags=[tf.saved_model.tag_constants.SERVING],
+            export_dir=model_path)
+        signature = meta_graph_pb.signature_def['serving_default']
+
+        input_alias_map = {friendly_name: tensor_info_proto.name 
+            for (friendly_name, tensor_info_proto) in signature.inputs.items() }
+        output_alias_map = {friendly_name: tensor_info_proto.name 
+            for (friendly_name, tensor_info_proto) in signature.outputs.items() }
+     
+        feed_dict = {'key': [12,11],
+                     'target': [-49, -9,] if problem_type == 'regression' else ['100', '101'],
+                     'num_id': [11, 10],
+                     'num_scale': [22.29, 5.20],
+                     'str_one_hot': ['brown', 'brown'],
+                     'str_embedding': ['def', 'def'],
+                     'str_bow': ['drone', 'drone truck bike truck'],
+                     'str_tfidf': ['bike train train car', 'train']
+        }
+        if not has_target:
+          del feed_dict['target']
+
+        expected_output_keys = ['predicted', 'key']
+        if has_target:
+          expected_output_keys.append('target')
+        if problem_type == 'classification':
+          expected_output_keys.extend(['score', 'score_2', 'score_3', 'predicted_2', 'predicted_3'])
+
+        self.assertItemsEqual(feed_dict.keys(), input_alias_map.keys())
+        self.assertItemsEqual(expected_output_keys, output_alias_map.keys())
+
+        feed_placeholders = {}
+        for key in input_alias_map:
+          feed_placeholders[input_alias_map[key]] = feed_dict[key]
+
+        result = sess.run(fetches=output_alias_map,
+                          feed_dict=feed_placeholders)
+        
+        self.assertItemsEqual(expected_output_keys, result.keys())
+    
+  def testClassificationLinear(self):
     self._logger.debug('\n\nTesting Classification Linear')
 
     problem_type='classification'
@@ -250,9 +318,12 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type,
         extra_args=['--top-n=3'])
+    self._check_model(
+        problem_type=problem_type,
+        model_type=model_type)    
 
 
-  def xtestRegressionLinear(self):
+  def testRegressionLinear(self):
     self._logger.debug('\n\nTesting Regression Linear')
 
     problem_type='regression'
@@ -261,7 +332,10 @@ class TestTrainer(unittest.TestCase):
     self._run_transform()
     self._run_training_transform(
         problem_type=problem_type,
-        model_type=model_type,)
+        model_type=model_type)
+    self._check_model(
+        problem_type=problem_type,
+        model_type=model_type)    
 
   def testClassificationDNN(self):
     self._logger.debug('\n\nTesting Classification DNN')
@@ -269,8 +343,25 @@ class TestTrainer(unittest.TestCase):
     problem_type='classification'
     model_type='dnn'
     self._run_analyze(problem_type)
-    #self._run_transform()
+    self._run_transform()
     #self._run_training_transform(
+    self._run_training_transform(
+        problem_type=problem_type,
+        model_type=model_type,
+        extra_args=['--top-n=3',
+                    '--layer-size1=10',
+                    '--layer-size2=5',
+                    '--layer-size3=2'])
+    self._check_model(
+        problem_type=problem_type,
+        model_type=model_type)    
+
+  def testRegressionDNN(self):
+    self._logger.debug('\n\nTesting Regression DNN')
+
+    problem_type='regression'
+    model_type='dnn'
+    self._run_analyze(problem_type)
     self._run_training_raw(
         problem_type=problem_type,
         model_type=model_type,
@@ -278,6 +369,9 @@ class TestTrainer(unittest.TestCase):
                     '--layer-size1=10',
                     '--layer-size2=5',
                     '--layer-size3=2'])
+    self._check_model(
+        problem_type=problem_type,
+        model_type=model_type)
 
 if __name__ == '__main__':
     unittest.main()
