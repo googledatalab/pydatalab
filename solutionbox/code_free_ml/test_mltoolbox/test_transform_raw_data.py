@@ -43,7 +43,7 @@ class TestTransformRawData(unittest.TestCase):
     img3_file = os.path.join(cls.source_dir, 'img3.jpg')
     image3 = Image.new('RGBA', size=(800, 600), color=(33, 55, 77))
     image3.save(img3_file)
-    
+
     # Make csv input file
     cls.csv_input_filepath = os.path.join(cls.source_dir, 'input.csv')
     file_io.write_string_to_file(
@@ -112,7 +112,6 @@ class TestTransformRawData(unittest.TestCase):
     self.assertEqual(len(image_bytes), 2048)
     self.assertTrue(any(x != 0.0 for x in image_bytes))
 
-
   def test_local_bigquery_transform(self):
     """Test transfrom locally, but the data comes from bigquery."""
 
@@ -121,14 +120,14 @@ class TestTransformRawData(unittest.TestCase):
     dataset_name = 'test_transform_raw_data_%s' % uuid.uuid4().hex
     table_name = 'tmp_table'
 
-    dataset = bq.Dataset((project_id, dataset_name)).create()
+    bq.Dataset((project_id, dataset_name)).create()
     table = bq.Table((project_id, dataset_name, table_name))
     table.create([{'name': 'key_col', 'type': 'INTEGER'},
                   {'name': 'target_col', 'type': 'FLOAT'},
                   {'name': 'cat_col', 'type': 'STRING'},
                   {'name': 'num_col', 'type': 'FLOAT'},
                   {'name': 'img_col', 'type': 'STRING'}])
-      
+
     img1_file = os.path.join(self.source_dir, 'img1.jpg')
     dest_file = os.path.join(self.bucket_root, 'img1.jpg')
     subprocess.check_call('gsutil cp %s %s' % (img1_file, dest_file), shell=True)
