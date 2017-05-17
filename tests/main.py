@@ -12,6 +12,7 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import argparse
 import sys
 import unittest
 
@@ -56,7 +57,7 @@ import _util.lru_cache_tests
 import _util.util_tests
 
 
-_TEST_MODULES = [
+_UNIT_TEST_MODULES = [
     context_tests,
     bigquery.api_tests,
     bigquery.dataset_tests,
@@ -78,9 +79,6 @@ _TEST_MODULES = [
     kernel.storage_tests,
     kernel.utils_tests,
     ml.dataset_tests,
-    mltoolbox_structured_data.dl_interface_tests,
-    mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
-    mltoolbox_structured_data.traininglib_tests,
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,
     stackdriver.monitoring.metric_tests,
@@ -96,10 +94,42 @@ _TEST_MODULES = [
     _util.util_tests
 ]
 
+
+_INTEGRATION_TEST_MODULES = [
+    mltoolbox_structured_data.dl_interface_tests,
+    mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
+    mltoolbox_structured_data.traininglib_tests,  
+]
+
+
+def parse_arguments(argv):
+  """Parse command line arguments.
+
+  Args:
+    argv: list of command line arguments, including program name.
+
+  Returns:
+    An argparse Namespace object.
+
+  Raises:
+    ValueError: for bad parameters
+  """
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--unittestonly',
+                      action='store_true',
+                      help='Only run unit tests (no integration tests).')
+  args = parser.parse_args(args=argv[1:])
+  return args
+
+
 if __name__ == '__main__':
+  args = parse_arguments(sys.argv)
   suite = unittest.TestSuite()
-  for m in _TEST_MODULES:
+  for m in _UNIT_TEST_MODULES:
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(m))
+  if not args.unittestonly:
+    for m in _INTEGRATION_TEST_MODULES:
+      suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(m))
 
   runner = unittest.TextTestRunner()
   result = runner.run(suite)
