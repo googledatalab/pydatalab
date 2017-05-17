@@ -98,7 +98,7 @@ _UNIT_TEST_MODULES = [
 _INTEGRATION_TEST_MODULES = [
     mltoolbox_structured_data.dl_interface_tests,
     mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
-    mltoolbox_structured_data.traininglib_tests,  
+    mltoolbox_structured_data.traininglib_tests,
 ]
 
 
