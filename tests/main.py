@@ -29,7 +29,7 @@ import bigquery.query_tests
 import bigquery.sampling_tests
 import bigquery.schema_tests
 import bigquery.table_tests
-# import bigquery.udf_tests
+import bigquery.udf_tests
 import bigquery.view_tests
 import kernel.bigquery_tests
 import kernel.chart_data_tests
@@ -68,7 +68,7 @@ _UNIT_TEST_MODULES = [
     bigquery.sampling_tests,
     bigquery.schema_tests,
     bigquery.table_tests,
-    # bigquery.udf_tests, # TODO: enable UDF tests once new implementation is done
+    bigquery.udf_tests,
     bigquery.view_tests,
     bigquery.sampling_tests,
     kernel.bigquery_tests,
