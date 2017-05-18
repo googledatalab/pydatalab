@@ -30,7 +30,6 @@ from tensorflow.contrib.framework.python.ops import variables as contrib_variabl
 from tensorflow.contrib.learn.python.learn import export_strategy
 from tensorflow.contrib.learn.python.learn import learn_runner
 from tensorflow.contrib.learn.python.learn.estimators import model_fn as model_fn_lib
-from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
 from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
 from tensorflow.python.client import session as tf_session
 from tensorflow.python.framework import dtypes
@@ -49,7 +48,6 @@ from tensorflow_transform.saved import input_fn_maker
 from tensorflow_transform.saved import saved_transform_io
 from tensorflow_transform.tf_metadata import dataset_schema
 from tensorflow_transform.tf_metadata import metadata_io
-
 
 
 # Files

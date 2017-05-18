@@ -525,7 +525,7 @@ def make_preprocessing_fn(output_dir, features):
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
           result[name] = string_to_int(inputs[name], vocab)
       elif transform_name == IMAGE_TRANSFORM:
-        result[name] = tft.map(make_image_to_vec_tito(output_dir), inputs[name])         
+        result[name] = tft.map(make_image_to_vec_tito(output_dir), inputs[name])
       else:
         raise ValueError('unknown transform %s' % transform_name)
     return result
