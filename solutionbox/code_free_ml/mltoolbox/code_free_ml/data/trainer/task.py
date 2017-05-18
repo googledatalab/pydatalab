@@ -16,47 +16,39 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import os
-import pandas as pd
-import re
-import six
-import sys
+import json
 import math
 import multiprocessing
-import json
-
-
+import os
+import re
+import sys
+import pandas as pd
+import six
 import tensorflow as tf
-from tensorflow.python.framework import dtypes
 
+from tensorflow.contrib.framework.python.ops import variables as contrib_variables
+from tensorflow.contrib.learn.python.learn import export_strategy
 from tensorflow.contrib.learn.python.learn import learn_runner
+from tensorflow.contrib.learn.python.learn.estimators import model_fn as model_fn_lib
+from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
+from tensorflow.contrib.learn.python.learn.utils import saved_model_export_utils
+from tensorflow.python.client import session as tf_session
+from tensorflow.python.framework import dtypes
+from tensorflow.python.framework import ops
 from tensorflow.python.lib.io import file_io
-
+from tensorflow.python.ops import control_flow_ops
+from tensorflow.python.ops import data_flow_ops
+from tensorflow.python.ops import variables
+from tensorflow.python.platform import gfile
+from tensorflow.python.saved_model import builder as saved_model_builder
+from tensorflow.python.saved_model import signature_def_utils
+from tensorflow.python.saved_model import tag_constants
+from tensorflow.python.training import saver
+from tensorflow.python.util import compat
 from tensorflow_transform.saved import input_fn_maker
-from tensorflow_transform.tf_metadata import metadata_io
-
 from tensorflow_transform.saved import saved_transform_io
 from tensorflow_transform.tf_metadata import dataset_schema
-
-
-from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
-from tensorflow.contrib.learn.python.learn import export_strategy
-from tensorflow.contrib.learn.python.learn.utils import (
-    saved_model_export_utils)
-
-from tensorflow.python.ops import variables
-from tensorflow.contrib.framework.python.ops import variables as contrib_variables
-from tensorflow.contrib.learn.python.learn.estimators import model_fn as model_fn_lib
-from tensorflow.python.training import saver
-from tensorflow.python.ops import data_flow_ops
-from tensorflow.python.framework import ops
-from tensorflow.python.client import session as tf_session
-from tensorflow.python.saved_model import builder as saved_model_builder
-from tensorflow.python.saved_model import tag_constants
-from tensorflow.python.ops import control_flow_ops
-from tensorflow.python.util import compat
-from tensorflow.python.platform import gfile
-from tensorflow.python.saved_model import signature_def_utils
+from tensorflow_transform.tf_metadata import metadata_io
 
 
 
@@ -95,6 +87,7 @@ PG_CLASSIFICATION_FIRST_LABEL = 'predicted'
 PG_CLASSIFICATION_FIRST_SCORE = 'score'
 PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
+
 
 def parse_arguments(argv):
   """Parse the command line arguments."""
@@ -206,6 +199,7 @@ def is_regression_model(model_type):
 def is_classification_model(model_type):
   return model_type.endswith('_classification')
 
+
 def build_feature_columns(features, stats, model_type):
   feature_columns = []
   is_dnn = is_dnn_model(model_type)
@@ -252,20 +246,18 @@ def build_feature_columns(features, stats, model_type):
           name + '_ids',
           bucket_size=stats['column_stats'][name]['vocab_size'],
           combiner='sum')
-      sparse_weights =  tf.contrib.layers.weighted_sparse_column(
-          sparse_id_column=sparse_ids, 
+      sparse_weights = tf.contrib.layers.weighted_sparse_column(
+          sparse_id_column=sparse_ids,
           weight_column_name=name + '_weights',
           dtype=dtypes.float32)
       if is_dnn:
-        #TODO(brandondutra): Figure out why one_hot_column does not work.
-        #new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
+        # TODO(brandondutra): Figure out why one_hot_column does not work.
+        # Use new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
         dimension = int(math.log(stats['column_stats'][name]['vocab_size'])) + 1
         new_feature = tf.contrib.layers.embedding_column(
             sparse_weights,
             dimension=dimension,
             combiner='sqrtn')
-        #new_feature = sparse_weights
-        #continue
       else:
         new_feature = sparse_weights
     elif transform_name == TARGET_TRANSFORM or transform_name == KEY_TRANSFORM:
@@ -296,12 +288,9 @@ def _recursive_copy(src_dir, dest_dir):
     else:
       file_io.copy(old_path, new_path, overwrite=True)
 
-def make_prediction_output_tensors(
-          args,
-          features,
-          input_ops,
-          model_fn_ops,
-          keep_target):
+
+def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
+                                   keep_target):
   """Makes the final prediction output layer."""
   target_name = get_target_name(features)
   key_name = get_key_name(features)
@@ -366,9 +355,9 @@ def make_prediction_output_tensors(
     scores = model_fn_ops.predictions['scores']
     outputs[PG_REGRESSION_PREDICTED_TARGET] = tf.squeeze(scores)
 
-  return outputs  
+  return outputs
 
-  
+
 # This function is strongly based on
 # tensorflow/contrib/learn/python/learn/estimators/estimator.py:export_savedmodel()
 def make_export_strategy(
@@ -388,11 +377,9 @@ def make_export_strategy(
     features: features dict
     schema: schema list
   """
-
   target_name = get_target_name(features)
-  key_name = get_key_name(features)
   raw_metadata = raw_metadata = metadata_io.read_metadata(
-        os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
+      os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
 
   csv_header = [col['name'] for col in schema]
   if not keep_target:
@@ -407,7 +394,7 @@ def make_export_strategy(
           transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
           raw_label_keys=[target_name],
           raw_feature_keys=csv_header,
-          convert_scalars_to_vectors=True)()       
+          convert_scalars_to_vectors=True)()
 
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
@@ -420,16 +407,16 @@ def make_export_strategy(
           keep_target=keep_target)
 
       signature_def_map = {
-        'serving_default': signature_def_utils.predict_signature_def(input_ops.default_inputs,
-                                                                  output_fetch_tensors)
-      }
+          'serving_default':
+              signature_def_utils.predict_signature_def(input_ops.default_inputs,
+                                                        output_fetch_tensors)}
 
       if not checkpoint_path:
         # Locate the latest checkpoint
         checkpoint_path = saver.latest_checkpoint(estimator._model_dir)
       if not checkpoint_path:
-        raise NotFittedError("Couldn't find trained model at %s."
-                             % estimator._model_dir)
+        raise ValueError("Couldn't find trained model at %s."
+                         % estimator._model_dir)
 
       export_dir = saved_model_export_utils.get_timestamped_export_dir(
           export_dir_base)
@@ -555,14 +542,13 @@ def build_csv_transforming_training_input_fn(raw_metadata,
                         "having shape []. %s has shape %s")
                        % (k, shape))
 
-
   def raw_training_input_fn():
     """Training input function that reads raw data and applies transforms."""
 
     if isinstance(raw_data_file_pattern, six.string_types):
       filepath_list = [raw_data_file_pattern]
     else:
-      filepath_list =  raw_data_file_pattern
+      filepath_list = raw_data_file_pattern
 
     files = []
     for path in filepath_list:
@@ -601,7 +587,7 @@ def build_csv_transforming_training_input_fn(raw_metadata,
         value = tf.constant([], dtype=column_schemas[k].domain.dtype)
       record_defaults.append(value)
 
-    parsed_tensors  = tf.decode_csv(batch_csv_lines, record_defaults, name='csv_to_tensors')
+    parsed_tensors = tf.decode_csv(batch_csv_lines, record_defaults, name='csv_to_tensors')
 
     raw_data = {k: v for k, v in zip(raw_keys, parsed_tensors)}
 
@@ -625,7 +611,6 @@ def build_csv_transforming_training_input_fn(raw_metadata,
     return transformed_features, transformed_labels
 
   return raw_training_input_fn
-
 
 
 def get_estimator(args, output_dir, features, stats, target_vocab_size):
@@ -680,6 +665,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
 
   return estimator
 
+
 def read_vocab(args, column_name):
   """Reads a vocab file if it exists.
 
@@ -709,15 +695,18 @@ def get_target_name(features):
       return name
   return None
 
+
 def get_key_name(features):
   for name, transform in six.iteritems(features):
     if transform['transform'] == KEY_TRANSFORM:
       return name
   return None
 
+
 def gzip_reader_fn():
   return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
       compression_type=tf.python_io.TFRecordCompressionType.GZIP))
+
 
 def get_experiment_fn(args):
   """Builds the experiment function for learn_runner.run.
@@ -750,13 +739,12 @@ def get_experiment_fn(args):
     key_column_name = get_key_name(features)
     header_names = [col['name'] for col in schema]
     if not target_column_name or not key_column_name:
-      raise ValueError('target or key transform missing from features file.') 
-    
+      raise ValueError('target or key transform missing from features file.')
+
     # Get the model to train.
     target_vocab = read_vocab(args, target_column_name)
     estimator = get_estimator(args, output_dir, features, stats, len(target_vocab))
 
-    
     # Make list of files to save with the trained model.
     additional_assets = {FEATURES_FILE: features_file_path,
                          SCHEMA_FILE: schema_file_path}
@@ -773,7 +761,6 @@ def get_experiment_fn(args):
         assets_extra=additional_assets,
         features=features,
         schema=schema)
-    
 
     # Build readers for training.
     if args.run_transforms:
@@ -804,7 +791,7 @@ def get_experiment_fn(args):
           num_epochs=1,
           randomize_input=False,
           reader_num_threads=multiprocessing.cpu_count()
-      )      
+      )
     else:
       transformed_metadata = metadata_io.read_metadata(
           os.path.join(args.analysis_output_dir, TRANSFORMED_METADATA_DIR))
@@ -848,7 +835,6 @@ def get_experiment_fn(args):
 
   # Return a function to create an Experiment.
   return get_experiment
-
 
 
 def main(argv=None):

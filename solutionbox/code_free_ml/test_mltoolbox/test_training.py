@@ -4,12 +4,10 @@ import json
 import logging
 import os
 import random
-import re
 import shutil
 import subprocess
 import sys
 import tempfile
-import time
 import unittest
 
 import tensorflow as tf
@@ -18,6 +16,7 @@ from tensorflow.python.lib.io import file_io
 
 CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data'))
+
 
 def make_csv_data(filename, num_rows, problem_type, keep_target=True):
   """Writes csv data for preprocessing and training.
@@ -38,30 +37,34 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
     if random.uniform(0, 1) < 0.05:
       return ''
     return x
-  
+
   with open(filename, 'w') as f:
     for i in range(num_rows):
       num_id = random.randint(0, 20)
       num_scale = random.uniform(0, 30)
 
-      str_one_hot = random.choice(['red', 'blue', 'green', 'pink', 'yellow', 'brown', 'black'])
+      str_one_hot = random.choice(['red', 'blue', 'green', 'pink', 'yellow',
+                                   'brown', 'black'])
       str_embedding = random.choice(['abc', 'def', 'ghi', 'jkl', 'mno', 'pqr'])
 
-      word_fn = lambda : random.choice(['car', 'truck', 'van', 'bike', 'train', 'drone'])
+      def _word_fn():
+        return random.choice(['car', 'truck', 'van', 'bike', 'train', 'drone'])
 
-      str_bow =  [word_fn() for _ in range(random.randint(1,4))]
-      str_tfidf =  [word_fn() for _ in range(random.randint(1,4))]
+      str_bow = [_word_fn() for _ in range(random.randint(1, 4))]
+      str_tfidf = [_word_fn() for _ in range(random.randint(1, 4))]
 
-      color_map = {'red': 2, 'blue': 6, 'green': 4, 'pink': -5, 'yellow': -6, 'brown': -1, 'black': -7}
+      color_map = {'red': 2, 'blue': 6, 'green': 4, 'pink': -5, 'yellow': -6,
+                   'brown': -1, 'black': -7}
       abc_map = {'abc': -1, 'def': -1, 'ghi': 1, 'jkl': 1, 'mno': 2, 'pqr': 1}
-      transport_map = {'car': 5, 'truck': 10, 'van': 15, 'bike': 20, 'train': -25, 'drone': -30}
+      transport_map = {'car': 5, 'truck': 10, 'van': 15, 'bike': 20,
+                       'train': -25, 'drone': -30}
 
       # Build some model: t id the dependent variable
       t = 0.5 + 0.5 * num_id - 2.5 * num_scale
       t += color_map[str_one_hot]
       t += abc_map[str_embedding]
       t += sum([transport_map[x] for x in str_bow])
-      t += sum([transport_map[x]*0.5 for x in str_tfidf])
+      t += sum([transport_map[x] * 0.5 for x in str_tfidf])
 
       if problem_type == 'classification':
         # If you cange the weights above or add more columns, look at the new
@@ -84,7 +87,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
       str_tfidf = _drop_out(str_tfidf)
 
       if keep_target:
-          csv_line = "{key},{target},{num_id},{num_scale},{str_one_hot},{str_embedding},{str_bow},{str_tfidf}\n".format(
+          csv_line = "{key},{target},{num_id},{num_scale},{str_one_hot},{str_embedding},{str_bow},{str_tfidf}\n".format( # noqa
             key=i,
             target=t,
             num_id=num_id,
@@ -94,7 +97,7 @@ def make_csv_data(filename, num_rows, problem_type, keep_target=True):
             str_bow=str_bow,
             str_tfidf=str_tfidf)
       else:
-          csv_line = "{key},{num_id},{num_scale},{str_one_hot},{str_embedding},{str_bow},{str_tfidf}\n".format(
+          csv_line = "{key},{num_id},{num_scale},{str_one_hot},{str_embedding},{str_bow},{str_tfidf}\n".format(  # noqa
             key=i,
             num_id=num_id,
             num_scale=num_scale,
@@ -128,7 +131,7 @@ class TestTrainer(unittest.TestCase):
 
   def setUp(self):
     self._test_dir = tempfile.mkdtemp()
-    #self._test_dir = './tmp'
+
     self._analysis_output = os.path.join(self._test_dir, 'analysis_output')
     self._transform_output = os.path.join(self._test_dir, 'transform_output')
     self._train_output = os.path.join(self._test_dir, 'train_output')
@@ -153,11 +156,10 @@ class TestTrainer(unittest.TestCase):
         'num_scale': {'transform': 'scale', 'value': 4},
         'str_one_hot': {'transform': 'one_hot'},
         'str_embedding': {'transform': 'embedding', 'embedding_dim': 3},
-        'str_bow': {'transform': 'bag_of_words'}, 
-        'str_tfidf': {'transform': 'tfidf'}, 
+        'str_bow': {'transform': 'bag_of_words'},
+        'str_tfidf': {'transform': 'tfidf'},
         'target': {'transform': 'target'},
-        'key': {'transform': 'key'},
-    }
+        'key': {'transform': 'key'}}
 
     schema = [
         {'name': 'key', 'type': 'integer'},
@@ -167,8 +169,7 @@ class TestTrainer(unittest.TestCase):
         {'name': 'str_one_hot', 'type': 'string'},
         {'name': 'str_embedding', 'type': 'string'},
         {'name': 'str_bow', 'type': 'string'},
-        {'name': 'str_tfidf', 'type': 'string'},
-    ]
+        {'name': 'str_tfidf', 'type': 'string'}]
 
     file_io.write_string_to_file(self._schema_filename, json.dumps(schema, indent=2))
     file_io.write_string_to_file(self._features_filename, json.dumps(features, indent=2))
@@ -181,9 +182,8 @@ class TestTrainer(unittest.TestCase):
            '--output-dir=' + self._analysis_output,
            '--csv-file-pattern=' + self._csv_train_filename,
            '--csv-schema-file=' + self._schema_filename,
-           '--features-file=' + self._features_filename,
-    ]
-  
+           '--features-file=' + self._features_filename]
+
     subprocess.check_call(' '.join(cmd), shell=True)
 
   def _run_transform(self):
@@ -197,7 +197,7 @@ class TestTrainer(unittest.TestCase):
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
-   
+
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
            '--csv-file-pattern=' + self._csv_eval_filename,
            '--analyze-output-dir=' + self._analysis_output,
@@ -206,7 +206,7 @@ class TestTrainer(unittest.TestCase):
            '--target']
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
-    subprocess.check_call(' '.join(cmd), shell=True)   
+    subprocess.check_call(' '.join(cmd), shell=True)
 
   def _run_training_transform(self, problem_type, model_type, extra_args=[]):
     """Runs training starting with transformed tf.example files.
@@ -218,8 +218,8 @@ class TestTrainer(unittest.TestCase):
     """
     cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
            '--train-data-paths=' + os.path.join(self._transform_output, 'features_train*'),
-           '--eval-data-paths=' +  os.path.join(self._transform_output, 'features_eval*'),
-           '--job-dir=' +  self._train_output,
+           '--eval-data-paths=' + os.path.join(self._transform_output, 'features_eval*'),
+           '--job-dir=' + self._train_output,
            '--analysis-output-dir=' + self._analysis_output,
            '--model-type=%s_%s' % (model_type, problem_type),
            '--train-batch-size=100',
@@ -239,8 +239,8 @@ class TestTrainer(unittest.TestCase):
     """
     cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
            '--train-data-paths=' + self._csv_train_filename,
-           '--eval-data-paths=' +  self._csv_eval_filename,
-           '--job-dir=' +  self._train_output,           
+           '--eval-data-paths=' + self._csv_eval_filename,
+           '--job-dir=' + self._train_output,
            '--analysis-output-dir=' + self._analysis_output,
            '--model-type=%s_%s' % (model_type, problem_type),
            '--train-batch-size=100',
@@ -273,20 +273,22 @@ class TestTrainer(unittest.TestCase):
             export_dir=model_path)
         signature = meta_graph_pb.signature_def['serving_default']
 
-        input_alias_map = {friendly_name: tensor_info_proto.name 
-            for (friendly_name, tensor_info_proto) in signature.inputs.items() }
-        output_alias_map = {friendly_name: tensor_info_proto.name 
-            for (friendly_name, tensor_info_proto) in signature.outputs.items() }
-     
-        feed_dict = {'key': [12,11],
-                     'target': [-49, -9,] if problem_type == 'regression' else ['100', '101'],
+        input_alias_map = {
+            friendly_name: tensor_info_proto.name
+            for (friendly_name, tensor_info_proto) in signature.inputs.items()}
+        output_alias_map = {
+            friendly_name: tensor_info_proto.name
+            for (friendly_name, tensor_info_proto) in signature.outputs.items()}
+
+        feed_dict = {'key': [12, 11],
+                     'target': [-49, -9] if problem_type == 'regression' else ['100', '101'],
                      'num_id': [11, 10],
                      'num_scale': [22.29, 5.20],
                      'str_one_hot': ['brown', 'brown'],
                      'str_embedding': ['def', 'def'],
                      'str_bow': ['drone', 'drone truck bike truck'],
-                     'str_tfidf': ['bike train train car', 'train']
-        }
+                     'str_tfidf': ['bike train train car', 'train']}
+
         if not has_target:
           del feed_dict['target']
 
@@ -300,19 +302,19 @@ class TestTrainer(unittest.TestCase):
         self.assertItemsEqual(expected_output_keys, output_alias_map.keys())
 
         feed_placeholders = {}
-        for key in input_alias_map:
+        for key in feed_dict:
           feed_placeholders[input_alias_map[key]] = feed_dict[key]
 
         result = sess.run(fetches=output_alias_map,
                           feed_dict=feed_placeholders)
-        
+
         self.assertItemsEqual(expected_output_keys, result.keys())
-    
+
   def testClassificationLinear(self):
     self._logger.debug('\n\nTesting Classification Linear')
 
-    problem_type='classification'
-    model_type='linear'
+    problem_type = 'classification'
+    model_type = 'linear'
     self._run_analyze(problem_type)
     self._run_training_raw(
         problem_type=problem_type,
@@ -320,14 +322,13 @@ class TestTrainer(unittest.TestCase):
         extra_args=['--top-n=3'])
     self._check_model(
         problem_type=problem_type,
-        model_type=model_type)    
-
+        model_type=model_type)
 
   def testRegressionLinear(self):
     self._logger.debug('\n\nTesting Regression Linear')
 
-    problem_type='regression'
-    model_type='linear'
+    problem_type = 'regression'
+    model_type = 'linear'
     self._run_analyze(problem_type)
     self._run_transform()
     self._run_training_transform(
@@ -335,16 +336,15 @@ class TestTrainer(unittest.TestCase):
         model_type=model_type)
     self._check_model(
         problem_type=problem_type,
-        model_type=model_type)    
+        model_type=model_type)
 
   def testClassificationDNN(self):
     self._logger.debug('\n\nTesting Classification DNN')
 
-    problem_type='classification'
-    model_type='dnn'
+    problem_type = 'classification'
+    model_type = 'dnn'
     self._run_analyze(problem_type)
     self._run_transform()
-    #self._run_training_transform(
     self._run_training_transform(
         problem_type=problem_type,
         model_type=model_type,
@@ -354,13 +354,13 @@ class TestTrainer(unittest.TestCase):
                     '--layer-size3=2'])
     self._check_model(
         problem_type=problem_type,
-        model_type=model_type)    
+        model_type=model_type)
 
   def testRegressionDNN(self):
     self._logger.debug('\n\nTesting Regression DNN')
 
-    problem_type='regression'
-    model_type='dnn'
+    problem_type = 'regression'
+    model_type = 'dnn'
     self._run_analyze(problem_type)
     self._run_training_raw(
         problem_type=problem_type,
@@ -372,6 +372,7 @@ class TestTrainer(unittest.TestCase):
     self._check_model(
         problem_type=problem_type,
         model_type=model_type)
+
 
 if __name__ == '__main__':
     unittest.main()

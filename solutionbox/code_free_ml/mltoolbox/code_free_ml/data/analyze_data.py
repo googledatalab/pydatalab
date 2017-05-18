@@ -33,7 +33,6 @@ import apache_beam as beam
 
 from tensorflow.contrib import lookup
 from tensorflow.python.lib.io import file_io
-from tensorflow_transform import impl_helper
 from tensorflow_transform.tf_metadata import dataset_metadata
 from tensorflow_transform.tf_metadata import dataset_schema
 from tensorflow_transform.tf_metadata import metadata_io
@@ -264,7 +263,8 @@ def string_to_int(x, vocab):
 
   return tft.api.map(_map_to_int, x)
 
-# TODO(brandondura): update this to not depend on tf layer's feature column 
+
+# TODO(brandondura): update this to not depend on tf layer's feature column
 # 'sum' combiner in the future.
 def tfidf(x, reduced_term_freq, vocab_size, corpus_size):
   """Maps the terms in x to their (1/doc_length) * inverse document frequency.
@@ -325,7 +325,7 @@ def tfidf(x, reduced_term_freq, vocab_size, corpus_size):
   return tft.api.map(tf.to_float, weights)
 
 
-# TODO(brandondura): update this to not depend on tf layer's feature column 
+# TODO(brandondura): update this to not depend on tf layer's feature column
 # 'sum' combiner in the future.
 def bag_of_words(x):
   """Computes bag of words weights
@@ -335,7 +335,7 @@ def bag_of_words(x):
   in tf layers during training can be applied to both.
   """
   def _bow(x):
-    """Comptue BOW weights. 
+    """Comptue BOW weights.
 
     As tf layer's sum combiner is used, the weights can be just ones. Tokens are
     not summed together here.
@@ -416,7 +416,7 @@ def make_preprocessing_fn(output_dir, features):
           weights = tfidf(
               x=ids,
               reduced_term_freq=ex_count + [0],
-              vocab_size=len(vocab)+1,
+              vocab_size=len(vocab) + 1,
               corpus_size=stats['num_examples'])
 
           result[name + '_ids'] = ids
@@ -496,48 +496,26 @@ def make_transform_graph(output_dir, schema, features):
   preprocessing_fn = make_preprocessing_fn(output_dir, features)
 
   # preprocessing_fn does not use any analyzer, so we can run a local beam job
-  # to properly make and write the transform function. 
+  # to properly make and write the transform function.
   temp_dir = os.path.join(output_dir, 'tmp')
   with beam.Pipeline('DirectRunner', options=None) as p:
     with tft_impl.Context(temp_dir=temp_dir):
 
       # Not going to transform, so no data is needed.
-      train_data = p | beam.Create([]) 
+      train_data = p | beam.Create([])
 
       transform_fn = (
         (train_data, tft_input_metadata)
-        | 'BuildTransformFn' >> 
-        tft_impl.AnalyzeDataset(preprocessing_fn))
+        | 'BuildTransformFn'  # noqa
+        >> tft_impl.AnalyzeDataset(preprocessing_fn))  # noqa
 
       # Writes transformed_metadata and transfrom_fn folders
-      _ = (transform_fn | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(output_dir))
+      _ = (transform_fn | 'WriteTransformFn' >> tft_beam_io.WriteTransformFn(output_dir))  # noqa
 
       # Write the raw_metadata
       metadata_io.write_metadata(
         metadata=tft_input_metadata,
         path=os.path.join(output_dir, RAW_METADATA_DIR))
-  # # copy from /tft/beam/impl
-  # inputs, outputs = impl_helper.run_preprocessing_fn(
-  #     preprocessing_fn=preprocessing_fn,
-  #     schema=tft_input_schema)
-  # output_metadata = dataset_metadata.DatasetMetadata(
-  #     schema=impl_helper.infer_feature_schema(outputs))
-
-  # transform_fn_dir = os.path.join(output_dir, TRANSFORM_FN_DIR)
-
-  # # This writes the SavedModel
-  # impl_helper.make_transform_fn_def(
-  #     schema=tft_input_schema,
-  #     inputs=inputs,
-  #     outputs=outputs,
-  #     saved_model_dir=transform_fn_dir)
-
-  # metadata_io.write_metadata(
-  #     metadata=output_metadata,
-  #     path=os.path.join(output_dir, TRANSFORMED_METADATA_DIR))
-  # metadata_io.write_metadata(
-  #     metadata=tft_input_metadata,
-  #     path=os.path.join(output_dir, RAW_METADATA_DIR))
 
 
 def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
@@ -904,6 +882,7 @@ def main(argv=None):
   file_io.write_string_to_file(
     os.path.join(args.output_dir, FEATURES_FILE),
     json.dumps(features, indent=2))
+
 
 if __name__ == '__main__':
   main()
