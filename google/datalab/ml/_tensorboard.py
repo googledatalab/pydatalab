@@ -88,6 +88,5 @@ class TensorBoard(object):
       try:
         p = psutil.Process(pid)
         p.kill()
-        p.wait()
       except Exception:
         pass

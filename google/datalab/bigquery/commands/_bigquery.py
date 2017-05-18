@@ -81,7 +81,7 @@ query_params_schema = {
           'type': 'object',
           'properties': {
             'name': {'type': 'string'},
-            'type': {'type': 'string', 'enum': ['STRING', 'INT64']},
+            'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
             'value': {'type': ['string', 'integer']}
           },
           'required': ['name', 'type', 'value'],
@@ -463,7 +463,7 @@ def _sample_cell(args, cell_body):
                             query_params=query_params).result()
 
   if args['verbose']:
-    print(results.sql)
+    print(query.sql)
 
   if args['profile']:
     return google.datalab.utils.commands.profile_df(results)
@@ -514,8 +514,8 @@ def _udf_cell(args, cell_body):
     raise Exception('Declaration must be of the form %%bq udf --name <variable name>')
 
   # Parse out parameters, return type, and imports
-  param_pattern = r'^\s*\/\/\s*@param\s+([<>\w]+)\s+([<>\w]+)\s*$'
-  returns_pattern = r'^\s*\/\/\s*@returns\s+([<>\w]+)\s*$'
+  param_pattern = r'^\s*\/\/\s*@param\s+([<>\w]+)\s+([<>\w,\s]+)\s*$'
+  returns_pattern = r'^\s*\/\/\s*@returns\s+([<>\w,\s]+)\s*$'
   import_pattern = r'^\s*\/\/\s*@import\s+(\S+)\s*$'
 
   params = re.findall(param_pattern, cell_body, re.MULTILINE)
@@ -530,8 +530,8 @@ def _udf_cell(args, cell_body):
   return_type = return_type[0]
 
   # Finally build the UDF object
-  udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, params, args['language'],
-                                    imports)
+  udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, dict(params),
+                                    args['language'], imports)
   google.datalab.utils.commands.notebook_environment()[udf_name] = udf
 
 
@@ -624,19 +624,6 @@ def _execute_cell(args, cell_body):
   context = _construct_context_for_args(args)
   r = query.execute(output_options, context=context, query_params=query_params)
   return r.result()
-
-
-def _get_schema(name):
-  """ Given a variable or table name, get the Schema if it exists. """
-  item = google.datalab.utils.commands.get_notebook_item(name)
-  if not item:
-    item = _get_table(name)
-
-  if isinstance(item, google.datalab.bigquery.Schema):
-    return item
-  if hasattr(item, 'schema') and isinstance(item.schema, google.datalab.bigquery._schema.Schema):
-    return item.schema
-  return None
 
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries

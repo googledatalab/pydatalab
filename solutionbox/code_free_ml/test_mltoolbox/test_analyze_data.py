@@ -2,8 +2,11 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import copy
+import cStringIO
+from PIL import Image
 import json
 import math
+import numpy as np
 import os
 import shutil
 import subprocess
@@ -700,6 +703,44 @@ class TestGraphBuilding(unittest.TestCase):
       for weight, exp_weight in zip(results['cat1_weights'].values.tolist(),
                                     expected_weights):
         self.assertAlmostEqual(weight, exp_weight)
+
+    finally:
+      shutil.rmtree(output_folder)
+
+  def test_make_transform_graph_images(self):
+
+    print('Testing make_transform_graph with image_to_vec.' +
+          'It may take a few minutes because it needs to download a large inception checkpoint.')
+
+    def _open_and_encode_image(img_url):
+      with file_io.FileIO(img_url, 'r') as f:
+        img = Image.open(f).convert('RGB')
+        output = cStringIO.StringIO()
+        img.save(output, 'jpeg')
+      return output.getvalue()
+
+    try:
+      output_folder = tempfile.mkdtemp()
+      stats_file_path = os.path.join(output_folder, analyze_data.STATS_FILE)
+      file_io.write_string_to_file(stats_file_path, json.dumps({'column_stats': {}}))
+      analyze_data.make_transform_graph(
+          output_folder,
+          [{'name': 'img', 'type': 'STRING'}],
+          {'img': {'transform': 'image_to_vec'}})
+
+      model_path = os.path.join(output_folder, 'transform_fn')
+      self.assertTrue(os.path.isfile(os.path.join(model_path, 'saved_model.pb')))
+
+      img_string1 = _open_and_encode_image(
+          'gs://cloud-ml-data/img/flower_photos/daisy/15207766_fc2f1d692c_n.jpg')
+      img_string2 = _open_and_encode_image(
+          'gs://cloud-ml-data/img/flower_photos/dandelion/8980164828_04fbf64f79_n.jpg')
+      results = self._run_graph(model_path, {'img': [img_string1, img_string2]})
+      embeddings = results['img']
+      self.assertEqual(len(embeddings), 2)
+      self.assertEqual(len(embeddings[0]), 2048)
+      self.assertEqual(embeddings[0].dtype, np.float32)
+      self.assertTrue(any(x != 0.0 for x in embeddings[1]))
 
     finally:
       shutil.rmtree(output_folder)

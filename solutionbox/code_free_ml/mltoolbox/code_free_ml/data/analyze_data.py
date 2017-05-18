@@ -32,6 +32,8 @@ import apache_beam as beam
 
 
 from tensorflow.contrib import lookup
+from tensorflow.contrib.slim.python.slim.nets.inception_v3 import inception_v3
+from tensorflow.contrib.slim.python.slim.nets.inception_v3 import inception_v3_arg_scope
 from tensorflow.python.lib.io import file_io
 from tensorflow_transform.tf_metadata import dataset_metadata
 from tensorflow_transform.tf_metadata import dataset_schema
@@ -58,6 +60,7 @@ BOW_TRANSFORM = 'bag_of_words'
 TFIDF_TRANSFORM = 'tfidf'
 KEY_TRANSFORM = 'key'
 TARGET_TRANSFORM = 'target'
+IMAGE_TRANSFORM = 'image_to_vec'
 
 # Transform collections
 NUMERIC_TRANSFORMS = [IDENTITY_TRANSFORM, SCALE_TRANSFORM]
@@ -73,6 +76,10 @@ INTEGER_SCHEMA = 'integer'
 FLOAT_SCHEMA = 'float'
 STRING_SCHEMA = 'string'
 NUMERIC_SCHEMA = [INTEGER_SCHEMA, FLOAT_SCHEMA]
+
+# Inception Checkpoint
+INCEPTION_V3_CHECKPOINT = 'gs://cloud-ml-data/img/flower_photos/inception_v3_2016_08_28.ckpt'
+INCEPTION_EXCLUDED_VARIABLES = ['InceptionV3/AuxLogits', 'InceptionV3/Logits', 'global_step']
 
 
 def parse_arguments(argv):
@@ -142,6 +149,7 @@ def parse_arguments(argv):
              {"transform": "bag_of_words"}: bag of words transform for string
                 columns.
              {"transform": "tfidf"}: TFIDF transform for string columns.
+             {"transform": "image_to_vec"}: From image gs url to embeddings.
              {"transform": "target"}: denotes what column is the target. If the
                 schema type of this column is string, a one_hot encoding is
                 automatically applied. If type is numerical, a identity transform
@@ -233,7 +241,7 @@ def scale(x, min_x_value, max_x_value, output_min, output_max):
     return ((((tf.to_float(x) - min_x_valuef) * (output_maxf - output_minf)) /
             (max_x_valuef - min_x_valuef)) + output_minf)
 
-  return tft.api.map(_scale, x)
+  return tft.map(_scale, x)
 
 
 def string_to_int(x, vocab):
@@ -261,7 +269,7 @@ def string_to_int(x, vocab):
         default_value=len(vocab))
     return table.lookup(x)
 
-  return tft.api.map(_map_to_int, x)
+  return tft.map(_map_to_int, x)
 
 
 # TODO(brandondura): update this to not depend on tf layer's feature column
@@ -319,10 +327,10 @@ def tfidf(x, reduced_term_freq, vocab_size, corpus_size):
         values=idf_over_doc_size,
         dense_shape=x.dense_shape)
 
-  cleaned_input = tft.api.map(_map_to_vocab_range, x)
+  cleaned_input = tft.map(_map_to_vocab_range, x)
 
-  weights = tft.api.map(_map_to_tfidf, cleaned_input)
-  return tft.api.map(tf.to_float, weights)
+  weights = tft.map(_map_to_tfidf, cleaned_input)
+  return tft.map(tf.to_float, weights)
 
 
 # TODO(brandondura): update this to not depend on tf layer's feature column
@@ -345,8 +353,92 @@ def bag_of_words(x):
       values=tf.to_float(tf.ones_like(x.values)),
       dense_shape=x.dense_shape)
 
-  return tft.api.map(_bow, x)
+  return tft.map(_bow, x)
 
+
+def make_image_to_vec_tito(tmp_dir):
+  """Creates a tensor-in-tensor-out function that produces embeddings from image bytes.
+
+  Image to embedding is implemented with Tensorflow's inception v3 model and a pretrained
+  checkpoint. It returns 1x2048 'PreLogits' embeddings for each image.
+
+  Args:
+    tmp_dir: a local directory that is used for downloading the checkpoint.
+
+  Returns: a tensor-in-tensor-out function that takes image string tensor and returns embeddings.
+  """
+
+  def _image_to_vec(image_str_tensor):
+
+    def _decode_and_resize(image_str_tensor):
+      """Decodes jpeg string, resizes it and returns a uint8 tensor."""
+
+      # These constants are set by Inception v3's expectations.
+      height = 299
+      width = 299
+      channels = 3
+
+      image = tf.image.decode_jpeg(image_str_tensor, channels=channels)
+      image = tf.expand_dims(image, 0)
+      image = tf.image.resize_bilinear(image, [height, width], align_corners=False)
+      image = tf.squeeze(image, squeeze_dims=[0])
+      image = tf.cast(image, dtype=tf.uint8)
+      return image
+
+    # The CloudML Prediction API always "feeds" the Tensorflow graph with
+    # dynamic batch sizes e.g. (?,).  decode_jpeg only processes scalar
+    # strings because it cannot guarantee a batch of images would have
+    # the same output size.  We use tf.map_fn to give decode_jpeg a scalar
+    # string from dynamic batches.
+    image = tf.map_fn(_decode_and_resize, image_str_tensor, back_prop=False, dtype=tf.uint8)
+    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+    image = tf.subtract(image, 0.5)
+    inception_input = tf.multiply(image, 2.0)
+
+    # Build Inception layers, which expect a tensor of type float from [-1, 1)
+    # and shape [batch_size, height, width, channels].
+    with tf.contrib.slim.arg_scope(inception_v3_arg_scope()):
+      _, end_points = inception_v3(inception_input, is_training=False)
+
+    embeddings = end_points['PreLogits']
+    inception_embeddings = tf.squeeze(embeddings, [1, 2], name='SpatialSqueeze')
+    return inception_embeddings
+
+  def _tito_from_checkpoint(tito_in, checkpoint, exclude):
+    """ Create an all-constants tito function from an original tito function.
+
+    Given a tensor-in-tensor-out function which contains variables and a checkpoint path,
+    create a new tensor-in-tensor-out function which includes only constants, and can be
+    used in tft.map.
+    """
+
+    def _tito_out(tensor_in):
+      g = tf.Graph()
+      with g.as_default():
+        si = tf.placeholder(dtype=tensor_in.dtype, shape=tensor_in.shape, name=tensor_in.op.name)
+        so = tito_in(si)
+        all_vars = tf.contrib.slim.get_variables_to_restore(exclude=exclude)
+        saver = tf.train.Saver(all_vars)
+        # Downloading the checkpoint from GCS to local speeds up saver.restore() a lot.
+        checkpoint_tmp = os.path.join(tmp_dir, 'checkpoint')
+        with file_io.FileIO(checkpoint, 'r') as f_in, file_io.FileIO(checkpoint_tmp, 'w') as f_out:
+          f_out.write(f_in.read())
+        with tf.Session() as sess:
+          saver.restore(sess, checkpoint_tmp)
+          output_graph_def = tf.graph_util.convert_variables_to_constants(sess,
+                                                                          g.as_graph_def(),
+                                                                          [so.op.name])
+        file_io.delete_file(checkpoint_tmp)
+      tensors_out = tf.import_graph_def(output_graph_def,
+                                        input_map={tensor_in.name: tensor_in},
+                                        return_elements=[so.name])
+      return tensors_out[0]
+
+    return _tito_out
+
+  return _tito_from_checkpoint(_image_to_vec,
+                               INCEPTION_V3_CHECKPOINT,
+                               INCEPTION_EXCLUDED_VARIABLES)
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 # end of TF.transform functions
@@ -432,6 +524,8 @@ def make_preprocessing_fn(output_dir, features):
           # ONE_HOT_TRANSFORM: making a dense vector is done at training
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
           result[name] = string_to_int(inputs[name], vocab)
+      elif transform_name == IMAGE_TRANSFORM:
+        result[name] = tft.map(make_image_to_vec_tito(output_dir), inputs[name])         
       else:
         raise ValueError('unknown transform %s' % transform_name)
     return result
@@ -629,6 +723,8 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       numerical_vocab_stats[col_name] = {'min': df.iloc[0]['min_value'],
                                          'max': df.iloc[0]['max_value'],
                                          'mean': df.iloc[0]['avg_value']}
+    elif transform == IMAGE_TRANSFORM:
+      pass
     elif transform == KEY_TRANSFORM:
       pass
     else:
@@ -719,6 +815,8 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
                   float(parsed_line[col_name])))
             numerical_results[col_name]['count'] += 1
             numerical_results[col_name]['sum'] += float(parsed_line[col_name])
+          elif transform == IMAGE_TRANSFORM:
+            pass
           elif transform == KEY_TRANSFORM:
             pass
           else:
@@ -790,7 +888,8 @@ def check_schema_transforms_match(schema, features):
         raise ValueError(
             'Transform %s not supported by schema %s' % (transform, col_type))
     elif col_type == STRING_SCHEMA:
-      if transform not in CATEGORICAL_TRANSFORMS + TEXT_TRANSFORMS:
+      if (transform not in CATEGORICAL_TRANSFORMS + TEXT_TRANSFORMS and
+         transform != IMAGE_TRANSFORM):
         raise ValueError(
             'Transform %s not supported by schema %s' % (transform, col_type))
     else:

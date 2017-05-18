@@ -50,7 +50,7 @@ TRANSFORM_FN_DIR = 'transform_fn'
 
 # Individual transforms
 TARGET_TRANSFORM = 'target'
-IMAGE_URL_TO_VEC_TRANSFORM = 'img_url_to_vec'
+IMAGE_TRANSFORM = 'image_to_vec'
 
 
 def parse_arguments(argv):
@@ -167,19 +167,19 @@ def image_transform_columns(features):
   """
   img_cols = []
   for name, transform in six.iteritems(features):
-    if transform['transform'] == IMAGE_URL_TO_VEC_TRANSFORM:
+    if transform['transform'] == IMAGE_TRANSFORM:
       img_cols.append(name)
 
   return img_cols
 
+
 def prepare_image_transforms(element, image_columns):
-  """Replace an images url with its jpeg bytes as a web safe base64 string.
+  """Replace an images url with its jpeg bytes.
 
   Args: 
   """
+  import cStringIO
   from PIL import Image
-  import base64
-  import six
   from tensorflow.python.lib.io import file_io as tf_file_io
 
   for name in image_columns:
@@ -187,6 +187,8 @@ def prepare_image_transforms(element, image_columns):
     try:
       with tf_file_io.FileIO(uri, 'r') as f:
         img = Image.open(f).convert('RGB')
+      
+
     # A variety of different calling libraries throw different exceptions here.
     # They all correspond to an unreadable file so we treat them equivalently.
     # pylint: disable broad-except
@@ -196,11 +198,9 @@ def prepare_image_transforms(element, image_columns):
       return
 
     # Convert to desired format and output.
-    output = six.BytesIO()
+    output = cStringIO.StringIO()
     img.save(output, 'jpeg')
-    image_bytes = output.getvalue()
-
-    element[name] = base64.urlsafe_b64encode(image_bytes)
+    element[name] = output.getvalue()
 
   return element
 
@@ -242,8 +242,8 @@ def preprocess(pipeline, args):
         >> beam.io.Read(beam.io.BigQuerySource(query=query,
                                                use_standard_sql=True)))
 
-  # Note that prepare_image_transforms does not make embeddints, it justs reads
-  # the image files and converts them to base64 stings. tft.TransformDataset()
+  # Note that prepare_image_transforms does not make embeddings, it justs reads
+  # the image files and converts them to byte stings. tft.TransformDataset()
   # will apply the saved model that makes the image embeddings.
   image_columns = image_transform_columns(features)
   raw_data = (

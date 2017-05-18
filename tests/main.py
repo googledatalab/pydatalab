@@ -12,12 +12,14 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import argparse
 import sys
 import unittest
 
 # For these tests to work locally, install the package with "pip install -e ."
 # from the parent folder and run "python tests/main.py"
 
+import context_tests
 import bigquery.api_tests
 import bigquery.dataset_tests
 import bigquery.external_data_source_tests
@@ -27,7 +29,7 @@ import bigquery.query_tests
 import bigquery.sampling_tests
 import bigquery.schema_tests
 import bigquery.table_tests
-# import bigquery.udf_tests
+import bigquery.udf_tests
 import bigquery.view_tests
 import kernel.bigquery_tests
 import kernel.chart_data_tests
@@ -55,7 +57,8 @@ import _util.lru_cache_tests
 import _util.util_tests
 
 
-_TEST_MODULES = [
+_UNIT_TEST_MODULES = [
+    context_tests,
     bigquery.api_tests,
     bigquery.dataset_tests,
     # bigquery.external_data_source_tests, # TODO: enable external data source tests
@@ -65,7 +68,7 @@ _TEST_MODULES = [
     bigquery.sampling_tests,
     bigquery.schema_tests,
     bigquery.table_tests,
-    # bigquery.udf_tests, # TODO: enable UDF tests once new implementation is done
+    bigquery.udf_tests,
     bigquery.view_tests,
     bigquery.sampling_tests,
     kernel.bigquery_tests,
@@ -76,9 +79,6 @@ _TEST_MODULES = [
     kernel.storage_tests,
     kernel.utils_tests,
     ml.dataset_tests,
-    mltoolbox_structured_data.dl_interface_tests,
-    mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
-    mltoolbox_structured_data.traininglib_tests,
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,
     stackdriver.monitoring.metric_tests,
@@ -94,10 +94,42 @@ _TEST_MODULES = [
     _util.util_tests
 ]
 
+
+_INTEGRATION_TEST_MODULES = [
+    mltoolbox_structured_data.dl_interface_tests,
+    mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
+    mltoolbox_structured_data.traininglib_tests,
+]
+
+
+def parse_arguments(argv):
+  """Parse command line arguments.
+
+  Args:
+    argv: list of command line arguments, including program name.
+
+  Returns:
+    An argparse Namespace object.
+
+  Raises:
+    ValueError: for bad parameters
+  """
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--unittestonly',
+                      action='store_true',
+                      help='Only run unit tests (no integration tests).')
+  args = parser.parse_args(args=argv[1:])
+  return args
+
+
 if __name__ == '__main__':
+  args = parse_arguments(sys.argv)
   suite = unittest.TestSuite()
-  for m in _TEST_MODULES:
+  for m in _UNIT_TEST_MODULES:
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(m))
+  if not args.unittestonly:
+    for m in _INTEGRATION_TEST_MODULES:
+      suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(m))
 
   runner = unittest.TextTestRunner()
   result = runner.run(suite)
