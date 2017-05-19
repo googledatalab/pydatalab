@@ -252,7 +252,7 @@ def string_to_int(x, vocab):
 
   Returns:
     A `Column` where each string value is mapped to an integer representing
-    its index in the vocab. Our of vocab values are mapped to len(vocab).
+    its index in the vocab. Out of vocab values are mapped to len(vocab).
   """
 
   def _map_to_int(x):
