@@ -153,11 +153,11 @@ def parse_arguments(argv):
   args, remaining_args = parser.parse_known_args(args=argv[1:])
 
   # All HP parambeters must be unique, so we need to support an unknown number
-  # of --layer_size1=10 --layer_size2=10 ...
-  # Look at remaining_args for layer_size\d+ to get the layer info.
+  # of --hidden-layer-size1=10 --lhidden-layer-size2=10 ...
+  # Look at remaining_args for hidden-layer-size\d+ to get the layer info.
 
   # Get number of layers
-  pattern = re.compile('layer-size(\d+)')
+  pattern = re.compile('hidden-layer-size(\d+)')
   num_layers = 0
   for other_arg in remaining_args:
     match = re.search(pattern, other_arg)
@@ -169,16 +169,16 @@ def parse_arguments(argv):
   # Build a new parser so we catch unknown args and missing layer_sizes.
   parser = argparse.ArgumentParser()
   for i in range(num_layers):
-    parser.add_argument('--layer-size%s' % str(i + 1), type=int, required=True)
+    parser.add_argument('--hidden-layer-size%s' % str(i + 1), type=int, required=True)
 
   layer_args = vars(parser.parse_args(args=remaining_args))
-  layer_sizes = []
+  hidden_layer_sizes = []
   for i in range(num_layers):
-    key = 'layer_size%s' % str(i + 1)
-    layer_sizes.append(layer_args[key])
+    key = 'hidden_layer_size%s' % str(i + 1)
+    hidden_layer_sizes.append(layer_args[key])
 
-  assert len(layer_sizes) == num_layers
-  args.layer_sizes = layer_sizes
+  assert len(hidden_layer_sizes) == num_layers
+  args.hidden_layer_sizes = hidden_layer_sizes
 
   return args
 
@@ -615,10 +615,10 @@ def build_csv_transforming_training_input_fn(raw_metadata,
 
 def get_estimator(args, output_dir, features, stats, target_vocab_size):
   # Check layers used for dnn models.
-  if is_dnn_model(args.model_type) and not args.layer_sizes:
-    raise ValueError('--layer-size* must be used with DNN models')
-  if is_linear_model(args.model_type) and args.layer_sizes:
-    raise ValueError('--layer-size* cannot be used with linear models')
+  if is_dnn_model(args.model_type) and not args.hidden_layer_sizes:
+    raise ValueError('--hidden-layer-size* must be used with DNN models')
+  if is_linear_model(args.model_type) and args.hidden_layer_sizes:
+    raise ValueError('--hidden-layer-size* cannot be used with linear models')
 
   # Build tf.learn features
   feature_columns = build_feature_columns(features, stats, args.model_type)
@@ -631,7 +631,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
   if args.model_type == 'dnn_regression':
     estimator = tf.contrib.learn.DNNRegressor(
         feature_columns=feature_columns,
-        hidden_units=args.layer_sizes,
+        hidden_units=args.hidden_layer_sizes,
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
@@ -646,7 +646,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
   elif args.model_type == 'dnn_classification':
     estimator = tf.contrib.learn.DNNClassifier(
         feature_columns=feature_columns,
-        hidden_units=args.layer_sizes,
+        hidden_units=args.hidden_layer_sizes,
         n_classes=target_vocab_size,
         config=config,
         model_dir=train_dir,

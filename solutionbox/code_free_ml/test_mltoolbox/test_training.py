@@ -349,9 +349,9 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type,
         extra_args=['--top-n=3',
-                    '--layer-size1=10',
-                    '--layer-size2=5',
-                    '--layer-size3=2'])
+                    '--hidden-layer-size1=10',
+                    '--hidden-layer-size2=5',
+                    '--hidden-layer-size3=2'])
     self._check_model(
         problem_type=problem_type,
         model_type=model_type)
@@ -366,9 +366,9 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type,
         extra_args=['--top-n=3',
-                    '--layer-size1=10',
-                    '--layer-size2=5',
-                    '--layer-size3=2'])
+                    '--hidden-layer-size1=10',
+                    '--hidden-layer-size2=5',
+                    '--hidden-layer-size3=2'])
     self._check_model(
         problem_type=problem_type,
         model_type=model_type)
