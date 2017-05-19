@@ -213,7 +213,7 @@ def parse_arguments(argv):
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
-# start of end of TF.transform functions
+# start of TF.transform functions
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
@@ -245,15 +245,14 @@ def scale(x, min_x_value, max_x_value, output_min, output_max):
 
 
 def string_to_int(x, vocab):
-  """Generates a vocabulary for `x` and maps it to an integer with this vocab.
+  """Given a vocabulary and a string tensor `x`, maps `x` into an int tensor.
   Args:
-    x: A `Column` representing a string value or values.
+    x: A `Column` representing a string value.
     vocab: list of strings.
 
   Returns:
-    A `Column` where each string value is mapped to an integer where each unique
-    string value is mapped to a different integer and integers are consecutive
-    and starting from 0.
+    A `Column` where each string value is mapped to an integer representing
+    its index in the vocab. Our of vocab values are mapped to len(vocab).
   """
 
   def _map_to_int(x):
@@ -280,10 +279,12 @@ def tfidf(x, reduced_term_freq, vocab_size, corpus_size):
     x: A `Column` representing int64 values (most likely that are the result
         of calling string_to_int on a tokenized string).
     reduced_term_freq: A dense tensor of shape (vocab_size,) that represents
-        the count of the number of documents with each term.
-    corpus_size: A scalar count of the number of documents in the corpus
+        the count of the number of documents with each term. So vocab token i (
+        which is an int) occures in reduced_term_freq[i] examples in the corpus.
+        This means reduced_term_freq should have a count for out-of-vocab tokens
     vocab_size: An int - the count of vocab used to turn the string into int64s
-        including any OOV buckets
+        including any out-of-vocab ids
+    corpus_size: A scalar count of the number of documents in the corpus
   Returns:
     A `Column` where each int value is mapped to a double equal to
     (1 if that term appears in that row, 0 otherwise / the number of terms in

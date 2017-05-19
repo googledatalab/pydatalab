@@ -38,7 +38,6 @@ from tensorflow.python.lib.io import file_io
 from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import variables
-from tensorflow.python.platform import gfile
 from tensorflow.python.saved_model import builder as saved_model_builder
 from tensorflow.python.saved_model import signature_def_utils
 from tensorflow.python.saved_model import tag_constants
@@ -163,6 +162,8 @@ def parse_arguments(argv):
   for other_arg in remaining_args:
     match = re.search(pattern, other_arg)
     if match:
+      if int(match.group(1)) <= 0:
+        raise ValueError('layer size must be a positive integer. Was given %s' % other_arg)
       num_layers = max(num_layers, int(match.group(1)))
 
   # Build a new parser so we catch unknown args and missing layer_sizes.
@@ -204,15 +205,18 @@ def build_feature_columns(features, stats, model_type):
 
   # Supported transforms:
   # for DNN
-  # 1) string -> make int -> embedding (embedding)
-  # 2) string -> make int -> one_hot (one_hot, default)
+  #   numerical number
+  #   one hot: sparse int column -> one_hot_column
+  #   ebmedding: sparse int column -> embedding_column
+  #   text: sparse int weighted column -> embedding_column
   # for linear
-  # 1) string -> sparse_column_with_hash_bucket (embedding)
-  # 2) string -> make int -> sparse_column_with_integerized_feature (one_hot, default)
+  #   numerical number
+  #   one hot: sparse int column
+  #   ebmedding: sparse int column -> hash int
+  #   text: sparse int weighted column
   # It is unfortunate that tf.layers has different feature transforms if the
   # model is linear or DNN. This pacakge should not expose to the user that
-  # we are using tf.layers. It is crazy that DNN models support more feature
-  # types (like string -> hash sparse column -> embedding)
+  # we are using tf.layers.
   for name, transform in six.iteritems(features):
     transform_name = transform['transform']
 
@@ -268,12 +272,11 @@ def build_feature_columns(features, stats, model_type):
   return feature_columns
 
 
-def _recursive_copy(src_dir, dest_dir):
+def recursive_copy(src_dir, dest_dir):
   """Copy the contents of src_dir into the folder dest_dir.
   Args:
     src_dir: gsc or local path.
     dest_dir: gcs or local path.
-  When called, dest_dir should exist.
   """
 
   file_io.recursive_create_dir(dest_dir)
@@ -282,7 +285,7 @@ def _recursive_copy(src_dir, dest_dir):
     new_path = os.path.join(dest_dir, file_name)
 
     if file_io.is_directory(old_path):
-      _recursive_copy(old_path, new_path)
+      recursive_copy(old_path, new_path)
     else:
       file_io.copy(old_path, new_path, overwrite=True)
 
@@ -291,7 +294,7 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
                                    keep_target):
   """Makes the final prediction output layer."""
   target_name = get_target_name(features)
-  key_name = get_key_name(features)
+  key_name = get_key_name(features)  # TODO(brandondutra): make optional, rename to tag
 
   outputs = {}
   outputs[key_name] = tf.squeeze(input_ops.features[key_name])
@@ -358,6 +361,7 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
 
 # This function is strongly based on
 # tensorflow/contrib/learn/python/learn/estimators/estimator.py:export_savedmodel()
+# The difference is we need to modify estimator's output layer.
 def make_export_strategy(
         args,
         keep_target,
@@ -376,7 +380,7 @@ def make_export_strategy(
     schema: schema list
   """
   target_name = get_target_name(features)
-  raw_metadata = raw_metadata = metadata_io.read_metadata(
+  raw_metadata = metadata_io.read_metadata(
       os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
 
   csv_header = [col['name'] for col in schema]
@@ -420,7 +424,6 @@ def make_export_strategy(
           export_dir_base)
 
       with tf_session.Session('') as session:
-        # variables.initialize_local_variables()
         variables.local_variables_initializer()
         data_flow_ops.tables_initializer()
         saver_for_restore = saver.Saver(
@@ -450,8 +453,8 @@ def make_export_strategy(
           dest_absolute = os.path.join(compat.as_bytes(assets_extra_path),
                                        compat.as_bytes(dest_relative))
           dest_path = os.path.dirname(dest_absolute)
-          gfile.MakeDirs(dest_path)
-          gfile.Copy(source, dest_absolute)
+          file_io.recursive_create_dir(dest_path)
+          file_io.copy(source, dest_absolute)
 
     # only keep the last 3 models
     saved_model_export_utils.garbage_collect_exports(
@@ -467,7 +470,7 @@ def make_export_strategy(
     if file_io.is_directory(final_dir):
       file_io.delete_recursively(final_dir)
     file_io.recursive_create_dir(final_dir)
-    _recursive_copy(export_dir, final_dir)
+    recursive_copy(export_dir, final_dir)
 
     return export_dir
 
@@ -496,23 +499,22 @@ def build_csv_transforming_training_input_fn(raw_metadata,
   Args:
     raw_metadata: a `DatasetMetadata` object describing the raw data.
     transform_savedmodel_dir: a SavedModel directory produced by tf.Transform
-      embodying a transformation function to be applied to incoming raw data.
-    raw_data_file_pattern: List of files or pattern of file paths containing
-        `Example` records. See `tf.gfile.Glob` for pattern rules.
-    training_batch_size: An int or scalar `Tensor` specifying the batch size to
-      use.
-    raw_keys: List of string keys giving the order in the csv file.
-    transformed_label_keys
+        embodying a transformation function to be applied to incoming raw data.
+    raw_data_file_pattern: List of csv files or pattern of csv file paths.
+    training_batch_size: An int specifying the batch size to use.
+    raw_keys: List of feature keys giving the order in the csv file.
+    transformed_label_keys: ???
     convert_scalars_to_vectors: Boolean specifying whether this input_fn should
-      convert scalars into 1-d vectors.  This is necessary if the inputs will be
-      used with `FeatureColumn`s as `FeatureColumn`s cannot accept scalar
-      inputs. Default: True.
-
-    num_epochs
-    randomize_input
-    min_after_dequeue
-    reader_num_threads
-    queue_capacity
+        convert scalars into 1-d vectors.  This is necessary if the inputs will
+        be used with `FeatureColumn`s as `FeatureColumn`s cannot accept scalar
+        inputs. Default: True.
+    num_epochs: numer of epochs to read from the files. Use None to read forever.
+    randomize_input: If true, the input rows are read out of order. This
+        randomness is limited by the min_after_dequeue value.
+    min_after_dequeue: Minimum number elements in the reading queue after a
+        dequeue, used to ensure a level of mixing of elements. Only used if
+        randomize_input is True.
+    reader_num_threads: The number of threads enqueuing data.
 
   Returns:
     An input_fn suitable for training that reads raw csv training data and
@@ -706,6 +708,12 @@ def gzip_reader_fn():
       compression_type=tf.python_io.TFRecordCompressionType.GZIP))
 
 
+def read_json_file(file_path):
+  if not file_io.file_exists(file_path):
+    raise ValueError('File not found: %s' % file_path)
+  return json.loads(file_io.read_file_to_string(file_path).decode())
+
+
 def get_experiment_fn(args):
   """Builds the experiment function for learn_runner.run.
 
@@ -717,35 +725,24 @@ def get_experiment_fn(args):
   """
 
   def get_experiment(output_dir):
-    # Merge schema, input features, and transforms.
-    schema_file_path = os.path.join(args.analysis_output_dir, SCHEMA_FILE)
-    if not file_io.file_exists(schema_file_path):
-      raise ValueError('File not found: %s' % schema_file_path)
-    schema = json.loads(file_io.read_file_to_string(schema_file_path).decode())
-
-    features_file_path = os.path.join(args.analysis_output_dir, FEATURES_FILE)
-    if not file_io.file_exists(features_file_path):
-      raise ValueError('File not found: %s' % features_file_path)
-    features = json.loads(file_io.read_file_to_string(features_file_path).decode())
-
-    stats_file_path = os.path.join(args.analysis_output_dir, STATS_FILE)
-    if not file_io.file_exists(stats_file_path):
-      raise ValueError('File not found: %s' % stats_file_path)
-    stats = json.loads(file_io.read_file_to_string(stats_file_path).decode())
+    # Read schema, input features, and transforms.
+    schema = read_json_file(os.path.join(args.analysis_output_dir, SCHEMA_FILE))
+    features = read_json_file(os.path.join(args.analysis_output_dir, FEATURES_FILE))
+    stats = read_json_file(os.path.join(args.analysis_output_dir, STATS_FILE))
 
     target_column_name = get_target_name(features)
-    key_column_name = get_key_name(features)
     header_names = [col['name'] for col in schema]
-    if not target_column_name or not key_column_name:
-      raise ValueError('target or key transform missing from features file.')
+    if not target_column_name:
+      raise ValueError('target missing from features file.')
 
     # Get the model to train.
     target_vocab = read_vocab(args, target_column_name)
     estimator = get_estimator(args, output_dir, features, stats, len(target_vocab))
 
     # Make list of files to save with the trained model.
-    additional_assets = {FEATURES_FILE: features_file_path,
-                         SCHEMA_FILE: schema_file_path}
+    additional_assets = {
+        FEATURES_FILE: os.path.join(args.analysis_output_dir, FEATURES_FILE),
+        SCHEMA_FILE: os.path.join(args.analysis_output_dir, SCHEMA_FILE)}
 
     export_strategy_csv_notarget = make_export_strategy(
         args=args,
@@ -836,7 +833,6 @@ def get_experiment_fn(args):
 
 
 def main(argv=None):
-  """Run a Tensorflow model on the Iris dataset."""
   args = parse_arguments(sys.argv if argv is None else argv)
 
   tf.logging.set_verbosity(tf.logging.INFO)
