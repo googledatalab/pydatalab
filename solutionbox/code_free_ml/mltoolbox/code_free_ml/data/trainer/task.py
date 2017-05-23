@@ -391,12 +391,10 @@ def make_export_strategy(
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
 
-      input_ops = input_fn_maker.build_default_transforming_serving_input_fn(
+      input_ops = input_fn_maker.build_csv_transforming_serving_input_fn(
           raw_metadata=raw_metadata,
           transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
-          raw_label_keys=[target_name],
-          raw_feature_keys=csv_header,
-          convert_scalars_to_vectors=True)()
+          raw_keys=csv_header)()
 
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,

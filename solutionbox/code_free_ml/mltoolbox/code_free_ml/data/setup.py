@@ -28,7 +28,7 @@ setup(
   """,
   install_requires=[
     'google-cloud-dataflow==0.6.0',
-    'tensorflow-transform==0.1.7',
+    'tensorflow-transform==0.1.9',
     'tensorflow==1.0.1',
     'protobuf==3.1.0',
   ],
