@@ -241,7 +241,7 @@ def scale(x, min_x_value, max_x_value, output_min, output_max):
     return ((((tf.to_float(x) - min_x_valuef) * (output_maxf - output_minf)) /
             (max_x_valuef - min_x_valuef)) + output_minf)
 
-  return tft.map(_scale, x)
+  return _scale(x)
 
 
 def string_to_int(x, vocab):
@@ -268,7 +268,7 @@ def string_to_int(x, vocab):
         default_value=len(vocab))
     return table.lookup(x)
 
-  return tft.map(_map_to_int, x)
+  return tft.api.apply_function(_map_to_int, x)
 
 
 # TODO(brandondura): update this to not depend on tf layer's feature column
@@ -328,10 +328,10 @@ def tfidf(x, reduced_term_freq, vocab_size, corpus_size):
         values=idf_over_doc_size,
         dense_shape=x.dense_shape)
 
-  cleaned_input = tft.map(_map_to_vocab_range, x)
+  cleaned_input = _map_to_vocab_range(x)
 
-  weights = tft.map(_map_to_tfidf, cleaned_input)
-  return tft.map(tf.to_float, weights)
+  weights = _map_to_tfidf(cleaned_input)
+  return tf.to_float(weights)
 
 
 # TODO(brandondura): update this to not depend on tf layer's feature column
@@ -354,7 +354,7 @@ def bag_of_words(x):
       values=tf.to_float(tf.ones_like(x.values)),
       dense_shape=x.dense_shape)
 
-  return tft.map(_bow, x)
+  return _bow(x)
 
 
 def make_image_to_vec_tito(tmp_dir):
@@ -504,7 +504,7 @@ def make_preprocessing_fn(output_dir, features):
         ex_count = vocab_pd['count'].astype(int).tolist()
 
         if transform_name == TFIDF_TRANSFORM:
-          tokens = tft.map(lambda x: tf.string_split(x, ' '), inputs[name])
+          tokens = tf.string_split(inputs[name], ' ')
           ids = string_to_int(tokens, vocab)
           weights = tfidf(
               x=ids,
@@ -515,7 +515,7 @@ def make_preprocessing_fn(output_dir, features):
           result[name + '_ids'] = ids
           result[name + '_weights'] = weights
         elif transform_name == BOW_TRANSFORM:
-          tokens = tft.map(lambda x: tf.string_split(x, ' '), inputs[name])
+          tokens = tf.string_split(inputs[name], ' ')
           ids = string_to_int(tokens, vocab)
           weights = bag_of_words(x=ids)
 
@@ -526,7 +526,8 @@ def make_preprocessing_fn(output_dir, features):
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
           result[name] = string_to_int(inputs[name], vocab)
       elif transform_name == IMAGE_TRANSFORM:
-        result[name] = tft.map(make_image_to_vec_tito(output_dir), inputs[name])
+        make_image_to_vec_fn = make_image_to_vec_tito(output_dir)
+        result[name] = make_image_to_vec_fn(inputs[name])
       else:
         raise ValueError('unknown transform %s' % transform_name)
     return result
