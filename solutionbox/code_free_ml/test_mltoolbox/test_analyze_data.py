@@ -19,7 +19,8 @@ import six
 import tensorflow as tf
 
 from tensorflow.python.lib.io import file_io
-from tensorflow_transform import impl_helper
+from tensorflow_transform.tf_metadata import metadata_io
+from tensorflow_transform.saved import input_fn_maker
 
 import google.datalab as dl
 import google.datalab.bigquery as bq
@@ -434,26 +435,37 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 class TestGraphBuilding(unittest.TestCase):
   """Test the TITO functions work and can produce a working TF graph."""
 
-  def _run_graph(self, model_path, predict_data):
+  def _run_graph(self, analysis_path, predict_data):
     """Runs the preprocessing graph.
 
     Args:
-      model_path: path to a folder that contains the save_model.pb file_io
+      analysis_path: path to folder containing analysis output. Should contain the
+          folders raw_metadata and transform_fn.
       predict_data: batched feed dict. Eample {'column_name': [1,2,3]}
     """
     # Cannot call
     # bundle_shim.load_session_bundle_or_saved_model_bundle_from_path directly
     # as tft changes the in/output tensor names.
+    metadata_path = os.path.join(analysis_path, analyze_data.RAW_METADATA_DIR)
+    savedmodel_path = os.path.join(analysis_path, analyze_data.TRANSFORM_FN_DIR)
 
-    g = tf.Graph()
-    session = tf.Session(graph=g)
-    with g.as_default():
-      inputs, outputs = impl_helper.load_transform_fn_def(model_path)
-      session.run(tf.tables_initializer())
-      feed = {inputs[key]: value for key, value in six.iteritems(predict_data)}
-      result = session.run(outputs, feed_dict=feed)
+    raw_metadata = metadata_io.read_metadata(metadata_path)
+    serving_input_fn = input_fn_maker.build_default_transforming_serving_input_fn(
+      raw_metadata=raw_metadata,
+      transform_savedmodel_dir=savedmodel_path,
+      raw_label_keys=[],
+      raw_feature_keys=None,
+      convert_scalars_to_vectors=True)
 
-    return result
+    with tf.Graph().as_default():
+      with tf.Session().as_default() as session:
+        outputs, labels, inputs = serving_input_fn()
+        feed_inputs = {inputs[key]: value
+                       for key, value in six.iteritems(predict_data)}
+
+        session.run(tf.tables_initializer())
+        result = session.run(outputs, feed_dict=feed_inputs)
+        return result
 
   def test_make_transform_graph_numerics(self):
     output_folder = tempfile.mkdtemp()
@@ -474,21 +486,19 @@ class TestGraphBuilding(unittest.TestCase):
          'num2': {'transform': 'scale', 'value': 10},
          'num3': {'transform': 'scale'}})
 
-      model_path = os.path.join(output_folder, 'transform_fn')
-      self.assertTrue(os.path.isfile(os.path.join(model_path, 'saved_model.pb')))
+      results = self._run_graph(output_folder, {'num1': [5.0, 10.0, 15.0],
+                                                'num2': [-1.0, 1.0, 0.5],
+                                                'num3': [10, 5, 7]})
 
-      results = self._run_graph(model_path, {'num1': [5, 10, 15],
-                                             'num2': [-1, 1, 0.5],
-                                             'num3': [10, 5, 7]})
-
-      for result, expected_result in zip(results['num1'].tolist(), [5, 10, 15]):
+      for result, expected_result in zip(results['num1'].flatten().tolist(),
+                                         [5, 10, 15]):
         self.assertAlmostEqual(result, expected_result)
 
-      for result, expected_result in zip(results['num2'].tolist(),
+      for result, expected_result in zip(results['num2'].flatten().tolist(),
                                          [-10, 10, 5]):
         self.assertAlmostEqual(result, expected_result)
 
-      for result, expected_result in zip(results['num3'].tolist(),
+      for result, expected_result in zip(results['num3'].flatten().tolist(),
                                          [1, -1, (7.0 - 5) * 2.0 / 5.0 - 1]):
         self.assertAlmostEqual(result, expected_result)
     finally:
@@ -516,21 +526,19 @@ class TestGraphBuilding(unittest.TestCase):
          'num2': {'transform': 'scale', 'value': 10},
          'num3': {'transform': 'scale'}})
 
-      model_path = os.path.join(output_folder, 'transform_fn')
-      self.assertTrue(file_io.file_exists(os.path.join(model_path, 'saved_model.pb')))
+      results = self._run_graph(output_folder, {'num1': [5.0, 10.0, 15.0],
+                                                'num2': [-1.0, 1.0, 0.5],
+                                                'num3': [10, 5, 7]})
 
-      results = self._run_graph(model_path, {'num1': [5, 10, 15],
-                                             'num2': [-1, 1, 0.5],
-                                             'num3': [10, 5, 7]})
-
-      for result, expected_result in zip(results['num1'].tolist(), [5, 10, 15]):
+      for result, expected_result in zip(results['num1'].flatten().tolist(),
+                                         [5, 10, 15]):
         self.assertAlmostEqual(result, expected_result)
 
-      for result, expected_result in zip(results['num2'].tolist(),
+      for result, expected_result in zip(results['num2'].flatten().tolist(),
                                          [-10, 10, 5]):
         self.assertAlmostEqual(result, expected_result)
 
-      for result, expected_result in zip(results['num3'].tolist(),
+      for result, expected_result in zip(results['num3'].flatten().tolist(),
                                          [1, -1, (7.0 - 5) * 2.0 / 5.0 - 1]):
         self.assertAlmostEqual(result, expected_result)
     finally:
@@ -557,16 +565,13 @@ class TestGraphBuilding(unittest.TestCase):
         {'cat1': {'transform': 'one_hot'},
          'cat2': {'transform': 'embedding'}})
 
-      model_path = os.path.join(output_folder, 'transform_fn')
-      self.assertTrue(os.path.isfile(os.path.join(model_path, 'saved_model.pb')))
+      results = self._run_graph(output_folder, {'cat1': ['red', 'blue', 'green'],
+                                                'cat2': ['pizza', '', 'extra']})
 
-      results = self._run_graph(model_path, {'cat1': ['red', 'blue', 'green'],
-                                             'cat2': ['pizza', '', 'extra']})
-
-      for result, expected_result in zip(results['cat1'].tolist(), [0, 1, 2]):
+      for result, expected_result in zip(results['cat1'].flatten().tolist(), [0, 1, 2]):
         self.assertEqual(result, expected_result)
 
-      for result, expected_result in zip(results['cat2'].tolist(),
+      for result, expected_result in zip(results['cat2'].flatten().tolist(),
                                          [0, 3, 3]):
         self.assertEqual(result, expected_result)
     finally:
@@ -599,11 +604,8 @@ class TestGraphBuilding(unittest.TestCase):
         [{'name': 'cat1', 'type': 'STRING'}],
         {'cat1': {'transform': 'tfidf'}})
 
-      model_path = os.path.join(output_folder, 'transform_fn')
-      self.assertTrue(os.path.isfile(os.path.join(model_path, 'saved_model.pb')))
-
       results = self._run_graph(
-          model_path,
+          output_folder,
           {'cat1': ['red red red',    # doc 0
                     'red green red',  # doc 1
                     'blue',           # doc 2
@@ -665,12 +667,8 @@ class TestGraphBuilding(unittest.TestCase):
         [{'name': 'cat1', 'type': 'STRING'}],
         {'cat1': {'transform': 'bag_of_words'}})
 
-      model_path = os.path.join(output_folder, 'transform_fn')
-      self.assertTrue(os.path.isfile(os.path.join(model_path,
-                                                  'saved_model.pb')))
-
       results = self._run_graph(
-          model_path,
+          output_folder,
           {'cat1': ['red red red',    # doc 0
                     'red green red',  # doc 1
                     'blue',           # doc 2
@@ -728,14 +726,11 @@ class TestGraphBuilding(unittest.TestCase):
           [{'name': 'img', 'type': 'STRING'}],
           {'img': {'transform': 'image_to_vec'}})
 
-      model_path = os.path.join(output_folder, 'transform_fn')
-      self.assertTrue(os.path.isfile(os.path.join(model_path, 'saved_model.pb')))
-
       img_string1 = _open_and_encode_image(
           'gs://cloud-ml-data/img/flower_photos/daisy/15207766_fc2f1d692c_n.jpg')
       img_string2 = _open_and_encode_image(
           'gs://cloud-ml-data/img/flower_photos/dandelion/8980164828_04fbf64f79_n.jpg')
-      results = self._run_graph(model_path, {'img': [img_string1, img_string2]})
+      results = self._run_graph(output_folder, {'img': [img_string1, img_string2]})
       embeddings = results['img']
       self.assertEqual(len(embeddings), 2)
       self.assertEqual(len(embeddings[0]), 2048)
