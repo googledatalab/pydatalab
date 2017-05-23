@@ -739,21 +739,31 @@ def get_experiment_fn(args):
     target_vocab = read_vocab(args, target_column_name)
     estimator = get_estimator(args, output_dir, features, stats, len(target_vocab))
 
+    # Make a schema file with the target removed in a tmp folder of the output.
+    schema_notarget = [col for col in schema if col['name'] != target_column_name]
+    tmp_path = os.path.join(args.output_dir, 'tmp')
+    schema_notarget_path = os.path.join(tmp_path, SCHEMA_FILE)
+    file_io.recursive_create_dir(tmp_path)
+    file_io.write_string_to_file(schema_notarget_path, json.dumps(schema_notarget, indent=2))
+
     # Make list of files to save with the trained model.
-    additional_assets = {
+    additional_assets_target = {
         FEATURES_FILE: os.path.join(args.analysis_output_dir, FEATURES_FILE),
         SCHEMA_FILE: os.path.join(args.analysis_output_dir, SCHEMA_FILE)}
+    additional_assets_notarget = {
+        FEATURES_FILE: os.path.join(args.analysis_output_dir, FEATURES_FILE),
+        SCHEMA_FILE: schema_notarget_path}
 
     export_strategy_csv_notarget = make_export_strategy(
         args=args,
         keep_target=False,
-        assets_extra=additional_assets,
+        assets_extra=additional_assets_notarget,
         features=features,
         schema=schema)
     export_strategy_csv_target = make_export_strategy(
         args=args,
         keep_target=True,
-        assets_extra=additional_assets,
+        assets_extra=additional_assets_target,
         features=features,
         schema=schema)
 
