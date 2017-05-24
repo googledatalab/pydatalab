@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import base64
 import copy
 import cStringIO
 from PIL import Image
@@ -715,7 +716,7 @@ class TestGraphBuilding(unittest.TestCase):
         img = Image.open(f).convert('RGB')
         output = cStringIO.StringIO()
         img.save(output, 'jpeg')
-      return output.getvalue()
+      return base64.urlsafe_b64encode(output.getvalue())
 
     try:
       output_folder = tempfile.mkdtemp()
