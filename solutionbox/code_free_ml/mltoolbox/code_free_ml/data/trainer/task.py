@@ -739,7 +739,7 @@ def get_experiment_fn(args):
 
     # Make a schema file with the target removed in a tmp folder of the output.
     schema_notarget = [col for col in schema if col['name'] != target_column_name]
-    tmp_path = os.path.join(args.output_dir, 'tmp')
+    tmp_path = os.path.join(args.job_dir, 'tmp')
     schema_notarget_path = os.path.join(tmp_path, SCHEMA_FILE)
     file_io.recursive_create_dir(tmp_path)
     file_io.write_string_to_file(schema_notarget_path, json.dumps(schema_notarget, indent=2))
