@@ -379,7 +379,8 @@ def make_image_to_vec_tito(tmp_dir):
       width = 299
       channels = 3
 
-      image = tf.image.decode_jpeg(image_str_tensor, channels=channels)
+      image = tf.decode_base64(image_str_tensor)
+      image = tf.image.decode_jpeg(image, channels=channels)
       image = tf.expand_dims(image, 0)
       image = tf.image.resize_bilinear(image, [height, width], align_corners=False)
       image = tf.squeeze(image, squeeze_dims=[0])
