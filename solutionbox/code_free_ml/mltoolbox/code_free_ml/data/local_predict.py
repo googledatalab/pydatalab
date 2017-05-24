@@ -42,11 +42,17 @@ def parse_arguments(argv):
                       help='Usually train_output_path/model.')
   parser.add_argument('--output-location',
                       required=True,
-                      help=('Location to save output.'))
+                      help='Location to save output.')
   parser.add_argument('--output-format',
                       default='csv',
                       choices=['csv', 'json'],
-                      help=('format of prediction results.'))
+                      help='format of prediction results.')
+  parser.add_argument('--output-filename',
+                      default='predictions',
+                      type=str,
+                      help=('Output filename. If using --shard-files, this is '
+                            'the file prefix name. The file\'s suffix is added '
+                            'depending on the output format.')
 
   # Other args
   parser.add_argument('--batch-size',
@@ -229,11 +235,10 @@ def main(argv=None):
 
         # write the output file(s)
         if args.shard_files:
-          file_base_name = 'predictions-{index:05d}-of-{count:05d}'.format(
-              index=file_num, count=len(csv_files))
+          file_base_name = '{name}-{index:05d}-of-{count:05d}'.format(
+              name=args.output_filename, index=file_num, count=len(csv_files))
         else:
-          file_base_name = 'predictions-00000-of-00001'.format(
-              index=file_num, count=len(csv_files))
+          file_base_name = args.output_filename
 
         if args.output_format == 'csv':
           file_name = file_base_name + '.csv'
