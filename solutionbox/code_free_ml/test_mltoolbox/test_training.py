@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import base64
 import json
 import logging
 import os
@@ -339,7 +340,7 @@ class TestTrainer(unittest.TestCase):
           image_bytes = []
           for image_file in [self._image_files[0], self._image_files[2]]:
             with file_io.FileIO(image_file, 'r') as ff:
-              image_bytes.append(ff.read())
+              image_bytes.append(base64.urlsafe_b64encode(ff.read()))
           prediction_data.update({'image': image_bytes})
 
         # Convert the prediciton data to csv.
