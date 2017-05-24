@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import base64
 import datetime
 import json
 import logging
@@ -187,7 +188,6 @@ def prepare_image_transforms(element, image_columns):
     try:
       with tf_file_io.FileIO(uri, 'r') as f:
         img = Image.open(f).convert('RGB')
-      
 
     # A variety of different calling libraries throw different exceptions here.
     # They all correspond to an unreadable file so we treat them equivalently.
@@ -200,7 +200,7 @@ def prepare_image_transforms(element, image_columns):
     # Convert to desired format and output.
     output = cStringIO.StringIO()
     img.save(output, 'jpeg')
-    element[name] = output.getvalue()
+    element[name] = base64.urlsafe_b64encode(output.getvalue())
 
   return element
 
