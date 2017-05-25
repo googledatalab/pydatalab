@@ -88,7 +88,7 @@ class TestTransformRawData(unittest.TestCase):
 
     cmd = ['python ' + os.path.join(CODE_PATH, 'transform_raw_data.py'),
            '--csv-file-pattern=' + self.csv_input_filepath,
-           '--analyze-output-dir=' + self.analysis_dir,
+           '--analysis-output-dir=' + self.analysis_dir,
            '--output-filename-prefix=features',
            '--output-dir=' + self.output_dir]
     subprocess.check_call(' '.join(cmd), shell=True)
@@ -145,7 +145,7 @@ class TestTransformRawData(unittest.TestCase):
 
     cmd = ['python ' + os.path.join(CODE_PATH, 'transform_raw_data.py'),
            '--bigquery-table=%s.%s.%s' % (project_id, dataset_name, table_name),
-           '--analyze-output-dir=' + self.analysis_dir,
+           '--analysis-output-dir=' + self.analysis_dir,
            '--output-filename-prefix=features',
            '--project-id=' + project_id,
            '--output-dir=' + self.output_dir]
