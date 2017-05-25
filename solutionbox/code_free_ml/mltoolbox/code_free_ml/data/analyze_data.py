@@ -882,7 +882,6 @@ def check_schema_transforms_match(schema, features):
   Raises:
     ValueError if transform cannot be applied given schema type.
   """
-  num_key_transforms = 0
   num_target_transforms = 0
 
   for col_schema in schema:
@@ -891,7 +890,6 @@ def check_schema_transforms_match(schema, features):
 
     transform = features[col_name]['transform']
     if transform == KEY_TRANSFORM:
-      num_key_transforms += 1
       continue
     elif transform == TARGET_TRANSFORM:
       num_target_transforms += 1
@@ -909,8 +907,8 @@ def check_schema_transforms_match(schema, features):
     else:
       raise ValueError('Unsupported schema type %s' % col_type)
 
-  if num_key_transforms != 1 or num_target_transforms != 1:
-    raise ValueError('Must have exactly one key and target transform')
+  if num_target_transforms != 1:
+    raise ValueError('Must have exactly one target transform')
 
 
 def expand_defaults(schema, features):

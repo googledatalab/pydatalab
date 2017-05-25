@@ -302,10 +302,11 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
                                    keep_target):
   """Makes the final prediction output layer."""
   target_name = get_target_name(features)
-  key_name = get_key_name(features)  # TODO(brandondutra): make optional, rename to tag
+  key_names = get_key_names(features)
 
   outputs = {}
-  outputs[key_name] = tf.squeeze(input_ops.features[key_name])
+  outputs.update({key_name: tf.squeeze(input_ops.features[key_name])
+                  for key_name in key_names})
 
   if is_classification_model(args.model_type):
 
@@ -414,10 +415,18 @@ def make_export_strategy(
           model_fn_ops=model_fn_ops,
           keep_target=keep_target)
 
+      # Don't use signature_def_utils.predict_signature_def as that renames
+      # tensor names if there is only 1 input/output tensor!
+      signature_inputs = {key: tf.saved_model.utils.build_tensor_info(tensor)
+                          for key, tensor in six.iteritems(input_ops.default_inputs)}
+      signature_outputs = {key: tf.saved_model.utils.build_tensor_info(tensor)
+                           for key, tensor in six.iteritems(output_fetch_tensors)}
       signature_def_map = {
           'serving_default':
-              signature_def_utils.predict_signature_def(input_ops.default_inputs,
-                                                        output_fetch_tensors)}
+              signature_def_utils.build_signature_def(
+                  signature_inputs,
+                  signature_outputs,
+                  tf.saved_model.signature_constants.PREDICT_METHOD_NAME)}
 
       if not checkpoint_path:
         # Locate the latest checkpoint
@@ -728,11 +737,12 @@ def get_target_name(features):
   return None
 
 
-def get_key_name(features):
+def get_key_names(features):
+  names = []
   for name, transform in six.iteritems(features):
     if transform['transform'] == KEY_TRANSFORM:
-      return name
-  return None
+      names.append(name)
+  return names
 
 
 def gzip_reader_fn():

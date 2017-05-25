@@ -20,6 +20,136 @@ CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data'))
 
 
+class TestOptionalKeys(unittest.TestCase):
+
+  def testNoKeys(self):
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'num': {'transform': 'identity'},
+          'target': {'transform': 'target'}}
+      schema = [
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'float'}]
+      data = ['1,2\n', '4,8\n', '5,10\n', '11,22\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze_data.py'),
+             '--output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
+             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
+             '--features-file=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
+             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--model-type=linear_regression',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=2000',
+             '--run-transforms']
+
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      with tf.Graph().as_default(), tf.Session() as sess:
+        meta_graph_pb = tf.saved_model.loader.load(
+            sess=sess,
+            tags=[tf.saved_model.tag_constants.SERVING],
+            export_dir=os.path.join(output_dir, 'training', 'model'))
+        signature = meta_graph_pb.signature_def['serving_default']
+
+        input_alias_map = {
+            friendly_name: tensor_info_proto.name
+            for (friendly_name, tensor_info_proto) in signature.inputs.items()}
+        output_alias_map = {
+            friendly_name: tensor_info_proto.name
+            for (friendly_name, tensor_info_proto) in signature.outputs.items()}
+
+        _, csv_tensor_name = input_alias_map.items()[0]
+        result = sess.run(fetches=output_alias_map,
+                          feed_dict={csv_tensor_name: ['20']})
+        self.assertTrue(abs(40 - result['predicted']) < 5)
+    finally:
+      shutil.rmtree(output_dir)
+
+  def testManyKeys(self):
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'keyint': {'transform': 'key'},
+          'keyfloat': {'transform': 'key'},
+          'keystr': {'transform': 'key'},
+          'num': {'transform': 'identity'},
+          'target': {'transform': 'target'}}
+      schema = [
+          {'name': 'keyint', 'type': 'integer'},
+          {'name': 'keyfloat', 'type': 'float'},
+          {'name': 'keystr', 'type': 'string'},
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'float'}]
+      data = ['1,1.5,one,1,2\n', '2,2.5,two,4,8\n', '3,3.5,three,5,10\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze_data.py'),
+             '--output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
+             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
+             '--features-file=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
+             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--model-type=linear_regression',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=2000',
+             '--run-transforms']
+
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      with tf.Graph().as_default(), tf.Session() as sess:
+        meta_graph_pb = tf.saved_model.loader.load(
+            sess=sess,
+            tags=[tf.saved_model.tag_constants.SERVING],
+            export_dir=os.path.join(output_dir, 'training', 'model'))
+        signature = meta_graph_pb.signature_def['serving_default']
+
+        input_alias_map = {
+            friendly_name: tensor_info_proto.name
+            for (friendly_name, tensor_info_proto) in signature.inputs.items()}
+        output_alias_map = {
+            friendly_name: tensor_info_proto.name
+            for (friendly_name, tensor_info_proto) in signature.outputs.items()}
+
+        _, csv_tensor_name = input_alias_map.items()[0]
+        result = sess.run(fetches=output_alias_map,
+                          feed_dict={csv_tensor_name: ['7,4.5,hello,1']})
+
+        self.assertEqual(7, result['keyint'])
+        self.assertAlmostEqual(4.5, result['keyfloat'])
+        self.assertEqual('hello', result['keystr'])
+    finally:
+      shutil.rmtree(output_dir)
+
+
 class TestTrainer(unittest.TestCase):
   """Tests training.
 
