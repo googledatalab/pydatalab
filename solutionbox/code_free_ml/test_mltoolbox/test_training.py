@@ -136,6 +136,7 @@ class TestTrainer(unittest.TestCase):
         str_tfidf = ' '.join(str_tfidf)
         if with_image:
           img_url = random.choice(self._image_files)
+          _drop_out(img_url)
 
         num_id = _drop_out(num_id)
         num_scale = _drop_out(num_scale)
@@ -236,7 +237,7 @@ class TestTrainer(unittest.TestCase):
   def _run_transform(self):
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
            '--csv-file-pattern=' + self._csv_train_filename,
-           '--analyze-output-dir=' + self._analysis_output,
+           '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_train',
            '--output-dir=' + self._transform_output,
            '--target',
@@ -247,7 +248,7 @@ class TestTrainer(unittest.TestCase):
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
            '--csv-file-pattern=' + self._csv_eval_filename,
-           '--analyze-output-dir=' + self._analysis_output,
+           '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_eval',
            '--output-dir=' + self._transform_output,
            '--target']
