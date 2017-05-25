@@ -302,7 +302,7 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
                                    keep_target):
   """Makes the final prediction output layer."""
   target_name = get_target_name(features)
-  key_names = get_key_names(features)  # TODO(brandondutra): make optional, rename to tag
+  key_names = get_key_names(features)
 
   outputs = {}
   outputs.update({key_name: tf.squeeze(input_ops.features[key_name])
