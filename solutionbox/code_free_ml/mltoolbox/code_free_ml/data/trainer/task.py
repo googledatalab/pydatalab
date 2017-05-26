@@ -50,6 +50,8 @@ from tensorflow_transform.tf_metadata import dataset_schema
 from tensorflow_transform.tf_metadata import metadata_io
 
 
+import feature_transforms
+
 # Files
 SCHEMA_FILE = 'schema.json'
 FEATURES_FILE = 'features.json'
@@ -88,6 +90,7 @@ PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
 
 IMAGE_BOTTLENECK_TENSOR_SIZE = 2048
+
 
 
 def parse_arguments(argv):
@@ -389,9 +392,6 @@ def make_export_strategy(
     schema: schema list
   """
   target_name = get_target_name(features)
-  raw_metadata = metadata_io.read_metadata(
-      os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
-
   csv_header = [col['name'] for col in schema]
   if not keep_target:
     csv_header.remove(target_name)
@@ -400,11 +400,7 @@ def make_export_strategy(
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
 
-      input_ops = input_fn_maker.build_csv_transforming_serving_input_fn(
-          raw_metadata=raw_metadata,
-          transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
-          raw_keys=csv_header)()
-
+      input_ops = feature_transforms.build_csv_serving_tensors(args.analysis_output_dir, features, schema, keep_target)
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
@@ -497,135 +493,6 @@ def make_export_strategy(
   return export_strategy.ExportStrategy(intermediate_dir, export_fn)
 
 
-# TODO(brandondutra) add this to tft, and then remove it.
-def build_csv_transforming_training_input_fn(raw_metadata,
-                                             transform_savedmodel_dir,
-                                             raw_data_file_pattern,
-                                             training_batch_size,
-                                             raw_keys,
-                                             transformed_label_keys,
-                                             convert_scalars_to_vectors=True,
-                                             num_epochs=None,
-                                             randomize_input=False,
-                                             min_after_dequeue=1,
-                                             reader_num_threads=1):
-  """Creates training input_fn that reads raw csv data and applies transforms.
-
-  Args:
-    raw_metadata: a `DatasetMetadata` object describing the raw data.
-    transform_savedmodel_dir: a SavedModel directory produced by tf.Transform
-        embodying a transformation function to be applied to incoming raw data.
-    raw_data_file_pattern: List of csv files or pattern of csv file paths.
-    training_batch_size: An int specifying the batch size to use.
-    raw_keys: List of feature keys giving the order in the csv file.
-    transformed_label_keys: ???
-    convert_scalars_to_vectors: Boolean specifying whether this input_fn should
-        convert scalars into 1-d vectors.  This is necessary if the inputs will
-        be used with `FeatureColumn`s as `FeatureColumn`s cannot accept scalar
-        inputs. Default: True.
-    num_epochs: numer of epochs to read from the files. Use None to read forever.
-    randomize_input: If true, the input rows are read out of order. This
-        randomness is limited by the min_after_dequeue value.
-    min_after_dequeue: Minimum number elements in the reading queue after a
-        dequeue, used to ensure a level of mixing of elements. Only used if
-        randomize_input is True.
-    reader_num_threads: The number of threads enqueuing data.
-
-  Returns:
-    An input_fn suitable for training that reads raw csv training data and
-    applies transforms.
-
-  """
-
-  if not raw_keys:
-    raise ValueError("raw_keys must be set.")
-
-  column_schemas = raw_metadata.schema.column_schemas
-
-  # Check for errors.
-  for k in raw_keys:
-    if k not in column_schemas:
-      raise ValueError("Key %s does not exist in the schema" % k)
-    if not isinstance(column_schemas[k].representation,
-                      dataset_schema.FixedColumnRepresentation):
-      raise ValueError(("CSV files can only support tensors of fixed size"
-                        "which %s is not.") % k)
-    shape = column_schemas[k].tf_shape().as_list()
-    if shape and shape != [1]:
-      # Column is not a scalar-like value. shape == [] or [1] is ok.
-      raise ValueError(("CSV files can only support features that are scalars "
-                        "having shape []. %s has shape %s")
-                       % (k, shape))
-
-  def raw_training_input_fn():
-    """Training input function that reads raw data and applies transforms."""
-
-    if isinstance(raw_data_file_pattern, six.string_types):
-      filepath_list = [raw_data_file_pattern]
-    else:
-      filepath_list = raw_data_file_pattern
-
-    files = []
-    for path in filepath_list:
-      files.extend(file_io.get_matching_files(path))
-
-    filename_queue = tf.train.string_input_producer(
-        files, num_epochs=num_epochs, shuffle=randomize_input)
-
-    csv_id, csv_lines = tf.TextLineReader().read_up_to(filename_queue, training_batch_size)
-
-    queue_capacity = (reader_num_threads + 3) * training_batch_size + min_after_dequeue
-    if randomize_input:
-      batch_csv_id, batch_csv_lines = tf.train.shuffle_batch(
-          tensors=[csv_id, csv_lines],
-          batch_size=training_batch_size,
-          capacity=queue_capacity,
-          min_after_dequeue=min_after_dequeue,
-          enqueue_many=True,
-          num_threads=reader_num_threads)
-
-    else:
-      batch_csv_id, batch_csv_lines = tf.train.batch(
-          tensors=[csv_id, csv_lines],
-          batch_size=training_batch_size,
-          capacity=queue_capacity,
-          enqueue_many=True,
-          num_threads=reader_num_threads)
-
-    record_defaults = []
-    for k in raw_keys:
-      if column_schemas[k].representation.default_value is not None:
-        # Note that the default_value could be 'false' value like  '' or 0
-        value = tf.constant([column_schemas[k].representation.default_value],
-                            dtype=column_schemas[k].domain.dtype)
-      else:
-        value = tf.constant([], dtype=column_schemas[k].domain.dtype)
-      record_defaults.append(value)
-
-    parsed_tensors = tf.decode_csv(batch_csv_lines, record_defaults, name='csv_to_tensors')
-
-    raw_data = {k: v for k, v in zip(raw_keys, parsed_tensors)}
-
-    transformed_data = saved_transform_io.apply_saved_transform(
-        transform_savedmodel_dir, raw_data)
-
-    transformed_features = {
-        k: v for k, v in six.iteritems(transformed_data)
-        if k not in transformed_label_keys}
-    transformed_labels = {
-        k: v for k, v in six.iteritems(transformed_data)
-        if k in transformed_label_keys}
-
-    if convert_scalars_to_vectors:
-      transformed_features = input_fn_maker._convert_scalars_to_vectors(transformed_features)
-      transformed_labels = input_fn_maker._convert_scalars_to_vectors(transformed_labels)
-
-    # TODO(b/35264116): remove this when all estimators accept label dict
-    if len(transformed_labels) == 1:
-      (_, transformed_labels), = transformed_labels.items()
-    return transformed_features, transformed_labels
-
-  return raw_training_input_fn
 
 
 def make_feature_engineering_fn(features):
@@ -803,7 +670,7 @@ def get_experiment_fn(args):
         raise ValueError('"image_to_vec" transform requires transformation step. ' +
                          'Cannot train from raw data.')
 
-      input_reader_for_train = build_csv_transforming_training_input_fn(
+      input_reader_for_train = feature_transforms.build_csv_transforming_training_input_fn(
           schema=schema,
           features=features,
           analysis_output_dir=args.analysis_output_dir,
@@ -814,48 +681,45 @@ def get_experiment_fn(args):
           min_after_dequeue=10,
           reader_num_threads=multiprocessing.cpu_count()
       )
-      input_reader_for_eval = build_csv_transforming_training_input_fn(
-          raw_metadata=raw_metadata,
-          transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
+      input_reader_for_eval = feature_transforms.build_csv_transforming_training_input_fn(
+          schema=schema,
+          features=features,
+          analysis_output_dir=args.analysis_output_dir,
           raw_data_file_pattern=args.eval_data_paths,
           training_batch_size=args.eval_batch_size,
-          raw_keys=header_names,
-          transformed_label_keys=[target_column_name],
-          convert_scalars_to_vectors=True,
           num_epochs=1,
           randomize_input=False,
           reader_num_threads=multiprocessing.cpu_count()
       )
     else:
-      transformed_metadata = metadata_io.read_metadata(
-          os.path.join(args.analysis_output_dir, TRANSFORMED_METADATA_DIR))
+      raise ValueError('not done!')
 
-      input_reader_for_train = input_fn_maker.build_training_input_fn(
-          metadata=transformed_metadata,
-          file_pattern=args.train_data_paths,
-          training_batch_size=args.train_batch_size,
-          reader=gzip_reader_fn,
-          label_keys=[target_column_name],
-          feature_keys=None,  # extract all features
-          key_feature_name=None,  # None as we take care of the key column.
-          reader_num_threads=multiprocessing.cpu_count(),
-          queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
-          randomize_input=True,
-          num_epochs=args.num_epochs,
-      )
-      input_reader_for_eval = input_fn_maker.build_training_input_fn(
-          metadata=transformed_metadata,
-          file_pattern=args.eval_data_paths,
-          training_batch_size=args.eval_batch_size,
-          reader=gzip_reader_fn,
-          label_keys=[target_column_name],
-          feature_keys=None,  # extract all features
-          key_feature_name=None,  # None as we take care of the key column.
-          reader_num_threads=multiprocessing.cpu_count(),
-          queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
-          randomize_input=False,
-          num_epochs=1,
-      )
+      # input_reader_for_train = input_fn_maker.build_training_input_fn(
+      #     metadata=transformed_metadata,
+      #     file_pattern=args.train_data_paths,
+      #     training_batch_size=args.train_batch_size,
+      #     reader=gzip_reader_fn,
+      #     label_keys=[target_column_name],
+      #     feature_keys=None,  # extract all features
+      #     key_feature_name=None,  # None as we take care of the key column.
+      #     reader_num_threads=multiprocessing.cpu_count(),
+      #     queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
+      #     randomize_input=True,
+      #     num_epochs=args.num_epochs,
+      # )
+      # input_reader_for_eval = input_fn_maker.build_training_input_fn(
+      #     metadata=transformed_metadata,
+      #     file_pattern=args.eval_data_paths,
+      #     training_batch_size=args.eval_batch_size,
+      #     reader=gzip_reader_fn,
+      #     label_keys=[target_column_name],
+      #     feature_keys=None,  # extract all features
+      #     key_feature_name=None,  # None as we take care of the key column.
+      #     reader_num_threads=multiprocessing.cpu_count(),
+      #     queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
+      #     randomize_input=False,
+      #     num_epochs=1,
+      # )
 
     return tf.contrib.learn.Experiment(
         estimator=estimator,

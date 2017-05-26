@@ -25,7 +25,7 @@ class TestOptionalKeys(unittest.TestCase):
   def testNoKeys(self):
     output_dir = tempfile.mkdtemp()
     try:
-      features = 
+      features = {
           'num': {'transform': 'identity'},
           'target': {'transform': 'target'}}
       schema = [
