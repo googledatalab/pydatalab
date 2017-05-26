@@ -719,12 +719,14 @@ def _table_cell(args, cell_body):
       if args['project'] is None:
         datasets = [google.datalab.bigquery.Dataset(args['dataset'])]
       else:
-        datasets = [google.datalab.bigquery.Dataset((args['project'], args['dataset']))]
+        context = google.datalab.Context(args['project'],
+                                         google.datalab.Context.default().credentials)
+        datasets = [google.datalab.bigquery.Dataset(args['dataset'], context)]
     else:
       default_context = google.datalab.Context.default()
       context = google.datalab.Context(default_context.project_id, default_context.credentials)
       if args['project']:
-        context.project_id = args['project']
+        context.set_project_id(args['project'])
       datasets = google.datalab.bigquery.Datasets(context)
 
     tables = []

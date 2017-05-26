@@ -17,6 +17,7 @@ from oauth2client.client import AccessTokenCredentials
 import unittest
 import json
 import pandas
+from datetime import datetime
 try:
   from StringIO import StringIO
 except ImportError:
@@ -313,9 +314,337 @@ WITH q1 AS (
 
     self.assertIn(test_table_name, google.datalab.bigquery.commands._bigquery._table_cache)
 
-  def test_table_viewer(self):
-    # TODO(gram): complete this test
-    pass
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._render_list')
+  def test_dataset_line_list(self, mock_render_list, mock_datasets, mock_default_context):
+    args = {'command': 'list', 'filter': None, 'project': None}
+    datasets = ['ds1', 'ds2', 'ds11']
+    mock_datasets.return_value = iter(datasets)
+    google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    mock_render_list.assert_called_with(datasets)
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._render_list')
+  def test_dataset_line_list_asterisk(self, mock_render_list, mock_datasets,
+                                      mock_default_context):
+    args = {'command': 'list', 'filter': '*', 'project': None}
+    datasets = ['ds1', 'ds2', 'ds11']
+    mock_datasets.return_value = iter(datasets)
+    google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    mock_render_list.assert_called_with(datasets)
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._render_list')
+  def test_dataset_line_list_substr_filter(self, mock_render_list, mock_datasets,
+                                           mock_default_context):
+    args = {'command': 'list', 'filter': 'ds1*', 'project': None}
+    datasets = ['ds1', 'ds2', 'ds11']
+    mock_datasets.return_value = iter(datasets)
+    google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    mock_render_list.assert_called_with(['ds1', 'ds11'])
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._render_list')
+  def test_dataset_line_list_exact_filter(self, mock_render_list, mock_datasets,
+                                          mock_default_context):
+    args = {'command': 'list', 'filter': 'ds1', 'project': None}
+    datasets = ['ds1', 'ds2', 'ds11']
+    mock_datasets.return_value = iter(datasets)
+    google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    mock_render_list.assert_called_with(['ds1'])
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._render_list')
+  def test_dataset_line_list_project(self, mock_render_list, mock_datasets, mock_default_context):
+    args = {'command': 'list', 'filter': None, 'project': 'testproject'}
+    mock_default_context.return_value = self._create_context()
+    google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    self.assertEqual(mock_datasets.call_args[0][0].project_id, 'testproject')
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Dataset')
+  def test_dataset_line_create(self, mock_dataset, mock_default_context):
+    args = {'command': 'create', 'name': 'dataset-name', 'friendly': 'test-name'}
+    google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    mock_dataset.assert_called_with('dataset-name')
+    mock_dataset.return_value.create.assert_called_with(friendly_name='test-name')
+
+    mock_dataset.side_effect = Exception('error')
+    with mock.patch('sys.stdout', new=StringIO()) as mocked_stdout:
+      google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    self.assertIn('Failed to create dataset dataset-name', mocked_stdout.getvalue())
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Dataset')
+  def test_dataset_line_delete(self, mock_dataset, mock_default_context):
+    args = {'command': 'delete', 'name': 'dataset-name'}
+    google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    mock_dataset.assert_called_with('dataset-name')
+    mock_dataset.return_value.delete.assert_called_with()
+
+    mock_dataset.side_effect = Exception('error')
+    with mock.patch('sys.stdout', new=StringIO()) as mocked_stdout:
+      google.datalab.bigquery.commands._bigquery._dataset_line(args)
+    self.assertIn('Failed to delete dataset dataset-name', mocked_stdout.getvalue())
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  def test_table_cell_list(self, mock_datasets, mock_default_context):
+    args = {'command': 'list', 'filter': None, 'dataset': None, 'project': None}
+    tables = [google.datalab.bigquery.Table('project.test.' + name) for name in ['t1', 't2', 't3']]
+    ds1 = mock.MagicMock()
+    ds1.__iter__.return_value = iter([tables[0], tables[1]])
+    ds2 = mock.MagicMock()
+    ds2.__iter__.return_value = iter([tables[2]])
+    mock_datasets.return_value = iter([ds1, ds2])
+    self.assertEqual(
+        google.datalab.bigquery.commands._bigquery._table_cell(args, None),
+        '<ul><li>project.test.t1</li><li>project.test.t2</li><li>project.test.t3</li></ul>')
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  def test_table_cell_list_asterisk(self, mock_datasets, mock_default_context):
+    args = {'command': 'list', 'filter': '*', 'dataset': None, 'project': None}
+    tables = [google.datalab.bigquery.Table('project.test.' + name) for name in ['t1', 't2', 't3']]
+    ds1 = mock.MagicMock()
+    ds1.__iter__.return_value = iter([tables[0], tables[1]])
+    ds2 = mock.MagicMock()
+    ds2.__iter__.return_value = iter([tables[2]])
+    mock_datasets.return_value = iter([ds1, ds2])
+    self.assertEqual(
+        google.datalab.bigquery.commands._bigquery._table_cell(args, None),
+        '<ul><li>project.test.t1</li><li>project.test.t2</li><li>project.test.t3</li></ul>')
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  def test_table_cell_list_substr_filter(self, mock_datasets, mock_default_context):
+    args = {'command': 'list', 'filter': '*t1*', 'dataset': None, 'project': None}
+    tables = [google.datalab.bigquery.Table('project.test.' + name) for name in ['t1', 't2', 't11']]
+    ds1 = mock.MagicMock()
+    ds1.__iter__.return_value = iter([tables[0], tables[1]])
+    ds2 = mock.MagicMock()
+    ds2.__iter__.return_value = iter([tables[2]])
+    mock_datasets.return_value = iter([ds1, ds2])
+    self.assertEqual(
+        google.datalab.bigquery.commands._bigquery._table_cell(args, None),
+        '<ul><li>project.test.t1</li><li>project.test.t11</li></ul>')
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  def test_table_cell_list_bad_filter(self, mock_datasets, mock_default_context):
+    args = {'command': 'list', 'filter': 't7', 'dataset': None, 'project': None}
+    tables = [google.datalab.bigquery.Table('project.test.' + name) for name in ['t1', 't2', 't11']]
+    ds1 = mock.MagicMock()
+    ds1.__iter__.return_value = iter([tables[0], tables[1]])
+    ds2 = mock.MagicMock()
+    ds2.__iter__.return_value = iter([tables[2]])
+    mock_datasets.return_value = iter([ds1, ds2])
+    self.assertEqual(
+        google.datalab.bigquery.commands._bigquery._table_cell(args, None),
+        '<pre>&lt;empty&gt;</pre>')
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Dataset')
+  def test_table_cell_list_dataset(self, mock_dataset, mock_default_context):
+    args = {'command': 'list', 'filter': '', 'dataset': 'test-dataset', 'project': None}
+    tables = [google.datalab.bigquery.Table('project.test.' + name) for name in ['t1', 't2']]
+    mock_dataset.return_value = iter(tables)
+    self.assertEqual(
+        google.datalab.bigquery.commands._bigquery._table_cell(args, None),
+        '<ul><li>project.test.t1</li><li>project.test.t2</li></ul>')
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Datasets')
+  def test_table_cell_list_project(self, mock_datasets, mock_default_context):
+    args = {'command': 'list', 'filter': '', 'dataset': None, 'project': 'test-project'}
+    tables = [google.datalab.bigquery.Table('project.test.' + name) for name in ['t1', 't2', 't3']]
+    ds1 = mock.MagicMock()
+    ds1.__iter__.return_value = iter([tables[0], tables[1]])
+    ds2 = mock.MagicMock()
+    ds2.__iter__.return_value = iter([tables[2]])
+    mock_datasets.return_value = iter([ds1, ds2])
+    self.assertEqual(
+        google.datalab.bigquery.commands._bigquery._table_cell(args, None),
+        '<ul><li>project.test.t1</li><li>project.test.t2</li><li>project.test.t3</li></ul>')
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Dataset')
+  def test_table_cell_list_dataset_project(self, mock_dataset, mock_default_context):
+    args = {'command': 'list', 'filter': '', 'dataset': 'test-dataset', 'project': 'test-project'}
+    tables = [google.datalab.bigquery.Table('project.test.' + name) for name in ['t1', 't2']]
+    mock_dataset.return_value = iter(tables)
+    self.assertEqual(
+        google.datalab.bigquery.commands._bigquery._table_cell(args, None),
+        '<ul><li>project.test.t1</li><li>project.test.t2</li></ul>')
+    call_args = mock_dataset.call_args[0]
+    self.assertEqual(call_args[0], 'test-dataset')
+    self.assertEqual(call_args[1].project_id, 'test-project')
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Table')
+  def test_table_cell_create_bad_params(self, mock_table, mock_default_context):
+    args = {'command': 'create', 'name': 'test-table', 'overwrite': None}
+    with mock.patch('sys.stdout', new=StringIO()) as mocked_stdout:
+      google.datalab.bigquery.commands._bigquery._table_cell(args, None)
+    self.assertIn('Failed to create test-table: no schema', mocked_stdout.getvalue())
+
+    mock_table.side_effect = Exception
+    with mock.patch('sys.stdout', new=StringIO()) as mocked_stdout:
+      google.datalab.bigquery.commands._bigquery._table_cell(args, json.dumps({}))
+    self.assertIn('\'schema\' is a required property', mocked_stdout.getvalue())
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Table')
+  def test_table_cell_create(self, mock_table, mock_default_context):
+    args = {'command': 'create', 'name': 'test-table', 'overwrite': None}
+    cell_body = {
+      'schema': [
+        {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
+        {'name': 'col1', 'type': 'STRING', 'mode': 'required', 'description': 'description1'}
+      ]
+    }
+    google.datalab.bigquery.commands._bigquery._table_cell(args, json.dumps(cell_body))
+    call_kwargs = mock_table.return_value.create.call_args[1]
+    self.assertEqual(None, call_kwargs['overwrite'])
+    self.assertEqual(google.datalab.bigquery.Schema(cell_body['schema']), call_kwargs['schema'])
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
+  def test_table_cell_describe(self, mock_get_table, mock_default_context):
+    args = {'command': 'describe', 'name': 'test-table', 'overwrite': None}
+    mock_get_table.return_value = None
+    with self.assertRaisesRegexp(Exception, 'Could not find table'):
+      google.datalab.bigquery.commands._bigquery._table_cell(args, None)
+
+    mock_get_table.return_value = google.datalab.bigquery.Table('project.test.table')
+    schema = google.datalab.bigquery.Schema([{
+      'name': 'col1',
+      'type': 'string'
+    }])
+    mock_get_table.return_value._schema = schema
+    rendered = google.datalab.bigquery.commands._bigquery._table_cell(args, None)
+    expected_html1 = 'bq.renderSchema(dom, [{"type": "string", "name": "col1"}]);'
+    expected_html2 = 'bq.renderSchema(dom, [{"name": "col1", "type": "string"}]);'
+    self.assertTrue(expected_html1 in rendered or expected_html2 in rendered)
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Table')
+  def test_table_cell_delete(self, mock_table, mock_default_context):
+    args = {'command': 'delete', 'name': 'test-table'}
+    mock_table.return_value.delete.side_effect = Exception
+    with mock.patch('sys.stdout', new=StringIO()) as mocked_stdout:
+      google.datalab.bigquery.commands._bigquery._table_cell(args, None)
+    self.assertIn('Failed to delete table test-table', mocked_stdout.getvalue())
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
+  def test_table_cell_view(self, mock_get_table, mock_default_context):
+    args = {'command': 'view', 'name': 'test-table'}
+    table = google.datalab.bigquery.Table('project.test.table')
+    mock_get_table.return_value = None
+    with self.assertRaisesRegexp(Exception, 'Could not find table test-table'):
+      google.datalab.bigquery.commands._bigquery._table_cell(args, None)
+
+    mock_get_table.return_value = table
+    self.assertEqual(table, google.datalab.bigquery.commands._bigquery._table_cell(args, None))
+
+  @mock.patch('google.datalab.utils.commands._html.Html.next_id')
+  @mock.patch('google.datalab.utils.commands._html.HtmlBuilder.render_chart_data')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.utils.commands.get_data')
+  @mock.patch('google.datalab.utils.commands.get_field_list')
+  @mock.patch('google.datalab.bigquery.Table.exists')
+  def test_table_viewer(self, mock_table_exists, mock_get_field_list, mock_get_data,
+                        mock_tables_get, mock_render_chart_data, mock_next_id):
+    test_table = google.datalab.bigquery.Table('testproject.test.table', self._create_context())
+
+    mock_table_exists.return_value = False
+    with self.assertRaisesRegexp(Exception, 'does not exist'):
+      google.datalab.bigquery.commands._bigquery._table_viewer(test_table)
+
+    mock_table_exists.return_value = True
+    mock_get_field_list.return_value = ['col1']
+    mock_get_data.return_value = ({'cols': ['col1'], 'rows': ['val1']}, 1)
+    mock_render_chart_data.return_value = 'test_chart_data'
+    mock_next_id.return_value = 'test_id'
+    viewer = google.datalab.bigquery.commands._bigquery._table_viewer(test_table)
+
+    mock_table_exists.assert_called()
+    mock_get_field_list.assert_called()
+    mock_render_chart_data.assert_called()
+
+    expected_html_header = '''
+    <div class="bqtv" id="test_id">test_chart_data</div>
+    <br />(testproject.test.table)<br />
+    '''
+    self.assertIn(expected_html_header, viewer)
+
+  @mock.patch('google.datalab.bigquery._query_stats.QueryStats._size_formatter')
+  @mock.patch('google.datalab.bigquery.Table.job')
+  @mock.patch('google.datalab.utils.commands._html.Html.next_id')
+  @mock.patch('google.datalab.utils.commands._html.HtmlBuilder.render_chart_data')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  @mock.patch('google.datalab.utils.commands.get_data')
+  @mock.patch('google.datalab.utils.commands.get_field_list')
+  @mock.patch('google.datalab.bigquery.Table.exists')
+  def test_query_results_table_viewer(self, mock_table_exists, mock_get_field_list, mock_get_data,
+                                      mock_tables_get, mock_render_chart_data, mock_next_id,
+                                      mock_table_job, mock_size_formatter):
+    context = self._create_context()
+    table_name = 'testproject.test.table'
+    job = google.datalab.bigquery._query_job.QueryJob('test_id', table_name, 'test_sql', context)
+    job._start_time, job._end_time = datetime(2017, 1, 1, 1, 1), datetime(2017, 1, 1, 1, 2)
+    test_table = google.datalab.bigquery.QueryResultsTable(table_name, context, job)
+
+    mock_table_exists.return_value = True
+    mock_get_field_list.return_value = ['col1']
+    mock_get_data.return_value = ({'cols': ['col1'], 'rows': ['val1']}, 1)
+    mock_next_id.return_value = 'test_id'
+    mock_size_formatter.return_value = '10MB'
+    mock_render_chart_data.return_value = 'test_chart_data'
+
+    viewer = google.datalab.bigquery.commands._bigquery._table_viewer(test_table)
+
+    mock_table_exists.assert_called()
+    mock_get_field_list.assert_called()
+    mock_render_chart_data.assert_called()
+
+    expected_html_header = '''
+    <div class="bqtv" id="test_id">test_chart_data</div>
+    <br />(time: 60.0s, 10MB processed, job: test_id)<br />
+    '''
+    self.assertIn(expected_html_header, viewer)
+
+    job._cache_hit = True
+
+    viewer = google.datalab.bigquery.commands._bigquery._table_viewer(test_table)
+
+    expected_html_header = '''
+    <div class="bqtv" id="test_id">test_chart_data</div>
+    <br />(time: 60.0s, cached, job: test_id)<br />
+    '''
+    self.assertIn(expected_html_header, viewer)
+
+    mock_get_data.return_value = ({'rows': []}, -1)
+    viewer = google.datalab.bigquery.commands._bigquery._table_viewer(test_table)
+    expected_html_header = 'pageSize: 25,'
+    self.assertIn(expected_html_header, viewer)
+
+    mock_get_data.return_value = ({'rows': ['val'] * 5}, -1)
+    viewer = google.datalab.bigquery.commands._bigquery._table_viewer(test_table, rows_per_page=10)
+    expected_html_header = 'pageSize: 10,'
+    self.assertIn(expected_html_header, viewer)
+    expected_html_footer = '''
+            {source_index: 0, fields: 'col1'},
+            0,
+            5);
+    '''
+    self.assertIn(expected_html_footer, viewer)
 
   @mock.patch('google.datalab.utils._utils.get_credentials')
   @mock.patch('google.datalab.utils._utils.get_default_project_id')
