@@ -482,7 +482,7 @@ WITH q1 AS (
         google.datalab.bigquery.commands._bigquery._table_cell(args, None),
         '<ul><li>project.test.t1</li><li>project.test.t2</li></ul>')
     call_args = mock_dataset.call_args[0]
-    self.assertEqual(call_args[0], 'test-project')
+    self.assertEqual(call_args[0], 'test-dataset')
     self.assertEqual(call_args[1].project_id, 'test-project')
 
   @mock.patch('google.datalab.Context.default')

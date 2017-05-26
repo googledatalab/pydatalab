@@ -721,7 +721,7 @@ def _table_cell(args, cell_body):
       else:
         context = google.datalab.Context(args['project'],
                                          google.datalab.Context.default().credentials)
-        datasets = [google.datalab.bigquery.Dataset(args['project'], context)]
+        datasets = [google.datalab.bigquery.Dataset(args['dataset'], context)]
     else:
       default_context = google.datalab.Context.default()
       context = google.datalab.Context(default_context.project_id, default_context.credentials)

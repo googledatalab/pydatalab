@@ -52,7 +52,7 @@ class TestCases(unittest.TestCase):
           ]}
         ]
       }, ['col1', 'col2'], 'chartdata')
-    expected_html = ''.join('''\
+    expected_html = ''.join('''
     <table>
       <tr>
         <th>col1</th>
