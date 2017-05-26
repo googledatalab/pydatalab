@@ -639,8 +639,6 @@ def make_feature_engineering_fn(features):
         with tf.name_scope(name, 'Wx_plus_b'):
           hidden = layers.fully_connected(bottleneck_with_no_gradient,
                                           int(IMAGE_BOTTLENECK_TENSOR_SIZE / 4))
-          # We need a dropout when the size of the dataset is rather small.
-          hidden = tf.nn.dropout(hidden, 0.5)
           engineered_features[name] = hidden
       else:
         engineered_features[name] = feature_tensor
