@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import base64
 import datetime
 import json
 import logging
@@ -39,6 +40,7 @@ from tensorflow_transform.tf_metadata import metadata_io
 
 
 img_error_count = Metrics.counter('main', 'ImgErrorCount')
+img_missing_count = Metrics.counter('main', 'ImgMissingCount')
 
 # Files
 SCHEMA_FILE = 'schema.json'
@@ -115,7 +117,7 @@ def parse_arguments(argv):
             'data to transform'))
 
   parser.add_argument(
-      '--analyze-output-dir',
+      '--analysis-output-dir',
       required=True,
       help='The output folder of analyze')
   parser.add_argument(
@@ -184,10 +186,12 @@ def prepare_image_transforms(element, image_columns):
 
   for name in image_columns:
     uri = element[name]
+    if not uri:
+      img_missing_count.inc()
+      continue
     try:
       with tf_file_io.FileIO(uri, 'r') as f:
         img = Image.open(f).convert('RGB')
-      
 
     # A variety of different calling libraries throw different exceptions here.
     # They all correspond to an unreadable file so we treat them equivalently.
@@ -200,19 +204,19 @@ def prepare_image_transforms(element, image_columns):
     # Convert to desired format and output.
     output = cStringIO.StringIO()
     img.save(output, 'jpeg')
-    element[name] = output.getvalue()
+    element[name] = base64.urlsafe_b64encode(output.getvalue())
 
   return element
 
 
 def preprocess(pipeline, args):
   input_metadata = metadata_io.read_metadata(
-      os.path.join(args.analyze_output_dir, RAW_METADATA_DIR))
+      os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
 
   schema = json.loads(file_io.read_file_to_string(
-      os.path.join(args.analyze_output_dir, SCHEMA_FILE)).decode())
+      os.path.join(args.analysis_output_dir, SCHEMA_FILE)).decode())
   features = json.loads(file_io.read_file_to_string(
-      os.path.join(args.analyze_output_dir, FEATURES_FILE)).decode())
+      os.path.join(args.analysis_output_dir, FEATURES_FILE)).decode())
 
   column_names = [col['name'] for col in schema]
 
@@ -257,7 +261,7 @@ def preprocess(pipeline, args):
   transform_fn = (
       pipeline
       | 'ReadTransformFn'
-      >> tft_beam_io.ReadTransformFn(args.analyze_output_dir))
+      >> tft_beam_io.ReadTransformFn(args.analysis_output_dir))
 
   (transformed_data, transform_metadata) = (
       ((raw_data, input_metadata), transform_fn)

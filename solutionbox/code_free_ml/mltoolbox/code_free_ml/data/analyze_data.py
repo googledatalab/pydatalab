@@ -17,10 +17,13 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import base64
 import collections
+import cStringIO
 import csv
 import json
 import os
+from PIL import Image
 import sys
 import pandas as pd
 import six
@@ -80,6 +83,10 @@ NUMERIC_SCHEMA = [INTEGER_SCHEMA, FLOAT_SCHEMA]
 # Inception Checkpoint
 INCEPTION_V3_CHECKPOINT = 'gs://cloud-ml-data/img/flower_photos/inception_v3_2016_08_28.ckpt'
 INCEPTION_EXCLUDED_VARIABLES = ['InceptionV3/AuxLogits', 'InceptionV3/Logits', 'global_step']
+
+_img_buf = cStringIO.StringIO()
+Image.new('RGB', (16, 16)).save(_img_buf, 'jpeg')
+IMAGE_DEFAULT_STRING = base64.urlsafe_b64encode(_img_buf.getvalue())
 
 
 def parse_arguments(argv):
@@ -379,7 +386,9 @@ def make_image_to_vec_tito(tmp_dir):
       width = 299
       channels = 3
 
-      image = tf.image.decode_jpeg(image_str_tensor, channels=channels)
+      image = tf.where(tf.equal(image_str_tensor, ''), IMAGE_DEFAULT_STRING, image_str_tensor)
+      image = tf.decode_base64(image)
+      image = tf.image.decode_jpeg(image, channels=channels)
       image = tf.expand_dims(image, 0)
       image = tf.image.resize_bilinear(image, [height, width], align_corners=False)
       image = tf.squeeze(image, squeeze_dims=[0])
@@ -549,7 +558,7 @@ def make_tft_input_schema(schema, stats_filepath):
   """
   result = {}
 
-  # stats file us used to get default values.
+  # stats file is used to get default values.
   stats = json.loads(file_io.read_file_to_string(stats_filepath).decode())
 
   for col_schema in schema:
@@ -776,6 +785,9 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
   for input_file in input_files:
     with file_io.FileIO(input_file, 'r') as f:
       for line in csv.reader(f):
+        if len(header) != len(line):
+          raise ValueError('Schema has %d columns but a csv line only has %d columns.' %
+                           (len(header), len(line)))
         parsed_line = dict(zip(header, line))
         num_examples += 1
 
@@ -870,7 +882,6 @@ def check_schema_transforms_match(schema, features):
   Raises:
     ValueError if transform cannot be applied given schema type.
   """
-  num_key_transforms = 0
   num_target_transforms = 0
 
   for col_schema in schema:
@@ -879,7 +890,6 @@ def check_schema_transforms_match(schema, features):
 
     transform = features[col_name]['transform']
     if transform == KEY_TRANSFORM:
-      num_key_transforms += 1
       continue
     elif transform == TARGET_TRANSFORM:
       num_target_transforms += 1
@@ -897,8 +907,8 @@ def check_schema_transforms_match(schema, features):
     else:
       raise ValueError('Unsupported schema type %s' % col_type)
 
-  if num_key_transforms != 1 or num_target_transforms != 1:
-    raise ValueError('Must have exactly one key and target transform')
+  if num_target_transforms != 1:
+    raise ValueError('Must have exactly one target transform')
 
 
 def expand_defaults(schema, features):

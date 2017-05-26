@@ -26,6 +26,7 @@ import pandas as pd
 import six
 import tensorflow as tf
 
+from tensorflow.contrib import layers
 from tensorflow.contrib.framework.python.ops import variables as contrib_variables
 from tensorflow.contrib.learn.python.learn import export_strategy
 from tensorflow.contrib.learn.python.learn import learn_runner
@@ -66,6 +67,7 @@ ONE_HOT_TRANSFORM = 'one_hot'
 EMBEDDING_TRANSFROM = 'embedding'
 BOW_TRANSFORM = 'bag_of_words'
 TFIDF_TRANSFORM = 'tfidf'
+IMAGE_TRANSFORM = 'image_to_vec'
 KEY_TRANSFORM = 'key'
 TARGET_TRANSFORM = 'target'
 
@@ -84,6 +86,8 @@ PG_CLASSIFICATION_FIRST_LABEL = 'predicted'
 PG_CLASSIFICATION_FIRST_SCORE = 'score'
 PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
+
+IMAGE_BOTTLENECK_TENSOR_SIZE = 2048
 
 
 def parse_arguments(argv):
@@ -264,6 +268,10 @@ def build_feature_columns(features, stats, model_type):
         new_feature = sparse_weights
     elif transform_name == TARGET_TRANSFORM or transform_name == KEY_TRANSFORM:
       continue
+    elif transform_name == IMAGE_TRANSFORM:
+      new_feature = tf.contrib.layers.real_valued_column(
+          name,
+          dimension=IMAGE_BOTTLENECK_TENSOR_SIZE)
     else:
       raise ValueError('Unknown transfrom %s' % transform_name)
 
@@ -294,10 +302,11 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
                                    keep_target):
   """Makes the final prediction output layer."""
   target_name = get_target_name(features)
-  key_name = get_key_name(features)  # TODO(brandondutra): make optional, rename to tag
+  key_names = get_key_names(features)
 
   outputs = {}
-  outputs[key_name] = tf.squeeze(input_ops.features[key_name])
+  outputs.update({key_name: tf.squeeze(input_ops.features[key_name])
+                  for key_name in key_names})
 
   if is_classification_model(args.model_type):
 
@@ -406,10 +415,18 @@ def make_export_strategy(
           model_fn_ops=model_fn_ops,
           keep_target=keep_target)
 
+      # Don't use signature_def_utils.predict_signature_def as that renames
+      # tensor names if there is only 1 input/output tensor!
+      signature_inputs = {key: tf.saved_model.utils.build_tensor_info(tensor)
+                          for key, tensor in six.iteritems(input_ops.default_inputs)}
+      signature_outputs = {key: tf.saved_model.utils.build_tensor_info(tensor)
+                           for key, tensor in six.iteritems(output_fetch_tensors)}
       signature_def_map = {
           'serving_default':
-              signature_def_utils.predict_signature_def(input_ops.default_inputs,
-                                                        output_fetch_tensors)}
+              signature_def_utils.build_signature_def(
+                  signature_inputs,
+                  signature_outputs,
+                  tf.saved_model.signature_constants.PREDICT_METHOD_NAME)}
 
       if not checkpoint_path:
         # Locate the latest checkpoint
@@ -611,6 +628,25 @@ def build_csv_transforming_training_input_fn(raw_metadata,
   return raw_training_input_fn
 
 
+def make_feature_engineering_fn(features):
+  """feature_engineering_fn for adding a hidden layer on image embeddings."""
+
+  def feature_engineering_fn(feature_tensors_dict, target):
+    engineered_features = {}
+    for name, feature_tensor in six.iteritems(feature_tensors_dict):
+      if name in features and features[name]['transform'] == IMAGE_TRANSFORM:
+        bottleneck_with_no_gradient = tf.stop_gradient(feature_tensor)
+        with tf.name_scope(name, 'Wx_plus_b'):
+          hidden = layers.fully_connected(bottleneck_with_no_gradient,
+                                          int(IMAGE_BOTTLENECK_TENSOR_SIZE / 4))
+          engineered_features[name] = hidden
+      else:
+        engineered_features[name] = feature_tensor
+    return engineered_features, target
+
+  return feature_engineering_fn
+
+
 def get_estimator(args, output_dir, features, stats, target_vocab_size):
   # Check layers used for dnn models.
   if is_dnn_model(args.model_type) and not args.hidden_layer_sizes:
@@ -620,6 +656,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
 
   # Build tf.learn features
   feature_columns = build_feature_columns(features, stats, args.model_type)
+  feature_engineering_fn = make_feature_engineering_fn(features)
 
   # Set how often to run checkpointing in terms of time.
   config = tf.contrib.learn.RunConfig(
@@ -633,14 +670,16 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon))
+            args.learning_rate, epsilon=args.epsilon),
+        feature_engineering_fn=feature_engineering_fn)
   elif args.model_type == 'linear_regression':
     estimator = tf.contrib.learn.LinearRegressor(
         feature_columns=feature_columns,
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon))
+            args.learning_rate, epsilon=args.epsilon),
+        feature_engineering_fn=feature_engineering_fn)
   elif args.model_type == 'dnn_classification':
     estimator = tf.contrib.learn.DNNClassifier(
         feature_columns=feature_columns,
@@ -649,7 +688,8 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon))
+            args.learning_rate, epsilon=args.epsilon),
+        feature_engineering_fn=feature_engineering_fn)
   elif args.model_type == 'linear_classification':
     estimator = tf.contrib.learn.LinearClassifier(
         feature_columns=feature_columns,
@@ -657,7 +697,8 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon))
+            args.learning_rate, epsilon=args.epsilon),
+        feature_engineering_fn=feature_engineering_fn)
   else:
     raise ValueError('bad --model-type value')
 
@@ -694,11 +735,12 @@ def get_target_name(features):
   return None
 
 
-def get_key_name(features):
+def get_key_names(features):
+  names = []
   for name, transform in six.iteritems(features):
     if transform['transform'] == KEY_TRANSFORM:
-      return name
-  return None
+      names.append(name)
+  return names
 
 
 def gzip_reader_fn():
@@ -757,6 +799,9 @@ def get_experiment_fn(args):
 
     # Build readers for training.
     if args.run_transforms:
+      if any(v['transform'] == IMAGE_TRANSFORM for k, v in six.iteritems(features)):
+        raise ValueError('"image_to_vec" transform requires transformation step. ' +
+                         'Cannot train from raw data.')
       raw_metadata = metadata_io.read_metadata(
         os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
 
