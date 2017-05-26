@@ -802,17 +802,13 @@ def get_experiment_fn(args):
       if any(v['transform'] == IMAGE_TRANSFORM for k, v in six.iteritems(features)):
         raise ValueError('"image_to_vec" transform requires transformation step. ' +
                          'Cannot train from raw data.')
-      raw_metadata = metadata_io.read_metadata(
-        os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
 
       input_reader_for_train = build_csv_transforming_training_input_fn(
-          raw_metadata=raw_metadata,
-          transform_savedmodel_dir=os.path.join(args.analysis_output_dir, TRANSFORM_FN_DIR),
+          schema=schema,
+          features=features,
+          analysis_output_dir=args.analysis_output_dir,
           raw_data_file_pattern=args.train_data_paths,
           training_batch_size=args.train_batch_size,
-          raw_keys=header_names,
-          transformed_label_keys=[target_column_name],
-          convert_scalars_to_vectors=True,
           num_epochs=args.num_epochs,
           randomize_input=True,
           min_after_dequeue=10,
