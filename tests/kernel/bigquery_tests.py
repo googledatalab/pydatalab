@@ -553,6 +553,89 @@ WITH q1 AS (
     mock_get_table.return_value = table
     self.assertEqual(table, google.datalab.bigquery.commands._bigquery._table_cell(args, None))
 
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Query.execute')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
+  def test_extract_cell_query(self, mock_get_notebook_item, mock_query_execute,
+                              mock_default_context):
+    args = {'table': None, 'view': None, 'query': None, 'path': None, 'format': None,
+            'delimiter': None, 'header': None, 'compress': None, 'nocache': None}
+    with self.assertRaisesRegexp(Exception, 'A query, table, or view is needed'):
+      google.datalab.bigquery.commands._bigquery._extract_cell(args, None)
+
+    args['query'] = 'test-query'
+    mock_get_notebook_item.return_value = None
+    with self.assertRaisesRegexp(Exception, 'Could not find query test-query'):
+      google.datalab.bigquery.commands._bigquery._extract_cell(args, None)
+
+    mock_get_notebook_item.return_value = google.datalab.bigquery.Query('sql')
+    mock_query_execute.return_value.failed = True
+    mock_query_execute.return_value.fatal_error = 'test-error'
+    with self.assertRaisesRegexp(Exception, 'Extract failed: test-error'):
+      google.datalab.bigquery.commands._bigquery._extract_cell(args, None)
+
+    mock_query_execute.return_value.failed = False
+    mock_query_execute.return_value.errors = 'test-errors'
+    with self.assertRaisesRegexp(Exception, 'Extract completed with errors: test-errors'):
+      google.datalab.bigquery.commands._bigquery._extract_cell(args, None)
+
+    mock_query_execute.return_value.errors = None
+    mock_query_execute.return_value.result = lambda: 'results'
+    self.assertEqual(google.datalab.bigquery.commands._bigquery._extract_cell(args, None),
+                     'results')
+
+    cell_body = {
+      'parameters': [
+          {'name': 'arg1', 'type': 'INT64', 'value': 5}
+      ]
+    }
+    google.datalab.bigquery.commands._bigquery._extract_cell(args, json.dumps(cell_body))
+    call_args = mock_query_execute.call_args[1]
+    self.assertDictEqual(call_args['query_params'][0], {
+      'parameterValue': {'value': 5},
+      'name': 'arg1',
+      'parameterType': {'type': 'INT64'}
+    })
+
+  @mock.patch('google.datalab.bigquery.Table.extract')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
+  def test_extract_cell_table(self, mock_get_notebook_item, mock_get_table, mock_table_extract):
+    args = {'table': 'test-table', 'path': 'test-path', 'format': None, 'delimiter': None,
+            'header': None, 'compress': None, 'nocache': None}
+    mock_get_table.return_value = None
+    with self.assertRaisesRegexp(Exception, 'Could not find table test-table'):
+      google.datalab.bigquery.commands._bigquery._extract_cell(args, None)
+
+    mock_get_table.return_value = google.datalab.bigquery.Table('project.test.table',
+                                                                self._create_context())
+    mock_table_extract.return_value.result = lambda: 'test-results'
+    mock_table_extract.return_value.failed = False
+    mock_table_extract.return_value.errors = None
+    self.assertEqual(google.datalab.bigquery.commands._bigquery._extract_cell(args, None),
+                     'test-results')
+    mock_table_extract.assert_called_with('test-path', format='NEWLINE_DELIMITED_JSON',
+                                          csv_delimiter=None, csv_header=None, compress=None)
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Query.execute')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
+  def test_extract_cell_view(self, mock_get_notebook_item, mock_query_execute,
+                             mock_default_context):
+    args = {'view': 'test-view', 'table': None, 'query': None, 'path': 'test-path',
+            'format': None, 'delimiter': None, 'header': None, 'compress': None, 'nocache': None}
+    mock_get_notebook_item.return_value = None
+    with self.assertRaisesRegexp(Exception, 'Could not find view test-view'):
+      google.datalab.bigquery.commands._bigquery._extract_cell(args, None)
+
+    mock_get_notebook_item.return_value = google.datalab.bigquery.View('project.test.view',
+                                                                       self._create_context())
+    mock_query_execute.return_value.result = lambda: 'test-results'
+    mock_query_execute.return_value.failed = False
+    mock_query_execute.return_value.errors = None
+    self.assertEqual(google.datalab.bigquery.commands._bigquery._extract_cell(args, None),
+                     'test-results')
+
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')
   @mock.patch('google.datalab.utils.commands._html.HtmlBuilder.render_chart_data')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
