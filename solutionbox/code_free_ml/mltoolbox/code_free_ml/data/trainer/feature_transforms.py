@@ -363,7 +363,8 @@ def make_preprocessing_fn(output_dir, features, keep_target):
         vocab_pd = pd.read_csv(six.StringIO(vocab_str),
                                header=None,
                                names=['vocab', 'count'],
-                               dtype=str)  # Prevent pd from converting numerical categories.
+                               dtype=str,  # Prevent pd from converting numerical categories.
+                               na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
         vocab = vocab_pd['vocab'].tolist()
         ex_count = vocab_pd['count'].astype(int).tolist()
 

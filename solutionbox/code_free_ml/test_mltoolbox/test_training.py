@@ -22,7 +22,7 @@ CODE_PATH = os.path.abspath(os.path.join(
 
 class TestOptionalKeys(unittest.TestCase):
 
-  def xtestNoKeys(self):
+  def testNoKeys(self):
     output_dir = tempfile.mkdtemp()
     try:
       features = {
@@ -81,7 +81,7 @@ class TestOptionalKeys(unittest.TestCase):
     finally:
       shutil.rmtree(output_dir)
 
-  def xtestManyKeys(self):
+  def testManyKeys(self):
     output_dir = tempfile.mkdtemp()
     try:
       features = {
@@ -518,7 +518,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestRegressionLinear(self):
+  def testRegressionLinear(self):
     self._logger.debug('\n\nTesting Regression Linear')
 
     problem_type = 'regression'
@@ -532,7 +532,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestClassificationDNN(self):
+  def testClassificationDNN(self):
     self._logger.debug('\n\nTesting Classification DNN')
 
     problem_type = 'classification'
@@ -550,7 +550,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestRegressionDNN(self):
+  def testRegressionDNN(self):
     self._logger.debug('\n\nTesting Regression DNN')
 
     problem_type = 'regression'
@@ -567,7 +567,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestClassificationDNNWithImage(self):
+  def testClassificationDNNWithImage(self):
     self._logger.debug('\n\nTesting Classification DNN With Image')
 
     problem_type = 'classification'

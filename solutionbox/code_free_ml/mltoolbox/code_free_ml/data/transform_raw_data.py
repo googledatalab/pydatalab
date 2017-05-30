@@ -131,15 +131,10 @@ def parse_arguments(argv):
       help=('Google Cloud Storage or Local directory in which '
             'to place outputs.'))
 
-  feature_parser = parser.add_mutually_exclusive_group(required=False)
-  feature_parser.add_argument('--target', dest='target', action='store_true')
-  feature_parser.add_argument('--no-target', dest='target', action='store_false')
-  parser.set_defaults(target=True)
-
   parser.add_argument(
       '--shuffle',
       action='store_true',
-      default=False)
+      default=True)
 
   args, _ = parser.parse_known_args(args=argv[1:])
 
@@ -208,11 +203,123 @@ def prepare_image_transforms(element, image_columns):
 
   return element
 
+class EmitAsBatchDoFn(beam.DoFn):
+  """A DoFn that buffers the records and emits them batch by batch."""
+
+  def __init__(self, batch_size):
+    """Constructor of EmitAsBatchDoFn beam.DoFn class.
+
+    Args:
+      batch_size: the max size we want to buffer the records before emitting.
+    """
+    self._batch_size = batch_size
+    self._cached = []
+
+  def process(self, element):
+    self._cached.append(element)
+    if len(self._cached) >= self._batch_size:
+      emit = self._cached
+      self._cached = []
+      yield emit
+
+  def finish_bundle(self, element=None):
+    if len(self._cached) > 0:  # pylint: disable=g-explicit-length-test
+      yield self._cached
+
+class TransformFeaturesDoFn(beam.DoFn):
+  """TODO"""
+
+  def __init__(self, analysis_output_dir):
+    self._trained_model_dir = trained_model_dir
+    self._session = None
+
+  def start_bundle(self, element=None):
+    from tensorflow.python.saved_model import tag_constants
+    from tensorflow.contrib.session_bundle import bundle_shim
+
+    self._session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(
+        self._trained_model_dir, tags=[tag_constants.SERVING])
+    signature = meta_graph.signature_def['serving_default']
+
+    # get the mappings between aliases and tensor names
+    # for both inputs and outputs
+    self._input_alias_map = {friendly_name: tensor_info_proto.name
+                             for (friendly_name, tensor_info_proto) in signature.inputs.items()}
+    self._output_alias_map = {friendly_name: tensor_info_proto.name
+                              for (friendly_name, tensor_info_proto) in signature.outputs.items()}
+    self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
+
+  def finish_bundle(self, element=None):
+    self._session.close()
+
+  def process(self, element):
+    """Run batch prediciton on a TF graph.
+
+    Args:
+      element: list of strings, representing one batch input to the TF graph.
+    """
+    import collections
+    import apache_beam as beam
+
+    num_in_batch = 0
+    try:
+      assert self._session is not None
+
+      feed_dict = collections.defaultdict(list)
+      for line in element:
+
+        # Remove trailing newline.
+        if line.endswith('\n'):
+          line = line[:-1]
+
+        feed_dict[self._input_alias_map.values()[0]].append(line)
+        num_in_batch += 1
+
+      # batch_result is list of numpy arrays with batch_size many rows.
+      batch_result = self._session.run(fetches=self._tensor_names,
+                                       feed_dict=feed_dict)
+
+      # ex batch_result for batch_size > 1:
+      # (array([value1, value2, ..., value_batch_size]),
+      #  array([[a1, b1, c1]], ..., [a_batch_size, b_batch_size, c_batch_size]]),
+      #  ...)
+      # ex batch_result for batch_size == 1:
+      # (value,
+      #  array([a1, b1, c1]),
+      #  ...)
+
+      # Convert the results into a dict and unbatch the results.
+      if num_in_batch > 1:
+        for result in zip(*batch_result):
+          predictions = {}
+          for name, value in zip(self._aliases, result):
+            predictions[name] = (value.tolist() if getattr(value, 'tolist', None) else value)
+          yield predictions
+      else:
+        predictions = {}
+        for i in range(len(self._aliases)):
+          value = batch_result[i]
+          value = (value.tolist() if getattr(value, 'tolist', None)
+                   else value)
+          predictions[self._aliases[i]] = value
+        yield predictions
+
+    except Exception as e:  # pylint: disable=broad-except
+      yield beam.pvalue.SideOutputValue('errors',
+                                        (str(e), element))
+
+def decode_csv(csv_string, column_names):
+  import csv
+  r = next(csv.reader([csv_string]))
+  if len(r) != len(column_names):
+    raise ValueError('csv line %s does not have %d columns' % (csv_string, len(column_names)))
+  return {k: v for k, v in zip(column_names, r)}
+
+def encode_csv(data_dict, column_names):
+  values = [str(data_dict[x]) for x in column_names]
+  return ','.join(values)
 
 def preprocess(pipeline, args):
-  input_metadata = metadata_io.read_metadata(
-      os.path.join(args.analysis_output_dir, RAW_METADATA_DIR))
-
   schema = json.loads(file_io.read_file_to_string(
       os.path.join(args.analysis_output_dir, SCHEMA_FILE)).decode())
   features = json.loads(file_io.read_file_to_string(
@@ -220,22 +327,12 @@ def preprocess(pipeline, args):
 
   column_names = [col['name'] for col in schema]
 
-  exclude_outputs = None
-  if not args.target:
-    for name, transform in six.iteritems(features):
-      if transform['transform'] == TARGET_TRANSFORM:
-        target_name = name
-        column_names.remove(target_name)
-        exclude_outputs = [target_name]
-        del input_metadata.schema.column_schemas[target_name]
-        break
-
   if args.csv_file_pattern:
     coder = coders.CsvCoder(column_names, input_metadata.schema, delimiter=',')
     raw_data = (
         pipeline
         | 'ReadCsvData' >> beam.io.ReadFromText(args.csv_file_pattern)
-        | 'ParseCsvData' >> beam.Map(coder.decode))
+        | 'ParseCsvData' >> beam.Map(decode_csv, column_names))
   else:
     columns = ', '.join(column_names)
     query = 'SELECT {columns} FROM `{table}`'.format(columns=columns,
@@ -250,13 +347,16 @@ def preprocess(pipeline, args):
   # the image files and converts them to byte stings. tft.TransformDataset()
   # will apply the saved model that makes the image embeddings.
   image_columns = image_transform_columns(features)
-  raw_data = (
+  
+  clean_csv_data = (
       raw_data
       | 'PreprocessTransferredLearningTransformations'
-      >> beam.Map(prepare_image_transforms, image_columns))
+      >> beam.Map(prepare_image_transforms, image_columns)
+      | 'BuildCSVString'
+      >> beam.Map(encode_csv, column_names)))
 
   if args.shuffle:
-    raw_data = raw_data | 'ShuffleData' >> shuffle()
+    clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
 
   transform_fn = (
       pipeline
