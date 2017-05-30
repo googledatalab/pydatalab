@@ -654,12 +654,6 @@ def _get_table(name):
   return None
 
 
-def _render_table(data, fields=None):
-  """ Helper to render a list of dictionaries as an HTML display object. """
-  return IPython.core.display.HTML(google.datalab.utils.commands.HtmlBuilder.render_table(data,
-                                                                                          fields))
-
-
 def _render_list(data):
   """ Helper to render a list of objects as an HTML list object. """
   return IPython.core.display.HTML(google.datalab.utils.commands.HtmlBuilder.render_list(data))
@@ -783,24 +777,23 @@ def _extract_cell(args, cell_body):
     args: the arguments following '%bigquery extract'.
   """
 
-  query = google.datalab.utils.commands.get_notebook_item(args['query'])
-  query_params = _get_query_parameters(args, cell_body)
-
-  if args['table'] or args['view']:
-    if args['table']:
-      source = _get_table(args['table'])
-      if not source:
-        raise Exception('Could not find table %s' % args['table'])
-    elif args['view']:
-      source = google.datalab.utils.commands.get_notebook_item(args['view'])
-      if not source:
-        raise Exception('Could not find view %' % args['view'])
+  if args['table']:
+    source = _get_table(args['table'])
+    if not source:
+      raise Exception('Could not find table %s' % args['table'])
 
     job = source.extract(args['path'],
                          format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
                          csv_delimiter=args['delimiter'], csv_header=args['header'],
-                         compress=args['compress'], use_cache=not args['nocache'])
-  elif query:
+                         compress=args['compress'])
+  elif args['query'] or args['view']:
+    source = google.datalab.utils.commands.get_notebook_item(args['view'])
+    if not source:
+      raise Exception('Could not find ' +
+                      ('view ' + args['view'] if args['view'] else 'query ' + args['query']))
+    query = source if args['query'] else google.datalab.bigquery.Query.from_view(source)
+    query_params = _get_query_parameters(args, cell_body) if args['query'] else None
+
     output_options = QueryOutput.file(path=args['path'], format=args['format'],
                                       csv_delimiter=args['delimiter'],
                                       csv_header=args['header'], compress=args['compress'],
