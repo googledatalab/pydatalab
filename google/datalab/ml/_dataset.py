@@ -117,9 +117,6 @@ class CsvDataSet(object):
       Exception if n is larger than number of rows.
     """
 
-    if sys.version_info.major > 2:
-      xrange = range  # for python 3 compatibility
-
     row_total_count = 0
     row_counts = []
     for file in self.files:
@@ -143,7 +140,7 @@ class CsvDataSet(object):
     skip_count = row_total_count - n
     # Get all skipped indexes. These will be distributed into each file.
     # Note that random.sample will raise Exception if skip_count is greater than rows count.
-    skip_all = sorted(random.sample(xrange(0, row_total_count), skip_count))
+    skip_all = sorted(random.sample(range(0, row_total_count), skip_count))
     dfs = []
     for file, row_count in zip(self.files, row_counts):
       skip = [x for x in skip_all if x < row_count]
