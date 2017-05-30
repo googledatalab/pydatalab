@@ -435,7 +435,14 @@ def build_csv_serving_tensors(analysis_path, features, schema, keep_target):
   raw_features = dict(zip(csv_header, tensors))
 
   transform_fn = make_preprocessing_fn(analysis_path, features, keep_target)
-  transformed_features = transform_fn(raw_features)
+  transformed_tensors = transform_fn(raw_features)
+
+  transformed_features = {}
+  for k, v in six.iteritems(transformed_tensors):
+    if isinstance(v, tf.Tensor) and v.get_shape().ndims == 1:
+      transformed_features[k] = tf.expand_dims(v, -1)
+    else:
+      transformed_features[k] = v
   
   return input_fn_utils.InputFnOps(
         transformed_features, None, {"csv_example": placeholder})
@@ -518,7 +525,7 @@ def build_csv_transforming_training_input_fn(schema,
     # Exapnd te dimes of non-sparse tensors. This is needed by tf.learn.
     transformed_features = {}
     for k, v in six.iteritems(transformed_tensors):
-      if v.ndims == 1:
+      if isinstance(v, tf.Tensor) and v.get_shape().ndims == 1:
         transformed_features[k] = tf.expand_dims(v, -1)
       else:
         transformed_features[k] = v
