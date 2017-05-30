@@ -50,7 +50,7 @@ class TestGraphBuilding(unittest.TestCase):
     
     with tf.Graph().as_default():
       with tf.Session().as_default() as session:
-        outputs, labels, inputs = feature_transforms.build_csv_serving_tensors(analysis_path, features, schema)
+        outputs, labels, inputs = feature_transforms.build_csv_serving_tensors(analysis_path, features, schema, keep_target=False)
         feed_inputs = {inputs['csv_example']: predict_data}
 
         session.run(tf.tables_initializer())

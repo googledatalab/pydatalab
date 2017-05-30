@@ -309,7 +309,7 @@ def make_image_to_vec_tito(tmp_dir):
 # ------------------------------------------------------------------------------
 
 
-def make_preprocessing_fn(output_dir, features):
+def make_preprocessing_fn(output_dir, features, keep_target):
   """Makes a preprocessing function.
 
   Args:
@@ -340,6 +340,8 @@ def make_preprocessing_fn(output_dir, features):
       if transform_name == KEY_TRANSFORM:
         transform_name = 'identity'
       elif transform_name == TARGET_TRANSFORM:
+        if not keep_target:
+          continue
         if file_io.file_exists(os.path.join(output_dir, VOCAB_ANALYSIS_FILE % name)):
           transform_name = 'one_hot'
         else:
@@ -397,7 +399,7 @@ def make_preprocessing_fn(output_dir, features):
   return preprocessing_fn
 
 
-def csv_header_and_defaults(features, schema, keep_target=False):
+def csv_header_and_defaults(features, schema, keep_target):
   target_name = None
   for name, transform in six.iteritems(features):
     if transform['transform'] == TARGET_TRANSFORM:
@@ -423,7 +425,7 @@ def csv_header_and_defaults(features, schema, keep_target=False):
     record_defaults.append(tf.constant([default],dtype=dtype)) 
   return csv_header, record_defaults
 
-def build_csv_serving_tensors(analysis_path, features, schema, keep_target=False):
+def build_csv_serving_tensors(analysis_path, features, schema, keep_target):
   csv_header, record_defaults = csv_header_and_defaults(features, schema, keep_target)
 
   placeholder = tf.placeholder(dtype=tf.string, shape=(None,),
@@ -432,7 +434,7 @@ def build_csv_serving_tensors(analysis_path, features, schema, keep_target=False
   tensors = tf.decode_csv(placeholder, record_defaults)
   raw_features = dict(zip(csv_header, tensors))
 
-  transform_fn = make_preprocessing_fn(analysis_path, features)
+  transform_fn = make_preprocessing_fn(analysis_path, features, keep_target)
   transformed_features = transform_fn(raw_features)
   
   return input_fn_utils.InputFnOps(
@@ -507,12 +509,20 @@ def build_csv_transforming_training_input_fn(schema,
     csv_header, record_defaults = csv_header_and_defaults(features, schema, keep_target=True)
     parsed_tensors = tf.decode_csv(batch_csv_lines, record_defaults, name='csv_to_tensors')
     raw_features = dict(zip(csv_header, parsed_tensors))
-    transform_fn = make_preprocessing_fn(analysis_output_dir, features)
+
+    transform_fn = make_preprocessing_fn(analysis_output_dir, features, keep_target=True)
     transformed_tensors = transform_fn(raw_features)
 
-    transformed_features = {k: tf.expand_dims(v, -1)
-                            for k, v in six.iteritems(transformed_tensors)}
-
+    #transformed_features = {k: tf.expand_dims(v, -1)
+    #                        for k, v in six.iteritems(transformed_tensors)}
+    # Exapnd te dimes of non-sparse tensors. This is needed by tf.learn.
+    transformed_features = {}
+    for k, v in six.iteritems(transformed_tensors):
+      if v.ndims == 1:
+        transformed_features[k] = tf.expand_dims(v, -1)
+      else:
+        transformed_features[k] = v
+     
     # Remove the target tensor, and return it directly
     target_name = None
     for name, transform in six.iteritems(features):

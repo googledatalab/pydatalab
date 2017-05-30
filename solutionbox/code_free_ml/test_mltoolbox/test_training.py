@@ -22,7 +22,7 @@ CODE_PATH = os.path.abspath(os.path.join(
 
 class TestOptionalKeys(unittest.TestCase):
 
-  def testNoKeys(self):
+  def xtestNoKeys(self):
     output_dir = tempfile.mkdtemp()
     try:
       features = {
@@ -504,7 +504,7 @@ class TestTrainer(unittest.TestCase):
         self.assertItemsEqual(expected_output_keys, result.keys())
         self.assertEqual([12, 11], result['key'].flatten().tolist())
 
-  def xtestClassificationLinear(self):
+  def testClassificationLinear(self):
     self._logger.debug('\n\nTesting Classification Linear')
 
     problem_type = 'classification'
