@@ -101,7 +101,7 @@ class TestCases(unittest.TestCase):
     self.assertEquals('count_occurrences', udf._name)
     self.assertEquals('js', udf._language)
     self.assertEquals('INTEGER', udf._return_type)
-    self.assertEquals({'word': 'STRING', 'corpus': 'STRING'}, udf._params)
+    self.assertEquals([('word', 'STRING'), ('corpus', 'STRING')], udf._params)
     self.assertEquals([], udf._imports)
 
     # param types with spaces (regression for pull request 373)
@@ -113,7 +113,7 @@ class TestCases(unittest.TestCase):
                                                           'language': 'js'}, cell_body)
     udf = env['count_occurrences']
     self.assertIsNotNone(udf)
-    self.assertEquals({'test_param': 'ARRAY<STRUCT<index INT64, value STRING>>'}, udf._params)
+    self.assertEquals([('test_param', 'ARRAY<STRUCT<index INT64, value STRING>>')], udf._params)
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   def test_datasource_cell(self, mock_notebook_env):

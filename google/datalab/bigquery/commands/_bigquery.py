@@ -530,7 +530,7 @@ def _udf_cell(args, cell_body):
   return_type = return_type[0]
 
   # Finally build the UDF object
-  udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, dict(params),
+  udf = google.datalab.bigquery.UDF(udf_name, cell_body, return_type, params,
                                     args['language'], imports)
   google.datalab.utils.commands.notebook_environment()[udf_name] = udf
 
