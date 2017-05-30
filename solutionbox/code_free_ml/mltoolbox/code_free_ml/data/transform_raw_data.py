@@ -38,6 +38,7 @@ from tensorflow_transform.beam import impl as tft
 from tensorflow_transform.beam import tft_beam_io
 from tensorflow_transform.tf_metadata import metadata_io
 
+import trainer
 
 img_error_count = Metrics.counter('main', 'ImgErrorCount')
 img_missing_count = Metrics.counter('main', 'ImgMissingCount')
@@ -229,25 +230,19 @@ class EmitAsBatchDoFn(beam.DoFn):
 class TransformFeaturesDoFn(beam.DoFn):
   """TODO"""
 
-  def __init__(self, analysis_output_dir):
-    self._trained_model_dir = trained_model_dir
+  def __init__(self, analysis_output_dir, features, schema):
+    self._analysis_output_dir = analysis_output_dir
     self._session = None
 
   def start_bundle(self, element=None):
-    from tensorflow.python.saved_model import tag_constants
-    from tensorflow.contrib.session_bundle import bundle_shim
+    import tensorflow as tf
+    g = tf.Graph().as_default()
+    self._session = tf.Session(graph=g)
+    transformed_features, _, placeholders = trainer.build_csv_serving_tensors(analysis_output_dir, features, schema, keep_target=True)
 
-    self._session, meta_graph = bundle_shim.load_session_bundle_or_saved_model_bundle_from_path(
-        self._trained_model_dir, tags=[tag_constants.SERVING])
-    signature = meta_graph.signature_def['serving_default']
+    self._transformed_features = transformed_features
+    self._input_placeholder_tensor = placeholders['csv_example']
 
-    # get the mappings between aliases and tensor names
-    # for both inputs and outputs
-    self._input_alias_map = {friendly_name: tensor_info_proto.name
-                             for (friendly_name, tensor_info_proto) in signature.inputs.items()}
-    self._output_alias_map = {friendly_name: tensor_info_proto.name
-                              for (friendly_name, tensor_info_proto) in signature.outputs.items()}
-    self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
 
   def finish_bundle(self, element=None):
     self._session.close()
@@ -256,7 +251,7 @@ class TransformFeaturesDoFn(beam.DoFn):
     """Run batch prediciton on a TF graph.
 
     Args:
-      element: list of strings, representing one batch input to the TF graph.
+      element: list of csv strings, representing one batch input to the TF graph.
     """
     import collections
     import apache_beam as beam
@@ -266,18 +261,14 @@ class TransformFeaturesDoFn(beam.DoFn):
       assert self._session is not None
 
       feed_dict = collections.defaultdict(list)
+      clean_element = []
       for line in element:
-
-        # Remove trailing newline.
-        if line.endswith('\n'):
-          line = line[:-1]
-
-        feed_dict[self._input_alias_map.values()[0]].append(line)
-        num_in_batch += 1
+        clean_element.append(line.rstrip())
 
       # batch_result is list of numpy arrays with batch_size many rows.
-      batch_result = self._session.run(fetches=self._tensor_names,
-                                       feed_dict=feed_dict)
+      batch_result = self._session.run(
+          fetches=self._transformed_features,
+          feed_dict={self._input_placeholder_tensor: clean_element})
 
       # ex batch_result for batch_size > 1:
       # (array([value1, value2, ..., value_batch_size]),
