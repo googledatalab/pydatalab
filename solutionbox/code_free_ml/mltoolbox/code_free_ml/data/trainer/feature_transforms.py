@@ -293,7 +293,7 @@ def make_image_to_vec_tito(tmp_dir):
                                                                           [so.op.name])
         file_io.delete_file(checkpoint_tmp)
       tensors_out = tf.import_graph_def(output_graph_def,
-                                        input_map={tensor_in.name: tensor_in},
+                                        input_map={si.name: tensor_in},
                                         return_elements=[so.name])
       return tensors_out[0]
 
@@ -317,17 +317,16 @@ def make_preprocessing_fn(output_dir, features, keep_target):
     features: the features dict
 
   Returns:
-    a function
+    a function that takes a dict of input tensors
   """
   def preprocessing_fn(inputs):
-    """TFT preprocessing function.
+    """Preprocessing function.
 
     Args:
-      inputs: dictionary of input `tensorflow_transform.Column`.
+      inputs: dictionary of raw input tensors
 
     Returns:
-      A dictionary of `tensorflow_transform.Column` representing the transformed
-          columns.
+      A dictionary of transformed tensors
     """
     stats = json.loads(
       file_io.read_file_to_string(
@@ -431,7 +430,6 @@ def build_csv_serving_tensors(analysis_path, features, schema, keep_target):
 
   placeholder = tf.placeholder(dtype=tf.string, shape=(None,),
                                  name='csv_input_placeholder')
-  placeholder = tf.Print(placeholder, [placeholder])
   tensors = tf.decode_csv(placeholder, record_defaults)
   raw_features = dict(zip(csv_header, tensors))
 
@@ -547,5 +545,66 @@ def build_csv_transforming_training_input_fn(schema,
   return raw_training_input_fn
 
 
-if __name__ == '__main__':
-  main()
+def get_transfrormed_feature_info(features, schema):
+  """Returns information about the transformed features.
+
+  Returns:
+    Dict in the from 
+    {transformed_feature_name: {dtype: tf type, size: int or None}}
+  """
+
+  info = {}
+  for name, transform in six.iteritems(features):
+    transform_name = transform['transform']
+
+    info[name] = {}
+
+    if transform_name == IDENTITY_TRANSFORM:
+      schema_type = [col['type'] for col in schema if col['name'] == name]
+      schema_type = schema_type[0].lower()
+      if schema_type == FLOAT_SCHEMA:
+        info[name]['dtype'] = tf.float32
+      elif schema_type == INTEGER_SCHEMA:
+        info[name]['dtype'] = tf.int64
+      else:
+        info[name]['dtype'] = tf.string
+    elif transform_name == SCALE_TRANSFORM:
+      info[name]['dtype'] = tf.float32
+      info[name]['size'] = 1
+    elif transform_name == ONE_HOT_TRANSFORM:
+      info[name]['dtype'] = tf.int64
+      info[name]['size'] = 1
+    elif transform_name == EMBEDDING_TRANSFROM:
+      info[name]['dtype'] = tf.int64
+      info[name]['size'] = 1
+    elif transform_name == BOW_TRANSFORM or transform_name == TFIDF_TRANSFORM:
+      dtypes[name + '_ids'] = tf.int64
+      dtypes[name + '_weights'] = tf.float32
+      info[name + '_ids']['size'] = None
+      info[name + '_weights']['size'] = None
+    elif transform_name == KEY_TRANSFORM:
+      schema_type = [col['type'] for col in schema if col['name'] == name]
+      schema_type = schema_type[0].lower()
+      if schema_type == FLOAT_SCHEMA:
+        info[name]['dtype'] = tf.float32
+      elif schema_type == INTEGER_SCHEMA:
+        info[name]['dtype'] = tf.int64
+      else:
+        info[name]['dtype'] = tf.string
+      info[name]['size'] = 1
+    elif transform_name == TARGET_TRANSFORM:
+      # If the input is a string, it gets converted to an int (id)
+      schema_type = [col['type'] for col in schema if col['name'] == name]
+      schema_type = schema_type[0].lower()
+      if schema_type in NUMERIC_SCHEMA:
+        info[name]['dtype'] = tf.float32
+      else:
+        info[name]['dtype'] = tf.int64
+      info[name]['size'] = 1
+    elif transform_name == IMAGE_TRANSFORM:
+      info[name]['dtype'] = tf.float32
+      info[name]['size'] = 2048
+    else:
+      raise ValueError('Unknown transfrom %s' % transform_name)
+
+  return info

@@ -38,7 +38,7 @@ from tensorflow_transform.beam import impl as tft
 from tensorflow_transform.beam import tft_beam_io
 from tensorflow_transform.tf_metadata import metadata_io
 
-import trainer
+from trainer import feature_transforms
 
 img_error_count = Metrics.counter('main', 'ImgErrorCount')
 img_missing_count = Metrics.counter('main', 'ImgMissingCount')
@@ -137,6 +137,11 @@ def parse_arguments(argv):
       action='store_true',
       default=True)
 
+  parser.add_argument(
+      '--batch-size',
+      type=int,
+      default=100)
+
   args, _ = parser.parse_known_args(args=argv[1:])
 
   if args.cloud and not args.project_id:
@@ -232,14 +237,27 @@ class TransformFeaturesDoFn(beam.DoFn):
 
   def __init__(self, analysis_output_dir, features, schema):
     self._analysis_output_dir = analysis_output_dir
+    self._features = features
+    self._schema = schema
     self._session = None
 
   def start_bundle(self, element=None):
     import tensorflow as tf
-    g = tf.Graph().as_default()
-    self._session = tf.Session(graph=g)
-    transformed_features, _, placeholders = trainer.build_csv_serving_tensors(analysis_output_dir, features, schema, keep_target=True)
 
+    g = tf.Graph()
+    session = tf.Session(graph=g)
+
+    # Build the transformation graph
+    with g.as_default():
+      transformed_features, _, placeholders = (
+          feature_transforms.build_csv_serving_tensors(
+              analysis_path=self._analysis_output_dir, 
+              features=self._features, 
+              schema=self._schema,
+              keep_target=True))
+      session.run(tf.tables_initializer())
+    
+    self._session = session
     self._transformed_features = transformed_features
     self._input_placeholder_tensor = placeholders['csv_example']
 
@@ -253,14 +271,9 @@ class TransformFeaturesDoFn(beam.DoFn):
     Args:
       element: list of csv strings, representing one batch input to the TF graph.
     """
-    import collections
     import apache_beam as beam
 
-    num_in_batch = 0
     try:
-      assert self._session is not None
-
-      feed_dict = collections.defaultdict(list)
       clean_element = []
       for line in element:
         clean_element.append(line.rstrip())
@@ -270,30 +283,16 @@ class TransformFeaturesDoFn(beam.DoFn):
           fetches=self._transformed_features,
           feed_dict={self._input_placeholder_tensor: clean_element})
 
-      # ex batch_result for batch_size > 1:
-      # (array([value1, value2, ..., value_batch_size]),
-      #  array([[a1, b1, c1]], ..., [a_batch_size, b_batch_size, c_batch_size]]),
-      #  ...)
-      # ex batch_result for batch_size == 1:
-      # (value,
-      #  array([a1, b1, c1]),
-      #  ...)
+      # ex batch_result
+      # {'col1': array([[2]]), 'col2': array([[1]]), ...}
 
-      # Convert the results into a dict and unbatch the results.
-      if num_in_batch > 1:
-        for result in zip(*batch_result):
-          predictions = {}
-          for name, value in zip(self._aliases, result):
-            predictions[name] = (value.tolist() if getattr(value, 'tolist', None) else value)
-          yield predictions
-      else:
-        predictions = {}
-        for i in range(len(self._aliases)):
-          value = batch_result[i]
-          value = (value.tolist() if getattr(value, 'tolist', None)
-                   else value)
-          predictions[self._aliases[i]] = value
-        yield predictions
+      # Unbatch the results.
+      for i in range(len(clean_element)):
+        transformed_features = {}
+        for name, value in six.iteritems(batch_result):
+          transformed_features[name] = value[i].tolist()
+
+        yield transformed_features
 
     except Exception as e:  # pylint: disable=broad-except
       yield beam.pvalue.SideOutputValue('errors',
@@ -310,6 +309,33 @@ def encode_csv(data_dict, column_names):
   values = [str(data_dict[x]) for x in column_names]
   return ','.join(values)
 
+def serialize_example(transformed_json_data, info_dict):
+  import tensorflow as tf
+
+  def _make_int64_list(x):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=x))
+  def _make_bytes_list(x):
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=x))
+  def _make_float_list(x):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=x))
+
+  if sorted(six.iterkeys(transformed_json_data)) != sorted(six.iterkeys(info_dict)):
+    raise ValueError('Keys do not match %s, %s' % (six.iterkeys(transformed_json_data), six.iterkeys(info_dict)))
+
+  ex_dict = {}
+  for name, info in six.iteritems(info_dict):
+    if info['dtype'] == tf.int64:
+      ex_dict[name] = _make_int64_list(transformed_json_data[name])
+    elif info['dtype'] == tf.float32:
+      ex_dict[name] = _make_float_list(transformed_json_data[name])
+    elif info['dtype'] == tf.string:
+      ex_dict[name] = _make_bytes_list(transformed_json_data[name])      
+    else:
+      raise ValueError('Unsupported data type %s' % info['dtype'])
+
+  ex = tf.train.Example(features=tf.train.Features(feature=ex_dict))
+  return ex.SerializeToString()
+
 def preprocess(pipeline, args):
   schema = json.loads(file_io.read_file_to_string(
       os.path.join(args.analysis_output_dir, SCHEMA_FILE)).decode())
@@ -319,7 +345,6 @@ def preprocess(pipeline, args):
   column_names = [col['name'] for col in schema]
 
   if args.csv_file_pattern:
-    coder = coders.CsvCoder(column_names, input_metadata.schema, delimiter=',')
     raw_data = (
         pipeline
         | 'ReadCsvData' >> beam.io.ReadFromText(args.csv_file_pattern)
@@ -344,29 +369,29 @@ def preprocess(pipeline, args):
       | 'PreprocessTransferredLearningTransformations'
       >> beam.Map(prepare_image_transforms, image_columns)
       | 'BuildCSVString'
-      >> beam.Map(encode_csv, column_names)))
+      >> beam.Map(encode_csv, column_names))
 
-  if args.shuffle:
-    clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
+  #if args.shuffle:
+  #  clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
 
-  transform_fn = (
-      pipeline
-      | 'ReadTransformFn'
-      >> tft_beam_io.ReadTransformFn(args.analysis_output_dir))
+  (transformed_data, errors) = (
+       clean_csv_data
+       | 'Batch Input' 
+       >> beam.ParDo(EmitAsBatchDoFn(args.batch_size)) 
+       | 'Run TF Graph on Batches' 
+       >> beam.ParDo(TransformFeaturesDoFn(args.analysis_output_dir, features, schema)).with_outputs('errors', main='main'))
 
-  (transformed_data, transform_metadata) = (
-      ((raw_data, input_metadata), transform_fn)
-      | 'ApplyTensorflowPreprocessingGraph' 
-      >> tft.TransformDataset(exclude_outputs))
-
-  tfexample_coder = coders.ExampleProtoCoder(transform_metadata.schema)
   _ = (transformed_data
-       | 'SerializeExamples' >> beam.Map(tfexample_coder.encode)
-       | 'WriteExamples'
-       >> beam.io.WriteToTFRecord(
-           os.path.join(args.output_dir, args.output_filename_prefix),
-           file_name_suffix='.tfrecord.gz'))
-
+        | 'SerializeExamples' >> beam.Map(serialize_example, feature_transforms.get_transfrormed_feature_info(features, schema))
+        | 'WriteExamples'
+        >> beam.io.WriteToTFRecord(
+            os.path.join(args.output_dir, args.output_filename_prefix),
+            file_name_suffix='.tfrecord.gz'))
+  _ = (errors
+       | 'WriteErrors'
+       >> beam.io.WriteToText(
+           os.path.join(args.output_dir, 'errors'),
+           file_name_suffix='.txt'))
 
 def main(argv=None):
   """Run Preprocessing as a Dataflow."""
