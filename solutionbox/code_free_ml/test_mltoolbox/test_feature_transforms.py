@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import base64
-import copy
 import cStringIO
 from PIL import Image
 import json
@@ -10,21 +9,12 @@ import math
 import numpy as np
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
-import uuid
 import unittest
-import pandas as pd
-import six
 import tensorflow as tf
 
 from tensorflow.python.lib.io import file_io
-from tensorflow_transform.tf_metadata import metadata_io
-from tensorflow_transform.saved import input_fn_maker
-
-import google.datalab as dl
-import google.datalab.bigquery as bq
 
 # To make 'import analyze_data' work without installing it.
 sys.path.append(os.path.abspath(
@@ -47,10 +37,11 @@ class TestGraphBuilding(unittest.TestCase):
     # Cannot call
     # bundle_shim.load_session_bundle_or_saved_model_bundle_from_path directly
     # as tft changes the in/output tensor names.
-    
+
     with tf.Graph().as_default():
       with tf.Session().as_default() as session:
-        outputs, labels, inputs = feature_transforms.build_csv_serving_tensors(analysis_path, features, schema, keep_target=False)
+        outputs, labels, inputs = feature_transforms.build_csv_serving_tensors(
+            analysis_path, features, schema, keep_target=False)
         feed_inputs = {inputs['csv_example']: predict_data}
 
         session.run(tf.tables_initializer())
@@ -67,13 +58,13 @@ class TestGraphBuilding(unittest.TestCase):
                         {'num1': {'max': 10.0, 'mean': 9.5, 'min': 0.0},  # noqa
                          'num2': {'max': 1.0, 'mean': 2.0, 'min': -1.0},
                          'num3': {'max': 10.0, 'mean': 2.0, 'min': 5.0}}}))
-      schema =  [{'name': 'num1', 'type': 'FLOAT'},
-         {'name': 'num2', 'type': 'FLOAT'},
-         {'name': 'num3', 'type': 'INTEGER'}]
+      schema = [{'name': 'num1', 'type': 'FLOAT'},
+                {'name': 'num2', 'type': 'FLOAT'},
+                {'name': 'num3', 'type': 'INTEGER'}]
 
       features = {'num1': {'transform': 'identity'},
-         'num2': {'transform': 'scale', 'value': 10},
-         'num3': {'transform': 'scale'}}
+                  'num2': {'transform': 'scale', 'value': 10},
+                  'num3': {'transform': 'scale'}}
       input_data = ['5.0,-1.0,10',
                     '10.0,1.0,5',
                     '15.0,0.5,7']
@@ -109,7 +100,7 @@ class TestGraphBuilding(unittest.TestCase):
           os.path.join(output_folder, feature_transforms.STATS_FILE),
           json.dumps({}))  # stats file needed but unused.
 
-      schema =[{'name': 'cat1', 'type': 'STRING'}, {'name': 'cat2', 'type': 'STRING'}]
+      schema = [{'name': 'cat1', 'type': 'STRING'}, {'name': 'cat2', 'type': 'STRING'}]
       features = {'cat1': {'transform': 'one_hot'},
                   'cat2': {'transform': 'embedding'}}
 

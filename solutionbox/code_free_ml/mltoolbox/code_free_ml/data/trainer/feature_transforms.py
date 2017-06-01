@@ -2,21 +2,15 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import argparse
 import base64
 import collections
 import cStringIO
-import csv
 import json
 import os
 from PIL import Image
-import sys
 import pandas as pd
 import six
 import tensorflow as tf
-import textwrap
-
-import apache_beam as beam
 
 
 from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
@@ -73,7 +67,7 @@ IMAGE_DEFAULT_STRING = base64.urlsafe_b64encode(_img_buf.getvalue())
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
-# start of TF.transform functions
+# start of transform functions
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
@@ -304,7 +298,7 @@ def make_image_to_vec_tito(tmp_dir):
                                INCEPTION_EXCLUDED_VARIABLES)
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
-# end of TF.transform functions
+# end of transform functions
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
@@ -403,15 +397,16 @@ def get_transfrormed_feature_info(features, schema):
   """Returns information about the transformed features.
 
   Returns:
-    Dict in the from 
-    {transformed_feature_name: {dtype: tf type, size: int or None}}
+    Dict in the from
+    {transformed_feature_name: {dtype: tf type, size: int or None}}. If the size
+    is None, then the tensor is a sparse tensor.
   """
 
   info = collections.defaultdict(dict)
 
   for name, transform in six.iteritems(features):
     transform_name = transform['transform']
-  
+
     if transform_name == IDENTITY_TRANSFORM:
       schema_type = [col['type'] for col in schema if col['name'] == name]
       schema_type = schema_type[0].lower()
@@ -463,7 +458,11 @@ def get_transfrormed_feature_info(features, schema):
 
   return info
 
+
+# TODO(brandondutra): should numerical defaults be the mean or 0?
 def csv_header_and_defaults(features, schema, keep_target):
+  """Gets csv header and default lists."""
+
   target_name = None
   for name, transform in six.iteritems(features):
     if transform['transform'] == TARGET_TRANSFORM:
@@ -486,14 +485,18 @@ def csv_header_and_defaults(features, schema, keep_target):
     else:
       default, dtype = '', tf.string
 
-    record_defaults.append(tf.constant([default],dtype=dtype)) 
+    record_defaults.append(tf.constant([default], dtype=dtype))
+
   return csv_header, record_defaults
 
+
 def build_csv_serving_tensors(analysis_path, features, schema, keep_target):
+  """Returns a placeholder tensor and transformed tensors."""
+
   csv_header, record_defaults = csv_header_and_defaults(features, schema, keep_target)
 
   placeholder = tf.placeholder(dtype=tf.string, shape=(None,),
-                                 name='csv_input_placeholder')
+                               name='csv_input_placeholder')
   tensors = tf.decode_csv(placeholder, record_defaults)
   raw_features = dict(zip(csv_header, tensors))
 
@@ -506,9 +509,10 @@ def build_csv_serving_tensors(analysis_path, features, schema, keep_target):
       transformed_features[k] = tf.expand_dims(v, -1)
     else:
       transformed_features[k] = v
-  
+
   return input_fn_utils.InputFnOps(
-        transformed_features, None, {"csv_example": placeholder})
+      transformed_features, None, {"csv_example": placeholder})
+
 
 def build_csv_transforming_training_input_fn(schema,
                                              features,
@@ -590,7 +594,7 @@ def build_csv_transforming_training_input_fn(schema,
         transformed_features[k] = tf.expand_dims(v, -1)
       else:
         transformed_features[k] = v
-     
+
     # Remove the target tensor, and return it directly
     target_name = None
     for name, transform in six.iteritems(features):
@@ -601,7 +605,7 @@ def build_csv_transforming_training_input_fn(schema,
       raise ValueError('Cannot find target transform in features')
 
     transformed_labels = transformed_features.pop(target_name)
-    
+
     return transformed_features, transformed_labels
 
   return raw_training_input_fn
@@ -692,7 +696,7 @@ def build_tfexample_transfored_training_input_fn(schema,
         transformed_features[k] = tf.expand_dims(v, -1)
       else:
         transformed_features[k] = v
-     
+
     # Remove the target tensor, and return it directly
     target_name = None
     for name, transform in six.iteritems(features):
@@ -703,8 +707,7 @@ def build_tfexample_transfored_training_input_fn(schema,
       raise ValueError('Cannot find target transform in features')
 
     transformed_labels = transformed_features.pop(target_name)
-    
+
     return transformed_features, transformed_labels
 
   return transformed_training_input_fn
-

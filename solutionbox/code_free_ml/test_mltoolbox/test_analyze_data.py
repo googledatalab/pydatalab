@@ -1,13 +1,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import base64
 import copy
-import cStringIO
-from PIL import Image
 import json
-import math
-import numpy as np
 import os
 import shutil
 import subprocess
@@ -17,11 +12,8 @@ import uuid
 import unittest
 import pandas as pd
 import six
-import tensorflow as tf
 
 from tensorflow.python.lib.io import file_io
-from tensorflow_transform.tf_metadata import metadata_io
-from tensorflow_transform.saved import input_fn_maker
 
 import google.datalab as dl
 import google.datalab.bigquery as bq

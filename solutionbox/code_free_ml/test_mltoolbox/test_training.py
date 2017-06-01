@@ -173,7 +173,7 @@ class TestTrainer(unittest.TestCase):
 
   def setUp(self):
     self._test_dir = tempfile.mkdtemp()
-    
+
     self._analysis_output = os.path.join(self._test_dir, 'analysis_output')
     self._transform_output = os.path.join(self._test_dir, 'transform_output')
     self._train_output = os.path.join(self._test_dir, 'train_output')

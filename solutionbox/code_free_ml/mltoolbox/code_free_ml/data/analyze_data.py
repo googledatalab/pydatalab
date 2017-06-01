@@ -25,24 +25,10 @@ import json
 import os
 from PIL import Image
 import sys
-import pandas as pd
 import six
-import tensorflow as tf
-import tensorflow_transform as tft
 import textwrap
 
-import apache_beam as beam
-
-
-from tensorflow.contrib import lookup
-from tensorflow.contrib.slim.python.slim.nets.inception_v3 import inception_v3
-from tensorflow.contrib.slim.python.slim.nets.inception_v3 import inception_v3_arg_scope
 from tensorflow.python.lib.io import file_io
-from tensorflow_transform.tf_metadata import dataset_metadata
-from tensorflow_transform.tf_metadata import dataset_schema
-from tensorflow_transform.tf_metadata import metadata_io
-from tensorflow_transform.beam import impl as tft_impl
-from tensorflow_transform.beam import tft_beam_io
 
 # Files
 SCHEMA_FILE = 'schema.json'
@@ -216,6 +202,7 @@ def parse_arguments(argv):
                      ' be set or just --bigquery-table is set')
 
   return args
+
 
 def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
                        features):

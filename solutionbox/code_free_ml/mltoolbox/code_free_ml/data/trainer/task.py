@@ -44,10 +44,6 @@ from tensorflow.python.saved_model import signature_def_utils
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.training import saver
 from tensorflow.python.util import compat
-from tensorflow_transform.saved import input_fn_maker
-from tensorflow_transform.saved import saved_transform_io
-from tensorflow_transform.tf_metadata import dataset_schema
-from tensorflow_transform.tf_metadata import metadata_io
 
 
 import feature_transforms
@@ -90,7 +86,6 @@ PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
 
 IMAGE_BOTTLENECK_TENSOR_SIZE = 2048
-
 
 
 def parse_arguments(argv):
@@ -400,7 +395,8 @@ def make_export_strategy(
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
 
-      input_ops = feature_transforms.build_csv_serving_tensors(args.analysis_output_dir, features, schema, keep_target)
+      input_ops = feature_transforms.build_csv_serving_tensors(
+          args.analysis_output_dir, features, schema, keep_target)
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
@@ -491,8 +487,6 @@ def make_export_strategy(
     intermediate_dir = 'intermediate_prediction_models'
 
   return export_strategy.ExportStrategy(intermediate_dir, export_fn)
-
-
 
 
 def make_feature_engineering_fn(features):
@@ -591,7 +585,8 @@ def read_vocab(args, column_name):
   vocab = pd.read_csv(six.StringIO(vocab_str),
                       header=None,
                       names=['token', 'count'],
-                      dtype=str)  # Prevent pd from converting numerical categories.)
+                      dtype=str,  # Prevent pd from converting numerical categories.)
+                      na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
   return vocab['token'].tolist()
 
 
@@ -608,11 +603,6 @@ def get_key_names(features):
     if transform['transform'] == KEY_TRANSFORM:
       names.append(name)
   return names
-
-
-def gzip_reader_fn():
-  return tf.TFRecordReader(options=tf.python_io.TFRecordOptions(
-      compression_type=tf.python_io.TFRecordCompressionType.GZIP))
 
 
 def read_json_file(file_path):
@@ -638,7 +628,6 @@ def get_experiment_fn(args):
     stats = read_json_file(os.path.join(args.analysis_output_dir, STATS_FILE))
 
     target_column_name = get_target_name(features)
-    header_names = [col['name'] for col in schema]
     if not target_column_name:
       raise ValueError('target missing from features file.')
 
