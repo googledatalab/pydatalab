@@ -390,7 +390,7 @@ def preprocess(pipeline, args):
   _ = (errors
        | 'WriteErrors'
        >> beam.io.WriteToText(
-           os.path.join(args.output_dir, 'errors'),
+           os.path.join(args.output_dir, 'errors_' + args.output_filename_prefix),
            file_name_suffix='.txt'))
 
 def main(argv=None):

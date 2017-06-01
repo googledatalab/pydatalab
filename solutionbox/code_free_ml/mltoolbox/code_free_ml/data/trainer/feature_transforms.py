@@ -399,6 +399,70 @@ def make_preprocessing_fn(output_dir, features, keep_target):
   return preprocessing_fn
 
 
+def get_transfrormed_feature_info(features, schema):
+  """Returns information about the transformed features.
+
+  Returns:
+    Dict in the from 
+    {transformed_feature_name: {dtype: tf type, size: int or None}}
+  """
+
+  info = {}
+  for name, transform in six.iteritems(features):
+    transform_name = transform['transform']
+
+    info[name] = {}
+
+    if transform_name == IDENTITY_TRANSFORM:
+      schema_type = [col['type'] for col in schema if col['name'] == name]
+      schema_type = schema_type[0].lower()
+      if schema_type == FLOAT_SCHEMA:
+        info[name]['dtype'] = tf.float32
+      elif schema_type == INTEGER_SCHEMA:
+        info[name]['dtype'] = tf.int64
+      else:
+        info[name]['dtype'] = tf.string
+    elif transform_name == SCALE_TRANSFORM:
+      info[name]['dtype'] = tf.float32
+      info[name]['size'] = 1
+    elif transform_name == ONE_HOT_TRANSFORM:
+      info[name]['dtype'] = tf.int64
+      info[name]['size'] = 1
+    elif transform_name == EMBEDDING_TRANSFROM:
+      info[name]['dtype'] = tf.int64
+      info[name]['size'] = 1
+    elif transform_name == BOW_TRANSFORM or transform_name == TFIDF_TRANSFORM:
+      dtypes[name + '_ids'] = tf.int64
+      dtypes[name + '_weights'] = tf.float32
+      info[name + '_ids']['size'] = None
+      info[name + '_weights']['size'] = None
+    elif transform_name == KEY_TRANSFORM:
+      schema_type = [col['type'] for col in schema if col['name'] == name]
+      schema_type = schema_type[0].lower()
+      if schema_type == FLOAT_SCHEMA:
+        info[name]['dtype'] = tf.float32
+      elif schema_type == INTEGER_SCHEMA:
+        info[name]['dtype'] = tf.int64
+      else:
+        info[name]['dtype'] = tf.string
+      info[name]['size'] = 1
+    elif transform_name == TARGET_TRANSFORM:
+      # If the input is a string, it gets converted to an int (id)
+      schema_type = [col['type'] for col in schema if col['name'] == name]
+      schema_type = schema_type[0].lower()
+      if schema_type in NUMERIC_SCHEMA:
+        info[name]['dtype'] = tf.float32
+      else:
+        info[name]['dtype'] = tf.int64
+      info[name]['size'] = 1
+    elif transform_name == IMAGE_TRANSFORM:
+      info[name]['dtype'] = tf.float32
+      info[name]['size'] = 2048
+    else:
+      raise ValueError('Unknown transfrom %s' % transform_name)
+
+  return info
+
 def csv_header_and_defaults(features, schema, keep_target):
   target_name = None
   for name, transform in six.iteritems(features):
@@ -519,8 +583,6 @@ def build_csv_transforming_training_input_fn(schema,
     transform_fn = make_preprocessing_fn(analysis_output_dir, features, keep_target=True)
     transformed_tensors = transform_fn(raw_features)
 
-    #transformed_features = {k: tf.expand_dims(v, -1)
-    #                        for k, v in six.iteritems(transformed_tensors)}
     # Exapnd te dimes of non-sparse tensors. This is needed by tf.learn.
     transformed_features = {}
     for k, v in six.iteritems(transformed_tensors):
@@ -545,66 +607,4 @@ def build_csv_transforming_training_input_fn(schema,
   return raw_training_input_fn
 
 
-def get_transfrormed_feature_info(features, schema):
-  """Returns information about the transformed features.
 
-  Returns:
-    Dict in the from 
-    {transformed_feature_name: {dtype: tf type, size: int or None}}
-  """
-
-  info = {}
-  for name, transform in six.iteritems(features):
-    transform_name = transform['transform']
-
-    info[name] = {}
-
-    if transform_name == IDENTITY_TRANSFORM:
-      schema_type = [col['type'] for col in schema if col['name'] == name]
-      schema_type = schema_type[0].lower()
-      if schema_type == FLOAT_SCHEMA:
-        info[name]['dtype'] = tf.float32
-      elif schema_type == INTEGER_SCHEMA:
-        info[name]['dtype'] = tf.int64
-      else:
-        info[name]['dtype'] = tf.string
-    elif transform_name == SCALE_TRANSFORM:
-      info[name]['dtype'] = tf.float32
-      info[name]['size'] = 1
-    elif transform_name == ONE_HOT_TRANSFORM:
-      info[name]['dtype'] = tf.int64
-      info[name]['size'] = 1
-    elif transform_name == EMBEDDING_TRANSFROM:
-      info[name]['dtype'] = tf.int64
-      info[name]['size'] = 1
-    elif transform_name == BOW_TRANSFORM or transform_name == TFIDF_TRANSFORM:
-      dtypes[name + '_ids'] = tf.int64
-      dtypes[name + '_weights'] = tf.float32
-      info[name + '_ids']['size'] = None
-      info[name + '_weights']['size'] = None
-    elif transform_name == KEY_TRANSFORM:
-      schema_type = [col['type'] for col in schema if col['name'] == name]
-      schema_type = schema_type[0].lower()
-      if schema_type == FLOAT_SCHEMA:
-        info[name]['dtype'] = tf.float32
-      elif schema_type == INTEGER_SCHEMA:
-        info[name]['dtype'] = tf.int64
-      else:
-        info[name]['dtype'] = tf.string
-      info[name]['size'] = 1
-    elif transform_name == TARGET_TRANSFORM:
-      # If the input is a string, it gets converted to an int (id)
-      schema_type = [col['type'] for col in schema if col['name'] == name]
-      schema_type = schema_type[0].lower()
-      if schema_type in NUMERIC_SCHEMA:
-        info[name]['dtype'] = tf.float32
-      else:
-        info[name]['dtype'] = tf.int64
-      info[name]['size'] = 1
-    elif transform_name == IMAGE_TRANSFORM:
-      info[name]['dtype'] = tf.float32
-      info[name]['size'] = 2048
-    else:
-      raise ValueError('Unknown transfrom %s' % transform_name)
-
-  return info
