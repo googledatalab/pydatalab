@@ -142,7 +142,7 @@ def parse_arguments(argv):
       type=int,
       default=100)
 
-  args, _ = parser.parse_known_args(args=argv[1:])
+  args = parser.parse_args(args=argv[1:])
 
   if args.cloud and not args.project_id:
     raise ValueError('--project-id is needed for --cloud')
@@ -272,6 +272,7 @@ class TransformFeaturesDoFn(beam.DoFn):
       element: list of csv strings, representing one batch input to the TF graph.
     """
     import apache_beam as beam
+    import tensorflow as tf
 
     try:
       clean_element = []
@@ -283,14 +284,24 @@ class TransformFeaturesDoFn(beam.DoFn):
           fetches=self._transformed_features,
           feed_dict={self._input_placeholder_tensor: clean_element})
 
-      # ex batch_result
-      # {'col1': array([[2]]), 'col2': array([[1]]), ...}
+      # ex batch_result. 
+      # Dense tensor: {'col1': array([[batch_1], [batch_2]])}
+      # Sparse tensor: {'col1': tf.SparseTensorValue(
+      #   indices=array([[batch_1, 0], [batch_1, 1], ...,
+      #                  [batch_2, 0], [batch_2, 1], ...]],
+      #   values=array[value, value, value, ...])}
+
 
       # Unbatch the results.
       for i in range(len(clean_element)):
         transformed_features = {}
         for name, value in six.iteritems(batch_result):
-          transformed_features[name] = value[i].tolist()
+          if isinstance(value, tf.SparseTensorValue):
+            batch_i_indices = value.indices[:, 0] == i
+            batch_i_values = value.values[batch_i_indices]
+            transformed_features[name] = batch_i_values.tolist()
+          else:
+            transformed_features[name] = value[i].tolist()
 
         yield transformed_features
 

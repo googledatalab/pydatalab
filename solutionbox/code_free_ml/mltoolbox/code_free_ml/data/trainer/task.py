@@ -679,8 +679,7 @@ def get_experiment_fn(args):
           num_epochs=args.num_epochs,
           randomize_input=True,
           min_after_dequeue=10,
-          reader_num_threads=multiprocessing.cpu_count()
-      )
+          reader_num_threads=multiprocessing.cpu_count())
       input_reader_for_eval = feature_transforms.build_csv_transforming_training_input_fn(
           schema=schema,
           features=features,
@@ -689,37 +688,27 @@ def get_experiment_fn(args):
           training_batch_size=args.eval_batch_size,
           num_epochs=1,
           randomize_input=False,
-          reader_num_threads=multiprocessing.cpu_count()
-      )
+          reader_num_threads=multiprocessing.cpu_count())
     else:
-      raise ValueError('not done!')
-
-      # input_reader_for_train = input_fn_maker.build_training_input_fn(
-      #     metadata=transformed_metadata,
-      #     file_pattern=args.train_data_paths,
-      #     training_batch_size=args.train_batch_size,
-      #     reader=gzip_reader_fn,
-      #     label_keys=[target_column_name],
-      #     feature_keys=None,  # extract all features
-      #     key_feature_name=None,  # None as we take care of the key column.
-      #     reader_num_threads=multiprocessing.cpu_count(),
-      #     queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
-      #     randomize_input=True,
-      #     num_epochs=args.num_epochs,
-      # )
-      # input_reader_for_eval = input_fn_maker.build_training_input_fn(
-      #     metadata=transformed_metadata,
-      #     file_pattern=args.eval_data_paths,
-      #     training_batch_size=args.eval_batch_size,
-      #     reader=gzip_reader_fn,
-      #     label_keys=[target_column_name],
-      #     feature_keys=None,  # extract all features
-      #     key_feature_name=None,  # None as we take care of the key column.
-      #     reader_num_threads=multiprocessing.cpu_count(),
-      #     queue_capacity=args.train_batch_size * multiprocessing.cpu_count() + 10,
-      #     randomize_input=False,
-      #     num_epochs=1,
-      # )
+      input_reader_for_train = feature_transforms.build_tfexample_transfored_training_input_fn(
+          schema=schema,
+          features=features,
+          analysis_output_dir=args.analysis_output_dir,
+          raw_data_file_pattern=args.train_data_paths,
+          training_batch_size=args.train_batch_size,
+          num_epochs=args.num_epochs,
+          randomize_input=True,
+          min_after_dequeue=10,
+          reader_num_threads=multiprocessing.cpu_count())
+      input_reader_for_eval = feature_transforms.build_tfexample_transfored_training_input_fn(
+          schema=schema,
+          features=features,
+          analysis_output_dir=args.analysis_output_dir,
+          raw_data_file_pattern=args.eval_data_paths,
+          training_batch_size=args.eval_batch_size,
+          num_epochs=1,
+          randomize_input=False,
+          reader_num_threads=multiprocessing.cpu_count())
 
     return tf.contrib.learn.Experiment(
         estimator=estimator,
@@ -728,8 +717,7 @@ def get_experiment_fn(args):
         train_steps=args.max_steps,
         export_strategies=[export_strategy_csv_notarget, export_strategy_csv_target],
         min_eval_frequency=args.min_eval_frequency,
-        eval_steps=None,
-    )
+        eval_steps=None)
 
   # Return a function to create an Experiment.
   return get_experiment

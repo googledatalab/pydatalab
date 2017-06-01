@@ -407,12 +407,11 @@ def get_transfrormed_feature_info(features, schema):
     {transformed_feature_name: {dtype: tf type, size: int or None}}
   """
 
-  info = {}
+  info = collections.defaultdict(dict)
+
   for name, transform in six.iteritems(features):
     transform_name = transform['transform']
-
-    info[name] = {}
-
+  
     if transform_name == IDENTITY_TRANSFORM:
       schema_type = [col['type'] for col in schema if col['name'] == name]
       schema_type = schema_type[0].lower()
@@ -422,6 +421,7 @@ def get_transfrormed_feature_info(features, schema):
         info[name]['dtype'] = tf.int64
       else:
         info[name]['dtype'] = tf.string
+      info[name]['size'] = 1
     elif transform_name == SCALE_TRANSFORM:
       info[name]['dtype'] = tf.float32
       info[name]['size'] = 1
@@ -432,8 +432,8 @@ def get_transfrormed_feature_info(features, schema):
       info[name]['dtype'] = tf.int64
       info[name]['size'] = 1
     elif transform_name == BOW_TRANSFORM or transform_name == TFIDF_TRANSFORM:
-      dtypes[name + '_ids'] = tf.int64
-      dtypes[name + '_weights'] = tf.float32
+      info[name + '_ids']['dtype'] = tf.int64
+      info[name + '_weights']['dtype'] = tf.float32
       info[name + '_ids']['size'] = None
       info[name + '_weights']['size'] = None
     elif transform_name == KEY_TRANSFORM:
@@ -607,4 +607,104 @@ def build_csv_transforming_training_input_fn(schema,
   return raw_training_input_fn
 
 
+def build_tfexample_transfored_training_input_fn(schema,
+                                                 features,
+                                                 analysis_output_dir,
+                                                 raw_data_file_pattern,
+                                                 training_batch_size,
+                                                 num_epochs=None,
+                                                 randomize_input=False,
+                                                 min_after_dequeue=1,
+                                                 reader_num_threads=1):
+  """Creates training input_fn that reads transformed tf.example files.
+
+  Args:
+    schema: schema list
+    features: features dict
+    analysis_output_dir: output folder from analysis
+    raw_data_file_pattern: file path, or list of files
+    training_batch_size: An int specifying the batch size to use.
+    num_epochs: numer of epochs to read from the files. Use None to read forever.
+    randomize_input: If true, the input rows are read out of order. This
+        randomness is limited by the min_after_dequeue value.
+    min_after_dequeue: Minimum number elements in the reading queue after a
+        dequeue, used to ensure a level of mixing of elements. Only used if
+        randomize_input is True.
+    reader_num_threads: The number of threads enqueuing data.
+
+  Returns:
+    An input_fn suitable for training that reads transformed data in tf record
+      files of tf.example.
+  """
+
+  def transformed_training_input_fn():
+    """Training input function that reads transformed data."""
+
+    if isinstance(raw_data_file_pattern, six.string_types):
+      filepath_list = [raw_data_file_pattern]
+    else:
+      filepath_list = raw_data_file_pattern
+
+    files = []
+    for path in filepath_list:
+      files.extend(file_io.get_matching_files(path))
+
+    filename_queue = tf.train.string_input_producer(
+        files, num_epochs=num_epochs, shuffle=randomize_input)
+
+    options = tf.python_io.TFRecordOptions(
+        compression_type=tf.python_io.TFRecordCompressionType.GZIP)
+    ex_id, ex_str = tf.TFRecordReader(options=options).read_up_to(
+        filename_queue, training_batch_size)
+
+    queue_capacity = (reader_num_threads + 3) * training_batch_size + min_after_dequeue
+    if randomize_input:
+      batch_ex_id, batch_ex_str = tf.train.shuffle_batch(
+          tensors=[ex_id, ex_str],
+          batch_size=training_batch_size,
+          capacity=queue_capacity,
+          min_after_dequeue=min_after_dequeue,
+          enqueue_many=True,
+          num_threads=reader_num_threads)
+
+    else:
+      batch_ex_id, batch_ex_str = tf.train.batch(
+          tensors=[ex_id, ex_str],
+          batch_size=training_batch_size,
+          capacity=queue_capacity,
+          enqueue_many=True,
+          num_threads=reader_num_threads)
+
+    feature_spec = {}
+    feature_info = get_transfrormed_feature_info(features, schema)
+    for name, info in six.iteritems(feature_info):
+      if info['size'] is None:
+        feature_spec[name] = tf.VarLenFeature(dtype=info['dtype'])
+      else:
+        feature_spec[name] = tf.FixedLenFeature(shape=[info['size']], dtype=info['dtype'])
+
+    parsed_tensors = tf.parse_example(batch_ex_str, feature_spec)
+
+    # Exapnd te dimes of non-sparse tensors. This is needed by tf.learn.
+    transformed_features = {}
+    for k, v in six.iteritems(parsed_tensors):
+      if isinstance(v, tf.Tensor) and v.get_shape().ndims == 1:
+        transformed_features[k] = tf.expand_dims(v, -1)
+      else:
+        transformed_features[k] = v
+     
+    # Remove the target tensor, and return it directly
+    target_name = None
+    for name, transform in six.iteritems(features):
+      if transform['transform'] == TARGET_TRANSFORM:
+        target_name = name
+        break
+    if not target_name or target_name not in transformed_features:
+      raise ValueError('Cannot find target transform in features')
+
+    transformed_labels = transformed_features.pop(target_name)
+    
+    return transformed_features, transformed_labels
+
+  return transformed_training_input_fn
 
