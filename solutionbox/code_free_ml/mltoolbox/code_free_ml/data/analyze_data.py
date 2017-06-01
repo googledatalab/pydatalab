@@ -217,8 +217,6 @@ def parse_arguments(argv):
 
   return args
 
-
-
 def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
                        features):
   """Use BigQuery to analyze input date.

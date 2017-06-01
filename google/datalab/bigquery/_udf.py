@@ -41,14 +41,14 @@ class UDF(object):
       code: function body implementing the logic.
       return_type: BigQuery data type of the function return. See supported data types in
         the BigQuery docs
-      params: dictionary of parameter names and types
+      params: list of parameter tuples: (name, type)
       language: see list of supported languages in the BigQuery docs
       imports: a list of GCS paths containing further support code.
       """
     if not isinstance(return_type, basestring):
       raise TypeError('Argument return_type should be a string. Instead got: ', type(return_type))
-    if params and not isinstance(params, dict):
-      raise TypeError('Argument params should be a dictionary of parameter names and types')
+    if params and not isinstance(params, list):
+      raise TypeError('Argument params should be a list of parameter names and types')
     if imports and not isinstance(imports, list):
       raise TypeError('Argument imports should be a list of GCS string paths')
     if imports and language != 'js':
@@ -57,7 +57,7 @@ class UDF(object):
     self._name = name
     self._code = code
     self._return_type = return_type
-    self._params = params or {}
+    self._params = params or []
     self._language = language
     self._imports = imports or []
     self._sql = None
@@ -93,7 +93,7 @@ class UDF(object):
       imports: a list of GCS paths containing further support code.
       """
 
-    params = ','.join(['%s %s' % named_param for named_param in params.items()])
+    params = ','.join(['%s %s' % named_param for named_param in params])
     imports = ','.join(['library="%s"' % i for i in imports])
 
     udf = 'CREATE TEMPORARY FUNCTION {name} ({params})\n' +\

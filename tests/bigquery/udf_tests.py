@@ -23,7 +23,7 @@ class TestCases(unittest.TestCase):
   def _create_udf(self, name='test_udf', code='console.log("test");', return_type='integer',
                   params=None, language='js', imports=None):
     if params is None:
-      params = {'test_param': 'integer'}
+      params = [('test_param', 'integer')]
     if code is None:
       code = 'test code;'
     if imports is None:
@@ -60,8 +60,12 @@ library="gcs://test_lib"
       self._create_udf(return_type=['integer'])
 
   def test_udf_bad_params(self):
-    with self.assertRaisesRegexp(TypeError, 'Argument params should be a dictionary'):
-      self._create_udf(params=['param1', 'param2'])
+    with self.assertRaisesRegexp(TypeError, 'Argument params should be a list'):
+      self._create_udf(params={'param1': 'param2'})
+
+  def test_udf_params_order(self):
+    udf = self._create_udf(params=[('param1', 'int'), ('param2', 'string'), ('param3', 'array')])
+    self.assertIn('param1 int,param2 string,param3 array', udf._expanded_sql())
 
   def test_udf_bad_imports(self):
     with self.assertRaisesRegexp(TypeError, 'Argument imports should be a list'):
@@ -74,7 +78,7 @@ library="gcs://test_lib"
   def test_query_with_udf(self):
     code = 'console.log("test");'
     return_type = 'integer'
-    params = {'test_param': 'integer'}
+    params = [('test_param', 'integer')]
     language = 'js'
     imports = ''
     udf = google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
