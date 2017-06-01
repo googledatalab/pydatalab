@@ -180,6 +180,11 @@ def prepare_image_transforms(element, image_columns):
   """Replace an images url with its jpeg bytes.
 
   Args: 
+    element: one input row, as a dict
+    image_columns: list of columns that are image paths
+
+  Return:
+    element, where each image file path has been replaced by a base64 image.
   """
   import cStringIO
   from PIL import Image
@@ -209,6 +214,7 @@ def prepare_image_transforms(element, image_columns):
 
   return element
 
+
 class EmitAsBatchDoFn(beam.DoFn):
   """A DoFn that buffers the records and emits them batch by batch."""
 
@@ -232,8 +238,9 @@ class EmitAsBatchDoFn(beam.DoFn):
     if len(self._cached) > 0:  # pylint: disable=g-explicit-length-test
       yield self._cached
 
+
 class TransformFeaturesDoFn(beam.DoFn):
-  """TODO"""
+  """Converts raw data into transformed data."""
 
   def __init__(self, analysis_output_dir, features, schema):
     self._analysis_output_dir = analysis_output_dir
@@ -242,6 +249,7 @@ class TransformFeaturesDoFn(beam.DoFn):
     self._session = None
 
   def start_bundle(self, element=None):
+    """Build the transfromation graph once."""
     import tensorflow as tf
 
     g = tf.Graph()
@@ -261,15 +269,18 @@ class TransformFeaturesDoFn(beam.DoFn):
     self._transformed_features = transformed_features
     self._input_placeholder_tensor = placeholders['csv_example']
 
-
   def finish_bundle(self, element=None):
     self._session.close()
 
   def process(self, element):
-    """Run batch prediciton on a TF graph.
+    """Run the transformation graph on batched input data
 
     Args:
       element: list of csv strings, representing one batch input to the TF graph.
+
+    Returns:
+      dict containing the transformed data. Results are un-batched. Sparse
+      tensors are converted to lists.
     """
     import apache_beam as beam
     import tensorflow as tf
@@ -291,7 +302,6 @@ class TransformFeaturesDoFn(beam.DoFn):
       #                  [batch_2, 0], [batch_2, 1], ...]],
       #   values=array[value, value, value, ...])}
 
-
       # Unbatch the results.
       for i in range(len(clean_element)):
         transformed_features = {}
@@ -309,18 +319,49 @@ class TransformFeaturesDoFn(beam.DoFn):
       yield beam.pvalue.SideOutputValue('errors',
                                         (str(e), element))
 
+
 def decode_csv(csv_string, column_names):
+  """Parse a csv line into a dict.
+
+  Args:
+    csv_string: a csv string. May contain missing values "a,,c"
+    column_names: list of column names
+
+  Returns:
+    Dict of {column_name, value_from_csv}. If there are missing values, 
+    value_from_csv will be ''.
+  """
   import csv
   r = next(csv.reader([csv_string]))
   if len(r) != len(column_names):
     raise ValueError('csv line %s does not have %d columns' % (csv_string, len(column_names)))
   return {k: v for k, v in zip(column_names, r)}
 
+
 def encode_csv(data_dict, column_names):
+  """Builds a csv string.
+
+  Args:
+    data_dict: dict of {column_name: 1 value}
+    column_names: list of column names
+
+  Returns:
+    A csv string version of data_dict
+  """
   values = [str(data_dict[x]) for x in column_names]
   return ','.join(values)
 
+
 def serialize_example(transformed_json_data, info_dict):
+  """Makes a serialized tf.example.
+
+  Args:
+    transformed_json_data: dict of transformed data.
+    info_dict: output of feature_transforms.get_transfrormed_feature_info()
+
+  Returns:
+    The serialized tf.example version of transformed_json_data.
+  """
   import tensorflow as tf
 
   def _make_int64_list(x):
@@ -347,7 +388,19 @@ def serialize_example(transformed_json_data, info_dict):
   ex = tf.train.Example(features=tf.train.Features(feature=ex_dict))
   return ex.SerializeToString()
 
+
 def preprocess(pipeline, args):
+  """Transfrom csv data into transfromed tf.example files.
+
+  Outline:
+    1) read the input data (as csv or bigquery) into a dict format
+    2) replace image paths with base64 encoded image files
+    3) build a csv input string with images paths replaced with base64. This 
+       matches the serving csv that a trained model would expect.
+    4) batch the csv strings
+    5) run the transformations
+    6) write the results to tf.example files and save any errors.
+  """
   schema = json.loads(file_io.read_file_to_string(
       os.path.join(args.analysis_output_dir, SCHEMA_FILE)).decode())
   features = json.loads(file_io.read_file_to_string(
@@ -371,8 +424,8 @@ def preprocess(pipeline, args):
                                                use_standard_sql=True)))
 
   # Note that prepare_image_transforms does not make embeddings, it justs reads
-  # the image files and converts them to byte stings. tft.TransformDataset()
-  # will apply the saved model that makes the image embeddings.
+  # the image files and converts them to byte stings. TransformFeaturesDoFn()
+  # will make the image embeddings.
   image_columns = image_transform_columns(features)
   
   clean_csv_data = (
@@ -382,8 +435,8 @@ def preprocess(pipeline, args):
       | 'BuildCSVString'
       >> beam.Map(encode_csv, column_names))
 
-  #if args.shuffle:
-  #  clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
+  if args.shuffle:
+    clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
 
   (transformed_data, errors) = (
        clean_csv_data
@@ -403,6 +456,7 @@ def preprocess(pipeline, args):
        >> beam.io.WriteToText(
            os.path.join(args.output_dir, 'errors_' + args.output_filename_prefix),
            file_name_suffix='.txt'))
+
 
 def main(argv=None):
   """Run Preprocessing as a Dataflow."""
