@@ -135,7 +135,7 @@ def parse_arguments(argv):
   parser.add_argument(
       '--shuffle',
       action='store_true',
-      default=True)
+      default=False)
 
   parser.add_argument(
       '--batch-size',

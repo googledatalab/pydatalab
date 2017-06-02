@@ -71,7 +71,7 @@ IMAGE_DEFAULT_STRING = base64.urlsafe_b64encode(_img_buf.getvalue())
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
-def scale(x, min_x_value, max_x_value, output_min, output_max):
+def _scale(x, min_x_value, max_x_value, output_min, output_max):
   """Scale a column to [output_min, output_max].
 
   Assumes the columns's range is [min_x_value, max_x_value]. If this is not
@@ -98,7 +98,7 @@ def scale(x, min_x_value, max_x_value, output_min, output_max):
   return _scale(x)
 
 
-def string_to_int(x, vocab):
+def _string_to_int(x, vocab):
   """Given a vocabulary and a string tensor `x`, maps `x` into an int tensor.
   Args:
     x: A `Column` representing a string value.
@@ -127,7 +127,7 @@ def string_to_int(x, vocab):
 
 # TODO(brandondura): update this to not depend on tf layer's feature column
 # 'sum' combiner in the future.
-def tfidf(x, reduced_term_freq, vocab_size, corpus_size):
+def _tfidf(x, reduced_term_freq, vocab_size, corpus_size):
   """Maps the terms in x to their (1/doc_length) * inverse document frequency.
   Args:
     x: A `Column` representing int64 values (most likely that are the result
@@ -190,7 +190,7 @@ def tfidf(x, reduced_term_freq, vocab_size, corpus_size):
 
 # TODO(brandondura): update this to not depend on tf layer's feature column
 # 'sum' combiner in the future.
-def bag_of_words(x):
+def _bag_of_words(x):
   """Computes bag of words weights
 
   Note the return type is a float sparse tensor, not a int sparse tensor. This
@@ -211,7 +211,7 @@ def bag_of_words(x):
   return _bow(x)
 
 
-def make_image_to_vec_tito(tmp_dir):
+def _make_image_to_vec_tito(tmp_dir):
   """Creates a tensor-in-tensor-out function that produces embeddings from image bytes.
 
   Image to embedding is implemented with Tensorflow's inception v3 model and a pretrained
@@ -343,7 +343,7 @@ def make_preprocessing_fn(output_dir, features, keep_target):
       if transform_name == 'identity':
         result[name] = inputs[name]
       elif transform_name == 'scale':
-        result[name] = scale(
+        result[name] = _scale(
             inputs[name],
             min_x_value=stats['column_stats'][name]['min'],
             max_x_value=stats['column_stats'][name]['max'],
@@ -351,20 +351,13 @@ def make_preprocessing_fn(output_dir, features, keep_target):
             output_max=transform.get('value', 1))
       elif transform_name in [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM,
                               TFIDF_TRANSFORM, BOW_TRANSFORM]:
-        vocab_str = file_io.read_file_to_string(
+        vocab, ex_count = read_vocab_file(
             os.path.join(output_dir, VOCAB_ANALYSIS_FILE % name))
-        vocab_pd = pd.read_csv(six.StringIO(vocab_str),
-                               header=None,
-                               names=['vocab', 'count'],
-                               dtype=str,  # Prevent pd from converting numerical categories.
-                               na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
-        vocab = vocab_pd['vocab'].tolist()
-        ex_count = vocab_pd['count'].astype(int).tolist()
 
         if transform_name == TFIDF_TRANSFORM:
           tokens = tf.string_split(inputs[name], ' ')
-          ids = string_to_int(tokens, vocab)
-          weights = tfidf(
+          ids = _string_to_int(tokens, vocab)
+          weights = _tfidf(
               x=ids,
               reduced_term_freq=ex_count + [0],
               vocab_size=len(vocab) + 1,
@@ -374,17 +367,17 @@ def make_preprocessing_fn(output_dir, features, keep_target):
           result[name + '_weights'] = weights
         elif transform_name == BOW_TRANSFORM:
           tokens = tf.string_split(inputs[name], ' ')
-          ids = string_to_int(tokens, vocab)
-          weights = bag_of_words(x=ids)
+          ids = _string_to_int(tokens, vocab)
+          weights = _bag_of_words(x=ids)
 
           result[name + '_ids'] = ids
           result[name + '_weights'] = weights
         else:
           # ONE_HOT_TRANSFORM: making a dense vector is done at training
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
-          result[name] = string_to_int(inputs[name], vocab)
+          result[name] = _string_to_int(inputs[name], vocab)
       elif transform_name == IMAGE_TRANSFORM:
-        make_image_to_vec_fn = make_image_to_vec_tito(output_dir)
+        make_image_to_vec_fn = _make_image_to_vec_tito(output_dir)
         result[name] = make_image_to_vec_fn(inputs[name])
       else:
         raise ValueError('unknown transform %s' % transform_name)
@@ -408,14 +401,14 @@ def get_transfrormed_feature_info(features, schema):
     transform_name = transform['transform']
 
     if transform_name == IDENTITY_TRANSFORM:
-      schema_type = [col['type'] for col in schema if col['name'] == name]
-      schema_type = schema_type[0].lower()
+      schema_type = next(col['type'].lower() for col in schema if col['name'] == name)
       if schema_type == FLOAT_SCHEMA:
         info[name]['dtype'] = tf.float32
       elif schema_type == INTEGER_SCHEMA:
         info[name]['dtype'] = tf.int64
       else:
-        info[name]['dtype'] = tf.string
+        raise ValueError('itentity should only be applied to integer or float'
+                         'columns, but was used on %s' % name)
       info[name]['size'] = 1
     elif transform_name == SCALE_TRANSFORM:
       info[name]['dtype'] = tf.float32
@@ -432,8 +425,7 @@ def get_transfrormed_feature_info(features, schema):
       info[name + '_ids']['size'] = None
       info[name + '_weights']['size'] = None
     elif transform_name == KEY_TRANSFORM:
-      schema_type = [col['type'] for col in schema if col['name'] == name]
-      schema_type = schema_type[0].lower()
+      schema_type = next(col['type'].lower() for col in schema if col['name'] == name)
       if schema_type == FLOAT_SCHEMA:
         info[name]['dtype'] = tf.float32
       elif schema_type == INTEGER_SCHEMA:
@@ -443,8 +435,7 @@ def get_transfrormed_feature_info(features, schema):
       info[name]['size'] = 1
     elif transform_name == TARGET_TRANSFORM:
       # If the input is a string, it gets converted to an int (id)
-      schema_type = [col['type'] for col in schema if col['name'] == name]
-      schema_type = schema_type[0].lower()
+      schema_type = next(col['type'].lower() for col in schema if col['name'] == name)
       if schema_type in NUMERIC_SCHEMA:
         info[name]['dtype'] = tf.float32
       else:
@@ -459,15 +450,11 @@ def get_transfrormed_feature_info(features, schema):
   return info
 
 
-# TODO(brandondutra): should numerical defaults be the mean or 0?
+# TODO(brandondutra): make numerical defaults be the mean. Need stats file!
 def csv_header_and_defaults(features, schema, keep_target):
   """Gets csv header and default lists."""
 
-  target_name = None
-  for name, transform in six.iteritems(features):
-    if transform['transform'] == TARGET_TRANSFORM:
-      target_name = name
-      break
+  target_name = get_target_name(features)
   if keep_target and not target_name:
     raise ValueError('Cannot find target transform')
 
@@ -504,6 +491,7 @@ def build_csv_serving_tensors(analysis_path, features, schema, keep_target):
   transformed_tensors = transform_fn(raw_features)
 
   transformed_features = {}
+  # Expand the dims of non-sparse tensors
   for k, v in six.iteritems(transformed_tensors):
     if isinstance(v, tf.Tensor) and v.get_shape().ndims == 1:
       transformed_features[k] = tf.expand_dims(v, -1)
@@ -564,7 +552,7 @@ def build_csv_transforming_training_input_fn(schema,
 
     queue_capacity = (reader_num_threads + 3) * training_batch_size + min_after_dequeue
     if randomize_input:
-      batch_csv_id, batch_csv_lines = tf.train.shuffle_batch(
+      _, batch_csv_lines = tf.train.shuffle_batch(
           tensors=[csv_id, csv_lines],
           batch_size=training_batch_size,
           capacity=queue_capacity,
@@ -573,7 +561,7 @@ def build_csv_transforming_training_input_fn(schema,
           num_threads=reader_num_threads)
 
     else:
-      batch_csv_id, batch_csv_lines = tf.train.batch(
+      _, batch_csv_lines = tf.train.batch(
           tensors=[csv_id, csv_lines],
           batch_size=training_batch_size,
           capacity=queue_capacity,
@@ -587,7 +575,7 @@ def build_csv_transforming_training_input_fn(schema,
     transform_fn = make_preprocessing_fn(analysis_output_dir, features, keep_target=True)
     transformed_tensors = transform_fn(raw_features)
 
-    # Exapnd te dimes of non-sparse tensors. This is needed by tf.learn.
+    # Expand the dims of non-sparse tensors. This is needed by tf.learn.
     transformed_features = {}
     for k, v in six.iteritems(transformed_tensors):
       if isinstance(v, tf.Tensor) and v.get_shape().ndims == 1:
@@ -596,17 +584,13 @@ def build_csv_transforming_training_input_fn(schema,
         transformed_features[k] = v
 
     # Remove the target tensor, and return it directly
-    target_name = None
-    for name, transform in six.iteritems(features):
-      if transform['transform'] == TARGET_TRANSFORM:
-        target_name = name
-        break
+    target_name = get_target_name(features)
     if not target_name or target_name not in transformed_features:
       raise ValueError('Cannot find target transform in features')
 
-    transformed_labels = transformed_features.pop(target_name)
+    transformed_target = transformed_features.pop(target_name)
 
-    return transformed_features, transformed_labels
+    return transformed_features, transformed_target
 
   return raw_training_input_fn
 
@@ -663,7 +647,7 @@ def build_tfexample_transfored_training_input_fn(schema,
 
     queue_capacity = (reader_num_threads + 3) * training_batch_size + min_after_dequeue
     if randomize_input:
-      batch_ex_id, batch_ex_str = tf.train.shuffle_batch(
+      _, batch_ex_str = tf.train.shuffle_batch(
           tensors=[ex_id, ex_str],
           batch_size=training_batch_size,
           capacity=queue_capacity,
@@ -672,7 +656,7 @@ def build_tfexample_transfored_training_input_fn(schema,
           num_threads=reader_num_threads)
 
     else:
-      batch_ex_id, batch_ex_str = tf.train.batch(
+      _, batch_ex_str = tf.train.batch(
           tensors=[ex_id, ex_str],
           batch_size=training_batch_size,
           capacity=queue_capacity,
@@ -689,25 +673,49 @@ def build_tfexample_transfored_training_input_fn(schema,
 
     parsed_tensors = tf.parse_example(batch_ex_str, feature_spec)
 
-    # Exapnd te dimes of non-sparse tensors. This is needed by tf.learn.
+    # Expand the dims of non-sparse tensors. This is needed by tf.learn.
     transformed_features = {}
     for k, v in six.iteritems(parsed_tensors):
       if isinstance(v, tf.Tensor) and v.get_shape().ndims == 1:
         transformed_features[k] = tf.expand_dims(v, -1)
       else:
+        # Sparse tensor
         transformed_features[k] = v
 
     # Remove the target tensor, and return it directly
-    target_name = None
-    for name, transform in six.iteritems(features):
-      if transform['transform'] == TARGET_TRANSFORM:
-        target_name = name
-        break
+    target_name = get_target_name(features)
     if not target_name or target_name not in transformed_features:
       raise ValueError('Cannot find target transform in features')
 
-    transformed_labels = transformed_features.pop(target_name)
+    transformed_target = transformed_features.pop(target_name)
 
-    return transformed_features, transformed_labels
+    return transformed_features, transformed_target
 
   return transformed_training_input_fn
+
+
+def get_target_name(features):
+  for name, transform in six.iteritems(features):
+    if transform['transform'] == TARGET_TRANSFORM:
+      return name
+  return None
+
+def read_vocab_file(file_path):
+  """Reads a vocab file to memeory.
+
+  Args:
+    file_path: Each line of the vocab is in the form "token,example_count"
+
+  Returns:
+    Two lists, one for the vocab, and one for just the example counts.
+  """
+  vocab_str = file_io.read_file_to_string(file_path)
+  vocab_pd = pd.read_csv(six.StringIO(vocab_str),
+                        header=None,
+                        names=['vocab', 'count'],
+                        dtype=str,  # Prevent pd from converting numerical categories.
+                        na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
+  vocab = vocab_pd['vocab'].tolist()
+  ex_count = vocab_pd['count'].astype(int).tolist()
+
+  return vocab, ex_count

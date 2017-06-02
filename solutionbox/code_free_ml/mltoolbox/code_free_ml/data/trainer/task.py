@@ -299,7 +299,7 @@ def recursive_copy(src_dir, dest_dir):
 def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
                                    keep_target):
   """Makes the final prediction output layer."""
-  target_name = get_target_name(features)
+  target_name = feature_transforms.get_target_name(features)
   key_names = get_key_names(features)
 
   outputs = {}
@@ -386,7 +386,7 @@ def make_export_strategy(
     features: features dict
     schema: schema list
   """
-  target_name = get_target_name(features)
+  target_name = feature_transforms.get_target_name(features)
   csv_header = [col['name'] for col in schema]
   if not keep_target:
     csv_header.remove(target_name)
@@ -590,13 +590,6 @@ def read_vocab(args, column_name):
   return vocab['token'].tolist()
 
 
-def get_target_name(features):
-  for name, transform in six.iteritems(features):
-    if transform['transform'] == TARGET_TRANSFORM:
-      return name
-  return None
-
-
 def get_key_names(features):
   names = []
   for name, transform in six.iteritems(features):
@@ -627,7 +620,7 @@ def get_experiment_fn(args):
     features = read_json_file(os.path.join(args.analysis_output_dir, FEATURES_FILE))
     stats = read_json_file(os.path.join(args.analysis_output_dir, STATS_FILE))
 
-    target_column_name = get_target_name(features)
+    target_column_name = feature_transforms.get_target_name(features)
     if not target_column_name:
       raise ValueError('target missing from features file.')
 
