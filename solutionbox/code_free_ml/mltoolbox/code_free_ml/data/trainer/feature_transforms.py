@@ -698,6 +698,7 @@ def get_target_name(features):
   for name, transform in six.iteritems(features):
     if transform['transform'] == TARGET_TRANSFORM:
       return name
+
   return None
 
 
@@ -710,12 +711,14 @@ def read_vocab_file(file_path):
   Returns:
     Two lists, one for the vocab, and one for just the example counts.
   """
-  vocab_str = file_io.read_file_to_string(file_path)
-  vocab_pd = pd.read_csv(six.StringIO(vocab_str),
-                         header=None,
-                         names=['vocab', 'count'],
-                         dtype=str,  # Prevent pd from converting numerical categories.
-                         na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
+  with file_io.FileIO(file_path, 'r') as f:
+    vocab_pd = pd.read_csv(
+        f,
+        header=None,
+        names=['vocab', 'count'],
+        dtype=str,  # Prevent pd from converting numerical categories.
+        na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
+
   vocab = vocab_pd['vocab'].tolist()
   ex_count = vocab_pd['count'].astype(int).tolist()
 
