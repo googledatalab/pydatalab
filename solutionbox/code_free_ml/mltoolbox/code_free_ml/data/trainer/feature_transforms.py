@@ -700,6 +700,7 @@ def get_target_name(features):
       return name
   return None
 
+
 def read_vocab_file(file_path):
   """Reads a vocab file to memeory.
 
@@ -711,10 +712,10 @@ def read_vocab_file(file_path):
   """
   vocab_str = file_io.read_file_to_string(file_path)
   vocab_pd = pd.read_csv(six.StringIO(vocab_str),
-                        header=None,
-                        names=['vocab', 'count'],
-                        dtype=str,  # Prevent pd from converting numerical categories.
-                        na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
+                         header=None,
+                         names=['vocab', 'count'],
+                         dtype=str,  # Prevent pd from converting numerical categories.
+                         na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
   vocab = vocab_pd['vocab'].tolist()
   ex_count = vocab_pd['count'].astype(int).tolist()
 
