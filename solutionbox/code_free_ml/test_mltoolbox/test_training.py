@@ -370,7 +370,6 @@ class TestTrainer(unittest.TestCase):
            '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_train',
            '--output-dir=' + self._transform_output,
-           '--target',
            '--shuffle']
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
@@ -380,8 +379,7 @@ class TestTrainer(unittest.TestCase):
            '--csv-file-pattern=' + self._csv_eval_filename,
            '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_eval',
-           '--output-dir=' + self._transform_output,
-           '--target']
+           '--output-dir=' + self._transform_output]
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
