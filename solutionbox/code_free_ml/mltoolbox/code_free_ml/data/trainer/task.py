@@ -22,7 +22,6 @@ import multiprocessing
 import os
 import re
 import sys
-import pandas as pd
 import six
 import tensorflow as tf
 

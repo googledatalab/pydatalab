@@ -56,6 +56,7 @@ class TestOptionalKeys(unittest.TestCase):
              '--train-batch-size=4',
              '--eval-batch-size=4',
              '--max-steps=2000',
+             '--learning-rate=0.1',
              '--run-transforms']
 
       subprocess.check_call(' '.join(cmd), shell=True)
@@ -77,6 +78,7 @@ class TestOptionalKeys(unittest.TestCase):
         _, csv_tensor_name = input_alias_map.items()[0]
         result = sess.run(fetches=output_alias_map,
                           feed_dict={csv_tensor_name: ['20']})
+        print('result', result)
         self.assertTrue(abs(40 - result['predicted']) < 5)
     finally:
       shutil.rmtree(output_dir)
