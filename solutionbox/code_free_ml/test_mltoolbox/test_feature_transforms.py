@@ -26,18 +26,22 @@ import feature_transforms  # noqa: E303
 class TestGraphBuilding(unittest.TestCase):
   """Test the TITO functions work and can produce a working TF graph."""
 
-  def _run_graph(self, analysis_path, features, schema, predict_data):
+  def _run_graph(self, analysis_path, features, schema, stats, predict_data):
     """Runs the preprocessing graph.
 
     Args:
-      analysis_path: path to folder containing analysis output. Should contain the
-          folders raw_metadata and transform_fn.
+      analysis_path: path to folder containing analysis output. Should contain
+          the stats file.
+      features: features dict
+      schema: schema list
+      stats: stats dict
       predict_data: list of csv strings
     """
+    stats = {'column_stats': {}}
     with tf.Graph().as_default():
       with tf.Session().as_default() as session:
         outputs, labels, inputs = feature_transforms.build_csv_serving_tensors(
-            analysis_path, features, schema, keep_target=False)
+            analysis_path, features, schema, stats, keep_target=False)
         feed_inputs = {inputs['csv_example']: predict_data}
 
         session.run(tf.tables_initializer())
@@ -48,24 +52,24 @@ class TestGraphBuilding(unittest.TestCase):
     output_folder = tempfile.mkdtemp()
     stats_file_path = os.path.join(output_folder, feature_transforms.STATS_FILE)
     try:
-      file_io.write_string_to_file(
-          stats_file_path,
-          json.dumps({'column_stats':
-                        {'num1': {'max': 10.0, 'mean': 9.5, 'min': 0.0},  # noqa
-                         'num2': {'max': 1.0, 'mean': 2.0, 'min': -1.0},
-                         'num3': {'max': 10.0, 'mean': 2.0, 'min': 5.0}}}))
+      stats = {'column_stats':
+                {'num1': {'max': 10.0, 'mean': 9.5, 'min': 0.0},  # noqa
+                 'num2': {'max': 1.0, 'mean': 2.0, 'min': -1.0},
+                 'num3': {'max': 10.0, 'mean': 2.0, 'min': 5.0}}}
       schema = [{'name': 'num1', 'type': 'FLOAT'},
                 {'name': 'num2', 'type': 'FLOAT'},
                 {'name': 'num3', 'type': 'INTEGER'}]
-
       features = {'num1': {'transform': 'identity'},
                   'num2': {'transform': 'scale', 'value': 10},
                   'num3': {'transform': 'scale'}}
       input_data = ['5.0,-1.0,10',
                     '10.0,1.0,5',
                     '15.0,0.5,7']
+      file_io.write_string_to_file(
+          stats_file_path,
+          json.dumps(stats))
 
-      results = self._run_graph(output_folder, features, schema, input_data)
+      results = self._run_graph(output_folder, features, schema, stats, input_data)
 
       for result, expected_result in zip(results['num1'].flatten().tolist(),
                                          [5, 10, 15]):
@@ -92,19 +96,19 @@ class TestGraphBuilding(unittest.TestCase):
           os.path.join(output_folder, feature_transforms.VOCAB_ANALYSIS_FILE % 'cat2'),
           '\n'.join(['pizza,300', 'ice_cream,200', 'cookies,100']))
 
+      stats = {'column_stats': {}}  # stats file needed but unused.
       file_io.write_string_to_file(
           os.path.join(output_folder, feature_transforms.STATS_FILE),
-          json.dumps({}))  # stats file needed but unused.
+          json.dumps(stats))
 
       schema = [{'name': 'cat1', 'type': 'STRING'}, {'name': 'cat2', 'type': 'STRING'}]
       features = {'cat1': {'transform': 'one_hot'},
                   'cat2': {'transform': 'embedding'}}
-
       input_data = ['red,pizza',
                     'blue,',
                     'green,extra']
 
-      results = self._run_graph(output_folder, features, schema, input_data)
+      results = self._run_graph(output_folder, features, schema, stats, input_data)
 
       for result, expected_result in zip(results['cat1'].flatten().tolist(), [0, 1, 2]):
         self.assertEqual(result, expected_result)
@@ -133,9 +137,10 @@ class TestGraphBuilding(unittest.TestCase):
           os.path.join(output_folder, feature_transforms.VOCAB_ANALYSIS_FILE % 'cat1'),
           '\n'.join(['red,2', 'blue,2', 'green,1']))
 
+      stats = {'column_stats': {}, 'num_examples': 4}
       file_io.write_string_to_file(
           os.path.join(output_folder, feature_transforms.STATS_FILE),
-          json.dumps({'num_examples': 4}))
+          json.dumps(stats))
 
       # decode_csv does not like 1 column files with an empty row, so add
       # a key column
@@ -151,7 +156,7 @@ class TestGraphBuilding(unittest.TestCase):
                     '5,brown',          # doc 5
                     '6,brown blue']     # doc 6
 
-      results = self._run_graph(output_folder, features, schema, input_data)
+      results = self._run_graph(output_folder, features, schema, stats, input_data)
 
       # indices are in the form [doc id, vocab id]
       expected_indices = [[0, 0], [0, 1], [0, 2],
@@ -197,9 +202,10 @@ class TestGraphBuilding(unittest.TestCase):
                        feature_transforms.VOCAB_ANALYSIS_FILE % 'cat1'),
           '\n'.join(['red,2', 'blue,2', 'green,1']))
 
+      stats = {'column_stats': {}}
       file_io.write_string_to_file(
           os.path.join(output_folder, feature_transforms.STATS_FILE),
-          json.dumps({}))  # Stats file needed but unused.
+          json.dumps(stats))  # Stats file needed but unused.
 
       # decode_csv does not like 1 column files with an empty row, so add
       # a key column
@@ -215,7 +221,7 @@ class TestGraphBuilding(unittest.TestCase):
                     '5,brown',          # doc 5
                     '6,brown blue']     # doc 6
 
-      results = self._run_graph(output_folder, features, schema, input_data)
+      results = self._run_graph(output_folder, features, schema, stats, input_data)
 
       # indices are in the form [doc id, vocab id]
       expected_indices = [[0, 0], [0, 1], [0, 2],
@@ -260,7 +266,8 @@ class TestGraphBuilding(unittest.TestCase):
     try:
       output_folder = tempfile.mkdtemp()
       stats_file_path = os.path.join(output_folder, feature_transforms.STATS_FILE)
-      file_io.write_string_to_file(stats_file_path, json.dumps({'column_stats': {}}))
+      stats = {'column_stats': {}}
+      file_io.write_string_to_file(stats_file_path, json.dumps(stats))
 
       schema = [{'name': 'img', 'type': 'STRING'}]
       features = {'img': {'transform': 'image_to_vec'}}
@@ -270,7 +277,7 @@ class TestGraphBuilding(unittest.TestCase):
       img_string2 = _open_and_encode_image(
           'gs://cloud-ml-data/img/flower_photos/dandelion/8980164828_04fbf64f79_n.jpg')
       input_data = [img_string1, img_string2]
-      results = self._run_graph(output_folder, features, schema, input_data)
+      results = self._run_graph(output_folder, features, schema, stats, input_data)
       embeddings = results['img']
       self.assertEqual(len(embeddings), 2)
       self.assertEqual(len(embeddings[0]), 2048)
