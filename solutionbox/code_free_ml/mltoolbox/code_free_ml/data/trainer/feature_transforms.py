@@ -64,6 +64,8 @@ _img_buf = cStringIO.StringIO()
 Image.new('RGB', (16, 16)).save(_img_buf, 'jpeg')
 IMAGE_DEFAULT_STRING = base64.urlsafe_b64encode(_img_buf.getvalue())
 
+IMAGE_BOTTLENECK_TENSOR_SIZE = 2048
+
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -443,15 +445,14 @@ def get_transfrormed_feature_info(features, schema):
       info[name]['size'] = 1
     elif transform_name == IMAGE_TRANSFORM:
       info[name]['dtype'] = tf.float32
-      info[name]['size'] = 2048
+      info[name]['size'] = IMAGE_BOTTLENECK_TENSOR_SIZE
     else:
       raise ValueError('Unknown transfrom %s' % transform_name)
 
   return info
 
 
-# TODO(brandondutra): make numerical defaults be the mean. Need stats file!
-def csv_header_and_defaults(features, schema, keep_target):
+def csv_header_and_defaults(features, schema, stats, keep_target):
   """Gets csv header and default lists."""
 
   target_name = get_target_name(features)
@@ -464,23 +465,28 @@ def csv_header_and_defaults(features, schema, keep_target):
     if not keep_target and col['name'] == target_name:
       continue
 
+    # Note that numerical key columns do not have a stats entry, hence the use
+    # of get(col['name'], {})
     csv_header.append(col['name'])
     if col['type'].lower() == 'integer':
-      default, dtype = 0, tf.int64
+      dtype = tf.int64
+      default = int(stats['column_stats'].get(col['name'], {}).get('mean', 0))
     elif col['type'].lower() == 'float':
-      default, dtype = 0.0, tf.float32
+      dtype = tf.float32
+      default = float(stats['column_stats'].get(col['name'], {}).get('mean', 0.0))
     else:
-      default, dtype = '', tf.string
+      dtype = tf.string
+      default = ''
 
     record_defaults.append(tf.constant([default], dtype=dtype))
 
   return csv_header, record_defaults
 
 
-def build_csv_serving_tensors(analysis_path, features, schema, keep_target):
+def build_csv_serving_tensors(analysis_path, features, schema, stats, keep_target):
   """Returns a placeholder tensor and transformed tensors."""
 
-  csv_header, record_defaults = csv_header_and_defaults(features, schema, keep_target)
+  csv_header, record_defaults = csv_header_and_defaults(features, schema, stats, keep_target)
 
   placeholder = tf.placeholder(dtype=tf.string, shape=(None,),
                                name='csv_input_placeholder')
@@ -504,6 +510,7 @@ def build_csv_serving_tensors(analysis_path, features, schema, keep_target):
 
 def build_csv_transforming_training_input_fn(schema,
                                              features,
+                                             stats,
                                              analysis_output_dir,
                                              raw_data_file_pattern,
                                              training_batch_size,
@@ -516,6 +523,7 @@ def build_csv_transforming_training_input_fn(schema,
   Args:
     schema: schema list
     features: features dict
+    stats: stats dict
     analysis_output_dir: output folder from analysis
     raw_data_file_pattern: file path, or list of files
     training_batch_size: An int specifying the batch size to use.
@@ -568,7 +576,7 @@ def build_csv_transforming_training_input_fn(schema,
           enqueue_many=True,
           num_threads=reader_num_threads)
 
-    csv_header, record_defaults = csv_header_and_defaults(features, schema, keep_target=True)
+    csv_header, record_defaults = csv_header_and_defaults(features, schema, stats, keep_target=True)
     parsed_tensors = tf.decode_csv(batch_csv_lines, record_defaults, name='csv_to_tensors')
     raw_features = dict(zip(csv_header, parsed_tensors))
 

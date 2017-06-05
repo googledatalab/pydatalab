@@ -48,33 +48,6 @@ from tensorflow.python.util import compat
 
 import feature_transforms
 
-# Files
-SCHEMA_FILE = 'schema.json'
-FEATURES_FILE = 'features.json'
-STATS_FILE = 'stats.json'
-VOCAB_ANALYSIS_FILE = 'vocab_%s.csv'
-
-TRANSFORMED_METADATA_DIR = 'transformed_metadata'
-RAW_METADATA_DIR = 'raw_metadata'
-TRANSFORM_FN_DIR = 'transform_fn'
-
-# Individual transforms
-IDENTITY_TRANSFORM = 'identity'
-SCALE_TRANSFORM = 'scale'
-ONE_HOT_TRANSFORM = 'one_hot'
-EMBEDDING_TRANSFROM = 'embedding'
-BOW_TRANSFORM = 'bag_of_words'
-TFIDF_TRANSFORM = 'tfidf'
-IMAGE_TRANSFORM = 'image_to_vec'
-KEY_TRANSFORM = 'key'
-TARGET_TRANSFORM = 'target'
-
-# Transform collections
-NUMERIC_TRANSFORMS = [IDENTITY_TRANSFORM, SCALE_TRANSFORM]
-CATEGORICAL_TRANSFORMS = [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM]
-TEXT_TRANSFORMS = [BOW_TRANSFORM, TFIDF_TRANSFORM]
-
-
 # Constants for the Prediction Graph fetch tensors.
 PG_TARGET = 'target'  # from input
 
@@ -84,8 +57,6 @@ PG_CLASSIFICATION_FIRST_LABEL = 'predicted'
 PG_CLASSIFICATION_FIRST_SCORE = 'score'
 PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
-
-IMAGE_BOTTLENECK_TENSOR_SIZE = 2048
 
 
 def parse_arguments(argv):
@@ -116,9 +87,14 @@ def parse_arguments(argv):
 
   # HP parameters
   parser.add_argument('--learning-rate', type=float, default=0.01,
-                      help='tf.train.AdamOptimizer learning rate')
+                      help='optimizer learning rate')
   parser.add_argument('--epsilon', type=float, default=0.0005,
-                      help='tf.train.AdamOptimizer epsilon')
+                      help='tf.train.AdamOptimizer epsilon. Only used in '
+                           'dnn models.')
+  parser.add_argument('--l1_regularization', type=float, default=0.0,
+                      help='L1 term for linear models.')
+  parser.add_argument('--l2_regularization', type=float, default=0.0,
+                      help='L2 term for linear models.')
 
   # Model problems
   parser.add_argument('--model-type',
@@ -222,9 +198,9 @@ def build_feature_columns(features, stats, model_type):
   for name, transform in six.iteritems(features):
     transform_name = transform['transform']
 
-    if transform_name in NUMERIC_TRANSFORMS:
+    if transform_name in feature_transforms.NUMERIC_TRANSFORMS:
       new_feature = tf.contrib.layers.real_valued_column(name, dimension=1)
-    elif transform_name == ONE_HOT_TRANSFORM:
+    elif transform_name == feature_transforms.ONE_HOT_TRANSFORM:
       sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
           name,
           bucket_size=stats['column_stats'][name]['vocab_size'])
@@ -232,7 +208,7 @@ def build_feature_columns(features, stats, model_type):
         new_feature = tf.contrib.layers.one_hot_column(sparse)
       else:
         new_feature = sparse
-    elif transform_name == EMBEDDING_TRANSFROM:
+    elif transform_name == feature_transforms.EMBEDDING_TRANSFROM:
       if is_dnn:
         sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
             name,
@@ -245,7 +221,7 @@ def build_feature_columns(features, stats, model_type):
             name,
             hash_bucket_size=transform['embedding_dim'],
             dtype=dtypes.int64)
-    elif transform_name in TEXT_TRANSFORMS:
+    elif transform_name in feature_transforms.TEXT_TRANSFORMS:
       sparse_ids = tf.contrib.layers.sparse_column_with_integerized_feature(
           name + '_ids',
           bucket_size=stats['column_stats'][name]['vocab_size'],
@@ -264,12 +240,13 @@ def build_feature_columns(features, stats, model_type):
             combiner='sqrtn')
       else:
         new_feature = sparse_weights
-    elif transform_name == TARGET_TRANSFORM or transform_name == KEY_TRANSFORM:
+    elif (transform_name == feature_transforms.TARGET_TRANSFORM or
+          transform_name == feature_transforms.KEY_TRANSFORM):
       continue
-    elif transform_name == IMAGE_TRANSFORM:
+    elif transform_name == feature_transforms.IMAGE_TRANSFORM:
       new_feature = tf.contrib.layers.real_valued_column(
           name,
-          dimension=IMAGE_BOTTLENECK_TENSOR_SIZE)
+          dimension=feature_transforms.IMAGE_BOTTLENECK_TENSOR_SIZE)
     else:
       raise ValueError('Unknown transfrom %s' % transform_name)
 
@@ -374,7 +351,8 @@ def make_export_strategy(
         keep_target,
         assets_extra,
         features,
-        schema):
+        schema,
+        stats):
   """Makes prediction graph that takes json input.
 
   Args:
@@ -385,6 +363,7 @@ def make_export_strategy(
     job_dir: root job folder
     features: features dict
     schema: schema list
+    stats: stats dict
   """
   target_name = feature_transforms.get_target_name(features)
   csv_header = [col['name'] for col in schema]
@@ -396,7 +375,7 @@ def make_export_strategy(
       contrib_variables.create_global_step(g)
 
       input_ops = feature_transforms.build_csv_serving_tensors(
-          args.analysis_output_dir, features, schema, keep_target)
+          args.analysis_output_dir, features, schema, stats, keep_target)
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
@@ -495,11 +474,12 @@ def make_feature_engineering_fn(features):
   def feature_engineering_fn(feature_tensors_dict, target):
     engineered_features = {}
     for name, feature_tensor in six.iteritems(feature_tensors_dict):
-      if name in features and features[name]['transform'] == IMAGE_TRANSFORM:
+      if name in features and features[name]['transform'] == feature_transforms.IMAGE_TRANSFORM:
         bottleneck_with_no_gradient = tf.stop_gradient(feature_tensor)
         with tf.name_scope(name, 'Wx_plus_b'):
-          hidden = layers.fully_connected(bottleneck_with_no_gradient,
-                                          int(IMAGE_BOTTLENECK_TENSOR_SIZE / 4))
+          hidden = layers.fully_connected(
+              bottleneck_with_no_gradient,
+              int(feature_transforms.IMAGE_BOTTLENECK_TENSOR_SIZE / 4))
           engineered_features[name] = hidden
       else:
         engineered_features[name] = feature_tensor
@@ -538,8 +518,10 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         feature_columns=feature_columns,
         config=config,
         model_dir=train_dir,
-        optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon),
+        optimizer=tf.train.FtrlOptimizer(
+            args.learning_rate,
+            l1_regularization_strength=args.l1_regularization,
+            l2_regularization_strength=args.l2_regularization),
         feature_engineering_fn=feature_engineering_fn)
   elif args.model_type == 'dnn_classification':
     estimator = tf.contrib.learn.DNNClassifier(
@@ -557,8 +539,10 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         n_classes=target_vocab_size,
         config=config,
         model_dir=train_dir,
-        optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon),
+        optimizer=tf.train.FtrlOptimizer(
+            args.learning_rate,
+            l1_regularization_strength=args.l1_regularization,
+            l2_regularization_strength=args.l2_regularization),
         feature_engineering_fn=feature_engineering_fn)
   else:
     raise ValueError('bad --model-type value')
@@ -576,24 +560,20 @@ def read_vocab(args, column_name):
   Returns:
     List of vocab words or [] if the vocab file is not found.
   """
-  vocab_path = os.path.join(args.analysis_output_dir, VOCAB_ANALYSIS_FILE % column_name)
+  vocab_path = os.path.join(args.analysis_output_dir,
+                            feature_transforms.VOCAB_ANALYSIS_FILE % column_name)
 
   if not file_io.file_exists(vocab_path):
     return []
 
-  vocab_str = file_io.read_file_to_string(vocab_path)
-  vocab = pd.read_csv(six.StringIO(vocab_str),
-                      header=None,
-                      names=['token', 'count'],
-                      dtype=str,  # Prevent pd from converting numerical categories.)
-                      na_filter=False)  # Prevent pd from converting 'NA' to a NaN.
-  return vocab['token'].tolist()
+  vocab, _ = feature_transforms.read_vocab_file(vocab_path)
+  return vocab
 
 
 def get_key_names(features):
   names = []
   for name, transform in six.iteritems(features):
-    if transform['transform'] == KEY_TRANSFORM:
+    if transform['transform'] == feature_transforms.KEY_TRANSFORM:
       names.append(name)
   return names
 
@@ -616,45 +596,63 @@ def get_experiment_fn(args):
 
   def get_experiment(output_dir):
     # Read schema, input features, and transforms.
-    schema = read_json_file(os.path.join(args.analysis_output_dir, SCHEMA_FILE))
-    features = read_json_file(os.path.join(args.analysis_output_dir, FEATURES_FILE))
-    stats = read_json_file(os.path.join(args.analysis_output_dir, STATS_FILE))
+    schema_path_with_target = os.path.join(args.analysis_output_dir, feature_transforms.SCHEMA_FILE)
+    features_path = os.path.join(args.analysis_output_dir, feature_transforms.FEATURES_FILE)
+    stats_path = os.path.join(args.analysis_output_dir, feature_transforms.STATS_FILE)
+
+    schema = read_json_file(schema_path_with_target)
+    features = read_json_file(features_path)
+    stats = read_json_file(stats_path)
 
     target_column_name = feature_transforms.get_target_name(features)
     if not target_column_name:
       raise ValueError('target missing from features file.')
 
+    # Make a copy of the schema file without the target column.
+    schema_without_target = [col for col in schema if col['name'] != target_column_name]
+    schema_path_without_target = os.path.join(args.job_dir, 'schema_without_target.json')
+    file_io.recursive_create_dir(args.job_dir)
+    file_io.write_string_to_file(schema_path_without_target,
+                                 json.dumps(schema_without_target, indent=2))
+
+    # Make list of files to save with the trained model.
+    additional_assets_with_target = {
+        feature_transforms.FEATURES_FILE: features_path,
+        feature_transforms.SCHEMA_FILE: schema_path_with_target}
+    additional_assets_without_target = {
+        feature_transforms.FEATURES_FILE: features_path,
+        feature_transforms.SCHEMA_FILE: schema_path_without_target}
+
     # Get the model to train.
     target_vocab = read_vocab(args, target_column_name)
     estimator = get_estimator(args, output_dir, features, stats, len(target_vocab))
 
-    # Make list of files to save with the trained model.
-    additional_assets = {
-        FEATURES_FILE: os.path.join(args.analysis_output_dir, FEATURES_FILE),
-        SCHEMA_FILE: os.path.join(args.analysis_output_dir, SCHEMA_FILE)}
-
     export_strategy_csv_notarget = make_export_strategy(
         args=args,
         keep_target=False,
-        assets_extra=additional_assets,
+        assets_extra=additional_assets_without_target,
         features=features,
-        schema=schema)
+        schema=schema,
+        stats=stats)
     export_strategy_csv_target = make_export_strategy(
         args=args,
         keep_target=True,
-        assets_extra=additional_assets,
+        assets_extra=additional_assets_with_target,
         features=features,
-        schema=schema)
+        schema=schema,
+        stats=stats)
 
     # Build readers for training.
     if args.run_transforms:
-      if any(v['transform'] == IMAGE_TRANSFORM for k, v in six.iteritems(features)):
+      if any(v['transform'] == feature_transforms.IMAGE_TRANSFORM
+             for k, v in six.iteritems(features)):
         raise ValueError('"image_to_vec" transform requires transformation step. ' +
                          'Cannot train from raw data.')
 
       input_reader_for_train = feature_transforms.build_csv_transforming_training_input_fn(
           schema=schema,
           features=features,
+          stats=stats,
           analysis_output_dir=args.analysis_output_dir,
           raw_data_file_pattern=args.train_data_paths,
           training_batch_size=args.train_batch_size,
@@ -665,6 +663,7 @@ def get_experiment_fn(args):
       input_reader_for_eval = feature_transforms.build_csv_transforming_training_input_fn(
           schema=schema,
           features=features,
+          stats=stats,
           analysis_output_dir=args.analysis_output_dir,
           raw_data_file_pattern=args.eval_data_paths,
           training_batch_size=args.eval_batch_size,

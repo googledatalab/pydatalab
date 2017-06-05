@@ -43,18 +43,6 @@ from trainer import feature_transforms
 img_error_count = Metrics.counter('main', 'ImgErrorCount')
 img_missing_count = Metrics.counter('main', 'ImgMissingCount')
 
-# Files
-SCHEMA_FILE = 'schema.json'
-FEATURES_FILE = 'features.json'
-
-TRANSFORMED_METADATA_DIR = 'transformed_metadata'
-RAW_METADATA_DIR = 'raw_metadata'
-TRANSFORM_FN_DIR = 'transform_fn'
-
-# Individual transforms
-TARGET_TRANSFORM = 'target'
-IMAGE_TRANSFORM = 'image_to_vec'
-
 
 def parse_arguments(argv):
   """Parse command line arguments.
@@ -170,7 +158,7 @@ def image_transform_columns(features):
   """
   img_cols = []
   for name, transform in six.iteritems(features):
-    if transform['transform'] == IMAGE_TRANSFORM:
+    if transform['transform'] == feature_transforms.IMAGE_TRANSFORM:
       img_cols.append(name)
 
   return img_cols
@@ -242,10 +230,11 @@ class EmitAsBatchDoFn(beam.DoFn):
 class TransformFeaturesDoFn(beam.DoFn):
   """Converts raw data into transformed data."""
 
-  def __init__(self, analysis_output_dir, features, schema):
+  def __init__(self, analysis_output_dir, features, schema, stats):
     self._analysis_output_dir = analysis_output_dir
     self._features = features
     self._schema = schema
+    self._stats = stats
     self._session = None
 
   def start_bundle(self, element=None):
@@ -262,6 +251,7 @@ class TransformFeaturesDoFn(beam.DoFn):
               analysis_path=self._analysis_output_dir, 
               features=self._features, 
               schema=self._schema,
+              stats=self._stats,
               keep_target=True))
       session.run(tf.tables_initializer())
     
@@ -402,9 +392,11 @@ def preprocess(pipeline, args):
     6) write the results to tf.example files and save any errors.
   """
   schema = json.loads(file_io.read_file_to_string(
-      os.path.join(args.analysis_output_dir, SCHEMA_FILE)).decode())
+      os.path.join(args.analysis_output_dir, feature_transforms.SCHEMA_FILE)).decode())
   features = json.loads(file_io.read_file_to_string(
-      os.path.join(args.analysis_output_dir, FEATURES_FILE)).decode())
+      os.path.join(args.analysis_output_dir, feature_transforms.FEATURES_FILE)).decode())
+  stats = json.loads(file_io.read_file_to_string(
+      os.path.join(args.analysis_output_dir, feature_transforms.STATS_FILE)).decode())
 
   column_names = [col['name'] for col in schema]
 
@@ -438,12 +430,13 @@ def preprocess(pipeline, args):
   if args.shuffle:
     clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
 
+  transform_dofn = TransformFeaturesDoFn(args.analysis_output_dir, features, schema, stats)
   (transformed_data, errors) = (
        clean_csv_data
        | 'Batch Input' 
        >> beam.ParDo(EmitAsBatchDoFn(args.batch_size)) 
        | 'Run TF Graph on Batches' 
-       >> beam.ParDo(TransformFeaturesDoFn(args.analysis_output_dir, features, schema)).with_outputs('errors', main='main'))
+       >> beam.ParDo(transform_dofn).with_outputs('errors', main='main'))
 
   _ = (transformed_data
         | 'SerializeExamples' >> beam.Map(serialize_example, feature_transforms.get_transfrormed_feature_info(features, schema))

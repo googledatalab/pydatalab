@@ -34,10 +34,6 @@ class TestGraphBuilding(unittest.TestCase):
           folders raw_metadata and transform_fn.
       predict_data: list of csv strings
     """
-    # Cannot call
-    # bundle_shim.load_session_bundle_or_saved_model_bundle_from_path directly
-    # as tft changes the in/output tensor names.
-
     with tf.Graph().as_default():
       with tf.Session().as_default() as session:
         outputs, labels, inputs = feature_transforms.build_csv_serving_tensors(
