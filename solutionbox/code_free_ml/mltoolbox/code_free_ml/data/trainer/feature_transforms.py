@@ -20,15 +20,9 @@ from tensorflow.contrib.slim.python.slim.nets.inception_v3 import inception_v3
 from tensorflow.contrib.slim.python.slim.nets.inception_v3 import inception_v3_arg_scope
 from tensorflow.python.lib.io import file_io
 
-# Files
-SCHEMA_FILE = 'schema.json'
-FEATURES_FILE = 'features.json'
-STATS_FILE = 'stats.json'
-VOCAB_ANALYSIS_FILE = 'vocab_%s.csv'
-
-TRANSFORMED_METADATA_DIR = 'transformed_metadata'
-RAW_METADATA_DIR = 'raw_metadata'
-TRANSFORM_FN_DIR = 'transform_fn'
+# ------------------------------------------------------------------------------
+# public constants. Changing these could break user's code
+# ------------------------------------------------------------------------------
 
 # Individual transforms
 IDENTITY_TRANSFORM = 'identity'
@@ -41,6 +35,16 @@ KEY_TRANSFORM = 'key'
 TARGET_TRANSFORM = 'target'
 IMAGE_TRANSFORM = 'image_to_vec'
 
+# ------------------------------------------------------------------------------
+# internal constants.
+# ------------------------------------------------------------------------------
+
+# Files
+SCHEMA_FILE = 'schema.json'
+FEATURES_FILE = 'features.json'
+STATS_FILE = 'stats.json'
+VOCAB_ANALYSIS_FILE = 'vocab_%s.csv'
+
 # Transform collections
 NUMERIC_TRANSFORMS = [IDENTITY_TRANSFORM, SCALE_TRANSFORM]
 CATEGORICAL_TRANSFORMS = [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM]
@@ -50,7 +54,7 @@ TEXT_TRANSFORMS = [BOW_TRANSFORM, TFIDF_TRANSFORM]
 DEFAULT_NUMERIC_TRANSFORM = IDENTITY_TRANSFORM
 DEFAULT_CATEGORICAL_TRANSFORM = ONE_HOT_TRANSFORM
 
-# Schema values
+# BigQuery Schema values supported
 INTEGER_SCHEMA = 'integer'
 FLOAT_SCHEMA = 'float'
 STRING_SCHEMA = 'string'
