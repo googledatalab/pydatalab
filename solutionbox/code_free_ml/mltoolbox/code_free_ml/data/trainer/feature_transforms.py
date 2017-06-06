@@ -472,10 +472,10 @@ def csv_header_and_defaults(features, schema, stats, keep_target):
     # Note that numerical key columns do not have a stats entry, hence the use
     # of get(col['name'], {})
     csv_header.append(col['name'])
-    if col['type'].lower() == 'integer':
+    if col['type'].lower() == INTEGER_SCHEMA:
       dtype = tf.int64
       default = int(stats['column_stats'].get(col['name'], {}).get('mean', 0))
-    elif col['type'].lower() == 'float':
+    elif col['type'].lower() == FLOAT_SCHEMA:
       dtype = tf.float32
       default = float(stats['column_stats'].get(col['name'], {}).get('mean', 0.0))
     else:
