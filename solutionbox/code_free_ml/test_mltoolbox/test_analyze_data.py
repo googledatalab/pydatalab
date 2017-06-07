@@ -118,7 +118,7 @@ class TestLocalAnalyze(unittest.TestCase):
          'col2': {'transform': 'identity'}})
       stats = json.loads(
           file_io.read_file_to_string(
-              os.path.join(output_folder, analyze_data.STATS_FILE)).decode())
+              os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
 
       self.assertEqual(stats['num_examples'], 100)
       col = stats['column_stats']['col1']
@@ -153,13 +153,13 @@ class TestLocalAnalyze(unittest.TestCase):
 
       stats = json.loads(
           file_io.read_file_to_string(
-              os.path.join(output_folder, analyze_data.STATS_FILE)).decode())
+              os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
       self.assertEqual(stats['column_stats']['color']['vocab_size'], 3)
       self.assertEqual(stats['column_stats']['transport']['vocab_size'], 6)
 
       # Color column.
       vocab_str = file_io.read_file_to_string(
-        os.path.join(output_folder, analyze_data.VOCAB_ANALYSIS_FILE % 'color'))
+        os.path.join(output_folder, analyze_data.constant.VOCAB_ANALYSIS_FILE % 'color'))
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['color', 'count'])
@@ -172,7 +172,7 @@ class TestLocalAnalyze(unittest.TestCase):
       # not known.
       vocab_str = file_io.read_file_to_string(
           os.path.join(output_folder,
-                       analyze_data.VOCAB_ANALYSIS_FILE % 'transport'))
+                       analyze_data.constant.VOCAB_ANALYSIS_FILE % 'transport'))
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['transport', 'count'])
@@ -201,13 +201,13 @@ class TestLocalAnalyze(unittest.TestCase):
 
       stats = json.loads(
           file_io.read_file_to_string(
-              os.path.join(output_folder, analyze_data.STATS_FILE)).decode())
+              os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
       self.assertEqual(stats['column_stats']['col1']['vocab_size'], 5)
       self.assertEqual(stats['column_stats']['col2']['vocab_size'], 4)
 
       vocab_str = file_io.read_file_to_string(
           os.path.join(output_folder,
-                       analyze_data.VOCAB_ANALYSIS_FILE % 'col1'))
+                       analyze_data.constant.VOCAB_ANALYSIS_FILE % 'col1'))
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['col1', 'count'])
@@ -217,7 +217,7 @@ class TestLocalAnalyze(unittest.TestCase):
 
       vocab_str = file_io.read_file_to_string(
           os.path.join(output_folder,
-                       analyze_data.VOCAB_ANALYSIS_FILE % 'col2'))
+                       analyze_data.constant.VOCAB_ANALYSIS_FILE % 'col2'))
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['col2', 'count'])
@@ -267,7 +267,7 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
 
       stats = json.loads(
           file_io.read_file_to_string(
-              os.path.join(output_folder, analyze_data.STATS_FILE)).decode())
+              os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
 
       self.assertEqual(stats['num_examples'], 100)
       col = stats['column_stats']['col1']
@@ -316,7 +316,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
                   'col2': {'transform': 'identity'}})
     stats = json.loads(
         file_io.read_file_to_string(
-            os.path.join(output_folder, analyze_data.STATS_FILE)).decode())
+            os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
 
     self.assertEqual(stats['num_examples'], 100)
     col = stats['column_stats']['col1']
@@ -352,13 +352,13 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 
     stats = json.loads(
         file_io.read_file_to_string(
-            os.path.join(output_folder, analyze_data.STATS_FILE)).decode())
+            os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
     self.assertEqual(stats['column_stats']['color']['vocab_size'], 3)
     self.assertEqual(stats['column_stats']['transport']['vocab_size'], 6)
 
     # Color column.
     vocab_str = file_io.read_file_to_string(
-      os.path.join(output_folder, analyze_data.VOCAB_ANALYSIS_FILE % 'color'))
+      os.path.join(output_folder, analyze_data.constant.VOCAB_ANALYSIS_FILE % 'color'))
     vocab = pd.read_csv(six.StringIO(vocab_str),
                         header=None,
                         names=['color', 'count'])
@@ -370,7 +370,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
     # transport column.
     vocab_str = file_io.read_file_to_string(
         os.path.join(output_folder,
-                     analyze_data.VOCAB_ANALYSIS_FILE % 'transport'))
+                     analyze_data.constant.VOCAB_ANALYSIS_FILE % 'transport'))
     vocab = pd.read_csv(six.StringIO(vocab_str),
                         header=None,
                         names=['transport', 'count'])
@@ -401,13 +401,13 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 
     stats = json.loads(
         file_io.read_file_to_string(
-            os.path.join(output_folder, analyze_data.STATS_FILE)).decode())
+            os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
     self.assertEqual(stats['column_stats']['col1']['vocab_size'], 5)
     self.assertEqual(stats['column_stats']['col2']['vocab_size'], 4)
 
     vocab_str = file_io.read_file_to_string(
         os.path.join(output_folder,
-                     analyze_data.VOCAB_ANALYSIS_FILE % 'col1'))
+                     analyze_data.constant.VOCAB_ANALYSIS_FILE % 'col1'))
     vocab = pd.read_csv(six.StringIO(vocab_str),
                         header=None,
                         names=['col1', 'count'])
@@ -417,7 +417,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 
     vocab_str = file_io.read_file_to_string(
         os.path.join(output_folder,
-                     analyze_data.VOCAB_ANALYSIS_FILE % 'col2'))
+                     analyze_data.constant.VOCAB_ANALYSIS_FILE % 'col2'))
     vocab = pd.read_csv(six.StringIO(vocab_str),
                         header=None,
                         names=['col2', 'count'])
