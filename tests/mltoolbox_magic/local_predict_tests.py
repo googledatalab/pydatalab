@@ -159,7 +159,7 @@ class TestLocalPredictions(unittest.TestCase):
     for missing_values in [True, False]:
       for csv_data in [True, False]:
         for show_image in [True, False]:
-          self._logger.debug('LocalPredict: ' + 
+          self._logger.debug('LocalPredict: ' +
                              'missing_values=%s, csv_data=%s, show_image=%s' %
                              (missing_values, csv_data, show_image))
           test_data = self._create_test_data(False, missing_values, csv_data)
@@ -169,7 +169,7 @@ class TestLocalPredictions(unittest.TestCase):
 
     # Test data being dataframes, with and without missing values, and embedded images.
     for missing_values in [True, False]:
-      self._logger.debug('LocalPredict: ' + 
+      self._logger.debug('LocalPredict: ' +
                          'missing_values=%s, DataFrame' % missing_values)
       test_data = self._create_test_data(True, missing_values, csv_data=False)
       df_s = pd.DataFrame(test_data).fillna('')

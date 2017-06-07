@@ -75,7 +75,7 @@ prediction_data: $my_data
                               help='The comma seperated headers of the prediction data.')
   predict_parser.add_argument('--image_columns',
                               help='Comma seperated headers of image URL columns. ' +
-                                   'Required if prediction data contains image columns.')
+                                   'Required if prediction data contains image URL columns.')
   predict_parser.add_argument('--no_show_image', action='store_true', default=False,
                               help='If not set, add a column of images in output.')
 
