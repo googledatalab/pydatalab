@@ -52,7 +52,7 @@ def _tf_predict(model_dir, input_csvlines):
 
   with tf.Graph().as_default(), tf.Session() as sess:
     input_alias_map, output_alias_map = _tf_load_model(sess, model_dir)
-    _, csv_tensor_name = input_alias_map.items()[0]
+    csv_tensor_name = list(input_alias_map.values())[0]
     results = sess.run(fetches=output_alias_map,
                        feed_dict={csv_tensor_name: input_csvlines})
 
