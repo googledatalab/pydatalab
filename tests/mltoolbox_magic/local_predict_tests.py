@@ -17,12 +17,12 @@ from __future__ import print_function
 
 import base64
 import csv
+from io import BytesIO
 import logging
 import os
 import pandas as pd
 from PIL import Image
 import shutil
-import six
 import sys
 import tempfile
 import tensorflow as tf
@@ -51,7 +51,7 @@ class TestLocalPredictions(unittest.TestCase):
     """Create a simple model that takes 'key', 'num1', 'text1', 'img_url1' input."""
 
     def _decode_jpg(image):
-      img_buf = six.StringIO()
+      img_buf = BytesIO()
       Image.new('RGB', (16, 16)).save(img_buf, 'jpeg')
       default_image_string = base64.urlsafe_b64encode(img_buf.getvalue())
       image = tf.where(tf.equal(image, ''), default_image_string, image)
@@ -131,7 +131,7 @@ class TestLocalPredictions(unittest.TestCase):
     if csv_data:
       csv_lines = []
       for d in data:
-        buf = six.StringIO()
+        buf = BytesIO()
         writer = csv.DictWriter(buf, fieldnames=['key', 'num1', 'text1', 'img_url1'])
         writer.writerow(d)
         csv_lines.append(buf.getvalue().rstrip())

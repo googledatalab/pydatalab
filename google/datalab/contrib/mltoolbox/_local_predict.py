@@ -21,6 +21,7 @@ import base64
 import collections
 import copy
 import csv
+from io import BytesIO
 import pandas as pd
 from PIL import Image
 import six
@@ -86,7 +87,7 @@ def _get_predicton_csv_lines(data, headers, images):
 
         im = im.copy()
         im.thumbnail((299, 299), Image.ANTIALIAS)
-        buf = six.StringIO()
+        buf = BytesIO()
         im.save(buf, "JPEG")
         content = base64.urlsafe_b64encode(buf.getvalue())
         d[img_col] = content
@@ -115,7 +116,7 @@ def _get_display_data_with_images(data, images):
       else:
         im = im.copy()
         im.thumbnail((128, 128), Image.ANTIALIAS)
-        buf = six.StringIO()
+        buf = BytesIO()
         im.save(buf, "PNG")
         content = base64.b64encode(buf.getvalue())
         d[img_col + '_image'] = content
