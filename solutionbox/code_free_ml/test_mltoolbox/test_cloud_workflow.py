@@ -102,6 +102,10 @@ class TestCloudServicesTrainer(unittest.TestCase):
         # Build a simple linear model
         t = -100 + 0.5 * num + r - g + b
 
+        num = _drop_out(num)
+        r = _drop_out(r)
+        g = 
+
         if keep_target:
           csv_line = "{key},{target},{num},{img_path}\n".format(
               key=i,
@@ -118,31 +122,21 @@ class TestCloudServicesTrainer(unittest.TestCase):
     subprocess.check_call('gsutil cp %s %s' % (local_file, filename), shell=True)
 
   def test_cloud_workflow(self):
-    self._logger.debug('Create input files')
-    self._make_image_files()
-
-    self._make_csv_data(self._csv_train_filename, 5000, True)
-    self._make_csv_data(self._csv_eval_filename, 500, True)
-    self._make_csv_data(self._csv_predict_filename, 100, False)
+    self._run_analyze()
 
 
   def _run_analyze(self, problem_type, with_image=False):
+
     features = {
-        'num_id': {'transform': 'identity'},
-        'num_scale': {'transform': 'scale', 'value': 4},
-        'str_one_hot': {'transform': 'one_hot'},
-        'str_embedding': {'transform': 'embedding', 'embedding_dim': 3},
-        'str_bow': {'transform': 'bag_of_words'},
-        'str_tfidf': {'transform': 'tfidf'},
+        'num': {'transform': 'scale'},
+        'img': {'transform': 'image_to_vec'},
         'target': {'transform': 'target'},
         'key': {'transform': 'key'}}
-    if with_image:
-      features['image'] = {'transform': 'image_to_vec'}
 
     schema = [
         {'name': 'key', 'type': 'integer'},
-        {'name': 'target', 'type': 'string' if problem_type == 'classification' else 'float'},
-        {'name': 'num_id', 'type': 'integer'},
+        {'name': 'target', 'type': 'float'},
+        {'name': 'num', 'type': 'integer'},
         {'name': 'num_scale', 'type': 'float'},
         {'name': 'str_one_hot', 'type': 'string'},
         {'name': 'str_embedding', 'type': 'string'},
@@ -150,6 +144,17 @@ class TestCloudServicesTrainer(unittest.TestCase):
         {'name': 'str_tfidf', 'type': 'string'}]
     if with_image:
       schema.append({'name': 'image', 'type': 'string'})
+
+
+
+
+    self._logger.debug('Create input files')
+    self._make_image_files()
+
+    self._make_csv_data(self._csv_train_filename, 5000, True)
+    self._make_csv_data(self._csv_eval_filename, 500, True)
+    self._make_csv_data(self._csv_predict_filename, 100, False)
+
 
     self._schema = schema
 
