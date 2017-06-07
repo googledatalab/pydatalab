@@ -20,7 +20,7 @@ CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data'))
 
 
-class TestCloudServicesTrainer(unittest.TestCase):
+class TestCloudServices(unittest.TestCase):
   """Tests everything using the cloud services.
 
   Run cloud analyze, cloud transformation, cloud training, and cloud batch
@@ -36,9 +36,15 @@ class TestCloudServicesTrainer(unittest.TestCase):
   Test files will be uploaded into a new bucket named temp_pydatalab_test_*
   using the default project from gcloud. The bucket is removed at the end
   of the test.
+
+  To run this test, the following evironment is needed:
+
+  * gcloud version >= 156
+  * gcloud with a default project that has access to dataflow and ml engine
+  * google-cloud-dataflow 0.6.0
   """
   def __init__(self, *args, **kwargs):
-    super(TestCloudServicesTrainer, self).__init__(*args, **kwargs)
+    super(TestCloudServices, self).__init__(*args, **kwargs)
 
     self._max_steps = 2000
 
@@ -72,7 +78,7 @@ class TestCloudServicesTrainer(unittest.TestCase):
     self._image_files = None
 
   def tearDown(self):
-    self._logger.debug('TestCloudServicesTrainer: removing folders %s, %s' %
+    self._logger.debug('TestCloudServices: removing folders %s, %s' %
                        (self._local_dir, self._gs_dir))
     shutil.rmtree(self._local_dir)
     subprocess.check_call('gsutil -m rm -r %s' % self._gs_dir, shell=True)

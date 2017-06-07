@@ -123,6 +123,14 @@ def parse_arguments(argv):
       default=0,
       help='Set to 0 to use the default size determined by the Dataflow service.')
 
+  parser.add_argument(
+      '--worker-machine-type',
+      type=str,
+      help='A machine name from https://cloud.google.com/compute/docs/machine-types. '
+           ' If not given, the service uses the default machine type.')
+
+
+
   args = parser.parse_args(args=argv[1:])
 
   if args.cloud and not args.project_id:
@@ -481,6 +489,9 @@ def main(argv=None):
   }
   if args.num_workers:
     options['num_workers'] = args.num_workers
+  if arg.worker_machine_type:
+    options['worker_machine_type'] = args.worker_machine_type
+
   pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
 
   with beam.Pipeline(pipeline_name, options=pipeline_options) as p:
