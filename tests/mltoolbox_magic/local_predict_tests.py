@@ -23,6 +23,7 @@ import os
 import pandas as pd
 from PIL import Image
 import shutil
+import six
 import sys
 import tempfile
 import tensorflow as tf
@@ -131,7 +132,7 @@ class TestLocalPredictions(unittest.TestCase):
     if csv_data:
       csv_lines = []
       for d in data:
-        buf = BytesIO()
+        buf = six.StringIO()
         writer = csv.DictWriter(buf, fieldnames=['key', 'num1', 'text1', 'img_url1'])
         writer.writerow(d)
         csv_lines.append(buf.getvalue().rstrip())
