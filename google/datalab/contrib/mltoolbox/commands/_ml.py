@@ -23,6 +23,7 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
+import argparse
 import pandas as pd
 import numpy as np
 import six
@@ -49,13 +50,24 @@ Use "%ml <command> -h" for help on a specific command.
 """)
 
   predict_parser = parser.subcommand(
-      'predict', help='Predict with local or deployed models. ' +
-      'Prediction data is provided in cell in yaml format of CSV lines. For example, ' +
-      """
+      'predict', help="""Predict with local or deployed models.
+      'Prediction data by CSV lines in input cell in yaml format. For example:
+
+%%ml predict --headers key,num --model path/to/model
 prediction_data:
-  - value1,value2, ...
-  - value1,value2, ...
-""")
+  - key1,value1
+  - key2,value2
+
+or define your data as a list of dict, or a list of CSV lines, or a pandas DataFrame.
+For example, in another cell, define a list of dict:
+
+my_data = [{'key': 1, 'num': 1.2}, {'key': 2, 'num': 2.8}]
+
+Then:
+
+%%ml predict --headers key,num --model path/to/model
+prediction_data: $my_data
+""", formatter_class=argparse.RawTextHelpFormatter)
   predict_parser.add_argument('--model', required=True,
                               help='The model path if not --cloud, or the id in ' +
                                    'the form of model.version if --cloud.')
@@ -64,13 +76,8 @@ prediction_data:
   predict_parser.add_argument('--image_columns',
                               help='Comma seperated headers of image URL columns. ' +
                                    'Required if prediction data contains image columns.')
-  predict_parser.add_argument('--show_image', action='store_true', default=True,
-                              help='Whether to add a column of images in output.')
-  predict_parser.add_argument('--data',
-                              help='The prediction data defined in other cells. ' +
-                                   'It can be a DataFrame, a list of CSV lines or a list ' +
-                                   'of dictionary. If not provided, then cell input is used ' +
-                                   'as a list of CSV lines')
+  predict_parser.add_argument('--no_show_image', action='store_true', default=False,
+                              help='If not set, add a column of images in output.')
 
   predict_parser.set_defaults(func=_predict)
 
@@ -81,13 +88,14 @@ def _predict(args, cell):
   headers = args['headers'].split(',')
   img_cols = args['image_columns'].split(',') if args['image_columns'] else []
   env = google.datalab.utils.commands.notebook_environment()
+
   cell_data = google.datalab.utils.commands.parse_config(cell, env)
-  if 'prediction_data' not in cell:
+  if 'prediction_data' not in cell_data:
     raise ValueError('Missing "prediction_data" in cell.')
 
   data = cell_data['prediction_data']
   df = _local_predict.get_prediction_results(args['model'], data, headers,
-                                             img_cols, args['show_image'])
+                                             img_cols, not args['no_show_image'])
 
   def _show_img(img_bytes):
     return '<img src="data:image/png;base64,' + img_bytes + '" />'
@@ -96,8 +104,9 @@ def _predict(args, cell):
     return (text[:37] + '...') if isinstance(text, six.string_types) and len(text) > 40 else text
 
   # Truncate text explicitly here because we will set display.max_colwidth to -1.
+  # This applies to images to but images will be overriden with "_show_img()" later.
   formatters = {x: _truncate_text for x in df.columns if df[x].dtype == np.object}
-  if args['show_image'] and img_cols:
+  if not args['no_show_image'] and img_cols:
     formatters.update({x + '_image': _show_img for x in img_cols})
 
   # Set display.max_colwidth to -1 so we can display images.

@@ -17,11 +17,13 @@ from __future__ import print_function
 
 import base64
 import csv
+import logging
 import os
 import pandas as pd
 from PIL import Image
 import shutil
 import six
+import sys
 import tempfile
 import tensorflow as tf
 from tensorflow.python.saved_model import signature_constants
@@ -35,6 +37,11 @@ class TestLocalPredictions(unittest.TestCase):
   """Tests for checking the format between the schema and features files."""
 
   def setUp(self):
+    self._logger = logging.getLogger('TestStructuredDataLogger')
+    self._logger.setLevel(logging.DEBUG)
+    if not self._logger.handlers:
+      self._logger.addHandler(logging.StreamHandler(stream=sys.stdout))
+
     self._test_dir = tempfile.mkdtemp()
 
   def tearDown(self):
@@ -121,8 +128,8 @@ class TestLocalPredictions(unittest.TestCase):
       del data[0]['num1']
       del data[1]['img_url1']
 
-    csv_lines = []
     if csv_data:
+      csv_lines = []
       for d in data:
         buf = six.StringIO()
         writer = csv.DictWriter(buf, fieldnames=['key', 'num1', 'text1', 'img_url1'])
@@ -152,6 +159,9 @@ class TestLocalPredictions(unittest.TestCase):
     for missing_values in [True, False]:
       for csv_data in [True, False]:
         for show_image in [True, False]:
+          self._logger.debug('LocalPredict: ' + 
+                             'missing_values=%s, csv_data=%s, show_image=%s' %
+                             (missing_values, csv_data, show_image))
           test_data = self._create_test_data(False, missing_values, csv_data)
           df = _local_predict.get_prediction_results(
               model_dir, test_data, headers, ['img_url1'], show_image)
@@ -159,6 +169,8 @@ class TestLocalPredictions(unittest.TestCase):
 
     # Test data being dataframes, with and without missing values, and embedded images.
     for missing_values in [True, False]:
+      self._logger.debug('LocalPredict: ' + 
+                         'missing_values=%s, DataFrame' % missing_values)
       test_data = self._create_test_data(True, missing_values, csv_data=False)
       df_s = pd.DataFrame(test_data).fillna('')
       df = _local_predict.get_prediction_results(model_dir, df_s, headers, None, False)
