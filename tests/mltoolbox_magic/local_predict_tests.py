@@ -122,8 +122,8 @@ class TestLocalPredictions(unittest.TestCase):
     ]
     if embedding_images:
       for d in data:
-        with open(d['img_url1'], 'r') as f:
-          d['img_url1'] = base64.urlsafe_b64encode(f.read())
+        with open(d['img_url1'], 'rb') as f:
+          d['img_url1'] = base64.urlsafe_b64encode(f.read()).decode('ascii')
 
     if missing_values:
       del data[0]['num1']

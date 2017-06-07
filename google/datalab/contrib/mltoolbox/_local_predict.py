@@ -89,7 +89,7 @@ def _get_predicton_csv_lines(data, headers, images):
         im.thumbnail((299, 299), Image.ANTIALIAS)
         buf = BytesIO()
         im.save(buf, "JPEG")
-        content = base64.urlsafe_b64encode(buf.getvalue())
+        content = base64.urlsafe_b64encode(buf.getvalue()).decode('ascii')
         d[img_col] = content
 
   csv_lines = []
@@ -118,7 +118,7 @@ def _get_display_data_with_images(data, images):
         im.thumbnail((128, 128), Image.ANTIALIAS)
         buf = BytesIO()
         im.save(buf, "PNG")
-        content = base64.b64encode(buf.getvalue())
+        content = base64.b64encode(buf.getvalue()).decode('ascii')
         d[img_col + '_image'] = content
 
   return display_data
@@ -148,7 +148,7 @@ def get_prediction_results(model_dir, data, headers, img_cols=None, show_image=T
     img_cols = []
 
   if isinstance(data, pd.DataFrame):
-    data = data.T.to_dict().values()
+    data = list(data.T.to_dict().values())
   elif isinstance(data[0], six.string_types):
     data = list(csv.DictReader(data, fieldnames=headers))
 
