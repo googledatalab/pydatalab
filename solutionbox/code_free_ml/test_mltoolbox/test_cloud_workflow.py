@@ -14,7 +14,6 @@ import tempfile
 import unittest
 import uuid
 
-import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
 CODE_PATH = os.path.abspath(os.path.join(
@@ -32,7 +31,7 @@ class TestCloudServicesTrainer(unittest.TestCase):
   run the local version of the step. This is usefull when debugging as not
   every step needs to use cloud services.
 
-  Because of the cloud overhead, this test easily takes ~40 mins to finish.
+  Because of the cloud overhead, this test easily takes 30-40 mins to finish.
 
   Test files will be uploaded into a new bucket named temp_pydatalab_test_*
   using the default project from gcloud. The bucket is removed at the end
@@ -52,9 +51,8 @@ class TestCloudServicesTrainer(unittest.TestCase):
   def setUp(self):
     random.seed(12321)
     self._local_dir = tempfile.mkdtemp()  # Local folder for temp files.
-    self._gs_dir = 'gs://temp_pydatalab_test_264bf887749047e0a09b35f5ebf672be'
-    #self._gs_dir = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
-    #subprocess.check_call('gsutil mb %s' % self._gs_dir, shell=True)
+    self._gs_dir = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
+    subprocess.check_call('gsutil mb %s' % self._gs_dir, shell=True)
 
     self._input_files = os.path.join(self._gs_dir, 'input_files')
 
@@ -74,9 +72,10 @@ class TestCloudServicesTrainer(unittest.TestCase):
     self._image_files = None
 
   def tearDown(self):
-    self._logger.debug('TestCloudServicesTrainer: removing folders %s, %s' % (self._local_dir, self._gs_dir))
+    self._logger.debug('TestCloudServicesTrainer: removing folders %s, %s' %
+                       (self._local_dir, self._gs_dir))
     shutil.rmtree(self._local_dir)
-    #subprocess.check_call('gsutil -m rm -r %s' % self._gs_dir, shell=True)
+    subprocess.check_call('gsutil -m rm -r %s' % self._gs_dir, shell=True)
 
   def _make_image_files(self):
     """Makes random images and uploads them to GCS.
@@ -291,9 +290,16 @@ class TestCloudServicesTrainer(unittest.TestCase):
     subprocess.check_call(' '.join(cmd), shell=True)  # async call.
     subprocess.check_call('gcloud ml-engine jobs stream-logs ' + job_name, shell=True)
 
+    # check that there was no errors.
+    error_files = file_io.get_matching_files(
+        os.path.join(self._prediction_output, 'prediction.errors_stats*'))
+    self.assertEqual(1, len(error_files))
+    error_str = file_io.read_file_to_string(error_files[0])
+    self.assertEqual('', error_str)
+
   def test_cloud_workflow(self):
-    #self._run_analyze()
-    #self._run_transform()
+    self._run_analyze()
+    self._run_transform()
     self._run_training_transform()
     self._run_batch_prediction()
 
