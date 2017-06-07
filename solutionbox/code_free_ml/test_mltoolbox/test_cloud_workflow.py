@@ -16,6 +16,9 @@ import uuid
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
+CODE_PATH = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data'))
+
 
 class TestCloudServicesTrainer(unittest.TestCase):
   """Tests everything using the cloud
@@ -34,8 +37,9 @@ class TestCloudServicesTrainer(unittest.TestCase):
   def setUp(self):
     random.seed(12321)
     self._local_dir = tempfile.mkdtemp()
-    self._gs_dir = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
-    subprocess.check_call('gsutil mb %s' % self._gs_dir, shell=True)
+    #self._gs_dir = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
+    self._gs_dir = 'gs://temp_pydatalab_test_123'
+    #subprocess.check_call('gsutil mb %s' % self._gs_dir, shell=True)
 
     self._input_files = os.path.join(self._gs_dir, 'input_files')
 
@@ -59,7 +63,7 @@ class TestCloudServicesTrainer(unittest.TestCase):
   def tearDown(self):
     self._logger.debug('TestCloudServicesTrainer: removing folders %s, %s' % (self._local_dir, self._gs_dir))
     shutil.rmtree(self._local_dir)
-    subprocess.check_call('gsutil -m rm -r %s' % self._gs_dir, shell=True)
+    #subprocess.check_call('gsutil -m rm -r %s' % self._gs_dir, shell=True)
 
   def _make_image_files(self):
     self._image_files = []
@@ -73,7 +77,7 @@ class TestCloudServicesTrainer(unittest.TestCase):
       img = Image.new('RGBA', size=(300, 300), color=(155, 0, 0))
       img.save(local_img)
 
-      self._image_files.append((r, g, b, img_name))
+      self._image_files.append((r, g, b, os.path.join(self._input_files, img_name)))
 
     subprocess.check_call('gsutil -m mv %s/img*.jpg %s/' % (self._local_dir, self._input_files), shell=True)
 
@@ -103,8 +107,8 @@ class TestCloudServicesTrainer(unittest.TestCase):
         t = -100 + 0.5 * num + r - g + b
 
         num = _drop_out(num)
-        r = _drop_out(r)
-        g = 
+        if num is not '':  # Don't drop every column
+          img_path = _drop_out(img_path)
 
         if keep_target:
           csv_line = "{key},{target},{num},{img_path}\n".format(
@@ -123,70 +127,72 @@ class TestCloudServicesTrainer(unittest.TestCase):
 
   def test_cloud_workflow(self):
     self._run_analyze()
+    self._run_transform()
 
+  def _get_default_project_id(self):
+    with open(os.devnull, 'w') as dev_null:
+      cmd = 'gcloud config list project --format=\'value(core.project)\''
+      return subprocess.check_output(cmd, shell=True, stderr=dev_null).strip()
 
-  def _run_analyze(self, problem_type, with_image=False):
+  def _run_analyze(self):
+
+    cloud = False
+    self._logger.debug('Create input files')
 
     features = {
         'num': {'transform': 'scale'},
         'img': {'transform': 'image_to_vec'},
         'target': {'transform': 'target'},
         'key': {'transform': 'key'}}
+    file_io.write_string_to_file(self._features_filename, json.dumps(features, indent=2))
 
     schema = [
         {'name': 'key', 'type': 'integer'},
         {'name': 'target', 'type': 'float'},
         {'name': 'num', 'type': 'integer'},
-        {'name': 'num_scale', 'type': 'float'},
-        {'name': 'str_one_hot', 'type': 'string'},
-        {'name': 'str_embedding', 'type': 'string'},
-        {'name': 'str_bow', 'type': 'string'},
-        {'name': 'str_tfidf', 'type': 'string'}]
-    if with_image:
-      schema.append({'name': 'image', 'type': 'string'})
+        {'name': 'img', 'type': 'string'}]
+    file_io.write_string_to_file(self._schema_filename, json.dumps(schema, indent=2))
 
-
-
-
-    self._logger.debug('Create input files')
+    
     self._make_image_files()
 
     self._make_csv_data(self._csv_train_filename, 5000, True)
     self._make_csv_data(self._csv_eval_filename, 500, True)
     self._make_csv_data(self._csv_predict_filename, 100, False)
 
-
-    self._schema = schema
-
-    file_io.write_string_to_file(self._schema_filename, json.dumps(schema, indent=2))
-    file_io.write_string_to_file(self._features_filename, json.dumps(features, indent=2))
-
-    if with_image:
-      self.make_image_files()
-
-    self.make_csv_data(self._csv_train_filename, 200, problem_type, True, with_image)
-    self.make_csv_data(self._csv_eval_filename, 100, problem_type, True, with_image)
-    self.make_csv_data(self._csv_predict_filename, 100, problem_type, False, with_image)
-
+    
     cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze_data.py'),
+           '--cloud' if cloud else '',
            '--output-dir=' + self._analysis_output,
            '--csv-file-pattern=' + self._csv_train_filename,
            '--csv-schema-file=' + self._schema_filename,
            '--features-file=' + self._features_filename]
 
+    self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
+    self.assertTrue(file_io.file_exists(os.path.join(self._analysis_output, 'stats.json')))
+    self.assertTrue(file_io.file_exists(os.path.join(self._analysis_output, 'schema.json')))
+    self.assertTrue(file_io.file_exists(os.path.join(self._analysis_output, 'features.json')))
 
   def _run_transform(self):
+    cloud = True
+    extra_args = []
+    if cloud:
+      extra_args = ['--cloud',
+                    '--job-name=test-mltoolbox-df-%s' % uuid.uuid4().hex,
+                    '--project-id=%s' % self._get_default_project_id()]
+    
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
            '--csv-file-pattern=' + self._csv_train_filename,
            '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_train',
            '--output-dir=' + self._transform_output,
-           '--shuffle']
+           '--shuffle'] + extra_args
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
+    # Don't wate time running a 2nd DF job, run it locally.
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
            '--csv-file-pattern=' + self._csv_eval_filename,
            '--analysis-output-dir=' + self._analysis_output,
