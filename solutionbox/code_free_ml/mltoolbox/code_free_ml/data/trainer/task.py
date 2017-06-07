@@ -45,7 +45,7 @@ from tensorflow.python.training import saver
 from tensorflow.python.util import compat
 
 
-import feature_transforms
+from . import feature_transforms
 
 # Constants for the Prediction Graph fetch tensors.
 PG_TARGET = 'target'  # from input

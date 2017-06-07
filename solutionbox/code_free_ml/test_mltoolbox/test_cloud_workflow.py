@@ -6,6 +6,7 @@ import logging
 import os
 from PIL import Image
 import random
+import six
 import shutil
 import subprocess
 import sys
@@ -21,7 +22,21 @@ CODE_PATH = os.path.abspath(os.path.join(
 
 
 class TestCloudServicesTrainer(unittest.TestCase):
-  """Tests everything using the cloud
+  """Tests everything using the cloud services.
+
+  Run cloud analyze, cloud transformation, cloud training, and cloud batch
+  prediction. Easy step is done by making a subprocess call to python or
+  gcloud.
+
+  Each step has a local 'cloud' variable that can be mannually set to False to
+  run the local version of the step. This is usefull when debugging as not
+  every step needs to use cloud services.
+
+  Because of the cloud overhead, this test easily takes ~40 mins to finish.
+
+  Test files will be uploaded into a new bucket named temp_pydatalab_test_*
+  using the default project from gcloud. The bucket is removed at the end
+  of the test.
   """
   def __init__(self, *args, **kwargs):
     super(TestCloudServicesTrainer, self).__init__(*args, **kwargs)
@@ -36,9 +51,9 @@ class TestCloudServicesTrainer(unittest.TestCase):
 
   def setUp(self):
     random.seed(12321)
-    self._local_dir = tempfile.mkdtemp()
+    self._local_dir = tempfile.mkdtemp()  # Local folder for temp files.
+    self._gs_dir = 'gs://temp_pydatalab_test_264bf887749047e0a09b35f5ebf672be'
     #self._gs_dir = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
-    self._gs_dir = 'gs://temp_pydatalab_test_123'
     #subprocess.check_call('gsutil mb %s' % self._gs_dir, shell=True)
 
     self._input_files = os.path.join(self._gs_dir, 'input_files')
@@ -46,11 +61,9 @@ class TestCloudServicesTrainer(unittest.TestCase):
     self._analysis_output = os.path.join(self._gs_dir, 'analysis_output')
     self._transform_output = os.path.join(self._gs_dir, 'transform_output')
     self._train_output = os.path.join(self._gs_dir, 'train_output')
+    self._prediction_output = os.path.join(self._gs_dir, 'prediction_output')
 
     file_io.recursive_create_dir(self._input_files)
-    file_io.recursive_create_dir(self._analysis_output)
-    file_io.recursive_create_dir(self._transform_output)
-    file_io.recursive_create_dir(self._train_output)
 
     self._csv_train_filename = os.path.join(self._input_files, 'train_csv_data.csv')
     self._csv_eval_filename = os.path.join(self._input_files, 'eval_csv_data.csv')
@@ -66,9 +79,13 @@ class TestCloudServicesTrainer(unittest.TestCase):
     #subprocess.check_call('gsutil -m rm -r %s' % self._gs_dir, shell=True)
 
   def _make_image_files(self):
+    """Makes random images and uploads them to GCS.
+
+    The images are first made locally and then moved to GCS for speed.
+    """
     self._image_files = []
 
-    for i in range(50):
+    for i in range(10):
       r = random.randint(0, 255)
       g = random.randint(0, 255)
       b = random.randint(0, 255)
@@ -79,17 +96,19 @@ class TestCloudServicesTrainer(unittest.TestCase):
 
       self._image_files.append((r, g, b, os.path.join(self._input_files, img_name)))
 
-    subprocess.check_call('gsutil -m mv %s/img*.jpg %s/' % (self._local_dir, self._input_files), shell=True)
+    cmd = 'gsutil -m mv %s/img*.jpg %s/' % (self._local_dir, self._input_files)
+    subprocess.check_call(cmd, shell=True)
 
-  def _make_csv_data(self, filename, num_rows, keep_target=True):
+  def _make_csv_data(self, filename, num_rows, keep_target=True, embedded_image=False):
     """Writes csv data.
 
-    Builds a linear model.
+    Builds a linear model that uses 1 numerical column and an image column.
 
     Args:
       filename: gcs filepath
       num_rows: how many rows of data will be generated.
-      keep_target: if false, the target column is missing. 
+      keep_target: if false, the target column is missing.
+      embedded_image: if true, the image column will be the base64 data
     """
     def _drop_out(x):
       # Make 5% of the data missing
@@ -103,31 +122,36 @@ class TestCloudServicesTrainer(unittest.TestCase):
         num = random.randint(0, 20)
         r, g, b, img_path = random.choice(self._image_files)
 
+        if embedded_image:
+          with file_io.FileIO(img_path, 'r') as img_file:
+            img_bytes = Image.open(img_file)
+          buf = six.StringIO()
+          img_bytes.save(buf, 'JPEG')
+          img_data = base64.urlsafe_b64encode(buf.getvalue())
+        else:
+          img_data = img_path
+
         # Build a simple linear model
-        t = -100 + 0.5 * num + r - g + b
+        t = -10 + 0.5 * num + 0.1 * r
 
         num = _drop_out(num)
         if num is not '':  # Don't drop every column
-          img_path = _drop_out(img_path)
+          img_data = _drop_out(img_data)
 
         if keep_target:
-          csv_line = "{key},{target},{num},{img_path}\n".format(
+          csv_line = "{key},{target},{num},{img_data}\n".format(
               key=i,
               target=t,
               num=num,
-              img_path=img_path)
+              img_data=img_data)
         else:
-          csv_line = "{key},{num},{img_path}\n".format(
+          csv_line = "{key},{num},{img_data}\n".format(
               key=i,
               num=num,
-              img_path=img_path)
+              img_data=img_data)
 
         f.write(csv_line)
     subprocess.check_call('gsutil cp %s %s' % (local_file, filename), shell=True)
-
-  def test_cloud_workflow(self):
-    self._run_analyze()
-    self._run_transform()
 
   def _get_default_project_id(self):
     with open(os.devnull, 'w') as dev_null:
@@ -135,8 +159,9 @@ class TestCloudServicesTrainer(unittest.TestCase):
       return subprocess.check_output(cmd, shell=True, stderr=dev_null).strip()
 
   def _run_analyze(self):
+    """Runs analysis using BigQuery from csv files."""
 
-    cloud = False
+    cloud = True
     self._logger.debug('Create input files')
 
     features = {
@@ -153,14 +178,12 @@ class TestCloudServicesTrainer(unittest.TestCase):
         {'name': 'img', 'type': 'string'}]
     file_io.write_string_to_file(self._schema_filename, json.dumps(schema, indent=2))
 
-    
     self._make_image_files()
 
-    self._make_csv_data(self._csv_train_filename, 5000, True)
-    self._make_csv_data(self._csv_eval_filename, 500, True)
-    self._make_csv_data(self._csv_predict_filename, 100, False)
+    self._make_csv_data(self._csv_train_filename, 30, True, False)
+    self._make_csv_data(self._csv_eval_filename, 10, True, False)
+    self._make_csv_data(self._csv_predict_filename, 5, False, True)
 
-    
     cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze_data.py'),
            '--cloud' if cloud else '',
            '--output-dir=' + self._analysis_output,
@@ -175,13 +198,19 @@ class TestCloudServicesTrainer(unittest.TestCase):
     self.assertTrue(file_io.file_exists(os.path.join(self._analysis_output, 'features.json')))
 
   def _run_transform(self):
+    """Runs DataFlow for makint tf.example files.
+
+    Only the train file uses DataFlow, the eval file runs beam locally to save
+    time.
+    """
     cloud = True
     extra_args = []
     if cloud:
       extra_args = ['--cloud',
                     '--job-name=test-mltoolbox-df-%s' % uuid.uuid4().hex,
-                    '--project-id=%s' % self._get_default_project_id()]
-    
+                    '--project-id=%s' % self._get_default_project_id(),
+                    '--num-workers=3']
+
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
            '--csv-file-pattern=' + self._csv_train_filename,
            '--analysis-output-dir=' + self._analysis_output,
@@ -202,125 +231,72 @@ class TestCloudServicesTrainer(unittest.TestCase):
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
-  def _run_training_transform(self, problem_type, model_type, extra_args=[]):
-    """Runs training starting with transformed tf.example files.
+    # Check the files were made
+    train_files = file_io.get_matching_files(
+        os.path.join(self._transform_output, 'features_train*'))
+    eval_files = file_io.get_matching_files(
+        os.path.join(self._transform_output, 'features_eval*'))
+    self.assertNotEqual([], train_files)
+    self.assertNotEqual([], eval_files)
 
-    Args:
-      problem_type: 'regression' or 'classification'
-      model_type: 'linear' or 'dnn'
-      extra_args: list of strings to pass to the trainer.
-    """
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
-           '--train-data-paths=' + os.path.join(self._transform_output, 'features_train*'),
-           '--eval-data-paths=' + os.path.join(self._transform_output, 'features_eval*'),
-           '--job-dir=' + self._train_output,
-           '--analysis-output-dir=' + self._analysis_output,
-           '--model-type=%s_%s' % (model_type, problem_type),
-           '--train-batch-size=100',
-           '--eval-batch-size=50',
-           '--max-steps=' + str(self._max_steps)] + extra_args
+  def _run_training_transform(self):
+    """Runs training starting with transformed tf.example files."""
 
-    self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
-    subprocess.check_call(' '.join(cmd), shell=True)
+    cloud = True
+    if cloud:
+      cmd = ['gcloud ml-engine jobs submit training test_mltoolbox_train_%s' % uuid.uuid4().hex,
+             '--runtime-version=1.0',
+             '--scale-tier=STANDARD_1',
+             '--stream-logs']
+    else:
+      cmd = ['gcloud ml-engine local train']
 
-  def _run_training_raw(self, problem_type, model_type, extra_args=[]):
-    """Runs training starting from raw csv data.
-
-    Args:
-      problem_type: 'regression' or 'classification'
-      model_type: 'linear' or 'dnn'
-      extra_args: list of strings to pass to the trainer.
-    """
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
-           '--train-data-paths=' + self._csv_train_filename,
-           '--eval-data-paths=' + self._csv_eval_filename,
-           '--job-dir=' + self._train_output,
-           '--analysis-output-dir=' + self._analysis_output,
-           '--model-type=%s_%s' % (model_type, problem_type),
-           '--train-batch-size=100',
-           '--eval-batch-size=50',
-           '--max-steps=' + str(self._max_steps),
-           '--run-transforms'] + extra_args
+    cmd = cmd + [
+        '--module-name trainer.task',
+        '--job-dir=' + self._train_output,
+        '--package-path=' + os.path.join(CODE_PATH, 'trainer'),
+        '--',
+        '--train-data-paths=' + os.path.join(self._transform_output, 'features_train*'),
+        '--eval-data-paths=' + os.path.join(self._transform_output, 'features_eval*'),
+        '--analysis-output-dir=' + self._analysis_output,
+        '--model-type=linear_regression',
+        '--train-batch-size=10',
+        '--eval-batch-size=10',
+        '--max-steps=' + str(self._max_steps)]
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
-  def _check_model(self, problem_type, model_type, with_image=False):
-    """Checks that both exported prediction graphs work."""
+    # Check the saved model was made.
+    self.assertTrue(file_io.file_exists(
+        os.path.join(self._train_output, 'model', 'saved_model.pb')))
+    self.assertTrue(file_io.file_exists(
+        os.path.join(self._train_output, 'evaluation_model', 'saved_model.pb')))
 
-    for has_target in [True, False]:
-      if has_target:
-        model_path = os.path.join(self._train_output, 'evaluation_model')
-      else:
-        model_path = os.path.join(self._train_output, 'model')
+  def _run_batch_prediction(self):
+    """Run batch prediction using the cloudml engine prediction service.
 
-      self._logger.debug('Checking model %s %s at %s' % (problem_type, model_type, model_path))
+    There is no local version of this step as it's the last step.
+    """
 
-      # Check there is a saved model.
-      self.assertTrue(os.path.isfile(os.path.join(model_path, 'saved_model.pb')))
+    job_name = 'test_mltoolbox_batchprediction_%s' % uuid.uuid4().hex
+    cmd = ['gcloud ml-engine jobs submit prediction ' + job_name,
+           '--data-format=TEXT',
+           '--input-paths=' + self._csv_predict_filename,
+           '--output-path=' + self._prediction_output,
+           '--model-dir=' + os.path.join(self._train_output, 'model'),
+           '--runtime-version=1.0',
+           '--region=us-central1']
+    self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
+    subprocess.check_call(' '.join(cmd), shell=True)  # async call.
+    subprocess.check_call('gcloud ml-engine jobs stream-logs ' + job_name, shell=True)
 
-      # Must create new graphs as multiple graphs are loaded into memory.
-      with tf.Graph().as_default(), tf.Session() as sess:
-        meta_graph_pb = tf.saved_model.loader.load(
-            sess=sess,
-            tags=[tf.saved_model.tag_constants.SERVING],
-            export_dir=model_path)
-        signature = meta_graph_pb.signature_def['serving_default']
+  def test_cloud_workflow(self):
+    #self._run_analyze()
+    #self._run_transform()
+    self._run_training_transform()
+    self._run_batch_prediction()
 
-        input_alias_map = {
-            friendly_name: tensor_info_proto.name
-            for (friendly_name, tensor_info_proto) in signature.inputs.items()}
-        output_alias_map = {
-            friendly_name: tensor_info_proto.name
-            for (friendly_name, tensor_info_proto) in signature.outputs.items()}
-
-        prediction_data = {
-            'key': [12, 11],
-            'target': [-49, -9] if problem_type == 'regression' else ['100', '101'],
-            'num_id': [11, 10],
-            'num_scale': [22.29, 5.20],
-            'str_one_hot': ['brown', 'brown'],
-            'str_embedding': ['def', 'def'],
-            'str_bow': ['drone', 'drone truck bike truck'],
-            'str_tfidf': ['bike train train car', 'train']}
-        if with_image:
-          image_bytes = []
-          for image_file in [self._image_files[0], self._image_files[2]]:
-            with file_io.FileIO(image_file, 'r') as ff:
-              image_bytes.append(base64.urlsafe_b64encode(ff.read()))
-
-          prediction_data.update({'image': image_bytes})
-
-        # Convert the prediciton data to csv.
-        csv_header = [col['name']
-                      for col in self._schema
-                      if (has_target or col['name'] != 'target')]
-        if not has_target:
-          del prediction_data['target']
-
-        csv_data = []
-        for i in range(2):
-          data = [str(prediction_data[name][i]) for name in csv_header]
-          csv_data.append(','.join(data))
-
-        # Test the *_alias_maps have the expected keys
-        expected_output_keys = ['predicted', 'key']
-        if has_target:
-          expected_output_keys.append('target')
-        if problem_type == 'classification':
-          expected_output_keys.extend(['score', 'score_2', 'score_3', 'predicted_2', 'predicted_3'])
-
-        self.assertEqual(1, len(input_alias_map.keys()))
-        self.assertItemsEqual(expected_output_keys, output_alias_map.keys())
-
-        _, csv_tensor_name = input_alias_map.items()[0]
-        result = sess.run(fetches=output_alias_map,
-                          feed_dict={csv_tensor_name: csv_data})
-
-        self.assertItemsEqual(expected_output_keys, result.keys())
-        self.assertEqual([12, 11], result['key'].flatten().tolist())
-
-  
 
 if __name__ == '__main__':
     unittest.main()

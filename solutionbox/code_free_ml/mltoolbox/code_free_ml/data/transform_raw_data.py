@@ -21,27 +21,14 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import base64
 import datetime
 import json
 import logging
 import os
-import random
 import sys
 import apache_beam as beam
-from apache_beam.metrics import Metrics
-import six
 import textwrap
-from tensorflow.python.lib.io import file_io
-from tensorflow_transform import coders
-from tensorflow_transform.beam import impl as tft
-from tensorflow_transform.beam import tft_beam_io
-from tensorflow_transform.tf_metadata import metadata_io
 
-from trainer import feature_transforms
-
-img_error_count = Metrics.counter('main', 'ImgErrorCount')
-img_missing_count = Metrics.counter('main', 'ImgMissingCount')
 
 
 def parse_arguments(argv):
@@ -130,6 +117,12 @@ def parse_arguments(argv):
       type=int,
       default=100)
 
+  parser.add_argument(
+      '--num-workers',
+      type=int,
+      default=0,
+      help='Set to 0 to use the default size determined by the Dataflow service.')
+
   args = parser.parse_args(args=argv[1:])
 
   if args.cloud and not args.project_id:
@@ -143,6 +136,7 @@ def parse_arguments(argv):
 
 @beam.ptransform_fn
 def shuffle(pcoll):  # pylint: disable=invalid-name
+  import random
   return (pcoll
           | 'PairWithRandom' >> beam.Map(lambda x: (random.random(), x))
           | 'GroupByRandom' >> beam.GroupByKey()
@@ -156,6 +150,9 @@ def image_transform_columns(features):
   a beam function, so we extract the columns prepare_image_transforms() should 
   run on outside of beam.
   """
+  import six
+  from trainer import feature_transforms
+
   img_cols = []
   for name, transform in six.iteritems(features):
     if transform['transform'] == feature_transforms.IMAGE_TRANSFORM:
@@ -174,10 +171,16 @@ def prepare_image_transforms(element, image_columns):
   Return:
     element, where each image file path has been replaced by a base64 image.
   """
+  import base64
   import cStringIO
   from PIL import Image
   from tensorflow.python.lib.io import file_io as tf_file_io
+  from apache_beam.metrics import Metrics
 
+  img_error_count = Metrics.counter('main', 'ImgErrorCount')
+  img_missing_count = Metrics.counter('main', 'ImgMissingCount')
+
+  img_missing_count.inc()
   for name in image_columns:
     uri = element[name]
     if not uri:
@@ -240,6 +243,7 @@ class TransformFeaturesDoFn(beam.DoFn):
   def start_bundle(self, element=None):
     """Build the transfromation graph once."""
     import tensorflow as tf
+    from trainer import feature_transforms
 
     g = tf.Graph()
     session = tf.Session(graph=g)
@@ -273,6 +277,7 @@ class TransformFeaturesDoFn(beam.DoFn):
       tensors are converted to lists.
     """
     import apache_beam as beam
+    import six
     import tensorflow as tf
 
     try:
@@ -352,6 +357,7 @@ def serialize_example(transformed_json_data, info_dict):
   Returns:
     The serialized tf.example version of transformed_json_data.
   """
+  import six
   import tensorflow as tf
 
   def _make_int64_list(x):
@@ -391,6 +397,9 @@ def preprocess(pipeline, args):
     5) run the transformations
     6) write the results to tf.example files and save any errors.
   """
+  from tensorflow.python.lib.io import file_io
+  from trainer import feature_transforms
+
   schema = json.loads(file_io.read_file_to_string(
       os.path.join(args.analysis_output_dir, feature_transforms.SCHEMA_FILE)).decode())
   features = json.loads(file_io.read_file_to_string(
@@ -470,13 +479,14 @@ def main(argv=None):
               os.path.dirname(__file__),
               'setup.py')),
   }
+  if args.num_workers:
+    options['num_workers'] = args.num_workers
   pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
 
   with beam.Pipeline(pipeline_name, options=pipeline_options) as p:
-    with tft.Context(temp_dir=temp_dir):
-      preprocess(
-          pipeline=p,
-          args=args)
+    preprocess(
+        pipeline=p,
+        args=args)
 
 
 if __name__ == '__main__':
