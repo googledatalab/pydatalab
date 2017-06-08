@@ -17,7 +17,7 @@ import google.datalab as dl
 import google.datalab.bigquery as bq
 
 CODE_PATH = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data'))
+    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
 
 
 class TestTransformRawData(unittest.TestCase):

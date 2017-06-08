@@ -18,7 +18,7 @@ from tensorflow.python.lib.io import file_io
 
 # To make 'import analyze_data' work without installing it.
 sys.path.append(os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data', 'trainer')))
+    os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'trainer')))
 
 import feature_transforms  # noqa: E303
 

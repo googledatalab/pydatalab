@@ -20,7 +20,7 @@ import google.datalab.bigquery as bq
 
 # To make 'import analyze_data' work without installing it.
 sys.path.append(os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data')))
+    os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml')))
 
 import analyze_data  # noqa: E303
 

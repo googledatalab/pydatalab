@@ -17,7 +17,7 @@ from tensorflow.python.lib.io import file_io
 
 
 CODE_PATH = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data'))
+    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
 
 
 class TestOptionalKeys(unittest.TestCase):

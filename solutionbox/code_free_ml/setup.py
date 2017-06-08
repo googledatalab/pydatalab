@@ -19,7 +19,8 @@ setup(
   version='1.0.0',
   packages=[
     'mltoolbox',
-    'mltoolbox.code_free_ml'
+    'mltoolbox.code_free_ml',
+    'mltoolbox.code_free_ml.trainer',
   ],
   description='Google Cloud Datalab Structured Data Package',
   author='Google',
@@ -42,7 +43,6 @@ setup(
   install_requires=[  # TODO(brandondutra): fill this in. Add pydatalab?
   ],
   package_data={
-    'mltoolbox.code_free_ml': ['data/*'],
   },
   data_files=[],
 )
