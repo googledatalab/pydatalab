@@ -18,11 +18,11 @@ from tensorflow.python.lib.io import file_io
 import google.datalab as dl
 import google.datalab.bigquery as bq
 
-# To make 'import analyze_data' work without installing it.
+# To make 'import analyze' work without installing it.
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml')))
 
-import analyze_data  # noqa: E303
+import analyze  # noqa: E303
 
 
 class TestConfigFiles(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestConfigFiles(unittest.TestCase):
                 'col2': {'transform': 'y'}}
     original_features = copy.deepcopy(features)
 
-    analyze_data.expand_defaults(schema, features)
+    analyze.expand_defaults(schema, features)
 
     # Nothing should change.
     self.assertEqual(original_features, features)
@@ -47,7 +47,7 @@ class TestConfigFiles(unittest.TestCase):
                 'col2': {'transform': 'y'}}
 
     with self.assertRaises(ValueError):
-      analyze_data.expand_defaults(schema, features)
+      analyze.expand_defaults(schema, features)
 
   def test_expand_defaults(self):
     schema = [{'name': 'col1', 'type': 'FLOAT'},
@@ -60,7 +60,7 @@ class TestConfigFiles(unittest.TestCase):
                 'col2': {'transform': 'y'},
                 'col3': {'transform': 'z'}}
 
-    analyze_data.expand_defaults(schema, features)
+    analyze.expand_defaults(schema, features)
 
     self.assertEqual(
       features,
@@ -73,27 +73,27 @@ class TestConfigFiles(unittest.TestCase):
 
   def test_check_schema_transforms_match(self):
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transforms_match(
+      analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'INTEGER'}],
          {'col1': {'transform': 'one_hot'}})
 
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transforms_match(
+      analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'FLOAT'}],
          {'col1': {'transform': 'embedding'}})
 
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transforms_match(
+      analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'STRING'}],
          {'col1': {'transform': 'scale'}})
 
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transforms_match(
+      analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'xxx'}],
          {'col1': {'transform': 'scale'}})
 
     with self.assertRaises(ValueError):
-      analyze_data.check_schema_transforms_match(
+      analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'INTEGER'}],
          {'col1': {'transform': 'xxx'}})
 
@@ -109,7 +109,7 @@ class TestLocalAnalyze(unittest.TestCase):
         input_file_path,
         '\n'.join(['%s,%s' % (i, 10 * i + 0.5) for i in range(100)]))
 
-      analyze_data.run_local_analysis(
+      analyze.run_local_analysis(
         output_folder,
         input_file_path,
         [{'name': 'col1', 'type': 'INTEGER'},
@@ -118,7 +118,7 @@ class TestLocalAnalyze(unittest.TestCase):
          'col2': {'transform': 'identity'}})
       stats = json.loads(
           file_io.read_file_to_string(
-              os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
+              os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
 
       self.assertEqual(stats['num_examples'], 100)
       col = stats['column_stats']['col1']
@@ -143,7 +143,7 @@ class TestLocalAnalyze(unittest.TestCase):
         input_file_path,
         '\n'.join(csv_file))
 
-      analyze_data.run_local_analysis(
+      analyze.run_local_analysis(
         output_folder,
         input_file_path,
         [{'name': 'color', 'type': 'STRING'},
@@ -153,13 +153,13 @@ class TestLocalAnalyze(unittest.TestCase):
 
       stats = json.loads(
           file_io.read_file_to_string(
-              os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
+              os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
       self.assertEqual(stats['column_stats']['color']['vocab_size'], 3)
       self.assertEqual(stats['column_stats']['transport']['vocab_size'], 6)
 
       # Color column.
       vocab_str = file_io.read_file_to_string(
-        os.path.join(output_folder, analyze_data.constant.VOCAB_ANALYSIS_FILE % 'color'))
+        os.path.join(output_folder, analyze.constant.VOCAB_ANALYSIS_FILE % 'color'))
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['color', 'count'])
@@ -172,7 +172,7 @@ class TestLocalAnalyze(unittest.TestCase):
       # not known.
       vocab_str = file_io.read_file_to_string(
           os.path.join(output_folder,
-                       analyze_data.constant.VOCAB_ANALYSIS_FILE % 'transport'))
+                       analyze.constant.VOCAB_ANALYSIS_FILE % 'transport'))
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['transport', 'count'])
@@ -192,7 +192,7 @@ class TestLocalAnalyze(unittest.TestCase):
         input_file_path,
         '\n'.join(csv_file))
 
-      analyze_data.run_local_analysis(
+      analyze.run_local_analysis(
         output_folder,
         input_file_path,
         [{'name': 'col1', 'type': 'STRING'}, {'name': 'col2', 'type': 'STRING'}],
@@ -201,13 +201,13 @@ class TestLocalAnalyze(unittest.TestCase):
 
       stats = json.loads(
           file_io.read_file_to_string(
-              os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
+              os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
       self.assertEqual(stats['column_stats']['col1']['vocab_size'], 5)
       self.assertEqual(stats['column_stats']['col2']['vocab_size'], 4)
 
       vocab_str = file_io.read_file_to_string(
           os.path.join(output_folder,
-                       analyze_data.constant.VOCAB_ANALYSIS_FILE % 'col1'))
+                       analyze.constant.VOCAB_ANALYSIS_FILE % 'col1'))
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['col1', 'count'])
@@ -217,7 +217,7 @@ class TestLocalAnalyze(unittest.TestCase):
 
       vocab_str = file_io.read_file_to_string(
           os.path.join(output_folder,
-                       analyze_data.constant.VOCAB_ANALYSIS_FILE % 'col2'))
+                       analyze.constant.VOCAB_ANALYSIS_FILE % 'col2'))
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['col2', 'count'])
@@ -257,7 +257,7 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
       data = [{'col1': i, 'col2': 10 * i + 0.5} for i in range(100)]
       table.insert(data)
 
-      analyze_data.run_cloud_analysis(
+      analyze.run_cloud_analysis(
           output_dir=output_folder,
           csv_file_pattern=None,
           bigquery_table=full_table_name,
@@ -267,7 +267,7 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
 
       stats = json.loads(
           file_io.read_file_to_string(
-              os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
+              os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
 
       self.assertEqual(stats['num_examples'], 100)
       col = stats['column_stats']['col1']
@@ -306,7 +306,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       input_file_path,
       '\n'.join(['%s,%s' % (i, 10 * i + 0.5) for i in range(100)]))
 
-    analyze_data.run_cloud_analysis(
+    analyze.run_cloud_analysis(
         output_dir=output_folder,
         csv_file_pattern=input_file_path,
         bigquery_table=None,
@@ -316,7 +316,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
                   'col2': {'transform': 'identity'}})
     stats = json.loads(
         file_io.read_file_to_string(
-            os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
+            os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
 
     self.assertEqual(stats['num_examples'], 100)
     col = stats['column_stats']['col1']
@@ -341,7 +341,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       input_file_path,
       '\n'.join(csv_file))
 
-    analyze_data.run_cloud_analysis(
+    analyze.run_cloud_analysis(
         output_dir=output_folder,
         csv_file_pattern=input_file_path,
         bigquery_table=None,
@@ -352,13 +352,13 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 
     stats = json.loads(
         file_io.read_file_to_string(
-            os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
+            os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
     self.assertEqual(stats['column_stats']['color']['vocab_size'], 3)
     self.assertEqual(stats['column_stats']['transport']['vocab_size'], 6)
 
     # Color column.
     vocab_str = file_io.read_file_to_string(
-      os.path.join(output_folder, analyze_data.constant.VOCAB_ANALYSIS_FILE % 'color'))
+      os.path.join(output_folder, analyze.constant.VOCAB_ANALYSIS_FILE % 'color'))
     vocab = pd.read_csv(six.StringIO(vocab_str),
                         header=None,
                         names=['color', 'count'])
@@ -370,7 +370,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
     # transport column.
     vocab_str = file_io.read_file_to_string(
         os.path.join(output_folder,
-                     analyze_data.constant.VOCAB_ANALYSIS_FILE % 'transport'))
+                     analyze.constant.VOCAB_ANALYSIS_FILE % 'transport'))
     vocab = pd.read_csv(six.StringIO(vocab_str),
                         header=None,
                         names=['transport', 'count'])
@@ -390,7 +390,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       input_file_path,
       '\n'.join(csv_file))
 
-    analyze_data.run_cloud_analysis(
+    analyze.run_cloud_analysis(
         output_dir=output_folder,
         csv_file_pattern=input_file_path,
         bigquery_table=None,
@@ -401,13 +401,13 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 
     stats = json.loads(
         file_io.read_file_to_string(
-            os.path.join(output_folder, analyze_data.constant.STATS_FILE)).decode())
+            os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
     self.assertEqual(stats['column_stats']['col1']['vocab_size'], 5)
     self.assertEqual(stats['column_stats']['col2']['vocab_size'], 4)
 
     vocab_str = file_io.read_file_to_string(
         os.path.join(output_folder,
-                     analyze_data.constant.VOCAB_ANALYSIS_FILE % 'col1'))
+                     analyze.constant.VOCAB_ANALYSIS_FILE % 'col1'))
     vocab = pd.read_csv(six.StringIO(vocab_str),
                         header=None,
                         names=['col1', 'count'])
@@ -417,7 +417,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 
     vocab_str = file_io.read_file_to_string(
         os.path.join(output_folder,
-                     analyze_data.constant.VOCAB_ANALYSIS_FILE % 'col2'))
+                     analyze.constant.VOCAB_ANALYSIS_FILE % 'col2'))
     vocab = pd.read_csv(six.StringIO(vocab_str),
                         header=None,
                         names=['col2', 'count'])

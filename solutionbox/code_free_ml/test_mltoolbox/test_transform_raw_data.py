@@ -52,7 +52,7 @@ class TestTransformRawData(unittest.TestCase):
         '2,0,Friday,18.0,%s\n' % img2_file +
         '3,0,Sunday,12.0,%s\n' % img3_file)
 
-    # Call analyze_data.py to create analysis results.
+    # Call analyze.py to create analysis results.
     schema = [{'name': 'key_col', 'type': 'INTEGER'},
               {'name': 'target_col', 'type': 'FLOAT'},
               {'name': 'cat_col', 'type': 'STRING'},
@@ -67,7 +67,7 @@ class TestTransformRawData(unittest.TestCase):
                 'img_col': {'transform': 'image_to_vec'}}
     features_file = os.path.join(cls.source_dir, 'features.json')
     file_io.write_string_to_file(features_file, json.dumps(features))
-    cmd = ['python ' + os.path.join(CODE_PATH, 'analyze_data.py'),
+    cmd = ['python ' + os.path.join(CODE_PATH, 'analyze.py'),
            '--output-dir=' + cls.analysis_dir,
            '--csv-file-pattern=' + cls.csv_input_filepath,
            '--csv-schema-file=' + schema_file,
@@ -86,7 +86,7 @@ class TestTransformRawData(unittest.TestCase):
   def test_local_csv_transform(self):
     """Test transfrom from local csv files."""
 
-    cmd = ['python ' + os.path.join(CODE_PATH, 'transform_raw_data.py'),
+    cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self.csv_input_filepath,
            '--analysis-output-dir=' + self.analysis_dir,
            '--output-filename-prefix=features',
@@ -143,7 +143,7 @@ class TestTransformRawData(unittest.TestCase):
     ]
     table.insert(data=data)
 
-    cmd = ['python ' + os.path.join(CODE_PATH, 'transform_raw_data.py'),
+    cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
            '--bigquery-table=%s.%s.%s' % (project_id, dataset_name, table_name),
            '--analysis-output-dir=' + self.analysis_dir,
            '--output-filename-prefix=features',

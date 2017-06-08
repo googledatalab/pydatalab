@@ -16,7 +16,7 @@ import tensorflow as tf
 
 from tensorflow.python.lib.io import file_io
 
-# To make 'import analyze_data' work without installing it.
+# To make 'import analyze' work without installing it.
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'trainer')))
 

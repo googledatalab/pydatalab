@@ -189,7 +189,7 @@ class TestCloudServices(unittest.TestCase):
     self._make_csv_data(self._csv_eval_filename, 10, True, False)
     self._make_csv_data(self._csv_predict_filename, 5, False, True)
 
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze_data.py'),
+    cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
            '--cloud' if cloud else '',
            '--output-dir=' + self._analysis_output,
            '--csv-file-pattern=' + self._csv_train_filename,
@@ -216,7 +216,7 @@ class TestCloudServices(unittest.TestCase):
                     '--project-id=%s' % self._get_default_project_id(),
                     '--num-workers=3']
 
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
+    cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self._csv_train_filename,
            '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_train',
@@ -227,7 +227,7 @@ class TestCloudServices(unittest.TestCase):
     subprocess.check_call(' '.join(cmd), shell=True)
 
     # Don't wate time running a 2nd DF job, run it locally.
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
+    cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self._csv_eval_filename,
            '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_eval',
