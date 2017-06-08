@@ -10,7 +10,9 @@ import os
 from PIL import Image
 import pandas as pd
 import six
+import shutil
 import tensorflow as tf
+import tempfile
 
 
 from tensorflow.contrib.learn.python.learn.utils import input_fn_utils
@@ -217,14 +219,15 @@ def _bag_of_words(x):
   return _bow(x)
 
 
-def _make_image_to_vec_tito(tmp_dir):
+def _make_image_to_vec_tito(tmp_dir=None):
   """Creates a tensor-in-tensor-out function that produces embeddings from image bytes.
 
   Image to embedding is implemented with Tensorflow's inception v3 model and a pretrained
   checkpoint. It returns 1x2048 'PreLogits' embeddings for each image.
 
   Args:
-    tmp_dir: a local directory that is used for downloading the checkpoint.
+    tmp_dir: a local directory that is used for downloading the checkpoint. If
+      non, a temp folder will be made and deleted.
 
   Returns: a tensor-in-tensor-out function that takes image string tensor and returns embeddings.
   """
@@ -276,6 +279,10 @@ def _make_image_to_vec_tito(tmp_dir):
     """
 
     def _tito_out(tensor_in):
+      checkpoint_dir = tmp_dir
+      if tmp_dir is None:
+        checkpoint_dir = tempfile.mkdtemp()
+
       g = tf.Graph()
       with g.as_default():
         si = tf.placeholder(dtype=tensor_in.dtype, shape=tensor_in.shape, name=tensor_in.op.name)
@@ -283,7 +290,7 @@ def _make_image_to_vec_tito(tmp_dir):
         all_vars = tf.contrib.slim.get_variables_to_restore(exclude=exclude)
         saver = tf.train.Saver(all_vars)
         # Downloading the checkpoint from GCS to local speeds up saver.restore() a lot.
-        checkpoint_tmp = os.path.join(tmp_dir, 'checkpoint')
+        checkpoint_tmp = os.path.join(checkpoint_dir, 'checkpoint')
         with file_io.FileIO(checkpoint, 'r') as f_in, file_io.FileIO(checkpoint_tmp, 'w') as f_out:
           f_out.write(f_in.read())
         with tf.Session() as sess:
@@ -292,6 +299,9 @@ def _make_image_to_vec_tito(tmp_dir):
                                                                           g.as_graph_def(),
                                                                           [so.op.name])
         file_io.delete_file(checkpoint_tmp)
+        if tmp_dir is None:
+          shutil.rmtree(checkpoint_dir)
+
       tensors_out = tf.import_graph_def(output_graph_def,
                                         input_map={si.name: tensor_in},
                                         return_elements=[so.name])
@@ -383,7 +393,7 @@ def make_preprocessing_fn(output_dir, features, keep_target):
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
           result[name] = _string_to_int(inputs[name], vocab)
       elif transform_name == IMAGE_TRANSFORM:
-        make_image_to_vec_fn = _make_image_to_vec_tito(output_dir)
+        make_image_to_vec_fn = _make_image_to_vec_tito()
         result[name] = make_image_to_vec_fn(inputs[name])
       else:
         raise ValueError('unknown transform %s' % transform_name)
