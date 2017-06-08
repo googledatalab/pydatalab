@@ -489,7 +489,7 @@ def main(argv=None):
   }
   if args.num_workers:
     options['num_workers'] = args.num_workers
-  if arg.worker_machine_type:
+  if args.worker_machine_type:
     options['worker_machine_type'] = args.worker_machine_type
 
   pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
