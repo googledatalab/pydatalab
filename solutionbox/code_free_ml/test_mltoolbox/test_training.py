@@ -17,7 +17,7 @@ from tensorflow.python.lib.io import file_io
 
 
 CODE_PATH = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'data'))
+    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
 
 
 class TestOptionalKeys(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestOptionalKeys(unittest.TestCase):
       file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
                                    ''.join(data))
 
-      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze_data.py'),
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
              '--output-dir=' + os.path.join(output_dir, 'analysis'),
              '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
              '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
@@ -108,7 +108,7 @@ class TestOptionalKeys(unittest.TestCase):
       file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
                                    ''.join(data))
 
-      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze_data.py'),
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
              '--output-dir=' + os.path.join(output_dir, 'analysis'),
              '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
              '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
@@ -157,7 +157,7 @@ class TestOptionalKeys(unittest.TestCase):
 class TestTrainer(unittest.TestCase):
   """Tests training.
 
-  Runs analysze_data and transform_raw_data on generated test data. Also loads
+  Runs analyze.py and transform.py on generated test data. Also loads
   the exported graphs and checks they run. No validation of the test results is
   done (i.e., the training loss is not checked).
   """
@@ -360,7 +360,7 @@ class TestTrainer(unittest.TestCase):
     self.make_csv_data(self._csv_eval_filename, 100, problem_type, True, with_image)
     self.make_csv_data(self._csv_predict_filename, 100, problem_type, False, with_image)
 
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze_data.py'),
+    cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
            '--output-dir=' + self._analysis_output,
            '--csv-file-pattern=' + self._csv_train_filename,
            '--csv-schema-file=' + self._schema_filename,
@@ -369,7 +369,7 @@ class TestTrainer(unittest.TestCase):
     subprocess.check_call(' '.join(cmd), shell=True)
 
   def _run_transform(self):
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
+    cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self._csv_train_filename,
            '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_train',
@@ -379,7 +379,7 @@ class TestTrainer(unittest.TestCase):
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'transform_raw_data.py'),
+    cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self._csv_eval_filename,
            '--analysis-output-dir=' + self._analysis_output,
            '--output-filename-prefix=features_eval',
