@@ -75,8 +75,8 @@ class CommandParser(argparse.ArgumentParser):
       print(str(e))
       return None
 
-  def subcommand(self, name, help):
+  def subcommand(self, name, help, **kwargs):
     """Creates a parser for a sub-command. """
     if self._subcommands is None:
       self._subcommands = self.add_subparsers(help='commands')
-    return self._subcommands.add_parser(name, description=help, help=help)
+    return self._subcommands.add_parser(name, description=help, help=help, **kwargs)
