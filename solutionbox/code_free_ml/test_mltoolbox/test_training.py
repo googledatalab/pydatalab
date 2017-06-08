@@ -47,7 +47,8 @@ class TestOptionalKeys(unittest.TestCase):
              '--features-file=' + os.path.join(output_dir, 'features.json')]
       subprocess.check_call(' '.join(cmd), shell=True)
 
-      cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
              '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
@@ -114,7 +115,8 @@ class TestOptionalKeys(unittest.TestCase):
              '--features-file=' + os.path.join(output_dir, 'features.json')]
       subprocess.check_call(' '.join(cmd), shell=True)
 
-      cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
              '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
@@ -394,7 +396,8 @@ class TestTrainer(unittest.TestCase):
       model_type: 'linear' or 'dnn'
       extra_args: list of strings to pass to the trainer.
     """
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
+    cmd = ['cd %s && ' % CODE_PATH,
+           'python -m trainer.task',
            '--train-data-paths=' + os.path.join(self._transform_output, 'features_train*'),
            '--eval-data-paths=' + os.path.join(self._transform_output, 'features_eval*'),
            '--job-dir=' + self._train_output,
@@ -415,7 +418,8 @@ class TestTrainer(unittest.TestCase):
       model_type: 'linear' or 'dnn'
       extra_args: list of strings to pass to the trainer.
     """
-    cmd = ['python %s' % os.path.join(CODE_PATH, 'trainer', 'task.py'),
+    cmd = ['cd %s && ' % CODE_PATH,
+           'python -m trainer.task',
            '--train-data-paths=' + self._csv_train_filename,
            '--eval-data-paths=' + self._csv_eval_filename,
            '--job-dir=' + self._train_output,
