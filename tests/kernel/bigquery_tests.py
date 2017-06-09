@@ -653,12 +653,12 @@ WITH q1 AS (
                                                       'test_sql', context)
 
     with self.assertRaisesRegexp(Exception, 'already exists; use --append or --overwrite'):
-      google.datalab.bigquery.commands._bigquery._load_cell(args, None);
+      google.datalab.bigquery.commands._bigquery._load_cell(args, None)
 
     mock_table_exists.return_value = False
 
     with self.assertRaisesRegexp(Exception, 'Table does not exist, and no schema specified'):
-      google.datalab.bigquery.commands._bigquery._load_cell(args, None);
+      google.datalab.bigquery.commands._bigquery._load_cell(args, None)
 
     cell_body = {
       'schema': [
@@ -671,28 +671,28 @@ WITH q1 AS (
     job._fatal_error = 'fatal error'
 
     with self.assertRaisesRegexp(Exception, 'Load failed: fatal error'):
-      google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body));
+      google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body))
 
     job._fatal_error = None
     job._errors = 'error'
 
     with self.assertRaisesRegexp(Exception, 'Load completed with errors: error'):
-      google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body));
+      google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body))
 
     job._errors = None
 
-    google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body));
+    google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body))
 
     mock_table_load.assert_called_with('test/path', mode='create',
                                        source_format='NEWLINE_DELIMITED_JSON',
                                        csv_options=mock.ANY, ignore_unknown_values=True)
 
-    mock_get_table.return_value = None;
+    mock_get_table.return_value = None
     mock_table_exists.return_value = True
     args['mode'] = 'append'
     args['format'] = 'csv'
 
-    google.datalab.bigquery.commands._bigquery._load_cell(args, None);
+    google.datalab.bigquery.commands._bigquery._load_cell(args, None)
 
     mock_table_load.assert_called_with('test/path', mode='append',
                                        source_format='csv', csv_options=mock.ANY,
