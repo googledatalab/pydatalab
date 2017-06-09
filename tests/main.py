@@ -101,6 +101,7 @@ _INTEGRATION_TEST_MODULES = [
     mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
     mltoolbox_structured_data.traininglib_tests,
     mltoolbox_magic.local_predict_tests,
+    mltoolbox_magic.shell_process_tests,
 ]
 
 
