@@ -59,7 +59,7 @@ def run_and_monitor(args, pid_to_wait, std_out_filter_fn=None):
 
     pids_to_kill = [p.pid]
     script = ('import %s;%s._wait_and_kill(%s, %s)' %
-         (__name__, __name__, str(pid_to_wait), str(pids_to_kill)))
+              (__name__, __name__, str(pid_to_wait), str(pids_to_kill)))
     monitor_process = subprocess.Popen(['python', '-c', script], env=os.environ)
     while p.poll() is None:
       line = p.stdout.readline()
