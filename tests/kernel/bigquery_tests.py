@@ -636,6 +636,68 @@ WITH q1 AS (
     self.assertEqual(google.datalab.bigquery.commands._bigquery._extract_cell(args, None),
                      'test-results')
 
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Table.create')
+  @mock.patch('google.datalab.bigquery.Table.exists')
+  @mock.patch('google.datalab.bigquery.Table.load')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
+  def test_load_cell(self, mock_get_table, mock_table_load, mock_table_exists,
+                     mock_table_create, mock_default_context):
+    args = {'table': 'project.test.table', 'mode': 'create', 'path': 'test/path', 'skip': None,
+            'csv': None, 'delimiter': None, 'format': None, 'strict': None, 'quote': None}
+    context = self._create_context()
+    table = google.datalab.bigquery.Table('project.test.table')
+    mock_get_table.return_value = table
+    mock_table_exists.return_value = True
+    job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
+                                                      'test_sql', context)
+
+    with self.assertRaisesRegexp(Exception, 'already exists; use --append or --overwrite'):
+      google.datalab.bigquery.commands._bigquery._load_cell(args, None);
+
+    mock_table_exists.return_value = False
+
+    with self.assertRaisesRegexp(Exception, 'Table does not exist, and no schema specified'):
+      google.datalab.bigquery.commands._bigquery._load_cell(args, None);
+
+    cell_body = {
+      'schema': [
+        {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
+        {'name': 'col1', 'type': 'STRING', 'mode': 'required', 'description': 'description1'}
+      ]
+    }
+    mock_table_load.return_value = job
+    job._is_complete = True
+    job._fatal_error = 'fatal error'
+
+    with self.assertRaisesRegexp(Exception, 'Load failed: fatal error'):
+      google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body));
+
+    job._fatal_error = None
+    job._errors = 'error'
+
+    with self.assertRaisesRegexp(Exception, 'Load completed with errors: error'):
+      google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body));
+
+    job._errors = None
+
+    google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body));
+
+    mock_table_load.assert_called_with('test/path', mode='create',
+                                       source_format='NEWLINE_DELIMITED_JSON',
+                                       csv_options=mock.ANY, ignore_unknown_values=True)
+
+    mock_get_table.return_value = None;
+    mock_table_exists.return_value = True
+    args['mode'] = 'append'
+    args['format'] = 'csv'
+
+    google.datalab.bigquery.commands._bigquery._load_cell(args, None);
+
+    mock_table_load.assert_called_with('test/path', mode='append',
+                                       source_format='csv', csv_options=mock.ANY,
+                                       ignore_unknown_values=True)
+
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')
   @mock.patch('google.datalab.utils.commands._html.HtmlBuilder.render_chart_data')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
