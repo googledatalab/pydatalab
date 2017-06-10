@@ -40,7 +40,7 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
       p.kill()
 
 
-def run_and_monitor(args, pid_to_wait, std_out_filter_fn=None):
+def run_and_monitor(args, pid_to_wait, std_out_filter_fn=None, cwd=None):
   """ Start a process, and have it depend on another specified process.
 
   Args:
@@ -48,11 +48,13 @@ def run_and_monitor(args, pid_to_wait, std_out_filter_fn=None):
     pid_to_wait: the process to wait on. If the process ends, also kill the started process.
     std_out_filter_fn: a filter function which takes a string content from the stdout of the
         started process, and returns True if the string should be redirected to console stdout.
+    cwd: the current working directory for the process to start.
   """
 
   monitor_process = None
   try:
     p = subprocess.Popen(args,
+                         cwd=cwd,
                          env=os.environ,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
