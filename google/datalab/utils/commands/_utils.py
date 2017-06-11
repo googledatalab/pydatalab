@@ -461,7 +461,7 @@ def parse_control_options(controls, variable_defaults=None):
   div_id = _html.Html.next_id()
   if variable_defaults is None:
     variable_defaults = {}
-  for varname, control in list(controls.items()):
+  for varname, control in controls.items():
     label = control.get('label', varname)
     control_id = div_id + '__' + varname
     control_ids.append(control_id)
