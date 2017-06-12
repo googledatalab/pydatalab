@@ -157,6 +157,19 @@ def parse_arguments(argv):
 
   return args
 
+def make_analysis_plan(schema, features):
+  """Records what analysis sets needs to be performed on which input columns.
+
+  Args:
+    schema: schema list
+    features: features dict
+
+  Return:
+    A dict in the form {schema_name: analysis_type}, where schema_name is an
+    input column name, and analysis_type is one of "numeric", "vocab", 
+    "split_vocab", or "none"
+  """
+  
 
 def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
                        features):
@@ -423,24 +436,29 @@ def check_schema_transforms_match(schema, features):
     col_name = col_schema['name']
     col_type = col_schema['type'].lower()
 
-    transform = features[col_name]['transform']
-    if transform == constant.KEY_TRANSFORM:
-      continue
-    elif transform == constant.TARGET_TRANSFORM:
-      num_target_transforms += 1
-      continue
+    for name, transform in six.iteritems(features):
+      # Check transfrom depends on col_name
+      if col_name != transfrom['source_column']:
+        continue
+      transform_name = transform['transform']
 
-    if col_type in constant.NUMERIC_SCHEMA:
-      if transform not in constant.NUMERIC_TRANSFORMS:
-        raise ValueError(
-            'Transform %s not supported by schema %s' % (transform, col_type))
-    elif col_type == constant.STRING_SCHEMA:
-      if (transform not in constant.CATEGORICAL_TRANSFORMS + constant.TEXT_TRANSFORMS and
-         transform != constant.IMAGE_TRANSFORM):
-        raise ValueError(
-            'Transform %s not supported by schema %s' % (transform, col_type))
-    else:
-      raise ValueError('Unsupported schema type %s' % col_type)
+      if transform_name == constant.KEY_TRANSFORM:
+        continue
+      elif transform_name == constant.TARGET_TRANSFORM:
+        num_target_transforms += 1
+        continue
+
+      if col_type in constant.NUMERIC_SCHEMA:
+        if transform_name not in constant.NUMERIC_TRANSFORMS:
+          raise ValueError(
+              'Transform %s not supported by schema %s' % (transform_name, col_type))
+      elif col_type == constant.STRING_SCHEMA:
+        if (transform_name not in constant.CATEGORICAL_TRANSFORMS + constant.TEXT_TRANSFORMS and
+           transform_name != constant.IMAGE_TRANSFORM):
+          raise ValueError(
+              'Transform %s not supported by schema %s' % (transform_name, col_type))
+      else:
+        raise ValueError('Unsupported schema type %s' % col_type)
 
   if num_target_transforms != 1:
     raise ValueError('Must have exactly one target transform')
@@ -463,9 +481,18 @@ def expand_defaults(schema, features):
 
   schema_names = [x['name'] for x in schema]
 
-  for source_column in six.iterkeys(features):
-    if source_column not in schema_names:
-      raise ValueError('source column %s is not in the schema' % source_column)
+  # Add missing source columns 
+  for name, transform in six.iteritems(features):
+    if 'source_column' not in transform:
+      transform['source_column'] = name
+
+  # Check source columns are in the schema and collect which are used.
+  used_schema_columns = []
+  for name, transform in six.iteritems(features):
+    if transform['source_column'] not in schema_names:
+      raise ValueError('source column %s is not in the schema for transform %s'
+         % (transform['source_column'], name)
+    used_schema_columns.append(transform['source_column'])
 
   # Update default transformation based on schema.
   for col_schema in schema:
@@ -476,12 +503,16 @@ def expand_defaults(schema, features):
       raise ValueError(('Only the following schema types are supported: %s'
                         % ' '.join(constant.NUMERIC_SCHEMA + [constant.STRING_SCHEMA])))
 
-    if schema_name not in six.iterkeys(features):
+    if schema_name not in used_schema_columns:
       # add the default transform to the features
       if schema_type in constant.NUMERIC_SCHEMA:
-        features[schema_name] = {'transform': constant.DEFAULT_NUMERIC_TRANSFORM}
+        features[schema_name] = {
+            'transform': constant.DEFAULT_NUMERIC_TRANSFORM,
+            'source_column': schema_name}
       elif schema_type == constant.STRING_SCHEMA:
-        features[schema_name] = {'transform': constant.DEFAULT_CATEGORICAL_TRANSFORM}
+        features[schema_name] = {
+            'transform': constant.DEFAULT_CATEGORICAL_TRANSFORM,
+            'source_column': schema_name}
       else:
         raise NotImplementedError('Unknown type %s' % schema_type)
 
