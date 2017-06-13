@@ -79,12 +79,17 @@ def parse_arguments(argv):
                 "column_name_1": {"transform": "scale"},
                 "column_name_3": {"transform": "target"},
                 "column_name_2": {"transform": "one_hot"},
-                "column_name_4": {"transform": "key"},
+                "new_feature_name": {"transform": "key", "source_column": "column_name_4"},
              }
 
              The format of the dict is `name`: `transform-dict` where the
-             `name` must be a column name from the schema file. A list of
-             supported `transform-dict`s is below:
+             `name` is the name of the transformed feature. The `source_column`
+             value lists what column in the input data is the source for this
+             transformation. If `source_column` is missing, it is assumed the
+             `name` is a source column and the transformed feature will have
+             the same name as the input column.
+
+             A list of supported `transform-dict`s is below:
 
              {"transform": "identity"}: does nothing (for numerical columns).
              {"transform": "scale", "value": x}: scale a numerical column to
