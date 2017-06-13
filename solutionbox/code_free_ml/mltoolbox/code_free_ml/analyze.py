@@ -198,7 +198,6 @@ def make_analysis_plan(schema, features):
     else:
       analysis_plan[column_name] = plan
 
-
   for name, transform in six.iteritems(features):
     source_column = transform['source_column']
     transform_name = transform['transform']

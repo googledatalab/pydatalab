@@ -100,6 +100,28 @@ class TestConfigFiles(unittest.TestCase):
          [{'name': 'col1', 'type': 'INTEGER'}],
          {'col1': {'transform': 'xxx', 'source_column': 'col1'}})
 
+  def test_analysis_plan(self):
+    with self.assertRaises(ValueError):
+      # scale and one_hot different transform family
+      analyze.make_analysis_plan(
+         [{'name': 'col1', 'type': 'INTEGER'}],
+         {'col1': {'transform': 'scale', 'source_column': 'col1'},
+          'col2': {'transform': 'one_hot', 'source_column': 'col1'},
+          'col3': {'transform': 'key', 'source_column': 'col1'}})
+
+    with self.assertRaises(ValueError):
+      # Unknown target schema
+      analyze.make_analysis_plan(
+         [{'name': 'col1', 'type': 'x'}],
+         {'col1': {'transform': 'target', 'source_column': 'col1'}})
+
+    with self.assertRaises(ValueError):
+      # Unknown transform
+      analyze.make_analysis_plan(
+         [{'name': 'col1', 'type': 'INTEGER'}],
+         {'col1': {'transform': 'x', 'source_column': 'col1'}})
+
+
 class TestLocalAnalyze(unittest.TestCase):
   """Test local analyze functions."""
 
@@ -430,7 +452,6 @@ class TestOneSourceColumnManyFeatures(unittest.TestCase):
   """Test input column can be used more than once."""
 
   def test_multiple_usage(self):
-
     def _make_csv_row(i):
       """Makes a csv file with the following header.
 

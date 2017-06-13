@@ -20,6 +20,10 @@ CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
 
 
+class TestMultipleFeatures(unittest.TestCase):
+  """Test one source column can be used in many features."""
+  pass
+
 class TestOptionalKeys(unittest.TestCase):
 
   def testNoKeys(self):
