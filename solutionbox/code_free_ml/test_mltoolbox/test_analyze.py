@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import copy
 import json
 import os
 import shutil
@@ -448,6 +447,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
     self.assertEqual(vocab['col2'].tolist(), ['in', 'raining', 'kir', 'pdx'])
     self.assertEqual(vocab['count'].tolist(), [2, 2, 1, 1])
 
+
 class TestOneSourceColumnManyFeatures(unittest.TestCase):
   """Test input column can be used more than once."""
 
@@ -457,12 +457,11 @@ class TestOneSourceColumnManyFeatures(unittest.TestCase):
 
       target,number,category,text,image
       """
-      return "%d,%d,%s,%s,%s" % (i*2,
-                                 i, 
+      return "%d,%d,%s,%s,%s" % (i * 2,
+                                 i,
                                  'red' if i % 2 else 'blue',
                                  'hello world' if i % 2 else 'bye moon',
                                  '/image%d.jpeg' % i)
-
 
     output_folder = tempfile.mkdtemp()
     try:
@@ -505,8 +504,8 @@ class TestOneSourceColumnManyFeatures(unittest.TestCase):
       self.assertTrue(os.path.isfile(os.path.join(output_folder, 'vocab_text.csv')))
 
       stats = json.loads(
-           file_io.read_file_to_string(
-               os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
+          file_io.read_file_to_string(
+              os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
 
       self.assertEqual(stats['num_examples'], 100)
       col = stats['column_stats']['int']
@@ -522,7 +521,7 @@ class TestOneSourceColumnManyFeatures(unittest.TestCase):
       col = stats['column_stats']['cat']
       self.assertEqual(col['vocab_size'], 2)
     finally:
-      shutil.rmtree(output_folder)    
+      shutil.rmtree(output_folder)
 
 
 if __name__ == '__main__':

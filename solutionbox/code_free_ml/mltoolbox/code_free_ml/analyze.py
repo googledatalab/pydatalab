@@ -157,6 +157,7 @@ def parse_arguments(argv):
 
   return args
 
+
 def make_analysis_plan(schema, features):
   """Records what analysis sets needs to be performed on which input columns.
 
@@ -166,11 +167,12 @@ def make_analysis_plan(schema, features):
 
   Return:
     A dict in the form {schema_name: analysis_type}, where schema_name is an
-    input column name, and analysis_type is one of "numeric", "vocab", 
+    input column name, and analysis_type is one of "numeric", "vocab",
     "split_vocab", "image", or "key"
   """
 
   analysis_plan = {}
+
   def _insert_plan(analysis_plan, column_name, plan):
     if column_name in analysis_plan:
       if plan == 'key':
@@ -225,7 +227,6 @@ def make_analysis_plan(schema, features):
 
   return analysis_plan
 
-  
 
 def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
                        features):
@@ -502,7 +503,7 @@ def expand_defaults(schema, features):
 
   schema_names = [x['name'] for x in schema]
 
-  # Add missing source columns 
+  # Add missing source columns
   for name, transform in six.iteritems(features):
     if 'source_column' not in transform:
       transform['source_column'] = name
@@ -512,7 +513,7 @@ def expand_defaults(schema, features):
   for name, transform in six.iteritems(features):
     if transform['source_column'] not in schema_names:
       raise ValueError('source column %s is not in the schema for transform %s'
-         % (transform['source_column'], name))
+                       % (transform['source_column'], name))
     used_schema_columns.append(transform['source_column'])
 
   # Update default transformation based on schema.
