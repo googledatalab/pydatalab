@@ -167,9 +167,11 @@ prediction_data: $my_data
 def _analyze(args, cell):
   env = google.datalab.utils.commands.notebook_environment()
   cell_data = google.datalab.utils.commands.parse_config(cell, env)
-  print(cell_data)
   google.datalab.utils.commands.validate_config(cell_data,
                                                 required_keys=['training_data', 'features'])
+  # For now, always run python2. If needed we can run python3 when the current kernel
+  # is py3. Since now our transform cannot work on py3 anyway, I would rather run
+  # everything with python2.
   cmd_args = ['python', 'analyze.py', '--output-dir', args['output_dir']]
   if args['cloud']:
     cmd_args.append('--cloud')
