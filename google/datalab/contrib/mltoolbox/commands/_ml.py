@@ -24,12 +24,20 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 import argparse
+import json
+import os
 import pandas as pd
 import numpy as np
+import shutil
 import six
+import tempfile
 
 import google.datalab.utils.commands
 import google.datalab.contrib.mltoolbox._local_predict as _local_predict
+import google.datalab.contrib.mltoolbox._shell_process as _shell_process
+
+
+MLTOOLBOX_CODE_PATH = '/datalab/lib/pydatalab/solutionbox/code_free_ml/mltoolbox/code_free_ml/'
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -48,6 +56,78 @@ Execute MLToolbox operations.
 
 Use "%ml <command> -h" for help on a specific command.
 """)
+
+  analyze_parser = parser.subcommand(
+      'analyze', help="""Analyze training data and generate stats, such as min/max/mean
+for numeric values, vocabulary for text columns. Example usage:
+
+%%ml analyze --output_dir path/to/dir [--cloud]
+training_data:
+  csv_file_pattern: path/to/csv
+  csv_schema:
+    - name: serialId
+      type: STRING
+    - name: num1
+      type: FLOAT
+    - name: num2
+      type: INTEGER
+    - name: text1
+      type: STRING
+features:
+  serialId:
+    transform: key
+  num1:
+    transform: scale
+    value: 1
+  num2:
+    transform: identity
+  text1:
+    transform: bag_of_words
+
+Cell input is in yaml format. Fields:
+
+training_data: one of the following:
+  csv_file_pattern and csv_schema (as the example above), or
+  bigquery (example: "bigquery: project.dataset.table" or
+                     "bigquery: select * from table where num1 > 1.0"), or
+  a variable defined as google.datalab.ml.CsvDataSet or google.datalab.ml.BigQueryDataSet
+
+features: A dictionary with key being column name. The list of supported transforms:
+            "transform: identity"
+                does nothing (for numerical columns).
+            "transform: scale
+             value: x"
+                scale a numerical column to [-a, a]. If value is missing, x defaults to 1.
+            "transform: one_hot"
+                treats the string column as categorical and makes one-hot encoding of it.
+            "transform: embedding
+             embedding_dim: d"
+                treats the string column as categorical and makes embeddings of it with specified
+                dimension size.
+            "transform: bag_of_words"
+                treats the string column as text and make bag of words transform of it.
+            "transform: tfidf"
+                treats the string column as text and make TFIDF transform of it.
+            "transform: image_to_vec"
+                from image gs url to embeddings.
+            "transform: target"
+                denotes the column is the target. If the schema type of this column is string,
+                a one_hot encoding is automatically applied. If numerical, an identity transform
+                is automatically applied.
+            "transform: key"
+                column contains metadata-like information and will be output as-is in prediction.
+
+Also support in-notebook variables, such as:
+%%ml analyze --output_dir path/to/dir
+training_data: $my_csv_dataset
+features: $features_def
+""", formatter_class=argparse.RawTextHelpFormatter)
+  analyze_parser.add_argument('--output_dir', required=True,
+                              help='path of output directory.')
+  analyze_parser.add_argument('--cloud', action='store_true', default=False,
+                              help='whether to run analysis in cloud or local.')
+
+  analyze_parser.set_defaults(func=_analyze)
 
   predict_parser = parser.subcommand(
       'predict', help="""Predict with local or deployed models.
@@ -82,6 +162,59 @@ prediction_data: $my_data
   predict_parser.set_defaults(func=_predict)
 
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
+
+
+def _analyze(args, cell):
+  env = google.datalab.utils.commands.notebook_environment()
+  cell_data = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(cell_data,
+                                                required_keys=['training_data', 'features'])
+  # For now, always run python2. If needed we can run python3 when the current kernel
+  # is py3. Since now our transform cannot work on py3 anyway, I would rather run
+  # everything with python2.
+  cmd_args = ['python', 'analyze.py', '--output-dir', args['output_dir']]
+  if args['cloud']:
+    cmd_args.append('--cloud')
+
+  training_data = cell_data['training_data']
+  tmpdir = tempfile.mkdtemp()
+
+  def _create_json_file(data, filename):
+    json_file = os.path.join(tmpdir, filename)
+    with open(json_file, 'w') as f:
+      json.dump(data, f)
+    return json_file
+
+  try:
+    if isinstance(training_data, dict):
+      if 'csv_file_pattern' in training_data and 'csv_schema' in training_data:
+        schema = training_data['csv_schema']
+        schema_file = _create_json_file(schema, 'schema.json')
+        cmd_args.extend(['--csv-file-pattern', training_data['csv_file_pattern']])
+        cmd_args.extend(['--csv-schema-file', schema_file])
+      elif 'bigquery' in training_data:
+        cmd_args.extend(['--bigquery-table', training_data['bigquery']])
+      else:
+        raise ValueError('Invalid training_data dict. ' +
+                         'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
+    elif isinstance(training_data, google.datalab.ml.CsvDataSet):
+      schema_file = _create_json_file(training_data.schema, 'schema.json')
+      # TODO: Modify when command line interface supports multiple csv files.
+      cmd_args.extend(['--csv-file-pattern', training_data.input_files[0]])
+      cmd_args.extend(['--csv-schema-file', schema_file])
+    elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
+      # TODO: Support query too once command line supports query.
+      cmd_args.extend(['--bigquery-table', training_data.table])
+    else:
+      raise ValueError('Invalid training data. Requires either a dict, ' +
+                       'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
+
+    features = cell_data['features']
+    features_file = _create_json_file(features, 'features.json')
+    cmd_args.extend(['--features-file', features_file])
+    _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
+  finally:
+    shutil.rmtree(tmpdir)
 
 
 def _predict(args, cell):
