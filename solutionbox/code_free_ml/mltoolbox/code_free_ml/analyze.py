@@ -167,8 +167,65 @@ def make_analysis_plan(schema, features):
   Return:
     A dict in the form {schema_name: analysis_type}, where schema_name is an
     input column name, and analysis_type is one of "numeric", "vocab", 
-    "split_vocab", or "none"
+    "split_vocab", "image", or "key"
   """
+
+  analysis_plan = {}
+  def _insert_plan(analysis_plan, column_name, plan):
+    if column_name in analysis_plan:
+      if plan == 'key':
+        return  # don't update the plan
+      elif analysis_plan[column_name] == 'key':
+        # update the plan with the new action
+        analysis_plan[column_name] = plan
+      elif analysis_plan[column_name] != plan:
+        # Error, using same source column as two different feature types
+        message = """
+          The source column of a feature can only be used in multiple
+          features within the same family of transforms. The familes are
+
+          1) text transformations: %s
+          2) categorical transformations: %s
+          3) numerical transformations: %s
+          4) image transformations: %s
+
+          Any column can also be a key column.
+        """ % (str(constant.TEXT_TRANSFORMS),
+               str(constant.CATEGORICAL_TRANSFORMS),
+               str(constant.NUMERIC_TRANSFORMS),
+               constant.IMAGE_TRANSFORM)
+        raise ValueError(message)
+    else:
+      analysis_plan[column_name] = plan
+
+
+  for name, transform in six.iteritems(features):
+    source_column = transform['source_column']
+    transform_name = transform['transform']
+
+    if transform_name == constant.TARGET_TRANSFORM:
+      target_schema = next(col['type'].lower() for col in schema if col['name'] == source_column)
+      if target_schema == constant.STRING_SCHEMA:
+        _insert_plan(analysis_plan, source_column, 'vocab')
+      elif target_schema in constant.NUMERIC_SCHEMA:
+        _insert_plan(analysis_plan, source_column, 'numeric')
+      else:
+        raise ValueError('Unknown schema type')
+    elif transform_name in constant.TEXT_TRANSFORMS:
+      _insert_plan(analysis_plan, source_column, 'split_vocab')
+    elif transform_name in constant.CATEGORICAL_TRANSFORMS:
+      _insert_plan(analysis_plan, source_column, 'vocab')
+    elif transform_name in constant.NUMERIC_TRANSFORMS:
+      _insert_plan(analysis_plan, source_column, 'numeric')
+    elif transform_name == constant.IMAGE_TRANSFORM:
+      _insert_plan(analysis_plan, source_column, 'image')
+    elif transform_name == constant.KEY_TRANSFORM:
+      _insert_plan(analysis_plan, source_column, 'key')
+    else:
+      raise ValueError('Unknown transform %s' % transform_name)
+
+  return analysis_plan
+
   
 
 def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
@@ -212,24 +269,12 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
         source=csv_file_pattern,
         schema=bq.Schema(schema))
 
+  analysis_plan = make_analysis_plan(schema, features)
+
   numerical_vocab_stats = {}
-
-  for col_schema in schema:
-    col_name = col_schema['name']
-    col_type = col_schema['type'].lower()
-    transform = features[col_name]['transform']
-
-    # Map the target transfrom into one_hot or identity.
-    if transform == constant.TARGET_TRANSFORM:
-      if col_type == constant.STRING_SCHEMA:
-        transform = constant.ONE_HOT_TRANSFORM
-      elif col_type in constant.NUMERIC_SCHEMA:
-        transform = constant.IDENTITY_TRANSFORM
-      else:
-        raise ValueError('Unknown schema type')
-
-    if transform in (constant.TEXT_TRANSFORMS + constant.CATEGORICAL_TRANSFORMS):
-      if transform in constant.TEXT_TRANSFORMS:
+  for col_name, plan in six.iteritems(analysis_plan):
+    if plan == 'vocab' or plan == 'split_vocab':
+      if plan == 'split_vocab':
         # Split strings on space, then extract labels and how many rows each
         # token is in. This is done by making two temp tables:
         #   SplitTable: each text row is made into an array of strings. The
@@ -273,7 +318,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       # free memeory
       del string_buff
       del df
-    elif transform in constant.NUMERIC_TRANSFORMS:
+    elif plan == 'numeric':
       # get min/max/average
       sql = ('SELECT max({name}) as max_value, min({name}) as min_value, '
              'avg({name}) as avg_value from {table}').format(name=col_name,
@@ -282,12 +327,6 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       numerical_vocab_stats[col_name] = {'min': df.iloc[0]['min_value'],
                                          'max': df.iloc[0]['max_value'],
                                          'mean': df.iloc[0]['avg_value']}
-    elif transform == constant.IMAGE_TRANSFORM:
-      pass
-    elif transform == constant.KEY_TRANSFORM:
-      pass
-    else:
-      raise ValueError('Unknown transform %s' % transform)
 
   # get num examples
   sql = 'SELECT count(*) as num_examples from {table}'.format(table=table_name)
@@ -327,6 +366,8 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
   numerical_results = collections.defaultdict(_init_numerical_results)
   vocabs = collections.defaultdict(lambda: collections.defaultdict(int))
 
+  analysis_plan = make_analysis_plan(schema, features)
+
   num_examples = 0
   # for each file, update the numerical stats from that file, and update the set
   # of unique labels.
@@ -339,21 +380,8 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
         parsed_line = dict(zip(header, line))
         num_examples += 1
 
-        for col_schema in schema:
-          col_name = col_schema['name']
-          col_type = col_schema['type'].lower()
-          transform = features[col_name]['transform']
-
-          # Map the target transfrom into one_hot or identity.
-          if transform == constant.TARGET_TRANSFORM:
-            if col_type == constant.STRING_SCHEMA:
-              transform = constant.ONE_HOT_TRANSFORM
-            elif col_type in constant.NUMERIC_SCHEMA:
-              transform = constant.IDENTITY_TRANSFORM
-            else:
-              raise ValueError('Unknown schema type')
-
-          if transform in constant.TEXT_TRANSFORMS:
+        for col_name, plan in six.iteritems(analysis_plan):
+          if plan == 'split_vocab':
             split_strings = parsed_line[col_name].split(' ')
 
             # If a label is in the row N times, increase it's vocab count by 1.
@@ -362,10 +390,10 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
               # Filter out empty strings
               if one_label:
                 vocabs[col_name][one_label] += 1
-          elif transform in constant.CATEGORICAL_TRANSFORMS:
+          elif plan == 'vocab':
             if parsed_line[col_name]:
               vocabs[col_name][parsed_line[col_name]] += 1
-          elif transform in constant.NUMERIC_TRANSFORMS:
+          elif plan == 'numeric':
             if not parsed_line[col_name].strip():
               continue
 
@@ -377,12 +405,6 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
                   float(parsed_line[col_name])))
             numerical_results[col_name]['count'] += 1
             numerical_results[col_name]['sum'] += float(parsed_line[col_name])
-          elif transform == constant.IMAGE_TRANSFORM:
-            pass
-          elif transform == constant.KEY_TRANSFORM:
-            pass
-          else:
-            raise ValueError('Unknown transform %s' % transform)
 
   # Write the vocab files. Each label is on its own line.
   vocab_sizes = {}
@@ -437,8 +459,8 @@ def check_schema_transforms_match(schema, features):
     col_type = col_schema['type'].lower()
 
     for name, transform in six.iteritems(features):
-      # Check transfrom depends on col_name
-      if col_name != transfrom['source_column']:
+      # Check transform depends on col_name
+      if col_name != transform['source_column']:
         continue
       transform_name = transform['transform']
 
@@ -491,7 +513,7 @@ def expand_defaults(schema, features):
   for name, transform in six.iteritems(features):
     if transform['source_column'] not in schema_names:
       raise ValueError('source column %s is not in the schema for transform %s'
-         % (transform['source_column'], name)
+         % (transform['source_column'], name))
     used_schema_columns.append(transform['source_column'])
 
   # Update default transformation based on schema.
