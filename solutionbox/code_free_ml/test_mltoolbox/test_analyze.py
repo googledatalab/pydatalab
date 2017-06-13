@@ -77,48 +77,42 @@ class TestConfigFiles(unittest.TestCase):
     with self.assertRaises(ValueError):
       analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'INTEGER'}],
-         {'col1': {'transform': 'one_hot', 'source_column': 'col1'}})
+         analyze.invert_features({'col1': {'transform': 'one_hot', 'source_column': 'col1'}}))
 
     with self.assertRaises(ValueError):
       analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'FLOAT'}],
-         {'col1': {'transform': 'embedding', 'source_column': 'col1'}})
+         analyze.invert_features({'col1': {'transform': 'embedding', 'source_column': 'col1'}}))
 
     with self.assertRaises(ValueError):
       analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'STRING'}],
-         {'col1': {'transform': 'scale', 'source_column': 'col1'}})
+         analyze.invert_features({'col1': {'transform': 'scale', 'source_column': 'col1'}}))
 
     with self.assertRaises(ValueError):
       analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'xxx'}],
-         {'col1': {'transform': 'scale', 'source_column': 'col1'}})
+         analyze.invert_features({'col1': {'transform': 'scale', 'source_column': 'col1'}}))
 
     with self.assertRaises(ValueError):
       analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'INTEGER'}],
-         {'col1': {'transform': 'xxx', 'source_column': 'col1'}})
+         analyze.invert_features({'col1': {'transform': 'xxx', 'source_column': 'col1'}}))
 
-  def test_analysis_plan(self):
     with self.assertRaises(ValueError):
       # scale and one_hot different transform family
-      analyze.make_analysis_plan(
+      analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'INTEGER'}],
-         {'col1': {'transform': 'scale', 'source_column': 'col1'},
-          'col2': {'transform': 'one_hot', 'source_column': 'col1'},
-          'col3': {'transform': 'key', 'source_column': 'col1'}})
-
-    with self.assertRaises(ValueError):
-      # Unknown target schema
-      analyze.make_analysis_plan(
-         [{'name': 'col1', 'type': 'x'}],
-         {'col1': {'transform': 'target', 'source_column': 'col1'}})
+         analyze.invert_features(
+            {'col1': {'transform': 'scale', 'source_column': 'col1'},
+             'col2': {'transform': 'one_hot', 'source_column': 'col1'},
+             'col3': {'transform': 'key', 'source_column': 'col1'}}))
 
     with self.assertRaises(ValueError):
       # Unknown transform
-      analyze.make_analysis_plan(
+      analyze.check_schema_transforms_match(
          [{'name': 'col1', 'type': 'INTEGER'}],
-         {'col1': {'transform': 'x', 'source_column': 'col1'}})
+         analyze.invert_features({'col1': {'transform': 'x', 'source_column': 'col1'}}))
 
 
 class TestLocalAnalyze(unittest.TestCase):
@@ -132,13 +126,13 @@ class TestLocalAnalyze(unittest.TestCase):
         input_file_path,
         '\n'.join(['%s,%s' % (i, 10 * i + 0.5) for i in range(100)]))
 
+      schema = [{'name': 'col1', 'type': 'INTEGER'},
+                {'name': 'col2', 'type': 'FLOAT'}]
+      features = {'col1': {'transform': 'scale', 'source_column': 'col1'},
+                  'col2': {'transform': 'identity', 'source_column': 'col2'}}
       analyze.run_local_analysis(
-        output_folder,
-        input_file_path,
-        [{'name': 'col1', 'type': 'INTEGER'},
-         {'name': 'col2', 'type': 'FLOAT'}],
-        {'col1': {'transform': 'scale', 'source_column': 'col1'},
-         'col2': {'transform': 'identity', 'source_column': 'col2'}})
+          output_folder, input_file_path, schema, analyze.invert_features(features))
+
       stats = json.loads(
           file_io.read_file_to_string(
               os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
@@ -166,13 +160,12 @@ class TestLocalAnalyze(unittest.TestCase):
         input_file_path,
         '\n'.join(csv_file))
 
+      schema = [{'name': 'color', 'type': 'STRING'},
+                {'name': 'transport', 'type': 'STRING'}]
+      features = {'color': {'transform': 'one_hot', 'source_column': 'color'},
+                  'transport': {'transform': 'embedding', 'source_column': 'transport'}}
       analyze.run_local_analysis(
-        output_folder,
-        input_file_path,
-        [{'name': 'color', 'type': 'STRING'},
-         {'name': 'transport', 'type': 'STRING'}],
-        {'color': {'transform': 'one_hot', 'source_column': 'color'},
-         'transport': {'transform': 'embedding', 'source_column': 'transport'}})
+        output_folder, input_file_path, schema, analyze.invert_features(features))
 
       stats = json.loads(
           file_io.read_file_to_string(
@@ -215,12 +208,11 @@ class TestLocalAnalyze(unittest.TestCase):
         input_file_path,
         '\n'.join(csv_file))
 
+      schema = [{'name': 'col1', 'type': 'STRING'}, {'name': 'col2', 'type': 'STRING'}]
+      features = {'col1': {'transform': 'bag_of_words', 'source_column': 'col1'},
+                  'col2': {'transform': 'tfidf', 'source_column': 'col2'}}
       analyze.run_local_analysis(
-        output_folder,
-        input_file_path,
-        [{'name': 'col1', 'type': 'STRING'}, {'name': 'col2', 'type': 'STRING'}],
-        {'col1': {'transform': 'bag_of_words', 'source_column': 'col1'},
-         'col2': {'transform': 'tfidf', 'source_column': 'col2'}})
+        output_folder, input_file_path, schema, analyze.invert_features(features))
 
       stats = json.loads(
           file_io.read_file_to_string(
@@ -280,13 +272,14 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
       data = [{'col1': i, 'col2': 10 * i + 0.5} for i in range(100)]
       table.insert(data)
 
+      features = {'col1': {'transform': 'scale', 'source_column': 'col1'},
+                  'col2': {'transform': 'identity', 'source_column': 'col2'}}
       analyze.run_cloud_analysis(
           output_dir=output_folder,
           csv_file_pattern=None,
           bigquery_table=full_table_name,
           schema=schema,
-          features={'col1': {'transform': 'scale', 'source_column': 'col1'},
-                    'col2': {'transform': 'identity', 'source_column': 'col2'}})
+          inverted_features=analyze.invert_features(features))
 
       stats = json.loads(
           file_io.read_file_to_string(
@@ -329,14 +322,17 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       input_file_path,
       '\n'.join(['%s,%s' % (i, 10 * i + 0.5) for i in range(100)]))
 
+    schema = [{'name': 'col1', 'type': 'INTEGER'},
+              {'name': 'col2', 'type': 'FLOAT'}]
+    features = {'col1': {'transform': 'scale', 'source_column': 'col1'},
+                'col2': {'transform': 'identity', 'source_column': 'col2'}}
     analyze.run_cloud_analysis(
         output_dir=output_folder,
         csv_file_pattern=input_file_path,
         bigquery_table=None,
-        schema=[{'name': 'col1', 'type': 'INTEGER'},
-                {'name': 'col2', 'type': 'FLOAT'}],
-        features={'col1': {'transform': 'scale', 'source_column': 'col1'},
-                  'col2': {'transform': 'identity', 'source_column': 'col2'}})
+        schema=schema,
+        inverted_features=analyze.invert_features(features))
+
     stats = json.loads(
         file_io.read_file_to_string(
             os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
@@ -364,14 +360,16 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       input_file_path,
       '\n'.join(csv_file))
 
+    schema = [{'name': 'color', 'type': 'STRING'},
+              {'name': 'transport', 'type': 'STRING'}]
+    features = {'color': {'transform': 'one_hot', 'source_column': 'color'},
+                'transport': {'transform': 'embedding', 'source_column': 'transport'}}
     analyze.run_cloud_analysis(
         output_dir=output_folder,
         csv_file_pattern=input_file_path,
         bigquery_table=None,
-        schema=[{'name': 'color', 'type': 'STRING'},
-                {'name': 'transport', 'type': 'STRING'}],
-        features={'color': {'transform': 'one_hot', 'source_column': 'color'},
-                  'transport': {'transform': 'embedding', 'source_column': 'transport'}})
+        schema=schema,
+        inverted_features=analyze.invert_features(features))
 
     stats = json.loads(
         file_io.read_file_to_string(
@@ -413,14 +411,16 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
       input_file_path,
       '\n'.join(csv_file))
 
+    schema = [{'name': 'col1', 'type': 'STRING'},
+              {'name': 'col2', 'type': 'STRING'}]
+    features = {'col1': {'transform': 'bag_of_words', 'source_column': 'col1'},
+                'col2': {'transform': 'tfidf', 'source_column': 'col2'}}
     analyze.run_cloud_analysis(
         output_dir=output_folder,
         csv_file_pattern=input_file_path,
         bigquery_table=None,
-        schema=[{'name': 'col1', 'type': 'STRING'},
-                {'name': 'col2', 'type': 'STRING'}],
-        features={'col1': {'transform': 'bag_of_words', 'source_column': 'col1'},
-                  'col2': {'transform': 'tfidf', 'source_column': 'col2'}})
+        schema=schema,
+        inverted_features=analyze.invert_features(features))
 
     stats = json.loads(
         file_io.read_file_to_string(
