@@ -302,6 +302,10 @@ def _transform(args, cell):
 
   if 'cloud' in cell_data:
     cloud_config = cell_data['cloud']
+    google.datalab.utils.commands.validate_config(
+        cloud_config,
+        required_keys=[],
+        optional_keys=['num_workers', 'worker_machine_type', 'project_id'])
     if 'num_workers' in cloud_config:
       cmd_args.extend(['--num-workers', str(cloud_config['num_workers'])])
     if 'worker_machine_type' in cloud_config:
