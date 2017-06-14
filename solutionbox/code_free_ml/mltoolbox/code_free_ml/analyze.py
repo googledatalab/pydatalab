@@ -150,8 +150,8 @@ def parse_arguments(argv):
   if args.cloud:
     if not args.output_dir.startswith('gs://'):
       raise ValueError('--output-dir must point to a location on GCS')
-    if (args.csv_file_pattern and 
-        not all(x.startswith('gs://') for x in args.csv_file_pattern)):
+    if (args.csv_file_pattern and
+       not all(x.startswith('gs://') for x in args.csv_file_pattern)):
       raise ValueError('--csv-file-pattern must point to a location on GCS')
     if args.csv_schema_file and not args.csv_schema_file.startswith('gs://'):
       raise ValueError('--csv-schema-file must point to a location on GCS')
