@@ -20,8 +20,179 @@ CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
 
 
-class TestOptionalKeys(unittest.TestCase):
+def run_exported_model(model_path, csv_data):
+  """Runs an exported model.
 
+  Model should have one placeholder of csv data.
+
+  Args:
+    model_path: path to the saved_model.pb
+    csv_data: list of csv strings
+
+  Return:
+    The result of session.run
+  """
+  with tf.Graph().as_default(), tf.Session() as sess:
+    meta_graph_pb = tf.saved_model.loader.load(
+        sess=sess,
+        tags=[tf.saved_model.tag_constants.SERVING],
+        export_dir=model_path)
+    signature = meta_graph_pb.signature_def['serving_default']
+
+    input_alias_map = {
+        friendly_name: tensor_info_proto.name
+        for (friendly_name, tensor_info_proto) in signature.inputs.items()}
+    output_alias_map = {
+        friendly_name: tensor_info_proto.name
+        for (friendly_name, tensor_info_proto) in signature.outputs.items()}
+
+    _, csv_tensor_name = input_alias_map.items()[0]
+    result = sess.run(fetches=output_alias_map,
+                      feed_dict={csv_tensor_name: csv_data})
+
+  return result
+
+
+class TestMultipleFeatures(unittest.TestCase):
+  """Test one source column can be used in many features."""
+
+  def testMultipleColumnsRaw(self):
+    """Test training starting from raw csv."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'num': {'transform': 'identity'},
+          'num2': {'transform': 'key', 'source_column': 'num'},
+          'target': {'transform': 'target'},
+          'text': {'transform': 'bag_of_words'},
+          'text2': {'transform': 'tfidf', 'source_column': 'text'},
+          'text3': {'transform': 'key', 'source_column': 'text'}}
+      schema = [
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'float'},
+          {'name': 'text', 'type': 'string'}]
+      data = ['1,2,hello world\n', '4,8,bye moon\n', '5,10,hello moon\n', '11,22,moon moon\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
+             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
+             '--features-file=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--model-type=linear_regression',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=200',
+             '--learning-rate=0.1',
+             '--run-transforms']
+
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['20,hello moon'])
+
+      # check keys were made
+      self.assertEqual(20, result['num2'])
+      self.assertEqual('hello moon', result['text3'])
+    finally:
+      shutil.rmtree(output_dir)
+
+  def testMultipleColumnsTransformed(self):
+    """Test training starting from tf.example."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'num': {'transform': 'identity'},
+          'num2': {'transform': 'key', 'source_column': 'num'},
+          'target': {'transform': 'target'},
+          'text': {'transform': 'bag_of_words'},
+          'text2': {'transform': 'tfidf', 'source_column': 'text'},
+          'text3': {'transform': 'key', 'source_column': 'text'}}
+      schema = [
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'float'},
+          {'name': 'text', 'type': 'string'}]
+      data = ['1,2,hello world\n', '4,8,bye moon\n', '5,10,hello moon\n', '11,22,moon moon\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
+             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
+             '--features-file=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
+             '--output-dir=' + os.path.join(output_dir, 'transform'),
+             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
+             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--output-filename-prefix=features']
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      # Check tf.example file has the expected features
+      file_list = file_io.get_matching_files(os.path.join(output_dir, 'transform', 'features*'))
+      options = tf.python_io.TFRecordOptions(
+          compression_type=tf.python_io.TFRecordCompressionType.GZIP)
+      record_iter = tf.python_io.tf_record_iterator(path=file_list[0], options=options)
+      tf_example = tf.train.Example()
+      tf_example.ParseFromString(next(record_iter))
+
+      self.assertEqual(1, len(tf_example.features.feature['num'].int64_list.value))
+      self.assertEqual(1, len(tf_example.features.feature['num2'].int64_list.value))
+      self.assertEqual(1, len(tf_example.features.feature['target'].float_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text_ids'].int64_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text_weights'].float_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text2_ids'].int64_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text2_weights'].float_list.value))
+      self.assertEqual(1, len(tf_example.features.feature['text3'].bytes_list.value))
+
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--model-type=linear_regression',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=200',
+             '--learning-rate=0.1',
+             '--run-transforms']
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['20,hello moon'])
+
+      # check keys were made
+      self.assertEqual(20, result['num2'])
+      self.assertEqual('hello moon', result['text3'])
+    finally:
+      shutil.rmtree(output_dir)
+
+
+class TestOptionalKeys(unittest.TestCase):
   def testNoKeys(self):
     output_dir = tempfile.mkdtemp()
     try:
@@ -62,25 +233,10 @@ class TestOptionalKeys(unittest.TestCase):
 
       subprocess.check_call(' '.join(cmd), shell=True)
 
-      with tf.Graph().as_default(), tf.Session() as sess:
-        meta_graph_pb = tf.saved_model.loader.load(
-            sess=sess,
-            tags=[tf.saved_model.tag_constants.SERVING],
-            export_dir=os.path.join(output_dir, 'training', 'model'))
-        signature = meta_graph_pb.signature_def['serving_default']
-
-        input_alias_map = {
-            friendly_name: tensor_info_proto.name
-            for (friendly_name, tensor_info_proto) in signature.inputs.items()}
-        output_alias_map = {
-            friendly_name: tensor_info_proto.name
-            for (friendly_name, tensor_info_proto) in signature.outputs.items()}
-
-        _, csv_tensor_name = input_alias_map.items()[0]
-        result = sess.run(fetches=output_alias_map,
-                          feed_dict={csv_tensor_name: ['20']})
-        print('result', result)
-        self.assertTrue(abs(40 - result['predicted']) < 5)
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['20'])
+      self.assertTrue(abs(40 - result['predicted']) < 5)
     finally:
       shutil.rmtree(output_dir)
 
@@ -129,27 +285,12 @@ class TestOptionalKeys(unittest.TestCase):
 
       subprocess.check_call(' '.join(cmd), shell=True)
 
-      with tf.Graph().as_default(), tf.Session() as sess:
-        meta_graph_pb = tf.saved_model.loader.load(
-            sess=sess,
-            tags=[tf.saved_model.tag_constants.SERVING],
-            export_dir=os.path.join(output_dir, 'training', 'model'))
-        signature = meta_graph_pb.signature_def['serving_default']
-
-        input_alias_map = {
-            friendly_name: tensor_info_proto.name
-            for (friendly_name, tensor_info_proto) in signature.inputs.items()}
-        output_alias_map = {
-            friendly_name: tensor_info_proto.name
-            for (friendly_name, tensor_info_proto) in signature.outputs.items()}
-
-        _, csv_tensor_name = input_alias_map.items()[0]
-        result = sess.run(fetches=output_alias_map,
-                          feed_dict={csv_tensor_name: ['7,4.5,hello,1']})
-
-        self.assertEqual(7, result['keyint'])
-        self.assertAlmostEqual(4.5, result['keyfloat'])
-        self.assertEqual('hello', result['keystr'])
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['7,4.5,hello,1'])
+      self.assertEqual(7, result['keyint'])
+      self.assertAlmostEqual(4.5, result['keyfloat'])
+      self.assertEqual('hello', result['keystr'])
     finally:
       shutil.rmtree(output_dir)
 
