@@ -510,6 +510,9 @@ def main(argv=None):
 
   if not args.async:
     pipeline_result.wait_until_finish()
+  if args.async and args.cloud:
+    print('View job at https://console.developers.google.com/dataflow/job/%s?project=%s' %
+        (pipeline_result.job_id(), args.project_id))
 
 
 if __name__ == '__main__':
