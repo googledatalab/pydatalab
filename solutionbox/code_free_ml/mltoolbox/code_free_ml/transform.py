@@ -83,6 +83,7 @@ def parse_arguments(argv):
   parser.add_argument(
       '--csv-file-pattern',
       required=False,
+      action='append',
       help='CSV data to transform.')
   # If using bigquery table
   parser.add_argument(
@@ -418,10 +419,13 @@ def preprocess(pipeline, args):
   column_names = [col['name'] for col in schema]
 
   if args.csv_file_pattern:
+    all_files = []
+    for i, file_pattern in enumerate(args.csv_file_pattern):
+      all_files.append(pipeline | ('ReadCSVFile%d' % i) >> beam.io.ReadFromText(file_pattern)]
     raw_data = (
-        pipeline
-        | 'ReadCsvData' >> beam.io.ReadFromText(args.csv_file_pattern)
-        | 'ParseCsvData' >> beam.Map(decode_csv, column_names))
+        all_files
+        | 'MergeCSVFiles' >> beam.Flatten()
+        | 'ParseCSDData' >> beam.Map(decode_csv, column_names))
   else:
     columns = ', '.join(column_names)
     query = 'SELECT {columns} FROM `{table}`'.format(columns=columns,
