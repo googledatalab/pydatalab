@@ -82,7 +82,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('os.name', 'nt')
   @mock.patch('os.path.join')
   def test_get_config_dir_win(self, mock_path_join):
-    mock_path_join.side_effect = lambda x,y: x+'\\'+y
+    mock_path_join.side_effect = lambda x, y: x + '\\' + y
     self.assertEquals(_utils.get_config_dir(), 'C:\\gcloud')
 
     with mock.patch.dict(os.environ, {'APPDATA': 'test\\path'}):
@@ -92,7 +92,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('oauth2client.client.GoogleCredentials.get_application_default')
   @mock.patch('os.path.exists')
   def test_get_credentials_from_file(self, mock_path_exists, mock_get_default_creds,
-                                           mock_in_datalab):
+                                     mock_in_datalab):
     # If application default credentials exist, use them
     _utils.get_credentials()
     mock_get_default_creds.assert_has_calls([
@@ -143,7 +143,7 @@ class TestCases(unittest.TestCase):
     _utils.save_project_id('test-project')
     mock_subprocess_call.assert_called_with([
       'gcloud', 'config', 'set', 'project', 'test-project'
-      ])
+    ])
 
     mock_subprocess_call.side_effect = Exception
 
