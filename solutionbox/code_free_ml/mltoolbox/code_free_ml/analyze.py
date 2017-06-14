@@ -420,26 +420,27 @@ def check_schema_transforms_match(schema, inverted_features):
     col_type = col_schema['type'].lower()
 
     # Check each transform and schema are compatible
-    for transform_name in inverted_features[col_name]:
-      if transform_name == constant.TARGET_TRANSFORM:
-        num_target_transforms += 1
-        continue
+    if col_name in inverted_features:
+      for transform_name in inverted_features[col_name]:
+        if transform_name == constant.TARGET_TRANSFORM:
+          num_target_transforms += 1
+          continue
 
-      elif col_type in constant.NUMERIC_SCHEMA:
-        if transform_name not in constant.NUMERIC_TRANSFORMS:
-          raise ValueError(
-              'Transform %s not supported by schema %s' % (transform_name, col_type))
-      elif col_type == constant.STRING_SCHEMA:
-        if (transform_name not in constant.CATEGORICAL_TRANSFORMS + constant.TEXT_TRANSFORMS and
-           transform_name != constant.IMAGE_TRANSFORM):
-          raise ValueError(
-              'Transform %s not supported by schema %s' % (transform_name, col_type))
-      else:
-        raise ValueError('Unsupported schema type %s' % col_type)
+        elif col_type in constant.NUMERIC_SCHEMA:
+          if transform_name not in constant.NUMERIC_TRANSFORMS:
+            raise ValueError(
+                'Transform %s not supported by schema %s' % (transform_name, col_type))
+        elif col_type == constant.STRING_SCHEMA:
+          if (transform_name not in constant.CATEGORICAL_TRANSFORMS + constant.TEXT_TRANSFORMS and
+             transform_name != constant.IMAGE_TRANSFORM):
+            raise ValueError(
+                'Transform %s not supported by schema %s' % (transform_name, col_type))
+        else:
+          raise ValueError('Unsupported schema type %s' % col_type)
 
     # Check each transform is compatible for the same source column.
     # inverted_features[col_name] should belong to exactly 1 of the 5 groups.
-    if 1 != (
+    if col_name in inverted_features and 1 != (
       sum([inverted_features[col_name].issubset(set(constant.NUMERIC_TRANSFORMS)),
            inverted_features[col_name].issubset(set(constant.CATEGORICAL_TRANSFORMS)),
            inverted_features[col_name].issubset(set(constant.TEXT_TRANSFORMS)),
@@ -532,7 +533,7 @@ def expand_defaults(schema, features):
 def invert_features(features):
   """Make a dict in the form source column : set of transforms.
 
-  Note that key transforms are removed from the set.
+  Note that the key transform is removed.
   """
   inverted_features = collections.defaultdict(set)
   for transform in six.itervalues(features):
@@ -542,7 +543,7 @@ def invert_features(features):
       continue
     inverted_features[source_column].add(transform_name)
 
-  return inverted_features
+  return dict(inverted_features)  # convert from defaultdict to dict
 
 
 def main(argv=None):
