@@ -67,9 +67,9 @@ def parse_arguments(argv):
 
   # I/O file parameters
   parser.add_argument('--train-data-paths', type=str,
-                      required=True)
+                      required=True, action='append')
   parser.add_argument('--eval-data-paths', type=str,
-                      required=True)
+                      required=True, action='append')
   parser.add_argument('--job-dir', type=str, required=True)
   parser.add_argument('--analysis-output-dir',
                       type=str,
