@@ -83,6 +83,7 @@ def parse_arguments(argv):
   parser.add_argument(
       '--csv-file-pattern',
       required=False,
+      action='append',
       help='CSV data to transform.')
   # If using bigquery table
   parser.add_argument(
@@ -129,12 +130,18 @@ def parse_arguments(argv):
       help='A machine name from https://cloud.google.com/compute/docs/machine-types. '
            ' If not given, the service uses the default machine type.')
 
-
+  parser.add_argument(
+      '--async',
+      action='store_true',
+      help='If used, this script returns before the dataflow job is completed.')
 
   args = parser.parse_args(args=argv[1:])
 
   if args.cloud and not args.project_id:
     raise ValueError('--project-id is needed for --cloud')
+
+  if args.async and not args.cloud:
+    raise ValueError('--async should only be used with --cloud')
 
   if not args.job_name:
     args.job_name = ('dataflow-job-{}'.format(
@@ -418,10 +425,13 @@ def preprocess(pipeline, args):
   column_names = [col['name'] for col in schema]
 
   if args.csv_file_pattern:
+    all_files = []
+    for i, file_pattern in enumerate(args.csv_file_pattern):
+      all_files.append(pipeline | ('ReadCSVFile%d' % i) >> beam.io.ReadFromText(file_pattern))
     raw_data = (
-        pipeline
-        | 'ReadCsvData' >> beam.io.ReadFromText(args.csv_file_pattern)
-        | 'ParseCsvData' >> beam.Map(decode_csv, column_names))
+        all_files
+        | 'MergeCSVFiles' >> beam.Flatten()
+        | 'ParseCSDData' >> beam.Map(decode_csv, column_names))
   else:
     columns = ', '.join(column_names)
     query = 'SELECT {columns} FROM `{table}`'.format(columns=columns,
@@ -494,10 +504,15 @@ def main(argv=None):
 
   pipeline_options = beam.pipeline.PipelineOptions(flags=[], **options)
 
-  with beam.Pipeline(pipeline_name, options=pipeline_options) as p:
-    preprocess(
-        pipeline=p,
-        args=args)
+  p = beam.Pipeline(pipeline_name, options=pipeline_options)
+  preprocess(pipeline=p, args=args)
+  pipeline_result = p.run()
+
+  if not args.async:
+    pipeline_result.wait_until_finish()
+  if args.async and args.cloud:
+    print('View job at https://console.developers.google.com/dataflow/job/%s?project=%s' %
+        (pipeline_result.job_id(), args.project_id))
 
 
 if __name__ == '__main__':

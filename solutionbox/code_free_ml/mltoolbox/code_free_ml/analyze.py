@@ -126,6 +126,7 @@ def parse_arguments(argv):
   parser.add_argument('--csv-file-pattern',
                       type=str,
                       required=False,
+                      action='append',
                       help=('Input CSV file names. May contain a file pattern. '
                             'File prefix must include absolute file path.'))
   parser.add_argument('--csv-schema-file',
@@ -149,10 +150,14 @@ def parse_arguments(argv):
   if args.cloud:
     if not args.output_dir.startswith('gs://'):
       raise ValueError('--output-dir must point to a location on GCS')
-    if args.csv_file_pattern and not args.csv_file_pattern.startswith('gs://'):
+    if (args.csv_file_pattern and
+       not all(x.startswith('gs://') for x in args.csv_file_pattern)):
       raise ValueError('--csv-file-pattern must point to a location on GCS')
     if args.csv_schema_file and not args.csv_schema_file.startswith('gs://'):
       raise ValueError('--csv-schema-file must point to a location on GCS')
+
+  if not args.cloud and args.bigquery_table:
+    raise ValueError('--bigquery-table must be used with --cloud')
 
   if not ((args.bigquery_table and args.csv_file_pattern is None and
            args.csv_schema_file is None) or
@@ -172,7 +177,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
 
   Args:
     output_dir: output folder
-    csv_file_pattern: csv file path, may contain wildcards
+    csv_file_pattern: list of csv file paths, may contain wildcards
     bigquery_table: project_id.dataset_name.table_name
     schema: schema list
     inverted_features: inverted_features dict
@@ -218,6 +223,8 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
 
   numerical_vocab_stats = {}
   for col_name, transform_set in six.iteritems(inverted_features_target):
+    sys.stdout.write('Analyzing column %s...' % col_name)
+    sys.stdout.flush()
     # All transforms in transform_set require the same analysis. So look
     # at the first transform.
     transform_name = next(iter(transform_set))
@@ -276,6 +283,8 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       numerical_vocab_stats[col_name] = {'min': df.iloc[0]['min_value'],
                                          'max': df.iloc[0]['max_value'],
                                          'mean': df.iloc[0]['avg_value']}
+    sys.stdout.write('done.\n')
+    sys.stdout.flush()
 
   # get num examples
   sql = 'SELECT count(*) as num_examples from {table}'.format(table=table_name)
@@ -296,7 +305,7 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
 
   Args:
     output_dir: output folder
-    csv_file_pattern: string, may contain wildcards
+    csv_file_pattern: list of csv file paths, may contain wildcards
     schema: BQ schema list
     inverted_features: inverted_features dict
 
@@ -304,7 +313,9 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
     ValueError: on unknown transfrorms/schemas
   """
   header = [column['name'] for column in schema]
-  input_files = file_io.get_matching_files(csv_file_pattern)
+  input_files = []
+  for file_pattern in csv_file_pattern:
+    input_files.extend(file_io.get_matching_files(file_pattern))
 
   # Make a copy of inverted_features and update the target transform to be
   # identity or one hot depending on the schema.
@@ -330,6 +341,8 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
   # for each file, update the numerical stats from that file, and update the set
   # of unique labels.
   for input_file in input_files:
+    sys.stdout.write('Analyzing file %s...' % input_file)
+    sys.stdout.flush()
     with file_io.FileIO(input_file, 'r') as f:
       for line in csv.reader(f):
         if len(header) != len(line):
@@ -366,6 +379,9 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
                   float(parsed_line[col_name])))
             numerical_results[col_name]['count'] += 1
             numerical_results[col_name]['sum'] += float(parsed_line[col_name])
+
+    sys.stdout.write('done.\n')
+    sys.stdout.flush()
 
   # Write the vocab files. Each label is on its own line.
   vocab_sizes = {}

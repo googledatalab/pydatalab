@@ -91,6 +91,7 @@ class TestTransformRawData(unittest.TestCase):
            '--analysis-output-dir=' + self.analysis_dir,
            '--output-filename-prefix=features',
            '--output-dir=' + self.output_dir]
+    print('cmd ', ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
     # Read the tf record file. There should only be one file.
@@ -116,59 +117,63 @@ class TestTransformRawData(unittest.TestCase):
     """Test transfrom locally, but the data comes from bigquery."""
 
     # Make a BQ table, and insert 1 row.
-    project_id = dl.Context.default().project_id
-    dataset_name = 'test_transform_raw_data_%s' % uuid.uuid4().hex
-    table_name = 'tmp_table'
+    try:
+      project_id = dl.Context.default().project_id
+      dataset_name = 'test_transform_raw_data_%s' % uuid.uuid4().hex
+      table_name = 'tmp_table'
 
-    bq.Dataset((project_id, dataset_name)).create()
-    table = bq.Table((project_id, dataset_name, table_name))
-    table.create([{'name': 'key_col', 'type': 'INTEGER'},
-                  {'name': 'target_col', 'type': 'FLOAT'},
-                  {'name': 'cat_col', 'type': 'STRING'},
-                  {'name': 'num_col', 'type': 'FLOAT'},
-                  {'name': 'img_col', 'type': 'STRING'}])
+      dataset = bq.Dataset((project_id, dataset_name)).create()
+      table = bq.Table((project_id, dataset_name, table_name))
+      table.create([{'name': 'key_col', 'type': 'INTEGER'},
+                    {'name': 'target_col', 'type': 'FLOAT'},
+                    {'name': 'cat_col', 'type': 'STRING'},
+                    {'name': 'num_col', 'type': 'FLOAT'},
+                    {'name': 'img_col', 'type': 'STRING'}])
 
-    img1_file = os.path.join(self.source_dir, 'img1.jpg')
-    dest_file = os.path.join(self.bucket_root, 'img1.jpg')
-    subprocess.check_call('gsutil cp %s %s' % (img1_file, dest_file), shell=True)
+      img1_file = os.path.join(self.source_dir, 'img1.jpg')
+      dest_file = os.path.join(self.bucket_root, 'img1.jpg')
+      subprocess.check_call('gsutil cp %s %s' % (img1_file, dest_file), shell=True)
 
-    data = [
-        {
-         'key_col': 1,
-         'target_col': 1.0,
-         'cat_col': 'Monday',
-         'num_col': 23.0,
-         'img_col': dest_file,
-        },
-    ]
-    table.insert(data=data)
+      data = [
+          {
+           'key_col': 1,
+           'target_col': 1.0,
+           'cat_col': 'Monday',
+           'num_col': 23.0,
+           'img_col': dest_file,
+          },
+      ]
+      table.insert(data=data)
 
-    cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
-           '--bigquery-table=%s.%s.%s' % (project_id, dataset_name, table_name),
-           '--analysis-output-dir=' + self.analysis_dir,
-           '--output-filename-prefix=features',
-           '--project-id=' + project_id,
-           '--output-dir=' + self.output_dir]
-    subprocess.check_call(' '.join(cmd), shell=True)
+      cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
+             '--bigquery-table=%s.%s.%s' % (project_id, dataset_name, table_name),
+             '--analysis-output-dir=' + self.analysis_dir,
+             '--output-filename-prefix=features',
+             '--project-id=' + project_id,
+             '--output-dir=' + self.output_dir]
+      print('cmd ', ' '.join(cmd))
+      subprocess.check_call(' '.join(cmd), shell=True)
 
-    # Read the tf record file. There should only be one file.
-    record_filepath = os.path.join(self.output_dir,
-                                   'features-00000-of-00001.tfrecord.gz')
-    options = tf.python_io.TFRecordOptions(
-        compression_type=tf.python_io.TFRecordCompressionType.GZIP)
-    serialized_examples = list(tf.python_io.tf_record_iterator(record_filepath, options=options))
-    self.assertEqual(len(serialized_examples), 1)
+      # Read the tf record file. There should only be one file.
+      record_filepath = os.path.join(self.output_dir,
+                                     'features-00000-of-00001.tfrecord.gz')
+      options = tf.python_io.TFRecordOptions(
+          compression_type=tf.python_io.TFRecordCompressionType.GZIP)
+      serialized_examples = list(tf.python_io.tf_record_iterator(record_filepath, options=options))
+      self.assertEqual(len(serialized_examples), 1)
 
-    example = tf.train.Example()
-    example.ParseFromString(serialized_examples[0])
+      example = tf.train.Example()
+      example.ParseFromString(serialized_examples[0])
 
-    transformed_number = example.features.feature['num_col'].float_list.value[0]
-    self.assertAlmostEqual(transformed_number, 23.0)
-    transformed_category = example.features.feature['cat_col'].int64_list.value[0]
-    self.assertEqual(transformed_category, 2)
-    image_bytes = example.features.feature['img_col'].float_list.value
-    self.assertEqual(len(image_bytes), 2048)
-    self.assertTrue(any(x != 0.0 for x in image_bytes))
+      transformed_number = example.features.feature['num_col'].float_list.value[0]
+      self.assertAlmostEqual(transformed_number, 23.0)
+      transformed_category = example.features.feature['cat_col'].int64_list.value[0]
+      self.assertEqual(transformed_category, 2)
+      image_bytes = example.features.feature['img_col'].float_list.value
+      self.assertEqual(len(image_bytes), 2048)
+      self.assertTrue(any(x != 0.0 for x in image_bytes))
+    finally:
+      dataset.delete(deleete_contents=True)
 
 
 if __name__ == '__main__':
