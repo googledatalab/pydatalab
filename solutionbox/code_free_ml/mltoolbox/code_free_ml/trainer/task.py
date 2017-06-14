@@ -196,13 +196,14 @@ def build_feature_columns(features, stats, model_type):
   # we are using tf.layers.
   for name, transform in six.iteritems(features):
     transform_name = transform['transform']
+    source_column = transform['source_column']
 
     if transform_name in feature_transforms.NUMERIC_TRANSFORMS:
       new_feature = tf.contrib.layers.real_valued_column(name, dimension=1)
     elif transform_name == feature_transforms.ONE_HOT_TRANSFORM:
       sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
           name,
-          bucket_size=stats['column_stats'][name]['vocab_size'])
+          bucket_size=stats['column_stats'][source_column]['vocab_size'])
       if is_dnn:
         new_feature = tf.contrib.layers.one_hot_column(sparse)
       else:
@@ -211,7 +212,7 @@ def build_feature_columns(features, stats, model_type):
       if is_dnn:
         sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
             name,
-            bucket_size=stats['column_stats'][name]['vocab_size'])
+            bucket_size=stats['column_stats'][source_column]['vocab_size'])
         new_feature = tf.contrib.layers.embedding_column(
             sparse,
             dimension=transform['embedding_dim'])
@@ -223,7 +224,7 @@ def build_feature_columns(features, stats, model_type):
     elif transform_name in feature_transforms.TEXT_TRANSFORMS:
       sparse_ids = tf.contrib.layers.sparse_column_with_integerized_feature(
           name + '_ids',
-          bucket_size=stats['column_stats'][name]['vocab_size'],
+          bucket_size=stats['column_stats'][source_column]['vocab_size'],
           combiner='sum')
       sparse_weights = tf.contrib.layers.weighted_sparse_column(
           sparse_id_column=sparse_ids,
@@ -232,7 +233,7 @@ def build_feature_columns(features, stats, model_type):
       if is_dnn:
         # TODO(brandondutra): Figure out why one_hot_column does not work.
         # Use new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
-        dimension = int(math.log(stats['column_stats'][name]['vocab_size'])) + 1
+        dimension = int(math.log(stats['column_stats'][source_column]['vocab_size'])) + 1
         new_feature = tf.contrib.layers.embedding_column(
             sparse_weights,
             dimension=dimension,

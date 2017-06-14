@@ -59,9 +59,9 @@ class TestGraphBuilding(unittest.TestCase):
       schema = [{'name': 'num1', 'type': 'FLOAT'},
                 {'name': 'num2', 'type': 'FLOAT'},
                 {'name': 'num3', 'type': 'INTEGER'}]
-      features = {'num1': {'transform': 'identity'},
-                  'num2': {'transform': 'scale', 'value': 10},
-                  'num3': {'transform': 'scale'}}
+      features = {'num1': {'transform': 'identity', 'source_column': 'num1'},
+                  'num2': {'transform': 'scale', 'value': 10, 'source_column': 'num2'},
+                  'num3': {'transform': 'scale', 'source_column': 'num3'}}
       input_data = ['5.0,-1.0,10',
                     '10.0,1.0,5',
                     '15.0,0.5,7']
@@ -102,8 +102,8 @@ class TestGraphBuilding(unittest.TestCase):
           json.dumps(stats))
 
       schema = [{'name': 'cat1', 'type': 'STRING'}, {'name': 'cat2', 'type': 'STRING'}]
-      features = {'cat1': {'transform': 'one_hot'},
-                  'cat2': {'transform': 'embedding'}}
+      features = {'cat1': {'transform': 'one_hot', 'source_column': 'cat1'},
+                  'cat2': {'transform': 'embedding', 'source_column': 'cat2'}}
       input_data = ['red,pizza',
                     'blue,',
                     'green,extra']
@@ -146,8 +146,8 @@ class TestGraphBuilding(unittest.TestCase):
       # a key column
       schema = [{'name': 'key', 'type': 'STRING'},
                 {'name': 'cat1', 'type': 'STRING'}]
-      features = {'key': {'transform': 'key'},
-                  'cat1': {'transform': 'tfidf'}}
+      features = {'key': {'transform': 'key', 'source_column': 'key'},
+                  'cat1': {'transform': 'tfidf', 'source_column': 'cat1'}}
       input_data = ['0,red red red',    # doc 0
                     '1,red green red',  # doc 1
                     '2,blue',           # doc 2
@@ -211,8 +211,8 @@ class TestGraphBuilding(unittest.TestCase):
       # a key column
       schema = [{'name': 'key', 'type': 'STRING'},
                 {'name': 'cat1', 'type': 'STRING'}]
-      features = {'key': {'transform': 'key'},
-                  'cat1': {'transform': 'bag_of_words'}}
+      features = {'key': {'transform': 'key', 'source_column': 'key'},
+                  'cat1': {'transform': 'bag_of_words', 'source_column': 'cat1'}}
       input_data = ['0,red red red',    # doc 0
                     '1,red green red',  # doc 1
                     '2,blue',           # doc 2
@@ -270,7 +270,7 @@ class TestGraphBuilding(unittest.TestCase):
       file_io.write_string_to_file(stats_file_path, json.dumps(stats))
 
       schema = [{'name': 'img', 'type': 'STRING'}]
-      features = {'img': {'transform': 'image_to_vec'}}
+      features = {'img': {'transform': 'image_to_vec', 'source_column': 'img'}}
 
       img_string1 = _open_and_encode_image(
           'gs://cloud-ml-data/img/flower_photos/daisy/15207766_fc2f1d692c_n.jpg')

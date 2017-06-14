@@ -18,6 +18,7 @@ from __future__ import print_function
 
 import argparse
 import collections
+import copy
 import csv
 import json
 import os
@@ -79,12 +80,17 @@ def parse_arguments(argv):
                 "column_name_1": {"transform": "scale"},
                 "column_name_3": {"transform": "target"},
                 "column_name_2": {"transform": "one_hot"},
-                "column_name_4": {"transform": "key"},
+                "new_feature_name": {"transform": "key", "source_column": "column_name_4"},
              }
 
              The format of the dict is `name`: `transform-dict` where the
-             `name` must be a column name from the schema file. A list of
-             supported `transform-dict`s is below:
+             `name` is the name of the transformed feature. The `source_column`
+             value lists what column in the input data is the source for this
+             transformation. If `source_column` is missing, it is assumed the
+             `name` is a source column and the transformed feature will have
+             the same name as the input column.
+
+             A list of supported `transform-dict`s is below:
 
              {"transform": "identity"}: does nothing (for numerical columns).
              {"transform": "scale", "value": x}: scale a numerical column to
@@ -159,7 +165,7 @@ def parse_arguments(argv):
 
 
 def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
-                       features):
+                       inverted_features):
   """Use BigQuery to analyze input date.
 
   Only one of csv_file_pattern or bigquery_table should be non-None.
@@ -169,7 +175,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
     csv_file_pattern: csv file path, may contain wildcards
     bigquery_table: project_id.dataset_name.table_name
     schema: schema list
-    features: features dict
+    inverted_features: inverted_features dict
   """
 
   def _execute_sql(sql, table):
@@ -199,24 +205,25 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
         source=csv_file_pattern,
         schema=bq.Schema(schema))
 
-  numerical_vocab_stats = {}
-
-  for col_schema in schema:
-    col_name = col_schema['name']
-    col_type = col_schema['type'].lower()
-    transform = features[col_name]['transform']
-
-    # Map the target transfrom into one_hot or identity.
-    if transform == constant.TARGET_TRANSFORM:
-      if col_type == constant.STRING_SCHEMA:
-        transform = constant.ONE_HOT_TRANSFORM
-      elif col_type in constant.NUMERIC_SCHEMA:
-        transform = constant.IDENTITY_TRANSFORM
+  # Make a copy of inverted_features and update the target transform to be
+  # identity or one hot depending on the schema.
+  inverted_features_target = copy.deepcopy(inverted_features)
+  for name, transform_set in six.iteritems(inverted_features_target):
+    if transform_set == set([constant.TARGET_TRANSFORM]):
+      target_schema = next(col['type'].lower() for col in schema if col['name'] == name)
+      if target_schema in constant.NUMERIC_SCHEMA:
+        inverted_features_target[name] = {constant.IDENTITY_TRANSFORM}
       else:
-        raise ValueError('Unknown schema type')
+        inverted_features_target[name] = {constant.ONE_HOT_TRANSFORM}
 
-    if transform in (constant.TEXT_TRANSFORMS + constant.CATEGORICAL_TRANSFORMS):
-      if transform in constant.TEXT_TRANSFORMS:
+  numerical_vocab_stats = {}
+  for col_name, transform_set in six.iteritems(inverted_features_target):
+    # All transforms in transform_set require the same analysis. So look
+    # at the first transform.
+    transform_name = next(iter(transform_set))
+    if (transform_name in constant.CATEGORICAL_TRANSFORMS or
+       transform_name in constant.TEXT_TRANSFORMS):
+      if transform_name in constant.TEXT_TRANSFORMS:
         # Split strings on space, then extract labels and how many rows each
         # token is in. This is done by making two temp tables:
         #   SplitTable: each text row is made into an array of strings. The
@@ -260,7 +267,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       # free memeory
       del string_buff
       del df
-    elif transform in constant.NUMERIC_TRANSFORMS:
+    elif transform_name in constant.NUMERIC_TRANSFORMS:
       # get min/max/average
       sql = ('SELECT max({name}) as max_value, min({name}) as min_value, '
              'avg({name}) as avg_value from {table}').format(name=col_name,
@@ -269,12 +276,6 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       numerical_vocab_stats[col_name] = {'min': df.iloc[0]['min_value'],
                                          'max': df.iloc[0]['max_value'],
                                          'mean': df.iloc[0]['avg_value']}
-    elif transform == constant.IMAGE_TRANSFORM:
-      pass
-    elif transform == constant.KEY_TRANSFORM:
-      pass
-    else:
-      raise ValueError('Unknown transform %s' % transform)
 
   # get num examples
   sql = 'SELECT count(*) as num_examples from {table}'.format(table=table_name)
@@ -288,7 +289,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       json.dumps(stats, indent=2, separators=(',', ': ')))
 
 
-def run_local_analysis(output_dir, csv_file_pattern, schema, features):
+def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
   """Use pandas to analyze csv files.
 
   Produces a stats file and vocab files.
@@ -297,13 +298,24 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
     output_dir: output folder
     csv_file_pattern: string, may contain wildcards
     schema: BQ schema list
-    features: features dict
+    inverted_features: inverted_features dict
 
   Raises:
     ValueError: on unknown transfrorms/schemas
   """
   header = [column['name'] for column in schema]
   input_files = file_io.get_matching_files(csv_file_pattern)
+
+  # Make a copy of inverted_features and update the target transform to be
+  # identity or one hot depending on the schema.
+  inverted_features_target = copy.deepcopy(inverted_features)
+  for name, transform_set in six.iteritems(inverted_features_target):
+    if transform_set == set([constant.TARGET_TRANSFORM]):
+      target_schema = next(col['type'].lower() for col in schema if col['name'] == name)
+      if target_schema in constant.NUMERIC_SCHEMA:
+        inverted_features_target[name] = {constant.IDENTITY_TRANSFORM}
+      else:
+        inverted_features_target[name] = {constant.ONE_HOT_TRANSFORM}
 
   # initialize the results
   def _init_numerical_results():
@@ -326,21 +338,11 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
         parsed_line = dict(zip(header, line))
         num_examples += 1
 
-        for col_schema in schema:
-          col_name = col_schema['name']
-          col_type = col_schema['type'].lower()
-          transform = features[col_name]['transform']
-
-          # Map the target transfrom into one_hot or identity.
-          if transform == constant.TARGET_TRANSFORM:
-            if col_type == constant.STRING_SCHEMA:
-              transform = constant.ONE_HOT_TRANSFORM
-            elif col_type in constant.NUMERIC_SCHEMA:
-              transform = constant.IDENTITY_TRANSFORM
-            else:
-              raise ValueError('Unknown schema type')
-
-          if transform in constant.TEXT_TRANSFORMS:
+        for col_name, transform_set in six.iteritems(inverted_features_target):
+          # All transforms in transform_set require the same analysis. So look
+          # at the first transform.
+          transform_name = next(iter(transform_set))
+          if transform_name in constant.TEXT_TRANSFORMS:
             split_strings = parsed_line[col_name].split(' ')
 
             # If a label is in the row N times, increase it's vocab count by 1.
@@ -349,10 +351,10 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
               # Filter out empty strings
               if one_label:
                 vocabs[col_name][one_label] += 1
-          elif transform in constant.CATEGORICAL_TRANSFORMS:
+          elif transform_name in constant.CATEGORICAL_TRANSFORMS:
             if parsed_line[col_name]:
               vocabs[col_name][parsed_line[col_name]] += 1
-          elif transform in constant.NUMERIC_TRANSFORMS:
+          elif transform_name in constant.NUMERIC_TRANSFORMS:
             if not parsed_line[col_name].strip():
               continue
 
@@ -364,12 +366,6 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
                   float(parsed_line[col_name])))
             numerical_results[col_name]['count'] += 1
             numerical_results[col_name]['sum'] += float(parsed_line[col_name])
-          elif transform == constant.IMAGE_TRANSFORM:
-            pass
-          elif transform == constant.KEY_TRANSFORM:
-            pass
-          else:
-            raise ValueError('Unknown transform %s' % transform)
 
   # Write the vocab files. Each label is on its own line.
   vocab_sizes = {}
@@ -407,12 +403,12 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
       json.dumps(stats, indent=2, separators=(',', ': ')))
 
 
-def check_schema_transforms_match(schema, features):
+def check_schema_transforms_match(schema, inverted_features):
   """Checks that the transform and schema do not conflict.
 
   Args:
-    schema: schema file
-    features: features file
+    schema: schema list
+    inverted_features: inverted_features dict
 
   Raises:
     ValueError if transform cannot be applied given schema type.
@@ -423,24 +419,54 @@ def check_schema_transforms_match(schema, features):
     col_name = col_schema['name']
     col_type = col_schema['type'].lower()
 
-    transform = features[col_name]['transform']
-    if transform == constant.KEY_TRANSFORM:
-      continue
-    elif transform == constant.TARGET_TRANSFORM:
-      num_target_transforms += 1
-      continue
+    # Check each transform and schema are compatible
+    if col_name in inverted_features:
+      for transform_name in inverted_features[col_name]:
+        if transform_name == constant.TARGET_TRANSFORM:
+          num_target_transforms += 1
+          continue
 
-    if col_type in constant.NUMERIC_SCHEMA:
-      if transform not in constant.NUMERIC_TRANSFORMS:
-        raise ValueError(
-            'Transform %s not supported by schema %s' % (transform, col_type))
-    elif col_type == constant.STRING_SCHEMA:
-      if (transform not in constant.CATEGORICAL_TRANSFORMS + constant.TEXT_TRANSFORMS and
-         transform != constant.IMAGE_TRANSFORM):
-        raise ValueError(
-            'Transform %s not supported by schema %s' % (transform, col_type))
-    else:
-      raise ValueError('Unsupported schema type %s' % col_type)
+        elif col_type in constant.NUMERIC_SCHEMA:
+          if transform_name not in constant.NUMERIC_TRANSFORMS:
+            raise ValueError(
+                'Transform %s not supported by schema %s' % (transform_name, col_type))
+        elif col_type == constant.STRING_SCHEMA:
+          if (transform_name not in constant.CATEGORICAL_TRANSFORMS + constant.TEXT_TRANSFORMS and
+             transform_name != constant.IMAGE_TRANSFORM):
+            raise ValueError(
+                'Transform %s not supported by schema %s' % (transform_name, col_type))
+        else:
+          raise ValueError('Unsupported schema type %s' % col_type)
+
+    # Check each transform is compatible for the same source column.
+    # inverted_features[col_name] should belong to exactly 1 of the 5 groups.
+    if col_name in inverted_features and 1 != (
+      sum([inverted_features[col_name].issubset(set(constant.NUMERIC_TRANSFORMS)),
+           inverted_features[col_name].issubset(set(constant.CATEGORICAL_TRANSFORMS)),
+           inverted_features[col_name].issubset(set(constant.TEXT_TRANSFORMS)),
+           inverted_features[col_name].issubset(set([constant.IMAGE_TRANSFORM])),
+           inverted_features[col_name].issubset(set([constant.TARGET_TRANSFORM]))])):
+      message = """
+          The source column of a feature can only be used in multiple
+          features within the same family of transforms. The familes are
+
+          1) text transformations: %s
+          2) categorical transformations: %s
+          3) numerical transformations: %s
+          4) image transformations: %s
+          5) target transform: %s
+
+          Any column can also be a key column.
+
+          But column %s is used by transforms %s.
+          """ % (str(constant.TEXT_TRANSFORMS),
+                 str(constant.CATEGORICAL_TRANSFORMS),
+                 str(constant.NUMERIC_TRANSFORMS),
+                 constant.IMAGE_TRANSFORM,
+                 constant.TARGET_TRANSFORM,
+                 col_name,
+                 str(inverted_features[col_name]))
+      raise ValueError(message)
 
   if num_target_transforms != 1:
     raise ValueError('Must have exactly one target transform')
@@ -453,6 +479,9 @@ def expand_defaults(schema, features):
   in the featurs file. For these columns, add a default transformation based on
   the schema's type. The features dict is modified by this function call.
 
+  After this function call, every column in schema is used in a feature, and
+  every feature uses a column in the schema.
+
   Args:
     schema: schema list
     features: features dict
@@ -463,9 +492,18 @@ def expand_defaults(schema, features):
 
   schema_names = [x['name'] for x in schema]
 
-  for source_column in six.iterkeys(features):
-    if source_column not in schema_names:
-      raise ValueError('source column %s is not in the schema' % source_column)
+  # Add missing source columns
+  for name, transform in six.iteritems(features):
+    if 'source_column' not in transform:
+      transform['source_column'] = name
+
+  # Check source columns are in the schema and collect which are used.
+  used_schema_columns = []
+  for name, transform in six.iteritems(features):
+    if transform['source_column'] not in schema_names:
+      raise ValueError('source column %s is not in the schema for transform %s'
+                       % (transform['source_column'], name))
+    used_schema_columns.append(transform['source_column'])
 
   # Update default transformation based on schema.
   for col_schema in schema:
@@ -476,14 +514,36 @@ def expand_defaults(schema, features):
       raise ValueError(('Only the following schema types are supported: %s'
                         % ' '.join(constant.NUMERIC_SCHEMA + [constant.STRING_SCHEMA])))
 
-    if schema_name not in six.iterkeys(features):
+    if schema_name not in used_schema_columns:
       # add the default transform to the features
       if schema_type in constant.NUMERIC_SCHEMA:
-        features[schema_name] = {'transform': constant.DEFAULT_NUMERIC_TRANSFORM}
+        features[schema_name] = {
+            'transform': constant.DEFAULT_NUMERIC_TRANSFORM,
+            'source_column': schema_name}
       elif schema_type == constant.STRING_SCHEMA:
-        features[schema_name] = {'transform': constant.DEFAULT_CATEGORICAL_TRANSFORM}
+        features[schema_name] = {
+            'transform': constant.DEFAULT_CATEGORICAL_TRANSFORM,
+            'source_column': schema_name}
       else:
         raise NotImplementedError('Unknown type %s' % schema_type)
+
+
+# TODO(brandondutra): introduce the notion an analysis plan/classes if we
+# support more complicated transforms like binning by quratiles.
+def invert_features(features):
+  """Make a dict in the form source column : set of transforms.
+
+  Note that the key transform is removed.
+  """
+  inverted_features = collections.defaultdict(set)
+  for transform in six.itervalues(features):
+    source_column = transform['source_column']
+    transform_name = transform['transform']
+    if transform_name == constant.KEY_TRANSFORM:
+      continue
+    inverted_features[source_column].add(transform_name)
+
+  return dict(inverted_features)  # convert from defaultdict to dict
 
 
 def main(argv=None):
@@ -499,7 +559,8 @@ def main(argv=None):
       file_io.read_file_to_string(args.features_file).decode())
 
   expand_defaults(schema, features)  # features are updated.
-  check_schema_transforms_match(schema, features)
+  inverted_features = invert_features(features)
+  check_schema_transforms_match(schema, inverted_features)
 
   file_io.recursive_create_dir(args.output_dir)
 
@@ -509,13 +570,13 @@ def main(argv=None):
         csv_file_pattern=args.csv_file_pattern,
         bigquery_table=args.bigquery_table,
         schema=schema,
-        features=features)
+        inverted_features=inverted_features)
   else:
     run_local_analysis(
         output_dir=args.output_dir,
         csv_file_pattern=args.csv_file_pattern,
         schema=schema,
-        features=features)
+        inverted_features=inverted_features)
 
   # Save a copy of the schema and features in the output folder.
   file_io.write_string_to_file(
