@@ -154,6 +154,9 @@ def parse_arguments(argv):
     if args.csv_schema_file and not args.csv_schema_file.startswith('gs://'):
       raise ValueError('--csv-schema-file must point to a location on GCS')
 
+  if not args.cloud and args.bigquery_table:
+    raise ValueError('--cloud must be used with --bigquery-table')
+
   if not ((args.bigquery_table and args.csv_file_pattern is None and
            args.csv_schema_file is None) or
           (args.bigquery_table is None and args.csv_file_pattern and
