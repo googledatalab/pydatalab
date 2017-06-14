@@ -14,8 +14,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import imp
 import unittest
+import pytz
+import mock
+import os
 
-from google.datalab.utils._utils import get_item
+import google.datalab.utils._utils as _utils
+from datetime import datetime
+import oauth2client.client
 
 
 class TestCases(unittest.TestCase):
@@ -36,15 +41,144 @@ class TestCases(unittest.TestCase):
 
   def test_no_entry(self):
     data = TestCases._get_data()
-    self.assertIsNone(get_item(data, 'x'))
-    self.assertIsNone(get_item(data, 'bar.x'))
-    self.assertIsNone(get_item(data, 'foo.bar.x'))
-    self.assertIsNone(get_item(globals(), 'datetime.bar.x'))
+    self.assertIsNone(_utils.get_item(data, 'x'))
+    self.assertIsNone(_utils.get_item(data, 'bar.x'))
+    self.assertIsNone(_utils.get_item(data, 'foo.bar.x'))
+    self.assertIsNone(_utils.get_item(globals(), 'datetime.bar.x'))
 
   def test_entry(self):
     data = TestCases._get_data()
-    self.assertEquals(data['foo']['bar']['xyz'], get_item(data, 'foo.bar.xyz'))
-    self.assertEquals(data['foo']['bar'], get_item(data, 'foo.bar'))
-    self.assertEquals(data['foo'], get_item(data, 'foo'))
-    self.assertEquals(data['foo']['m'], get_item(data, 'foo.m'))
-    self.assertEquals(99, get_item(data, 'foo.m.x'))
+    self.assertEquals(data['foo']['bar']['xyz'], _utils.get_item(data, 'foo.bar.xyz'))
+    self.assertEquals(data['foo']['bar'], _utils.get_item(data, 'foo.bar'))
+    self.assertEquals(data['foo'], _utils.get_item(data, 'foo'))
+    self.assertEquals(data['foo']['m'], _utils.get_item(data, 'foo.m'))
+    self.assertEquals(99, _utils.get_item(data, 'foo.m.x'))
+
+  def test_compare_datetimes(self):
+    t1, t2 = datetime(2017, 2, 2, 12, 0, 0), datetime(2017, 2, 2, 12, 0, 0)
+    self.assertEquals(_utils.compare_datetimes(t1, t2), 0)
+
+    t2 = t2.replace(hour=11)
+    self.assertEquals(_utils.compare_datetimes(t1, t2), 1)
+
+  def test_compare_datetimes_tz(self):
+    t1 = datetime(2017, 2, 2, 12, 0, 0)
+    t2 = datetime(2017, 2, 2, 12, 0, 0, tzinfo=pytz.timezone('US/Eastern'))
+
+    self.assertEquals(_utils.compare_datetimes(t1, t2), -1)
+
+    t1 = t1.replace(tzinfo=pytz.timezone('US/Pacific'))
+
+    self.assertEquals(_utils.compare_datetimes(t1, t2), 1)
+
+  @mock.patch('os.path.expanduser')
+  def test_get_config_dir(self, mock_expand_user):
+    mock_expand_user.return_value = 'user/relative/path'
+    with mock.patch.dict(os.environ, {'CLOUDSDK_CONFIG': 'test/path'}):
+      self.assertEquals(_utils.get_config_dir(), 'test/path')
+
+    self.assertEquals(_utils.get_config_dir(), 'user/relative/path/.config/gcloud')
+
+  @mock.patch('os.name', 'nt')
+  @mock.patch('os.path.join')
+  def test_get_config_dir_win(self, mock_path_join):
+    mock_path_join.side_effect = lambda x,y: x+'\\'+y
+    self.assertEquals(_utils.get_config_dir(), 'C:\\gcloud')
+
+    with mock.patch.dict(os.environ, {'APPDATA': 'test\\path'}):
+      self.assertEquals(_utils.get_config_dir(), 'test\\path\\gcloud')
+
+  @mock.patch('google.datalab.utils._utils._in_datalab_docker')
+  @mock.patch('oauth2client.client.GoogleCredentials.get_application_default')
+  @mock.patch('os.path.exists')
+  def test_get_credentials_from_file(self, mock_path_exists, mock_get_default_creds,
+                                           mock_in_datalab):
+    # If application default credentials exist, use them
+    _utils.get_credentials()
+    mock_get_default_creds.assert_has_calls([
+      mock.call().create_scoped_required(),
+      mock.call().create_scoped(_utils.CREDENTIAL_SCOPES)
+    ], any_order=True)
+
+    # If application default credentials are not defined, should load from file
+    test_creds = '''
+      {
+        "data": [{
+          "key": {
+            "type": "google-cloud-sdk"
+          },
+          "credential": {
+            "access_token": "test-access-token",
+            "client_id": "test-id",
+            "client_secret": "test-secret",
+            "refresh_token": "test-token",
+            "token_expiry": "test-expiry",
+            "token_uri": "test-url",
+            "user_agent": "test-agent",
+            "invalid": "false"
+          }
+        }]
+      }
+    '''
+    with mock.patch('google.datalab.utils._utils.open', mock.mock_open(read_data=test_creds)):
+      mock_get_default_creds.side_effect = Exception
+      cred = _utils.get_credentials()
+
+      self.assertEquals(cred.access_token, 'test-access-token')
+
+    mock_path_exists.return_value = False
+    with self.assertRaises(Exception):
+      cred = _utils.get_credentials()
+
+    # If default creds are not define, and no file exists with credentials, throw
+    # something more meaningful.
+    mock_get_default_creds.side_effect = oauth2client.client.ApplicationDefaultCredentialsError
+    with self.assertRaisesRegexp(Exception,
+                                 'No application credentials found. Perhaps you should sign in'):
+      cred = _utils.get_credentials()
+
+  @mock.patch('subprocess.call')
+  @mock.patch('os.path.exists')
+  def test_save_project_id(self, mock_path_exists, mock_subprocess_call):
+    _utils.save_project_id('test-project')
+    mock_subprocess_call.assert_called_with([
+      'gcloud', 'config', 'set', 'project', 'test-project'
+      ])
+
+    mock_subprocess_call.side_effect = Exception
+
+    test_config = '''
+      {
+        "project_id": ""
+      }
+    '''
+    opener = mock.mock_open(read_data=test_config)
+    with mock.patch('google.datalab.utils._utils.open', opener):
+      _utils.save_project_id('test-project')
+      opener.assert_has_calls([mock.call().write('{"project_id": "test-project"}')])
+
+  @mock.patch('subprocess.Popen')
+  @mock.patch('os.path.exists')
+  def test_get_default_project_id(self, mock_path_exists, mock_subprocess_call):
+    mock_subprocess_call.return_value.communicate.return_value = ('test-project', '')
+    mock_subprocess_call.return_value.poll.return_value = 0
+    self.assertEquals(_utils.get_default_project_id(), 'test-project')
+    mock_subprocess_call.assert_called_with(
+      ['gcloud', 'config', 'list', '--format', 'value(core.project)'], stdout=-1)
+
+    mock_subprocess_call.side_effect = Exception
+
+    test_config = '''
+      {
+        "project_id": "test-project2"
+      }
+    '''
+    opener = mock.mock_open(read_data=test_config)
+    with mock.patch('google.datalab.utils._utils.open', opener):
+      self.assertEquals(_utils.get_default_project_id(), 'test-project2')
+
+    mock_path_exists.return_value = False
+    self.assertIsNone(_utils.get_default_project_id())
+
+    with mock.patch.dict(os.environ, {'PROJECT_ID': 'test-project3'}):
+      self.assertEquals(_utils.get_default_project_id(), 'test-project3')
