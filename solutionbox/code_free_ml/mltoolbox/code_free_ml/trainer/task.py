@@ -123,7 +123,6 @@ class DatalabParser():
         '--save-checkpoints-secs', type=int, default=600,
         help='How often the model should be checkpointed/saved in seconds')
 
-
   def make_lite_help_action(self):
     """Custom action for --lite-help.
 
