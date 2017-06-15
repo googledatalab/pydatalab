@@ -246,7 +246,7 @@ def _analyze(args, cell):
         # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
         print('Creating temporary table that will be deleted in 24 hours')
         r = bq.Query(training_data['bigquery_sql']).execute().result()
-        cmd_args.extend(['--bigquery-table', r.full_name]))
+        cmd_args.extend(['--bigquery-table', r.full_name])
       else:
         raise ValueError('Invalid training_data dict. ' +
                          'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
@@ -299,7 +299,7 @@ def _transform(args, cell):
         # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
         print('Creating temporary table that will be deleted in 24 hours')
         r = bq.Query(training_data['bigquery_sql']).execute().result()
-        cmd_args.extend(['--bigquery-table', r.full_name]))
+        cmd_args.extend(['--bigquery-table', r.full_name])
     else:
       raise ValueError('Invalid training_data dict. ' +
                        'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
