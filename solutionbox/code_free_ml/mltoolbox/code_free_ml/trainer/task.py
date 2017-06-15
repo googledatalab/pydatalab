@@ -82,7 +82,7 @@ class DatalabParser():
     # Datalab help string
     self.full_parser.add_argument(
         '--lite-help', action=self.make_lite_help_action(),
-        help='Show a smaller help message and exit')
+        help='Show a smaller help message for DataLab only and exit')
 
     # I/O file parameters
     self.full_parser.add_argument(
@@ -97,31 +97,6 @@ class DatalabParser():
     self.full_parser.add_argument(
         '--run-transforms', action='store_true', default=False,
         help='If used, input data is raw csv that needs transformation.')
-
-    # HP parameters
-    self.full_parser.add_argument(
-        '--learning-rate', type=float, default=0.01, help='optimizer learning rate')
-
-    # Training input parameters
-    self.full_parser.add_argument(
-        '--max-steps', type=int, default=5000,
-        help='Maximum number of training steps to perform.')
-    self.full_parser.add_argument(
-        '--num-epochs', type=int,
-        help=('Maximum number of training data epochs on which to train. If '
-              'both --max-steps and --num-epochs are specified, the training '
-              'job will run for --max-steps or --num-epochs, whichever occurs '
-              'first. If unspecified will run for --max-steps.'))
-    self.full_parser.add_argument('--train-batch-size', type=int, default=1000)
-    self.full_parser.add_argument('--eval-batch-size', type=int, default=1000)
-    self.full_parser.add_argument(
-        '--min-eval-frequency', type=int, default=100,
-        help='Minimum number of training steps between evaluations')
-
-    # other parameters
-    self.full_parser.add_argument(
-        '--save-checkpoints-secs', type=int, default=600,
-        help='How often the model should be checkpointed/saved in seconds')
 
   def make_lite_help_action(self):
     """Custom action for --lite-help.
@@ -166,25 +141,49 @@ def parse_arguments(argv):
               '--hidden-layer-size=NUM, ..., should be used. '))
 
   # HP parameters
-  parser.add_argument('--epsilon', type=float, default=0.0005,
-                      help='tf.train.AdamOptimizer epsilon. Only used in '
-                           'dnn models.')
-  parser.add_argument('--l1-regularization', type=float, default=0.0,
-                      help='L1 term for linear models.')
-  parser.add_argument('--l2-regularization', type=float, default=0.0,
-                      help='L2 term for linear models.')
+  parser.add_argument(
+      '--epsilon', type=float, default=0.0005,
+      help='tf.train.AdamOptimizer epsilon. Only used in dnn models.')
+  parser.add_argument(
+      '--l1-regularization', type=float, default=0.0,
+      help='L1 term for linear models.')
+  parser.add_argument(
+      '--l2-regularization', type=float, default=0.0,
+      help='L2 term for linear models.')
 
   # Model problems
-  parser.add_argument('--model-type',
-                      choices=['linear_classification', 'linear_regression',
-                               'dnn_classification', 'dnn_regression'],
-                      required=True)
-  parser.add_argument('--top-n',
-                      type=int,
-                      default=1,
-                      help=('For classification problems, the output graph '
-                            'will contain the labels and scores for the top '
-                            'n classes.'))
+  parser.add_argument(
+    '--model-type', required=True,
+    choices=['linear_classification', 'linear_regression', 'dnn_classification', 'dnn_regression'])
+  parser.add_argument(
+      '--top-n', type=int, default=1,
+      help=('For classification problems, the output graph will contain the '
+            'labels and scores for the top n classes.'))
+
+  # HP parameters
+  parser.add_argument(
+      '--learning-rate', type=float, default=0.01, help='optimizer learning rate')
+
+  # Training input parameters
+  parser.add_argument(
+      '--max-steps', type=int, default=5000,
+      help='Maximum number of training steps to perform.')
+  parser.add_argument(
+      '--num-epochs', type=int,
+      help=('Maximum number of training data epochs on which to train. If '
+            'both --max-steps and --num-epochs are specified, the training '
+            'job will run for --max-steps or --num-epochs, whichever occurs '
+            'first. If unspecified will run for --max-steps.'))
+  parser.add_argument('--train-batch-size', type=int, default=1000)
+  parser.add_argument('--eval-batch-size', type=int, default=1000)
+  parser.add_argument(
+      '--min-eval-frequency', type=int, default=100,
+      help='Minimum number of training steps between evaluations')
+
+  # other parameters
+  parser.add_argument(
+      '--save-checkpoints-secs', type=int, default=600,
+      help='How often the model should be checkpointed/saved in seconds')
 
   args, remaining_args = parser.parse_known_args(args=argv[1:])
 
