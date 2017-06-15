@@ -79,6 +79,11 @@ class DatalabParser():
 
     # The arguments added here are required to exist by Datalab's magics.
 
+    # Datalab help string
+    self.full_parser.add_argument(
+        '--lite-help', action=self.make_lite_help_action(),
+        help='Show a smaller help message and exit')
+
     # I/O file parameters
     self.full_parser.add_argument(
         '--train-data-paths', type=str, required=True, action='append')
@@ -118,10 +123,6 @@ class DatalabParser():
         '--save-checkpoints-secs', type=int, default=600,
         help='How often the model should be checkpointed/saved in seconds')
 
-    # Datalab help string
-    self.full_parser.add_argument(
-        '--lite-help', action=self.make_lite_help_action(),
-        help='Show only special options to this trainer')
 
   def make_lite_help_action(self):
     """Custom action for --lite-help.
