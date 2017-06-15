@@ -33,6 +33,7 @@ import six
 import tempfile
 
 import google.datalab
+import google.datalab.bigquery as bq
 import google.datalab.utils.commands
 import google.datalab.contrib.mltoolbox._local_predict as _local_predict
 import google.datalab.contrib.mltoolbox._shell_process as _shell_process
@@ -89,8 +90,8 @@ Cell input is in yaml format. Fields:
 
 training_data: one of the following:
   csv_file_pattern and csv_schema (as the example above), or
-  bigquery (example: "bigquery: project.dataset.table" or
-                     "bigquery: select * from table where num1 > 1.0"), or
+  bigquery_table (example: "bigquery_table: project.dataset.table"), or
+  bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
   a variable defined as google.datalab.ml.CsvDataSet or google.datalab.ml.BigQueryDataSet
 
 features: A dictionary with key being column name. The list of supported transforms:
@@ -147,8 +148,8 @@ Cell input is in yaml format. Fields:
 
 training_data: Required. It is one of the following:
   csv_file_pattern or
-  bigquery (example: "bigquery: project.dataset.table" or
-                     "bigquery: select * from table where num1 > 1.0"), or
+  bigquery_table (example: "bigquery_table: project.dataset.table"), or
+  bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
   a variable defined as google.datalab.ml.CsvDataSet or google.datalab.ml.BigQueryDataSet
 
 cloud: A dictionary of cloud config. All of them are optional. The "cloud" itself is optional too.
@@ -239,8 +240,13 @@ def _analyze(args, cell):
         schema_file = _create_json_file(tmpdir, schema, 'schema.json')
         cmd_args.extend(['--csv-file-pattern', training_data['csv_file_pattern']])
         cmd_args.extend(['--csv-schema-file', schema_file])
-      elif 'bigquery' in training_data:
-        cmd_args.extend(['--bigquery-table', training_data['bigquery']])
+      elif 'bigquery_table' in training_data:
+        cmd_args.extend(['--bigquery-table', training_data['bigquery_table']])
+      elif 'bigquery_sql' in training_data:
+        # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
+        print('Creating temporary table that will be deleted in 24 hours')
+        r = bq.Query(training_data['bigquery_sql']).execute().result()
+        cmd_args.extend(['--bigquery-table', r.full_name]))
       else:
         raise ValueError('Invalid training_data dict. ' +
                          'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
@@ -287,8 +293,13 @@ def _transform(args, cell):
   if isinstance(training_data, dict):
     if 'csv_file_pattern' in training_data:
       cmd_args.extend(['--csv-file-pattern', training_data['csv_file_pattern']])
-    elif 'bigquery' in training_data:
-      cmd_args.extend(['--bigquery-table', training_data['bigquery']])
+    elif 'bigquery_table' in training_data:
+      cmd_args.extend(['--bigquery-table', training_data['bigquery_table']])
+    elif 'bigquery_sql' in training_data:
+        # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
+        print('Creating temporary table that will be deleted in 24 hours')
+        r = bq.Query(training_data['bigquery_sql']).execute().result()
+        cmd_args.extend(['--bigquery-table', r.full_name]))
     else:
       raise ValueError('Invalid training_data dict. ' +
                        'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
