@@ -169,9 +169,9 @@ def parse_arguments(argv):
   parser.add_argument('--epsilon', type=float, default=0.0005,
                       help='tf.train.AdamOptimizer epsilon. Only used in '
                            'dnn models.')
-  parser.add_argument('--l1_regularization', type=float, default=0.0,
+  parser.add_argument('--l1-regularization', type=float, default=0.0,
                       help='L1 term for linear models.')
-  parser.add_argument('--l2_regularization', type=float, default=0.0,
+  parser.add_argument('--l2-regularization', type=float, default=0.0,
                       help='L2 term for linear models.')
 
   # Model problems
