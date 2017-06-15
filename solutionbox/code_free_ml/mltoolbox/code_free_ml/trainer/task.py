@@ -58,74 +58,132 @@ PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
 
 
+class DatalabParser():
+  """Datalab parser.
+
+  When using Datalab magic's to run this trainer, it prints it's own help menu
+  that describes the required options that are common to all trainers. In order
+  to print just the options that are unique to this trainer, datalab calls this
+  file with --lite-help.
+
+  This class implements --lite-help by building a 2nd argparser that only has
+  the unique parameters. This insures the formatting is consistant with
+  argparse as argparse is used.
+  """
+
+  def __init__(self, epilog=None):
+    # full_parser is used by this trainer. lite_parser is only used to print
+    # a shorter help string when --lite-help is used.
+    self.full_parser = argparse.ArgumentParser(epilog=epilog)
+    self.lite_parser = argparse.ArgumentParser(usage='', epilog=epilog, add_help=False)
+
+    # The arguments added here are required to exist by Datalab's magics.
+
+    # Datalab help string
+    self.full_parser.add_argument(
+        '--lite-help', action=self.make_lite_help_action(),
+        help='Show a smaller help message for DataLab only and exit')
+
+    # I/O file parameters
+    self.full_parser.add_argument(
+        '--train-data-paths', type=str, required=True, action='append')
+    self.full_parser.add_argument(
+        '--eval-data-paths', type=str, required=True, action='append')
+    self.full_parser.add_argument('--job-dir', type=str, required=True)
+    self.full_parser.add_argument(
+        '--analysis-output-dir', type=str, required=True,
+        help=('Output folder of analysis. Should contain the schema, stats, and '
+              'vocab files. Path must be on GCS if running cloud training.'))
+    self.full_parser.add_argument(
+        '--run-transforms', action='store_true', default=False,
+        help='If used, input data is raw csv that needs transformation.')
+
+  def make_lite_help_action(self):
+    """Custom action for --lite-help.
+
+    The action takes a reference to the lite_parser via closure and calls its
+    help message function.
+    """
+    lite_parser = self.lite_parser
+
+    class _CustomAction(argparse.Action):
+
+      def __init__(self, option_strings, dest, help=None):
+        super(_CustomAction, self).__init__(
+            option_strings=option_strings, dest=dest, nargs=0, help=help)
+
+      def __call__(self, parser, args, values, option_string=None):
+        # Note that parser is a reference to full_parser, but we need to get the
+        # help string from the lite_parser.
+        help_str = lite_parser.format_help()
+        index = help_str.find('optional arguments:')
+        if index >= 0:
+          help_str = help_str[index + len('optional arguments:'):]
+        print(help_str)
+
+        lite_parser.exit()
+    return _CustomAction
+
+  def add_argument(self, *args, **kwargs):
+    # Any argument added here is not required by Datalab, and so is unique
+    # to this trainer. Add each argument to the main parser and the lite parser.
+    self.full_parser.add_argument(*args, **kwargs)
+    self.lite_parser.add_argument(*args, **kwargs)
+
+  def parse_known_args(self, args=None):
+    return self.full_parser.parse_known_args(args=args)
+
+
 def parse_arguments(argv):
   """Parse the command line arguments."""
-  parser = argparse.ArgumentParser(
-      description=('Train a regression or classification model. Note that if '
-                   'using a DNN model, --layer-size1=NUM, --layer-size2=NUM, '
-                   'should be used. '))
-
-  # I/O file parameters
-  parser.add_argument('--train-data-paths', type=str,
-                      required=True, action='append')
-  parser.add_argument('--eval-data-paths', type=str,
-                      required=True, action='append')
-  parser.add_argument('--job-dir', type=str, required=True)
-  parser.add_argument('--analysis-output-dir',
-                      type=str,
-                      required=True,
-                      help=('Output folder of analysis. Should contain the'
-                            ' schema, stats, and vocab files.'
-                            ' Path must be on GCS if running'
-                            ' cloud training.'))
-  parser.add_argument('--run-transforms',
-                      action='store_true',
-                      default=False,
-                      help=('If used, input data is raw csv that needs '
-                            'transformation.'))
+  parser = DatalabParser(
+      epilog=('Note that if using a DNN model, --hidden-layer-size=NUM, '
+              '--hidden-layer-size=NUM, ..., should be used. '))
 
   # HP parameters
-  parser.add_argument('--learning-rate', type=float, default=0.01,
-                      help='optimizer learning rate')
-  parser.add_argument('--epsilon', type=float, default=0.0005,
-                      help='tf.train.AdamOptimizer epsilon. Only used in '
-                           'dnn models.')
-  parser.add_argument('--l1_regularization', type=float, default=0.0,
-                      help='L1 term for linear models.')
-  parser.add_argument('--l2_regularization', type=float, default=0.0,
-                      help='L2 term for linear models.')
+  parser.add_argument(
+      '--epsilon', type=float, default=0.0005,
+      help='tf.train.AdamOptimizer epsilon. Only used in dnn models.')
+  parser.add_argument(
+      '--l1-regularization', type=float, default=0.0,
+      help='L1 term for linear models.')
+  parser.add_argument(
+      '--l2-regularization', type=float, default=0.0,
+      help='L2 term for linear models.')
 
   # Model problems
-  parser.add_argument('--model-type',
-                      choices=['linear_classification', 'linear_regression',
-                               'dnn_classification', 'dnn_regression'],
-                      required=True)
-  parser.add_argument('--top-n',
-                      type=int,
-                      default=1,
-                      help=('For classification problems, the output graph '
-                            'will contain the labels and scores for the top '
-                            'n classes.'))
+  parser.add_argument(
+    '--model-type', required=True,
+    choices=['linear_classification', 'linear_regression', 'dnn_classification', 'dnn_regression'])
+  parser.add_argument(
+      '--top-n', type=int, default=1,
+      help=('For classification problems, the output graph will contain the '
+            'labels and scores for the top n classes.'))
+
+  # HP parameters
+  parser.add_argument(
+      '--learning-rate', type=float, default=0.01, help='optimizer learning rate')
+
   # Training input parameters
-  parser.add_argument('--max-steps', type=int, default=5000,
-                      help='Maximum number of training steps to perform.')
-  parser.add_argument('--num-epochs',
-                      type=int,
-                      help=('Maximum number of training data epochs on which '
-                            'to train. If both --max-steps and --num-epochs '
-                            'are specified, the training job will run for '
-                            '--max-steps or --num-epochs, whichever occurs '
-                            'first. If unspecified will run for --max-steps.'))
+  parser.add_argument(
+      '--max-steps', type=int, default=5000,
+      help='Maximum number of training steps to perform.')
+  parser.add_argument(
+      '--num-epochs', type=int,
+      help=('Maximum number of training data epochs on which to train. If '
+            'both --max-steps and --num-epochs are specified, the training '
+            'job will run for --max-steps or --num-epochs, whichever occurs '
+            'first. If unspecified will run for --max-steps.'))
   parser.add_argument('--train-batch-size', type=int, default=1000)
   parser.add_argument('--eval-batch-size', type=int, default=1000)
-  parser.add_argument('--min-eval-frequency', type=int, default=100,
-                      help=('Minimum number of training steps between '
-                            'evaluations'))
+  parser.add_argument(
+      '--min-eval-frequency', type=int, default=100,
+      help='Minimum number of training steps between evaluations')
 
   # other parameters
-  parser.add_argument('--save-checkpoints-secs', type=int, default=600,
-                      help=('How often the model should be checkpointed/saved '
-                            'in seconds'))
+  parser.add_argument(
+      '--save-checkpoints-secs', type=int, default=600,
+      help='How often the model should be checkpointed/saved in seconds')
 
   args, remaining_args = parser.parse_known_args(args=argv[1:])
 
