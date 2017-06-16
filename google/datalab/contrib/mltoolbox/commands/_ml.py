@@ -279,7 +279,7 @@ def _transform(args, cell):
   training_data = cell_data['training_data']
   cmd_args = ['python', 'transform.py',
               '--output-dir', args['output_dir'],
-              '--analysis-output-dir', args['analysis_output_dir'],
+              '--output-dir-from-analysis-step', args['output_dir_from_analysis_step'],
               '--output-filename-prefix', args['output_filename_predix']]
   if args['cloud']:
     cmd_args.append('--cloud')

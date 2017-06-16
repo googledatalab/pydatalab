@@ -91,7 +91,7 @@ class DatalabParser():
         '--eval-data-paths', type=str, required=True, action='append')
     self.full_parser.add_argument('--job-dir', type=str, required=True)
     self.full_parser.add_argument(
-        '--analysis-output-dir', type=str, required=True,
+        '--output-dir-from-analysis-step', type=str, required=True,
         help=('Output folder of analysis. Should contain the schema, stats, and '
               'vocab files. Path must be on GCS if running cloud training.'))
     self.full_parser.add_argument(
@@ -433,7 +433,7 @@ def make_export_strategy(
       contrib_variables.create_global_step(g)
 
       input_ops = feature_transforms.build_csv_serving_tensors(
-          args.analysis_output_dir, features, schema, stats, keep_target)
+          args.output_dir_from_analysis_step, features, schema, stats, keep_target)
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
@@ -618,7 +618,7 @@ def read_vocab(args, column_name):
   Returns:
     List of vocab words or [] if the vocab file is not found.
   """
-  vocab_path = os.path.join(args.analysis_output_dir,
+  vocab_path = os.path.join(args.output_dir_from_analysis_step,
                             feature_transforms.VOCAB_ANALYSIS_FILE % column_name)
 
   if not file_io.file_exists(vocab_path):
@@ -654,9 +654,9 @@ def get_experiment_fn(args):
 
   def get_experiment(output_dir):
     # Read schema, input features, and transforms.
-    schema_path_with_target = os.path.join(args.analysis_output_dir, feature_transforms.SCHEMA_FILE)
-    features_path = os.path.join(args.analysis_output_dir, feature_transforms.FEATURES_FILE)
-    stats_path = os.path.join(args.analysis_output_dir, feature_transforms.STATS_FILE)
+    schema_path_with_target = os.path.join(args.output_dir_from_analysis_step, feature_transforms.SCHEMA_FILE)
+    features_path = os.path.join(args.output_dir_from_analysis_step, feature_transforms.FEATURES_FILE)
+    stats_path = os.path.join(args.output_dir_from_analysis_step, feature_transforms.STATS_FILE)
 
     schema = read_json_file(schema_path_with_target)
     features = read_json_file(features_path)
@@ -711,7 +711,7 @@ def get_experiment_fn(args):
           schema=schema,
           features=features,
           stats=stats,
-          analysis_output_dir=args.analysis_output_dir,
+          analysis_output_dir=args.output_dir_from_analysis_step,
           raw_data_file_pattern=args.train_data_paths,
           training_batch_size=args.train_batch_size,
           num_epochs=args.num_epochs,
@@ -722,7 +722,7 @@ def get_experiment_fn(args):
           schema=schema,
           features=features,
           stats=stats,
-          analysis_output_dir=args.analysis_output_dir,
+          analysis_output_dir=args.output_dir_from_analysis_step,
           raw_data_file_pattern=args.eval_data_paths,
           training_batch_size=args.eval_batch_size,
           num_epochs=1,
@@ -732,7 +732,7 @@ def get_experiment_fn(args):
       input_reader_for_train = feature_transforms.build_tfexample_transfored_training_input_fn(
           schema=schema,
           features=features,
-          analysis_output_dir=args.analysis_output_dir,
+          analysis_output_dir=args.output_dir_from_analysis_step,
           raw_data_file_pattern=args.train_data_paths,
           training_batch_size=args.train_batch_size,
           num_epochs=args.num_epochs,
@@ -742,7 +742,7 @@ def get_experiment_fn(args):
       input_reader_for_eval = feature_transforms.build_tfexample_transfored_training_input_fn(
           schema=schema,
           features=features,
-          analysis_output_dir=args.analysis_output_dir,
+          analysis_output_dir=args.output_dir_from_analysis_step,
           raw_data_file_pattern=args.eval_data_paths,
           training_batch_size=args.eval_batch_size,
           num_epochs=1,
