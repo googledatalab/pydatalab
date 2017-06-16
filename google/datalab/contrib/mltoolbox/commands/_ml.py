@@ -136,7 +136,7 @@ features: $features_def
       'transform', help="""Transform the data into tf.example which is more efficient
 in training. Example usage:
 
-%%ml transform --analysis_output_dir path/to/analysis --output_dir path/to/dir
+%%ml transform --output_dir_from_analysis_step path/to/analysis --output_dir path/to/dir
      --output_filename_prefix my_filename [--cloud] [--shuffle] [--batch_size 100]
 training_data:
   csv_file_pattern: path/to/csv
@@ -160,7 +160,7 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
   project_id: id of the project to use for DataFlow service. If not set, Datalab's default
               project (set by %%datalab project set) is used.
 """, formatter_class=argparse.RawTextHelpFormatter)
-  transform_parser.add_argument('--analysis_output_dir', required=True,
+  transform_parser.add_argument('--output_dir_from_analysis_step', required=True,
                                 help='path of analysis output directory.')
   transform_parser.add_argument('--output_dir', required=True,
                                 help='path of output directory.')
@@ -185,7 +185,7 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
   train_parser = parser.subcommand(
       'train', help="""Train a model. Example usage:
 
-%%ml train --analysis_output_dir path/to/analysis --output_dir path/to/dir
+%%ml train --output_dir_from_analysis_step path/to/analysis --output_dir path/to/dir
 training_data:
   csv_file_pattern: path/to/csv
 evaluation_data:
@@ -205,7 +205,7 @@ evaluation_data: Required. Same as training_data
 model_args: a dictionary of model specific args. See below.
 
 """ + train_datalab_help, formatter_class=argparse.RawTextHelpFormatter)
-  train_parser.add_argument('--analysis_output_dir', required=True,
+  train_parser.add_argument('--output_dir_from_analysis_step', required=True,
                             help='path of analysis output directory.')
   train_parser.add_argument('--output_dir', required=True,
                             help='path of trained model directory.')
@@ -376,7 +376,7 @@ def _train(args, cell):
 
   cmd_args = ['python', '-m', 'trainer.task',
               '--job-dir', args['output_dir'],
-              '--analysis-output-dir', args['analysis_output_dir']]
+              '--output-dir-from-analysis-step', args['output_dir_from_analysis_step']]
 
   def _process_train_eval_data(data, arg_name, cmd_args):
     if isinstance(data, dict):
