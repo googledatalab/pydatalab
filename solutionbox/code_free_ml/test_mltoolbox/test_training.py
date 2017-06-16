@@ -92,7 +92,7 @@ class TestMultipleFeatures(unittest.TestCase):
              '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
-             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
              '--model-type=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
@@ -146,7 +146,7 @@ class TestMultipleFeatures(unittest.TestCase):
       cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
              '--output-dir=' + os.path.join(output_dir, 'transform'),
              '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
-             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
              '--output-filename-prefix=features']
       subprocess.check_call(' '.join(cmd), shell=True)
 
@@ -172,7 +172,7 @@ class TestMultipleFeatures(unittest.TestCase):
              '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
-             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
              '--model-type=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
@@ -223,7 +223,7 @@ class TestOptionalKeys(unittest.TestCase):
              '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
-             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
              '--model-type=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
@@ -276,7 +276,7 @@ class TestOptionalKeys(unittest.TestCase):
              '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
-             '--analysis-output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
              '--model-type=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
@@ -512,7 +512,7 @@ class TestTrainer(unittest.TestCase):
   def _run_transform(self):
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self._csv_train_filename,
-           '--analysis-output-dir=' + self._analysis_output,
+           '--output-dir-from-analysis-step=' + self._analysis_output,
            '--output-filename-prefix=features_train',
            '--output-dir=' + self._transform_output,
            '--shuffle']
@@ -522,7 +522,7 @@ class TestTrainer(unittest.TestCase):
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self._csv_eval_filename,
-           '--analysis-output-dir=' + self._analysis_output,
+           '--output-dir-from-analysis-step=' + self._analysis_output,
            '--output-filename-prefix=features_eval',
            '--output-dir=' + self._transform_output]
 
@@ -542,7 +542,7 @@ class TestTrainer(unittest.TestCase):
            '--train-data-paths=' + os.path.join(self._transform_output, 'features_train*'),
            '--eval-data-paths=' + os.path.join(self._transform_output, 'features_eval*'),
            '--job-dir=' + self._train_output,
-           '--analysis-output-dir=' + self._analysis_output,
+           '--output-dir-from-analysis-step=' + self._analysis_output,
            '--model-type=%s_%s' % (model_type, problem_type),
            '--train-batch-size=100',
            '--eval-batch-size=50',
@@ -564,7 +564,7 @@ class TestTrainer(unittest.TestCase):
            '--train-data-paths=' + self._csv_train_filename,
            '--eval-data-paths=' + self._csv_eval_filename,
            '--job-dir=' + self._train_output,
-           '--analysis-output-dir=' + self._analysis_output,
+           '--output-dir-from-analysis-step=' + self._analysis_output,
            '--model-type=%s_%s' % (model_type, problem_type),
            '--train-batch-size=100',
            '--eval-batch-size=50',

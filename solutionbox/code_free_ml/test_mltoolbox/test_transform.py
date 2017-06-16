@@ -88,7 +88,7 @@ class TestTransformRawData(unittest.TestCase):
 
     cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self.csv_input_filepath,
-           '--analysis-output-dir=' + self.analysis_dir,
+           '--output-dir-from-analysis-step=' + self.analysis_dir,
            '--output-filename-prefix=features',
            '--output-dir=' + self.output_dir]
     print('cmd ', ' '.join(cmd))
@@ -147,7 +147,7 @@ class TestTransformRawData(unittest.TestCase):
 
       cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
              '--bigquery-table=%s.%s.%s' % (project_id, dataset_name, table_name),
-             '--analysis-output-dir=' + self.analysis_dir,
+             '--output-dir-from-analysis-step=' + self.analysis_dir,
              '--output-filename-prefix=features',
              '--project-id=' + project_id,
              '--output-dir=' + self.output_dir]
@@ -173,7 +173,7 @@ class TestTransformRawData(unittest.TestCase):
       self.assertEqual(len(image_bytes), 2048)
       self.assertTrue(any(x != 0.0 for x in image_bytes))
     finally:
-      dataset.delete(deleete_contents=True)
+      dataset.delete(delete_contents=True)
 
 
 if __name__ == '__main__':

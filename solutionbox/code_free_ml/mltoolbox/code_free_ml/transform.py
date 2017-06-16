@@ -94,7 +94,7 @@ def parse_arguments(argv):
             'data to transform'))
 
   parser.add_argument(
-      '--analysis-output-dir',
+      '--output-dir-from-analysis-step',
       required=True,
       help='The output folder of analyze')
   parser.add_argument(
@@ -416,11 +416,11 @@ def preprocess(pipeline, args):
   from trainer import feature_transforms
 
   schema = json.loads(file_io.read_file_to_string(
-      os.path.join(args.analysis_output_dir, feature_transforms.SCHEMA_FILE)).decode())
+      os.path.join(args.output_dir_from_analysis_step, feature_transforms.SCHEMA_FILE)).decode())
   features = json.loads(file_io.read_file_to_string(
-      os.path.join(args.analysis_output_dir, feature_transforms.FEATURES_FILE)).decode())
+      os.path.join(args.output_dir_from_analysis_step, feature_transforms.FEATURES_FILE)).decode())
   stats = json.loads(file_io.read_file_to_string(
-      os.path.join(args.analysis_output_dir, feature_transforms.STATS_FILE)).decode())
+      os.path.join(args.output_dir_from_analysis_step, feature_transforms.STATS_FILE)).decode())
 
   column_names = [col['name'] for col in schema]
 
@@ -457,7 +457,7 @@ def preprocess(pipeline, args):
   if args.shuffle:
     clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
 
-  transform_dofn = TransformFeaturesDoFn(args.analysis_output_dir, features, schema, stats)
+  transform_dofn = TransformFeaturesDoFn(args.output_dir_from_analysis_step, features, schema, stats)
   (transformed_data, errors) = (
        clean_csv_data
        | 'Batch Input' 
