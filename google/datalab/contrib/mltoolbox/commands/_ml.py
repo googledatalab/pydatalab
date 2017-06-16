@@ -30,6 +30,7 @@ import pandas as pd
 import numpy as np
 import shutil
 import six
+import subprocess
 import tempfile
 
 import google.datalab
@@ -135,7 +136,7 @@ features: $features_def
       'transform', help="""Transform the data into tf.example which is more efficient
 in training. Example usage:
 
-%%ml transform --analysis_dir path/to/analysis --output_dir path/to/dir
+%%ml transform --analysis_output_dir path/to/analysis --output_dir path/to/dir
      --output_filename_prefix my_filename [--cloud] [--shuffle] [--batch_size 100]
 training_data:
   csv_file_pattern: path/to/csv
@@ -176,9 +177,44 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
 
   transform_parser.set_defaults(func=_transform)
 
+  train_datalab_help = subprocess.Popen(
+      ['python', '-m', 'trainer.task', '--datalab-help'],
+      cwd=MLTOOLBOX_CODE_PATH,
+      stdout=subprocess.PIPE).communicate()[0]
+
+  train_parser = parser.subcommand(
+      'train', help="""Train a model. Example usage:
+
+%%ml train --analysis_output_dir path/to/analysis --output_dir path/to/dir
+training_data:
+  csv_file_pattern: path/to/csv
+evaluation_data:
+  csv_file_pattern: path/to/csv
+model_args:
+  model_type: linear_regression
+
+Cell input is in yaml format. Fields:
+
+training_data: Required. It is one of the following:
+  csv_file_pattern or
+  transformed_file_pattern or
+  a variable defined as google.datalab.ml.CsvDataSet
+
+evaluation_data: Required. Same as training_data
+
+model_args: a dictionary of model specific args. See below.
+
+""" + train_datalab_help, formatter_class=argparse.RawTextHelpFormatter)
+  train_parser.add_argument('--analysis_output_dir', required=True,
+                            help='path of analysis output directory.')
+  train_parser.add_argument('--output_dir', required=True,
+                            help='path of trained model directory.')
+
+  train_parser.set_defaults(func=_train)
+
   predict_parser = parser.subcommand(
-      'predict', help="""Predict with local or deployed models.
-      'Prediction data by CSV lines in input cell in yaml format. For example:
+      'predict', help="""Predict with local or deployed models. Prediction data can be CSV lines
+in input cell in yaml format. For example:
 
 %%ml predict --headers key,num --model path/to/model
 prediction_data:
@@ -252,8 +288,9 @@ def _analyze(args, cell):
                          'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
     elif isinstance(training_data, google.datalab.ml.CsvDataSet):
       schema_file = _create_json_file(tmpdir, training_data.schema, 'schema.json')
-      # TODO: Modify when command line interface supports multiple csv files.
-      cmd_args.extend(['--csv-file-pattern', training_data.input_files[0]])
+      for file_name in training_data.input_files:
+        cmd_args.append('--csv-file-pattern=' + file_name)
+
       cmd_args.extend(['--csv-schema-file', schema_file])
     elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
       # TODO: Support query too once command line supports query.
@@ -287,8 +324,6 @@ def _transform(args, cell):
     cmd_args.append('--shuffle')
   if args['batch_size']:
     cmd_args.extend(['--batch-size', str(args['batch_size'])])
-  if args['cloud']:
-    cmd_args.append('--cloud')
 
   if isinstance(training_data, dict):
     if 'csv_file_pattern' in training_data:
@@ -304,7 +339,8 @@ def _transform(args, cell):
       raise ValueError('Invalid training_data dict. ' +
                        'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
   elif isinstance(training_data, google.datalab.ml.CsvDataSet):
-    cmd_args.extend(['--csv-file-pattern', training_data.input_files[0]])
+    for file_name in training_data.input_files:
+      cmd_args.append('--csv-file-pattern=' + file_name)
   elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
     cmd_args.extend(['--bigquery-table', training_data.table])
   else:
@@ -326,6 +362,46 @@ def _transform(args, cell):
 
   if '--project-id' not in cmd_args:
     cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
+
+  _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
+
+
+def _train(args, cell):
+  env = google.datalab.utils.commands.notebook_environment()
+  cell_data = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(
+      cell_data,
+      required_keys=['training_data', 'evaluation_data'],
+      optional_keys=['model_args'])
+
+  cmd_args = ['python', '-m', 'trainer.task',
+              '--job-dir', args['output_dir'],
+              '--analysis-output-dir', args['analysis_output_dir']]
+
+  def _process_train_eval_data(data, arg_name, cmd_args):
+    if isinstance(data, dict):
+      if 'csv_file_pattern' in data:
+        cmd_args.extend([arg_name, data['csv_file_pattern']])
+        if '--run-transforms' not in cmd_args:
+          cmd_args.append('--run-transforms')
+      elif 'transformed_file_pattern' in data:
+        cmd_args.extend([arg_name, data['transformed_file_pattern']])
+      else:
+        raise ValueError('Invalid training_data dict. ' +
+                         'Requires either "csv_file_pattern" or "transformed_file_pattern".')
+    elif isinstance(data, google.datalab.ml.CsvDataSet):
+      for file_name in data.input_files:
+        cmd_args.append(arg_name + '=' + file_name)
+    else:
+      raise ValueError('Invalid training data. Requires either a dict, or ' +
+                       'a google.datalab.ml.CsvDataSet')
+
+  _process_train_eval_data(cell_data['training_data'], '--train-data-paths', cmd_args)
+  _process_train_eval_data(cell_data['evaluation_data'], '--eval-data-paths', cmd_args)
+
+  if 'model_args' in cell_data:
+    for k, v in six.iteritems(cell_data['model_args']):
+      cmd_args.extend(['--' + k, str(v)])
 
   _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
 
