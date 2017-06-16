@@ -131,7 +131,7 @@ class TestLocalAnalyze(unittest.TestCase):
       features = {'col1': {'transform': 'scale', 'source_column': 'col1'},
                   'col2': {'transform': 'identity', 'source_column': 'col2'}}
       analyze.run_local_analysis(
-          output_folder, input_file_path, schema, analyze.invert_features(features))
+          output_folder, [input_file_path], schema, analyze.invert_features(features))
 
       stats = json.loads(
           file_io.read_file_to_string(
@@ -165,7 +165,7 @@ class TestLocalAnalyze(unittest.TestCase):
       features = {'color': {'transform': 'one_hot', 'source_column': 'color'},
                   'transport': {'transform': 'embedding', 'source_column': 'transport'}}
       analyze.run_local_analysis(
-        output_folder, input_file_path, schema, analyze.invert_features(features))
+        output_folder, [input_file_path], schema, analyze.invert_features(features))
 
       stats = json.loads(
           file_io.read_file_to_string(
@@ -212,7 +212,7 @@ class TestLocalAnalyze(unittest.TestCase):
       features = {'col1': {'transform': 'bag_of_words', 'source_column': 'col1'},
                   'col2': {'transform': 'tfidf', 'source_column': 'col2'}}
       analyze.run_local_analysis(
-        output_folder, input_file_path, schema, analyze.invert_features(features))
+        output_folder, [input_file_path], schema, analyze.invert_features(features))
 
       stats = json.loads(
           file_io.read_file_to_string(
