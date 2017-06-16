@@ -44,9 +44,9 @@ def extract_archive(archive_path, dest):
       archive_path = os.path.join(tmpfolder, os.path.name(archive_path))
 
     if archive_path.lower().endswith('.tar.gz'):
-      flags = '-xvzf'
+      flags = '-xzf'
     elif archive_path.lower().endswith('.tar'):
-      flags = '-xvf'
+      flags = '-xf'
     else:
       raise ValueError('Only tar.gz or tar.Z files are supported.')
 
