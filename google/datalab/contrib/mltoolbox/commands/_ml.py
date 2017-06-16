@@ -288,8 +288,9 @@ def _analyze(args, cell):
                          'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
     elif isinstance(training_data, google.datalab.ml.CsvDataSet):
       schema_file = _create_json_file(tmpdir, training_data.schema, 'schema.json')
-      # TODO: Modify when command line interface supports multiple csv files.
-      cmd_args.extend(['--csv-file-pattern', training_data.input_files[0]])
+      for file_name in training_data.input_files:
+        cmd_args.append('--csv-file-pattern=' + file_name)
+
       cmd_args.extend(['--csv-schema-file', schema_file])
     elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
       # TODO: Support query too once command line supports query.
@@ -323,8 +324,6 @@ def _transform(args, cell):
     cmd_args.append('--shuffle')
   if args['batch_size']:
     cmd_args.extend(['--batch-size', str(args['batch_size'])])
-  if args['cloud']:
-    cmd_args.append('--cloud')
 
   if isinstance(training_data, dict):
     if 'csv_file_pattern' in training_data:
@@ -340,7 +339,8 @@ def _transform(args, cell):
       raise ValueError('Invalid training_data dict. ' +
                        'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
   elif isinstance(training_data, google.datalab.ml.CsvDataSet):
-    cmd_args.extend(['--csv-file-pattern', training_data.input_files[0]])
+    for file_name in training_data.input_files:
+      cmd_args.append('--csv-file-pattern=' + file_name)
   elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
     cmd_args.extend(['--bigquery-table', training_data.table])
   else:
@@ -382,14 +382,16 @@ def _train(args, cell):
     if isinstance(data, dict):
       if 'csv_file_pattern' in data:
         cmd_args.extend([arg_name, data['csv_file_pattern']])
-        cmd_args.append('--run-transforms')
+        if '--run-transforms' not in cmd_args:
+          cmd_args.append('--run-transforms')
       elif 'transformed_file_pattern' in data:
         cmd_args.extend([arg_name, data['transformed_file_pattern']])
       else:
         raise ValueError('Invalid training_data dict. ' +
                          'Requires either "csv_file_pattern" or "transformed_file_pattern".')
     elif isinstance(data, google.datalab.ml.CsvDataSet):
-      cmd_args.extend([arg_name, data.input_files[0]])
+      for file_name in data.input_files:
+        cmd_args.append(arg_name + '=' + file_name)
     else:
       raise ValueError('Invalid training data. Requires either a dict, or ' +
                        'a google.datalab.ml.CsvDataSet')
