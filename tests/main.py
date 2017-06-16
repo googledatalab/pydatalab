@@ -39,6 +39,7 @@ import kernel.html_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import ml.dataset_tests
+import mltoolbox_magic.archive_tests
 import mltoolbox_magic.local_predict_tests
 import mltoolbox_magic.shell_process_tests
 import mltoolbox_structured_data.dl_interface_tests
@@ -103,6 +104,7 @@ _INTEGRATION_TEST_MODULES = [
     mltoolbox_structured_data.traininglib_tests,
     mltoolbox_magic.local_predict_tests,
     mltoolbox_magic.shell_process_tests,
+    mltoolbox_magic.archive_tests,
 ]
 
 
