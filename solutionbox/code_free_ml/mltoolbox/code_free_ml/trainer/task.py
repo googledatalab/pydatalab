@@ -59,32 +59,28 @@ PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
 
 
 class DatalabParser():
-  """Datalab parser.
+  """An arg parser that also prints package specific args with --datalab-help.
 
   When using Datalab magic's to run this trainer, it prints it's own help menu
   that describes the required options that are common to all trainers. In order
   to print just the options that are unique to this trainer, datalab calls this
-  file with --lite-help.
+  file with --datalab-help.
 
-  This class implements --lite-help by building a 2nd argparser that only has
-  the unique parameters. This insures the formatting is consistant with
-  argparse as argparse is used.
+  This class implements --datalab-help by building a list of help string that only
+  includes the unique parameters.
   """
 
-  def __init__(self, epilog=None):
-    # full_parser is used by this trainer. lite_parser is only used to print
-    # a shorter help string when --lite-help is used.
+  def __init__(self, epilog=None, datalab_epilog=None):
     self.full_parser = argparse.ArgumentParser(epilog=epilog)
-    self.lite_parser = argparse.ArgumentParser(usage='', epilog=epilog, add_help=False)
-
-    # The arguments added here are required to exist by Datalab's magics.
+    self.datalab_help = []
+    self.datalab_epilog = datalab_epilog
 
     # Datalab help string
     self.full_parser.add_argument(
-        '--lite-help', action=self.make_lite_help_action(),
+        '--datalab-help', action=self.make_datalab_help_action(),
         help='Show a smaller help message for DataLab only and exit')
 
-    # I/O file parameters
+    # The arguments added here are required to exist by Datalab's "%%ml train" magics.
     self.full_parser.add_argument(
         '--train-data-paths', type=str, required=True, action='append')
     self.full_parser.add_argument(
@@ -98,13 +94,14 @@ class DatalabParser():
         '--run-transforms', action='store_true', default=False,
         help='If used, input data is raw csv that needs transformation.')
 
-  def make_lite_help_action(self):
-    """Custom action for --lite-help.
+  def make_datalab_help_action(self):
+    """Custom action for --datalab-help.
 
-    The action takes a reference to the lite_parser via closure and calls its
-    help message function.
+    The action output the package specific parameters and will be part of "%%ml train"
+    help string.
     """
-    lite_parser = self.lite_parser
+    datalab_help = self.datalab_help
+    epilog = self.datalab_epilog
 
     class _CustomAction(argparse.Action):
 
@@ -113,22 +110,33 @@ class DatalabParser():
             option_strings=option_strings, dest=dest, nargs=0, help=help)
 
       def __call__(self, parser, args, values, option_string=None):
-        # Note that parser is a reference to full_parser, but we need to get the
-        # help string from the lite_parser.
-        help_str = lite_parser.format_help()
-        index = help_str.find('optional arguments:')
-        if index >= 0:
-          help_str = help_str[index + len('optional arguments:'):]
-        print(help_str)
+        print('\n\n'.join(datalab_help))
+        if epilog:
+          print(epilog)
 
-        lite_parser.exit()
+        # We have printed all help string datalab needs. If we don't quit, it will complain about
+        # missing required arguments later.
+        quit()
     return _CustomAction
 
-  def add_argument(self, *args, **kwargs):
+  def add_argument(self, name, **kwargs):
     # Any argument added here is not required by Datalab, and so is unique
-    # to this trainer. Add each argument to the main parser and the lite parser.
-    self.full_parser.add_argument(*args, **kwargs)
-    self.lite_parser.add_argument(*args, **kwargs)
+    # to this trainer. Add each argument to the main parser and the datalab helper string.
+    self.full_parser.add_argument(name, **kwargs)
+    name = name.replace('--', '')
+    # leading spaces are needed for datalab's help formatting.
+    msg = '  ' + name + ': '
+    if 'help' in kwargs:
+      msg += kwargs['help'] + ' '
+    if kwargs.get('required', False):
+      msg += 'Required. '
+    else:
+      msg += 'Optional. '
+    if 'choices' in kwargs:
+      msg += 'One of ' + str(kwargs['choices']) + '. '
+    if 'default' in kwargs:
+      msg += 'default: ' + str(kwargs['default']) + '.'
+    self.datalab_help.append(msg)
 
   def parse_known_args(self, args=None):
     return self.full_parser.parse_known_args(args=args)
@@ -137,8 +145,14 @@ class DatalabParser():
 def parse_arguments(argv):
   """Parse the command line arguments."""
   parser = DatalabParser(
-      epilog=('Note that if using a DNN model, --hidden-layer-size=NUM, '
-              '--hidden-layer-size=NUM, ..., should be used. '))
+      epilog=('Note that if using a DNN model, --hidden-layer-size1=NUM, '
+              '--hidden-layer-size2=NUM, ..., is also required. '),
+      datalab_epilog=("""
+  Note that if using a DNN model,
+  hidden-layer-size1: NUM
+  hidden-layer-size2: NUM
+  ...
+  is also required. """))
 
   # HP parameters
   parser.add_argument(
@@ -151,7 +165,7 @@ def parse_arguments(argv):
       '--l2-regularization', type=float, default=0.0,
       help='L2 term for linear models.')
 
-  # Model problems
+  # Model parameters
   parser.add_argument(
     '--model-type', required=True,
     choices=['linear_classification', 'linear_regression', 'dnn_classification', 'dnn_regression'])
@@ -162,7 +176,7 @@ def parse_arguments(argv):
 
   # HP parameters
   parser.add_argument(
-      '--learning-rate', type=float, default=0.01, help='optimizer learning rate')
+      '--learning-rate', type=float, default=0.01, help='optimizer learning rate.')
 
   # Training input parameters
   parser.add_argument(
@@ -171,19 +185,19 @@ def parse_arguments(argv):
   parser.add_argument(
       '--num-epochs', type=int,
       help=('Maximum number of training data epochs on which to train. If '
-            'both --max-steps and --num-epochs are specified, the training '
-            'job will run for --max-steps or --num-epochs, whichever occurs '
-            'first. If unspecified will run for --max-steps.'))
+            'both "max-step" and "num-epochs" are specified, the training '
+            'job will run for "max-steps" or "num-epochs", whichever occurs '
+            'first. If unspecified will run for "max-steps".'))
   parser.add_argument('--train-batch-size', type=int, default=1000)
   parser.add_argument('--eval-batch-size', type=int, default=1000)
   parser.add_argument(
       '--min-eval-frequency', type=int, default=100,
-      help='Minimum number of training steps between evaluations')
+      help='Minimum number of training steps between evaluations.')
 
   # other parameters
   parser.add_argument(
       '--save-checkpoints-secs', type=int, default=600,
-      help='How often the model should be checkpointed/saved in seconds')
+      help='How often the model should be checkpointed/saved in seconds.')
 
   args, remaining_args = parser.parse_known_args(args=argv[1:])
 
