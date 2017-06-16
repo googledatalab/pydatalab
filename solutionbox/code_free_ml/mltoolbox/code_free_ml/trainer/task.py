@@ -668,9 +668,12 @@ def get_experiment_fn(args):
 
   def get_experiment(output_dir):
     # Read schema, input features, and transforms.
-    schema_path_with_target = os.path.join(args.output_dir_from_analysis_step, feature_transforms.SCHEMA_FILE)
-    features_path = os.path.join(args.output_dir_from_analysis_step, feature_transforms.FEATURES_FILE)
-    stats_path = os.path.join(args.output_dir_from_analysis_step, feature_transforms.STATS_FILE)
+    schema_path_with_target = os.path.join(args.output_dir_from_analysis_step,
+                                           feature_transforms.SCHEMA_FILE)
+    features_path = os.path.join(args.output_dir_from_analysis_step,
+                                 feature_transforms.FEATURES_FILE)
+    stats_path = os.path.join(args.output_dir_from_analysis_step,
+                              feature_transforms.STATS_FILE)
 
     schema = read_json_file(schema_path_with_target)
     features = read_json_file(features_path)
