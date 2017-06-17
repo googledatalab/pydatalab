@@ -58,74 +58,146 @@ PG_CLASSIFICATION_LABEL_TEMPLATE = 'predicted_%s'
 PG_CLASSIFICATION_SCORE_TEMPLATE = 'score_%s'
 
 
+class DatalabParser():
+  """An arg parser that also prints package specific args with --datalab-help.
+
+  When using Datalab magic's to run this trainer, it prints it's own help menu
+  that describes the required options that are common to all trainers. In order
+  to print just the options that are unique to this trainer, datalab calls this
+  file with --datalab-help.
+
+  This class implements --datalab-help by building a list of help string that only
+  includes the unique parameters.
+  """
+
+  def __init__(self, epilog=None, datalab_epilog=None):
+    self.full_parser = argparse.ArgumentParser(epilog=epilog)
+    self.datalab_help = []
+    self.datalab_epilog = datalab_epilog
+
+    # Datalab help string
+    self.full_parser.add_argument(
+        '--datalab-help', action=self.make_datalab_help_action(),
+        help='Show a smaller help message for DataLab only and exit')
+
+    # The arguments added here are required to exist by Datalab's "%%ml train" magics.
+    self.full_parser.add_argument(
+        '--train-data-paths', type=str, required=True, action='append')
+    self.full_parser.add_argument(
+        '--eval-data-paths', type=str, required=True, action='append')
+    self.full_parser.add_argument('--job-dir', type=str, required=True)
+    self.full_parser.add_argument(
+        '--output-dir-from-analysis-step', type=str, required=True,
+        help=('Output folder of analysis. Should contain the schema, stats, and '
+              'vocab files. Path must be on GCS if running cloud training.'))
+    self.full_parser.add_argument(
+        '--run-transforms', action='store_true', default=False,
+        help='If used, input data is raw csv that needs transformation.')
+
+  def make_datalab_help_action(self):
+    """Custom action for --datalab-help.
+
+    The action output the package specific parameters and will be part of "%%ml train"
+    help string.
+    """
+    datalab_help = self.datalab_help
+    epilog = self.datalab_epilog
+
+    class _CustomAction(argparse.Action):
+
+      def __init__(self, option_strings, dest, help=None):
+        super(_CustomAction, self).__init__(
+            option_strings=option_strings, dest=dest, nargs=0, help=help)
+
+      def __call__(self, parser, args, values, option_string=None):
+        print('\n\n'.join(datalab_help))
+        if epilog:
+          print(epilog)
+
+        # We have printed all help string datalab needs. If we don't quit, it will complain about
+        # missing required arguments later.
+        quit()
+    return _CustomAction
+
+  def add_argument(self, name, **kwargs):
+    # Any argument added here is not required by Datalab, and so is unique
+    # to this trainer. Add each argument to the main parser and the datalab helper string.
+    self.full_parser.add_argument(name, **kwargs)
+    name = name.replace('--', '')
+    # leading spaces are needed for datalab's help formatting.
+    msg = '  ' + name + ': '
+    if 'help' in kwargs:
+      msg += kwargs['help'] + ' '
+    if kwargs.get('required', False):
+      msg += 'Required. '
+    else:
+      msg += 'Optional. '
+    if 'choices' in kwargs:
+      msg += 'One of ' + str(kwargs['choices']) + '. '
+    if 'default' in kwargs:
+      msg += 'default: ' + str(kwargs['default']) + '.'
+    self.datalab_help.append(msg)
+
+  def parse_known_args(self, args=None):
+    return self.full_parser.parse_known_args(args=args)
+
+
 def parse_arguments(argv):
   """Parse the command line arguments."""
-  parser = argparse.ArgumentParser(
-      description=('Train a regression or classification model. Note that if '
-                   'using a DNN model, --layer-size1=NUM, --layer-size2=NUM, '
-                   'should be used. '))
-
-  # I/O file parameters
-  parser.add_argument('--train-data-paths', type=str,
-                      required=True)
-  parser.add_argument('--eval-data-paths', type=str,
-                      required=True)
-  parser.add_argument('--job-dir', type=str, required=True)
-  parser.add_argument('--analysis-output-dir',
-                      type=str,
-                      required=True,
-                      help=('Output folder of analysis. Should contain the'
-                            ' schema, stats, and vocab files.'
-                            ' Path must be on GCS if running'
-                            ' cloud training.'))
-  parser.add_argument('--run-transforms',
-                      action='store_true',
-                      default=False,
-                      help=('If used, input data is raw csv that needs '
-                            'transformation.'))
+  parser = DatalabParser(
+      epilog=('Note that if using a DNN model, --hidden-layer-size1=NUM, '
+              '--hidden-layer-size2=NUM, ..., is also required. '),
+      datalab_epilog=("""
+  Note that if using a DNN model,
+  hidden-layer-size1: NUM
+  hidden-layer-size2: NUM
+  ...
+  is also required. """))
 
   # HP parameters
-  parser.add_argument('--learning-rate', type=float, default=0.01,
-                      help='optimizer learning rate')
-  parser.add_argument('--epsilon', type=float, default=0.0005,
-                      help='tf.train.AdamOptimizer epsilon. Only used in '
-                           'dnn models.')
-  parser.add_argument('--l1_regularization', type=float, default=0.0,
-                      help='L1 term for linear models.')
-  parser.add_argument('--l2_regularization', type=float, default=0.0,
-                      help='L2 term for linear models.')
+  parser.add_argument(
+      '--epsilon', type=float, default=0.0005,
+      help='tf.train.AdamOptimizer epsilon. Only used in dnn models.')
+  parser.add_argument(
+      '--l1-regularization', type=float, default=0.0,
+      help='L1 term for linear models.')
+  parser.add_argument(
+      '--l2-regularization', type=float, default=0.0,
+      help='L2 term for linear models.')
 
-  # Model problems
-  parser.add_argument('--model-type',
-                      choices=['linear_classification', 'linear_regression',
-                               'dnn_classification', 'dnn_regression'],
-                      required=True)
-  parser.add_argument('--top-n',
-                      type=int,
-                      default=1,
-                      help=('For classification problems, the output graph '
-                            'will contain the labels and scores for the top '
-                            'n classes.'))
+  # Model parameters
+  parser.add_argument(
+    '--model-type', required=True,
+    choices=['linear_classification', 'linear_regression', 'dnn_classification', 'dnn_regression'])
+  parser.add_argument(
+      '--top-n', type=int, default=1,
+      help=('For classification problems, the output graph will contain the '
+            'labels and scores for the top n classes.'))
+
+  # HP parameters
+  parser.add_argument(
+      '--learning-rate', type=float, default=0.01, help='optimizer learning rate.')
+
   # Training input parameters
-  parser.add_argument('--max-steps', type=int, default=5000,
-                      help='Maximum number of training steps to perform.')
-  parser.add_argument('--num-epochs',
-                      type=int,
-                      help=('Maximum number of training data epochs on which '
-                            'to train. If both --max-steps and --num-epochs '
-                            'are specified, the training job will run for '
-                            '--max-steps or --num-epochs, whichever occurs '
-                            'first. If unspecified will run for --max-steps.'))
+  parser.add_argument(
+      '--max-steps', type=int, default=5000,
+      help='Maximum number of training steps to perform.')
+  parser.add_argument(
+      '--num-epochs', type=int,
+      help=('Maximum number of training data epochs on which to train. If '
+            'both "max-step" and "num-epochs" are specified, the training '
+            'job will run for "max-steps" or "num-epochs", whichever occurs '
+            'first. If unspecified will run for "max-steps".'))
   parser.add_argument('--train-batch-size', type=int, default=1000)
   parser.add_argument('--eval-batch-size', type=int, default=1000)
-  parser.add_argument('--min-eval-frequency', type=int, default=100,
-                      help=('Minimum number of training steps between '
-                            'evaluations'))
+  parser.add_argument(
+      '--min-eval-frequency', type=int, default=100,
+      help='Minimum number of training steps between evaluations.')
 
   # other parameters
-  parser.add_argument('--save-checkpoints-secs', type=int, default=600,
-                      help=('How often the model should be checkpointed/saved '
-                            'in seconds'))
+  parser.add_argument(
+      '--save-checkpoints-secs', type=int, default=600,
+      help='How often the model should be checkpointed/saved in seconds.')
 
   args, remaining_args = parser.parse_known_args(args=argv[1:])
 
@@ -196,13 +268,14 @@ def build_feature_columns(features, stats, model_type):
   # we are using tf.layers.
   for name, transform in six.iteritems(features):
     transform_name = transform['transform']
+    source_column = transform['source_column']
 
     if transform_name in feature_transforms.NUMERIC_TRANSFORMS:
       new_feature = tf.contrib.layers.real_valued_column(name, dimension=1)
     elif transform_name == feature_transforms.ONE_HOT_TRANSFORM:
       sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
           name,
-          bucket_size=stats['column_stats'][name]['vocab_size'])
+          bucket_size=stats['column_stats'][source_column]['vocab_size'])
       if is_dnn:
         new_feature = tf.contrib.layers.one_hot_column(sparse)
       else:
@@ -211,7 +284,7 @@ def build_feature_columns(features, stats, model_type):
       if is_dnn:
         sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
             name,
-            bucket_size=stats['column_stats'][name]['vocab_size'])
+            bucket_size=stats['column_stats'][source_column]['vocab_size'])
         new_feature = tf.contrib.layers.embedding_column(
             sparse,
             dimension=transform['embedding_dim'])
@@ -223,7 +296,7 @@ def build_feature_columns(features, stats, model_type):
     elif transform_name in feature_transforms.TEXT_TRANSFORMS:
       sparse_ids = tf.contrib.layers.sparse_column_with_integerized_feature(
           name + '_ids',
-          bucket_size=stats['column_stats'][name]['vocab_size'],
+          bucket_size=stats['column_stats'][source_column]['vocab_size'],
           combiner='sum')
       sparse_weights = tf.contrib.layers.weighted_sparse_column(
           sparse_id_column=sparse_ids,
@@ -232,7 +305,7 @@ def build_feature_columns(features, stats, model_type):
       if is_dnn:
         # TODO(brandondutra): Figure out why one_hot_column does not work.
         # Use new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
-        dimension = int(math.log(stats['column_stats'][name]['vocab_size'])) + 1
+        dimension = int(math.log(stats['column_stats'][source_column]['vocab_size'])) + 1
         new_feature = tf.contrib.layers.embedding_column(
             sparse_weights,
             dimension=dimension,
@@ -374,7 +447,7 @@ def make_export_strategy(
       contrib_variables.create_global_step(g)
 
       input_ops = feature_transforms.build_csv_serving_tensors(
-          args.analysis_output_dir, features, schema, stats, keep_target)
+          args.output_dir_from_analysis_step, features, schema, stats, keep_target)
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
@@ -559,7 +632,7 @@ def read_vocab(args, column_name):
   Returns:
     List of vocab words or [] if the vocab file is not found.
   """
-  vocab_path = os.path.join(args.analysis_output_dir,
+  vocab_path = os.path.join(args.output_dir_from_analysis_step,
                             feature_transforms.VOCAB_ANALYSIS_FILE % column_name)
 
   if not file_io.file_exists(vocab_path):
@@ -595,9 +668,12 @@ def get_experiment_fn(args):
 
   def get_experiment(output_dir):
     # Read schema, input features, and transforms.
-    schema_path_with_target = os.path.join(args.analysis_output_dir, feature_transforms.SCHEMA_FILE)
-    features_path = os.path.join(args.analysis_output_dir, feature_transforms.FEATURES_FILE)
-    stats_path = os.path.join(args.analysis_output_dir, feature_transforms.STATS_FILE)
+    schema_path_with_target = os.path.join(args.output_dir_from_analysis_step,
+                                           feature_transforms.SCHEMA_FILE)
+    features_path = os.path.join(args.output_dir_from_analysis_step,
+                                 feature_transforms.FEATURES_FILE)
+    stats_path = os.path.join(args.output_dir_from_analysis_step,
+                              feature_transforms.STATS_FILE)
 
     schema = read_json_file(schema_path_with_target)
     features = read_json_file(features_path)
@@ -652,7 +728,7 @@ def get_experiment_fn(args):
           schema=schema,
           features=features,
           stats=stats,
-          analysis_output_dir=args.analysis_output_dir,
+          analysis_output_dir=args.output_dir_from_analysis_step,
           raw_data_file_pattern=args.train_data_paths,
           training_batch_size=args.train_batch_size,
           num_epochs=args.num_epochs,
@@ -663,7 +739,7 @@ def get_experiment_fn(args):
           schema=schema,
           features=features,
           stats=stats,
-          analysis_output_dir=args.analysis_output_dir,
+          analysis_output_dir=args.output_dir_from_analysis_step,
           raw_data_file_pattern=args.eval_data_paths,
           training_batch_size=args.eval_batch_size,
           num_epochs=1,
@@ -673,7 +749,7 @@ def get_experiment_fn(args):
       input_reader_for_train = feature_transforms.build_tfexample_transfored_training_input_fn(
           schema=schema,
           features=features,
-          analysis_output_dir=args.analysis_output_dir,
+          analysis_output_dir=args.output_dir_from_analysis_step,
           raw_data_file_pattern=args.train_data_paths,
           training_batch_size=args.train_batch_size,
           num_epochs=args.num_epochs,
@@ -683,7 +759,7 @@ def get_experiment_fn(args):
       input_reader_for_eval = feature_transforms.build_tfexample_transfored_training_input_fn(
           schema=schema,
           features=features,
-          analysis_output_dir=args.analysis_output_dir,
+          analysis_output_dir=args.output_dir_from_analysis_step,
           raw_data_file_pattern=args.eval_data_paths,
           training_batch_size=args.eval_batch_size,
           num_epochs=1,

@@ -345,33 +345,34 @@ def make_preprocessing_fn(output_dir, features, keep_target):
     result = {}
     for name, transform in six.iteritems(features):
       transform_name = transform['transform']
+      source_column = transform['source_column']
 
       if transform_name == KEY_TRANSFORM:
         transform_name = 'identity'
       elif transform_name == TARGET_TRANSFORM:
         if not keep_target:
           continue
-        if file_io.file_exists(os.path.join(output_dir, VOCAB_ANALYSIS_FILE % name)):
+        if file_io.file_exists(os.path.join(output_dir, VOCAB_ANALYSIS_FILE % source_column)):
           transform_name = 'one_hot'
         else:
           transform_name = 'identity'
 
       if transform_name == 'identity':
-        result[name] = inputs[name]
+        result[name] = inputs[source_column]
       elif transform_name == 'scale':
         result[name] = _scale(
             inputs[name],
-            min_x_value=stats['column_stats'][name]['min'],
-            max_x_value=stats['column_stats'][name]['max'],
+            min_x_value=stats['column_stats'][source_column]['min'],
+            max_x_value=stats['column_stats'][source_column]['max'],
             output_min=transform.get('value', 1) * (-1),
             output_max=transform.get('value', 1))
       elif transform_name in [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM,
                               TFIDF_TRANSFORM, BOW_TRANSFORM]:
         vocab, ex_count = read_vocab_file(
-            os.path.join(output_dir, VOCAB_ANALYSIS_FILE % name))
+            os.path.join(output_dir, VOCAB_ANALYSIS_FILE % source_column))
 
         if transform_name == TFIDF_TRANSFORM:
-          tokens = tf.string_split(inputs[name], ' ')
+          tokens = tf.string_split(inputs[source_column], ' ')
           ids = _string_to_int(tokens, vocab)
           weights = _tfidf(
               x=ids,
@@ -382,7 +383,7 @@ def make_preprocessing_fn(output_dir, features, keep_target):
           result[name + '_ids'] = ids
           result[name + '_weights'] = weights
         elif transform_name == BOW_TRANSFORM:
-          tokens = tf.string_split(inputs[name], ' ')
+          tokens = tf.string_split(inputs[source_column], ' ')
           ids = _string_to_int(tokens, vocab)
           weights = _bag_of_words(x=ids)
 
@@ -391,10 +392,10 @@ def make_preprocessing_fn(output_dir, features, keep_target):
         else:
           # ONE_HOT_TRANSFORM: making a dense vector is done at training
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
-          result[name] = _string_to_int(inputs[name], vocab)
+          result[name] = _string_to_int(inputs[source_column], vocab)
       elif transform_name == IMAGE_TRANSFORM:
         make_image_to_vec_fn = _make_image_to_vec_tito()
-        result[name] = make_image_to_vec_fn(inputs[name])
+        result[name] = make_image_to_vec_fn(inputs[source_column])
       else:
         raise ValueError('unknown transform %s' % transform_name)
     return result
@@ -415,9 +416,10 @@ def get_transfrormed_feature_info(features, schema):
 
   for name, transform in six.iteritems(features):
     transform_name = transform['transform']
+    source_column = transform['source_column']
 
     if transform_name == IDENTITY_TRANSFORM:
-      schema_type = next(col['type'].lower() for col in schema if col['name'] == name)
+      schema_type = next(col['type'].lower() for col in schema if col['name'] == source_column)
       if schema_type == FLOAT_SCHEMA:
         info[name]['dtype'] = tf.float32
       elif schema_type == INTEGER_SCHEMA:
@@ -441,7 +443,7 @@ def get_transfrormed_feature_info(features, schema):
       info[name + '_ids']['size'] = None
       info[name + '_weights']['size'] = None
     elif transform_name == KEY_TRANSFORM:
-      schema_type = next(col['type'].lower() for col in schema if col['name'] == name)
+      schema_type = next(col['type'].lower() for col in schema if col['name'] == source_column)
       if schema_type == FLOAT_SCHEMA:
         info[name]['dtype'] = tf.float32
       elif schema_type == INTEGER_SCHEMA:
@@ -451,7 +453,7 @@ def get_transfrormed_feature_info(features, schema):
       info[name]['size'] = 1
     elif transform_name == TARGET_TRANSFORM:
       # If the input is a string, it gets converted to an int (id)
-      schema_type = next(col['type'].lower() for col in schema if col['name'] == name)
+      schema_type = next(col['type'].lower() for col in schema if col['name'] == source_column)
       if schema_type in NUMERIC_SCHEMA:
         info[name]['dtype'] = tf.float32
       else:

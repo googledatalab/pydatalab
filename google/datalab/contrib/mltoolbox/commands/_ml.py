@@ -30,8 +30,11 @@ import pandas as pd
 import numpy as np
 import shutil
 import six
+import subprocess
 import tempfile
 
+import google.datalab
+import google.datalab.bigquery as bq
 import google.datalab.utils.commands
 import google.datalab.contrib.mltoolbox._local_predict as _local_predict
 import google.datalab.contrib.mltoolbox._shell_process as _shell_process
@@ -88,8 +91,8 @@ Cell input is in yaml format. Fields:
 
 training_data: one of the following:
   csv_file_pattern and csv_schema (as the example above), or
-  bigquery (example: "bigquery: project.dataset.table" or
-                     "bigquery: select * from table where num1 > 1.0"), or
+  bigquery_table (example: "bigquery_table: project.dataset.table"), or
+  bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
   a variable defined as google.datalab.ml.CsvDataSet or google.datalab.ml.BigQueryDataSet
 
 features: A dictionary with key being column name. The list of supported transforms:
@@ -129,9 +132,89 @@ features: $features_def
 
   analyze_parser.set_defaults(func=_analyze)
 
+  transform_parser = parser.subcommand(
+      'transform', help="""Transform the data into tf.example which is more efficient
+in training. Example usage:
+
+%%ml transform --output_dir_from_analysis_step path/to/analysis --output_dir path/to/dir
+     --output_filename_prefix my_filename [--cloud] [--shuffle] [--batch_size 100]
+training_data:
+  csv_file_pattern: path/to/csv
+cloud:
+  num_workers: 3
+  worker_machine_type: n1-standard-1
+  project_id: my_project_id
+
+Cell input is in yaml format. Fields:
+
+training_data: Required. It is one of the following:
+  csv_file_pattern or
+  bigquery_table (example: "bigquery_table: project.dataset.table"), or
+  bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
+  a variable defined as google.datalab.ml.CsvDataSet or google.datalab.ml.BigQueryDataSet
+
+cloud: A dictionary of cloud config. All of them are optional. The "cloud" itself is optional too.
+  num_workers: Dataflow number of workers. If not set, DataFlow service will determine the number.
+  worker_machine_type: a machine name from https://cloud.google.com/compute/docs/machine-types.
+                       If not given, the service uses the default machine type.
+  project_id: id of the project to use for DataFlow service. If not set, Datalab's default
+              project (set by %%datalab project set) is used.
+""", formatter_class=argparse.RawTextHelpFormatter)
+  transform_parser.add_argument('--output_dir_from_analysis_step', required=True,
+                                help='path of analysis output directory.')
+  transform_parser.add_argument('--output_dir', required=True,
+                                help='path of output directory.')
+  transform_parser.add_argument('--output_filename_predix', required=True,
+                                help='The prefix of the output file name. The output files will ' +
+                                     'be like output_filename_prefix_00001_of_0000n')
+  transform_parser.add_argument('--cloud', action='store_true', default=False,
+                                help='whether to run transform in cloud or local.')
+  transform_parser.add_argument('--shuffle', action='store_true', default=False,
+                                help='whether to shuffle the training data in output.')
+  transform_parser.add_argument('--batch_size', type=int, default=100,
+                                help='number of instances in a batch to process once. ' +
+                                     'Larger batch is more efficient but may consume more memory.')
+
+  transform_parser.set_defaults(func=_transform)
+
+  train_datalab_help = subprocess.Popen(
+      ['python', '-m', 'trainer.task', '--datalab-help'],
+      cwd=MLTOOLBOX_CODE_PATH,
+      stdout=subprocess.PIPE).communicate()[0]
+
+  train_parser = parser.subcommand(
+      'train', help="""Train a model. Example usage:
+
+%%ml train --output_dir_from_analysis_step path/to/analysis --output_dir path/to/dir
+training_data:
+  csv_file_pattern: path/to/csv
+evaluation_data:
+  csv_file_pattern: path/to/csv
+model_args:
+  model_type: linear_regression
+
+Cell input is in yaml format. Fields:
+
+training_data: Required. It is one of the following:
+  csv_file_pattern or
+  transformed_file_pattern or
+  a variable defined as google.datalab.ml.CsvDataSet
+
+evaluation_data: Required. Same as training_data
+
+model_args: a dictionary of model specific args. See below.
+
+""" + train_datalab_help, formatter_class=argparse.RawTextHelpFormatter)
+  train_parser.add_argument('--output_dir_from_analysis_step', required=True,
+                            help='path of analysis output directory.')
+  train_parser.add_argument('--output_dir', required=True,
+                            help='path of trained model directory.')
+
+  train_parser.set_defaults(func=_train)
+
   predict_parser = parser.subcommand(
-      'predict', help="""Predict with local or deployed models.
-      'Prediction data by CSV lines in input cell in yaml format. For example:
+      'predict', help="""Predict with local or deployed models. Prediction data can be CSV lines
+in input cell in yaml format. For example:
 
 %%ml predict --headers key,num --model path/to/model
 prediction_data:
@@ -164,6 +247,13 @@ prediction_data: $my_data
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
+def _create_json_file(tmpdir, data, filename):
+  json_file = os.path.join(tmpdir, filename)
+  with open(json_file, 'w') as f:
+    json.dump(data, f)
+  return json_file
+
+
 def _analyze(args, cell):
   env = google.datalab.utils.commands.notebook_environment()
   cell_data = google.datalab.utils.commands.parse_config(cell, env)
@@ -177,30 +267,30 @@ def _analyze(args, cell):
     cmd_args.append('--cloud')
 
   training_data = cell_data['training_data']
+
   tmpdir = tempfile.mkdtemp()
-
-  def _create_json_file(data, filename):
-    json_file = os.path.join(tmpdir, filename)
-    with open(json_file, 'w') as f:
-      json.dump(data, f)
-    return json_file
-
   try:
     if isinstance(training_data, dict):
       if 'csv_file_pattern' in training_data and 'csv_schema' in training_data:
         schema = training_data['csv_schema']
-        schema_file = _create_json_file(schema, 'schema.json')
+        schema_file = _create_json_file(tmpdir, schema, 'schema.json')
         cmd_args.extend(['--csv-file-pattern', training_data['csv_file_pattern']])
         cmd_args.extend(['--csv-schema-file', schema_file])
-      elif 'bigquery' in training_data:
-        cmd_args.extend(['--bigquery-table', training_data['bigquery']])
+      elif 'bigquery_table' in training_data:
+        cmd_args.extend(['--bigquery-table', training_data['bigquery_table']])
+      elif 'bigquery_sql' in training_data:
+        # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
+        print('Creating temporary table that will be deleted in 24 hours')
+        r = bq.Query(training_data['bigquery_sql']).execute().result()
+        cmd_args.extend(['--bigquery-table', r.full_name])
       else:
         raise ValueError('Invalid training_data dict. ' +
                          'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
     elif isinstance(training_data, google.datalab.ml.CsvDataSet):
-      schema_file = _create_json_file(training_data.schema, 'schema.json')
-      # TODO: Modify when command line interface supports multiple csv files.
-      cmd_args.extend(['--csv-file-pattern', training_data.input_files[0]])
+      schema_file = _create_json_file(tmpdir, training_data.schema, 'schema.json')
+      for file_name in training_data.input_files:
+        cmd_args.append('--csv-file-pattern=' + file_name)
+
       cmd_args.extend(['--csv-schema-file', schema_file])
     elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
       # TODO: Support query too once command line supports query.
@@ -210,11 +300,110 @@ def _analyze(args, cell):
                        'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
 
     features = cell_data['features']
-    features_file = _create_json_file(features, 'features.json')
+    features_file = _create_json_file(tmpdir, features, 'features.json')
     cmd_args.extend(['--features-file', features_file])
     _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
   finally:
     shutil.rmtree(tmpdir)
+
+
+def _transform(args, cell):
+  env = google.datalab.utils.commands.notebook_environment()
+  cell_data = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(cell_data,
+                                                required_keys=['training_data'],
+                                                optional_keys=['cloud'])
+  training_data = cell_data['training_data']
+  cmd_args = ['python', 'transform.py',
+              '--output-dir', args['output_dir'],
+              '--output-dir-from-analysis-step', args['output_dir_from_analysis_step'],
+              '--output-filename-prefix', args['output_filename_predix']]
+  if args['cloud']:
+    cmd_args.append('--cloud')
+  if args['shuffle']:
+    cmd_args.append('--shuffle')
+  if args['batch_size']:
+    cmd_args.extend(['--batch-size', str(args['batch_size'])])
+
+  if isinstance(training_data, dict):
+    if 'csv_file_pattern' in training_data:
+      cmd_args.extend(['--csv-file-pattern', training_data['csv_file_pattern']])
+    elif 'bigquery_table' in training_data:
+      cmd_args.extend(['--bigquery-table', training_data['bigquery_table']])
+    elif 'bigquery_sql' in training_data:
+        # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
+        print('Creating temporary table that will be deleted in 24 hours')
+        r = bq.Query(training_data['bigquery_sql']).execute().result()
+        cmd_args.extend(['--bigquery-table', r.full_name])
+    else:
+      raise ValueError('Invalid training_data dict. ' +
+                       'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
+  elif isinstance(training_data, google.datalab.ml.CsvDataSet):
+    for file_name in training_data.input_files:
+      cmd_args.append('--csv-file-pattern=' + file_name)
+  elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
+    cmd_args.extend(['--bigquery-table', training_data.table])
+  else:
+    raise ValueError('Invalid training data. Requires either a dict, ' +
+                     'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
+
+  if 'cloud' in cell_data:
+    cloud_config = cell_data['cloud']
+    google.datalab.utils.commands.validate_config(
+        cloud_config,
+        required_keys=[],
+        optional_keys=['num_workers', 'worker_machine_type', 'project_id'])
+    if 'num_workers' in cloud_config:
+      cmd_args.extend(['--num-workers', str(cloud_config['num_workers'])])
+    if 'worker_machine_type' in cloud_config:
+      cmd_args.extend(['--worker-machine-type', cloud_config['worker_machine_type']])
+    if 'project_id' in cloud_config:
+      cmd_args.extend(['--project-id', cloud_config['project_id']])
+
+  if '--project-id' not in cmd_args:
+    cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
+
+  _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
+
+
+def _train(args, cell):
+  env = google.datalab.utils.commands.notebook_environment()
+  cell_data = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(
+      cell_data,
+      required_keys=['training_data', 'evaluation_data'],
+      optional_keys=['model_args'])
+
+  cmd_args = ['python', '-m', 'trainer.task',
+              '--job-dir', args['output_dir'],
+              '--output-dir-from-analysis-step', args['output_dir_from_analysis_step']]
+
+  def _process_train_eval_data(data, arg_name, cmd_args):
+    if isinstance(data, dict):
+      if 'csv_file_pattern' in data:
+        cmd_args.extend([arg_name, data['csv_file_pattern']])
+        if '--run-transforms' not in cmd_args:
+          cmd_args.append('--run-transforms')
+      elif 'transformed_file_pattern' in data:
+        cmd_args.extend([arg_name, data['transformed_file_pattern']])
+      else:
+        raise ValueError('Invalid training_data dict. ' +
+                         'Requires either "csv_file_pattern" or "transformed_file_pattern".')
+    elif isinstance(data, google.datalab.ml.CsvDataSet):
+      for file_name in data.input_files:
+        cmd_args.append(arg_name + '=' + file_name)
+    else:
+      raise ValueError('Invalid training data. Requires either a dict, or ' +
+                       'a google.datalab.ml.CsvDataSet')
+
+  _process_train_eval_data(cell_data['training_data'], '--train-data-paths', cmd_args)
+  _process_train_eval_data(cell_data['evaluation_data'], '--eval-data-paths', cmd_args)
+
+  if 'model_args' in cell_data:
+    for k, v in six.iteritems(cell_data['model_args']):
+      cmd_args.extend(['--' + k, str(v)])
+
+  _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
 
 
 def _predict(args, cell):
