@@ -131,7 +131,7 @@ class TestCases(unittest.TestCase):
     with self.assertRaises(Exception):
       cred = _utils.get_credentials()
 
-    # If default creds are not define, and no file exists with credentials, throw
+    # If default creds are not defined, and no file exists with credentials, throw
     # something more meaningful.
     mock_get_default_creds.side_effect = oauth2client.client.ApplicationDefaultCredentialsError
     with self.assertRaisesRegexp(Exception,
