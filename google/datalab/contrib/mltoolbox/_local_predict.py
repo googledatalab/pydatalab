@@ -233,31 +233,41 @@ def _format_results(output_format, output_schema, batched_results):
   return results
 
 
-def local_batch_predict(model_dir, csv_file_pattern, output_file, output_format):
+def local_batch_predict(model_dir, csv_file_pattern, output_dir, output_format, batch_size=None):
   """ Batch Predict with a specified model.
 
-  It does batch prediction, saves results to output_file and also creates an output
-  schema file.
+  It does batch prediction, saves results to output files and also creates an output
+  schema file. The output file names are input file names prepended by 'predict_results_'.
 
   Args:
     model_dir: The model directory containing a SavedModel (usually saved_model.pb).
     csv_file_pattern: a pattern of csv files as batch prediction source.
-    output_file: the path of file to output.
+    output_dir: the path of the output directory.
     output_format: csv or json.
+    batch_size: if not specified, 100 is used. Larger batch_size improves performance but may
+        cause more memory usage.
   """
+  if batch_size is None:
+    batch_size = 100
+
+  file_io.recursive_create_dir(output_dir)
   csv_files = file_io.get_matching_files(csv_file_pattern)
+  if len(csv_files) == 0:
+    raise ValueError('No files found given ' + csv_file_pattern)
+
   with tf.Graph().as_default(), tf.Session() as sess:
     input_alias_map, output_alias_map = _tf_load_model(sess, model_dir)
     csv_tensor_name = list(input_alias_map.values())[0]
     output_schema = _get_output_schema(sess, output_alias_map)
-    with file_io.FileIO(output_file, 'w') as f:
-      for csv_file in csv_files:
-        prediction_source = _batch_csv_reader(csv_file, 100)
+    for csv_file in csv_files:
+      output_file = os.path.join(output_dir, 'predict_results_' + os.path.basename(csv_file))
+      with file_io.FileIO(output_file, 'w') as f:
+        prediction_source = _batch_csv_reader(csv_file, batch_size)
         for batch in prediction_source:
           batch = [l.rstrip() for l in batch if l]
           predict_results = sess.run(fetches=output_alias_map, feed_dict={csv_tensor_name: batch})
           formatted_results = _format_results(output_format, output_schema, predict_results)
           f.write('\n'.join(formatted_results) + '\n')
 
-  file_io.write_string_to_file(os.path.join(output_file + '.schema.json'),
+  file_io.write_string_to_file(os.path.join(output_dir, 'predict_results_schema.json'),
                                json.dumps(output_schema, indent=2))

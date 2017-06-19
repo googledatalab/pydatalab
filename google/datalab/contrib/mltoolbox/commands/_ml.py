@@ -269,10 +269,14 @@ prediction_data:
   batch_predict_parser.add_argument('--model', required=True,
                                     help='The model path if not --cloud, or the id in ' +
                                          'the form of model.version if --cloud.')
-  batch_predict_parser.add_argument('--output_file', required=True,
-                                    help='The output file with prediction results.')
+  batch_predict_parser.add_argument('--output_dir', required=True,
+                                    help='The path of output directory with prediction results.')
   batch_predict_parser.add_argument('--output_format',
                                     help='csv or json')
+  batch_predict_parser.add_argument('--batch_size', type=int, default=100,
+                                    help='number of instances in a batch to process once. ' +
+                                         'Larger batch is more efficient but may consume ' +
+                                         'more memory.')
   batch_predict_parser.add_argument('--cloud', action='store_true', default=False,
                                     help='whether to run prediction in cloud or local.')
   batch_predict_parser.set_defaults(func=_batch_predict)
@@ -440,6 +444,9 @@ def _train(args, cell):
 
   if args['cloud']:
     cloud_config = cell_data['cloud']
+    if not args['output_dir'].startswith('gs://'):
+      raise ValueError('Cloud training requires a GCS (starting with "gs://") output_dir.')
+
     staging_tarball = os.path.join(args['output_dir'], 'staging', 'trainer.tar.gz')
     datalab_ml.package_and_copy(MLTOOLBOX_CODE_PATH,
                                 os.path.join(MLTOOLBOX_CODE_PATH, 'setup.py'),
@@ -512,6 +519,7 @@ def _batch_predict(args, cell):
   print('local prediction...')
   _local_predict.local_batch_predict(args['model'],
                                      data['csv_file_pattern'],
-                                     args['output_file'],
-                                     args['output_format'])
+                                     args['output_dir'],
+                                     args['output_format'],
+                                     args['batch_size'])
   print('done.')
