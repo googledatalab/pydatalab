@@ -181,8 +181,8 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
                                 help='number of instances in a batch to process once. ' +
                                      'Larger batch is more efficient but may consume more memory.')
   transform_parser.add_argument('--package', required=False,
-                              help='A local or GCS tarball path to use as the source. ' +
-                                   'If not set, the default source package will be used.')
+                                help='A local or GCS tarball path to use as the source. ' +
+                                     'If not set, the default source package will be used.')
   transform_parser.set_defaults(func=_transform)
 
   train_datalab_help = subprocess.Popen(
@@ -229,8 +229,8 @@ cloud: a dictionary of cloud training config, including:
   train_parser.add_argument('--cloud', action='store_true', default=False,
                             help='whether to run training in cloud or local.')
   train_parser.add_argument('--package', required=False,
-                              help='A local or GCS tarball path to use as the source. ' +
-                                   'If not set, the default source package will be used.')
+                            help='A local or GCS tarball path to use as the source. ' +
+                                 'If not set, the default source package will be used.')
   train_parser.set_defaults(func=_train)
 
   predict_parser = parser.subcommand(
@@ -427,6 +427,7 @@ def _transform(args, cell):
   finally:
     if tmpdir:
       shutil.rmtree(tmpdir)
+
 
 def _train(args, cell):
   env = google.datalab.utils.commands.notebook_environment()
