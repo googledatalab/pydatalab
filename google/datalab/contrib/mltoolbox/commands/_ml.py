@@ -170,7 +170,7 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
                                 help='path of analysis output directory.')
   transform_parser.add_argument('--output_dir', required=True,
                                 help='path of output directory.')
-  transform_parser.add_argument('--output_filename_predix', required=True,
+  transform_parser.add_argument('--output_filename_prefix', required=True,
                                 help='The prefix of the output file name. The output files will ' +
                                      'be like output_filename_prefix_00001_of_0000n')
   transform_parser.add_argument('--cloud', action='store_true', default=False,
@@ -368,7 +368,7 @@ def _transform(args, cell):
   cmd_args = ['python', 'transform.py',
               '--output-dir', args['output_dir'],
               '--output-dir-from-analysis-step', args['output_dir_from_analysis_step'],
-              '--output-filename-prefix', args['output_filename_predix']]
+              '--output-filename-prefix', args['output_filename_prefix']]
   if args['cloud']:
     cmd_args.append('--cloud')
   if args['shuffle']:
