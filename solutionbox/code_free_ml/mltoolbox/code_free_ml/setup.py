@@ -27,7 +27,6 @@ setup(
   long_description="""
   """,
   install_requires=[
-    'google-cloud-dataflow==0.6.0',
     'tensorflow==1.0.1',
     'protobuf==3.1.0',
     'pillow==3.4.1',  # ML Engine does not have PIL installed
