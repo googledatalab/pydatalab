@@ -22,7 +22,6 @@ import collections
 import copy
 import csv
 from io import BytesIO
-import itertools
 import json
 import numpy as np
 import os
@@ -186,7 +185,7 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
 def _batch_csv_reader(csv_file, n):
   with file_io.FileIO(csv_file, 'r') as f:
     args = [f] * n
-    return itertools.izip_longest(*args)
+    return six.moves.zip_longest(*args)
 
 
 def _get_output_schema(session, output_alias_map):
@@ -206,7 +205,13 @@ def _get_output_schema(session, output_alias_map):
 
 def _format_results(output_format, output_schema, batched_results):
   # Convert a dict of list to a list of dict.
-  batched_results = [dict(zip(batched_results, t)) for t in zip(*batched_results.values())]
+  # Note that results from session.run may contain scaler value instead of lists
+  # if batch size is 1.
+  if isinstance(next(iter(batched_results.values())), list):
+    batched_results = [dict(zip(batched_results, t)) for t in zip(*batched_results.values())]
+  else:
+    batched_results = [batched_results]
+
   if output_format == 'csv':
     results = []
     for r in batched_results:
@@ -221,6 +226,8 @@ def _format_results(output_format, output_schema, batched_results):
             return int(obj)
         elif isinstance(obj, np.floating):
             return float(obj)
+        elif isinstance(obj, bytes):
+            return obj.decode('utf-8')
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
         else:
@@ -233,7 +240,7 @@ def _format_results(output_format, output_schema, batched_results):
   return results
 
 
-def local_batch_predict(model_dir, csv_file_pattern, output_dir, output_format, batch_size=None):
+def local_batch_predict(model_dir, csv_file_pattern, output_dir, output_format, batch_size=100):
   """ Batch Predict with a specified model.
 
   It does batch prediction, saves results to output files and also creates an output
@@ -244,11 +251,9 @@ def local_batch_predict(model_dir, csv_file_pattern, output_dir, output_format, 
     csv_file_pattern: a pattern of csv files as batch prediction source.
     output_dir: the path of the output directory.
     output_format: csv or json.
-    batch_size: if not specified, 100 is used. Larger batch_size improves performance but may
+    batch_size: Larger batch_size improves performance but may
         cause more memory usage.
   """
-  if batch_size is None:
-    batch_size = 100
 
   file_io.recursive_create_dir(output_dir)
   csv_files = file_io.get_matching_files(csv_file_pattern)
