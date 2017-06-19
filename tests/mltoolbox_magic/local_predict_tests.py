@@ -165,7 +165,7 @@ class TestLocalPredictions(unittest.TestCase):
                              (missing_values, csv_data, show_image))
           test_data = self._create_test_data(False, missing_values, csv_data)
           df = _local_predict.get_prediction_results(
-              model_dir, test_data, headers, ['img_url1'], show_image)
+              model_dir, test_data, headers, ['img_url1'], False, show_image)
           self._validate_results(df, show_image)
 
     # Test data being dataframes, with and without missing values, and embedded images.
@@ -174,7 +174,7 @@ class TestLocalPredictions(unittest.TestCase):
                          'missing_values=%s, DataFrame' % missing_values)
       test_data = self._create_test_data(True, missing_values, csv_data=False)
       df_s = pd.DataFrame(test_data).fillna('')
-      df = _local_predict.get_prediction_results(model_dir, df_s, headers, None, False)
+      df = _local_predict.get_prediction_results(model_dir, df_s, headers, None, False, False)
       self._validate_results(df, False)
 
 

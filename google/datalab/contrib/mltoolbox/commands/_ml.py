@@ -32,9 +32,12 @@ import shutil
 import six
 import subprocess
 import tempfile
+import urllib
 
 import google.datalab
 import google.datalab.bigquery as bq
+from google.datalab import Context
+import google.datalab.ml as datalab_ml
 import google.datalab.utils.commands
 import google.datalab.contrib.mltoolbox._local_predict as _local_predict
 import google.datalab.contrib.mltoolbox._shell_process as _shell_process
@@ -185,13 +188,15 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
   train_parser = parser.subcommand(
       'train', help="""Train a model. Example usage:
 
-%%ml train --output_dir_from_analysis_step path/to/analysis --output_dir path/to/dir
+%%ml train --output_dir_from_analysis_step path/to/analysis --output_dir path/to/dir [--cloud]
 training_data:
   csv_file_pattern: path/to/csv
 evaluation_data:
   csv_file_pattern: path/to/csv
 model_args:
   model_type: linear_regression
+cloud:
+  region: us-central1
 
 Cell input is in yaml format. Fields:
 
@@ -202,13 +207,22 @@ training_data: Required. It is one of the following:
 
 evaluation_data: Required. Same as training_data
 
-model_args: a dictionary of model specific args. See below.
+model_args: a dictionary of model specific args, including:
 
-""" + train_datalab_help, formatter_class=argparse.RawTextHelpFormatter)
+%s
+
+cloud: a dictionary of cloud training config, including:
+  job_id: the name of the job. If not provided, a default job name is created.
+  region: see https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training.
+  runtime-version: see reference in "region".
+  scale-tier: see reference in "region".
+""" % train_datalab_help, formatter_class=argparse.RawTextHelpFormatter)
   train_parser.add_argument('--output_dir_from_analysis_step', required=True,
                             help='path of analysis output directory.')
   train_parser.add_argument('--output_dir', required=True,
                             help='path of trained model directory.')
+  train_parser.add_argument('--cloud', action='store_true', default=False,
+                            help='whether to run training in cloud or local.')
 
   train_parser.set_defaults(func=_train)
 
@@ -241,8 +255,31 @@ prediction_data: $my_data
                                    'Required if prediction data contains image URL columns.')
   predict_parser.add_argument('--no_show_image', action='store_true', default=False,
                               help='If not set, add a column of images in output.')
-
+  predict_parser.add_argument('--cloud', action='store_true', default=False,
+                              help='whether to run prediction in cloud or local.')
   predict_parser.set_defaults(func=_predict)
+
+  batch_predict_parser = parser.subcommand(
+      'batch_predict', help="""Batch prediction with local or deployed models.
+
+%%ml batch_predict --model path/to/model --output_file path/to/outputfile --output_format csv
+prediction_data:
+  csv_file_pattern: path/to/file_pattern
+""", formatter_class=argparse.RawTextHelpFormatter)
+  batch_predict_parser.add_argument('--model', required=True,
+                                    help='The model path if not --cloud, or the id in ' +
+                                         'the form of model.version if --cloud.')
+  batch_predict_parser.add_argument('--output_dir', required=True,
+                                    help='The path of output directory with prediction results.')
+  batch_predict_parser.add_argument('--output_format',
+                                    help='csv or json')
+  batch_predict_parser.add_argument('--batch_size', type=int, default=100,
+                                    help='number of instances in a batch to process once. ' +
+                                         'Larger batch is more efficient but may consume ' +
+                                         'more memory.')
+  batch_predict_parser.add_argument('--cloud', action='store_true', default=False,
+                                    help='whether to run prediction in cloud or local.')
+  batch_predict_parser.set_defaults(func=_batch_predict)
 
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
@@ -369,41 +406,72 @@ def _transform(args, cell):
 def _train(args, cell):
   env = google.datalab.utils.commands.notebook_environment()
   cell_data = google.datalab.utils.commands.parse_config(cell, env)
+  required_keys = ['training_data', 'evaluation_data']
+  if args['cloud']:
+    required_keys.append('cloud')
+
   google.datalab.utils.commands.validate_config(
       cell_data,
-      required_keys=['training_data', 'evaluation_data'],
+      required_keys=required_keys,
       optional_keys=['model_args'])
-
-  cmd_args = ['python', '-m', 'trainer.task',
-              '--job-dir', args['output_dir'],
+  job_args = ['--job-dir', args['output_dir'],
               '--output-dir-from-analysis-step', args['output_dir_from_analysis_step']]
 
-  def _process_train_eval_data(data, arg_name, cmd_args):
+  def _process_train_eval_data(data, arg_name, job_args):
     if isinstance(data, dict):
       if 'csv_file_pattern' in data:
-        cmd_args.extend([arg_name, data['csv_file_pattern']])
-        if '--run-transforms' not in cmd_args:
-          cmd_args.append('--run-transforms')
+        job_args.extend([arg_name, data['csv_file_pattern']])
+        if '--run-transforms' not in job_args:
+          job_args.append('--run-transforms')
       elif 'transformed_file_pattern' in data:
-        cmd_args.extend([arg_name, data['transformed_file_pattern']])
+        job_args.extend([arg_name, data['transformed_file_pattern']])
       else:
         raise ValueError('Invalid training_data dict. ' +
                          'Requires either "csv_file_pattern" or "transformed_file_pattern".')
     elif isinstance(data, google.datalab.ml.CsvDataSet):
       for file_name in data.input_files:
-        cmd_args.append(arg_name + '=' + file_name)
+        job_args.append(arg_name + '=' + file_name)
     else:
       raise ValueError('Invalid training data. Requires either a dict, or ' +
                        'a google.datalab.ml.CsvDataSet')
 
-  _process_train_eval_data(cell_data['training_data'], '--train-data-paths', cmd_args)
-  _process_train_eval_data(cell_data['evaluation_data'], '--eval-data-paths', cmd_args)
+  _process_train_eval_data(cell_data['training_data'], '--train-data-paths', job_args)
+  _process_train_eval_data(cell_data['evaluation_data'], '--eval-data-paths', job_args)
 
   if 'model_args' in cell_data:
     for k, v in six.iteritems(cell_data['model_args']):
-      cmd_args.extend(['--' + k, str(v)])
+      job_args.extend(['--' + k, str(v)])
 
-  _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
+  if args['cloud']:
+    cloud_config = cell_data['cloud']
+    if not args['output_dir'].startswith('gs://'):
+      raise ValueError('Cloud training requires a GCS (starting with "gs://") output_dir.')
+
+    staging_tarball = os.path.join(args['output_dir'], 'staging', 'trainer.tar.gz')
+    datalab_ml.package_and_copy(MLTOOLBOX_CODE_PATH,
+                                os.path.join(MLTOOLBOX_CODE_PATH, 'setup.py'),
+                                staging_tarball)
+    job_request = {
+        'package_uris': [staging_tarball],
+        'python_module': 'trainer.task',
+        'job_dir': args['output_dir'],
+        'args': job_args,
+    }
+    job_request.update(cloud_config)
+    job_id = cloud_config.get('job_id', None)
+    job = datalab_ml.Job.submit_training(job_request, job_id)
+    log_url_query_strings = {
+      'project': Context.default().project_id,
+      'resource': 'ml.googleapis.com/job_id/' + job.info['jobId']
+    }
+    log_url = 'https://console.developers.google.com/logs/viewer?' + \
+        urllib.urlencode(log_url_query_strings)
+    html = 'Job "%s" submitted.' % job.info['jobId']
+    html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
+    IPython.display.display_html(html, raw=True)
+  else:
+    cmd_args = ['python', '-m', 'trainer.task'] + job_args
+    _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
 
 
 def _predict(args, cell):
@@ -416,8 +484,9 @@ def _predict(args, cell):
     raise ValueError('Missing "prediction_data" in cell.')
 
   data = cell_data['prediction_data']
-  df = _local_predict.get_prediction_results(args['model'], data, headers,
-                                             img_cols, not args['no_show_image'])
+  df = _local_predict.get_prediction_results(
+      args['model'], data, headers, img_cols=img_cols, cloud=args['cloud'],
+      show_image=not args['no_show_image'])
 
   def _show_img(img_bytes):
     return '<img src="data:image/png;base64,' + img_bytes + '" />'
@@ -439,3 +508,18 @@ def _predict(args, cell):
         df.to_html(formatters=formatters, escape=False, index=False)))
   finally:
     pd.set_option('display.max_colwidth', old_width)
+
+
+def _batch_predict(args, cell):
+  env = google.datalab.utils.commands.notebook_environment()
+  cell_data = google.datalab.utils.commands.parse_config(cell, env)
+  google.datalab.utils.commands.validate_config(cell_data, required_keys=['prediction_data'])
+  data = cell_data['prediction_data']
+  google.datalab.utils.commands.validate_config(data, required_keys=['csv_file_pattern'])
+  print('local prediction...')
+  _local_predict.local_batch_predict(args['model'],
+                                     data['csv_file_pattern'],
+                                     args['output_dir'],
+                                     args['output_format'],
+                                     args['batch_size'])
+  print('done.')

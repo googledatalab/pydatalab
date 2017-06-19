@@ -59,11 +59,12 @@ def package_and_copy(package_root_dir, setup_py, output_tar_path):
     raise ValueError('Supplied file "%s" does not exist.' % setup_py)
 
   dest_setup_py = os.path.join(package_root_dir, 'setup.py')
-  # setuptools requires a "setup.py" in the current dir, so copy setup.py there.
-  # Also check if there is an existing setup.py. If so, back it up.
-  if os.path.isfile(dest_setup_py):
-    os.rename(dest_setup_py, dest_setup_py + '._bak_')
-  shutil.copyfile(setup_py, dest_setup_py)
+  if dest_setup_py != setup_py:
+    # setuptools requires a "setup.py" in the current dir, so copy setup.py there.
+    # Also check if there is an existing setup.py. If so, back it up.
+    if os.path.isfile(dest_setup_py):
+      os.rename(dest_setup_py, dest_setup_py + '._bak_')
+    shutil.copyfile(setup_py, dest_setup_py)
 
   tempdir = tempfile.mkdtemp()
   previous_cwd = os.getcwd()
