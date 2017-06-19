@@ -218,7 +218,7 @@ class TestCloudServices(unittest.TestCase):
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self._csv_train_filename,
-           '--analysis-output-dir=' + self._analysis_output,
+           '--output-dir-from-analysis-step=' + self._analysis_output,
            '--output-filename-prefix=features_train',
            '--output-dir=' + self._transform_output,
            '--shuffle'] + extra_args
@@ -229,7 +229,7 @@ class TestCloudServices(unittest.TestCase):
     # Don't wate time running a 2nd DF job, run it locally.
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
            '--csv-file-pattern=' + self._csv_eval_filename,
-           '--analysis-output-dir=' + self._analysis_output,
+           '--output-dir-from-analysis-step=' + self._analysis_output,
            '--output-filename-prefix=features_eval',
            '--output-dir=' + self._transform_output]
 
@@ -263,7 +263,7 @@ class TestCloudServices(unittest.TestCase):
         '--',
         '--train-data-paths=' + os.path.join(self._transform_output, 'features_train*'),
         '--eval-data-paths=' + os.path.join(self._transform_output, 'features_eval*'),
-        '--analysis-output-dir=' + self._analysis_output,
+        '--output-dir-from-analysis-step=' + self._analysis_output,
         '--model-type=linear_regression',
         '--train-batch-size=10',
         '--eval-batch-size=10',
