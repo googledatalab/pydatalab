@@ -275,4 +275,3 @@ def local_batch_predict(model_dir, csv_file_pattern, output_dir, output_format, 
           f.write('\n'.join(formatted_results) + '\n')
 
   file_io.write_string_to_file(os.path.join(output_dir, 'predict_results_schema.json'),
-                               json.dumps(output_schema, indent=2))
