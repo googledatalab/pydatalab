@@ -82,9 +82,10 @@ class TestCases(unittest.TestCase):
   @mock.patch('os.name', 'nt')
   @mock.patch('os.path.join')
   def test_get_config_dir_win(self, mock_path_join):
-    mock_path_join.side_effect = lambda x, y: x + '\\' + y
+    mock_path_join.side_effect = lambda x, y: x + y
     self.assertEquals(_utils.get_config_dir(), 'C:\\gcloud')
 
+    mock_path_join.side_effect = lambda x, y: x + '\\' + y
     with mock.patch.dict(os.environ, {'APPDATA': 'test\\path'}):
       self.assertEquals(_utils.get_config_dir(), 'test\\path\\gcloud')
 
