@@ -130,8 +130,9 @@ features: $features_def
                               help='path of output directory.')
   analyze_parser.add_argument('--cloud', action='store_true', default=False,
                               help='whether to run analysis in cloud or local.')
-  analyze_parser.add_argument('--source_code', required=False,
-                              help='A local or GCS tarball path to use as the source.')
+  analyze_parser.add_argument('--package', required=False,
+                              help='A local or GCS tarball path to use as the source. ' +
+                                   'If not set, the default source package will be used.')
   analyze_parser.set_defaults(func=_analyze)
 
   transform_parser = parser.subcommand(
@@ -305,9 +306,9 @@ def _analyze(args, cell):
     features_file = _create_json_file(tmpdir, features, 'features.json')
     cmd_args.extend(['--features-file', features_file])
 
-    if args['source_code']:
-      code_path = os.path.join(tmpdir, 'source_code')
-      _archive.extract_archive(args['source_code'], code_path)
+    if args['package']:
+      code_path = os.path.join(tmpdir, 'package')
+      _archive.extract_archive(args['package'], code_path)
     else:
       code_path = MLTOOLBOX_CODE_PATH
 
