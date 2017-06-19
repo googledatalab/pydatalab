@@ -2,6 +2,7 @@
 *.pyi
 *.map
 *.egg-info
+*.iml
 .idea
 MANIFEST
 build
