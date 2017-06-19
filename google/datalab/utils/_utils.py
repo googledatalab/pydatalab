@@ -152,7 +152,7 @@ def get_config_dir():
       except KeyError:
         # This should never happen unless someone is really messing with things.
         drive = os.environ.get('SystemDrive', 'C:')
-        config_dir = os.path.join(drive, 'gcloud')
+        config_dir = os.path.join(drive, '\\gcloud')
     else:
       config_dir = os.path.join(os.path.expanduser('~'), '.config/gcloud')
   return config_dir
