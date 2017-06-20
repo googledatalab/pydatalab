@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 import os
 import shutil
 import tempfile
+import tensorflow as tf
 
 import google.datalab.contrib.mltoolbox._shell_process as _shell_process
 
@@ -36,6 +37,10 @@ def extract_archive(archive_path, dest):
 
   try:
     tmpfolder = None
+
+    if (not tf.gfile.Exists(archive_path)) or tf.gfile.IsDirectory(archive_path):
+      raise ValueError('archive path %s is not a file' % archive_path)
+
     if archive_path.startswith('gs://'):
       # Copy the file to a local temp folder
       tmpfolder = tempfile.mkdtemp()

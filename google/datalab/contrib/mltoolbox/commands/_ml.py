@@ -170,7 +170,7 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
                                 help='path of analysis output directory.')
   transform_parser.add_argument('--output_dir', required=True,
                                 help='path of output directory.')
-  transform_parser.add_argument('--output_filename_predix', required=True,
+  transform_parser.add_argument('--output_filename_prefix', required=True,
                                 help='The prefix of the output file name. The output files will ' +
                                      'be like output_filename_prefix_00001_of_0000n')
   transform_parser.add_argument('--cloud', action='store_true', default=False,
@@ -180,7 +180,9 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
   transform_parser.add_argument('--batch_size', type=int, default=100,
                                 help='number of instances in a batch to process once. ' +
                                      'Larger batch is more efficient but may consume more memory.')
-
+  transform_parser.add_argument('--package', required=False,
+                                help='A local or GCS tarball path to use as the source. ' +
+                                     'If not set, the default source package will be used.')
   transform_parser.set_defaults(func=_transform)
 
   train_datalab_help = subprocess.Popen(
@@ -226,7 +228,9 @@ cloud: a dictionary of cloud training config, including:
                             help='path of trained model directory.')
   train_parser.add_argument('--cloud', action='store_true', default=False,
                             help='whether to run training in cloud or local.')
-
+  train_parser.add_argument('--package', required=False,
+                            help='A local or GCS tarball path to use as the source. ' +
+                                 'If not set, the default source package will be used.')
   train_parser.set_defaults(func=_train)
 
   predict_parser = parser.subcommand(
@@ -364,7 +368,7 @@ def _transform(args, cell):
   cmd_args = ['python', 'transform.py',
               '--output-dir', args['output_dir'],
               '--output-dir-from-analysis-step', args['output_dir_from_analysis_step'],
-              '--output-filename-prefix', args['output_filename_predix']]
+              '--output-filename-prefix', args['output_filename_prefix']]
   if args['cloud']:
     cmd_args.append('--cloud')
   if args['shuffle']:
@@ -410,7 +414,19 @@ def _transform(args, cell):
   if '--project-id' not in cmd_args:
     cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
 
-  _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
+  try:
+    tmpdir = None
+    if args['package']:
+      tmpdir = tempfile.mkdtemp()
+      code_path = os.path.join(tmpdir, 'package')
+      _archive.extract_archive(args['package'], code_path)
+    else:
+      code_path = MLTOOLBOX_CODE_PATH
+
+    _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=code_path)
+  finally:
+    if tmpdir:
+      shutil.rmtree(tmpdir)
 
 
 def _train(args, cell):
@@ -452,36 +468,48 @@ def _train(args, cell):
     for k, v in six.iteritems(cell_data['model_args']):
       job_args.extend(['--' + k, str(v)])
 
-  if args['cloud']:
-    cloud_config = cell_data['cloud']
-    if not args['output_dir'].startswith('gs://'):
-      raise ValueError('Cloud training requires a GCS (starting with "gs://") output_dir.')
+  try:
+    tmpdir = None
+    if args['package']:
+      tmpdir = tempfile.mkdtemp()
+      code_path = os.path.join(tmpdir, 'package')
+      _archive.extract_archive(args['package'], code_path)
+    else:
+      code_path = MLTOOLBOX_CODE_PATH
 
-    staging_tarball = os.path.join(args['output_dir'], 'staging', 'trainer.tar.gz')
-    datalab_ml.package_and_copy(MLTOOLBOX_CODE_PATH,
-                                os.path.join(MLTOOLBOX_CODE_PATH, 'setup.py'),
-                                staging_tarball)
-    job_request = {
-        'package_uris': [staging_tarball],
-        'python_module': 'trainer.task',
-        'job_dir': args['output_dir'],
-        'args': job_args,
-    }
-    job_request.update(cloud_config)
-    job_id = cloud_config.get('job_id', None)
-    job = datalab_ml.Job.submit_training(job_request, job_id)
-    log_url_query_strings = {
-      'project': Context.default().project_id,
-      'resource': 'ml.googleapis.com/job_id/' + job.info['jobId']
-    }
-    log_url = 'https://console.developers.google.com/logs/viewer?' + \
-        urllib.urlencode(log_url_query_strings)
-    html = 'Job "%s" submitted.' % job.info['jobId']
-    html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
-    IPython.display.display_html(html, raw=True)
-  else:
-    cmd_args = ['python', '-m', 'trainer.task'] + job_args
-    _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=MLTOOLBOX_CODE_PATH)
+    if args['cloud']:
+      cloud_config = cell_data['cloud']
+      if not args['output_dir'].startswith('gs://'):
+        raise ValueError('Cloud training requires a GCS (starting with "gs://") output_dir.')
+
+      staging_tarball = os.path.join(args['output_dir'], 'staging', 'trainer.tar.gz')
+      datalab_ml.package_and_copy(code_path,
+                                  os.path.join(code_path, 'setup.py'),
+                                  staging_tarball)
+      job_request = {
+          'package_uris': [staging_tarball],
+          'python_module': 'trainer.task',
+          'job_dir': args['output_dir'],
+          'args': job_args,
+      }
+      job_request.update(cloud_config)
+      job_id = cloud_config.get('job_id', None)
+      job = datalab_ml.Job.submit_training(job_request, job_id)
+      log_url_query_strings = {
+        'project': Context.default().project_id,
+        'resource': 'ml.googleapis.com/job_id/' + job.info['jobId']
+      }
+      log_url = 'https://console.developers.google.com/logs/viewer?' + \
+          urllib.urlencode(log_url_query_strings)
+      html = 'Job "%s" submitted.' % job.info['jobId']
+      html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
+      IPython.display.display_html(html, raw=True)
+    else:
+      cmd_args = ['python', '-m', 'trainer.task'] + job_args
+      _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=code_path)
+  finally:
+    if tmpdir:
+      shutil.rmtree(tmpdir)
 
 
 def _predict(args, cell):
