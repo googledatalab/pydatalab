@@ -291,6 +291,26 @@ prediction_data:
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
+def _abs_path(path):
+  """Convert a non-GCS path to its absolute path.
+
+  path can contain special filepath characters like '..', '*' and '.'.
+
+  Example: If the current folder is /content/datalab/folder1 and path is
+  '../folder2/files*', then this function returns the string
+  '/content/datalab/folder2/files*'.
+
+  This function is needed if using _shell_process.run_and_monitor() as that
+  function runs a command in a different folder.
+
+  Args:
+    path: string.
+  """
+  if path.startswith('gs://'):
+    return path
+  return os.path.abspath(path)
+
+
 def _create_json_file(tmpdir, data, filename):
   json_file = os.path.join(tmpdir, filename)
   with open(json_file, 'w') as f:
@@ -306,7 +326,7 @@ def _analyze(args, cell):
   # For now, always run python2. If needed we can run python3 when the current kernel
   # is py3. Since now our transform cannot work on py3 anyway, I would rather run
   # everything with python2.
-  cmd_args = ['python', 'analyze.py', '--output-dir', args['output_dir']]
+  cmd_args = ['python', 'analyze.py', '--output-dir', _abs_path(args['output_dir'])]
   if args['cloud']:
     cmd_args.append('--cloud')
 
@@ -318,7 +338,7 @@ def _analyze(args, cell):
       if 'csv_file_pattern' in training_data and 'csv_schema' in training_data:
         schema = training_data['csv_schema']
         schema_file = _create_json_file(tmpdir, schema, 'schema.json')
-        cmd_args.extend(['--csv-file-pattern', training_data['csv_file_pattern']])
+        cmd_args.extend(['--csv-file-pattern', _abs_path(training_data['csv_file_pattern'])])
         cmd_args.extend(['--csv-schema-file', schema_file])
       elif 'bigquery_table' in training_data:
         cmd_args.extend(['--bigquery-table', training_data['bigquery_table']])
@@ -333,7 +353,7 @@ def _analyze(args, cell):
     elif isinstance(training_data, google.datalab.ml.CsvDataSet):
       schema_file = _create_json_file(tmpdir, training_data.schema, 'schema.json')
       for file_name in training_data.input_files:
-        cmd_args.append('--csv-file-pattern=' + file_name)
+        cmd_args.append('--csv-file-pattern=' + _abs_path(file_name))
 
       cmd_args.extend(['--csv-schema-file', schema_file])
     elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
@@ -366,8 +386,8 @@ def _transform(args, cell):
                                                 optional_keys=['cloud'])
   training_data = cell_data['training_data']
   cmd_args = ['python', 'transform.py',
-              '--output-dir', args['output_dir'],
-              '--output-dir-from-analysis-step', args['output_dir_from_analysis_step'],
+              '--output-dir', _abs_path(args['output_dir']),
+              '--output-dir-from-analysis-step', _abs_path(args['output_dir_from_analysis_step']),
               '--output-filename-prefix', args['output_filename_prefix']]
   if args['cloud']:
     cmd_args.append('--cloud')
@@ -378,7 +398,7 @@ def _transform(args, cell):
 
   if isinstance(training_data, dict):
     if 'csv_file_pattern' in training_data:
-      cmd_args.extend(['--csv-file-pattern', training_data['csv_file_pattern']])
+      cmd_args.extend(['--csv-file-pattern', _abs_path(training_data['csv_file_pattern'])])
     elif 'bigquery_table' in training_data:
       cmd_args.extend(['--bigquery-table', training_data['bigquery_table']])
     elif 'bigquery_sql' in training_data:
@@ -391,7 +411,7 @@ def _transform(args, cell):
                        'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
   elif isinstance(training_data, google.datalab.ml.CsvDataSet):
     for file_name in training_data.input_files:
-      cmd_args.append('--csv-file-pattern=' + file_name)
+      cmd_args.append('--csv-file-pattern=' + _abs_path(file_name))
   elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
     cmd_args.extend(['--bigquery-table', training_data.table])
   else:
@@ -440,23 +460,23 @@ def _train(args, cell):
       cell_data,
       required_keys=required_keys,
       optional_keys=['model_args'])
-  job_args = ['--job-dir', args['output_dir'],
-              '--output-dir-from-analysis-step', args['output_dir_from_analysis_step']]
+  job_args = ['--job-dir', _abs_path(args['output_dir']),
+              '--output-dir-from-analysis-step', _abs_path(args['output_dir_from_analysis_step'])]
 
   def _process_train_eval_data(data, arg_name, job_args):
     if isinstance(data, dict):
       if 'csv_file_pattern' in data:
-        job_args.extend([arg_name, data['csv_file_pattern']])
+        job_args.extend([arg_name, _abs_path(data['csv_file_pattern'])])
         if '--run-transforms' not in job_args:
           job_args.append('--run-transforms')
       elif 'transformed_file_pattern' in data:
-        job_args.extend([arg_name, data['transformed_file_pattern']])
+        job_args.extend([arg_name, _abs_path(data['transformed_file_pattern'])])
       else:
         raise ValueError('Invalid training_data dict. ' +
                          'Requires either "csv_file_pattern" or "transformed_file_pattern".')
     elif isinstance(data, google.datalab.ml.CsvDataSet):
       for file_name in data.input_files:
-        job_args.append(arg_name + '=' + file_name)
+        job_args.append(arg_name + '=' + _abs_path(file_name))
     else:
       raise ValueError('Invalid training data. Requires either a dict, or ' +
                        'a google.datalab.ml.CsvDataSet')
@@ -464,6 +484,8 @@ def _train(args, cell):
   _process_train_eval_data(cell_data['training_data'], '--train-data-paths', job_args)
   _process_train_eval_data(cell_data['evaluation_data'], '--eval-data-paths', job_args)
 
+  # TODO(brandondutra) document that any model_args that are file paths must
+  # be given as an absolute path
   if 'model_args' in cell_data:
     for k, v in six.iteritems(cell_data['model_args']):
       job_args.extend(['--' + k, str(v)])
