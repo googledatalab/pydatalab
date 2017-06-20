@@ -232,7 +232,6 @@ cloud: a dictionary of cloud training config, including:
   train_parser.add_argument('--package', required=False,
                             help='A local or GCS tarball path to use as the source. ' +
                                  'If not set, the default source package will be used.')
-
   train_parser.set_defaults(func=_train)
 
   predict_parser = parser.subcommand(
