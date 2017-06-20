@@ -306,9 +306,9 @@ def _abs_path(path):
   Args:
     path: string.
   """
-  if not path.startswith('gs://'):
-    return os.path.abspath(path)
-  return path
+  if path.startswith('gs://'):
+    return path
+  return os.path.abspath(path)
 
 
 def _create_json_file(tmpdir, data, filename):
