@@ -38,7 +38,7 @@ def extract_archive(archive_path, dest):
   try:
     tmpfolder = None
 
-    if not (tf.gfile.Exists(archive_path) and not tf.gfile.IsDirectory(archive_path)):
+    if (not tf.gfile.Exists(archive_path)) or tf.gfile.IsDirectory(archive_path):
       raise ValueError('archive path %s is not a file' % archive_path)
 
     if archive_path.startswith('gs://'):
