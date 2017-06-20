@@ -207,7 +207,8 @@ def _format_results(output_format, output_schema, batched_results):
   # Convert a dict of list to a list of dict.
   # Note that results from session.run may contain scaler value instead of lists
   # if batch size is 1.
-  if isinstance(next(iter(batched_results.values())), list):
+  if (isinstance(next(iter(batched_results.values())), list) or
+     isinstance(next(iter(batched_results.values())), np.ndarray)):
     batched_results = [dict(zip(batched_results, t)) for t in zip(*batched_results.values())]
   else:
     batched_results = [batched_results]
@@ -265,7 +266,10 @@ def local_batch_predict(model_dir, csv_file_pattern, output_dir, output_format, 
     csv_tensor_name = list(input_alias_map.values())[0]
     output_schema = _get_output_schema(sess, output_alias_map)
     for csv_file in csv_files:
-      output_file = os.path.join(output_dir, 'predict_results_' + os.path.basename(csv_file))
+      output_file = os.path.join(
+          output_dir,
+          'predict_results_' +
+          os.path.splitext(os.path.basename(csv_file))[0] + '.' + output_format)
       with file_io.FileIO(output_file, 'w') as f:
         prediction_source = _batch_csv_reader(csv_file, batch_size)
         for batch in prediction_source:

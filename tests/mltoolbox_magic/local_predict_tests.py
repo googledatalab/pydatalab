@@ -18,6 +18,7 @@ from __future__ import print_function
 import base64
 import csv
 from io import BytesIO
+import json
 import logging
 import os
 import pandas as pd
@@ -176,6 +177,53 @@ class TestLocalPredictions(unittest.TestCase):
       df_s = pd.DataFrame(test_data).fillna('')
       df = _local_predict.get_prediction_results(model_dir, df_s, headers, None, False, False)
       self._validate_results(df, False)
+
+  def _validate_schema_file(self, output_dir):
+    with open(os.path.join(output_dir, 'predict_results_schema.json'), 'r') as f:
+      schema = json.loads(f.read())
+
+    expected_schema = [
+        {"type": "INTEGER", "name": "key"},
+        {"type": "FLOAT", "name": "var1"},
+        {"type": "FLOAT", "name": "var2"}
+    ]
+    self.assertEqual(expected_schema, schema)
+
+  def test_batch_predict(self):
+    """ Test batch prediction on a model which accepts CSV lines "int64,float32,text,image_url".
+    """
+
+    self._logger.debug('Starting Local Batch Predict')
+    model_dir = self._create_model('model2')
+    test_data = self._create_test_data(embedding_images=True, missing_values=True, csv_data=True)
+    prediction_source = os.path.join(self._test_dir, 'prediction.csv')
+    output_dir = os.path.join(self._test_dir, 'prediction_output')
+    with open(prediction_source, 'w') as f:
+      f.write('\n'.join(test_data))
+
+    # Test prediction output as csv file.
+    _local_predict.local_batch_predict(model_dir, prediction_source,
+                                       output_dir, 'csv', batch_size=2)
+    self._validate_schema_file(output_dir)
+
+    prediction_results_file = os.path.join(output_dir, 'predict_results_prediction.csv')
+    df = pd.read_csv(prediction_results_file, header=None, names=['key', 'var1', 'var2'])
+    self.assertEqual(3, len(df.index))
+    self.assertEqual([1, 2, 5], list(df['key']))
+
+    # Test prediction output as json file.
+    _local_predict.local_batch_predict(model_dir, prediction_source,
+                                       output_dir, 'json', batch_size=1)
+    self._validate_schema_file(output_dir)
+
+    prediction_results_file = os.path.join(output_dir, 'predict_results_prediction.json')
+    results = []
+    with open(prediction_results_file, 'r') as f:
+      for l in f:
+        results.append(json.loads(l))
+
+    self.assertEqual(3, len(results))
+    self.assertEqual([1, 2, 5], [x['key'] for x in results])
 
 
 if __name__ == '__main__':
