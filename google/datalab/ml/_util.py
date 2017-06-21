@@ -81,7 +81,8 @@ def package_and_copy(package_root_dir, setup_py, output_tar_path):
     return
   finally:
     os.chdir(previous_cwd)
-    os.remove(dest_setup_py)
+    if dest_setup_py != setup_py:
+      os.remove(dest_setup_py)
     if os.path.isfile(dest_setup_py + '._bak_'):
       os.rename(dest_setup_py + '._bak_', dest_setup_py)
     shutil.rmtree(tempdir)
