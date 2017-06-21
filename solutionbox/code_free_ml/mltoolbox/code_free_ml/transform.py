@@ -431,7 +431,7 @@ def preprocess(pipeline, args):
     raw_data = (
         all_files
         | 'MergeCSVFiles' >> beam.Flatten()
-        | 'ParseCSDData' >> beam.Map(decode_csv, column_names))
+        | 'ParseCSVData' >> beam.Map(decode_csv, column_names))
   else:
     columns = ', '.join(column_names)
     query = 'SELECT {columns} FROM `{table}`'.format(columns=columns,

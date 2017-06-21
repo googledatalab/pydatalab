@@ -220,8 +220,8 @@ model_args: a dictionary of model specific args, including:
 cloud: a dictionary of cloud training config, including:
   job_id: the name of the job. If not provided, a default job name is created.
   region: see https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training.
-  runtime-version: see reference in "region".
-  scale-tier: see reference in "region".
+  runtime_version: see reference in "region".
+  scale_tier: see reference in "region".
 """ % train_datalab_help, formatter_class=argparse.RawTextHelpFormatter)
   train_parser.add_argument('--output_dir_from_analysis_step', required=True,
                             help='path of analysis output directory.')
@@ -325,7 +325,7 @@ def _abs_path(path):
 
 def _create_json_file(tmpdir, data, filename):
   json_file = os.path.join(tmpdir, filename)
-  with open(json_file, 'w') as f:
+  with file_io.FileIO(json_file, 'w') as f:
     json.dump(data, f)
   return json_file
 
@@ -355,8 +355,11 @@ def _analyze(args, cell):
     cmd_args.append('--cloud')
 
   training_data = cell_data['training_data']
+  if args['cloud']:
+    tmpdir = os.path.join(args['output_dir'], 'tmp')
+  else:
+    tmpdir = tempfile.mkdtemp()
 
-  tmpdir = tempfile.mkdtemp()
   try:
     if isinstance(training_data, dict):
       if 'csv_file_pattern' in training_data and 'csv_schema' in training_data:
@@ -399,7 +402,7 @@ def _analyze(args, cell):
 
     _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=code_path)
   finally:
-    shutil.rmtree(tmpdir)
+    file_io.delete_recursively(tmpdir)
 
 
 def _transform(args, cell):
@@ -415,6 +418,7 @@ def _transform(args, cell):
               '--output-filename-prefix', args['output_filename_prefix']]
   if args['cloud']:
     cmd_args.append('--cloud')
+    cmd_args.append('--async')
   if args['shuffle']:
     cmd_args.append('--shuffle')
   if args['batch_size']:
