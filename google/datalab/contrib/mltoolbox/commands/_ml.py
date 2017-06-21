@@ -32,6 +32,7 @@ import shutil
 import six
 import subprocess
 import tempfile
+from tensorflow.python.lib.io import file_io
 import urllib
 
 import google.datalab
@@ -269,21 +270,32 @@ prediction_data: $my_data
   batch_predict_parser = parser.subcommand(
       'batch_predict', help="""Batch prediction with local or deployed models.
 
-%%ml batch_predict --model path/to/model --output_file path/to/outputfile --output_format csv
+%%ml batch_predict --model path/to/model --output_file path/to/output --output_format csv [--cloud]
 prediction_data:
   csv_file_pattern: path/to/file_pattern
+
+Cell input is in yaml format. Fields:
+
+prediction_data: Required. The data to predict with.
+
+cloud: a dictionary of cloud batch prediction config, including:
+  job_id: the name of the job. If not provided, a default job name is created.
+  region: see https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/prediction.
+  max_worker_count: see reference in "region".
 """, formatter_class=argparse.RawTextHelpFormatter)
   batch_predict_parser.add_argument('--model', required=True,
                                     help='The model path if not --cloud, or the id in ' +
                                          'the form of model.version if --cloud.')
   batch_predict_parser.add_argument('--output_dir', required=True,
-                                    help='The path of output directory with prediction results.')
+                                    help='The path of output directory with prediction results. ' +
+                                         'If --cloud, it has to be GCS path.')
   batch_predict_parser.add_argument('--output_format',
-                                    help='csv or json')
+                                    help='csv or json. For cloud run, ' +
+                                         'the only supported format is json.')
   batch_predict_parser.add_argument('--batch_size', type=int, default=100,
                                     help='number of instances in a batch to process once. ' +
                                          'Larger batch is more efficient but may consume ' +
-                                         'more memory.')
+                                         'more memory. Only used in local run.')
   batch_predict_parser.add_argument('--cloud', action='store_true', default=False,
                                     help='whether to run prediction in cloud or local.')
   batch_predict_parser.set_defaults(func=_batch_predict)
@@ -316,6 +328,18 @@ def _create_json_file(tmpdir, data, filename):
   with open(json_file, 'w') as f:
     json.dump(data, f)
   return json_file
+
+
+def _show_job_link(job):
+  log_url_query_strings = {
+    'project': Context.default().project_id,
+    'resource': 'ml.googleapis.com/job_id/' + job.info['jobId']
+  }
+  log_url = 'https://console.developers.google.com/logs/viewer?' + \
+      urllib.urlencode(log_url_query_strings)
+  html = 'Job "%s" submitted.' % job.info['jobId']
+  html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
+  IPython.display.display_html(html, raw=True)
 
 
 def _analyze(args, cell):
@@ -517,15 +541,7 @@ def _train(args, cell):
       job_request.update(cloud_config)
       job_id = cloud_config.get('job_id', None)
       job = datalab_ml.Job.submit_training(job_request, job_id)
-      log_url_query_strings = {
-        'project': Context.default().project_id,
-        'resource': 'ml.googleapis.com/job_id/' + job.info['jobId']
-      }
-      log_url = 'https://console.developers.google.com/logs/viewer?' + \
-          urllib.urlencode(log_url_query_strings)
-      html = 'Job "%s" submitted.' % job.info['jobId']
-      html += '<p>Click <a href="%s" target="_blank">here</a> to view cloud log. <br/>' % log_url
-      IPython.display.display_html(html, raw=True)
+      _show_job_link(job)
     else:
       cmd_args = ['python', '-m', 'trainer.task'] + job_args
       _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=code_path)
@@ -573,13 +589,39 @@ def _predict(args, cell):
 def _batch_predict(args, cell):
   env = google.datalab.utils.commands.notebook_environment()
   cell_data = google.datalab.utils.commands.parse_config(cell, env)
-  google.datalab.utils.commands.validate_config(cell_data, required_keys=['prediction_data'])
+  required_keys = ['prediction_data']
+  if args['cloud']:
+    required_keys.append('cloud')
+
+  google.datalab.utils.commands.validate_config(cell_data, required_keys=required_keys)
+
   data = cell_data['prediction_data']
   google.datalab.utils.commands.validate_config(data, required_keys=['csv_file_pattern'])
-  print('local prediction...')
-  _local_predict.local_batch_predict(args['model'],
-                                     data['csv_file_pattern'],
-                                     args['output_dir'],
-                                     args['output_format'],
-                                     args['batch_size'])
-  print('done.')
+
+  if args['cloud']:
+    parts = args['model'].split('.')
+    if len(parts) != 2:
+      raise ValueError('Invalid model name for cloud prediction. Use "model.version".')
+
+    version_name = ('projects/%s/models/%s/versions/%s' %
+                    (Context.default().project_id, parts[0], parts[1]))
+
+    cloud_config = cell_data['cloud']
+    job_id = cloud_config.pop('job_id', None)
+    job_request = {
+      'version_name': version_name,
+      'data_format': 'TEXT',
+      'input_paths': file_io.get_matching_files(data['csv_file_pattern']),
+      'output_path': args['output_dir'],
+    }
+    job_request.update(cloud_config)
+    job = datalab_ml.Job.submit_batch_prediction(job_request, job_id)
+    _show_job_link(job)
+  else:
+    print('local prediction...')
+    _local_predict.local_batch_predict(args['model'],
+                                       data['csv_file_pattern'],
+                                       args['output_dir'],
+                                       args['output_format'],
+                                       args['batch_size'])
+    print('done.')
