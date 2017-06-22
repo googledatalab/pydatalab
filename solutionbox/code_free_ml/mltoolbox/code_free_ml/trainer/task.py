@@ -188,11 +188,13 @@ def parse_arguments(argv):
             'both "max-step" and "num-epochs" are specified, the training '
             'job will run for "max-steps" or "num-epochs", whichever occurs '
             'first. If unspecified will run for "max-steps".'))
-  parser.add_argument('--train-batch-size', type=int, default=1000)
-  parser.add_argument('--eval-batch-size', type=int, default=1000)
+  parser.add_argument('--train-batch-size', type=int, default=100)
+  parser.add_argument('--eval-batch-size', type=int, default=100)
   parser.add_argument(
       '--min-eval-frequency', type=int, default=100,
-      help='Minimum number of training steps between evaluations.')
+      help='Minimum number of training steps between evaluations. Evaluation '
+           'does not occur if no new checkpoint is available, hence, this is '
+           'the minimum. If 0, the evaluation will only happen after training.')
 
   # other parameters
   parser.add_argument(
