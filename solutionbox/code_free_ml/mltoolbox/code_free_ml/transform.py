@@ -195,7 +195,6 @@ def prepare_image_transforms(element, image_columns):
   img_error_count = Metrics.counter('main', 'ImgErrorCount')
   img_missing_count = Metrics.counter('main', 'ImgMissingCount')
 
-  img_missing_count.inc()
   for name in image_columns:
     uri = element[name]
     if not uri:
