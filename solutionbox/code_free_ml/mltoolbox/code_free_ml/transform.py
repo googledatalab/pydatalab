@@ -82,6 +82,7 @@ def parse_arguments(argv):
 
   parser.add_argument(
       '--csv-file-pattern',
+      metavar='FILE',
       required=False,
       action='append',
       help='CSV data to transform.')
@@ -95,14 +96,17 @@ def parse_arguments(argv):
 
   parser.add_argument(
       '--output-dir-from-analysis-step',
+      metavar='FOLDER',
       required=True,
       help='The output folder of analyze')
   parser.add_argument(
       '--output-filename-prefix',
+      metavar='PREFIX',
       required=True,
       type=str)
   parser.add_argument(
       '--output-dir',
+      metavar='FOLDER',
       default=None,
       required=True,
       help=('Google Cloud Storage or Local directory in which '
@@ -115,17 +119,20 @@ def parse_arguments(argv):
 
   parser.add_argument(
       '--batch-size',
+      metavar='N',
       type=int,
       default=100)
 
   parser.add_argument(
       '--num-workers',
+      metavar='N',
       type=int,
       default=0,
       help='Set to 0 to use the default size determined by the Dataflow service.')
 
   parser.add_argument(
       '--worker-machine-type',
+      metavar='NAME',
       type=str,
       help='A machine name from https://cloud.google.com/compute/docs/machine-types. '
            ' If not given, the service uses the default machine type.')
