@@ -82,12 +82,12 @@ class DatalabParser():
 
     # The arguments added here are required to exist by Datalab's "%%ml train" magics.
     self.full_parser.add_argument(
-        '--train-data-paths', type=str, required=True, action='append')
+        '--train-data-paths', type=str, required=True, action='append', metavar='FILE')
     self.full_parser.add_argument(
-        '--eval-data-paths', type=str, required=True, action='append')
+        '--eval-data-paths', type=str, required=True, action='append', metavar='FILE')
     self.full_parser.add_argument('--job-dir', type=str, required=True)
     self.full_parser.add_argument(
-        '--output-dir-from-analysis-step', type=str, required=True,
+        '--output-dir-from-analysis-step', type=str, required=True, metavar='FOLDER',
         help=('Output folder of analysis. Should contain the schema, stats, and '
               'vocab files. Path must be on GCS if running cloud training.'))
     self.full_parser.add_argument(
@@ -156,13 +156,13 @@ def parse_arguments(argv):
 
   # HP parameters
   parser.add_argument(
-      '--epsilon', type=float, default=0.0005,
+      '--epsilon', type=float, default=0.0005, metavar='R',
       help='tf.train.AdamOptimizer epsilon. Only used in dnn models.')
   parser.add_argument(
-      '--l1-regularization', type=float, default=0.0,
+      '--l1-regularization', type=float, default=0.0, metavar='R',
       help='L1 term for linear models.')
   parser.add_argument(
-      '--l2-regularization', type=float, default=0.0,
+      '--l2-regularization', type=float, default=0.0, metavar='R',
       help='L2 term for linear models.')
 
   # Model parameters
@@ -170,33 +170,36 @@ def parse_arguments(argv):
     '--model-type', required=True,
     choices=['linear_classification', 'linear_regression', 'dnn_classification', 'dnn_regression'])
   parser.add_argument(
-      '--top-n', type=int, default=1,
+      '--top-n', type=int, default=1, metavar='N',
       help=('For classification problems, the output graph will contain the '
             'labels and scores for the top n classes.'))
 
   # HP parameters
   parser.add_argument(
-      '--learning-rate', type=float, default=0.01, help='optimizer learning rate.')
+      '--learning-rate', type=float, default=0.01, metavar='R',
+      help='optimizer learning rate.')
 
   # Training input parameters
   parser.add_argument(
-      '--max-steps', type=int, default=5000,
+      '--max-steps', type=int, default=5000, metavar='N',
       help='Maximum number of training steps to perform.')
   parser.add_argument(
-      '--num-epochs', type=int,
+      '--num-epochs', type=int, metavar='N',
       help=('Maximum number of training data epochs on which to train. If '
             'both "max-step" and "num-epochs" are specified, the training '
             'job will run for "max-steps" or "num-epochs", whichever occurs '
             'first. If unspecified will run for "max-steps".'))
-  parser.add_argument('--train-batch-size', type=int, default=1000)
-  parser.add_argument('--eval-batch-size', type=int, default=1000)
+  parser.add_argument('--train-batch-size', type=int, default=100, metavar='N')
+  parser.add_argument('--eval-batch-size', type=int, default=100, metavar='N')
   parser.add_argument(
-      '--min-eval-frequency', type=int, default=100,
-      help='Minimum number of training steps between evaluations.')
+      '--min-eval-frequency', type=int, default=100, metavar='N',
+      help='Minimum number of training steps between evaluations. Evaluation '
+           'does not occur if no new checkpoint is available, hence, this is '
+           'the minimum. If 0, the evaluation will only happen after training.')
 
   # other parameters
   parser.add_argument(
-      '--save-checkpoints-secs', type=int, default=600,
+      '--save-checkpoints-secs', type=int, default=600, metavar='N',
       help='How often the model should be checkpointed/saved in seconds.')
 
   args, remaining_args = parser.parse_known_args(args=argv[1:])

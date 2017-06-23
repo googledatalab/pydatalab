@@ -118,18 +118,21 @@ def parse_arguments(argv):
                       action='store_true',
                       help='Analysis will use cloud services.')
   parser.add_argument('--output-dir',
+                      metavar='FOLDER',
                       type=str,
                       required=True,
                       help='GCS or local folder')
 
   # CSV inputs
   parser.add_argument('--csv-file-pattern',
+                      metavar='FILE',
                       type=str,
                       required=False,
                       action='append',
                       help=('Input CSV file names. May contain a file pattern. '
                             'File prefix must include absolute file path.'))
   parser.add_argument('--csv-schema-file',
+                      metavar='FILE',
                       type=str,
                       required=False,
                       help=('BigQuery json schema file path'))
@@ -138,9 +141,10 @@ def parse_arguments(argv):
   parser.add_argument('--bigquery-table',
                       type=str,
                       required=False,
-                      help=('project.dataset.table_name'))
+                      help=('Must be in the form project.dataset.table_name'))
 
   parser.add_argument('--features-file',
+                      metavar='FILE',
                       type=str,
                       required=True,
                       help='Features file path')
