@@ -128,10 +128,10 @@ class TestSpecialCharacters(unittest.TestCase):
 
       # Run transform, and check there are no reported errors.
       cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
-          '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
-          '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
-          '--output-filename-prefix=features_train',
-          '--output-dir=' + os.path.join(output_dir, 'transform')]
+             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
+             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
+             '--output-filename-prefix=features_train',
+             '--output-dir=' + os.path.join(output_dir, 'transform')]
       subprocess.check_call(' '.join(cmd), shell=True)
 
       error_files = glob.glob(os.path.join(output_dir, 'transform', 'error*'))
