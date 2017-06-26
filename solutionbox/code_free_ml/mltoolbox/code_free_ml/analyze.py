@@ -276,7 +276,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       numerical_vocab_stats[col_name] = {'vocab_size': len(df)}
 
       # free memeory
-      del string_buff
+      del csv_string
       del df
     elif transform_name in constant.NUMERIC_TRANSFORMS:
       # get min/max/average
