@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
 import base64
+import glob
 import json
 import logging
 import os
+import pandas as pd
 from PIL import Image
 import random
 import shutil
@@ -51,6 +53,114 @@ def run_exported_model(model_path, csv_data):
                       feed_dict={csv_tensor_name: csv_data})
 
   return result
+
+
+class TestSpecialCharacters(unittest.TestCase):
+  """Test special characters are supported."""
+
+  def testCommaQuote(self):
+    """Test when csv input data has quotes and commas."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'target': {'transform': 'target'},
+          'cat': {'transform': 'one_hot'},
+          'text': {'transform': 'bag_of_words'}}
+      schema = [
+          {'name': 'target', 'type': 'string'},
+          {'name': 'cat', 'type': 'string'},
+          {'name': 'text', 'type': 'string'}]
+      # Target column = cat  column
+      data = [{'cat': 'red,', 'text': 'one, two, three', 'target': 'red,'},
+              {'cat': 'blue"', 'text': 'one, "two"', 'target': 'blue"'},
+              {'cat': '"green"', 'text': '"two', 'target': '"green"'},
+              {'cat': "yellow, 'brown", 'text': "'one, two'", 'target': "yellow, 'brown"}]
+
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(
+          os.path.join(output_dir, 'data.csv'),
+          pd.DataFrame(data, columns=['target', 'cat', 'text']).to_csv(index=False, header=False))
+
+      # Run analysis and check the output vocabs are correctly encoded in csv
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output-dir=' + os.path.join(output_dir, 'analysis'),
+             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
+             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
+             '--features-file=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      df_vocab_cat_expected = pd.DataFrame(
+          {'label': ['blue"', '"green"', "yellow, 'brown", 'red,'],
+           'count': ['1', '1', '1', '1']},
+          columns=['label', 'count'])
+      df_vocab_cat = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_cat.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      self.assertTrue(df_vocab_cat_expected.equals(df_vocab_cat))
+
+      df_vocab_target_expected = df_vocab_cat_expected
+      df_vocab_target = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_target.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      self.assertTrue(df_vocab_target_expected.equals(df_vocab_target))
+
+      df_vocab_text_expected = pd.DataFrame(
+          {'label': ['one,', 'two,', '"two"', "'one,", '"two', "two'", 'three'],
+           'count': ['2', '1', '1', '1', '1', '1', '1']},
+          columns=['label', 'count'])
+      df_vocab_text = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_text.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      self.assertTrue(df_vocab_text_expected.equals(df_vocab_text))
+
+      # Run transform, and check there are no reported errors.
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
+          '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
+          '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
+          '--output-filename-prefix=features_train',
+          '--output-dir=' + os.path.join(output_dir, 'transform')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      error_files = glob.glob(os.path.join(output_dir, 'transform', 'error*'))
+      self.assertEqual(1, len(error_files))
+      self.assertEqual(0, os.path.getsize(error_files[0]))
+
+      # Run training
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
+             '--model-type=linear_classification',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=500',
+             '--learning-rate=1.0',
+             '--run-transforms']
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['"red,","one, two, three"'])
+
+      # Check it made the correct prediction
+      self.assertEqual(result['predicted'], 'red,')
+    finally:
+      shutil.rmtree(output_dir)
 
 
 class TestMultipleFeatures(unittest.TestCase):
