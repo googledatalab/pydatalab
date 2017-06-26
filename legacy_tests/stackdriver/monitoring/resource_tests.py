@@ -12,7 +12,7 @@
 
 from __future__ import absolute_import
 import mock
-from oauth2client.client import AccessTokenCredentials
+from google.auth.credentials import Credentials
 import unittest
 
 import google.cloud.monitoring
@@ -31,6 +31,16 @@ LABELS = [dict(key='instance_id', value_type='STRING',
 FILTER_STRING = 'resource.type = ends_with("instance")'
 
 
+class MockCredentials(Credentials):
+    def __init__(self, token='token'):
+        super(MockCredentials, self).__init__()
+        self.token = token
+        self.expiry = None
+
+    def refresh(self, request):
+        self.token += '1'
+
+
 class TestCases(unittest.TestCase):
 
   def setUp(self):
@@ -45,8 +55,8 @@ class TestCases(unittest.TestCase):
 
     expected_client = gcm._utils.make_client(context=self.context)
     self.assertEqual(descriptors._client.project, expected_client.project)
-    self.assertEqual(descriptors._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(descriptors._client._connection.credentials,
+                     expected_client._connection.credentials)
 
     self.assertIsNone(descriptors._filter_string)
     self.assertIsNone(descriptors._descriptors)
@@ -59,8 +69,8 @@ class TestCases(unittest.TestCase):
     expected_client = gcm._utils.make_client(
         context=context, project_id=PROJECT)
     self.assertEqual(descriptors._client.project, expected_client.project)
-    self.assertEqual(descriptors._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(descriptors._client._connection.credentials,
+                     expected_client._connection.credentials)
 
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
     self.assertIsNone(descriptors._descriptors)
@@ -145,7 +155,7 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_context(project_id='test'):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = MockCredentials()
     return datalab.context.Context(project_id, creds)
 
   @staticmethod

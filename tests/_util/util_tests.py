@@ -20,7 +20,7 @@ import os
 
 import google.datalab.utils._utils as _utils
 from datetime import datetime
-import oauth2client.client
+import google.auth
 
 
 class TestCases(unittest.TestCase):
@@ -90,7 +90,7 @@ class TestCases(unittest.TestCase):
       self.assertEquals(_utils.get_config_dir(), 'test\\path\\gcloud')
 
   @mock.patch('google.datalab.utils._utils._in_datalab_docker')
-  @mock.patch('oauth2client.client.GoogleCredentials.get_application_default')
+  @mock.patch('google.auth.default')
   @mock.patch('os.path.exists')
   def test_get_credentials_from_file(self, mock_path_exists, mock_get_default_creds,
                                      mock_in_datalab):
@@ -109,7 +109,7 @@ class TestCases(unittest.TestCase):
             "type": "google-cloud-sdk"
           },
           "credential": {
-            "access_token": "test-access-token",
+            "token": "test-access-token",
             "client_id": "test-id",
             "client_secret": "test-secret",
             "refresh_token": "test-token",
@@ -125,7 +125,7 @@ class TestCases(unittest.TestCase):
       mock_get_default_creds.side_effect = Exception
       cred = _utils.get_credentials()
 
-      self.assertEquals(cred.access_token, 'test-access-token')
+      self.assertEquals(cred.token, 'test-access-token')
 
     mock_path_exists.return_value = False
     with self.assertRaises(Exception):
@@ -133,7 +133,7 @@ class TestCases(unittest.TestCase):
 
     # If default creds are not defined, and no file exists with credentials, throw
     # something more meaningful.
-    mock_get_default_creds.side_effect = oauth2client.client.ApplicationDefaultCredentialsError
+    mock_get_default_creds.side_effect = google.auth.exceptions.DefaultCredentialsError
     with self.assertRaisesRegexp(Exception,
                                  'No application credentials found. Perhaps you should sign in'):
       cred = _utils.get_credentials()

@@ -13,6 +13,7 @@
 import json
 import pandas as pd
 import sys
+from past.builtins import basestring
 
 import google.datalab as datalab
 import google.datalab.bigquery as bq

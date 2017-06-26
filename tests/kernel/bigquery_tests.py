@@ -13,7 +13,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import mock
-from oauth2client.client import AccessTokenCredentials
+from google.auth.credentials import Credentials
 import unittest
 import json
 import pandas
@@ -42,6 +42,16 @@ import google.datalab  # noqa
 import google.datalab.bigquery  # noqa
 import google.datalab.bigquery.commands  # noqa
 import google.datalab.utils.commands  # noqa
+
+
+class MockCredentials(Credentials):
+    def __init__(self, token='token'):
+        super(MockCredentials, self).__init__()
+        self.token = token
+        self.expiry = None
+
+    def refresh(self, request):
+        self.token += '1'
 
 
 class TestCases(unittest.TestCase):
@@ -202,7 +212,7 @@ WITH q1 AS (
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = MockCredentials()
     return google.datalab.Context(project_id, creds)
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
