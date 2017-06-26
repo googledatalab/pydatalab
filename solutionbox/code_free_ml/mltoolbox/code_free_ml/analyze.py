@@ -22,6 +22,7 @@ import copy
 import csv
 import json
 import os
+import pandas as pd
 import sys
 import six
 import textwrap
@@ -268,11 +269,10 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       df = _execute_sql(sql, table)
 
       # Save the vocab
-      string_buff = six.StringIO()
-      df.to_csv(string_buff, index=False, header=False)
+      csv_string = df.to_csv(index=False, header=False)
       file_io.write_string_to_file(
           os.path.join(output_dir, constant.VOCAB_ANALYSIS_FILE % col_name),
-          string_buff.getvalue())
+          csv_string)
       numerical_vocab_stats[col_name] = {'vocab_size': len(df)}
 
       # free memeory
@@ -394,18 +394,21 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
   # Write the vocab files. Each label is on its own line.
   vocab_sizes = {}
   for name, label_count in six.iteritems(vocabs):
-    # Labels is now the string:
+    # df is now:
     # label1,count
     # label2,count
     # ...
     # where label1 is the most frequent label, and label2 is the 2nd most, etc.
-    labels = '\n'.join(['%s,%d' % (label, count)
-                        for label, count in sorted(six.iteritems(label_count),
-                                                   key=lambda x: x[1],
-                                                   reverse=True)])
+    df = pd.DataFrame([{'label': label, 'count': count}
+                       for label, count in sorted(six.iteritems(label_count),
+                                                  key=lambda x: x[1],
+                                                  reverse=True)],
+                      columns=['label', 'count'])
+    csv_string = df.to_csv(index=False, header=False)
+
     file_io.write_string_to_file(
         os.path.join(output_dir, constant.VOCAB_ANALYSIS_FILE % name),
-        labels)
+        csv_string)
 
     vocab_sizes[name] = {'vocab_size': len(label_count)}
 
