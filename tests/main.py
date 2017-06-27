@@ -92,6 +92,9 @@ _UNIT_TEST_MODULES = [
     storage.bucket_tests,
     storage.object_tests,
     _util.commands_tests,
+    _util.http_tests,
+    _util.lru_cache_tests,
+    _util.util_tests
 ]
 
 
