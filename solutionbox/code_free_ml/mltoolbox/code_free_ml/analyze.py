@@ -118,7 +118,7 @@ def parse_arguments(argv):
   parser.add_argument('--cloud',
                       action='store_true',
                       help='Analysis will use cloud services.')
-  parser.add_argument('--output-dir',
+  parser.add_argument('--output',
                       metavar='FOLDER',
                       type=str,
                       required=True,
@@ -132,7 +132,7 @@ def parse_arguments(argv):
                       action='append',
                       help=('Input CSV file names. May contain a file pattern. '
                             'File prefix must include absolute file path.'))
-  parser.add_argument('--csv-schema-file',
+  parser.add_argument('--csv-schema',
                       metavar='FILE',
                       type=str,
                       required=False,
@@ -144,7 +144,7 @@ def parse_arguments(argv):
                       required=False,
                       help=('Must be in the form project.dataset.table_name'))
 
-  parser.add_argument('--features-file',
+  parser.add_argument('--features',
                       metavar='FILE',
                       type=str,
                       required=True,
@@ -153,21 +153,21 @@ def parse_arguments(argv):
   args = parser.parse_args(args=argv[1:])
 
   if args.cloud:
-    if not args.output_dir.startswith('gs://'):
+    if not args.output.startswith('gs://'):
       raise ValueError('--output-dir must point to a location on GCS')
     if (args.csv_file_pattern and
        not all(x.startswith('gs://') for x in args.csv_file_pattern)):
       raise ValueError('--csv-file-pattern must point to a location on GCS')
-    if args.csv_schema_file and not args.csv_schema_file.startswith('gs://'):
+    if args.csv_schema and not args.csv_schema.startswith('gs://'):
       raise ValueError('--csv-schema-file must point to a location on GCS')
 
   if not args.cloud and args.bigquery_table:
     raise ValueError('--bigquery-table must be used with --cloud')
 
   if not ((args.bigquery_table and args.csv_file_pattern is None and
-           args.csv_schema_file is None) or
+           args.csv_schema is None) or
           (args.bigquery_table is None and args.csv_file_pattern and
-           args.csv_schema_file)):
+           args.csv_schema)):
     raise ValueError('either --csv-schema-file and --csv-file-pattern must both'
                      ' be set or just --bigquery-table is set')
 
@@ -576,42 +576,42 @@ def invert_features(features):
 def main(argv=None):
   args = parse_arguments(sys.argv if argv is None else argv)
 
-  if args.csv_schema_file:
+  if args.csv_schema:
     schema = json.loads(
-        file_io.read_file_to_string(args.csv_schema_file).decode())
+        file_io.read_file_to_string(args.csv_schema).decode())
   else:
     import google.datalab.bigquery as bq
     schema = bq.Table(args.bigquery_table).schema._bq_schema
   features = json.loads(
-      file_io.read_file_to_string(args.features_file).decode())
+      file_io.read_file_to_string(args.features).decode())
 
   expand_defaults(schema, features)  # features are updated.
   inverted_features = invert_features(features)
   check_schema_transforms_match(schema, inverted_features)
 
-  file_io.recursive_create_dir(args.output_dir)
+  file_io.recursive_create_dir(args.output)
 
   if args.cloud:
     run_cloud_analysis(
-        output_dir=args.output_dir,
+        output_dir=args.output,
         csv_file_pattern=args.csv_file_pattern,
         bigquery_table=args.bigquery_table,
         schema=schema,
         inverted_features=inverted_features)
   else:
     run_local_analysis(
-        output_dir=args.output_dir,
+        output_dir=args.output,
         csv_file_pattern=args.csv_file_pattern,
         schema=schema,
         inverted_features=inverted_features)
 
   # Save a copy of the schema and features in the output folder.
   file_io.write_string_to_file(
-    os.path.join(args.output_dir, constant.SCHEMA_FILE),
+    os.path.join(args.output, constant.SCHEMA_FILE),
     json.dumps(schema, indent=2))
 
   file_io.write_string_to_file(
-    os.path.join(args.output_dir, constant.FEATURES_FILE),
+    os.path.join(args.output, constant.FEATURES_FILE),
     json.dumps(features, indent=2))
 
 

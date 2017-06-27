@@ -95,8 +95,8 @@ def parse_arguments(argv):
             'data to transform'))
 
   parser.add_argument(
-      '--output-dir-from-analysis-step',
-      metavar='FOLDER',
+      '--analysis',
+      metavar='ANALYSIS_OUTPUT_FOLDER',
       required=True,
       help='The output folder of analyze')
   parser.add_argument(
@@ -105,7 +105,7 @@ def parse_arguments(argv):
       required=True,
       type=str)
   parser.add_argument(
-      '--output-dir',
+      '--output',
       metavar='FOLDER',
       default=None,
       required=True,
@@ -427,11 +427,11 @@ def preprocess(pipeline, args):
   from trainer import feature_transforms
 
   schema = json.loads(file_io.read_file_to_string(
-      os.path.join(args.output_dir_from_analysis_step, feature_transforms.SCHEMA_FILE)).decode())
+      os.path.join(args.analysis, feature_transforms.SCHEMA_FILE)).decode())
   features = json.loads(file_io.read_file_to_string(
-      os.path.join(args.output_dir_from_analysis_step, feature_transforms.FEATURES_FILE)).decode())
+      os.path.join(args.analysis, feature_transforms.FEATURES_FILE)).decode())
   stats = json.loads(file_io.read_file_to_string(
-      os.path.join(args.output_dir_from_analysis_step, feature_transforms.STATS_FILE)).decode())
+      os.path.join(args.analysis, feature_transforms.STATS_FILE)).decode())
 
   column_names = [col['name'] for col in schema]
 
@@ -468,7 +468,7 @@ def preprocess(pipeline, args):
   if args.shuffle:
     clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
 
-  transform_dofn = TransformFeaturesDoFn(args.output_dir_from_analysis_step, features, schema, stats)
+  transform_dofn = TransformFeaturesDoFn(args.analysis, features, schema, stats)
   (transformed_data, errors) = (
        clean_csv_data
        | 'Batch Input' 
@@ -480,19 +480,19 @@ def preprocess(pipeline, args):
         | 'SerializeExamples' >> beam.Map(serialize_example, feature_transforms.get_transfrormed_feature_info(features, schema))
         | 'WriteExamples'
         >> beam.io.WriteToTFRecord(
-            os.path.join(args.output_dir, args.output_filename_prefix),
+            os.path.join(args.output, args.output_filename_prefix),
             file_name_suffix='.tfrecord.gz'))
   _ = (errors
        | 'WriteErrors'
        >> beam.io.WriteToText(
-           os.path.join(args.output_dir, 'errors_' + args.output_filename_prefix),
+           os.path.join(args.output, 'errors_' + args.output_filename_prefix),
            file_name_suffix='.txt'))
 
 
 def main(argv=None):
   """Run Preprocessing as a Dataflow."""
   args = parse_arguments(sys.argv if argv is None else argv)
-  temp_dir = os.path.join(args.output_dir, 'tmp')
+  temp_dir = os.path.join(args.output, 'tmp')
 
   if args.cloud:
     pipeline_name = 'DataflowRunner'
