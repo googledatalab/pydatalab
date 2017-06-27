@@ -20,6 +20,7 @@ import unittest
 # from the parent folder and run "python tests/main.py"
 
 import context_tests
+import airflow.airflow_tests
 import bigquery.api_tests
 import bigquery.dataset_tests
 import bigquery.external_data_source_tests
@@ -68,6 +69,7 @@ import _util.util_tests
 
 _UNIT_TEST_MODULES = [
     context_tests,
+    airflow.airflow_tests,
     bigquery.api_tests,
     bigquery.dataset_tests,
     # bigquery.external_data_source_tests, # TODO: enable external data source tests
