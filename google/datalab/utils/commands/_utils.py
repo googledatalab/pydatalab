@@ -30,6 +30,7 @@ try:
   import pandas_profiling
 except ImportError:
   pass
+import six
 import sys
 import yaml
 
@@ -249,7 +250,8 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
 
 def handle_magic_line(line, cell, parser, namespace=None):
   """ Helper function for handling magic command lines given a parser with handlers set. """
-  args = parser.parse(line, namespace)
+
+  args, cell = parser.parse(line, cell, namespace)
   if args:
     try:
       return args.func(vars(args), cell)
@@ -334,6 +336,62 @@ def parse_config(config, env, as_dict=True):
   # Now we need to walk the config dictionary recursively replacing any '$name' vars.
   replace_vars(config, env)
   return config
+
+
+def parse_config_for_selected_keys(content, env, keys):
+  """ Parse a config from a magic cell body for selected config keys.
+
+  For example, if 'content' is:
+    config_item1: value1
+    config_item2: value2
+    config_item3: value3
+  and 'keys' are: [config_item1, config_item3]
+
+  The results will be a tuple of
+  1. The parsed config items (dict): {config_item1: value1, config_item3: value3}
+  2. The remaining content (string): config_item2: value2
+
+  Args:
+    content: the input content. A string. It has to be a yaml or JSON string.
+    env: user supplied dictionary for replacing vars (for example, $myvalue).
+    keys: a list of keys to retrieve from content.
+
+  Returns:
+    A tuple. First is the parsed config including only selected keys. Second is
+      the remaining content.
+
+  Raises:
+    Exception if the content is not a valid yaml or JSON string.
+  """
+
+  if content is None:
+    return {}, None
+
+  stripped = content.strip()
+  if len(stripped) == 0:
+    return {}, None
+  elif stripped[0] == '{':
+    config = json.loads(content)
+  else:
+    config = yaml.load(content)
+
+  if not isinstance(config, dict):
+    raise ValueError('Invalid config.')
+
+  config_items = {k: v for k, v in six.iteritems(config)
+                  if k in keys and (isinstance(v, six.string_types) or isinstance(v, bool))}
+  config_remaining = {k: v for k, v in six.iteritems(config) if k not in config_items}
+  replace_vars(config_items, env)
+
+  if not config_remaining:
+    return config_items, None
+
+  if stripped[0] == '{':
+    content_items_removed = json.dumps(config_remaining)
+  else:
+    content_items_removed = yaml.dump(config_remaining, default_flow_style=False)
+
+  return config_items, content_items_removed
 
 
 def validate_config(config, required_keys, optional_keys=None):
