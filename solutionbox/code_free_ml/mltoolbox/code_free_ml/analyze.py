@@ -54,7 +54,7 @@ def parse_arguments(argv):
           Description of input files
           --------------------------
 
-          1) If using csv files, the --csv-schema-file must be the file path to
+          1) If using csv files, the --schema parameter must be the file path to
              a schema file. The format of this file must be a valid BigQuery
              schema file, which is a JSON file containing a list of dicts.
              Consider the example schema file below:
@@ -70,11 +70,11 @@ def parse_arguments(argv):
              in the schema list. Also, we only support three BigQuery types (
              integer, float, and string).
 
-             If instead of csv files, --bigquery-table is used, the schema file
+             If instead of csv files, --bigquery is used, the schema file
              is not needed as this program will extract it from
              the table directly.
 
-          2) --features-file is a file path to a file describing the
+          2) --features is a file path to a file describing the
              transformations. Below is an example features file:
 
              {
@@ -124,22 +124,27 @@ def parse_arguments(argv):
                       required=True,
                       help='GCS or local folder')
 
-  # CSV inputs
-  parser.add_argument('--csv-file-pattern',
-                      metavar='FILE',
-                      type=str,
-                      required=False,
-                      action='append',
-                      help=('Input CSV file names. May contain a file pattern. '
-                            'File prefix must include absolute file path.'))
-  parser.add_argument('--csv-schema',
-                      metavar='FILE',
-                      type=str,
-                      required=False,
-                      help=('BigQuery json schema file path'))
+  input_group = parser.add_argument_group(
+      title='Data Source Parameters',
+      description='schema is only needed if using --csv')
 
-  # If using bigquery table
-  parser.add_argument('--bigquery-table',
+  # CSV input
+  input_group.add_argument('--csv',
+                           metavar='FILE',
+                           type=str,
+                           required=False,
+                           action='append',
+                           help='Input CSV absolute file paths. May contain a '
+                                'file pattern.')
+  input_group.add_argument('--schema',
+                           metavar='FILE',
+                           type=str,
+                           required=False,
+                           help='Schema file path. Only required if using csv files')
+
+  # Bigquery input
+  input_group.add_argument('--bigquery',
+                      metavar='PROJECT_ID.DATASET.TABLE_NAME',
                       type=str,
                       required=False,
                       help=('Must be in the form project.dataset.table_name'))
@@ -154,22 +159,22 @@ def parse_arguments(argv):
 
   if args.cloud:
     if not args.output.startswith('gs://'):
-      raise ValueError('--output-dir must point to a location on GCS')
-    if (args.csv_file_pattern and
-       not all(x.startswith('gs://') for x in args.csv_file_pattern)):
-      raise ValueError('--csv-file-pattern must point to a location on GCS')
-    if args.csv_schema and not args.csv_schema.startswith('gs://'):
-      raise ValueError('--csv-schema-file must point to a location on GCS')
+      raise ValueError('--output must point to a location on GCS')
+    if (args.csv and
+       not all(x.startswith('gs://') for x in args.csv)):
+      raise ValueError('--csv must point to a location on GCS')
+    if args.schema and not args.schema.startswith('gs://'):
+      raise ValueError('--schema must point to a location on GCS')
 
-  if not args.cloud and args.bigquery_table:
-    raise ValueError('--bigquery-table must be used with --cloud')
+  if not args.cloud and args.bigquery:
+    raise ValueError('--bigquery must be used with --cloud')
 
-  if not ((args.bigquery_table and args.csv_file_pattern is None and
-           args.csv_schema is None) or
-          (args.bigquery_table is None and args.csv_file_pattern and
-           args.csv_schema)):
-    raise ValueError('either --csv-schema-file and --csv-file-pattern must both'
-                     ' be set or just --bigquery-table is set')
+  if not ((args.bigquery and args.csv is None and
+           args.schema is None) or
+          (args.bigquery is None and args.csv and
+           args.schema)):
+    raise ValueError('either --csv and --schema must both'
+                     ' be set or just --bigquery is set')
 
   return args
 
@@ -576,12 +581,12 @@ def invert_features(features):
 def main(argv=None):
   args = parse_arguments(sys.argv if argv is None else argv)
 
-  if args.csv_schema:
+  if args.schema:
     schema = json.loads(
-        file_io.read_file_to_string(args.csv_schema).decode())
+        file_io.read_file_to_string(args.schema).decode())
   else:
     import google.datalab.bigquery as bq
-    schema = bq.Table(args.bigquery_table).schema._bq_schema
+    schema = bq.Table(args.bigquery).schema._bq_schema
   features = json.loads(
       file_io.read_file_to_string(args.features).decode())
 
@@ -594,14 +599,14 @@ def main(argv=None):
   if args.cloud:
     run_cloud_analysis(
         output_dir=args.output,
-        csv_file_pattern=args.csv_file_pattern,
-        bigquery_table=args.bigquery_table,
+        csv_file_pattern=args.csv,
+        bigquery_table=args.bigquery,
         schema=schema,
         inverted_features=inverted_features)
   else:
     run_local_analysis(
         output_dir=args.output,
-        csv_file_pattern=args.csv_file_pattern,
+        csv_file_pattern=args.csv,
         schema=schema,
         inverted_features=inverted_features)
 

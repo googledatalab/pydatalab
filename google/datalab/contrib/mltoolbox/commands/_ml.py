@@ -69,10 +69,10 @@ Use "%ml <command> -h" for help on a specific command.
       'analyze', help="""Analyze training data and generate stats, such as min/max/mean
 for numeric values, vocabulary for text columns. Example usage:
 
-%%ml analyze --output_dir path/to/dir [--cloud]
+%%ml analyze --output path/to/dir [--cloud]
 training_data:
-  csv_file_pattern: path/to/csv
-  csv_schema:
+  csv: path/to/csv
+  schema:
     - name: serialId
       type: STRING
     - name: num1
@@ -95,7 +95,7 @@ features:
 Cell input is in yaml format. Fields:
 
 training_data: one of the following:
-  csv_file_pattern and csv_schema (as the example above), or
+  csv and schema (as the example above), or
   bigquery_table (example: "bigquery_table: project.dataset.table"), or
   bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
   a variable defined as google.datalab.ml.CsvDataSet or google.datalab.ml.BigQueryDataSet
@@ -130,7 +130,7 @@ Also support in-notebook variables, such as:
 training_data: $my_csv_dataset
 features: $features_def
 """, formatter_class=argparse.RawTextHelpFormatter)
-  analyze_parser.add_argument('--output_dir', required=True,
+  analyze_parser.add_argument('--output', required=True,
                               help='path of output directory.')
   analyze_parser.add_argument('--cloud', action='store_true', default=False,
                               help='whether to run analysis in cloud or local.')
@@ -143,10 +143,10 @@ features: $features_def
       'transform', help="""Transform the data into tf.example which is more efficient
 in training. Example usage:
 
-%%ml transform --output_dir_from_analysis_step path/to/analysis --output_dir path/to/dir
-     --output_filename_prefix my_filename [--cloud] [--shuffle] [--batch_size 100]
+%%ml transform --analysis path/to/analysis_output_folder --output path/to/dir
+     --prefix my_filename [--cloud] [--shuffle] [--batch_size 100]
 training_data:
-  csv_file_pattern: path/to/csv
+  csv: path/to/csv
 cloud:
   num_workers: 3
   worker_machine_type: n1-standard-1
@@ -155,7 +155,7 @@ cloud:
 Cell input is in yaml format. Fields:
 
 training_data: Required. It is one of the following:
-  csv_file_pattern or
+  csv or
   bigquery_table (example: "bigquery_table: project.dataset.table"), or
   bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
   a variable defined as google.datalab.ml.CsvDataSet or google.datalab.ml.BigQueryDataSet
@@ -167,11 +167,11 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
   project_id: id of the project to use for DataFlow service. If not set, Datalab's default
               project (set by %%datalab project set) is used.
 """, formatter_class=argparse.RawTextHelpFormatter)
-  transform_parser.add_argument('--output_dir_from_analysis_step', required=True,
+  transform_parser.add_argument('--analysis', required=True,
                                 help='path of analysis output directory.')
   transform_parser.add_argument('--output_dir', required=True,
                                 help='path of output directory.')
-  transform_parser.add_argument('--output_filename_prefix', required=True,
+  transform_parser.add_argument('--prefix', required=True,
                                 help='The prefix of the output file name. The output files will ' +
                                      'be like output_filename_prefix_00001_of_0000n')
   transform_parser.add_argument('--cloud', action='store_true', default=False,
@@ -350,49 +350,49 @@ def _analyze(args, cell):
   # For now, always run python2. If needed we can run python3 when the current kernel
   # is py3. Since now our transform cannot work on py3 anyway, I would rather run
   # everything with python2.
-  cmd_args = ['python', 'analyze.py', '--output-dir', _abs_path(args['output_dir'])]
+  cmd_args = ['python', 'analyze.py', '--output', _abs_path(args['output'])]
   if args['cloud']:
     cmd_args.append('--cloud')
 
   training_data = cell_data['training_data']
   if args['cloud']:
-    tmpdir = os.path.join(args['output_dir'], 'tmp')
+    tmpdir = os.path.join(args['output'], 'tmp')
   else:
     tmpdir = tempfile.mkdtemp()
 
   try:
     if isinstance(training_data, dict):
-      if 'csv_file_pattern' in training_data and 'csv_schema' in training_data:
-        schema = training_data['csv_schema']
+      if 'csv' in training_data and 'schema' in training_data:
+        schema = training_data['schema']
         schema_file = _create_json_file(tmpdir, schema, 'schema.json')
-        cmd_args.extend(['--csv-file-pattern', _abs_path(training_data['csv_file_pattern'])])
-        cmd_args.extend(['--csv-schema-file', schema_file])
+        cmd_args.extend(['--csv', _abs_path(training_data['csv'])])
+        cmd_args.extend(['--schema', schema_file])
       elif 'bigquery_table' in training_data:
-        cmd_args.extend(['--bigquery-table', training_data['bigquery_table']])
+        cmd_args.extend(['--bigquery', training_data['bigquery_table']])
       elif 'bigquery_sql' in training_data:
         # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
         print('Creating temporary table that will be deleted in 24 hours')
         r = bq.Query(training_data['bigquery_sql']).execute().result()
-        cmd_args.extend(['--bigquery-table', r.full_name])
+        cmd_args.extend(['--bigquery', r.full_name])
       else:
         raise ValueError('Invalid training_data dict. ' +
                          'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
     elif isinstance(training_data, google.datalab.ml.CsvDataSet):
       schema_file = _create_json_file(tmpdir, training_data.schema, 'schema.json')
       for file_name in training_data.input_files:
-        cmd_args.append('--csv-file-pattern=' + _abs_path(file_name))
+        cmd_args.append('--csv=' + _abs_path(file_name))
 
-      cmd_args.extend(['--csv-schema-file', schema_file])
+      cmd_args.extend(['--schema', schema_file])
     elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
       # TODO: Support query too once command line supports query.
-      cmd_args.extend(['--bigquery-table', training_data.table])
+      cmd_args.extend(['--bigquery', training_data.table])
     else:
       raise ValueError('Invalid training data. Requires either a dict, ' +
                        'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
 
     features = cell_data['features']
     features_file = _create_json_file(tmpdir, features, 'features.json')
-    cmd_args.extend(['--features-file', features_file])
+    cmd_args.extend(['--features', features_file])
 
     if args['package']:
       code_path = os.path.join(tmpdir, 'package')
@@ -413,9 +413,9 @@ def _transform(args, cell):
                                                 optional_keys=['cloud'])
   training_data = cell_data['training_data']
   cmd_args = ['python', 'transform.py',
-              '--output-dir', _abs_path(args['output_dir']),
-              '--output-dir-from-analysis-step', _abs_path(args['output_dir_from_analysis_step']),
-              '--output-filename-prefix', args['output_filename_prefix']]
+              '--output', _abs_path(args['output_dir']),
+              '--analysis', _abs_path(args['output_dir_from_analysis_step']),
+              '--prefix', args['prefix']]
   if args['cloud']:
     cmd_args.append('--cloud')
     cmd_args.append('--async')
@@ -425,23 +425,23 @@ def _transform(args, cell):
     cmd_args.extend(['--batch-size', str(args['batch_size'])])
 
   if isinstance(training_data, dict):
-    if 'csv_file_pattern' in training_data:
-      cmd_args.extend(['--csv-file-pattern', _abs_path(training_data['csv_file_pattern'])])
+    if 'csv' in training_data:
+      cmd_args.extend(['--csv', _abs_path(training_data['csv'])])
     elif 'bigquery_table' in training_data:
-      cmd_args.extend(['--bigquery-table', training_data['bigquery_table']])
+      cmd_args.extend(['--bigquery', training_data['bigquery_table']])
     elif 'bigquery_sql' in training_data:
         # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
         print('Creating temporary table that will be deleted in 24 hours')
         r = bq.Query(training_data['bigquery_sql']).execute().result()
-        cmd_args.extend(['--bigquery-table', r.full_name])
+        cmd_args.extend(['--bigquery', r.full_name])
     else:
       raise ValueError('Invalid training_data dict. ' +
-                       'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
+                       'Requires either "csv" and "schema", or "bigquery".')
   elif isinstance(training_data, google.datalab.ml.CsvDataSet):
     for file_name in training_data.input_files:
-      cmd_args.append('--csv-file-pattern=' + _abs_path(file_name))
+      cmd_args.append('--csv=' + _abs_path(file_name))
   elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
-    cmd_args.extend(['--bigquery-table', training_data.table])
+    cmd_args.extend(['--bigquery', training_data.table])
   else:
     raise ValueError('Invalid training data. Requires either a dict, ' +
                      'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')

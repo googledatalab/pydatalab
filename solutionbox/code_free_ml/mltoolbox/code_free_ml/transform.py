@@ -67,28 +67,18 @@ def parse_arguments(argv):
           performance impact if the transforms are all simple like scaling
           numerical values."""))
 
-  parser.add_argument(
-      '--project-id',
-      help='The project to which the job will be submitted. Only needed if '
-           '--cloud is used.')
-  parser.add_argument(
-      '--cloud',
-      action='store_true',
-      help='Run preprocessing on the cloud.')
-  parser.add_argument(
-      '--job-name',
-      type=str,
-      help='Unique job name if running on the cloud.')
+  source_group = parser.add_mutually_exclusive_group(required=True)
 
-  parser.add_argument(
-      '--csv-file-pattern',
+  source_group.add_argument(
+      '--csv',
       metavar='FILE',
       required=False,
       action='append',
       help='CSV data to transform.')
-  # If using bigquery table
-  parser.add_argument(
-      '--bigquery-table',
+
+  source_group.add_argument(
+      '--bigquery',
+      metavar='PROJECT_ID.DATASET.TABLE_NAME',
       type=str,
       required=False,
       help=('Must be in the form `project.dataset.table_name`. BigQuery '
@@ -99,11 +89,13 @@ def parse_arguments(argv):
       metavar='ANALYSIS_OUTPUT_FOLDER',
       required=True,
       help='The output folder of analyze')
+
   parser.add_argument(
-      '--output-filename-prefix',
-      metavar='PREFIX',
+      '--prefix',
+      metavar='OUTPUT_FILENAME_PREFIX',
       required=True,
       type=str)
+
   parser.add_argument(
       '--output',
       metavar='FOLDER',
@@ -115,29 +107,49 @@ def parse_arguments(argv):
   parser.add_argument(
       '--shuffle',
       action='store_true',
-      default=False)
+      default=False,
+      help='If used, data source is shuffled. This is recommended for training data.')
 
   parser.add_argument(
       '--batch-size',
       metavar='N',
       type=int,
-      default=100)
+      default=100,
+      help='Larger values increase performance and peak memory usage.')
 
-  parser.add_argument(
+  cloud_group = parser.add_argument_group(
+      title='Cloud Parameters',
+      description='These parameters are only used if --cloud is used.')
+
+  cloud_group.add_argument(
+      '--cloud',
+      action='store_true',
+      help='Run preprocessing on the cloud.')
+
+  cloud_group.add_argument(
+      '--job-name',
+      type=str,
+      help='Unique dataflow job name.')
+
+  cloud_group.add_argument(
+      '--project-id',
+      help='The project to which the job will be submitted.')
+
+  cloud_group.add_argument(
       '--num-workers',
       metavar='N',
       type=int,
       default=0,
       help='Set to 0 to use the default size determined by the Dataflow service.')
 
-  parser.add_argument(
+  cloud_group.add_argument(
       '--worker-machine-type',
       metavar='NAME',
       type=str,
       help='A machine name from https://cloud.google.com/compute/docs/machine-types. '
            ' If not given, the service uses the default machine type.')
 
-  parser.add_argument(
+  cloud_group.add_argument(
       '--async',
       action='store_true',
       help='If used, this script returns before the dataflow job is completed.')
@@ -435,9 +447,9 @@ def preprocess(pipeline, args):
 
   column_names = [col['name'] for col in schema]
 
-  if args.csv_file_pattern:
+  if args.csv:
     all_files = []
-    for i, file_pattern in enumerate(args.csv_file_pattern):
+    for i, file_pattern in enumerate(args.csv):
       all_files.append(pipeline | ('ReadCSVFile%d' % i) >> beam.io.ReadFromText(file_pattern))
     raw_data = (
         all_files
@@ -446,7 +458,7 @@ def preprocess(pipeline, args):
   else:
     columns = ', '.join(column_names)
     query = 'SELECT {columns} FROM `{table}`'.format(columns=columns,
-                                                     table=args.bigquery_table)
+                                                     table=args.bigquery)
     raw_data = (
         pipeline
         | 'ReadBiqQueryData'
@@ -480,12 +492,12 @@ def preprocess(pipeline, args):
         | 'SerializeExamples' >> beam.Map(serialize_example, feature_transforms.get_transfrormed_feature_info(features, schema))
         | 'WriteExamples'
         >> beam.io.WriteToTFRecord(
-            os.path.join(args.output, args.output_filename_prefix),
+            os.path.join(args.output, args.prefix),
             file_name_suffix='.tfrecord.gz'))
   _ = (errors
        | 'WriteErrors'
        >> beam.io.WriteToText(
-           os.path.join(args.output, 'errors_' + args.output_filename_prefix),
+           os.path.join(args.output, 'errors_' + args.prefix),
            file_name_suffix='.txt'))
 
 
