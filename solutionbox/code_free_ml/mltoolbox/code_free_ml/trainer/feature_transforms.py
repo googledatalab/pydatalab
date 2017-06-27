@@ -650,7 +650,7 @@ def build_tfexample_transfored_training_input_fn(schema,
         randomize_input is True.
     reader_num_threads: The number of threads enqueuing data.
     allow_smaller_final_batch: If false, fractional batches at the end of
-        training or evaluation are not used.    
+        training or evaluation are not used.
 
   Returns:
     An input_fn suitable for training that reads transformed data in tf record
