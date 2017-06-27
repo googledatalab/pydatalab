@@ -19,6 +19,7 @@ import unittest
 # For these tests to work locally, install the package with "pip install -e ."
 # from the parent folder and run "python tests/main.py"
 
+import airflow.airflow_tests
 import context_tests
 import airflow.airflow_tests
 import bigquery.api_tests
@@ -68,6 +69,7 @@ import _util.util_tests
 
 
 _UNIT_TEST_MODULES = [
+    airflow.airflow_tests,
     context_tests,
     airflow.airflow_tests,
     bigquery.api_tests,
