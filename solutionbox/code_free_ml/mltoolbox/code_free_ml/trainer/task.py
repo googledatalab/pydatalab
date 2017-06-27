@@ -189,13 +189,22 @@ def parse_arguments(argv):
             'both "max-step" and "num-epochs" are specified, the training '
             'job will run for "max-steps" or "num-epochs", whichever occurs '
             'first. If unspecified will run for "max-steps".'))
-  parser.add_argument('--train-batch-size', type=int, default=100, metavar='N')
-  parser.add_argument('--eval-batch-size', type=int, default=100, metavar='N')
+  parser.add_argument(
+      '--train-batch-size', type=int, default=100, metavar='N',
+      help='How many training examples are used per step.')
+  parser.add_argument(
+      '--eval-batch-size', type=int, default=100, metavar='N',
+      help='Batch size during evaluation. Larger values increase performance '
+           'but also increase peak memory usgae on the master node. One pass '
+           'over the full eval set is performed per evaluation run.')
   parser.add_argument(
       '--min-eval-frequency', type=int, default=100, metavar='N',
       help='Minimum number of training steps between evaluations. Evaluation '
            'does not occur if no new checkpoint is available, hence, this is '
-           'the minimum. If 0, the evaluation will only happen after training.')
+           'the minimum. If 0, the evaluation will only happen after training. '
+           'If more frequent evaluation is desired, decrease '
+           'save-checkpoints-secs. Increase min-eval-frequency to run evaluaton '
+           'less often.')
 
   # other parameters
   parser.add_argument(
@@ -737,7 +746,8 @@ def get_experiment_fn(args):
           num_epochs=args.num_epochs,
           randomize_input=True,
           min_after_dequeue=10,
-          reader_num_threads=multiprocessing.cpu_count())
+          reader_num_threads=multiprocessing.cpu_count(),
+          allow_smaller_final_batch=False)
       input_reader_for_eval = feature_transforms.build_csv_transforming_training_input_fn(
           schema=schema,
           features=features,
@@ -747,7 +757,8 @@ def get_experiment_fn(args):
           training_batch_size=args.eval_batch_size,
           num_epochs=1,
           randomize_input=False,
-          reader_num_threads=multiprocessing.cpu_count())
+          reader_num_threads=multiprocessing.cpu_count(),
+          allow_smaller_final_batch=True)
     else:
       input_reader_for_train = feature_transforms.build_tfexample_transfored_training_input_fn(
           schema=schema,
@@ -758,7 +769,8 @@ def get_experiment_fn(args):
           num_epochs=args.num_epochs,
           randomize_input=True,
           min_after_dequeue=10,
-          reader_num_threads=multiprocessing.cpu_count())
+          reader_num_threads=multiprocessing.cpu_count(),
+          allow_smaller_final_batch=False)
       input_reader_for_eval = feature_transforms.build_tfexample_transfored_training_input_fn(
           schema=schema,
           features=features,
@@ -767,7 +779,8 @@ def get_experiment_fn(args):
           training_batch_size=args.eval_batch_size,
           num_epochs=1,
           randomize_input=False,
-          reader_num_threads=multiprocessing.cpu_count())
+          reader_num_threads=multiprocessing.cpu_count(),
+          allow_smaller_final_batch=True)
 
     return tf.contrib.learn.Experiment(
         estimator=estimator,
