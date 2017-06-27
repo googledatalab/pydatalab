@@ -364,8 +364,13 @@ def encode_csv(data_dict, column_names):
   Returns:
     A csv string version of data_dict
   """
+  import csv
+  import six
   values = [str(data_dict[x]) for x in column_names]
-  return ','.join(values)
+  str_buff = six.StringIO()
+  writer = csv.writer(str_buff, lineterminator='')
+  writer.writerow(values)
+  return str_buff.getvalue()
 
 
 def serialize_example(transformed_json_data, info_dict):

@@ -533,7 +533,8 @@ def build_csv_transforming_training_input_fn(schema,
                                              num_epochs=None,
                                              randomize_input=False,
                                              min_after_dequeue=1,
-                                             reader_num_threads=1):
+                                             reader_num_threads=1,
+                                             allow_smaller_final_batch=True):
   """Creates training input_fn that reads raw csv data and applies transforms.
 
   Args:
@@ -550,6 +551,8 @@ def build_csv_transforming_training_input_fn(schema,
         dequeue, used to ensure a level of mixing of elements. Only used if
         randomize_input is True.
     reader_num_threads: The number of threads enqueuing data.
+    allow_smaller_final_batch: If false, fractional batches at the end of
+        training or evaluation are not used.
 
   Returns:
     An input_fn suitable for training that reads raw csv training data and
@@ -582,7 +585,8 @@ def build_csv_transforming_training_input_fn(schema,
           capacity=queue_capacity,
           min_after_dequeue=min_after_dequeue,
           enqueue_many=True,
-          num_threads=reader_num_threads)
+          num_threads=reader_num_threads,
+          allow_smaller_final_batch=allow_smaller_final_batch)
 
     else:
       _, batch_csv_lines = tf.train.batch(
@@ -590,7 +594,8 @@ def build_csv_transforming_training_input_fn(schema,
           batch_size=training_batch_size,
           capacity=queue_capacity,
           enqueue_many=True,
-          num_threads=reader_num_threads)
+          num_threads=reader_num_threads,
+          allow_smaller_final_batch=allow_smaller_final_batch)
 
     csv_header, record_defaults = csv_header_and_defaults(features, schema, stats, keep_target=True)
     parsed_tensors = tf.decode_csv(batch_csv_lines, record_defaults, name='csv_to_tensors')
@@ -627,7 +632,8 @@ def build_tfexample_transfored_training_input_fn(schema,
                                                  num_epochs=None,
                                                  randomize_input=False,
                                                  min_after_dequeue=1,
-                                                 reader_num_threads=1):
+                                                 reader_num_threads=1,
+                                                 allow_smaller_final_batch=True):
   """Creates training input_fn that reads transformed tf.example files.
 
   Args:
@@ -643,6 +649,8 @@ def build_tfexample_transfored_training_input_fn(schema,
         dequeue, used to ensure a level of mixing of elements. Only used if
         randomize_input is True.
     reader_num_threads: The number of threads enqueuing data.
+    allow_smaller_final_batch: If false, fractional batches at the end of
+        training or evaluation are not used.
 
   Returns:
     An input_fn suitable for training that reads transformed data in tf record
@@ -677,7 +685,8 @@ def build_tfexample_transfored_training_input_fn(schema,
           capacity=queue_capacity,
           min_after_dequeue=min_after_dequeue,
           enqueue_many=True,
-          num_threads=reader_num_threads)
+          num_threads=reader_num_threads,
+          allow_smaller_final_batch=allow_smaller_final_batch)
 
     else:
       _, batch_ex_str = tf.train.batch(
@@ -685,7 +694,8 @@ def build_tfexample_transfored_training_input_fn(schema,
           batch_size=training_batch_size,
           capacity=queue_capacity,
           enqueue_many=True,
-          num_threads=reader_num_threads)
+          num_threads=reader_num_threads,
+          allow_smaller_final_batch=allow_smaller_final_batch)
 
     feature_spec = {}
     feature_info = get_transfrormed_feature_info(features, schema)

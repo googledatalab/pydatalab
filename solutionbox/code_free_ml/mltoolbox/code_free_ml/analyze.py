@@ -22,6 +22,7 @@ import copy
 import csv
 import json
 import os
+import pandas as pd
 import sys
 import six
 import textwrap
@@ -227,7 +228,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
 
   numerical_vocab_stats = {}
   for col_name, transform_set in six.iteritems(inverted_features_target):
-    sys.stdout.write('Analyzing column %s...' % col_name)
+    sys.stdout.write('Analyzing column %s...\n' % col_name)
     sys.stdout.flush()
     # All transforms in transform_set require the same analysis. So look
     # at the first transform.
@@ -268,15 +269,14 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       df = _execute_sql(sql, table)
 
       # Save the vocab
-      string_buff = six.StringIO()
-      df.to_csv(string_buff, index=False, header=False)
+      csv_string = df.to_csv(index=False, header=False)
       file_io.write_string_to_file(
           os.path.join(output_dir, constant.VOCAB_ANALYSIS_FILE % col_name),
-          string_buff.getvalue())
+          csv_string)
       numerical_vocab_stats[col_name] = {'vocab_size': len(df)}
 
       # free memeory
-      del string_buff
+      del csv_string
       del df
     elif transform_name in constant.NUMERIC_TRANSFORMS:
       # get min/max/average
@@ -287,7 +287,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       numerical_vocab_stats[col_name] = {'min': df.iloc[0]['min_value'],
                                          'max': df.iloc[0]['max_value'],
                                          'mean': df.iloc[0]['avg_value']}
-    sys.stdout.write('done.\n')
+    sys.stdout.write('column %s analyzed.\n' % col_name)
     sys.stdout.flush()
 
   # get num examples
@@ -316,10 +316,14 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
   Raises:
     ValueError: on unknown transfrorms/schemas
   """
+  sys.stdout.write('Expanding any file patterns...\n')
+  sys.stdout.flush()
   header = [column['name'] for column in schema]
   input_files = []
   for file_pattern in csv_file_pattern:
     input_files.extend(file_io.get_matching_files(file_pattern))
+  sys.stdout.write('file list computed.\n')
+  sys.stdout.flush()
 
   # Make a copy of inverted_features and update the target transform to be
   # identity or one hot depending on the schema.
@@ -345,7 +349,7 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
   # for each file, update the numerical stats from that file, and update the set
   # of unique labels.
   for input_file in input_files:
-    sys.stdout.write('Analyzing file %s...' % input_file)
+    sys.stdout.write('Analyzing file %s...\n' % input_file)
     sys.stdout.flush()
     with file_io.FileIO(input_file, 'r') as f:
       for line in csv.reader(f):
@@ -384,24 +388,27 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, inverted_features):
             numerical_results[col_name]['count'] += 1
             numerical_results[col_name]['sum'] += float(parsed_line[col_name])
 
-    sys.stdout.write('done.\n')
+    sys.stdout.write('file %s analyzed.\n' % input_file)
     sys.stdout.flush()
 
   # Write the vocab files. Each label is on its own line.
   vocab_sizes = {}
   for name, label_count in six.iteritems(vocabs):
-    # Labels is now the string:
+    # df is now:
     # label1,count
     # label2,count
     # ...
     # where label1 is the most frequent label, and label2 is the 2nd most, etc.
-    labels = '\n'.join(['%s,%d' % (label, count)
-                        for label, count in sorted(six.iteritems(label_count),
-                                                   key=lambda x: x[1],
-                                                   reverse=True)])
+    df = pd.DataFrame([{'label': label, 'count': count}
+                       for label, count in sorted(six.iteritems(label_count),
+                                                  key=lambda x: x[1],
+                                                  reverse=True)],
+                      columns=['label', 'count'])
+    csv_string = df.to_csv(index=False, header=False)
+
     file_io.write_string_to_file(
         os.path.join(output_dir, constant.VOCAB_ANALYSIS_FILE % name),
-        labels)
+        csv_string)
 
     vocab_sizes[name] = {'vocab_size': len(label_count)}
 
