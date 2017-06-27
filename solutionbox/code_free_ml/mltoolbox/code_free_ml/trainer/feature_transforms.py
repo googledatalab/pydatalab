@@ -534,7 +534,7 @@ def build_csv_transforming_training_input_fn(schema,
                                              randomize_input=False,
                                              min_after_dequeue=1,
                                              reader_num_threads=1,
-                                             allow_smaller_final_batch=False):
+                                             allow_smaller_final_batch=True):
   """Creates training input_fn that reads raw csv data and applies transforms.
 
   Args:
@@ -633,7 +633,7 @@ def build_tfexample_transfored_training_input_fn(schema,
                                                  randomize_input=False,
                                                  min_after_dequeue=1,
                                                  reader_num_threads=1,
-                                                 allow_smaller_final_batch=False):
+                                                 allow_smaller_final_batch=True):
   """Creates training input_fn that reads transformed tf.example files.
 
   Args:
