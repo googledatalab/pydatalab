@@ -144,10 +144,10 @@ def parse_arguments(argv):
 
   # Bigquery input
   input_group.add_argument('--bigquery',
-                      metavar='PROJECT_ID.DATASET.TABLE_NAME',
-                      type=str,
-                      required=False,
-                      help=('Must be in the form project.dataset.table_name'))
+                           metavar='PROJECT_ID.DATASET.TABLE_NAME',
+                           type=str,
+                           required=False,
+                           help=('Must be in the form project.dataset.table_name'))
 
   parser.add_argument('--features',
                       metavar='FILE',
