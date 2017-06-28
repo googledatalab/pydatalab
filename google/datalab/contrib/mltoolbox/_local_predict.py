@@ -70,11 +70,17 @@ def _tf_predict(model_dir, input_csvlines):
     results = sess.run(fetches=output_alias_map,
                        feed_dict={csv_tensor_name: input_csvlines})
 
-  # Make the values in results lists
-  #if len(input_csvlines) == 1:
-  #  return {k: [v] for k, v in six.iteritems(results)}
+  # convert any scalar values to a list. This may happen when there is one
+  # example in input_csvlines and the model uses tf.squeeze on the output 
+  # tensor.
+  updated_results = {}
+  for k, v in six.iteritems(results):
+    if isinstance(v, (list, np.ndarray)):
+      updated_results[k] = v
+    else:
+      updated_results[k] = [v]
 
-  return results
+  return updated_results
 
 
 def _download_images(data, img_cols):
