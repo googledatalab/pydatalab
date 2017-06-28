@@ -565,7 +565,6 @@ def _predict(args, cell):
     raise ValueError('Missing "prediction_data" in cell.')
 
   data = cell_data['prediction_data']
-
   df = _local_predict.get_prediction_results(
       args['model'], data, headers, img_cols=img_cols, cloud=args['cloud'],
       show_image=not args['no_show_image'])
