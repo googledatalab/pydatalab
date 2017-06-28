@@ -368,7 +368,7 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
   key_names = get_key_names(features)
 
   outputs = {}
-  outputs.update({key_name: tf.squeeze(input_ops.features[key_name])
+  outputs.update({key_name: input_ops.features[key_name]
                   for key_name in key_names})
 
   if is_classification_model(args.model):
@@ -382,7 +382,7 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
     # Get the label of the input target.
     if keep_target:
       input_target_label = table.lookup(input_ops.features[target_name])
-      outputs[PG_TARGET] = tf.squeeze(input_target_label)
+      outputs[PG_TARGET] = input_target_label
 
     # TODO(brandondutra): get the score of the target label too.
     probabilities = model_fn_ops.predictions['probabilities']
@@ -405,28 +405,27 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
       else:
         label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
 
-      label_tensor_name = (tf.squeeze(
-          tf.slice(top_k_labels, [0, i], [tf.shape(top_k_labels)[0], 1])))
+      label_tensor_name = tf.slice(
+          top_k_labels, [0, i], [tf.shape(top_k_labels)[0], 1])
 
       if i == 0:
         score_alias = PG_CLASSIFICATION_FIRST_SCORE
       else:
         score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
 
-      score_tensor_name = (tf.squeeze(
-          tf.slice(top_k_values,
-                   [0, i],
-                   [tf.shape(top_k_values)[0], 1])))
+      score_tensor_name = tf.slice(top_k_values,
+                                   [0, i],
+                                   [tf.shape(top_k_values)[0], 1])
 
       outputs.update({label_alias: label_tensor_name,
                       score_alias: score_tensor_name})
 
   else:
     if keep_target:
-      outputs[PG_TARGET] = tf.squeeze(input_ops.features[target_name])
+      outputs[PG_TARGET] = input_ops.features[target_name]
 
     scores = model_fn_ops.predictions['scores']
-    outputs[PG_REGRESSION_PREDICTED_TARGET] = tf.squeeze(scores)
+    outputs[PG_REGRESSION_PREDICTED_TARGET] = scores
 
   return outputs
 
