@@ -257,7 +257,8 @@ prediction_data: $my_data
                               help='The model path if not --cloud, or the id in ' +
                                    'the form of model.version if --cloud.')
   predict_parser.add_argument('--headers', required=True,
-                              help='The comma seperated headers of the prediction data.')
+                              help='The comma seperated headers of the prediction data. '
+                                   'Order must match the training order.')
   predict_parser.add_argument('--image_columns',
                               help='Comma seperated headers of image URL columns. ' +
                                    'Required if prediction data contains image URL columns.')
