@@ -191,10 +191,10 @@ class TestCloudServices(unittest.TestCase):
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
            '--cloud' if cloud else '',
-           '--output-dir=' + self._analysis_output,
-           '--csv-file-pattern=' + self._csv_train_filename,
-           '--csv-schema-file=' + self._schema_filename,
-           '--features-file=' + self._features_filename]
+           '--output=' + self._analysis_output,
+           '--csv=' + self._csv_train_filename,
+           '--schema=' + self._schema_filename,
+           '--features=' + self._features_filename]
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
@@ -217,10 +217,10 @@ class TestCloudServices(unittest.TestCase):
                     '--num-workers=3']
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
-           '--csv-file-pattern=' + self._csv_train_filename,
-           '--output-dir-from-analysis-step=' + self._analysis_output,
-           '--output-filename-prefix=features_train',
-           '--output-dir=' + self._transform_output,
+           '--csv=' + self._csv_train_filename,
+           '--analysis=' + self._analysis_output,
+           '--prefix=features_train',
+           '--output=' + self._transform_output,
            '--shuffle'] + extra_args
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
@@ -228,10 +228,10 @@ class TestCloudServices(unittest.TestCase):
 
     # Don't wate time running a 2nd DF job, run it locally.
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
-           '--csv-file-pattern=' + self._csv_eval_filename,
-           '--output-dir-from-analysis-step=' + self._analysis_output,
-           '--output-filename-prefix=features_eval',
-           '--output-dir=' + self._transform_output]
+           '--csv=' + self._csv_eval_filename,
+           '--analysis=' + self._analysis_output,
+           '--prefix=features_eval',
+           '--output=' + self._transform_output]
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
@@ -261,10 +261,10 @@ class TestCloudServices(unittest.TestCase):
         '--job-dir=' + self._train_output,
         '--package-path=' + os.path.join(CODE_PATH, 'trainer'),
         '--',
-        '--train-data-paths=' + os.path.join(self._transform_output, 'features_train*'),
-        '--eval-data-paths=' + os.path.join(self._transform_output, 'features_eval*'),
-        '--output-dir-from-analysis-step=' + self._analysis_output,
-        '--model-type=linear_regression',
+        '--train=' + os.path.join(self._transform_output, 'features_train*'),
+        '--eval=' + os.path.join(self._transform_output, 'features_eval*'),
+        '--analysis=' + self._analysis_output,
+        '--model=linear_regression',
         '--train-batch-size=10',
         '--eval-batch-size=10',
         '--max-steps=' + str(self._max_steps)]

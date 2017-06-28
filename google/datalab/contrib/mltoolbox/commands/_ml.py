@@ -194,21 +194,21 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
   train_parser = parser.subcommand(
       'train', help="""Train a model. Example usage:
 
-%%ml train --output_dir_from_analysis_step path/to/analysis --output_dir path/to/dir [--cloud]
+%%ml train --analysis path/to/analysis_output --output path/to/dir [--cloud]
 training_data:
-  csv_file_pattern: path/to/csv
+  csv: path/to/csv
 evaluation_data:
-  csv_file_pattern: path/to/csv
+  csv: path/to/csv
 model_args:
-  model_type: linear_regression
+  model: linear_regression
 cloud:
   region: us-central1
 
 Cell input is in yaml format. Fields:
 
 training_data: Required. It is one of the following:
-  csv_file_pattern or
-  transformed_file_pattern or
+  csv or
+  transformed or
   a variable defined as google.datalab.ml.CsvDataSet
 
 evaluation_data: Required. Same as training_data
@@ -223,9 +223,9 @@ cloud: a dictionary of cloud training config, including:
   runtime_version: see reference in "region".
   scale_tier: see reference in "region".
 """ % train_datalab_help, formatter_class=argparse.RawTextHelpFormatter)
-  train_parser.add_argument('--output_dir_from_analysis_step', required=True,
+  train_parser.add_argument('--analysis', required=True,
                             help='path of analysis output directory.')
-  train_parser.add_argument('--output_dir', required=True,
+  train_parser.add_argument('--output', required=True,
                             help='path of trained model directory.')
   train_parser.add_argument('--cloud', action='store_true', default=False,
                             help='whether to run training in cloud or local.')
@@ -489,19 +489,19 @@ def _train(args, cell):
       required_keys=required_keys,
       optional_keys=['model_args'])
   job_args = ['--job-dir', _abs_path(args['output_dir']),
-              '--output-dir-from-analysis-step', _abs_path(args['output_dir_from_analysis_step'])]
+              '--analysis', _abs_path(args['analysis'])]
 
   def _process_train_eval_data(data, arg_name, job_args):
     if isinstance(data, dict):
-      if 'csv_file_pattern' in data:
-        job_args.extend([arg_name, _abs_path(data['csv_file_pattern'])])
-        if '--run-transforms' not in job_args:
-          job_args.append('--run-transforms')
-      elif 'transformed_file_pattern' in data:
-        job_args.extend([arg_name, _abs_path(data['transformed_file_pattern'])])
+      if 'csv' in data:
+        job_args.extend([arg_name, _abs_path(data['csv'])])
+        if '--transform' not in job_args:
+          job_args.append('--transform')
+      elif 'transformed' in data:
+        job_args.extend([arg_name, _abs_path(data['transformed'])])
       else:
         raise ValueError('Invalid training_data dict. ' +
-                         'Requires either "csv_file_pattern" or "transformed_file_pattern".')
+                         'Requires either "csv" or "transformed".')
     elif isinstance(data, google.datalab.ml.CsvDataSet):
       for file_name in data.input_files:
         job_args.append(arg_name + '=' + _abs_path(file_name))
@@ -509,8 +509,8 @@ def _train(args, cell):
       raise ValueError('Invalid training data. Requires either a dict, or ' +
                        'a google.datalab.ml.CsvDataSet')
 
-  _process_train_eval_data(cell_data['training_data'], '--train-data-paths', job_args)
-  _process_train_eval_data(cell_data['evaluation_data'], '--eval-data-paths', job_args)
+  _process_train_eval_data(cell_data['training_data'], '--train', job_args)
+  _process_train_eval_data(cell_data['evaluation_data'], '--eval', job_args)
 
   # TODO(brandondutra) document that any model_args that are file paths must
   # be given as an absolute path
@@ -529,17 +529,17 @@ def _train(args, cell):
 
     if args['cloud']:
       cloud_config = cell_data['cloud']
-      if not args['output_dir'].startswith('gs://'):
-        raise ValueError('Cloud training requires a GCS (starting with "gs://") output_dir.')
+      if not args['output'].startswith('gs://'):
+        raise ValueError('Cloud training requires a GCS (starting with "gs://") output.')
 
-      staging_tarball = os.path.join(args['output_dir'], 'staging', 'trainer.tar.gz')
+      staging_tarball = os.path.join(args['output'], 'staging', 'trainer.tar.gz')
       datalab_ml.package_and_copy(code_path,
                                   os.path.join(code_path, 'setup.py'),
                                   staging_tarball)
       job_request = {
           'package_uris': [staging_tarball],
           'python_module': 'trainer.task',
-          'job_dir': args['output_dir'],
+          'job_dir': args['output'],
           'args': job_args,
       }
       job_request.update(cloud_config)
