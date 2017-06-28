@@ -119,7 +119,7 @@ def parse_arguments(argv):
                       action='store_true',
                       help='Analysis will use cloud services.')
   parser.add_argument('--output',
-                      metavar='FOLDER',
+                      metavar='DIR',
                       type=str,
                       required=True,
                       help='GCS or local folder')

@@ -86,7 +86,7 @@ def parse_arguments(argv):
 
   parser.add_argument(
       '--analysis',
-      metavar='ANALYSIS_OUTPUT_FOLDER',
+      metavar='ANALYSIS_OUTPUT_DIR',
       required=True,
       help='The output folder of analyze')
 
@@ -98,7 +98,7 @@ def parse_arguments(argv):
 
   parser.add_argument(
       '--output',
-      metavar='FOLDER',
+      metavar='DIR',
       default=None,
       required=True,
       help=('Google Cloud Storage or Local directory in which '

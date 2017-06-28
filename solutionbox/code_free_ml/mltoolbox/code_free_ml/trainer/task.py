@@ -88,7 +88,7 @@ class DatalabParser():
     self.full_parser.add_argument('--job-dir', type=str, required=True)
     self.full_parser.add_argument(
         '--analysis', type=str, required=True,
-        metavar='ANALYSIS_OUTPUT_FOLDER',
+        metavar='ANALYSIS_OUTPUT_DIR',
         help=('Output folder of analysis. Should contain the schema, stats, and '
               'vocab files. Path must be on GCS if running cloud training.'))
     self.full_parser.add_argument(
