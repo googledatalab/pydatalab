@@ -149,6 +149,9 @@ class TestLocalPredictions(unittest.TestCase):
     self.assertEqual([1, 2, 5], df['key'].tolist())
     self.assertEqual(3, len(df.index))
 
+  def test_predict_one_row(self):
+    self.assertEqual(1,2)
+
   def test_predict(self):
     """ Test prediction on a model which accepts CSV lines "int64,float32,text,image_url".
     """
