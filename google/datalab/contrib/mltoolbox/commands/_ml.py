@@ -171,7 +171,7 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
                                 help='path of analysis output directory.')
   transform_parser.add_argument('--output', required=True,
                                 help='path of output directory.')
-  transform_parser.add_argument('--prefix', required=True, metavar='NAME'
+  transform_parser.add_argument('--prefix', required=True, metavar='NAME',
                                 help='The prefix of the output file name. The output files will ' +
                                      'be like NAME_00000_of_00005.tar.gz')
   transform_parser.add_argument('--cloud', action='store_true', default=False,
