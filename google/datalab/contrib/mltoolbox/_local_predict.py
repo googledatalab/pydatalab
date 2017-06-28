@@ -73,14 +73,16 @@ def _tf_predict(model_dir, input_csvlines):
   # convert any scalar values to a list. This may happen when there is one
   # example in input_csvlines and the model uses tf.squeeze on the output 
   # tensor.
-  updated_results = {}
-  for k, v in six.iteritems(results):
-    if isinstance(v, (list, np.ndarray)):
-      updated_results[k] = v
-    else:
-      updated_results[k] = [v]
+  if len(input_csvlines) == 1:
+    updated_results = {}
+    for k, v in six.iteritems(results):
+      if isinstance(v, (list, np.ndarray)):
+        updated_results[k] = v
+      else:
+        updated_results[k] = [v]
+    return updated_results
 
-  return updated_results
+  return results
 
 
 def _download_images(data, img_cols):
@@ -192,8 +194,6 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
   else:
     predict_results = _tf_predict(model_dir_or_id, predict_data)
 
-  print('predicted_results')
-  print(predict_results)
   df_r = pd.DataFrame(predict_results)
   df_s = pd.DataFrame(display_data)
   df = pd.concat([df_r, df_s], axis=1)

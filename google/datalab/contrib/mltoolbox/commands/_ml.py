@@ -564,19 +564,11 @@ def _predict(args, cell):
   if 'prediction_data' not in cell_data:
     raise ValueError('Missing "prediction_data" in cell.')
 
-  print('cell_data start')
-  print(cell_data)
-  print('cell_data end')
   data = cell_data['prediction_data']
-
-  print('data', data)
 
   df = _local_predict.get_prediction_results(
       args['model'], data, headers, img_cols=img_cols, cloud=args['cloud'],
       show_image=not args['no_show_image'])
-
-  print('the df')
-  print(df)
 
   def _show_img(img_bytes):
     return '<img src="data:image/png;base64,' + img_bytes + '" />'
