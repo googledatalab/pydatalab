@@ -254,7 +254,7 @@ def handle_magic_line(line, cell, parser, namespace=None):
   if args:
     try:
       return args.func(vars(args), cell)
-    except Exception as e:
+    except Exception:
       sys.stderr.write(traceback.format_exc())
       sys.stderr.write('\n')
       sys.stderr.flush()

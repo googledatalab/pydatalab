@@ -71,7 +71,7 @@ def _tf_predict(model_dir, input_csvlines):
                        feed_dict={csv_tensor_name: input_csvlines})
 
   # convert any scalar values to a list. This may happen when there is one
-  # example in input_csvlines and the model uses tf.squeeze on the output 
+  # example in input_csvlines and the model uses tf.squeeze on the output
   # tensor.
   if len(input_csvlines) == 1:
     updated_results = {}
