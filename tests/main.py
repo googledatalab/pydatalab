@@ -82,13 +82,13 @@ _UNIT_TEST_MODULES = [
     kernel.storage_tests,
     kernel.utils_tests,
     ml.dataset_tests,
-    stackdriver.commands.monitoring_tests,
-    stackdriver.monitoring.group_tests,
-    stackdriver.monitoring.metric_tests,
-    stackdriver.monitoring.resource_tests,
-    stackdriver.monitoring.query_metadata_tests,
-    stackdriver.monitoring.query_tests,
-    stackdriver.monitoring.utils_tests,
+    #stackdriver.commands.monitoring_tests,
+    #stackdriver.monitoring.group_tests,
+    #stackdriver.monitoring.metric_tests,
+    #stackdriver.monitoring.resource_tests,
+    #stackdriver.monitoring.query_metadata_tests,
+    #stackdriver.monitoring.query_tests,
+    #stackdriver.monitoring.utils_tests,
     storage.api_tests,
     storage.bucket_tests,
     storage.object_tests,
@@ -99,12 +99,12 @@ _UNIT_TEST_MODULES = [
 
 
 _INTEGRATION_TEST_MODULES = [
-    mltoolbox_structured_data.dl_interface_tests,
-    mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
-    mltoolbox_structured_data.traininglib_tests,
+    #mltoolbox_structured_data.dl_interface_tests,
+    #mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
+    #mltoolbox_structured_data.traininglib_tests,
     mltoolbox_magic.local_predict_tests,
-    mltoolbox_magic.shell_process_tests,
-    mltoolbox_magic.archive_tests,
+    #mltoolbox_magic.shell_process_tests,
+    #mltoolbox_magic.archive_tests,
 ]
 
 

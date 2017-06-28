@@ -31,6 +31,7 @@ try:
 except ImportError:
   pass
 import sys
+import traceback
 import yaml
 
 import google.datalab.data
@@ -254,7 +255,7 @@ def handle_magic_line(line, cell, parser, namespace=None):
     try:
       return args.func(vars(args), cell)
     except Exception as e:
-      sys.stderr.write(str(e))
+      sys.stderr.write(traceback.format_exc())
       sys.stderr.write('\n')
       sys.stderr.flush()
   return None

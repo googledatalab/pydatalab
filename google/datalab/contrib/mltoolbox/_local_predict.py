@@ -53,13 +53,26 @@ def _tf_load_model(sess, model_dir):
 
 
 def _tf_predict(model_dir, input_csvlines):
-  """Prediction with a tf savedmodel."""
+  """Prediction with a tf savedmodel.
+
+  Args:
+    model_dir: folder that contains a saved model
+    input_csvlines: list of csv strings
+
+  Returns:
+    Dict in the form tensor_name:prediction_list. Note that the value is always
+        a list, even if there was only 1 row in input_csvlines.
+  """
 
   with tf.Graph().as_default(), tf.Session() as sess:
     input_alias_map, output_alias_map = _tf_load_model(sess, model_dir)
     csv_tensor_name = list(input_alias_map.values())[0]
     results = sess.run(fetches=output_alias_map,
                        feed_dict={csv_tensor_name: input_csvlines})
+
+  # Make the values in results lists
+  #if len(input_csvlines) == 1:
+  #  return {k: [v] for k, v in six.iteritems(results)}
 
   return results
 
@@ -173,6 +186,8 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
   else:
     predict_results = _tf_predict(model_dir_or_id, predict_data)
 
+  print('predicted_results')
+  print(predict_results)
   df_r = pd.DataFrame(predict_results)
   df_s = pd.DataFrame(display_data)
   df = pd.concat([df_r, df_s], axis=1)
