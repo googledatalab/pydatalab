@@ -126,7 +126,7 @@ features: A dictionary with key being column name. The list of supported transfo
                 column contains metadata-like information and will be output as-is in prediction.
 
 Also support in-notebook variables, such as:
-%%ml analyze --output_dir path/to/dir
+%%ml analyze --output path/to/dir
 training_data: $my_csv_dataset
 features: $features_def
 """, formatter_class=argparse.RawTextHelpFormatter)
@@ -171,9 +171,9 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
                                 help='path of analysis output directory.')
   transform_parser.add_argument('--output', required=True,
                                 help='path of output directory.')
-  transform_parser.add_argument('--prefix', required=True,
+  transform_parser.add_argument('--prefix', required=True, metavar='NAME'
                                 help='The prefix of the output file name. The output files will ' +
-                                     'be like output_filename_prefix_00001_of_0000n')
+                                     'be like NAME_00000_of_00005.tar.gz')
   transform_parser.add_argument('--cloud', action='store_true', default=False,
                                 help='whether to run transform in cloud or local.')
   transform_parser.add_argument('--shuffle', action='store_true', default=False,
@@ -270,7 +270,7 @@ prediction_data: $my_data
   batch_predict_parser = parser.subcommand(
       'batch_predict', help="""Batch prediction with local or deployed models.
 
-%%ml batch_predict --model path/to/model --output_file path/to/output --output_format csv [--cloud]
+%%ml batch_predict --model path/to/model --output path/to/output --format csv [--cloud]
 prediction_data:
   csv_file_pattern: path/to/file_pattern
 
