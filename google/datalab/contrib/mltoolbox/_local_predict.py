@@ -173,8 +173,6 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
   else:
     predict_results = _tf_predict(model_dir_or_id, predict_data)
 
-  print('predict_results')
-  print(predict_results)
   df_r = pd.DataFrame(predict_results)
   df_s = pd.DataFrame(display_data)
   df = pd.concat([df_r, df_s], axis=1)
