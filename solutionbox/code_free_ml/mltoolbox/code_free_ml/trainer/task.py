@@ -189,14 +189,26 @@ def parse_arguments(argv):
       help=('Maximum number of training data epochs on which to train. If '
             'both "max-step" and "max-epochs" are specified, the training '
             'job will run for "max-steps" or "num-epochs", whichever occurs '
-            'first. If unspecified will run for "max-steps".'))
-  parser.add_argument('--train-batch-size', type=int, default=100, metavar='N')
-  parser.add_argument('--eval-batch-size', type=int, default=100, metavar='N')
+            'first. If unspecified will run for "max-steps". If using '
+            'num-epochs and the last training batch is not full, the last '
+            'batch will not be used.'))
+  parser.add_argument(
+      '--train-batch-size', type=int, default=100, metavar='N',
+      help='How many training examples are used per step. If num-epochs is '
+           'used, the last batch may not be full.')
+  parser.add_argument(
+      '--eval-batch-size', type=int, default=100, metavar='N',
+      help='Batch size during evaluation. Larger values increase performance '
+           'but also increase peak memory usgae on the master node. One pass '
+           'over the full eval set is performed per evaluation run.')
   parser.add_argument(
       '--min-eval-frequency', type=int, default=100, metavar='N',
       help='Minimum number of training steps between evaluations. Evaluation '
            'does not occur if no new checkpoint is available, hence, this is '
-           'the minimum. If 0, the evaluation will only happen after training.')
+           'the minimum. If 0, the evaluation will only happen after training. '
+           'If more frequent evaluation is desired, decrease '
+           'save-checkpoints-secs. Increase min-eval-frequency to run evaluaton '
+           'less often.')
 
   # other parameters
   parser.add_argument(
