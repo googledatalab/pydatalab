@@ -16,6 +16,7 @@ import unittest
 
 import csv
 import os
+import pandas as pd
 import random
 import shutil
 import tempfile
@@ -37,7 +38,7 @@ class TestCsvDataSet(unittest.TestCase):
     ds = CsvDataSet(file_pattern='some/file', schema=schema_obj)
     self.assertEqual(json_schema, ds.schema)
 
-    schema_str = 'field1: STRING, field2: INTEGER'
+    schema_str = 'id: INTEGER, field1: STRING, field2: INTEGER'
     ds = CsvDataSet(file_pattern='some/file', schema=schema_str)
     self.assertEqual(json_schema, ds.schema)
 
@@ -45,14 +46,25 @@ class TestCsvDataSet(unittest.TestCase):
     tmp_dir = tempfile.mkdtemp()
     try:
       json_schema = TestCsvDataSet._create_json_schema()
-      TestCsvDataSet._create_csv_files(tmp_dir, 'data', 3)
+      all_rows = TestCsvDataSet._create_csv_files(tmp_dir, 'data', 3)
       ds = CsvDataSet(file_pattern=os.path.join(tmp_dir, 'data*'), schema=json_schema)
 
       df = ds.sample(5)
       self.assertEqual(5, len(df))
+      self.assertTrue(isinstance(df, pd.DataFrame))
+      self.assertEqual(5, len(set(df['id'].tolist())))  # 5 unique rows.
+
+      # check the 5 samples below to the csv files by checking they are in
+      # all_rows
+      for _, row in df.iterrows():
+        row_index = row['id']
+        self.assertEqual(all_rows.iloc[row_index]['field1'], row['field1'])
+        self.assertEqual(all_rows.iloc[row_index]['field2'], row['field2'])
 
       df = ds.sample(3 * 5)
       self.assertEqual(3 * 5, len(df))
+      self.assertTrue(isinstance(df, pd.DataFrame))
+      self.assertEqual(3 * 5, len(set(df['id'].tolist())))  # 15 unique rows.
 
       with self.assertRaises(ValueError):
         df = ds.sample(3 * 5 + 1)  # sample is larger than data size
@@ -75,15 +87,31 @@ class TestCsvDataSet(unittest.TestCase):
       folder: output folder
       filename: filename prefix
       num_files: how many files to make
+
+    Returns:
+      A pandas dataframe containing all the csv rows where the id is the index
+          row.
     """
+    ex_id = 0
+    dfs = []
     for i in range(1, num_files + 1):
-      with open(os.path.join(folder, filename + str(i) + '.csv'), 'w') as f:
+      full_file_name = os.path.join(folder, filename + str(i) + '.csv')
+      with open(full_file_name, 'w') as f:
         writer = csv.writer(f)
         for r in range(5):
-          writer.writerow([random.choice(['red', 'blue', 'green']),
+          writer.writerow([ex_id,
+                           random.choice(['red', 'blue', 'green']),
                            random.randint(0, 100)])
+          ex_id += 1
+      dfs.append(pd.read_csv(
+          full_file_name,
+          names=['id', 'field1', 'field2'],
+          index_col='id',
+          header=None))
+    return pd.concat(dfs, axis=0, ignore_index=False)
 
   @staticmethod
   def _create_json_schema():
-    return [{'name': 'field1', 'type': 'STRING'},
-            {'name': 'field2', 'type': 'INTEGER'}]
+    return [{'name': 'id', 'type': 'INTEGER'},      # unique id
+            {'name': 'field1', 'type': 'STRING'},   # random string
+            {'name': 'field2', 'type': 'INTEGER'}]  # random int
