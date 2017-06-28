@@ -169,7 +169,7 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
 """, formatter_class=argparse.RawTextHelpFormatter)
   transform_parser.add_argument('--analysis', required=True,
                                 help='path of analysis output directory.')
-  transform_parser.add_argument('--output_dir', required=True,
+  transform_parser.add_argument('--output', required=True,
                                 help='path of output directory.')
   transform_parser.add_argument('--prefix', required=True,
                                 help='The prefix of the output file name. The output files will ' +
@@ -286,10 +286,10 @@ cloud: a dictionary of cloud batch prediction config, including:
   batch_predict_parser.add_argument('--model', required=True,
                                     help='The model path if not --cloud, or the id in ' +
                                          'the form of model.version if --cloud.')
-  batch_predict_parser.add_argument('--output_dir', required=True,
+  batch_predict_parser.add_argument('--output', required=True,
                                     help='The path of output directory with prediction results. ' +
                                          'If --cloud, it has to be GCS path.')
-  batch_predict_parser.add_argument('--output_format',
+  batch_predict_parser.add_argument('--format',
                                     help='csv or json. For cloud run, ' +
                                          'the only supported format is json.')
   batch_predict_parser.add_argument('--batch_size', type=int, default=100,
@@ -413,8 +413,8 @@ def _transform(args, cell):
                                                 optional_keys=['cloud'])
   training_data = cell_data['training_data']
   cmd_args = ['python', 'transform.py',
-              '--output', _abs_path(args['output_dir']),
-              '--analysis', _abs_path(args['output_dir_from_analysis_step']),
+              '--output', _abs_path(args['output']),
+              '--analysis', _abs_path(args['analysis']),
               '--prefix', args['prefix']]
   if args['cloud']:
     cmd_args.append('--cloud')
@@ -488,7 +488,7 @@ def _train(args, cell):
       cell_data,
       required_keys=required_keys,
       optional_keys=['model_args'])
-  job_args = ['--job-dir', _abs_path(args['output_dir']),
+  job_args = ['--job-dir', _abs_path(args['output']),
               '--analysis', _abs_path(args['analysis'])]
 
   def _process_train_eval_data(data, arg_name, job_args):
@@ -600,7 +600,7 @@ def _batch_predict(args, cell):
   google.datalab.utils.commands.validate_config(cell_data, required_keys=required_keys)
 
   data = cell_data['prediction_data']
-  google.datalab.utils.commands.validate_config(data, required_keys=['csv_file_pattern'])
+  google.datalab.utils.commands.validate_config(data, required_keys=['csv'])
 
   if args['cloud']:
     parts = args['model'].split('.')
@@ -615,8 +615,8 @@ def _batch_predict(args, cell):
     job_request = {
       'version_name': version_name,
       'data_format': 'TEXT',
-      'input_paths': file_io.get_matching_files(data['csv_file_pattern']),
-      'output_path': args['output_dir'],
+      'input_paths': file_io.get_matching_files(data['csv']),
+      'output_path': args['output'],
     }
     job_request.update(cloud_config)
     job = datalab_ml.Job.submit_batch_prediction(job_request, job_id)
@@ -624,8 +624,8 @@ def _batch_predict(args, cell):
   else:
     print('local prediction...')
     _local_predict.local_batch_predict(args['model'],
-                                       data['csv_file_pattern'],
-                                       args['output_dir'],
-                                       args['output_format'],
+                                       data['csv'],
+                                       args['output'],
+                                       args['format'],
                                        args['batch_size'])
     print('done.')
