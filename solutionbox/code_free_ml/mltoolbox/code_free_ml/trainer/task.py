@@ -380,7 +380,7 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
   # Ex: tf.squeeze with axis=[] on batch prediction of size 2:
   #   output_tensor_name: [ 0.2,  0.5]
   # Ex: tf.squeeze with axis=[] on batch prediction of size 1:
-  #   output_tensor_name: 0.2 (this means all clients have to deal with 
+  #   output_tensor_name: 0.2 (this means all clients have to deal with
   #   batch size 1 as a special case!)
 
   outputs = {}
