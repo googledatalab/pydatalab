@@ -166,6 +166,7 @@ cloud: A dictionary of cloud config. All of them are optional. The "cloud" itsel
                        If not given, the service uses the default machine type.
   project_id: id of the project to use for DataFlow service. If not set, Datalab's default
               project (set by %%datalab project set) is used.
+  job_name: Unique name for a Dataflow job to use. If not set, a random name will be used.
 """, formatter_class=argparse.RawTextHelpFormatter)
   transform_parser.add_argument('--analysis', required=True,
                                 help='path of analysis output directory.')
@@ -459,6 +460,8 @@ def _transform(args, cell):
       cmd_args.extend(['--worker-machine-type', cloud_config['worker_machine_type']])
     if 'project_id' in cloud_config:
       cmd_args.extend(['--project-id', cloud_config['project_id']])
+    if 'job_name' in cloud_config:
+      cmd_args.extend(['--job-name', cloud_config['job_name']])
 
   if '--project-id' not in cmd_args:
     cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
