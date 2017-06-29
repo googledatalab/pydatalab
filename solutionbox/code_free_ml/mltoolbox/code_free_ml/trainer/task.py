@@ -367,8 +367,29 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
   target_name = feature_transforms.get_target_name(features)
   key_names = get_key_names(features)
 
+  # _squeeze with axis=1 is used because each output tensor has shape [1]
+  # The first dimension is the batch size, and it is ok if the batch size is 1.
+  # Ex: no tf.squeeze on batch prediction of size 2:
+  #   output_tensor_name: [[ 0.2 ],[ 0.5 ]]
+  # Ex: no tf.squeeze on batch prediction of size 1:
+  #   output_tensor_name: [[ 0.2 ]]
+  # Ex: tf.squeeze with axis=1 on batch prediction of size 2:
+  #   output_tensor_name: [ 0.2,  0.5]
+  # Ex: tf.squeeze with axis=1 on batch prediction of size 1:
+  #   output_tensor_name: [ 0.2 ]
+  # Ex: tf.squeeze with axis=[] on batch prediction of size 2:
+  #   output_tensor_name: [ 0.2,  0.5]
+  # Ex: tf.squeeze with axis=[] on batch prediction of size 1:
+  #   output_tensor_name: 0.2 (this means all clients have to deal with
+  #   batch size 1 as a special case!)
+
+  def _squeeze(v, axis=None):
+    print('1'*80, axis)
+    print(v)
+    return v
+
   outputs = {}
-  outputs.update({key_name: tf.squeeze(input_ops.features[key_name])
+  outputs.update({key_name: _squeeze(input_ops.features[key_name], axis=[1])
                   for key_name in key_names})
 
   if is_classification_model(args.model):
@@ -382,7 +403,7 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
     # Get the label of the input target.
     if keep_target:
       input_target_label = table.lookup(input_ops.features[target_name])
-      outputs[PG_TARGET] = tf.squeeze(input_target_label)
+      outputs[PG_TARGET] = _squeeze(input_target_label, axis=[2])
 
     # TODO(brandondutra): get the score of the target label too.
     probabilities = model_fn_ops.predictions['probabilities']
@@ -405,29 +426,31 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
       else:
         label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
 
-      label_tensor_name = (tf.squeeze(
-          tf.slice(top_k_labels, [0, i], [tf.shape(top_k_labels)[0], 1])))
+      label_tensor_name = (_squeeze(
+          tf.slice(top_k_labels, [0, i], [tf.shape(top_k_labels)[0], 1]),
+          axis=[3]))
 
       if i == 0:
         score_alias = PG_CLASSIFICATION_FIRST_SCORE
       else:
         score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
 
-      score_tensor_name = (tf.squeeze(
+      score_tensor_name = (_squeeze(
           tf.slice(top_k_values,
                    [0, i],
-                   [tf.shape(top_k_values)[0], 1])))
+                   [tf.shape(top_k_values)[0], 1]),
+          axis=[4]))
 
       outputs.update({label_alias: label_tensor_name,
                       score_alias: score_tensor_name})
 
   else:
     if keep_target:
-      outputs[PG_TARGET] = tf.squeeze(input_ops.features[target_name])
+      outputs[PG_TARGET] = _squeeze(input_ops.features[target_name], axis=[5])
 
     scores = model_fn_ops.predictions['scores']
-    outputs[PG_REGRESSION_PREDICTED_TARGET] = tf.squeeze(scores)
 
+    outputs[PG_REGRESSION_PREDICTED_TARGET] = _squeeze(scores,axis=[6])
   return outputs
 
 
