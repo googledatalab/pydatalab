@@ -56,7 +56,7 @@ def _tf_predict(model_dir, input_csvlines):
   """Prediction with a tf savedmodel.
 
   Args:
-    model_dir: folder that contains a saved model
+    model_dir: directory that contains a saved model
     input_csvlines: list of csv strings
 
   Returns:
@@ -74,13 +74,9 @@ def _tf_predict(model_dir, input_csvlines):
   # example in input_csvlines and the model uses tf.squeeze on the output
   # tensor.
   if len(input_csvlines) == 1:
-    updated_results = {}
     for k, v in six.iteritems(results):
-      if isinstance(v, (list, np.ndarray)):
-        updated_results[k] = v
-      else:
-        updated_results[k] = [v]
-    return updated_results
+      if not isinstance(v, (list, np.ndarray)):
+        results[k] = [v]
 
   return results
 
