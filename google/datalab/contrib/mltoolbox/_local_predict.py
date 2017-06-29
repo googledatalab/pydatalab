@@ -53,13 +53,30 @@ def _tf_load_model(sess, model_dir):
 
 
 def _tf_predict(model_dir, input_csvlines):
-  """Prediction with a tf savedmodel."""
+  """Prediction with a tf savedmodel.
+
+  Args:
+    model_dir: directory that contains a saved model
+    input_csvlines: list of csv strings
+
+  Returns:
+    Dict in the form tensor_name:prediction_list. Note that the value is always
+        a list, even if there was only 1 row in input_csvlines.
+  """
 
   with tf.Graph().as_default(), tf.Session() as sess:
     input_alias_map, output_alias_map = _tf_load_model(sess, model_dir)
     csv_tensor_name = list(input_alias_map.values())[0]
     results = sess.run(fetches=output_alias_map,
                        feed_dict={csv_tensor_name: input_csvlines})
+
+  # convert any scalar values to a list. This may happen when there is one
+  # example in input_csvlines and the model uses tf.squeeze on the output
+  # tensor.
+  if len(input_csvlines) == 1:
+    for k, v in six.iteritems(results):
+      if not isinstance(v, (list, np.ndarray)):
+        results[k] = [v]
 
   return results
 
