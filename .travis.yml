@@ -11,14 +11,14 @@ matrix:
   - python: 2.7
     env: TOX_ENV=flake8
   - python: 2.7
-    env: TOX_ENV=coveralls   
+    env: TOX_ENV=coveralls
 
 before_install:
   - npm install -g typescript
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
   # We use tox for actually running tests.
   - pip install --upgrade pip tox
-
+  
 script:
   # tox reads its configuration from tox.ini.
   - tox -e $TOX_ENV
