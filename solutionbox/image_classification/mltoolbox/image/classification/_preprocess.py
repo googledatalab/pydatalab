@@ -18,7 +18,6 @@
 
 
 import apache_beam as beam
-from apache_beam.io import fileio
 from apache_beam.io import tfrecordio
 from apache_beam.metrics import Metrics
 import cStringIO
@@ -301,9 +300,7 @@ class SaveFeatures(beam.PTransform):
             'Write to %s' % self._file_path_prefix.replace('/', '_') >>
             tfrecordio.WriteToTFRecord(file_path_prefix=self._file_path_prefix,
                                        file_name_suffix='.tfrecord.gz',
-                                       shard_name_template=fileio.DEFAULT_SHARD_NAME_TEMPLATE,
-                                       coder=ExampleProtoCoder(),
-                                       compression_type=fileio.CompressionTypes.AUTO))
+                                       coder=ExampleProtoCoder()))
 
 
 def _labels_pipeline(sources):
