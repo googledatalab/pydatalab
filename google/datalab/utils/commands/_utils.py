@@ -387,7 +387,7 @@ def parse_config_for_selected_keys(content, env, keys):
     return config_items, None
 
   if stripped[0] == '{':
-    content_out = json.dumps(config)
+    content_out = json.dumps(config, indent=4)
   else:
     content_out = yaml.dump(config, default_flow_style=False)
 
