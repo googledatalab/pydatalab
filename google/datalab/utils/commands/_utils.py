@@ -354,7 +354,8 @@ def parse_config_for_selected_keys(content, env, keys):
   Args:
     content: the input content. A string. It has to be a yaml or JSON string.
     env: user supplied dictionary for replacing vars (for example, $myvalue).
-    keys: a list of keys to retrieve from content.
+    keys: a list of keys to retrieve from content. Note that it only checks top level keys
+        in the dict.
 
   Returns:
     A tuple. First is the parsed config including only selected keys. Second is
