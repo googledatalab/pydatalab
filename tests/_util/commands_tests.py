@@ -143,7 +143,7 @@ dict1:
     old_stdout = sys.stdout
     buf = six.StringIO()
     sys.stdout = buf
-    with self.assertRaises(ValueError):
+    with self.assertRaises(Exception):
       parser.parse('subcommand1 subcommand2 --help', None)
     sys.stdout = old_stdout
     help_string = buf.getvalue()
