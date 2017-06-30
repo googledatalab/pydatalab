@@ -17,9 +17,14 @@
 import argparse
 import datetime
 import os
+import shutil
 import sys
+import tempfile
+from tensorflow.python.lib.io import file_io
 
 import apache_beam as beam
+from apache_beam.transforms import window
+from apache_beam.utils.windowed_value import WindowedValue
 
 
 def parse_arguments(argv):
@@ -125,7 +130,7 @@ class EmitAsBatchDoFn(beam.DoFn):
 
   def finish_bundle(self, element=None):
     if len(self._cached) > 0:  # pylint: disable=g-explicit-length-test
-      yield self._cached
+      yield WindowedValue(self._cached, -1, [window.GlobalWindow()])
 
 
 class RunGraphDoFn(beam.DoFn):
@@ -370,30 +375,37 @@ def main(argv=None):
   args = parse_arguments(sys.argv if argv is None else argv)
 
   if args.cloud:
-    options = {
-        'staging_location': os.path.join(args.output_dir, 'tmp', 'staging'),
-        'temp_location': os.path.join(args.output_dir, 'tmp', 'staging'),
-        'job_name': args.job_name,
-        'project': args.project_id,
-        'no_save_main_session': True,
-        'extra_packages': args.extra_package,
-        'teardown_policy': 'TEARDOWN_ALWAYS',
-    }
-    opts = beam.pipeline.PipelineOptions(flags=[], **options)
-    # Or use BlockingDataflowPipelineRunner
-    p = beam.Pipeline('DataflowRunner', options=opts)
+    tmpdir = tempfile.mkdtemp()
+    try:
+      local_packages = [os.path.join(tmpdir, os.path.basename(p)) for p in args.extra_package]
+      for source, dest in zip(args.extra_package, local_packages):
+        file_io.copy(source, dest, overwrite=True)
+
+      options = {
+          'staging_location': os.path.join(args.output_dir, 'tmp', 'staging'),
+          'temp_location': os.path.join(args.output_dir, 'tmp', 'staging'),
+          'job_name': args.job_name,
+          'project': args.project_id,
+          'no_save_main_session': True,
+          'extra_packages': local_packages,
+          'teardown_policy': 'TEARDOWN_ALWAYS',
+      }
+      opts = beam.pipeline.PipelineOptions(flags=[], **options)
+      # Or use BlockingDataflowPipelineRunner
+      p = beam.Pipeline('DataflowRunner', options=opts)
+      make_prediction_pipeline(p, args)
+      print(('Dataflow Job submitted, see Job %s at '
+             'https://console.developers.google.com/dataflow?project=%s') %
+            (options['job_name'], args.project_id))
+      sys.stdout.flush()
+      runner_results = p.run()
+    finally:
+      shutil.rmtree(tmpdir)
   else:
     p = beam.Pipeline('DirectRunner')
+    make_prediction_pipeline(p, args)
+    runner_results = p.run()
 
-  make_prediction_pipeline(p, args)
-
-  if args.cloud:
-    print(('Dataflow Job submitted, see Job %s at '
-           'https://console.developers.google.com/dataflow?project=%s') %
-          (options['job_name'], args.project_id))
-    sys.stdout.flush()
-
-  runner_results = p.run()
   return runner_results
 
 
