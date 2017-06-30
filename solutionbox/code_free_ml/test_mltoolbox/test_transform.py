@@ -28,6 +28,7 @@ try:
 except Exception:
   HAS_CREDENTIALS = False
 
+
 class TestTransformRawData(unittest.TestCase):
   """Tests for applying a saved model"""
 
@@ -122,6 +123,11 @@ class TestTransformRawData(unittest.TestCase):
 
     # Make a BQ table, and insert 1 row.
     try:
+      bucket_name = 'temp_pydatalab_test_%s' % uuid.uuid4().hex
+      bucket_root = 'gs://%s' % bucket_name
+      bucket = storage.Bucket(bucket_name)
+      bucket.create()
+
       project_id = dl.Context.default().project_id
 
       dataset_name = 'test_transform_raw_data_%s' % uuid.uuid4().hex
@@ -136,7 +142,7 @@ class TestTransformRawData(unittest.TestCase):
                     {'name': 'img_col', 'type': 'STRING'}])
 
       img1_file = os.path.join(self.source_dir, 'img1.jpg')
-      dest_file = os.path.join(self._bucket_root, 'img1.jpg')
+      dest_file = os.path.join(bucket_root, 'img1.jpg')
       file_io.copy(img1_file, dest_file)
 
       data = [
@@ -179,6 +185,10 @@ class TestTransformRawData(unittest.TestCase):
       self.assertTrue(any(x != 0.0 for x in image_bytes))
     finally:
       dataset.delete(delete_contents=True)
+
+      for obj in bucket.objects():
+        obj.delete()
+      bucket.delete()
 
 
 if __name__ == '__main__':

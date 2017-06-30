@@ -18,6 +18,7 @@ import os
 import subprocess
 import unittest
 
+
 class RunTestScript(unittest.TestCase):
   """Makes a subprocess call to the test script.
 
@@ -40,4 +41,3 @@ class RunTestScript(unittest.TestCase):
     """
     cmd = 'bash %s' % os.path.join(self._root_path, 'run_all.sh')
     subprocess.check_call(cmd, cwd=self._root_path, shell=True)
-

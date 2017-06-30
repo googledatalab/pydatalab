@@ -257,6 +257,7 @@ class TestLocalAnalyze(unittest.TestCase):
     finally:
       shutil.rmtree(output_folder)
 
+
 @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
 class TestCloudAnalyzeFromBQTable(unittest.TestCase):
   """Test the analyze functions using data in a BigQuery table.
