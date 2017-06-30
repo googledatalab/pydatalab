@@ -40,5 +40,6 @@ class RunTestScript(unittest.TestCase):
   	One test does use BigQuery.
   	"""
   	cmd = 'bash %s' % os.path.join(self._root_path, 'run_all.sh')
-  	subprocess.check_call(cmd, cwd=self._root_path, shell=True)
+  	cmd = 'python %s' % os.path.join(self._root_path, 'test_analyze.py')
+  	subprocess.check_call(cmd, shell=True)
 
