@@ -25,10 +25,6 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.storage._api.Api.buckets_get')
   def test_bucket_existence(self, mock_api_buckets):
-    print('1'*100)
-    print('does this fail?')
-    google.datalab.Context.default().project_id
-
     mock_api_buckets.return_value = TestCases._create_buckets_get_result()
 
     buckets = google.datalab.storage.Buckets(context=TestCases._create_context())

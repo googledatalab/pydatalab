@@ -20,6 +20,13 @@ import google.datalab.storage as storage
 CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
 
+# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
+# those tests will not run.
+HAS_CREDENTIALS = True
+try:
+  dl.Context.default().project_id
+except Exception:
+  HAS_CREDENTIALS = False
 
 class TestTransformRawData(unittest.TestCase):
   """Tests for applying a saved model"""
@@ -75,19 +82,9 @@ class TestTransformRawData(unittest.TestCase):
            '--features=' + features_file]
     subprocess.check_call(' '.join(cmd), shell=True)
 
-    # Setup a temp GCS bucket.
-    cls._bucket_name = 'temp_mltoolbox_test_%s' % uuid.uuid4().hex
-    cls._bucket_root = 'gs://%s' % cls._bucket_name
-    storage.Bucket(cls._bucket_name).create()
-
   @classmethod
   def tearDownClass(cls):
     shutil.rmtree(cls.working_dir)
-
-    bucket = storage.Bucket(cls._bucket_name)
-    for obj in bucket.objects():
-      obj.delete()
-    bucket.delete()
 
   def test_local_csv_transform(self):
     """Test transfrom from local csv files."""
@@ -119,12 +116,14 @@ class TestTransformRawData(unittest.TestCase):
     self.assertEqual(len(image_bytes), 2048)
     self.assertTrue(any(x != 0.0 for x in image_bytes))
 
+  @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def test_local_bigquery_transform(self):
     """Test transfrom locally, but the data comes from bigquery."""
 
     # Make a BQ table, and insert 1 row.
     try:
       project_id = dl.Context.default().project_id
+
       dataset_name = 'test_transform_raw_data_%s' % uuid.uuid4().hex
       table_name = 'tmp_table'
 

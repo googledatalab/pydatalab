@@ -25,6 +25,14 @@ sys.path.append(CODE_PATH)
 
 import analyze  # noqa: E303
 
+# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
+# those tests will not run.
+HAS_CREDENTIALS = True
+try:
+  dl.Context.default().project_id
+except Exception:
+  HAS_CREDENTIALS = False
+
 
 class TestConfigFiles(unittest.TestCase):
   """Tests for checking the format between the schema and features files."""
@@ -249,7 +257,7 @@ class TestLocalAnalyze(unittest.TestCase):
     finally:
       shutil.rmtree(output_folder)
 
-
+@unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
 class TestCloudAnalyzeFromBQTable(unittest.TestCase):
   """Test the analyze functions using data in a BigQuery table.
 
@@ -308,6 +316,7 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
       db.delete(delete_contents=True)
 
 
+@unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
 class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
   """Test the analyze function using BigQuery from csv files that are on GCS."""
 

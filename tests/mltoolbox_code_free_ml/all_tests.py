@@ -22,24 +22,22 @@ class RunTestScript(unittest.TestCase):
   """Makes a subprocess call to the test script.
 
   Note that we cannot simply install the mltoolbox package and run each step
-  as it is designed to run as a sample, not as a moduel. We run the test script
-  as a subprocess to 
+  as it is designed to run as a sample/script, not as a module.
   """
   def __init__(self, *args, **kwargs):
     super(RunTestScript, self).__init__(*args, **kwargs)
 
     # Path to the test script.
     self._root_path = os.path.abspath(
-	    	os.path.join(
-	    			os.path.dirname(__file__),
-    		    '..', '..', 'solutionbox', 'code_free_ml', 'test_mltoolbox'))
+        os.path.join(
+            os.path.dirname(__file__),
+            '..', '..', 'solutionbox', 'code_free_ml', 'test_mltoolbox'))
 
   def test_local(self):
-  	"""Test code_free_ml without ML Engine.
+    """Run some of the code_free_ml tests.
 
-  	One test does use BigQuery.
-  	"""
-  	cmd = 'bash %s' % os.path.join(self._root_path, 'run_all.sh')
-  	cmd = 'python %s' % os.path.join(self._root_path, 'test_analyze.py')
-  	subprocess.check_call(cmd, shell=True)
+    Tests that use GCS services like GCS or BigQuery are not ran.
+    """
+    cmd = 'bash %s' % os.path.join(self._root_path, 'run_all.sh')
+    subprocess.check_call(cmd, cwd=self._root_path, shell=True)
 
