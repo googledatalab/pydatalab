@@ -226,8 +226,11 @@ class TestLocalAnalyze(unittest.TestCase):
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['col1', 'count'])
-      self.assertEqual(vocab['col1'].tolist(),
-                       ['quick', 'brown', 'the', 'fox', 'chicken'])
+
+      # vocabs are sorted by count only
+      col1_vocab = vocab['col1'].tolist()
+      self.assertItemsEqual(col1_vocab[:2], ['brown', 'quick'])
+      self.assertItemsEqual(col1_vocab[2:], ['chicken', 'fox', 'the'])
       self.assertEqual(vocab['count'].tolist(), [2, 2, 1, 1, 1])
 
       vocab_str = file_io.read_file_to_string(
@@ -236,7 +239,11 @@ class TestLocalAnalyze(unittest.TestCase):
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['col2', 'count'])
-      self.assertEqual(vocab['col2'].tolist(), ['raining', 'in', 'pdx', 'kir'])
+
+      # vocabs are sorted by count only
+      col2_vocab = vocab['col2'].tolist()
+      self.assertItemsEqual(col2_vocab[:2], ['in', 'raining'])
+      self.assertItemsEqual(col2_vocab[2:], ['kir', 'pdx'])
       self.assertEqual(vocab['count'].tolist(), [2, 2, 1, 1])
     finally:
       shutil.rmtree(output_folder)
