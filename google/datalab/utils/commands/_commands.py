@@ -37,6 +37,7 @@ class CommandParser(argparse.ArgumentParser):
     # Set _parser_class, so that subparsers added will also be of this type.
     self._parser_class = CommandParser
     self._subcommands = None
+    # A dict such as {'argname': {'required': True, 'help': 'arg help string'}}
     self._cell_args = {}
 
   @staticmethod
@@ -46,7 +47,11 @@ class CommandParser(argparse.ArgumentParser):
 
   def exit(self, status=0, message=None):
     """Overridden exit method to stop parsing without calling sys.exit(). """
-    raise Exception(message)
+    if status == 0 and message is None:
+      # This happens when parsing '--help'
+      raise Exception('exit_0')
+    else:
+      raise Exception(message)
 
   def format_help(self):
     """Override help doc to add cell args. """
@@ -106,9 +111,7 @@ class CommandParser(argparse.ArgumentParser):
         # Found the subparser.
         args_to_parse = []
         for action in subparser._actions:
-          if (isinstance(action, argparse._StoreAction) or
-             isinstance(action, argparse._StoreTrueAction) or
-             isinstance(action, argparse._StoreFalseAction)):
+          if action.option_strings:
             for argname in action.option_strings:
               if argname.startswith('--'):
                 args_to_parse.append(argname[2:])
@@ -171,22 +174,26 @@ class CommandParser(argparse.ArgumentParser):
     # it will find the second one --- "tables list" because it matches the prog and
     # it is the longest.
     args = CommandParser.create_args(line, namespace)
+
+    # "prog" is a ArgumentParser's path splitted by namspace, such as '%bq tables list'.
     sub_parsers_progs = [x.prog for x in self._get_subparsers()]
     matched_progs = []
     for prog in sub_parsers_progs:
       # Remove the leading magic such as "%bq".
       match = prog.split()[1:]
-      if next((match for i in range(len(args)) if args[i:i + len(match)] == match), []):
-        matched_progs.append(prog)
+      for i in range(len(args)):
+        if args[i:i + len(match)] == match:
+          matched_progs.append(prog)
+          break
 
-    subcmd = None
+    matched_prog = None
     if matched_progs:
       # Get the longest match.
-      subcmd = max(matched_progs, key=lambda x: len(x.split()))
+      matched_prog = max(matched_progs, key=lambda x: len(x.split()))
 
     # Line args can be provided in cell too. If they are in cell, move them to line
     # so we can parse them all together.
-    line_args = self._get_subparser_line_args(subcmd)
+    line_args = self._get_subparser_line_args(matched_prog)
     if line_args:
       cell_config = None
       try:
@@ -216,7 +223,7 @@ class CommandParser(argparse.ArgumentParser):
 
     # Parse cell args.
     cell_config = None
-    cell_args = self._get_subparser_cell_args(subcmd)
+    cell_args = self._get_subparser_cell_args(matched_prog)
     if cell_args:
       try:
         cell_config, _ = google.datalab.utils.commands.parse_config_for_selected_keys(

@@ -254,12 +254,12 @@ def handle_magic_line(line, cell, parser, namespace=None):
     if args:
       return args['func'](args, cell)
   except Exception as e:
-    # e.args[0] is None if --help is provided in line.
+    # e.args[0] is 'exit_0' if --help is provided in line.
     # In this case don't write anything to stderr.
-    if e.args[0] is not None:
-      sys.stderr.write('\n' + str(e))
-      sys.stderr.flush()
-  return None
+    if e.args and e.args[0] == 'exit_0':
+      return
+    sys.stderr.write('\n' + str(e))
+    sys.stderr.flush()
 
 
 def expand_var(v, env):

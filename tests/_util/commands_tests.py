@@ -17,6 +17,7 @@ import argparse
 import six
 import sys
 import unittest
+import yaml
 
 from google.datalab.utils.commands import CommandParser
 
@@ -46,6 +47,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(args, {'string1': None, 'flag1': False})
     self.assertIsNone(cell)
 
+    # Adding same arg twice will cause argparse to raise its own ArgumentError.
     with self.assertRaises(argparse.ArgumentError):
       subcommand1.add_argument('--string2', help='string2 help.')
       subcommand1.add_argument('--string2', help='string2 help.')
@@ -82,18 +84,22 @@ class TestCases(unittest.TestCase):
                               'string4: value4\nflag1: false')
     self.assertEqual(args, {'string1': 'value1', 'string2': 'value2', 'string3': 'value3',
                             'command': 'subcommand2', 'flag1': False})
-    self.assertEqual(cell.strip(), 'string3: value3\nstring4: value4')
+    self.assertEqual(yaml.load(cell), {'string3': 'value3', 'string4': 'value4'})
 
+    # Regular arg and cell arg cannot be the same name.
     with self.assertRaises(ValueError):
       subcommand2.add_argument('--duparg', help='help.')
       subcommand2.add_cell_argument('duparg', help='help.')
 
+    # Do not allow same arg in both line and cell.
     with self.assertRaises(ValueError):
       parser.parse('subcommand1 subcommand2 -s value1 --duparg v1', 'duparg: v2')
 
+    # 'string3' is a cell arg. Argparse will raise Exception after finding an unrecognized param.
     with self.assertRaises(Exception):
       parser.parse('subcommand1 subcommand2 -s value1 --string3 value3', 'a: b')
 
+    # 'string4' is required but missing.
     subcommand2.add_cell_argument('string4', required=True, help='string4 help.')
     with self.assertRaises(ValueError):
       parser.parse('subcommand1 subcommand2 -s value1', 'a: b')
@@ -115,7 +121,7 @@ class TestCases(unittest.TestCase):
     args, cell = parser.parse('subcommand1 --string1 $var1', 'a: b\nstring2: $var2', namespace)
     self.assertEqual(args,
                      {'string1': 'value1', 'string2': 'value2', 'flag1': False, 'dict1': None})
-    self.assertEqual(cell.strip(), 'a: b\nstring2: $var2')
+    self.assertEqual(yaml.load(cell), {'a': 'b', 'string2': '$var2'})
 
     cell = """
 dict1:
