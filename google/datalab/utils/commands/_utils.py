@@ -30,7 +30,6 @@ try:
   import pandas_profiling
 except ImportError:
   pass
-import six
 import sys
 import yaml
 
@@ -250,14 +249,15 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
 
 def handle_magic_line(line, cell, parser, namespace=None):
   """ Helper function for handling magic command lines given a parser with handlers set. """
-
-  args, cell = parser.parse(line, cell, namespace)
-  if args:
-    try:
-      return args.func(vars(args), cell)
-    except Exception as e:
-      sys.stderr.write(str(e))
-      sys.stderr.write('\n')
+  try:
+    args, cell = parser.parse(line, cell, namespace)
+    if args:
+      return args['func'](args, cell)
+  except Exception as e:
+    # e.args[0] is None if --help is provided in line.
+    # In this case don't write anything to stderr.
+    if e.args[0] is not None:
+      sys.stderr.write('\n' + str(e))
       sys.stderr.flush()
   return None
 
@@ -364,8 +364,9 @@ def parse_config_for_selected_keys(content, env, keys):
     Exception if the content is not a valid yaml or JSON string.
   """
 
-  if content is None:
-    return {}, None
+  config_items = {key: None for key in keys}
+  if not content:
+    return config_items, content
 
   stripped = content.strip()
   if len(stripped) == 0:
@@ -378,20 +379,19 @@ def parse_config_for_selected_keys(content, env, keys):
   if not isinstance(config, dict):
     raise ValueError('Invalid config.')
 
-  config_items = {k: v for k, v in six.iteritems(config)
-                  if k in keys and (isinstance(v, six.string_types) or isinstance(v, bool))}
-  config_remaining = {k: v for k, v in six.iteritems(config) if k not in config_items}
-  replace_vars(config_items, env)
+  for key in keys:
+    config_items[key] = config.pop(key, None)
 
-  if not config_remaining:
+  replace_vars(config_items, env)
+  if not config:
     return config_items, None
 
   if stripped[0] == '{':
-    content_items_removed = json.dumps(config_remaining)
+    content_out = json.dumps(config)
   else:
-    content_items_removed = yaml.dump(config_remaining, default_flow_style=False)
+    content_out = yaml.dump(config, default_flow_style=False)
 
-  return config_items, content_items_removed
+  return config_items, content_out
 
 
 def validate_config(config, required_keys, optional_keys=None):

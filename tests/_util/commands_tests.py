@@ -12,6 +12,10 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import argparse
+import six
+import sys
 import unittest
 
 from google.datalab.utils.commands import CommandParser
@@ -31,16 +35,70 @@ class TestCases(unittest.TestCase):
                              help='flag1 help.')
 
     args, cell = parser.parse('subcommand1 --string1 value1 --flag1', None)
-    self.assertEqual(vars(args), {'string1': 'value1', 'flag1': True})
+    self.assertEqual(args, {'string1': 'value1', 'flag1': True})
     self.assertIsNone(cell)
 
-    args, cell = parser.parse('subcommand1 --string1 value1', 'string3: value3')
-    self.assertEqual(vars(args), {'string1': 'value1', 'flag1': False})
-    self.assertEqual(cell.strip(), 'string3: value3')
-
-    args, cell = parser.parse('subcommand1', 'string1: value1\nflag1: true')
-    self.assertEqual(vars(args), {'string1': 'value1', 'flag1': True})
+    args, cell = parser.parse('subcommand1 --string1 value1', None)
+    self.assertEqual(args, {'string1': 'value1', 'flag1': False})
     self.assertIsNone(cell)
+
+    args, cell = parser.parse('subcommand1', None)
+    self.assertEqual(args, {'string1': None, 'flag1': False})
+    self.assertIsNone(cell)
+
+    with self.assertRaises(argparse.ArgumentError):
+      subcommand1.add_argument('--string2', help='string2 help.')
+      subcommand1.add_argument('--string2', help='string2 help.')
+
+  def test_subcommand_line_cell(self):
+
+    parser = CommandParser(
+        prog='%test_subcommand_line',
+        description='test_subcommand_line description')
+
+    subcommand1 = parser.subcommand('subcommand1', help='subcommand1 help')
+    subcommands_of_subcommand1 = subcommand1.add_subparsers(dest='command')
+    subcommand2 = subcommands_of_subcommand1.add_parser('subcommand2', help='subcommand2 help')
+    subcommand2.add_argument('--string1', '-s', required=True, help='string1 help.')
+    subcommand2.add_argument('--string2', '--string2again', dest='string2', help='string2 help.')
+    subcommand2.add_cell_argument('string3', help='string3 help.')
+    subcommand2.add_argument('--flag1', action='store_true', default=False,
+                             help='flag1 help.')
+
+    args, cell = parser.parse('subcommand1 subcommand2 -s value1 --string2 value2',
+                              'flag1: true')
+    self.assertEqual(args, {'string1': 'value1', 'string2': 'value2', 'string3': None,
+                            'command': 'subcommand2', 'flag1': True})
+    self.assertIsNone(cell)
+
+    args, cell = parser.parse('subcommand1 subcommand2 --flag1',
+                              'string1: value1\nstring2again: value2')
+    self.assertEqual(args, {'string1': 'value1', 'string2': 'value2', 'string3': None,
+                            'command': 'subcommand2', 'flag1': True})
+    self.assertIsNone(cell)
+
+    args, cell = parser.parse('subcommand1 subcommand2',
+                              'string1: value1\nstring2: value2\nstring3: value3\n' +
+                              'string4: value4\nflag1: false')
+    self.assertEqual(args, {'string1': 'value1', 'string2': 'value2', 'string3': 'value3',
+                            'command': 'subcommand2', 'flag1': False})
+    self.assertEqual(cell.strip(), 'string3: value3\nstring4: value4')
+
+    with self.assertRaises(ValueError):
+      subcommand2.add_argument('--duparg', help='help.')
+      subcommand2.add_cell_argument('duparg', help='help.')
+
+    with self.assertRaises(ValueError):
+      parser.parse('subcommand1 subcommand2 -s value1 --duparg v1', 'duparg: v2')
+
+    with self.assertRaises(Exception):
+      parser.parse('subcommand1 subcommand2 -s value1 --string3 value3', 'a: b')
+
+    subcommand2.add_cell_argument('string4', required=True, help='string4 help.')
+    with self.assertRaises(ValueError):
+      parser.parse('subcommand1 subcommand2 -s value1', 'a: b')
+
+  def test_subcommand_var_replacement(self):
 
     parser = CommandParser(
         prog='%test_subcommand_line',
@@ -50,27 +108,46 @@ class TestCases(unittest.TestCase):
     subcommand1.add_argument('--string1', help='string1 help.')
     subcommand1.add_argument('--flag1', action='store_true', default=False,
                              help='flag1 help.')
+    subcommand1.add_cell_argument('string2', help='string2 help.')
+    subcommand1.add_cell_argument('dict1', help='dict1 help.')
+
+    namespace = {'var1': 'value1', 'var2': 'value2', 'var3': [1, 2]}
+    args, cell = parser.parse('subcommand1 --string1 $var1', 'a: b\nstring2: $var2', namespace)
+    self.assertEqual(args,
+                     {'string1': 'value1', 'string2': 'value2', 'flag1': False, 'dict1': None})
+    self.assertEqual(cell.strip(), 'a: b\nstring2: $var2')
+
+    cell = """
+dict1:
+  k1: $var1
+  k2: $var3
+"""
+    args, cell = parser.parse('subcommand1', cell, namespace)
+    self.assertEqual(args['dict1'], {'k1': 'value1', 'k2': [1, 2]})
+
+  def test_subcommand_help(self):
+
+    parser = CommandParser(
+        prog='%test_subcommand_line',
+        description='test_subcommand_line description')
+
+    subcommand1 = parser.subcommand('subcommand1', help='subcommand1 help')
     subcommands_of_subcommand1 = subcommand1.add_subparsers(dest='command')
     subcommand2 = subcommands_of_subcommand1.add_parser('subcommand2', help='subcommand2 help')
-    subcommand2.add_argument('--string2', '-s', required=True, help='string2 help.')
-    subcommand2.add_argument('--flag2', action='store_true', default=False,
-                             help='flag2 help.')
+    subcommand2.add_argument('--string1', '-s', required=True, help='string1 help.')
+    subcommand2.add_argument('--string2', '--string2again', dest='string2', help='string2 help.')
+    subcommand2.add_cell_argument('string3', help='string3 help.')
+    subcommand2.add_argument('--flag1', action='store_true', default=False,
+                             help='flag1 help.')
 
-    args, cell = parser.parse('subcommand1 subcommand2 -s value2', 'flag2: true')
-    self.assertEqual(vars(args), {'string1': None, 'string2': 'value2',
-                                  'flag1': False, 'command': 'subcommand2',
-                                  'flag2': True})
-    self.assertIsNone(cell)
-
-    args, cell = parser.parse('subcommand1 subcommand2 --flag2', 'string2: value2')
-    self.assertEqual(vars(args), {'string1': None, 'string2': 'value2',
-                                  'flag1': False, 'command': 'subcommand2',
-                                  'flag2': True})
-    self.assertIsNone(cell)
-
-    args, cell = parser.parse('subcommand1 subcommand2',
-                              'string1: value1\nstring2: value2\nstring3: value3\nflag2: false')
-    self.assertEqual(vars(args), {'string1': None, 'string2': 'value2',
-                                  'flag1': False, 'command': 'subcommand2',
-                                  'flag2': False})
-    self.assertEqual(cell.strip(), 'string1: value1\nstring3: value3')
+    old_stdout = sys.stdout
+    buf = six.StringIO()
+    sys.stdout = buf
+    with self.assertRaises(ValueError):
+      parser.parse('subcommand1 subcommand2 --help', None)
+    sys.stdout = old_stdout
+    help_string = buf.getvalue()
+    self.assertIn('string1 help.', help_string)
+    self.assertIn('string2 help.', help_string)
+    self.assertIn('string3 help.', help_string)
+    self.assertIn('flag1 help.', help_string)
