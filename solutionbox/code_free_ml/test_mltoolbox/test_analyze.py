@@ -494,10 +494,10 @@ class TestOneSourceColumnManyFeatures(unittest.TestCase):
                     'img': {'transform': 'image_to_vec'}}, indent=2))
 
       cmd = ['python %s/analyze.py' % CODE_PATH,
-             '--output-dir=' + output_folder,
-             '--csv-file-pattern=' + input_data_path,
-             '--csv-schema-file=' + input_schema_path,
-             '--features-file=' + input_feature_path]
+             '--output=' + output_folder,
+             '--csv=' + input_data_path,
+             '--schema=' + input_schema_path,
+             '--features=' + input_feature_path]
       subprocess.check_call(' '.join(cmd), shell=True)
 
       self.assertTrue(os.path.isfile(os.path.join(output_folder, 'vocab_cat.csv')))
