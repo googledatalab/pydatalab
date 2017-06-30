@@ -23,13 +23,13 @@ This package is available on PyPI as `datalab`:
 
 In a notebook cell, enable with:
 
-    %load_ext datalab.kernel
+    %load_ext google.datalab.kernel
 
 Alternatively add this to your `ipython_config.py` file in your profile:
 
     c = get_config()
     c.InteractiveShellApp.extensions = [
-        'datalab.kernel'
+        'google.datalab.kernel'
     ]
 
 You will typically put this under `~/.ipython/profile_default`. See
