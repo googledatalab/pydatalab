@@ -16,6 +16,7 @@ from tensorflow.python.lib.io import file_io
 
 import google.datalab as dl
 import google.datalab.bigquery as bq
+import google.datalab.storage as storage
 
 # To make 'import analyze' work without installing it.
 CODE_PATH = os.path.abspath(
@@ -312,12 +313,16 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
 
   @classmethod
   def setUpClass(cls):
-    cls._bucket_root = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
-    subprocess.check_call('gsutil mb %s' % cls._bucket_root, shell=True)
+    cls._bucket_name = 'temp_pydatalab_test_%s' % uuid.uuid4().hex
+    cls._bucket_root = 'gs://%s' % cls._bucket_name
+    storage.Bucket(cls._bucket_name).create()
 
   @classmethod
   def tearDownClass(cls):
-    subprocess.check_call('gsutil -m rm -r %s' % cls._bucket_root, shell=True)
+    bucket = storage.Bucket(cls._bucket_name)
+    for obj in bucket.objects():
+      obj.delete()
+    bucket.delete()
 
   def test_numerics(self):
     test_folder = os.path.join(self._bucket_root, 'test_numerics')

@@ -15,6 +15,7 @@ from tensorflow.python.lib.io import file_io
 
 import google.datalab as dl
 import google.datalab.bigquery as bq
+import google.datalab.storage as storage
 
 CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
@@ -75,13 +76,18 @@ class TestTransformRawData(unittest.TestCase):
     subprocess.check_call(' '.join(cmd), shell=True)
 
     # Setup a temp GCS bucket.
-    cls.bucket_root = 'gs://temp_mltoolbox_test_%s' % uuid.uuid4().hex
-    subprocess.check_call('gsutil mb %s' % cls.bucket_root, shell=True)
+    cls._bucket_name = 'temp_mltoolbox_test_%s' % uuid.uuid4().hex
+    cls._bucket_root = 'gs://%s' % cls._bucket_name
+    storage.Bucket(cls._bucket_name).create()
 
   @classmethod
   def tearDownClass(cls):
     shutil.rmtree(cls.working_dir)
-    subprocess.check_call('gsutil -m rm -r %s' % cls.bucket_root, shell=True)
+
+    bucket = storage.Bucket(cls._bucket_name)
+    for obj in bucket.objects():
+      obj.delete()
+    bucket.delete()
 
   def test_local_csv_transform(self):
     """Test transfrom from local csv files."""
@@ -131,8 +137,8 @@ class TestTransformRawData(unittest.TestCase):
                     {'name': 'img_col', 'type': 'STRING'}])
 
       img1_file = os.path.join(self.source_dir, 'img1.jpg')
-      dest_file = os.path.join(self.bucket_root, 'img1.jpg')
-      subprocess.check_call('gsutil cp %s %s' % (img1_file, dest_file), shell=True)
+      dest_file = os.path.join(self._bucket_root, 'img1.jpg')
+      file_io.copy(img1_file, dest_file)
 
       data = [
           {
