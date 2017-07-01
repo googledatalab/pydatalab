@@ -93,38 +93,40 @@ class TestSpecialCharacters(unittest.TestCase):
              '--features=' + os.path.join(output_dir, 'features.json')]
       subprocess.check_call(' '.join(cmd), shell=True)
 
-      df_vocab_cat_expected = pd.DataFrame(
-          {'label': ['blue"', '"green"', "yellow, 'brown", 'red,'],
-           'count': ['1', '1', '1', '1']},
-          columns=['label', 'count'])
       df_vocab_cat = pd.read_csv(
           os.path.join(output_dir, 'analysis', 'vocab_cat.csv'),
           header=None,
           names=['label', 'count'],
           dtype=str,
           na_filter=False)
-      self.assertTrue(df_vocab_cat_expected.equals(df_vocab_cat))
+      self.assertEqual(df_vocab_cat['count'].tolist(), ['1', '1', '1', '1'])
+      self.assertItemsEqual(
+          df_vocab_cat['label'].tolist(),
+          ['blue"', '"green"', "yellow, 'brown", 'red,'])
 
-      df_vocab_target_expected = df_vocab_cat_expected
       df_vocab_target = pd.read_csv(
           os.path.join(output_dir, 'analysis', 'vocab_target.csv'),
           header=None,
           names=['label', 'count'],
           dtype=str,
           na_filter=False)
-      self.assertTrue(df_vocab_target_expected.equals(df_vocab_target))
+      self.assertEqual(df_vocab_target['count'].tolist(), ['1', '1', '1', '1'])
+      self.assertItemsEqual(
+          df_vocab_target['label'].tolist(),
+          ['blue"', '"green"', "yellow, 'brown", 'red,'])
 
-      df_vocab_text_expected = pd.DataFrame(
-          {'label': ['one,', 'two,', '"two"', "'one,", '"two', "two'", 'three'],
-           'count': ['2', '1', '1', '1', '1', '1', '1']},
-          columns=['label', 'count'])
       df_vocab_text = pd.read_csv(
           os.path.join(output_dir, 'analysis', 'vocab_text.csv'),
           header=None,
           names=['label', 'count'],
           dtype=str,
           na_filter=False)
-      self.assertTrue(df_vocab_text_expected.equals(df_vocab_text))
+      vocab_text = df_vocab_text['label'].tolist()
+      self.assertEqual(vocab_text[0], 'one,')
+      self.assertItemsEqual(vocab_text[1:], ['two,', '"two"', "'one,", '"two', "two'", 'three'])
+      vocab_count = df_vocab_text['count'].tolist()
+      self.assertEqual(vocab_count[0], '2')
+      self.assertEqual(vocab_count[1:], ['1', '1', '1', '1', '1', '1'])
 
       # Run transform, and check there are no reported errors.
       cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
