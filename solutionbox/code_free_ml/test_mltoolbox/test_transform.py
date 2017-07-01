@@ -68,10 +68,10 @@ class TestTransformRawData(unittest.TestCase):
     features_file = os.path.join(cls.source_dir, 'features.json')
     file_io.write_string_to_file(features_file, json.dumps(features))
     cmd = ['python ' + os.path.join(CODE_PATH, 'analyze.py'),
-           '--output-dir=' + cls.analysis_dir,
-           '--csv-file-pattern=' + cls.csv_input_filepath,
-           '--csv-schema-file=' + schema_file,
-           '--features-file=' + features_file]
+           '--output=' + cls.analysis_dir,
+           '--csv=' + cls.csv_input_filepath,
+           '--schema=' + schema_file,
+           '--features=' + features_file]
     subprocess.check_call(' '.join(cmd), shell=True)
 
     # Setup a temp GCS bucket.
@@ -87,10 +87,10 @@ class TestTransformRawData(unittest.TestCase):
     """Test transfrom from local csv files."""
 
     cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
-           '--csv-file-pattern=' + self.csv_input_filepath,
-           '--output-dir-from-analysis-step=' + self.analysis_dir,
-           '--output-filename-prefix=features',
-           '--output-dir=' + self.output_dir]
+           '--csv=' + self.csv_input_filepath,
+           '--analysis=' + self.analysis_dir,
+           '--prefix=features',
+           '--output=' + self.output_dir]
     print('cmd ', ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
@@ -146,11 +146,11 @@ class TestTransformRawData(unittest.TestCase):
       table.insert(data=data)
 
       cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
-             '--bigquery-table=%s.%s.%s' % (project_id, dataset_name, table_name),
-             '--output-dir-from-analysis-step=' + self.analysis_dir,
-             '--output-filename-prefix=features',
+             '--bigquery=%s.%s.%s' % (project_id, dataset_name, table_name),
+             '--analysis=' + self.analysis_dir,
+             '--prefix=features',
              '--project-id=' + project_id,
-             '--output-dir=' + self.output_dir]
+             '--output=' + self.output_dir]
       print('cmd ', ' '.join(cmd))
       subprocess.check_call(' '.join(cmd), shell=True)
 

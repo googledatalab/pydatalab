@@ -16,6 +16,7 @@
 """Face functions for image classification.
 """
 
+import warnings
 
 from . import _local
 from . import _cloud
@@ -41,22 +42,25 @@ def preprocess_async(train_dataset, output_dir, eval_dataset=None, checkpoint=No
   Returns:
     A google.datalab.utils.Job object that can be used to query state from or wait.
   """
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    if cloud is None:
+      return _local.Local.preprocess(train_dataset, output_dir, eval_dataset, checkpoint)
 
-  if cloud is None:
-    return _local.Local.preprocess(train_dataset, output_dir, eval_dataset, checkpoint)
-
-  if not isinstance(cloud, dict):
-    cloud = {}
-  return _cloud.Cloud.preprocess(train_dataset, output_dir, eval_dataset, checkpoint, cloud)
+    if not isinstance(cloud, dict):
+      cloud = {}
+    return _cloud.Cloud.preprocess(train_dataset, output_dir, eval_dataset, checkpoint, cloud)
 
 
 def preprocess(train_dataset, output_dir, eval_dataset=None, checkpoint=None, cloud=None):
   """Blocking version of preprocess_async(). The only difference is that it blocks the caller
      until the job finishes, and it does not have a return value.
   """
-  job = preprocess_async(train_dataset, output_dir, eval_dataset, checkpoint, cloud)
-  job.wait()
-  print(job.state)
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    job = preprocess_async(train_dataset, output_dir, eval_dataset, checkpoint, cloud)
+    job.wait()
+    print(job.state)
 
 
 def train_async(input_dir, batch_size, max_steps, output_dir, checkpoint=None, cloud=None):
@@ -74,21 +78,23 @@ def train_async(input_dir, batch_size, max_steps, output_dir, checkpoint=None, c
   Returns:
     A google.datalab.utils.Job object that can be used to query state from or wait.
   """
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    if cloud is None:
+      return _local.Local.train(input_dir, batch_size, max_steps, output_dir, checkpoint)
 
-  if cloud is None:
-    return _local.Local.train(input_dir, batch_size, max_steps, output_dir, checkpoint)
-
-  return _cloud.Cloud.train(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud)
+    return _cloud.Cloud.train(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud)
 
 
 def train(input_dir, batch_size, max_steps, output_dir, checkpoint=None, cloud=None):
   """Blocking version of train_async(). The only difference is that it blocks the caller
      until the job finishes, and it does not have a return value.
   """
-
-  job = train_async(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud)
-  job.wait()
-  print(job.state)
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    job = train_async(input_dir, batch_size, max_steps, output_dir, checkpoint, cloud)
+    job.wait()
+    print(job.state)
 
 
 def predict(model, image_files, resize=False, show_image=True, cloud=None):
@@ -108,11 +114,13 @@ def predict(model, image_files, resize=False, show_image=True, cloud=None):
   """
 
   print('Predicting...')
-  if cloud is None:
-    results = _local.Local.predict(model, image_files, resize, show_image)
-  else:
-    results = _cloud.Cloud.predict(model, image_files, resize, show_image)
-  return results
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    if cloud is None:
+      results = _local.Local.predict(model, image_files, resize, show_image)
+    else:
+      results = _cloud.Cloud.predict(model, image_files, resize, show_image)
+    return results
 
 
 def batch_predict_async(dataset, model_dir, output_csv=None, output_bq_table=None, cloud=None):
@@ -138,19 +146,22 @@ def batch_predict_async(dataset, model_dir, output_csv=None, output_bq_table=Non
   Returns:
     A google.datalab.utils.Job object that can be used to query state from or wait.
   """
-  if cloud is None:
-    return _local.Local.batch_predict(dataset, model_dir, output_csv, output_bq_table)
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    if cloud is None:
+      return _local.Local.batch_predict(dataset, model_dir, output_csv, output_bq_table)
 
-  if not isinstance(cloud, dict):
-    cloud = {}
-  return _cloud.Cloud.batch_predict(dataset, model_dir, output_csv, output_bq_table, cloud)
+    if not isinstance(cloud, dict):
+      cloud = {}
+    return _cloud.Cloud.batch_predict(dataset, model_dir, output_csv, output_bq_table, cloud)
 
 
 def batch_predict(dataset, model_dir, output_csv=None, output_bq_table=None, cloud=None):
   """Blocking version of batch_predict_async(). The only difference is that it blocks the caller
      until the job finishes, and it does not have a return value.
   """
-
-  job = batch_predict_async(dataset, model_dir, output_csv, output_bq_table, cloud)
-  job.wait()
-  print(job.state)
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    job = batch_predict_async(dataset, model_dir, output_csv, output_bq_table, cloud)
+    job.wait()
+    print(job.state)
