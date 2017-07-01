@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import json
 import os
+import pandas as pd
 from PIL import Image
 import shutil
 import subprocess
@@ -106,14 +107,29 @@ class TestTransformRawData(unittest.TestCase):
     serialized_examples = list(tf.python_io.tf_record_iterator(record_filepath, options=options))
     self.assertEqual(len(serialized_examples), 3)
 
-    example = tf.train.Example()
-    example.ParseFromString(serialized_examples[0])
+    # Find the example with key=1 in the file.
+    first_example = None
+    for ex in serialized_examples:
+      example = tf.train.Example()
+      example.ParseFromString(ex)
+      if example.features.feature['key_col'].int64_list.value[0] == 1:
+        first_example = example
+    self.assertIsNotNone(first_example)
 
-    transformed_number = example.features.feature['num_col'].float_list.value[0]
+    transformed_number = first_example.features.feature['num_col'].float_list.value[0]
     self.assertAlmostEqual(transformed_number, 23.0)
-    transformed_category = example.features.feature['cat_col'].int64_list.value[0]
-    self.assertEqual(transformed_category, 2)
-    image_bytes = example.features.feature['img_col'].float_list.value
+
+    # transformed category = row number in the vocab file.
+    transformed_category = first_example.features.feature['cat_col'].int64_list.value[0]
+    vocab = pd.read_csv(
+        os.path.join(self.analysis_dir, 'vocab_cat_col.csv'),
+        header=None,
+        names=['label', 'count'],
+        dtype=str)
+    origional_category = vocab.iloc[transformed_category]['label']
+    self.assertEqual(origional_category, 'Monday')
+
+    image_bytes = first_example.features.feature['img_col'].float_list.value
     self.assertEqual(len(image_bytes), 2048)
     self.assertTrue(any(x != 0.0 for x in image_bytes))
 
