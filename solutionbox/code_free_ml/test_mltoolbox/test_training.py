@@ -21,6 +21,15 @@ from tensorflow.python.lib.io import file_io
 CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
 
+# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
+# those tests will not run.
+HAS_CREDENTIALS = True
+try:
+  import google.datalab as dl
+  dl.Context.default().project_id
+except Exception:
+  HAS_CREDENTIALS = False
+
 
 def run_exported_model(model_path, csv_data):
   """Runs an exported model.
@@ -824,6 +833,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
+  @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def testClassificationDNNWithImage(self):
     self._logger.debug('\n\nTesting Classification DNN With Image')
 
