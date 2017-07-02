@@ -35,6 +35,8 @@ from tensorflow.python.client import session as tf_session
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.lib.io import file_io
+from tensorflow.python.ops import resources
+from tensorflow.python.ops import lookup_ops
 from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import variables
@@ -498,16 +500,12 @@ def make_export_strategy(
           export_dir_base)
 
       with tf_session.Session('') as session:
-        variables.local_variables_initializer()
-        data_flow_ops.tables_initializer()
-        saver_for_restore = saver.Saver(
-            variables.global_variables(),
-            sharded=True)
+        saver_for_restore = saver.Saver(sharded=True)
         saver_for_restore.restore(session, checkpoint_path)
-
         init_op = control_flow_ops.group(
             variables.local_variables_initializer(),
-            data_flow_ops.tables_initializer())
+            resources.initialize_resources(resources.shared_resources()),
+            lookup_ops.tables_initializer())
 
         # Perform the export
         builder = saved_model_builder.SavedModelBuilder(export_dir)

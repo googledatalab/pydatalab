@@ -125,7 +125,7 @@ def _string_to_int(x, vocab):
     Returns:
       a Tensor/SparseTensor of indexes (int) of the same shape as x.
     """
-    table = lookup.string_to_index_table_from_tensor(
+    table = lookup.index_table_from_tensor(
         vocab,
         default_value=len(vocab))
     return table.lookup(x)

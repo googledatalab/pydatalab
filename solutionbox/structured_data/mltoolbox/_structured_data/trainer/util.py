@@ -27,6 +27,8 @@ from tensorflow.contrib.learn.python.learn import export_strategy
 from tensorflow.contrib.learn.python.learn.utils import (
     saved_model_export_utils)
 
+from tensorflow.python.ops import resources
+from tensorflow.python.ops import lookup_ops
 from tensorflow.python.ops import variables
 from tensorflow.contrib.framework.python.ops import variables as contrib_variables
 from tensorflow.contrib.learn.python.learn.estimators import model_fn as model_fn_lib
@@ -214,13 +216,13 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
           export_dir_base)
 
       with tf_session.Session('') as session:
-        # variables.initialize_local_variables()
-        variables.local_variables_initializer()
-        data_flow_ops.tables_initializer()
-        saver_for_restore = saver.Saver(
-            variables.global_variables(),
-            sharded=True)
+        saver_for_restore = saver.Saver(sharded=True)
         saver_for_restore.restore(session, checkpoint_path)
+        init_op = control_flow_ops.group(
+            variables.local_variables_initializer(),
+            resources.initialize_resources(resources.shared_resources()),
+            lookup_ops.tables_initializer())
+
 
         init_op = control_flow_ops.group(
             variables.local_variables_initializer(),
