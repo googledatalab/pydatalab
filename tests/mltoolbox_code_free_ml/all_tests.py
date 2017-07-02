@@ -16,6 +16,7 @@ from __future__ import print_function
 
 import os
 import subprocess
+import six
 import unittest
 
 
@@ -34,6 +35,7 @@ class RunTestScript(unittest.TestCase):
             os.path.dirname(__file__),
             '..', '..', 'solutionbox', 'code_free_ml', 'test_mltoolbox'))
 
+  @unittest.skipIf(not six.PY2, 'Python 2 is required')
   def test_local(self):
     """Run some of the code_free_ml tests.
 

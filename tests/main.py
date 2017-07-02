@@ -101,12 +101,12 @@ _UNIT_TEST_MODULES = [
 
 _INTEGRATION_TEST_MODULES = [
     mltoolbox_code_free_ml.all_tests,
-    #mltoolbox_structured_data.dl_interface_tests,
-    #mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
-    #mltoolbox_structured_data.traininglib_tests,
-    #mltoolbox_magic.local_predict_tests,
-    #mltoolbox_magic.shell_process_tests,
-    #mltoolbox_magic.archive_tests,
+    mltoolbox_structured_data.dl_interface_tests,
+    mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
+    mltoolbox_structured_data.traininglib_tests,
+    mltoolbox_magic.local_predict_tests,
+    mltoolbox_magic.shell_process_tests,
+    mltoolbox_magic.archive_tests,
 ]
 
 
