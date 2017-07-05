@@ -626,6 +626,8 @@ def make_feature_engineering_fn(features):
       if name in features and features[name]['transform'] == feature_transforms.IMAGE_TRANSFORM:
         bottleneck_with_no_gradient = tf.stop_gradient(feature_tensor)
         with tf.name_scope(name, 'Wx_plus_b'):
+          print('1'*100)
+          print('in EF fun')
           hidden = layers.fully_connected(
               bottleneck_with_no_gradient,
               int(feature_transforms.IMAGE_BOTTLENECK_TENSOR_SIZE / 4))

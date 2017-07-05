@@ -445,7 +445,7 @@ class TestTrainer(unittest.TestCase):
 
   def tearDown(self):
     self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
-    shutil.rmtree(self._test_dir)
+    #shutil.rmtree(self._test_dir)
 
   def make_image_files(self):
     img1_file = os.path.join(self._test_dir, 'img1.jpg')
@@ -787,7 +787,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def testClassificationDNN(self):
+  def xtestClassificationDNN(self):
     self._logger.debug('\n\nTesting Classification DNN')
 
     problem_type = 'classification'
@@ -822,7 +822,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestClassificationDNNWithImage(self):
+  def testClassificationDNNWithImage(self):
     self._logger.debug('\n\nTesting Classification DNN With Image')
 
     problem_type = 'classification'
