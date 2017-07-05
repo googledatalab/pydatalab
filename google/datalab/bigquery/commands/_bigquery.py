@@ -787,7 +787,7 @@ def _extract_cell(args, cell_body):
                          csv_delimiter=args['delimiter'], csv_header=args['header'],
                          compress=args['compress'])
   elif args['query'] or args['view']:
-    source_name = args['view'] if args['view'] else args['query']
+    source_name = args['view'] or args['query']
     source = google.datalab.utils.commands.get_notebook_item(source_name)
     if not source:
       raise Exception('Could not find ' +

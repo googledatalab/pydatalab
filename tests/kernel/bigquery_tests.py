@@ -590,6 +590,7 @@ WITH q1 AS (
       ]
     }
     google.datalab.bigquery.commands._bigquery._extract_cell(args, json.dumps(cell_body))
+    mock_get_notebook_item.assert_called_with('test-query')
     call_args = mock_query_execute.call_args[1]
     self.assertDictEqual(call_args['query_params'][0], {
       'parameterValue': {'value': 5},
@@ -635,6 +636,7 @@ WITH q1 AS (
     mock_query_execute.return_value.errors = None
     self.assertEqual(google.datalab.bigquery.commands._bigquery._extract_cell(args, None),
                      'test-results')
+    mock_get_notebook_item.assert_called_with('test-view')
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.Table.create')
