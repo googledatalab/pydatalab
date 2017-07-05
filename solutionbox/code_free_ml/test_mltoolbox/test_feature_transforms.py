@@ -22,6 +22,15 @@ sys.path.append(os.path.abspath(
 
 import feature_transforms  # noqa: E303
 
+# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
+# those tests will not run.
+HAS_CREDENTIALS = True
+try:
+  import google.datalab as dl
+  dl.Context.default().project_id
+except Exception:
+  HAS_CREDENTIALS = False
+
 
 class TestGraphBuilding(unittest.TestCase):
   """Test the TITO functions work and can produce a working TF graph."""
@@ -251,6 +260,7 @@ class TestGraphBuilding(unittest.TestCase):
     finally:
       shutil.rmtree(output_folder)
 
+  @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def test_make_transform_graph_images(self):
 
     print('Testing make_transform_graph with image_to_vec.' +
