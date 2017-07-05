@@ -432,11 +432,73 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
 
   return outputs
 
+def make_export_strategy(
+        args,
+        keep_target,
+        assets_extra,
+        features,
+        schema,
+        stats):
+  """Makes prediction graph that takes json input.
+
+  Args:
+    args: command line args
+    keep_target: If ture, target column is returned in prediction graph. Target
+        column must also exist in input data
+    assets_extra: other fiels to copy to the output folder
+    job_dir: root job folder
+    features: features dict
+    schema: schema list
+    stats: stats dict
+  """
+  target_name = feature_transforms.get_target_name(features)
+  csv_header = [col['name'] for col in schema]
+  if not keep_target:
+    csv_header.remove(target_name)
+
+
+  def _serving_input_fn():
+    if keep_target:
+      input_ops = feature_transforms.build_csv_serving_tensors(
+          args.analysis, features, schema, stats, keep_target)
+    else:
+      input_ops = feature_transforms.build_csv_serving_tensors(
+          args.analysis, features, schema, stats, keep_target)
+    return input_ops
+
+  def export_fn(estimator, export_dir_base, checkpoint_path=None, eval_result=None):
+    export_result = estimator.export_savedmodel(
+          export_dir_base,
+          _serving_input_fn,
+          assets_extra=assets_extra,
+          as_text=False,
+          checkpoint_path=checkpoint_path)
+
+    saved_model_export_utils.garbage_collect_exports(export_dir_base, 5)
+    # save the last model to the model folder.
+    # export_dir_base = A/B/intermediate_models/
+    if keep_target:
+      final_dir = os.path.join(args.job_dir, 'evaluation_model')
+    else:
+      final_dir = os.path.join(args.job_dir, 'model')
+    if file_io.is_directory(final_dir):
+      file_io.delete_recursively(final_dir)
+    file_io.recursive_create_dir(final_dir)
+    recursive_copy(export_result, final_dir)
+    return export_result
+
+  if keep_target:
+    intermediate_dir = 'intermediate_evaluation_models'
+  else:
+    intermediate_dir = 'intermediate_prediction_models'
+  return export_strategy.ExportStrategy(intermediate_dir, export_fn)
+
+
 
 # This function is strongly based on
 # tensorflow/contrib/learn/python/learn/estimators/estimator.py:export_savedmodel()
 # The difference is we need to modify estimator's output layer.
-def make_export_strategy(
+def make_export_strategy_old(
         args,
         keep_target,
         assets_extra,
@@ -503,6 +565,7 @@ def make_export_strategy(
         saver_for_restore = saver.Saver(sharded=True)
         saver_for_restore.restore(session, checkpoint_path)
         init_op = control_flow_ops.group(
+            variables.global_variables_initializer(),
             variables.local_variables_initializer(),
             resources.initialize_resources(resources.shared_resources()),
             lookup_ops.tables_initializer())
@@ -634,6 +697,16 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
     raise ValueError('bad --model-type value')
 
   return estimator
+
+
+def update_output_layer(estimator):
+    def _model_fn(features, labels, mode, params):
+        key = features.pop(KEY)
+        model_fn_ops = estimator.model_fn(
+           features=features, labels=labels, mode=mode, params=params)
+        model_fn_ops.predictions[KEY] = key
+        return model_fn_ops
+    return _model_fn
 
 
 def read_vocab(args, column_name):

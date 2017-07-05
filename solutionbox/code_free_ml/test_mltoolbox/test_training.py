@@ -58,7 +58,7 @@ def run_exported_model(model_path, csv_data):
 class TestSpecialCharacters(unittest.TestCase):
   """Test special characters are supported."""
 
-  def testCommaQuote(self):
+  def xtestCommaQuote(self):
     """Test when csv input data has quotes and commas."""
     output_dir = tempfile.mkdtemp()
     try:
@@ -787,7 +787,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestClassificationDNN(self):
+  def testClassificationDNN(self):
     self._logger.debug('\n\nTesting Classification DNN')
 
     problem_type = 'classification'
