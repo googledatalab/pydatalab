@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import sys
+from past.builtins import basestring
 
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record

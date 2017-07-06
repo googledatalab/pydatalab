@@ -29,7 +29,11 @@ import traceback
 import types
 import os
 import json
-import oauth2client.client
+import google.auth
+import google.oauth2.credentials
+
+
+OAUTH2_TOKEN_URI = 'https://accounts.google.com/o/oauth2/token'
 
 
 def print_exception_with_last_stack(e):
@@ -170,7 +174,7 @@ def get_credentials():
       overriding these the defaults should suffice.
   """
   try:
-    credentials = oauth2client.client.GoogleCredentials.get_application_default()
+    credentials = google.auth.default()
     if credentials.create_scoped_required():
       credentials = credentials.create_scoped(CREDENTIAL_SCOPES)
     return credentials
@@ -184,9 +188,15 @@ def get_credentials():
       # Use the first gcloud one we find
       for entry in creds['data']:
         if entry['key']['type'] == 'google-cloud-sdk':
-          return oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+          credential = entry['credential']
+          return google.oauth2.credentials.Credentials(
+            token=credential['token'],
+            refresh_token=credential['refresh_token'],
+            token_uri=OAUTH2_TOKEN_URI,
+            client_id=credential['client_id'],
+            client_secret=credential['client_secret'])
 
-    if type(e) == oauth2client.client.ApplicationDefaultCredentialsError:
+    if type(e) == google.auth.exceptions.DefaultCredentialsError:
       # If we are in Datalab container, change the message to be about signing in.
       if _in_datalab_docker():
         raise Exception('No application credentials found. Perhaps you should sign in.')

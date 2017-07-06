@@ -13,7 +13,7 @@
 from __future__ import absolute_import
 import datetime
 import mock
-from oauth2client.client import AccessTokenCredentials
+from google.auth.credentials import Credentials
 import unittest
 
 from google.cloud.monitoring import Query as BaseQuery
@@ -31,6 +31,16 @@ INSTANCE_ZONES = ['us-east1-a', 'us-east1-b']
 INSTANCE_IDS = ['1234567890123456789', '9876543210987654321']
 
 
+class MockCredentials(Credentials):
+    def __init__(self, token='token'):
+        super(MockCredentials, self).__init__()
+        self.token = token
+        self.expiry = None
+
+    def refresh(self, request):
+        self.token += '1'
+
+
 class TestCases(unittest.TestCase):
 
   @mock.patch('datalab.context._context.Context.default')
@@ -42,8 +52,8 @@ class TestCases(unittest.TestCase):
 
     expected_client = gcm._utils.make_client(context=default_context)
     self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(query._client._connection.credentials,
+                     expected_client._connection.credentials)
 
     self.assertEqual(query._filter.metric_type, BaseQuery.DEFAULT_METRIC_TYPE)
 
@@ -69,8 +79,8 @@ class TestCases(unittest.TestCase):
     expected_client = gcm._utils.make_client(
         context=context, project_id=PROJECT)
     self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(query._client._connection.credentials,
+                     expected_client._connection.credentials)
 
     self.assertEqual(query._filter.metric_type, UPTIME_METRIC)
 
@@ -93,5 +103,5 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_context(project_id='test'):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = MockCredentials()
     return datalab.context.Context(project_id, creds)

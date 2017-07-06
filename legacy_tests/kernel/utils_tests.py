@@ -16,7 +16,7 @@ from builtins import range
 import datetime as dt
 import collections
 import mock
-from oauth2client.client import AccessTokenCredentials
+from google.auth.credentials import Credentials
 import pandas
 import unittest
 
@@ -34,6 +34,16 @@ IPython.get_ipython = mock.Mock()
 import datalab.bigquery  # noqa: E402
 import datalab.context  # noqa: E402
 import datalab.utils.commands  # noqa: E402
+
+
+class MockCredentials(Credentials):
+    def __init__(self, token='token'):
+        super(MockCredentials, self).__init__()
+        self.token = token
+        self.expiry = None
+
+    def refresh(self, request):
+        self.token += '1'
 
 
 class TestCases(unittest.TestCase):
@@ -264,5 +274,5 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = MockCredentials()
     return datalab.context.Context(project_id, creds)

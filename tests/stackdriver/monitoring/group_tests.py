@@ -12,7 +12,7 @@
 
 from __future__ import absolute_import
 import mock
-from oauth2client.client import AccessTokenCredentials
+from google.auth.credentials import Credentials
 import unittest
 
 import google.datalab
@@ -27,6 +27,16 @@ PARENT_DISPLAY_NAMES = ['', DISPLAY_NAMES[0]]
 FILTER_STRINGS = ['resource.type = ends_with("instance")',
                   'resource.type = "gce_instance"']
 IS_CLUSTERS = [False, True]
+
+
+class MockCredentials(Credentials):
+    def __init__(self, token='token'):
+        super(MockCredentials, self).__init__()
+        self.token = token
+        self.expiry = None
+
+    def refresh(self, request):
+        self.token += '1'
 
 
 class TestCases(unittest.TestCase):
@@ -45,7 +55,7 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(groups._group_dict)
 
     self.assertEqual(groups._client.project, DEFAULT_PROJECT)
-    self.assertEqual(groups._client.connection.credentials,
+    self.assertEqual(groups._client._connection.credentials,
                      self.context.credentials)
 
   def test_constructor_maximal(self):
@@ -54,7 +64,7 @@ class TestCases(unittest.TestCase):
     self.assertIs(groups._context, context)
     self.assertIsNone(groups._group_dict)
     self.assertEqual(groups._client.project, PROJECT)
-    self.assertEqual(groups._client.connection.credentials,
+    self.assertEqual(groups._client._connection.credentials,
                      context.credentials)
 
   @mock.patch('google.cloud.monitoring.Client.list_groups')
@@ -124,7 +134,7 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_context(project_id):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = MockCredentials()
     return google.datalab.Context(project_id, creds)
 
   @staticmethod

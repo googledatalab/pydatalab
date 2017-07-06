@@ -12,7 +12,7 @@
 
 from __future__ import absolute_import
 import mock
-from oauth2client.client import AccessTokenCredentials
+from google.auth.credentials import Credentials
 import unittest
 
 import google.cloud.monitoring
@@ -36,6 +36,16 @@ FILTER_STRING = 'metric.type:"cpu"'
 TYPE_PREFIX = 'compute'
 
 
+class MockCredentials(Credentials):
+    def __init__(self, token='token'):
+        super(MockCredentials, self).__init__()
+        self.token = token
+        self.expiry = None
+
+    def refresh(self, request):
+        self.token += '1'
+
+
 class TestCases(unittest.TestCase):
 
   def setUp(self):
@@ -49,7 +59,7 @@ class TestCases(unittest.TestCase):
     descriptors = gcm.MetricDescriptors()
 
     self.assertEqual(descriptors._client.project, DEFAULT_PROJECT)
-    self.assertEqual(descriptors._client.connection.credentials,
+    self.assertEqual(descriptors._client._connection.credentials,
                      self.context.credentials)
 
     self.assertIsNone(descriptors._filter_string)
@@ -63,7 +73,7 @@ class TestCases(unittest.TestCase):
         context=context)
 
     self.assertEqual(descriptors._client.project, PROJECT)
-    self.assertEqual(descriptors._client.connection.credentials,
+    self.assertEqual(descriptors._client._connection.credentials,
                      context.credentials)
 
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
@@ -158,7 +168,7 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_context(project_id):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = MockCredentials()
     return google.datalab.Context(project_id, creds)
 
   @staticmethod

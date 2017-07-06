@@ -13,7 +13,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import mock
-from oauth2client.client import AccessTokenCredentials
+from google.auth.credentials import Credentials
 import unittest
 
 # import Python so we can mock the parts we need to here.
@@ -34,6 +34,16 @@ IPython.get_ipython = mock.Mock()
 import google.datalab  # noqa
 import google.datalab.storage  # noqa
 import google.datalab.storage.commands  # noqa
+
+
+class MockCredentials(Credentials):
+    def __init__(self, token='token'):
+        super(MockCredentials, self).__init__()
+        self.token = token
+        self.expiry = None
+
+    def refresh(self, request):
+        self.token += '1'
 
 
 class TestCases(unittest.TestCase):
@@ -207,7 +217,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = MockCredentials()
     return google.datalab.Context(project_id, creds)
 
   @staticmethod
