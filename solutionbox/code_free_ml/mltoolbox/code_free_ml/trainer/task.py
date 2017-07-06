@@ -25,7 +25,6 @@ import sys
 import six
 import tensorflow as tf
 
-from tensorflow.contrib import layers
 from tensorflow.contrib.framework.python.ops import variables as contrib_variables
 from tensorflow.contrib.learn.python.learn import export_strategy
 from tensorflow.contrib.learn.python.learn import learn_runner
@@ -38,7 +37,6 @@ from tensorflow.python.lib.io import file_io
 from tensorflow.python.ops import resources
 from tensorflow.python.ops import lookup_ops
 from tensorflow.python.ops import control_flow_ops
-from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import variables
 from tensorflow.python.saved_model import builder as saved_model_builder
 from tensorflow.python.saved_model import signature_def_utils
@@ -500,7 +498,7 @@ def make_export_strategy(
           export_dir_base)
 
       if (model_fn_ops.scaffold is not None and
-          model_fn_ops.scaffold.saver is not None):
+         model_fn_ops.scaffold.saver is not None):
         saver_for_restore = model_fn_ops.scaffold.saver
       else:
         saver_for_restore = saver.Saver(sharded=True)

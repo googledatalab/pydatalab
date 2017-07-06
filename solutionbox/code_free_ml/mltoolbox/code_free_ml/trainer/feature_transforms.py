@@ -79,6 +79,7 @@ IMAGE_HIDDEN_TENSOR_SIZE = int(IMAGE_BOTTLENECK_TENSOR_SIZE / 4)
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
+
 def _scale(x, min_x_value, max_x_value, output_min, output_max):
   """Scale a column to [output_min, output_max].
 
@@ -498,11 +499,15 @@ def csv_header_and_defaults(features, schema, stats, keep_target):
 
   return csv_header, record_defaults
 
-def build_csv_serving_tensors_for_transform_step(
-    analysis_path, features, schema, stats, keep_target):
+
+def build_csv_serving_tensors_for_transform_step(analysis_path,
+                                                 features,
+                                                 schema,
+                                                 stats,
+                                                 keep_target):
   """Builds a serving function starting from raw csv.
 
-  This should only be used by transform.py (the transform step), and the 
+  This should only be used by transform.py (the transform step), and the
 
   For image columns, the image should be a base64 string encoding the image.
   The output of this function will transform that image to a 2048 long vector
@@ -528,9 +533,14 @@ def build_csv_serving_tensors_for_transform_step(
       transformed_features[k] = v
 
   return input_fn_utils.InputFnOps(
-      transformed_features, None, {"csv_example": placeholder})  
+      transformed_features, None, {"csv_example": placeholder})
 
-def build_csv_serving_tensors_for_training_step(analysis_path, features, schema, stats, keep_target):
+
+def build_csv_serving_tensors_for_training_step(analysis_path,
+                                                features,
+                                                schema,
+                                                stats,
+                                                keep_target):
   """Builds a serving function starting from raw csv, used at model export time.
 
   For image columns, the image should be a base64 string encoding the image.
@@ -643,7 +653,7 @@ def build_csv_transforming_training_input_fn(schema,
         transformed_features[k] = v
 
     # image_feature_engineering does not need to be called as images are not
-    # supported in raw csv for training. 
+    # supported in raw csv for training.
 
     # Remove the target tensor, and return it directly
     target_name = get_target_name(features)
@@ -784,7 +794,6 @@ def image_feature_engineering(features, feature_tensors_dict):
     else:
       engineered_features[name] = feature_tensor
   return engineered_features
-
 
 
 def get_target_name(features):

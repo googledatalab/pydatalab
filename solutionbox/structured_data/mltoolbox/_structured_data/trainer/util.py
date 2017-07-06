@@ -33,7 +33,6 @@ from tensorflow.python.ops import variables
 from tensorflow.contrib.framework.python.ops import variables as contrib_variables
 from tensorflow.contrib.learn.python.learn.estimators import model_fn as model_fn_lib
 from tensorflow.python.training import saver
-from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.framework import ops
 from tensorflow.python.client import session as tf_session
 from tensorflow.python.saved_model import builder as saved_model_builder
@@ -216,7 +215,7 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
           export_dir_base)
 
       if (model_fn_ops.scaffold is not None and
-          model_fn_ops.scaffold.saver is not None):
+         model_fn_ops.scaffold.saver is not None):
         saver_for_restore = model_fn_ops.scaffold.saver
       else:
         saver_for_restore = saver.Saver(sharded=True)
