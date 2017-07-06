@@ -215,18 +215,18 @@ def make_export_strategy(train_config, args, keep_target, assets_extra=None):
       export_dir = saved_model_export_utils.get_timestamped_export_dir(
           export_dir_base)
 
-      with tf_session.Session('') as session:
+      if (model_fn_ops.scaffold is not None and
+          model_fn_ops.scaffold.saver is not None):
+        saver_for_restore = model_fn_ops.scaffold.saver
+      else:
         saver_for_restore = saver.Saver(sharded=True)
+
+      with tf_session.Session('') as session:
         saver_for_restore.restore(session, checkpoint_path)
         init_op = control_flow_ops.group(
             variables.local_variables_initializer(),
             resources.initialize_resources(resources.shared_resources()),
             lookup_ops.tables_initializer())
-
-
-        init_op = control_flow_ops.group(
-            variables.local_variables_initializer(),
-            data_flow_ops.tables_initializer())
 
         # Perform the export
         builder = saved_model_builder.SavedModelBuilder(export_dir)

@@ -58,7 +58,7 @@ def run_exported_model(model_path, csv_data):
 class TestSpecialCharacters(unittest.TestCase):
   """Test special characters are supported."""
 
-  def xtestCommaQuote(self):
+  def testCommaQuote(self):
     """Test when csv input data has quotes and commas."""
     output_dir = tempfile.mkdtemp()
     try:
@@ -153,11 +153,13 @@ class TestSpecialCharacters(unittest.TestCase):
              '--transform']
       subprocess.check_call(' '.join(cmd), shell=True)
 
+      # Run prediction.
       result = run_exported_model(
           model_path=os.path.join(output_dir, 'training', 'model'),
           csv_data=['"red,","one, two, three"'])
 
-      # Check it made the correct prediction
+      # The prediction data is a training row. As the data is samll, the model
+      # should have near 100% accuracy. Check it made the correct prediction.
       self.assertEqual(result['predicted'], 'red,')
     finally:
       shutil.rmtree(output_dir)
@@ -166,7 +168,7 @@ class TestSpecialCharacters(unittest.TestCase):
 class TestMultipleFeatures(unittest.TestCase):
   """Test one source column can be used in many features."""
 
-  def xtestMultipleColumnsRaw(self):
+  def testMultipleColumnsRaw(self):
     """Test training starting from raw csv."""
     output_dir = tempfile.mkdtemp()
     try:
@@ -222,7 +224,7 @@ class TestMultipleFeatures(unittest.TestCase):
     finally:
       shutil.rmtree(output_dir)
 
-  def xtestMultipleColumnsTransformed(self):
+  def testMultipleColumnsTransformed(self):
     """Test training starting from tf.example."""
     output_dir = tempfile.mkdtemp()
     try:
@@ -303,7 +305,7 @@ class TestMultipleFeatures(unittest.TestCase):
 
 
 class TestOptionalKeys(unittest.TestCase):
-  def xtestNoKeys(self):
+  def testNoKeys(self):
     output_dir = tempfile.mkdtemp()
     try:
       features = {
@@ -346,11 +348,12 @@ class TestOptionalKeys(unittest.TestCase):
       result = run_exported_model(
           model_path=os.path.join(output_dir, 'training', 'model'),
           csv_data=['20'])
+      print(result)
       self.assertTrue(abs(40 - result['predicted']) < 5)
     finally:
       shutil.rmtree(output_dir)
 
-  def xtestManyKeys(self):
+  def testManyKeys(self):
     output_dir = tempfile.mkdtemp()
     try:
       features = {
@@ -445,7 +448,7 @@ class TestTrainer(unittest.TestCase):
 
   def tearDown(self):
     self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
-    #shutil.rmtree(self._test_dir)
+    shutil.rmtree(self._test_dir)
 
   def make_image_files(self):
     img1_file = os.path.join(self._test_dir, 'img1.jpg')
@@ -759,7 +762,7 @@ class TestTrainer(unittest.TestCase):
         self.assertItemsEqual(expected_output_keys, result.keys())
         self.assertEqual([12, 11], result['key'].flatten().tolist())
 
-  def xtestClassificationLinear(self):
+  def testClassificationLinear(self):
     self._logger.debug('\n\nTesting Classification Linear')
 
     problem_type = 'classification'
@@ -773,7 +776,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestRegressionLinear(self):
+  def testRegressionLinear(self):
     self._logger.debug('\n\nTesting Regression Linear')
 
     problem_type = 'regression'
@@ -787,7 +790,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestClassificationDNN(self):
+  def testClassificationDNN(self):
     self._logger.debug('\n\nTesting Classification DNN')
 
     problem_type = 'classification'
@@ -805,7 +808,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def xtestRegressionDNN(self):
+  def testRegressionDNN(self):
     self._logger.debug('\n\nTesting Regression DNN')
 
     problem_type = 'regression'
