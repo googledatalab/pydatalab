@@ -54,6 +54,8 @@ def get_item(env, name, default=None):
     The result of looking up the name, if found; else the default.
   """
   # TODO: handle attributes
+  if not name:
+    return default
   for key in name.split('.'):
     if isinstance(env, dict) and key in env:
       env = env[key]

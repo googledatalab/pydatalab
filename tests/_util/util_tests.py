@@ -41,6 +41,7 @@ class TestCases(unittest.TestCase):
 
   def test_no_entry(self):
     data = TestCases._get_data()
+    self.assertIsNone(_utils.get_item(data, ''))
     self.assertIsNone(_utils.get_item(data, 'x'))
     self.assertIsNone(_utils.get_item(data, 'bar.x'))
     self.assertIsNone(_utils.get_item(data, 'foo.bar.x'))
