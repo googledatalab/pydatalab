@@ -164,7 +164,6 @@ class TestSpecialCharacters(unittest.TestCase):
              '--transform']
       subprocess.check_call(' '.join(cmd), shell=True)
 
-      # Run prediction.
       result = run_exported_model(
           model_path=os.path.join(output_dir, 'training', 'model'),
           csv_data=['"red,","one, two, three"'])
@@ -359,7 +358,7 @@ class TestOptionalKeys(unittest.TestCase):
       result = run_exported_model(
           model_path=os.path.join(output_dir, 'training', 'model'),
           csv_data=['20'])
-      print(result)
+
       self.assertTrue(abs(40 - result['predicted']) < 5)
     finally:
       shutil.rmtree(output_dir)
