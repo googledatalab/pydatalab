@@ -16,7 +16,9 @@ from __future__ import print_function
 
 import logging
 import os
+import six
 import sys
+import unittest
 
 # Set up the path so that we can import local packages.
 sys.path.append(
@@ -26,6 +28,7 @@ sys.path.append(
 import test_mltoolbox.test_datalab_e2e as e2e  # noqa
 
 
+@unittest.skipIf(not six.PY2, 'Python 2 is required')
 class TestLinearRegression(e2e.TestLinearRegression):
   """Test linear regression works e2e locally.
   """
