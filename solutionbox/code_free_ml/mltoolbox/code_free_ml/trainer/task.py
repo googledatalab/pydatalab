@@ -35,7 +35,6 @@ from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.lib.io import file_io
 from tensorflow.python.ops import resources
-from tensorflow.python.ops import lookup_ops
 from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.ops import variables
 from tensorflow.python.saved_model import builder as saved_model_builder
@@ -508,7 +507,7 @@ def make_export_strategy(
         init_op = control_flow_ops.group(
             variables.local_variables_initializer(),
             resources.initialize_resources(resources.shared_resources()),
-            lookup_ops.tables_initializer())
+            tf.tables_initializer())
 
         # Perform the export
         builder = saved_model_builder.SavedModelBuilder(export_dir)

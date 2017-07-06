@@ -21,7 +21,6 @@ import logging
 import tensorflow as tf
 from tensorflow.contrib import layers
 from tensorflow.python.ops import control_flow_ops
-from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import variables
 from tensorflow.python.saved_model import builder as saved_model_builder
 from tensorflow.python.saved_model import signature_def_utils
@@ -337,7 +336,7 @@ class Model(object):
                                    last_checkpoint)
       init_op_serving = control_flow_ops.group(
           variables.local_variables_initializer(),
-          data_flow_ops.tables_initializer())
+          tf.tables_initializer())
 
       builder = saved_model_builder.SavedModelBuilder(output_dir)
       builder.add_meta_graph_and_variables(
