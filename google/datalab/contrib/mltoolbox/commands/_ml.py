@@ -32,6 +32,7 @@ import shutil
 import six
 import subprocess
 import tempfile
+import textwrap
 from tensorflow.python.lib.io import file_io
 import urllib
 
@@ -59,149 +60,178 @@ def ml(line, cell=None):
   """
   parser = google.datalab.utils.commands.CommandParser(
       prog='%ml',
-      description="""
-Execute MLToolbox operations.
+      description=textwrap.dedent("""\
+          Execute MLToolbox operations
 
-Use "%ml <command> -h" for help on a specific command.
-""")
+          Use "%ml <command> -h" for help on a specific command.
+      """))
 
   analyze_parser = parser.subcommand(
-      'analyze', help="""Analyze training data and generate stats, such as min/max/mean
-for numeric values, vocabulary for text columns. Example usage:
+      'analyze',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Analyze training data and generate stats, such as min/max/mean '
+           'for numeric values, vocabulary for text columns.',
+      epilog=textwrap.dedent("""\
+          Example usage:
 
-%%ml analyze [--cloud]
-output: path/to/dir
-training_data:
-  csv: path/to/csv
-  schema:
-    - name: serialId
-      type: STRING
-    - name: num1
-      type: FLOAT
-    - name: num2
-      type: INTEGER
-    - name: text1
-      type: STRING
-features:
-  serialId:
-    transform: key
-  num1:
-    transform: scale
-    value: 1
-  num2:
-    transform: identity
-  text1:
-    transform: bag_of_words
+          %%ml analyze [--cloud]
+          output: path/to/dir
+          training_data:
+            csv: path/to/csv
+            schema:
+              - name: serialId
+                type: STRING
+              - name: num1
+                type: FLOAT
+              - name: num2
+                type: INTEGER
+              - name: text1
+                type: STRING
+          features:
+            serialId:
+              transform: key
+            num1:
+              transform: scale
+              value: 1
+            num2:
+              transform: identity
+            text1:
+              transform: bag_of_words
 
-Also support in-notebook variables, such as:
-%%ml analyze --output path/to/dir
-training_data: $my_csv_dataset
-features: $features_def
-""", formatter_class=argparse.RawTextHelpFormatter)
+          Also supports in-notebook variables, such as:
+          %%ml analyze --output path/to/dir
+          training_data: $my_csv_dataset
+          features: $features_def"""))
+
   analyze_parser.add_argument('--output', required=True,
                               help='path of output directory.')
   analyze_parser.add_argument('--cloud', action='store_true', default=False,
                               help='whether to run analysis in cloud or local.')
   analyze_parser.add_argument('--package', required=False,
-                              help='A local or GCS tarball path to use as the source. ' +
+                              help='A local or GCS tarball path to use as the source. '
                                    'If not set, the default source package will be used.')
-
-  training_data_help = """ training data. It is one of the following:
-  csv, or
-  bigquery_table (example: "bigquery_table: project.dataset.table"), or
-  bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
-  a variable defined as google.datalab.ml.CsvDataSet or google.datalab.ml.BigQueryDataSet."""
-  analyze_parser.add_cell_argument('training_data', required=True,
-                                   help=training_data_help)
-
-  features_help = """features config indicating how to transform data into features.
-  The list of supported transforms:
-  "transform: identity"
-       does nothing (for numerical columns).
-  "transform: scale
-   value: x"
-       scale a numerical column to [-a, a]. If value is missing, x defaults to 1.
-  "transform: one_hot"
-       treats the string column as categorical and makes one-hot encoding of it.
-  "transform: embedding
-   embedding_dim: d"
-       treats the string column as categorical and makes embeddings of it with specified
-       dimension size.
-  "transform: bag_of_words"
-       treats the string column as text and make bag of words transform of it.
-  "transform: tfidf"
-       treats the string column as text and make TFIDF transform of it.
-  "transform: image_to_vec"
-       from image gs url to embeddings.
-  "transform: target"
-       denotes the column is the target. If the schema type of this column is string,
-       a one_hot encoding is automatically applied. If numerical, an identity transform
-       is automatically applied.
-  "transform: key"
-       column contains metadata-like information and will be output as-is in prediction."""
-  analyze_parser.add_cell_argument('features', required=True, help=features_help)
+  analyze_parser.add_cell_argument(
+    'training_data',
+    required=True,
+    help=textwrap.dedent("""\
+        training data. It is one of the following:
+            csv (example "csv: file.csv"), or
+            bigquery_table (example: "bigquery_table: project.dataset.table"), or
+            bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
+            a variable defined as google.datalab.ml.CsvDataSet or
+                google.datalab.ml.BigQueryDataSet."""))
+  analyze_parser.add_cell_argument(
+      'features',
+      required=True,
+      help=textwrap.dedent("""\
+          features config indicating how to transform data into features. The
+          list of supported transforms:
+              "transform: identity"
+                   does nothing (for numerical columns).
+              "transform: scale
+               value: x"
+                   scale a numerical column to [-a, a]. If value is missing, x
+                   defaults to 1.
+              "transform: one_hot"
+                   treats the string column as categorical and makes one-hot
+                   encoding of it.
+              "transform: embedding
+               embedding_dim: d"
+                   treats the string column as categorical and makes embeddings of
+                   it with specified dimension size.
+              "transform: bag_of_words"
+                   treats the string column as text and make bag of words
+                   transform of it.
+              "transform: tfidf"
+                   treats the string column as text and make TFIDF transform of it.
+              "transform: image_to_vec"
+                   from image gs url to embeddings.
+              "transform: target"
+                   denotes the column is the target. If the schema type of this
+                   column is string, a one_hot encoding is automatically applied.
+                   If numerical, an identity transform is automatically applied.
+              "transform: key"
+                   column contains metadata-like information and will be output
+                   as-is in prediction."""))
   analyze_parser.set_defaults(func=_analyze)
 
   transform_parser = parser.subcommand(
-      'transform', help="""Transform the data into tf.example which is more efficient
-in training. Example usage:
+      'transform',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Transform the data into tf.example which is more efficient in training.',
+      epilog=textwrap.dedent("""\
+          Example usage:
 
-%%ml transform --analysis path/to/analysis_output_folder --output path/to/dir
-     --prefix my_filename [--cloud] [--shuffle] [--batch_size 100]
-training_data:
-  csv: path/to/csv
-cloud:
-  num_workers: 3
-  worker_machine_type: n1-standard-1
-  project_id: my_project_id
-""", formatter_class=argparse.RawTextHelpFormatter)
+          %%ml transform --cloud [--shuffle]
+          analysis: path/to/analysis_output_folder
+          output: path/to/dir
+          prefix: my_filename
+          batch_size: 100
+          training_data:
+            csv: path/to/csv
+          cloud:
+            num_workers: 3
+            worker_machine_type: n1-standard-1
+            project_id: my_project_id"""))
   transform_parser.add_argument('--analysis', required=True,
                                 help='path of analysis output directory.')
   transform_parser.add_argument('--output', required=True,
                                 help='path of output directory.')
-  transform_parser.add_argument('--prefix', required=True, metavar='NAME',
-                                help='The prefix of the output file name. The output files will ' +
-                                     'be like NAME_00000_of_00005.tar.gz')
+  transform_parser.add_argument(
+      '--prefix', required=True, metavar='NAME',
+      help='The prefix of the output file name. The output files will be like '
+           'NAME_00000_of_00005.tar.gz')
   transform_parser.add_argument('--cloud', action='store_true', default=False,
                                 help='whether to run transform in cloud or local.')
   transform_parser.add_argument('--shuffle', action='store_true', default=False,
                                 help='whether to shuffle the training data in output.')
   transform_parser.add_argument('--batch_size', type=int, default=100,
-                                help='number of instances in a batch to process once. ' +
+                                help='number of instances in a batch to process once. '
                                      'Larger batch is more efficient but may consume more memory.')
   transform_parser.add_argument('--package', required=False,
-                                help='A local or GCS tarball path to use as the source. ' +
+                                help='A local or GCS tarball path to use as the source. '
                                      'If not set, the default source package will be used.')
-  transform_parser.add_cell_argument('training_data', required=True, help=training_data_help)
-
-  dataflow_config_help = """A dictionary of cloud config. All of them are optional.
-  num_workers: Dataflow number of workers. If not set, DataFlow service will determine the number.
-  worker_machine_type: a machine name from https://cloud.google.com/compute/docs/machine-types.
-                       If not given, the service uses the default machine type.
-  project_id: id of the project to use for DataFlow service. If not set, Datalab's default
-              project (set by %%datalab project set) is used.
-  job_name: Unique name for a Dataflow job to use. If not set, a random name will be used."""
-  transform_parser.add_cell_argument('cloud_config', help=dataflow_config_help)
+  transform_parser.add_cell_argument(
+      'training_data',
+      required=True,
+      help=textwrap.dedent("""\
+          Training data. A dict containing one of the following:
+              csv (example: "csv: file.csv"), or
+              bigquery_table (example: "bigquery_table: project.dataset.table"), or
+              bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0")"""))
+  transform_parser.add_cell_argument(
+      'cloud_config',
+      help=textwrap.dedent("""\
+          A dictionary of cloud config. All of them are optional.
+              num_workers: Dataflow number of workers. If not set, DataFlow
+              service will determine the number.
+              worker_machine_type: a machine name from
+                  https://cloud.google.com/compute/docs/machine-types. If not
+                  given, the service uses the default machine type.
+              project_id: id of the project to use for DataFlow service. If not set,
+                  Datalab's default project (set by %%datalab project set) is used.
+              job_name: Unique name for a Dataflow job to use. If not set, a
+                  random name will be used."""))
   transform_parser.set_defaults(func=_transform)
 
-  package_model_help = subprocess.Popen(
-      ['python', '-m', 'trainer.task', '--datalab-help'],
-      cwd=MLTOOLBOX_CODE_PATH,
-      stdout=subprocess.PIPE).communicate()[0]
-
   train_parser = parser.subcommand(
-      'train', help="""Train a model. Example usage:
+      'train',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Train a model.',
+      epilog=textwrap.dedent("""\
+          Example usage:
 
-%%ml train --analysis path/to/analysis_output --output path/to/dir [--cloud]
-training_data:
-  transformed: path/to/transformed/train
-evaluation_data:
-  tranaformed: path/to/transformed/eval
-model_args:
-  model: linear_regression
-cloud:
-  region: us-central1
-""", formatter_class=argparse.RawTextHelpFormatter)
+          %%ml train --cloud
+          analysis: path/to/analysis_output
+          output: path/to/dir
+          training_data:
+            transformed: path/to/transformed/train
+          evaluation_data:
+            tranaformed: path/to/transformed/eval
+          model_args:
+            model: linear_regression
+          cloud:
+            region: us-central1"""))
   train_parser.add_argument('--analysis', required=True,
                             help='path of analysis output directory.')
   train_parser.add_argument('--output', required=True,
@@ -209,105 +239,133 @@ cloud:
   train_parser.add_argument('--cloud', action='store_true', default=False,
                             help='whether to run training in cloud or local.')
   train_parser.add_argument('--package', required=False,
-                            help='A local or GCS tarball path to use as the source. ' +
+                            help='A local or GCS tarball path to use as the source. '
                                  'If not set, the default source package will be used.')
+  train_parser.add_cell_argument(
+      'training_data',
+      required=True,
+      help=textwrap.dedent("""\
+          Training data. It is either raw csv file pattern, or transformed file pattern.
+              For example:
+              "training_data:
+                csv: /path/to/csv/mycsv*.csv"
 
-  train_data_for_train_help = """training data. It is either raw csv file pattern, or
-  transformed file pattern. For example:
-    "csv: /path/to/csv/mycsv*.csv"
-  or
-    "transformed: /path/to/transformed-*"
-"""
+              or
 
-  train_parser.add_cell_argument('training_data', required=True,
-                                 help=train_data_for_train_help)
+              "training_data:
+                transformed: /path/to/transformed-*" """))
   train_parser.add_cell_argument('evaluation_data', required=True,
                                  help='same as training_data.')
 
+  package_model_help = subprocess.Popen(
+      ['python', '-m', 'trainer.task', '--datalab-help'],
+      cwd=MLTOOLBOX_CODE_PATH,
+      stdout=subprocess.PIPE).communicate()[0]
   package_model_help = ('model_args: a dictionary of model specific args, including:\n\n' +
                         package_model_help)
   train_parser.add_cell_argument('model_args', help=package_model_help)
 
-  train_cloud_config_help = """a dictionary of cloud training config, including:
-
-  job_id: the name of the job. If not provided, a default job name is created.
-  region: see https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training.
-  runtime_version: see "region".
-  scale_tier: see "region".
-"""
-  train_parser.add_cell_argument('cloud_config', help=train_cloud_config_help)
+  train_parser.add_cell_argument(
+      'cloud_config',
+      help=textwrap.dedent("""\
+          A dictionary of cloud training config, including:
+              job_id: the name of the job. If not provided, a default job name is created.
+              region: see {url}.
+              runtime_version: see "region".
+              scale_tier: see "region".""".format(
+          url='https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training')))
   train_parser.set_defaults(func=_train)
 
   predict_parser = parser.subcommand(
-      'predict', help="""Predict with local or deployed models. Prediction data can be CSV lines
-in input cell in yaml format. For example:
+      'predict',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Predict with local or deployed models. (Good for small datasets).',
+      epilog=textwrap.dedent("""\
+          Example usage:
 
-%%ml predict --headers key,num --model path/to/model
-prediction_data:
-  - key1,value1
-  - key2,value2
+          %%ml predict
+          headers: key,num
+          model: path/to/model
+          prediction_data:
+            - key1,value1
+            - key2,value2
 
-or define your data as a list of dict, or a list of CSV lines, or a pandas DataFrame.
-For example, in another cell, define a list of dict:
+          Or, in another cell, define a list of dict:
 
-my_data = [{'key': 1, 'num': 1.2}, {'key': 2, 'num': 2.8}]
+          my_data = [{'key': 1, 'num': 1.2}, {'key': 2, 'num': 2.8}]
 
-Then:
+          Then:
 
-%%ml predict --headers key,num --model path/to/model
-prediction_data: $my_data
-""", formatter_class=argparse.RawTextHelpFormatter)
+          %%ml predict
+          headers: key,num
+          model: path/to/model
+          prediction_data: $my_data"""))
   predict_parser.add_argument('--model', required=True,
-                              help='The model path if not --cloud, or the id in ' +
+                              help='The model path if not --cloud, or the id in '
                                    'the form of model.version if --cloud.')
   predict_parser.add_argument('--headers', required=True,
                               help='The comma seperated headers of the prediction data. '
                                    'Order must match the training order.')
   predict_parser.add_argument('--image_columns',
-                              help='Comma seperated headers of image URL columns. ' +
+                              help='Comma seperated headers of image URL columns. '
                                    'Required if prediction data contains image URL columns.')
   predict_parser.add_argument('--no_show_image', action='store_true', default=False,
                               help='If not set, add a column of images in output.')
   predict_parser.add_argument('--cloud', action='store_true', default=False,
                               help='whether to run prediction in cloud or local.')
-  predict_parser.add_cell_argument('prediction_data', required=True,
-                                   help='list of csv lines to use for prediction.')
+  predict_parser.add_cell_argument(
+      'prediction_data',
+      required=True,
+      help=textwrap.dedent("""\
+          Prediction data can be
+              1) CSV lines in the input cell in yaml format or
+              2) a local variable which is one of
+                a) list of dict
+                b) list of strings of csv lines
+                c) a Pandas DataFrame"""))
   predict_parser.set_defaults(func=_predict)
 
   batch_predict_parser = parser.subcommand(
-      'batch_predict', help="""Batch prediction with local or deployed models.
+      'batch_predict',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Batch prediction with local or deployed models. (Good for large datasets)',
+      epilog=textwrap.dedent("""\
 
-%%ml batch_predict --model path/to/model --output path/to/output --format csv [--cloud]
-prediction_data:
-  csv_file_pattern: path/to/file_pattern
-""", formatter_class=argparse.RawTextHelpFormatter)
+      Example usage:
+
+      %%ml batch_predict [--cloud]
+      model: path/to/model
+      output: path/to/output
+      format: csv
+      prediction_data:
+        csv: path/to/file_pattern"""))
   batch_predict_parser.add_argument('--model', required=True,
-                                    help='The model path if not --cloud, or the id in ' +
+                                    help='The model path if not --cloud, or the id in '
                                          'the form of model.version if --cloud.')
   batch_predict_parser.add_argument('--output', required=True,
-                                    help='The path of output directory with prediction results. ' +
+                                    help='The path of output directory with prediction results. '
                                          'If --cloud, it has to be GCS path.')
   batch_predict_parser.add_argument('--format',
-                                    help='csv or json. For cloud run, ' +
+                                    help='csv or json. For cloud run, '
                                          'the only supported format is json.')
   batch_predict_parser.add_argument('--batch_size', type=int, default=100,
-                                    help='number of instances in a batch to process once. ' +
-                                         'Larger batch is more efficient but may consume ' +
+                                    help='number of instances in a batch to process once. '
+                                         'Larger batch is more efficient but may consume '
                                          'more memory. Only used in local run.')
   batch_predict_parser.add_argument('--cloud', action='store_true', default=False,
                                     help='whether to run prediction in cloud or local.')
-
-  batch_prediction_data_help = """Data to predict with. Only csv is supported. For example:
-  csv: path/to/myprediction*.csv
-"""
-  batch_predict_parser.add_cell_argument('prediction_data', required=True,
-                                         help=batch_prediction_data_help)
-  batch_prediction_cloud_config_help = """A dictionary of cloud batch prediction config:
-  job_id: the name of the job. If not provided, a default job name is created.
-  region: see https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/prediction.
-  max_worker_count: see reference in "region".
-"""
-  batch_predict_parser.add_cell_argument('cloud_config', help=batch_prediction_cloud_config_help)
+  batch_predict_parser.add_cell_argument(
+      'prediction_data',
+      required=True,
+      help='Data to predict with. Only csv is supported.')
+  batch_predict_parser.add_cell_argument(
+      'cloud_config',
+      help=textwrap.dedent("""\
+          A dictionary of cloud batch prediction config.
+              job_id: the name of the job. If not provided, a default job name is created.
+              region: see {url}.
+              max_worker_count: see reference in "region".""".format(
+                  url='https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/prediction')))  # noqa
   batch_predict_parser.set_defaults(func=_batch_predict)
 
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
@@ -381,7 +439,7 @@ def _analyze(args, cell):
         r = bq.Query(training_data['bigquery_sql']).execute().result()
         cmd_args.extend(['--bigquery', r.full_name])
       else:
-        raise ValueError('Invalid training_data dict. ' +
+        raise ValueError('Invalid training_data dict. '
                          'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
     elif isinstance(training_data, google.datalab.ml.CsvDataSet):
       schema_file = _create_json_file(tmpdir, training_data.schema, 'schema.json')
@@ -393,7 +451,7 @@ def _analyze(args, cell):
       # TODO: Support query too once command line supports query.
       cmd_args.extend(['--bigquery', training_data.table])
     else:
-      raise ValueError('Invalid training data. Requires either a dict, ' +
+      raise ValueError('Invalid training data. Requires either a dict, '
                        'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
 
     features = args['features']
@@ -413,7 +471,7 @@ def _analyze(args, cell):
 
 def _transform(args, cell):
   if args['cloud_config'] and not args['cloud']:
-    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+    raise ValueError('"cloud_config" is provided but no "--cloud". '
                      'Do you want local run or cloud run?')
 
   cmd_args = ['python', 'transform.py',
@@ -440,7 +498,7 @@ def _transform(args, cell):
         r = bq.Query(training_data['bigquery_sql']).execute().result()
         cmd_args.extend(['--bigquery', r.full_name])
     else:
-      raise ValueError('Invalid training_data dict. ' +
+      raise ValueError('Invalid training_data dict. '
                        'Requires either "csv" and "schema", or "bigquery".')
   elif isinstance(training_data, google.datalab.ml.CsvDataSet):
     for file_name in training_data.input_files:
@@ -448,7 +506,7 @@ def _transform(args, cell):
   elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
     cmd_args.extend(['--bigquery', training_data.table])
   else:
-    raise ValueError('Invalid training data. Requires either a dict, ' +
+    raise ValueError('Invalid training data. Requires either a dict, '
                      'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
 
   cloud_config = args['cloud_config']
@@ -485,7 +543,7 @@ def _transform(args, cell):
 
 def _train(args, cell):
   if args['cloud_config'] and not args['cloud']:
-    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+    raise ValueError('"cloud_config" is provided but no "--cloud". '
                      'Do you want local run or cloud run?')
 
   job_args = ['--job-dir', _abs_path(args['output']),
@@ -500,13 +558,13 @@ def _train(args, cell):
       elif 'transformed' in data:
         job_args.extend([arg_name, _abs_path(data['transformed'])])
       else:
-        raise ValueError('Invalid training_data dict. ' +
+        raise ValueError('Invalid training_data dict. '
                          'Requires either "csv" or "transformed".')
     elif isinstance(data, google.datalab.ml.CsvDataSet):
       for file_name in data.input_files:
         job_args.append(arg_name + '=' + _abs_path(file_name))
     else:
-      raise ValueError('Invalid training data. Requires either a dict, or ' +
+      raise ValueError('Invalid training data. Requires either a dict, or '
                        'a google.datalab.ml.CsvDataSet')
 
   _process_train_eval_data(args['training_data'], '--train', job_args)
@@ -587,7 +645,7 @@ def _predict(args, cell):
 
 def _batch_predict(args, cell):
   if args['cloud_config'] and not args['cloud']:
-    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+    raise ValueError('"cloud_config" is provided but no "--cloud". '
                      'Do you want local run or cloud run?')
 
   data = args['prediction_data']
