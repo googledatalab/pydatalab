@@ -71,13 +71,14 @@ Image.new('RGB', (16, 16)).save(_img_buf, 'jpeg')
 IMAGE_DEFAULT_STRING = base64.urlsafe_b64encode(_img_buf.getvalue())
 
 IMAGE_BOTTLENECK_TENSOR_SIZE = 2048
-
+IMAGE_HIDDEN_TENSOR_SIZE = int(IMAGE_BOTTLENECK_TENSOR_SIZE / 4)
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 # start of transform functions
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
+
 
 def _scale(x, min_x_value, max_x_value, output_min, output_max):
   """Scale a column to [output_min, output_max].
@@ -125,7 +126,7 @@ def _string_to_int(x, vocab):
     Returns:
       a Tensor/SparseTensor of indexes (int) of the same shape as x.
     """
-    table = lookup.string_to_index_table_from_tensor(
+    table = lookup.index_table_from_tensor(
         vocab,
         default_value=len(vocab))
     return table.lookup(x)
@@ -499,8 +500,19 @@ def csv_header_and_defaults(features, schema, stats, keep_target):
   return csv_header, record_defaults
 
 
-def build_csv_serving_tensors(analysis_path, features, schema, stats, keep_target):
-  """Returns a placeholder tensor and transformed tensors."""
+def build_csv_serving_tensors_for_transform_step(analysis_path,
+                                                 features,
+                                                 schema,
+                                                 stats,
+                                                 keep_target):
+  """Builds a serving function starting from raw csv.
+
+  This should only be used by transform.py (the transform step), and the
+
+  For image columns, the image should be a base64 string encoding the image.
+  The output of this function will transform that image to a 2048 long vector
+  using the inception model.
+  """
 
   csv_header, record_defaults = csv_header_and_defaults(features, schema, stats, keep_target)
 
@@ -522,6 +534,34 @@ def build_csv_serving_tensors(analysis_path, features, schema, stats, keep_targe
 
   return input_fn_utils.InputFnOps(
       transformed_features, None, {"csv_example": placeholder})
+
+
+def build_csv_serving_tensors_for_training_step(analysis_path,
+                                                features,
+                                                schema,
+                                                stats,
+                                                keep_target):
+  """Builds a serving function starting from raw csv, used at model export time.
+
+  For image columns, the image should be a base64 string encoding the image.
+  The output of this function will transform that image to a 2048 long vector
+  using the inception model and then a fully connected net is attached to
+  the 2048 long image embedding.
+  """
+
+  transformed_features, _, placeholder_dict = build_csv_serving_tensors_for_transform_step(
+      analysis_path=analysis_path,
+      features=features,
+      schema=schema,
+      stats=stats,
+      keep_target=keep_target)
+
+  transformed_features = image_feature_engineering(
+      features=features,
+      feature_tensors_dict=transformed_features)
+
+  return input_fn_utils.InputFnOps(
+      transformed_features, None, placeholder_dict)
 
 
 def build_csv_transforming_training_input_fn(schema,
@@ -611,6 +651,9 @@ def build_csv_transforming_training_input_fn(schema,
         transformed_features[k] = tf.expand_dims(v, -1)
       else:
         transformed_features[k] = v
+
+    # image_feature_engineering does not need to be called as images are not
+    # supported in raw csv for training.
 
     # Remove the target tensor, and return it directly
     target_name = get_target_name(features)
@@ -716,6 +759,10 @@ def build_tfexample_transfored_training_input_fn(schema,
         # Sparse tensor
         transformed_features[k] = v
 
+    transformed_features = image_feature_engineering(
+        features=features,
+        feature_tensors_dict=transformed_features)
+
     # Remove the target tensor, and return it directly
     target_name = get_target_name(features)
     if not target_name or target_name not in transformed_features:
@@ -726,6 +773,27 @@ def build_tfexample_transfored_training_input_fn(schema,
     return transformed_features, transformed_target
 
   return transformed_training_input_fn
+
+
+def image_feature_engineering(features, feature_tensors_dict):
+  """Add a hidden layer on image features.
+
+  Args:
+    features: features dict
+    feature_tensors_dict: dict of feature-name: tensor
+  """
+  engineered_features = {}
+  for name, feature_tensor in six.iteritems(feature_tensors_dict):
+    if name in features and features[name]['transform'] == IMAGE_TRANSFORM:
+      bottleneck_with_no_gradient = tf.stop_gradient(feature_tensor)
+      with tf.name_scope(name, 'Wx_plus_b'):
+        hidden = tf.contrib.layers.fully_connected(
+            bottleneck_with_no_gradient,
+            IMAGE_HIDDEN_TENSOR_SIZE)
+        engineered_features[name] = hidden
+    else:
+      engineered_features[name] = feature_tensor
+  return engineered_features
 
 
 def get_target_name(features):

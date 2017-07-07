@@ -25,7 +25,6 @@ import sys
 import six
 import tensorflow as tf
 
-from tensorflow.contrib import layers
 from tensorflow.contrib.framework.python.ops import variables as contrib_variables
 from tensorflow.contrib.learn.python.learn import export_strategy
 from tensorflow.contrib.learn.python.learn import learn_runner
@@ -35,8 +34,8 @@ from tensorflow.python.client import session as tf_session
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.lib.io import file_io
+from tensorflow.python.ops import resources
 from tensorflow.python.ops import control_flow_ops
-from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import variables
 from tensorflow.python.saved_model import builder as saved_model_builder
 from tensorflow.python.saved_model import signature_def_utils
@@ -334,7 +333,7 @@ def build_feature_columns(features, stats, model_type):
     elif transform_name == feature_transforms.IMAGE_TRANSFORM:
       new_feature = tf.contrib.layers.real_valued_column(
           name,
-          dimension=feature_transforms.IMAGE_BOTTLENECK_TENSOR_SIZE)
+          dimension=feature_transforms.IMAGE_HIDDEN_TENSOR_SIZE)
     else:
       raise ValueError('Unknown transfrom %s' % transform_name)
 
@@ -462,7 +461,7 @@ def make_export_strategy(
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
 
-      input_ops = feature_transforms.build_csv_serving_tensors(
+      input_ops = feature_transforms.build_csv_serving_tensors_for_training_step(
           args.analysis, features, schema, stats, keep_target)
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
@@ -497,17 +496,18 @@ def make_export_strategy(
       export_dir = saved_model_export_utils.get_timestamped_export_dir(
           export_dir_base)
 
-      with tf_session.Session('') as session:
-        variables.local_variables_initializer()
-        data_flow_ops.tables_initializer()
-        saver_for_restore = saver.Saver(
-            variables.global_variables(),
-            sharded=True)
-        saver_for_restore.restore(session, checkpoint_path)
+      if (model_fn_ops.scaffold is not None and
+         model_fn_ops.scaffold.saver is not None):
+        saver_for_restore = model_fn_ops.scaffold.saver
+      else:
+        saver_for_restore = saver.Saver(sharded=True)
 
+      with tf_session.Session('') as session:
+        saver_for_restore.restore(session, checkpoint_path)
         init_op = control_flow_ops.group(
             variables.local_variables_initializer(),
-            data_flow_ops.tables_initializer())
+            resources.initialize_resources(resources.shared_resources()),
+            tf.tables_initializer())
 
         # Perform the export
         builder = saved_model_builder.SavedModelBuilder(export_dir)
@@ -556,26 +556,6 @@ def make_export_strategy(
   return export_strategy.ExportStrategy(intermediate_dir, export_fn)
 
 
-def make_feature_engineering_fn(features):
-  """feature_engineering_fn for adding a hidden layer on image embeddings."""
-
-  def feature_engineering_fn(feature_tensors_dict, target):
-    engineered_features = {}
-    for name, feature_tensor in six.iteritems(feature_tensors_dict):
-      if name in features and features[name]['transform'] == feature_transforms.IMAGE_TRANSFORM:
-        bottleneck_with_no_gradient = tf.stop_gradient(feature_tensor)
-        with tf.name_scope(name, 'Wx_plus_b'):
-          hidden = layers.fully_connected(
-              bottleneck_with_no_gradient,
-              int(feature_transforms.IMAGE_BOTTLENECK_TENSOR_SIZE / 4))
-          engineered_features[name] = hidden
-      else:
-        engineered_features[name] = feature_tensor
-    return engineered_features, target
-
-  return feature_engineering_fn
-
-
 def get_estimator(args, output_dir, features, stats, target_vocab_size):
   # Check layers used for dnn models.
   if is_dnn_model(args.model) and not args.hidden_layer_sizes:
@@ -585,7 +565,6 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
 
   # Build tf.learn features
   feature_columns = build_feature_columns(features, stats, args.model)
-  feature_engineering_fn = make_feature_engineering_fn(features)
 
   # Set how often to run checkpointing in terms of time.
   config = tf.contrib.learn.RunConfig(
@@ -599,8 +578,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon),
-        feature_engineering_fn=feature_engineering_fn)
+            args.learning_rate, epsilon=args.epsilon))
   elif args.model == 'linear_regression':
     estimator = tf.contrib.learn.LinearRegressor(
         feature_columns=feature_columns,
@@ -609,8 +587,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         optimizer=tf.train.FtrlOptimizer(
             args.learning_rate,
             l1_regularization_strength=args.l1_regularization,
-            l2_regularization_strength=args.l2_regularization),
-        feature_engineering_fn=feature_engineering_fn)
+            l2_regularization_strength=args.l2_regularization))
   elif args.model == 'dnn_classification':
     estimator = tf.contrib.learn.DNNClassifier(
         feature_columns=feature_columns,
@@ -619,8 +596,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon),
-        feature_engineering_fn=feature_engineering_fn)
+            args.learning_rate, epsilon=args.epsilon))
   elif args.model == 'linear_classification':
     estimator = tf.contrib.learn.LinearClassifier(
         feature_columns=feature_columns,
@@ -630,8 +606,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         optimizer=tf.train.FtrlOptimizer(
             args.learning_rate,
             l1_regularization_strength=args.l1_regularization,
-            l2_regularization_strength=args.l2_regularization),
-        feature_engineering_fn=feature_engineering_fn)
+            l2_regularization_strength=args.l2_regularization))
   else:
     raise ValueError('bad --model-type value')
 

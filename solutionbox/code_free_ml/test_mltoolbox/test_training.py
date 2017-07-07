@@ -168,7 +168,8 @@ class TestSpecialCharacters(unittest.TestCase):
           model_path=os.path.join(output_dir, 'training', 'model'),
           csv_data=['"red,","one, two, three"'])
 
-      # Check it made the correct prediction
+      # The prediction data is a training row. As the data is samll, the model
+      # should have near 100% accuracy. Check it made the correct prediction.
       self.assertEqual(result['predicted'], 'red,')
     finally:
       shutil.rmtree(output_dir)
@@ -357,6 +358,7 @@ class TestOptionalKeys(unittest.TestCase):
       result = run_exported_model(
           model_path=os.path.join(output_dir, 'training', 'model'),
           csv_data=['20'])
+
       self.assertTrue(abs(40 - result['predicted']) < 5)
     finally:
       shutil.rmtree(output_dir)
