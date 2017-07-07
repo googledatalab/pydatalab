@@ -71,7 +71,10 @@ class CommandParser(argparse.ArgumentParser):
         required = 'Required' if v['required'] else 'Optional'
         cell_args_help += '%s: %s. %s.\n\n' % (cell_arg, required, v['help'])
 
-      return orig_help + cell_args_help + epilog + '\n\n'
+      orig_help += cell_args_help
+      if epilog:
+        orig_help += epilog + '\n\n'
+      return orig_help
 
   def format_usage(self):
     """Overridden usage generator to use the full help message. """

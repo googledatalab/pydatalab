@@ -45,13 +45,7 @@ import mltoolbox_magic.shell_process_tests
 import mltoolbox_structured_data.dl_interface_tests
 import mltoolbox_structured_data.sd_e2e_tests
 import mltoolbox_structured_data.traininglib_tests
-import stackdriver.commands.monitoring_tests
-import stackdriver.monitoring.group_tests
-import stackdriver.monitoring.metric_tests
-import stackdriver.monitoring.resource_tests
-import stackdriver.monitoring.query_metadata_tests
-import stackdriver.monitoring.query_tests
-import stackdriver.monitoring.utils_tests
+
 import storage.api_tests
 import storage.bucket_tests
 import storage.object_tests
@@ -82,13 +76,13 @@ _UNIT_TEST_MODULES = [
     kernel.storage_tests,
     kernel.utils_tests,
     ml.dataset_tests,
-    stackdriver.commands.monitoring_tests,
-    stackdriver.monitoring.group_tests,
-    stackdriver.monitoring.metric_tests,
-    stackdriver.monitoring.resource_tests,
-    stackdriver.monitoring.query_metadata_tests,
-    stackdriver.monitoring.query_tests,
-    stackdriver.monitoring.utils_tests,
+    #stackdriver.commands.monitoring_tests,
+    #stackdriver.monitoring.group_tests,
+    #stackdriver.monitoring.metric_tests,
+    #stackdriver.monitoring.resource_tests,
+    #stackdriver.monitoring.query_metadata_tests,
+    #stackdriver.monitoring.query_tests,
+    #stackdriver.monitoring.utils_tests,
     storage.api_tests,
     storage.bucket_tests,
     storage.object_tests,
