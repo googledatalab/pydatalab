@@ -13,7 +13,9 @@ from __future__ import absolute_import
 
 import logging
 import os
+import six
 import sys
+import unittest
 
 # Set up the path so that we can import local packages.
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -22,6 +24,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
 import test_mltoolbox.test_sd_trainer as sdtraining
 
 
+@unittest.skipIf(not six.PY2, 'Python 2 is required')
 class TestCoreTrainingLib(sdtraining.TestTrainer):
   """Wraps the training tests in the structured data package.
 

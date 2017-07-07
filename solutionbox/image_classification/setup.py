@@ -16,7 +16,7 @@ import datetime
 from setuptools import setup
 
 minor = datetime.datetime.now().strftime("%y%m%d%H%M")
-version = '0.1'
+version = '0.2'
 
 setup(
   name='mltoolbox_datalab_image_classification',

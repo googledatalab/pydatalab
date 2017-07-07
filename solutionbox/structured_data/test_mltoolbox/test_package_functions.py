@@ -32,6 +32,7 @@ import google.datalab.ml as dlml  # noqa: E402
 import unittest  # noqa: E402
 
 
+@unittest.skipIf(not six.PY2, 'Python 2 is required')
 class TestAnalyze(unittest.TestCase):
 
   def test_not_csvdataset(self):
@@ -114,6 +115,7 @@ class TestAnalyze(unittest.TestCase):
                     job.fatal_error.message)
 
 
+@unittest.skipIf(not six.PY2, 'Python 2 is required')
 class TestFunctionSignature(unittest.TestCase):
 
   def _argspec(self, fn_obj):
