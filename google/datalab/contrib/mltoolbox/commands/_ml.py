@@ -470,6 +470,10 @@ def _analyze(args, cell):
 
 
 def _transform(args, cell):
+  if args['cloud_config'] and not args['cloud']:
+    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+                     'Do you want local run or cloud run?')
+
   cmd_args = ['python', 'transform.py',
               '--output', _abs_path(args['output']),
               '--analysis', _abs_path(args['analysis']),
@@ -538,6 +542,10 @@ def _transform(args, cell):
 
 
 def _train(args, cell):
+  if args['cloud_config'] and not args['cloud']:
+    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+                     'Do you want local run or cloud run?')
+
   job_args = ['--job-dir', _abs_path(args['output']),
               '--analysis', _abs_path(args['analysis'])]
 
@@ -636,6 +644,9 @@ def _predict(args, cell):
 
 
 def _batch_predict(args, cell):
+  if args['cloud_config'] and not args['cloud']:
+    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+                     'Do you want local run or cloud run?')
 
   data = args['prediction_data']
   google.datalab.utils.commands.validate_config(data, required_keys=['csv'])

@@ -30,7 +30,6 @@ import apache_beam as beam
 import textwrap
 
 
-
 def parse_arguments(argv):
   """Parse command line arguments.
   Args:
@@ -259,8 +258,11 @@ class EmitAsBatchDoFn(beam.DoFn):
       yield emit
 
   def finish_bundle(self, element=None):
+    from apache_beam.transforms import window
+    from apache_beam.utils.windowed_value import WindowedValue
+
     if len(self._cached) > 0:  # pylint: disable=g-explicit-length-test
-      yield self._cached
+      yield WindowedValue(self._cached, -1, [window.GlobalWindow()])
 
 
 class TransformFeaturesDoFn(beam.DoFn):
