@@ -88,7 +88,7 @@ def _download_images(data, img_cols):
   for d in data:
     for img_col in img_cols:
       if d.get(img_col, None):
-        with file_io.FileIO(d[img_col], 'r') as fi:
+        with file_io.FileIO(d[img_col], 'rb') as fi:
           im = Image.open(fi)
         images[img_col].append(im)
       else:

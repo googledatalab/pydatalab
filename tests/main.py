@@ -38,6 +38,7 @@ import kernel.html_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import ml.dataset_tests
+import mltoolbox_code_free_ml.all_tests
 import mltoolbox_magic.archive_tests
 import mltoolbox_magic.local_predict_tests
 import mltoolbox_magic.shell_process_tests
@@ -99,6 +100,7 @@ _UNIT_TEST_MODULES = [
 
 
 _INTEGRATION_TEST_MODULES = [
+    mltoolbox_code_free_ml.all_tests,
     mltoolbox_structured_data.dl_interface_tests,
     mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
     mltoolbox_structured_data.traininglib_tests,

@@ -29,7 +29,7 @@ import urllib
 from . import _util
 
 
-_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinux1_x86_64.whl'
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.2.0-cp27-none-linux_x86_64.whl'
 _PROTOBUF_GS_URL = 'gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl'
 
 

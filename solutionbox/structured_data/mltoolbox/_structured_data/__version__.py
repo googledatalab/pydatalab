@@ -11,4 +11,4 @@
 # the License.
 
 # Source of truth for the version of this package.
-__version__ = '1.0.0'
+__version__ = '1.0.1'

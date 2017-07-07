@@ -286,7 +286,7 @@ class TransformFeaturesDoFn(beam.DoFn):
     # Build the transformation graph
     with g.as_default():
       transformed_features, _, placeholders = (
-          feature_transforms.build_csv_serving_tensors(
+          feature_transforms.build_csv_serving_tensors_for_transform_step(
               analysis_path=self._analysis_output_dir, 
               features=self._features, 
               schema=self._schema,
