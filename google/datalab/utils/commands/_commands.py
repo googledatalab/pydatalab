@@ -56,15 +56,20 @@ class CommandParser(argparse.ArgumentParser):
   def format_help(self):
     """Override help doc to add cell args. """
 
-    orig_help = super(CommandParser, self).format_help()
     if not self._cell_args:
-      return orig_help
+      return super(CommandParser, self).format_help()
+    else:
+      # Print the standard argparse info, the cell arg block, and then the epilog
+      epilog = self.epilog
+      self.epilog = None
+      orig_help = super(CommandParser, self).format_help()
+    
+      cell_args_help = '\nCell args:\n\n'
+      for cell_arg, v in six.iteritems(self._cell_args):
+        required = 'Required' if v['required'] else 'Optional'
+        cell_args_help += '%s: %s %s.\n\n' % (cell_arg, v['help'], required)
 
-    cell_args_help = '\nCell args:\n\n'
-    for cell_arg, v in six.iteritems(self._cell_args):
-      required = 'Required' if v['required'] else 'Optional'
-      cell_args_help += '%s: %s %s.\n\n' % (cell_arg, v['help'], required)
-    return orig_help + cell_args_help
+      return orig_help + cell_args_help + epilog + '\n\n'
 
   def format_usage(self):
     """Overridden usage generator to use the full help message. """
