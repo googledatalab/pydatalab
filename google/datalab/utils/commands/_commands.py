@@ -69,7 +69,7 @@ class CommandParser(argparse.ArgumentParser):
       cell_args_help = '\nCell args:\n\n'
       for cell_arg, v in six.iteritems(self._cell_args):
         required = 'Required' if v['required'] else 'Optional'
-        cell_args_help += '%s: %s %s.\n\n' % (cell_arg, v['help'], required)
+        cell_args_help += '%s: %s. %s.\n\n' % (cell_arg, required, v['help'])
 
       return orig_help + cell_args_help + epilog + '\n\n'
 
