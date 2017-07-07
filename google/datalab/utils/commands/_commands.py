@@ -60,6 +60,8 @@ class CommandParser(argparse.ArgumentParser):
       return super(CommandParser, self).format_help()
     else:
       # Print the standard argparse info, the cell arg block, and then the epilog
+      # If we don't remove epilog before calling the super, then epilog will
+      # be printed before the 'Cell args' block.
       epilog = self.epilog
       self.epilog = None
       orig_help = super(CommandParser, self).format_help()

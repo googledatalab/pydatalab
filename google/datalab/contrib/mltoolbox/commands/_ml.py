@@ -108,7 +108,7 @@ def ml(line, cell=None):
   analyze_parser.add_argument('--cloud', action='store_true', default=False,
                               help='whether to run analysis in cloud or local.')
   analyze_parser.add_argument('--package', required=False,
-                              help='A local or GCS tarball path to use as the source. ' +
+                              help='A local or GCS tarball path to use as the source. '
                                    'If not set, the default source package will be used.')
   analyze_parser.add_cell_argument(
     'training_data',
@@ -186,10 +186,10 @@ def ml(line, cell=None):
   transform_parser.add_argument('--shuffle', action='store_true', default=False,
                                 help='whether to shuffle the training data in output.')
   transform_parser.add_argument('--batch_size', type=int, default=100,
-                                help='number of instances in a batch to process once. ' +
+                                help='number of instances in a batch to process once. '
                                      'Larger batch is more efficient but may consume more memory.')
   transform_parser.add_argument('--package', required=False,
-                                help='A local or GCS tarball path to use as the source. ' +
+                                help='A local or GCS tarball path to use as the source. '
                                      'If not set, the default source package will be used.')
   transform_parser.add_cell_argument(
       'training_data',
@@ -239,7 +239,7 @@ def ml(line, cell=None):
   train_parser.add_argument('--cloud', action='store_true', default=False,
                             help='whether to run training in cloud or local.')
   train_parser.add_argument('--package', required=False,
-                            help='A local or GCS tarball path to use as the source. ' +
+                            help='A local or GCS tarball path to use as the source. '
                                  'If not set, the default source package will be used.')
   train_parser.add_cell_argument(
       'training_data',
@@ -301,13 +301,13 @@ def ml(line, cell=None):
           model: path/to/model
           prediction_data: $my_data"""))
   predict_parser.add_argument('--model', required=True,
-                              help='The model path if not --cloud, or the id in ' +
+                              help='The model path if not --cloud, or the id in '
                                    'the form of model.version if --cloud.')
   predict_parser.add_argument('--headers', required=True,
                               help='The comma seperated headers of the prediction data. '
                                    'Order must match the training order.')
   predict_parser.add_argument('--image_columns',
-                              help='Comma seperated headers of image URL columns. ' +
+                              help='Comma seperated headers of image URL columns. '
                                    'Required if prediction data contains image URL columns.')
   predict_parser.add_argument('--no_show_image', action='store_true', default=False,
                               help='If not set, add a column of images in output.')
@@ -340,17 +340,17 @@ def ml(line, cell=None):
       prediction_data:
         csv: path/to/file_pattern"""))
   batch_predict_parser.add_argument('--model', required=True,
-                                    help='The model path if not --cloud, or the id in ' +
+                                    help='The model path if not --cloud, or the id in '
                                          'the form of model.version if --cloud.')
   batch_predict_parser.add_argument('--output', required=True,
-                                    help='The path of output directory with prediction results. ' +
+                                    help='The path of output directory with prediction results. '
                                          'If --cloud, it has to be GCS path.')
   batch_predict_parser.add_argument('--format',
-                                    help='csv or json. For cloud run, ' +
+                                    help='csv or json. For cloud run, '
                                          'the only supported format is json.')
   batch_predict_parser.add_argument('--batch_size', type=int, default=100,
-                                    help='number of instances in a batch to process once. ' +
-                                         'Larger batch is more efficient but may consume ' +
+                                    help='number of instances in a batch to process once. '
+                                         'Larger batch is more efficient but may consume '
                                          'more memory. Only used in local run.')
   batch_predict_parser.add_argument('--cloud', action='store_true', default=False,
                                     help='whether to run prediction in cloud or local.')
@@ -439,7 +439,7 @@ def _analyze(args, cell):
         r = bq.Query(training_data['bigquery_sql']).execute().result()
         cmd_args.extend(['--bigquery', r.full_name])
       else:
-        raise ValueError('Invalid training_data dict. ' +
+        raise ValueError('Invalid training_data dict. '
                          'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
     elif isinstance(training_data, google.datalab.ml.CsvDataSet):
       schema_file = _create_json_file(tmpdir, training_data.schema, 'schema.json')
@@ -451,7 +451,7 @@ def _analyze(args, cell):
       # TODO: Support query too once command line supports query.
       cmd_args.extend(['--bigquery', training_data.table])
     else:
-      raise ValueError('Invalid training data. Requires either a dict, ' +
+      raise ValueError('Invalid training data. Requires either a dict, '
                        'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
 
     features = args['features']
@@ -471,7 +471,7 @@ def _analyze(args, cell):
 
 def _transform(args, cell):
   if args['cloud_config'] and not args['cloud']:
-    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+    raise ValueError('"cloud_config" is provided but no "--cloud". '
                      'Do you want local run or cloud run?')
 
   cmd_args = ['python', 'transform.py',
@@ -498,7 +498,7 @@ def _transform(args, cell):
         r = bq.Query(training_data['bigquery_sql']).execute().result()
         cmd_args.extend(['--bigquery', r.full_name])
     else:
-      raise ValueError('Invalid training_data dict. ' +
+      raise ValueError('Invalid training_data dict. '
                        'Requires either "csv" and "schema", or "bigquery".')
   elif isinstance(training_data, google.datalab.ml.CsvDataSet):
     for file_name in training_data.input_files:
@@ -506,7 +506,7 @@ def _transform(args, cell):
   elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
     cmd_args.extend(['--bigquery', training_data.table])
   else:
-    raise ValueError('Invalid training data. Requires either a dict, ' +
+    raise ValueError('Invalid training data. Requires either a dict, '
                      'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
 
   cloud_config = args['cloud_config']
@@ -543,7 +543,7 @@ def _transform(args, cell):
 
 def _train(args, cell):
   if args['cloud_config'] and not args['cloud']:
-    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+    raise ValueError('"cloud_config" is provided but no "--cloud". '
                      'Do you want local run or cloud run?')
 
   job_args = ['--job-dir', _abs_path(args['output']),
@@ -558,13 +558,13 @@ def _train(args, cell):
       elif 'transformed' in data:
         job_args.extend([arg_name, _abs_path(data['transformed'])])
       else:
-        raise ValueError('Invalid training_data dict. ' +
+        raise ValueError('Invalid training_data dict. '
                          'Requires either "csv" or "transformed".')
     elif isinstance(data, google.datalab.ml.CsvDataSet):
       for file_name in data.input_files:
         job_args.append(arg_name + '=' + _abs_path(file_name))
     else:
-      raise ValueError('Invalid training data. Requires either a dict, or ' +
+      raise ValueError('Invalid training data. Requires either a dict, or '
                        'a google.datalab.ml.CsvDataSet')
 
   _process_train_eval_data(args['training_data'], '--train', job_args)
@@ -645,7 +645,7 @@ def _predict(args, cell):
 
 def _batch_predict(args, cell):
   if args['cloud_config'] and not args['cloud']:
-    raise ValueError('"cloud_config" is provided but no "--cloud". ' +
+    raise ValueError('"cloud_config" is provided but no "--cloud". '
                      'Do you want local run or cloud run?')
 
   data = args['prediction_data']
