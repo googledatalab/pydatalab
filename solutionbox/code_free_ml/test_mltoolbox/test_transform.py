@@ -88,6 +88,7 @@ class TestTransformRawData(unittest.TestCase):
   def tearDownClass(cls):
     shutil.rmtree(cls.working_dir)
 
+  @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def test_local_csv_transform(self):
     """Test transfrom from local csv files."""
 
