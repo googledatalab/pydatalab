@@ -92,6 +92,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'httplib2==0.10.3',
     'oauth2client==2.2.0',
     'pandas>=0.17.1',
+    'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
     'pytz>=2015.4',
     'pyyaml==3.11',
