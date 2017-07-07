@@ -120,7 +120,6 @@ def ml(line, cell=None):
             bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
             a variable defined as google.datalab.ml.CsvDataSet or
                 google.datalab.ml.BigQueryDataSet."""))
-     
   analyze_parser.add_cell_argument(
       'features',
       required=True,
@@ -271,9 +270,10 @@ def ml(line, cell=None):
       help=textwrap.dedent("""\
           A dictionary of cloud training config, including:
               job_id: the name of the job. If not provided, a default job name is created.
-              region: see https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training.
+              region: see {url}.
               runtime_version: see "region".
-              scale_tier: see "region"."""))
+              scale_tier: see "region".""".format(
+          url='https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training')))
   train_parser.set_defaults(func=_train)
 
   predict_parser = parser.subcommand(

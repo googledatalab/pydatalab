@@ -63,7 +63,7 @@ class CommandParser(argparse.ArgumentParser):
       epilog = self.epilog
       self.epilog = None
       orig_help = super(CommandParser, self).format_help()
-    
+
       cell_args_help = '\nCell args:\n\n'
       for cell_arg, v in six.iteritems(self._cell_args):
         required = 'Required' if v['required'] else 'Optional'
