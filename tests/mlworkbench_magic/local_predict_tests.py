@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-"""Test the datalab prediction with MLToolbox models."""
+"""Test MLWorkbench local predict"""
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -32,7 +32,7 @@ from tensorflow.python.saved_model import signature_constants
 import unittest
 
 
-from google.datalab.contrib.mltoolbox import _local_predict
+from google.datalab.contrib.mlworkbench import _local_predict
 
 
 class TestLocalPredictions(unittest.TestCase):

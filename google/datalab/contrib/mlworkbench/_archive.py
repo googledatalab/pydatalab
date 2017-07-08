@@ -21,7 +21,7 @@ import shutil
 import tempfile
 import tensorflow as tf
 
-import google.datalab.contrib.mltoolbox._shell_process as _shell_process
+import google.datalab.contrib.mlworkbench._shell_process as _shell_process
 
 
 def extract_archive(archive_path, dest):
