@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-"""Test the datalab prediction with MLToolbox models."""
+"""Test MLWorkbench shell process monitor"""
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -24,11 +24,11 @@ import threading
 import time
 import unittest
 
-import google.datalab.contrib.mltoolbox._shell_process as _shell_process
+import google.datalab.contrib.mlworkbench._shell_process as _shell_process
 
 
 class TestShellProcess(unittest.TestCase):
-  """Tests for process managements used in MLToolbox magics."""
+  """Tests for process managements used in MLWorkbench magics."""
 
   def setUp(self):
     self._logger = logging.getLogger('TestStructuredDataLogger')

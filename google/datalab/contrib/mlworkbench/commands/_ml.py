@@ -41,9 +41,9 @@ import google.datalab.bigquery as bq
 from google.datalab import Context
 import google.datalab.ml as datalab_ml
 import google.datalab.utils.commands
-import google.datalab.contrib.mltoolbox._local_predict as _local_predict
-import google.datalab.contrib.mltoolbox._shell_process as _shell_process
-import google.datalab.contrib.mltoolbox._archive as _archive
+import google.datalab.contrib.mlworkbench._local_predict as _local_predict
+import google.datalab.contrib.mlworkbench._shell_process as _shell_process
+import google.datalab.contrib.mlworkbench._archive as _archive
 
 
 MLTOOLBOX_CODE_PATH = '/datalab/lib/pydatalab/solutionbox/code_free_ml/mltoolbox/code_free_ml/'
@@ -51,7 +51,7 @@ MLTOOLBOX_CODE_PATH = '/datalab/lib/pydatalab/solutionbox/code_free_ml/mltoolbox
 
 @IPython.core.magic.register_line_cell_magic
 def ml(line, cell=None):
-  """Implements the datalab cell magic for MLToolbox operations.
+  """Implements the datalab cell magic for MLWorkbench operations.
 
   Args:
     line: the contents of the ml command line.
@@ -61,7 +61,7 @@ def ml(line, cell=None):
   parser = google.datalab.utils.commands.CommandParser(
       prog='%ml',
       description=textwrap.dedent("""\
-          Execute MLToolbox operations
+          Execute MLWorkbench operations
 
           Use "%ml <command> -h" for help on a specific command.
       """))

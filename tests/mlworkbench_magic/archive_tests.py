@@ -21,7 +21,7 @@ import subprocess
 import tempfile
 import unittest
 
-import google.datalab.contrib.mltoolbox._archive as _archive
+import google.datalab.contrib.mlworkbench._archive as _archive
 
 
 class TestArchive(unittest.TestCase):
