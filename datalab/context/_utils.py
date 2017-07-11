@@ -29,6 +29,7 @@ import subprocess
 # that the user can define for themselves which scopes they want to use.
 CREDENTIAL_SCOPES = [
   'https://www.googleapis.com/auth/cloud-platform',
+  'https://www.googleapis.com/auth/drive',
 ]
 
 
