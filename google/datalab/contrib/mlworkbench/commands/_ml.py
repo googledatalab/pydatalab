@@ -206,7 +206,7 @@ def ml(line, cell=None):
               num_workers: Dataflow number of workers. If not set, DataFlow
               service will determine the number.
               worker_machine_type: a machine name from
-                  https://cloud.google.com/compute/docs/machine-types. If not
+                  https://cloud.google.com/compute/docs/machine-types If not
                   given, the service uses the default machine type.
               project_id: id of the project to use for DataFlow service. If not set,
                   Datalab's default project (set by %%datalab project set) is used.
@@ -270,7 +270,7 @@ def ml(line, cell=None):
       help=textwrap.dedent("""\
           A dictionary of cloud training config, including:
               job_id: the name of the job. If not provided, a default job name is created.
-              region: see {url}.
+              region: see {url}
               runtime_version: see "region".
               scale_tier: see "region".""".format(
           url='https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training')))
@@ -363,7 +363,7 @@ def ml(line, cell=None):
       help=textwrap.dedent("""\
           A dictionary of cloud batch prediction config.
               job_id: the name of the job. If not provided, a default job name is created.
-              region: see {url}.
+              region: see {url}
               max_worker_count: see reference in "region".""".format(
                   url='https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/prediction')))  # noqa
   batch_predict_parser.set_defaults(func=_batch_predict)
