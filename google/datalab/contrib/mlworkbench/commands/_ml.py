@@ -204,10 +204,10 @@ def ml(line, cell=None):
       help=textwrap.dedent("""\
           A dictionary of cloud config. All of them are optional.
               num_workers: Dataflow number of workers. If not set, DataFlow
-              service will determine the number.
+                  service will determine the number.
               worker_machine_type: a machine name from
-                  https://cloud.google.com/compute/docs/machine-types If not
-                  given, the service uses the default machine type.
+                  https://cloud.google.com/compute/docs/machine-types 
+                  If not given, the service uses the default machine type.
               project_id: id of the project to use for DataFlow service. If not set,
                   Datalab's default project (set by %%datalab project set) is used.
               job_name: Unique name for a Dataflow job to use. If not set, a
