@@ -271,7 +271,7 @@ def ml(line, cell=None):
           A dictionary of cloud training config, including:
               job_id: the name of the job. If not provided, a default job name is created.
               region: see {url}
-              runtime_version: see "region".
+              runtime_version: see "region". Must be a string like '1.2'.
               scale_tier: see "region".""".format(
           url='https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training')))
   train_parser.set_defaults(func=_train)
