@@ -243,6 +243,9 @@ class CommandParser(argparse.ArgumentParser):
         # It is okay --- probably because cell is not in yaml or json format.
         pass
 
+      if cell_config:
+        google.datalab.utils.commands.replace_vars(cell_config, namespace)
+
       for arg in cell_args:
         if (cell_args[arg]['required'] and
            (cell_config is None or cell_config.get(arg, None) is None)):
