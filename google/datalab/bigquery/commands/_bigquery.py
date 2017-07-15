@@ -929,13 +929,7 @@ def bq(line, cell=None):
   Use %bq --help for a list of commands, or %bq <command> --help for help
   on a specific command.
   """
-  namespace = {}
-  if line.find('$') >= 0:
-    # We likely have variables to expand; get the appropriate context.
-    namespace = google.datalab.utils.commands.notebook_environment()
-
-  return google.datalab.utils.commands.handle_magic_line(line, cell, _bigquery_parser,
-                                                         namespace=namespace)
+  return google.datalab.utils.commands.handle_magic_line(line, cell, _bigquery_parser)
 
 
 def _dispatch_handler(args, cell, parser, handler, cell_required=False, cell_prohibited=False):
