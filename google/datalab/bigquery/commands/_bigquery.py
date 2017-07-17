@@ -52,7 +52,12 @@ table_schema_schema = {
         'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
         'mode': {'type': 'string', 'enum': BIGQUERY_MODES + BIGQUERY_MODES_LOWER},
         'description': {'type': 'string'},
-        'fields': {'$ref': '#/definitions/field'}
+        'fields': {
+          'type': 'array',
+          'items': {
+            'allOf': [{'$ref': '#/definitions/field'}]
+          }
+        }
       },
       'required': ['name', 'type'],
       'additionalProperties': False
