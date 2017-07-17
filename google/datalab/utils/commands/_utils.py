@@ -338,7 +338,7 @@ def parse_config(config, env, as_dict=True):
   return config
 
 
-def parse_config_for_selected_keys(content, env, keys):
+def parse_config_for_selected_keys(content, keys):
   """ Parse a config from a magic cell body for selected config keys.
 
   For example, if 'content' is:
@@ -353,7 +353,6 @@ def parse_config_for_selected_keys(content, env, keys):
 
   Args:
     content: the input content. A string. It has to be a yaml or JSON string.
-    env: user supplied dictionary for replacing vars (for example, $myvalue).
     keys: a list of keys to retrieve from content. Note that it only checks top level keys
         in the dict.
 
@@ -383,7 +382,6 @@ def parse_config_for_selected_keys(content, env, keys):
   for key in keys:
     config_items[key] = config.pop(key, None)
 
-  replace_vars(config_items, env)
   if not config:
     return config_items, None
 

@@ -648,9 +648,6 @@ def _batch_predict(args, cell):
     raise ValueError('"cloud_config" is provided but no "--cloud". '
                      'Do you want local run or cloud run?')
 
-  data = args['prediction_data']
-  google.datalab.utils.commands.validate_config(data, required_keys=['csv'])
-
   if args['cloud']:
     parts = args['model'].split('.')
     if len(parts) != 2:
@@ -664,7 +661,7 @@ def _batch_predict(args, cell):
     job_request = {
       'version_name': version_name,
       'data_format': 'TEXT',
-      'input_paths': file_io.get_matching_files(data['csv']),
+      'input_paths': file_io.get_matching_files(args['prediction_data']['csv']),
       'output_path': args['output'],
     }
     job_request.update(cloud_config)
@@ -673,7 +670,7 @@ def _batch_predict(args, cell):
   else:
     print('local prediction...')
     _local_predict.local_batch_predict(args['model'],
-                                       data['csv'],
+                                       args['prediction_data']['csv'],
                                        args['output'],
                                        args['format'],
                                        args['batch_size'])

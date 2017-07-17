@@ -208,12 +208,13 @@ class CommandParser(argparse.ArgumentParser):
       cell_config = None
       try:
         cell_config, cell = google.datalab.utils.commands.parse_config_for_selected_keys(
-            cell, namespace, line_args)
+            cell, line_args)
       except:
         # It is okay --- probably because cell is not in yaml or json format.
         pass
 
       if cell_config:
+        google.datalab.utils.commands.replace_vars(cell_config, namespace)
         for arg_name in cell_config:
           arg_value = cell_config[arg_name]
           if arg_value is None:
@@ -237,13 +238,17 @@ class CommandParser(argparse.ArgumentParser):
     if cell_args:
       try:
         cell_config, _ = google.datalab.utils.commands.parse_config_for_selected_keys(
-            cell, namespace, cell_args)
+            cell, cell_args)
       except:
         # It is okay --- probably because cell is not in yaml or json format.
         pass
 
+      if cell_config:
+        google.datalab.utils.commands.replace_vars(cell_config, namespace)
+
       for arg in cell_args:
-        if cell_args[arg]['required'] and cell_config.get(arg, None) is None:
+        if (cell_args[arg]['required'] and
+           (cell_config is None or cell_config.get(arg, None) is None)):
           raise ValueError('Cell config "%s" is required.' % arg)
 
     if cell_config:
