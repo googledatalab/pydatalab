@@ -262,7 +262,7 @@ def ml(line, cell=None):
       cwd=MLTOOLBOX_CODE_PATH,
       stdout=subprocess.PIPE).communicate()[0]
   package_model_help = ('model_args: a dictionary of model specific args, including:\n\n' +
-                        package_model_help)
+                        package_model_help.decode())
   train_parser.add_cell_argument('model_args', help=package_model_help)
 
   train_parser.add_cell_argument(
