@@ -46,6 +46,73 @@ import google.datalab.utils.commands  # noqa
 
 class TestCases(unittest.TestCase):
 
+  def test_table_schema(self):
+    import jsonschema
+    good_schemas = [
+      {
+        'schema': [
+          {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
+          {'name': 'col1', 'type': 'STRING', 'mode': 'required', 'description': 'description1'}
+        ]
+      },
+      {
+        'schema': [
+          {'name': 'col1', 'type': 'record', 'mode': 'repeated', 'description': 'description1',
+           'fields': [
+             {'name': 'field1', 'type': 'int64'},
+             {'name': 'field2', 'type': 'int64'},
+             {'name': 'field3', 'type': 'record',
+              'fields': [
+                {'name': 'nestedField1', 'type': 'STRING'},
+                {'name': 'nestedField2', 'type': 'STRING'}
+              ]}
+           ]}
+        ]
+      }
+    ]
+
+    bad_schemas = [
+      {
+        # Bad type.
+        'schema': [
+          {'name': 'col1', 'type': 'badtype'}
+        ]
+      },
+      {
+        # Bad type. Strictly upper and lower case are supported.
+        'schema': [
+          {'name': 'col1', 'type': 'stRING'}
+        ]
+      },
+      {
+        # Missing name.
+        'schema': [
+          {'type': 'string'}
+        ]
+      },
+      {
+        # Missing type.
+        'schema': [
+          {'name': 'col1'}
+        ]
+      },
+      {
+        # Fields should be an array.
+        'schema': [
+          {'name': 'col1', 'type': 'string', 'fields': 'badfields'}
+        ]
+      }
+    ]
+
+    for s in good_schemas:
+      record = google.datalab.utils.commands.parse_config(json.dumps(s), {})
+      jsonschema.validate(record, google.datalab.bigquery.commands._bigquery.table_schema_schema)
+
+    for s in bad_schemas:
+      record = google.datalab.utils.commands.parse_config(json.dumps(s), {})
+      with self.assertRaises(Exception):
+        jsonschema.validate(record, google.datalab.bigquery.commands._bigquery.table_schema_schema)
+
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
   def test_udf_cell(self, mock_default_context, mock_notebook_environment):
