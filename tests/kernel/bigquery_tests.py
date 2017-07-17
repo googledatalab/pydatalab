@@ -48,7 +48,7 @@ class TestCases(unittest.TestCase):
 
   def test_table_schema(self):
     import jsonschema
-    schemas = [
+    good_schemas = [
       {
         'schema': [
           {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
@@ -71,9 +71,47 @@ class TestCases(unittest.TestCase):
       }
     ]
 
-    for s in schemas:
+    bad_schemas = [
+      {
+        # Bad type.
+        'schema': [
+          {'name': 'col1', 'type': 'badtype'}
+        ]
+      },
+      {
+        # Bad type. Strictly upper and lower case are supported.
+        'schema': [
+          {'name': 'col1', 'type': 'stRING'}
+        ]
+      },
+      {
+        # Missing name.
+        'schema': [
+          {'type': 'string'}
+        ]
+      },
+      {
+        # Missing type.
+        'schema': [
+          {'name': 'col1'}
+        ]
+      },
+      {
+        # Fields should be an array.
+        'schema': [
+          {'name': 'col1', 'type': 'string', 'fields': 'badfields'}
+        ]
+      }
+    ]
+
+    for s in good_schemas:
       record = google.datalab.utils.commands.parse_config(json.dumps(s), {})
       jsonschema.validate(record, google.datalab.bigquery.commands._bigquery.table_schema_schema)
+
+    for s in bad_schemas:
+      record = google.datalab.utils.commands.parse_config(json.dumps(s), {})
+      with self.assertRaises(Exception):
+        jsonschema.validate(record, google.datalab.bigquery.commands._bigquery.table_schema_schema)
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
