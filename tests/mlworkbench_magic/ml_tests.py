@@ -38,6 +38,7 @@ import google.datalab.contrib.mlworkbench.commands._ml as mlmagic  # noqa
 
 
 def find_key_value(arg_list, key, value):
+  """Checks '--key value' is in arg_list."""
   for i in range(len(arg_list)):
     if arg_list[i] == key and arg_list[i + 1] == value:
       return True
@@ -45,6 +46,7 @@ def find_key_value(arg_list, key, value):
 
 
 def find_key_endswith(arg_list, key, value):
+  """Checks '--key prefix_<value>' is in arg_list."""
   for i in range(len(arg_list)):
     if arg_list[i] == key and arg_list[i + 1].endswith(value):
       return True
@@ -52,6 +54,7 @@ def find_key_endswith(arg_list, key, value):
 
 
 def find_startswith_endswith(arg_list, key, value):
+  """Checks '--<key>anything<value>' is in arg_list."""
   for i in range(len(arg_list)):
     if arg_list[i].startswith(key) and arg_list[i].endswith(value):
       return True
