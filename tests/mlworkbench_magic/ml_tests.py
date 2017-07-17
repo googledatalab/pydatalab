@@ -9,22 +9,15 @@
 # is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
-"""Tests the %%ml magics functions without runing any jobs."""
+"""Tests the \%\%ml magics functions without runing any jobs."""
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
-
-import csv
 import mock
 import os
 import pandas as pd
-import random
-import shutil
-import tempfile
 
-import google.datalab
-from google.datalab.ml import CsvDataSet
 
 # import Python so we can mock the parts we need to here.
 import IPython.core.display
@@ -41,7 +34,8 @@ IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
 
-import google.datalab.contrib.mlworkbench.commands._ml as mlmagic
+import google.datalab.contrib.mlworkbench.commands._ml as mlmagic  # noqa
+
 
 def find_key_value(arg_list, key, value):
   for i in range(len(arg_list)):
@@ -49,17 +43,20 @@ def find_key_value(arg_list, key, value):
       return True
   return False
 
+
 def find_key_endswith(arg_list, key, value):
   for i in range(len(arg_list)):
     if arg_list[i] == key and arg_list[i + 1].endswith(value):
       return True
   return False
 
+
 def find_startswith_endswith(arg_list, key, value):
   for i in range(len(arg_list)):
     if arg_list[i].startswith(key) and arg_list[i].endswith(value):
       return True
   return False
+
 
 class TestMLMagic(unittest.TestCase):
 
@@ -75,8 +72,8 @@ class TestMLMagic(unittest.TestCase):
               schema: dummy_schema
             features: dummy_features""")
     cmd_list = run_and_monitor_mock.call_args[0][0]
-    # cmd_list = [u'python', u'analyze.py', u'--output', 'path/my_out_dir', 
-    #   u'--csv=path/file*.csv', u'--schema', u'/path/schema.json', 
+    # cmd_list = [u'python', u'analyze.py', u'--output', 'path/my_out_dir',
+    #   u'--csv=path/file*.csv', u'--schema', u'/path/schema.json',
     #   u'--features', u'path/features.json']
 
     self.assertEqual('python', cmd_list[0])
@@ -103,8 +100,8 @@ class TestMLMagic(unittest.TestCase):
               worker_machine_type: BLUE
               job_name: RED""")
     cmd_list = run_and_monitor_mock.call_args[0][0]
-    # cmd_list = [u'python', u'transform.py', u'--output', 'path/my_out_dir', 
-    #   u'--analysis', 'path/my_analyze_dir', u'--prefix', 'my_prefix', 
+    # cmd_list = [u'python', u'transform.py', u'--output', 'path/my_out_dir',
+    #   u'--analysis', 'path/my_analyze_dir', u'--prefix', 'my_prefix',
     #   u'--shuffle', u'--batch-size', '100', u'--csv=/path/file*.csv'
     #   ...
     self.assertEqual('python', cmd_list[0])
@@ -121,12 +118,12 @@ class TestMLMagic(unittest.TestCase):
     self.assertTrue(find_key_value(cmd_list, '--worker-machine-type', 'BLUE'))
     self.assertTrue(find_key_value(cmd_list, '--job-name', 'RED'))
 
-  @mock.patch('google.datalab.contrib.mlworkbench.commands._ml._show_job_link') 
-  @mock.patch('google.datalab.ml.package_and_copy') 
-  @mock.patch('google.datalab.ml.Job.submit_training') 
+  @mock.patch('google.datalab.contrib.mlworkbench.commands._ml._show_job_link')
+  @mock.patch('google.datalab.ml.package_and_copy')
+  @mock.patch('google.datalab.ml.Job.submit_training')
   @mock.patch('subprocess.Popen')  # Because of the trainer help menu
-  def test_train_csv_local(self, popen_mock, run_and_monitor_mock,
-                           package_and_copy_mock,_show_job_link_mock):
+  def test_train_csv(self, popen_mock, run_and_monitor_mock,
+                     package_and_copy_mock, _show_job_link_mock):
     mlmagic.ml(
         line='train --cloud',
         cell="""\
@@ -156,3 +153,51 @@ class TestMLMagic(unittest.TestCase):
     self.assertIn('--transform', cmd_list)
     self.assertTrue(find_startswith_endswith(cmd_list, '--eval=', '*.tfrecords.gz'))
     self.assertTrue(find_key_value(cmd_list, '--key', 'value'))
+
+  @mock.patch('IPython.display.display')
+  @mock.patch('google.datalab.contrib.mlworkbench._local_predict.get_prediction_results')
+  @mock.patch('subprocess.Popen')  # Because of the trainer help menu
+  def test_predict_csv(self, popen_mock, get_prediction_results_mock, display_mock):
+
+    # Don't run prediction on a real graph, just return 1 value.
+    df = pd.DataFrame({'col1': ['key1'], 'col2': ['value1'], 'col3': ['value2']})
+    get_prediction_results_mock.return_value = df
+
+    mlmagic.ml(
+        line='predict --cloud',
+        cell="""\
+            model: model.version
+            headers: col1,col2,col3
+            image_columns: col3
+            prediction_data:
+              - key1,value1,value2""")
+
+    # Check it was printed
+    self.assertEqual(1, display_mock.call_count)
+
+  @mock.patch('google.datalab.contrib.mlworkbench.commands._ml._show_job_link')
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.ml.Job.submit_batch_prediction')
+  @mock.patch('subprocess.Popen')  # Because of the trainer help menu
+  def test_batch_predict_csv(self, popen_mock, submit_batch_prediction_mock,
+                             default_mock, _show_job_link_mock):
+    default_mock.return_value = mock.Mock(project_id='my_project_id')
+
+    mlmagic.ml(
+        line='batch_predict --cloud',
+        cell="""\
+            model: my_model.my_version
+            output: gs://output
+            format: json
+            batch_size: 10
+            prediction_data:
+              csv: %s""" % os.path.abspath(__file__))
+
+    job_args = submit_batch_prediction_mock.call_args[0][0]
+
+    self.assertEqual(job_args['input_paths'], [os.path.abspath(__file__)])
+    self.assertEqual(
+        job_args['version_name'],
+        'projects/my_project_id/models/my_model/versions/my_version')
+    self.assertEqual(job_args['output_path'], 'gs://output')
+    self.assertEqual(job_args['data_format'], 'TEXT')

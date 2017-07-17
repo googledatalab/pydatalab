@@ -522,12 +522,10 @@ def _transform(args, cell):
       cmd_args.extend(['--worker-machine-type', cloud_config['worker_machine_type']])
     if 'project_id' in cloud_config:
       cmd_args.extend(['--project-id', cloud_config['project_id']])
-    else: 
-      cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])      
+    else:
+      cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
     if 'job_name' in cloud_config:
       cmd_args.extend(['--job-name', cloud_config['job_name']])
-
-
 
   try:
     tmpdir = None
@@ -661,7 +659,7 @@ def _batch_predict(args, cell):
     version_name = ('projects/%s/models/%s/versions/%s' %
                     (Context.default().project_id, parts[0], parts[1]))
 
-    cloud_config = args['cloud_config']
+    cloud_config = args['cloud_config'] or {}
     job_id = cloud_config.pop('job_id', None)
     job_request = {
       'version_name': version_name,
