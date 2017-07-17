@@ -25,7 +25,6 @@ import sys
 import six
 import tensorflow as tf
 
-from tensorflow.contrib import layers
 from tensorflow.contrib.framework.python.ops import variables as contrib_variables
 from tensorflow.contrib.learn.python.learn import export_strategy
 from tensorflow.contrib.learn.python.learn import learn_runner
@@ -35,8 +34,8 @@ from tensorflow.python.client import session as tf_session
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.lib.io import file_io
+from tensorflow.python.ops import resources
 from tensorflow.python.ops import control_flow_ops
-from tensorflow.python.ops import data_flow_ops
 from tensorflow.python.ops import variables
 from tensorflow.python.saved_model import builder as saved_model_builder
 from tensorflow.python.saved_model import signature_def_utils
@@ -82,16 +81,17 @@ class DatalabParser():
 
     # The arguments added here are required to exist by Datalab's "%%ml train" magics.
     self.full_parser.add_argument(
-        '--train-data-paths', type=str, required=True, action='append')
+        '--train', type=str, required=True, action='append', metavar='FILE')
     self.full_parser.add_argument(
-        '--eval-data-paths', type=str, required=True, action='append')
+        '--eval', type=str, required=True, action='append', metavar='FILE')
     self.full_parser.add_argument('--job-dir', type=str, required=True)
     self.full_parser.add_argument(
-        '--output-dir-from-analysis-step', type=str, required=True,
+        '--analysis', type=str, required=True,
+        metavar='ANALYSIS_OUTPUT_DIR',
         help=('Output folder of analysis. Should contain the schema, stats, and '
               'vocab files. Path must be on GCS if running cloud training.'))
     self.full_parser.add_argument(
-        '--run-transforms', action='store_true', default=False,
+        '--transform', action='store_true', default=False,
         help='If used, input data is raw csv that needs transformation.')
 
   def make_datalab_help_action(self):
@@ -156,47 +156,62 @@ def parse_arguments(argv):
 
   # HP parameters
   parser.add_argument(
-      '--epsilon', type=float, default=0.0005,
+      '--epsilon', type=float, default=0.0005, metavar='R',
       help='tf.train.AdamOptimizer epsilon. Only used in dnn models.')
   parser.add_argument(
-      '--l1-regularization', type=float, default=0.0,
+      '--l1-regularization', type=float, default=0.0, metavar='R',
       help='L1 term for linear models.')
   parser.add_argument(
-      '--l2-regularization', type=float, default=0.0,
+      '--l2-regularization', type=float, default=0.0, metavar='R',
       help='L2 term for linear models.')
 
   # Model parameters
   parser.add_argument(
-    '--model-type', required=True,
+    '--model', required=True,
     choices=['linear_classification', 'linear_regression', 'dnn_classification', 'dnn_regression'])
   parser.add_argument(
-      '--top-n', type=int, default=1,
+      '--top-n', type=int, default=1, metavar='N',
       help=('For classification problems, the output graph will contain the '
             'labels and scores for the top n classes.'))
 
   # HP parameters
   parser.add_argument(
-      '--learning-rate', type=float, default=0.01, help='optimizer learning rate.')
+      '--learning-rate', type=float, default=0.01, metavar='R',
+      help='optimizer learning rate.')
 
   # Training input parameters
   parser.add_argument(
-      '--max-steps', type=int, default=5000,
+      '--max-steps', type=int, default=5000, metavar='N',
       help='Maximum number of training steps to perform.')
   parser.add_argument(
-      '--num-epochs', type=int,
+      '--max-epochs', type=int, metavar='N',
       help=('Maximum number of training data epochs on which to train. If '
-            'both "max-step" and "num-epochs" are specified, the training '
+            'both "max-step" and "max-epochs" are specified, the training '
             'job will run for "max-steps" or "num-epochs", whichever occurs '
-            'first. If unspecified will run for "max-steps".'))
-  parser.add_argument('--train-batch-size', type=int, default=1000)
-  parser.add_argument('--eval-batch-size', type=int, default=1000)
+            'first. If unspecified will run for "max-steps". If using '
+            'num-epochs and the last training batch is not full, the last '
+            'batch will not be used.'))
   parser.add_argument(
-      '--min-eval-frequency', type=int, default=100,
-      help='Minimum number of training steps between evaluations.')
+      '--train-batch-size', type=int, default=100, metavar='N',
+      help='How many training examples are used per step. If num-epochs is '
+           'used, the last batch may not be full.')
+  parser.add_argument(
+      '--eval-batch-size', type=int, default=100, metavar='N',
+      help='Batch size during evaluation. Larger values increase performance '
+           'but also increase peak memory usgae on the master node. One pass '
+           'over the full eval set is performed per evaluation run.')
+  parser.add_argument(
+      '--min-eval-frequency', type=int, default=100, metavar='N',
+      help='Minimum number of training steps between evaluations. Evaluation '
+           'does not occur if no new checkpoint is available, hence, this is '
+           'the minimum. If 0, the evaluation will only happen after training. '
+           'If more frequent evaluation is desired, decrease '
+           'save-checkpoints-secs. Increase min-eval-frequency to run evaluaton '
+           'less often.')
 
   # other parameters
   parser.add_argument(
-      '--save-checkpoints-secs', type=int, default=600,
+      '--save-checkpoints-secs', type=int, default=600, metavar='N',
       help='How often the model should be checkpointed/saved in seconds.')
 
   args, remaining_args = parser.parse_known_args(args=argv[1:])
@@ -318,7 +333,7 @@ def build_feature_columns(features, stats, model_type):
     elif transform_name == feature_transforms.IMAGE_TRANSFORM:
       new_feature = tf.contrib.layers.real_valued_column(
           name,
-          dimension=feature_transforms.IMAGE_BOTTLENECK_TENSOR_SIZE)
+          dimension=feature_transforms.IMAGE_HIDDEN_TENSOR_SIZE)
     else:
       raise ValueError('Unknown transfrom %s' % transform_name)
 
@@ -355,7 +370,7 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
   outputs.update({key_name: tf.squeeze(input_ops.features[key_name])
                   for key_name in key_names})
 
-  if is_classification_model(args.model_type):
+  if is_classification_model(args.model):
 
     # build maps from ints to the origional categorical strings.
     string_values = read_vocab(args, target_name)
@@ -446,8 +461,8 @@ def make_export_strategy(
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
 
-      input_ops = feature_transforms.build_csv_serving_tensors(
-          args.output_dir_from_analysis_step, features, schema, stats, keep_target)
+      input_ops = feature_transforms.build_csv_serving_tensors_for_training_step(
+          args.analysis, features, schema, stats, keep_target)
       model_fn_ops = estimator._call_model_fn(input_ops.features,
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
@@ -481,17 +496,18 @@ def make_export_strategy(
       export_dir = saved_model_export_utils.get_timestamped_export_dir(
           export_dir_base)
 
-      with tf_session.Session('') as session:
-        variables.local_variables_initializer()
-        data_flow_ops.tables_initializer()
-        saver_for_restore = saver.Saver(
-            variables.global_variables(),
-            sharded=True)
-        saver_for_restore.restore(session, checkpoint_path)
+      if (model_fn_ops.scaffold is not None and
+         model_fn_ops.scaffold.saver is not None):
+        saver_for_restore = model_fn_ops.scaffold.saver
+      else:
+        saver_for_restore = saver.Saver(sharded=True)
 
+      with tf_session.Session('') as session:
+        saver_for_restore.restore(session, checkpoint_path)
         init_op = control_flow_ops.group(
             variables.local_variables_initializer(),
-            data_flow_ops.tables_initializer())
+            resources.initialize_resources(resources.shared_resources()),
+            tf.tables_initializer())
 
         # Perform the export
         builder = saved_model_builder.SavedModelBuilder(export_dir)
@@ -540,52 +556,30 @@ def make_export_strategy(
   return export_strategy.ExportStrategy(intermediate_dir, export_fn)
 
 
-def make_feature_engineering_fn(features):
-  """feature_engineering_fn for adding a hidden layer on image embeddings."""
-
-  def feature_engineering_fn(feature_tensors_dict, target):
-    engineered_features = {}
-    for name, feature_tensor in six.iteritems(feature_tensors_dict):
-      if name in features and features[name]['transform'] == feature_transforms.IMAGE_TRANSFORM:
-        bottleneck_with_no_gradient = tf.stop_gradient(feature_tensor)
-        with tf.name_scope(name, 'Wx_plus_b'):
-          hidden = layers.fully_connected(
-              bottleneck_with_no_gradient,
-              int(feature_transforms.IMAGE_BOTTLENECK_TENSOR_SIZE / 4))
-          engineered_features[name] = hidden
-      else:
-        engineered_features[name] = feature_tensor
-    return engineered_features, target
-
-  return feature_engineering_fn
-
-
 def get_estimator(args, output_dir, features, stats, target_vocab_size):
   # Check layers used for dnn models.
-  if is_dnn_model(args.model_type) and not args.hidden_layer_sizes:
+  if is_dnn_model(args.model) and not args.hidden_layer_sizes:
     raise ValueError('--hidden-layer-size* must be used with DNN models')
-  if is_linear_model(args.model_type) and args.hidden_layer_sizes:
+  if is_linear_model(args.model) and args.hidden_layer_sizes:
     raise ValueError('--hidden-layer-size* cannot be used with linear models')
 
   # Build tf.learn features
-  feature_columns = build_feature_columns(features, stats, args.model_type)
-  feature_engineering_fn = make_feature_engineering_fn(features)
+  feature_columns = build_feature_columns(features, stats, args.model)
 
   # Set how often to run checkpointing in terms of time.
   config = tf.contrib.learn.RunConfig(
       save_checkpoints_secs=args.save_checkpoints_secs)
 
   train_dir = os.path.join(output_dir, 'train')
-  if args.model_type == 'dnn_regression':
+  if args.model == 'dnn_regression':
     estimator = tf.contrib.learn.DNNRegressor(
         feature_columns=feature_columns,
         hidden_units=args.hidden_layer_sizes,
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon),
-        feature_engineering_fn=feature_engineering_fn)
-  elif args.model_type == 'linear_regression':
+            args.learning_rate, epsilon=args.epsilon))
+  elif args.model == 'linear_regression':
     estimator = tf.contrib.learn.LinearRegressor(
         feature_columns=feature_columns,
         config=config,
@@ -593,9 +587,8 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         optimizer=tf.train.FtrlOptimizer(
             args.learning_rate,
             l1_regularization_strength=args.l1_regularization,
-            l2_regularization_strength=args.l2_regularization),
-        feature_engineering_fn=feature_engineering_fn)
-  elif args.model_type == 'dnn_classification':
+            l2_regularization_strength=args.l2_regularization))
+  elif args.model == 'dnn_classification':
     estimator = tf.contrib.learn.DNNClassifier(
         feature_columns=feature_columns,
         hidden_units=args.hidden_layer_sizes,
@@ -603,9 +596,8 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         config=config,
         model_dir=train_dir,
         optimizer=tf.train.AdamOptimizer(
-            args.learning_rate, epsilon=args.epsilon),
-        feature_engineering_fn=feature_engineering_fn)
-  elif args.model_type == 'linear_classification':
+            args.learning_rate, epsilon=args.epsilon))
+  elif args.model == 'linear_classification':
     estimator = tf.contrib.learn.LinearClassifier(
         feature_columns=feature_columns,
         n_classes=target_vocab_size,
@@ -614,8 +606,7 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
         optimizer=tf.train.FtrlOptimizer(
             args.learning_rate,
             l1_regularization_strength=args.l1_regularization,
-            l2_regularization_strength=args.l2_regularization),
-        feature_engineering_fn=feature_engineering_fn)
+            l2_regularization_strength=args.l2_regularization))
   else:
     raise ValueError('bad --model-type value')
 
@@ -632,7 +623,7 @@ def read_vocab(args, column_name):
   Returns:
     List of vocab words or [] if the vocab file is not found.
   """
-  vocab_path = os.path.join(args.output_dir_from_analysis_step,
+  vocab_path = os.path.join(args.analysis,
                             feature_transforms.VOCAB_ANALYSIS_FILE % column_name)
 
   if not file_io.file_exists(vocab_path):
@@ -668,11 +659,11 @@ def get_experiment_fn(args):
 
   def get_experiment(output_dir):
     # Read schema, input features, and transforms.
-    schema_path_with_target = os.path.join(args.output_dir_from_analysis_step,
+    schema_path_with_target = os.path.join(args.analysis,
                                            feature_transforms.SCHEMA_FILE)
-    features_path = os.path.join(args.output_dir_from_analysis_step,
+    features_path = os.path.join(args.analysis,
                                  feature_transforms.FEATURES_FILE)
-    stats_path = os.path.join(args.output_dir_from_analysis_step,
+    stats_path = os.path.join(args.analysis,
                               feature_transforms.STATS_FILE)
 
     schema = read_json_file(schema_path_with_target)
@@ -718,7 +709,7 @@ def get_experiment_fn(args):
         stats=stats)
 
     # Build readers for training.
-    if args.run_transforms:
+    if args.transform:
       if any(v['transform'] == feature_transforms.IMAGE_TRANSFORM
              for k, v in six.iteritems(features)):
         raise ValueError('"image_to_vec" transform requires transformation step. ' +
@@ -728,10 +719,10 @@ def get_experiment_fn(args):
           schema=schema,
           features=features,
           stats=stats,
-          analysis_output_dir=args.output_dir_from_analysis_step,
-          raw_data_file_pattern=args.train_data_paths,
+          analysis_output_dir=args.analysis,
+          raw_data_file_pattern=args.train,
           training_batch_size=args.train_batch_size,
-          num_epochs=args.num_epochs,
+          num_epochs=args.max_epochs,
           randomize_input=True,
           min_after_dequeue=10,
           reader_num_threads=multiprocessing.cpu_count())
@@ -739,8 +730,8 @@ def get_experiment_fn(args):
           schema=schema,
           features=features,
           stats=stats,
-          analysis_output_dir=args.output_dir_from_analysis_step,
-          raw_data_file_pattern=args.eval_data_paths,
+          analysis_output_dir=args.analysis,
+          raw_data_file_pattern=args.eval,
           training_batch_size=args.eval_batch_size,
           num_epochs=1,
           randomize_input=False,
@@ -749,18 +740,18 @@ def get_experiment_fn(args):
       input_reader_for_train = feature_transforms.build_tfexample_transfored_training_input_fn(
           schema=schema,
           features=features,
-          analysis_output_dir=args.output_dir_from_analysis_step,
-          raw_data_file_pattern=args.train_data_paths,
+          analysis_output_dir=args.analysis,
+          raw_data_file_pattern=args.train,
           training_batch_size=args.train_batch_size,
-          num_epochs=args.num_epochs,
+          num_epochs=args.max_epochs,
           randomize_input=True,
           min_after_dequeue=10,
           reader_num_threads=multiprocessing.cpu_count())
       input_reader_for_eval = feature_transforms.build_tfexample_transfored_training_input_fn(
           schema=schema,
           features=features,
-          analysis_output_dir=args.output_dir_from_analysis_step,
-          raw_data_file_pattern=args.eval_data_paths,
+          analysis_output_dir=args.analysis,
+          raw_data_file_pattern=args.eval,
           training_batch_size=args.eval_batch_size,
           num_epochs=1,
           randomize_input=False,

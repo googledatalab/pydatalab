@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import json
 import os
+import pandas as pd
 from PIL import Image
 import shutil
 import subprocess
@@ -15,9 +16,18 @@ from tensorflow.python.lib.io import file_io
 
 import google.datalab as dl
 import google.datalab.bigquery as bq
+import google.datalab.storage as storage
 
 CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
+
+# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
+# those tests will not run.
+HAS_CREDENTIALS = True
+try:
+  dl.Context.default().project_id
+except Exception:
+  HAS_CREDENTIALS = False
 
 
 class TestTransformRawData(unittest.TestCase):
@@ -68,29 +78,24 @@ class TestTransformRawData(unittest.TestCase):
     features_file = os.path.join(cls.source_dir, 'features.json')
     file_io.write_string_to_file(features_file, json.dumps(features))
     cmd = ['python ' + os.path.join(CODE_PATH, 'analyze.py'),
-           '--output-dir=' + cls.analysis_dir,
-           '--csv-file-pattern=' + cls.csv_input_filepath,
-           '--csv-schema-file=' + schema_file,
-           '--features-file=' + features_file]
+           '--output=' + cls.analysis_dir,
+           '--csv=' + cls.csv_input_filepath,
+           '--schema=' + schema_file,
+           '--features=' + features_file]
     subprocess.check_call(' '.join(cmd), shell=True)
-
-    # Setup a temp GCS bucket.
-    cls.bucket_root = 'gs://temp_mltoolbox_test_%s' % uuid.uuid4().hex
-    subprocess.check_call('gsutil mb %s' % cls.bucket_root, shell=True)
 
   @classmethod
   def tearDownClass(cls):
     shutil.rmtree(cls.working_dir)
-    subprocess.check_call('gsutil -m rm -r %s' % cls.bucket_root, shell=True)
 
   def test_local_csv_transform(self):
     """Test transfrom from local csv files."""
 
     cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
-           '--csv-file-pattern=' + self.csv_input_filepath,
-           '--output-dir-from-analysis-step=' + self.analysis_dir,
-           '--output-filename-prefix=features',
-           '--output-dir=' + self.output_dir]
+           '--csv=' + self.csv_input_filepath,
+           '--analysis=' + self.analysis_dir,
+           '--prefix=features',
+           '--output=' + self.output_dir]
     print('cmd ', ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
@@ -102,23 +107,45 @@ class TestTransformRawData(unittest.TestCase):
     serialized_examples = list(tf.python_io.tf_record_iterator(record_filepath, options=options))
     self.assertEqual(len(serialized_examples), 3)
 
-    example = tf.train.Example()
-    example.ParseFromString(serialized_examples[0])
+    # Find the example with key=1 in the file.
+    first_example = None
+    for ex in serialized_examples:
+      example = tf.train.Example()
+      example.ParseFromString(ex)
+      if example.features.feature['key_col'].int64_list.value[0] == 1:
+        first_example = example
+    self.assertIsNotNone(first_example)
 
-    transformed_number = example.features.feature['num_col'].float_list.value[0]
+    transformed_number = first_example.features.feature['num_col'].float_list.value[0]
     self.assertAlmostEqual(transformed_number, 23.0)
-    transformed_category = example.features.feature['cat_col'].int64_list.value[0]
-    self.assertEqual(transformed_category, 2)
-    image_bytes = example.features.feature['img_col'].float_list.value
+
+    # transformed category = row number in the vocab file.
+    transformed_category = first_example.features.feature['cat_col'].int64_list.value[0]
+    vocab = pd.read_csv(
+        os.path.join(self.analysis_dir, 'vocab_cat_col.csv'),
+        header=None,
+        names=['label', 'count'],
+        dtype=str)
+    origional_category = vocab.iloc[transformed_category]['label']
+    self.assertEqual(origional_category, 'Monday')
+
+    image_bytes = first_example.features.feature['img_col'].float_list.value
     self.assertEqual(len(image_bytes), 2048)
     self.assertTrue(any(x != 0.0 for x in image_bytes))
 
+  @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def test_local_bigquery_transform(self):
     """Test transfrom locally, but the data comes from bigquery."""
 
     # Make a BQ table, and insert 1 row.
     try:
+      bucket_name = 'temp_pydatalab_test_%s' % uuid.uuid4().hex
+      bucket_root = 'gs://%s' % bucket_name
+      bucket = storage.Bucket(bucket_name)
+      bucket.create()
+
       project_id = dl.Context.default().project_id
+
       dataset_name = 'test_transform_raw_data_%s' % uuid.uuid4().hex
       table_name = 'tmp_table'
 
@@ -131,8 +158,8 @@ class TestTransformRawData(unittest.TestCase):
                     {'name': 'img_col', 'type': 'STRING'}])
 
       img1_file = os.path.join(self.source_dir, 'img1.jpg')
-      dest_file = os.path.join(self.bucket_root, 'img1.jpg')
-      subprocess.check_call('gsutil cp %s %s' % (img1_file, dest_file), shell=True)
+      dest_file = os.path.join(bucket_root, 'img1.jpg')
+      file_io.copy(img1_file, dest_file)
 
       data = [
           {
@@ -146,11 +173,11 @@ class TestTransformRawData(unittest.TestCase):
       table.insert(data=data)
 
       cmd = ['python ' + os.path.join(CODE_PATH, 'transform.py'),
-             '--bigquery-table=%s.%s.%s' % (project_id, dataset_name, table_name),
-             '--output-dir-from-analysis-step=' + self.analysis_dir,
-             '--output-filename-prefix=features',
+             '--bigquery=%s.%s.%s' % (project_id, dataset_name, table_name),
+             '--analysis=' + self.analysis_dir,
+             '--prefix=features',
              '--project-id=' + project_id,
-             '--output-dir=' + self.output_dir]
+             '--output=' + self.output_dir]
       print('cmd ', ' '.join(cmd))
       subprocess.check_call(' '.join(cmd), shell=True)
 
@@ -174,6 +201,10 @@ class TestTransformRawData(unittest.TestCase):
       self.assertTrue(any(x != 0.0 for x in image_bytes))
     finally:
       dataset.delete(delete_contents=True)
+
+      for obj in bucket.objects():
+        obj.delete()
+      bucket.delete()
 
 
 if __name__ == '__main__':

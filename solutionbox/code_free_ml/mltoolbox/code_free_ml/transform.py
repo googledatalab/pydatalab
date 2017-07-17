@@ -30,7 +30,6 @@ import apache_beam as beam
 import textwrap
 
 
-
 def parse_arguments(argv):
   """Parse command line arguments.
   Args:
@@ -67,42 +66,38 @@ def parse_arguments(argv):
           performance impact if the transforms are all simple like scaling
           numerical values."""))
 
-  parser.add_argument(
-      '--project-id',
-      help='The project to which the job will be submitted. Only needed if '
-           '--cloud is used.')
-  parser.add_argument(
-      '--cloud',
-      action='store_true',
-      help='Run preprocessing on the cloud.')
-  parser.add_argument(
-      '--job-name',
-      type=str,
-      help='Unique job name if running on the cloud.')
+  source_group = parser.add_mutually_exclusive_group(required=True)
 
-  parser.add_argument(
-      '--csv-file-pattern',
+  source_group.add_argument(
+      '--csv',
+      metavar='FILE',
       required=False,
       action='append',
       help='CSV data to transform.')
-  # If using bigquery table
-  parser.add_argument(
-      '--bigquery-table',
+
+  source_group.add_argument(
+      '--bigquery',
+      metavar='PROJECT_ID.DATASET.TABLE_NAME',
       type=str,
       required=False,
       help=('Must be in the form `project.dataset.table_name`. BigQuery '
             'data to transform'))
 
   parser.add_argument(
-      '--output-dir-from-analysis-step',
+      '--analysis',
+      metavar='ANALYSIS_OUTPUT_DIR',
       required=True,
       help='The output folder of analyze')
+
   parser.add_argument(
-      '--output-filename-prefix',
+      '--prefix',
+      metavar='OUTPUT_FILENAME_PREFIX',
       required=True,
       type=str)
+
   parser.add_argument(
-      '--output-dir',
+      '--output',
+      metavar='DIR',
       default=None,
       required=True,
       help=('Google Cloud Storage or Local directory in which '
@@ -111,26 +106,49 @@ def parse_arguments(argv):
   parser.add_argument(
       '--shuffle',
       action='store_true',
-      default=False)
+      default=False,
+      help='If used, data source is shuffled. This is recommended for training data.')
 
   parser.add_argument(
       '--batch-size',
+      metavar='N',
       type=int,
-      default=100)
+      default=100,
+      help='Larger values increase performance and peak memory usage.')
 
-  parser.add_argument(
+  cloud_group = parser.add_argument_group(
+      title='Cloud Parameters',
+      description='These parameters are only used if --cloud is used.')
+
+  cloud_group.add_argument(
+      '--cloud',
+      action='store_true',
+      help='Run preprocessing on the cloud.')
+
+  cloud_group.add_argument(
+      '--job-name',
+      type=str,
+      help='Unique dataflow job name.')
+
+  cloud_group.add_argument(
+      '--project-id',
+      help='The project to which the job will be submitted.')
+
+  cloud_group.add_argument(
       '--num-workers',
+      metavar='N',
       type=int,
       default=0,
       help='Set to 0 to use the default size determined by the Dataflow service.')
 
-  parser.add_argument(
+  cloud_group.add_argument(
       '--worker-machine-type',
+      metavar='NAME',
       type=str,
       help='A machine name from https://cloud.google.com/compute/docs/machine-types. '
            ' If not given, the service uses the default machine type.')
 
-  parser.add_argument(
+  cloud_group.add_argument(
       '--async',
       action='store_true',
       help='If used, this script returns before the dataflow job is completed.')
@@ -195,7 +213,6 @@ def prepare_image_transforms(element, image_columns):
   img_error_count = Metrics.counter('main', 'ImgErrorCount')
   img_missing_count = Metrics.counter('main', 'ImgMissingCount')
 
-  img_missing_count.inc()
   for name in image_columns:
     uri = element[name]
     if not uri:
@@ -241,8 +258,11 @@ class EmitAsBatchDoFn(beam.DoFn):
       yield emit
 
   def finish_bundle(self, element=None):
+    from apache_beam.transforms import window
+    from apache_beam.utils.windowed_value import WindowedValue
+
     if len(self._cached) > 0:  # pylint: disable=g-explicit-length-test
-      yield self._cached
+      yield WindowedValue(self._cached, -1, [window.GlobalWindow()])
 
 
 class TransformFeaturesDoFn(beam.DoFn):
@@ -266,7 +286,7 @@ class TransformFeaturesDoFn(beam.DoFn):
     # Build the transformation graph
     with g.as_default():
       transformed_features, _, placeholders = (
-          feature_transforms.build_csv_serving_tensors(
+          feature_transforms.build_csv_serving_tensors_for_transform_step(
               analysis_path=self._analysis_output_dir, 
               features=self._features, 
               schema=self._schema,
@@ -358,8 +378,13 @@ def encode_csv(data_dict, column_names):
   Returns:
     A csv string version of data_dict
   """
+  import csv
+  import six
   values = [str(data_dict[x]) for x in column_names]
-  return ','.join(values)
+  str_buff = six.StringIO()
+  writer = csv.writer(str_buff, lineterminator='')
+  writer.writerow(values)
+  return str_buff.getvalue()
 
 
 def serialize_example(transformed_json_data, info_dict):
@@ -416,26 +441,26 @@ def preprocess(pipeline, args):
   from trainer import feature_transforms
 
   schema = json.loads(file_io.read_file_to_string(
-      os.path.join(args.output_dir_from_analysis_step, feature_transforms.SCHEMA_FILE)).decode())
+      os.path.join(args.analysis, feature_transforms.SCHEMA_FILE)).decode())
   features = json.loads(file_io.read_file_to_string(
-      os.path.join(args.output_dir_from_analysis_step, feature_transforms.FEATURES_FILE)).decode())
+      os.path.join(args.analysis, feature_transforms.FEATURES_FILE)).decode())
   stats = json.loads(file_io.read_file_to_string(
-      os.path.join(args.output_dir_from_analysis_step, feature_transforms.STATS_FILE)).decode())
+      os.path.join(args.analysis, feature_transforms.STATS_FILE)).decode())
 
   column_names = [col['name'] for col in schema]
 
-  if args.csv_file_pattern:
+  if args.csv:
     all_files = []
-    for i, file_pattern in enumerate(args.csv_file_pattern):
+    for i, file_pattern in enumerate(args.csv):
       all_files.append(pipeline | ('ReadCSVFile%d' % i) >> beam.io.ReadFromText(file_pattern))
     raw_data = (
         all_files
         | 'MergeCSVFiles' >> beam.Flatten()
-        | 'ParseCSDData' >> beam.Map(decode_csv, column_names))
+        | 'ParseCSVData' >> beam.Map(decode_csv, column_names))
   else:
     columns = ', '.join(column_names)
     query = 'SELECT {columns} FROM `{table}`'.format(columns=columns,
-                                                     table=args.bigquery_table)
+                                                     table=args.bigquery)
     raw_data = (
         pipeline
         | 'ReadBiqQueryData'
@@ -457,7 +482,7 @@ def preprocess(pipeline, args):
   if args.shuffle:
     clean_csv_data = clean_csv_data | 'ShuffleData' >> shuffle()
 
-  transform_dofn = TransformFeaturesDoFn(args.output_dir_from_analysis_step, features, schema, stats)
+  transform_dofn = TransformFeaturesDoFn(args.analysis, features, schema, stats)
   (transformed_data, errors) = (
        clean_csv_data
        | 'Batch Input' 
@@ -469,19 +494,19 @@ def preprocess(pipeline, args):
         | 'SerializeExamples' >> beam.Map(serialize_example, feature_transforms.get_transfrormed_feature_info(features, schema))
         | 'WriteExamples'
         >> beam.io.WriteToTFRecord(
-            os.path.join(args.output_dir, args.output_filename_prefix),
+            os.path.join(args.output, args.prefix),
             file_name_suffix='.tfrecord.gz'))
   _ = (errors
        | 'WriteErrors'
        >> beam.io.WriteToText(
-           os.path.join(args.output_dir, 'errors_' + args.output_filename_prefix),
+           os.path.join(args.output, 'errors_' + args.prefix),
            file_name_suffix='.txt'))
 
 
 def main(argv=None):
   """Run Preprocessing as a Dataflow."""
   args = parse_arguments(sys.argv if argv is None else argv)
-  temp_dir = os.path.join(args.output_dir, 'tmp')
+  temp_dir = os.path.join(args.output, 'tmp')
 
   if args.cloud:
     pipeline_name = 'DataflowRunner'

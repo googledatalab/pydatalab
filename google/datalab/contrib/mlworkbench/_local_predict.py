@@ -53,13 +53,30 @@ def _tf_load_model(sess, model_dir):
 
 
 def _tf_predict(model_dir, input_csvlines):
-  """Prediction with a tf savedmodel."""
+  """Prediction with a tf savedmodel.
+
+  Args:
+    model_dir: directory that contains a saved model
+    input_csvlines: list of csv strings
+
+  Returns:
+    Dict in the form tensor_name:prediction_list. Note that the value is always
+        a list, even if there was only 1 row in input_csvlines.
+  """
 
   with tf.Graph().as_default(), tf.Session() as sess:
     input_alias_map, output_alias_map = _tf_load_model(sess, model_dir)
     csv_tensor_name = list(input_alias_map.values())[0]
     results = sess.run(fetches=output_alias_map,
                        feed_dict={csv_tensor_name: input_csvlines})
+
+  # convert any scalar values to a list. This may happen when there is one
+  # example in input_csvlines and the model uses tf.squeeze on the output
+  # tensor.
+  if len(input_csvlines) == 1:
+    for k, v in six.iteritems(results):
+      if not isinstance(v, (list, np.ndarray)):
+        results[k] = [v]
 
   return results
 
@@ -71,7 +88,7 @@ def _download_images(data, img_cols):
   for d in data:
     for img_col in img_cols:
       if d.get(img_col, None):
-        with file_io.FileIO(d[img_col], 'r') as fi:
+        with file_io.FileIO(d[img_col], 'rb') as fi:
           im = Image.open(fi)
         images[img_col].append(im)
       else:
@@ -207,7 +224,8 @@ def _format_results(output_format, output_schema, batched_results):
   # Convert a dict of list to a list of dict.
   # Note that results from session.run may contain scaler value instead of lists
   # if batch size is 1.
-  if isinstance(next(iter(batched_results.values())), list):
+  if (isinstance(next(iter(batched_results.values())), list) or
+     isinstance(next(iter(batched_results.values())), np.ndarray)):
     batched_results = [dict(zip(batched_results, t)) for t in zip(*batched_results.values())]
   else:
     batched_results = [batched_results]
@@ -265,7 +283,10 @@ def local_batch_predict(model_dir, csv_file_pattern, output_dir, output_format, 
     csv_tensor_name = list(input_alias_map.values())[0]
     output_schema = _get_output_schema(sess, output_alias_map)
     for csv_file in csv_files:
-      output_file = os.path.join(output_dir, 'predict_results_' + os.path.basename(csv_file))
+      output_file = os.path.join(
+          output_dir,
+          'predict_results_' +
+          os.path.splitext(os.path.basename(csv_file))[0] + '.' + output_format)
       with file_io.FileIO(output_file, 'w') as f:
         prediction_source = _batch_csv_reader(csv_file, batch_size)
         for batch in prediction_source:

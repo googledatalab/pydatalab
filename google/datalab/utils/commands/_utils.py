@@ -249,15 +249,17 @@ def get_data(source, fields='*', env=None, first_row=0, count=-1, schema=None):
 
 def handle_magic_line(line, cell, parser, namespace=None):
   """ Helper function for handling magic command lines given a parser with handlers set. """
-  args = parser.parse(line, namespace)
-  if args:
-    try:
-      return args.func(vars(args), cell)
-    except Exception as e:
-      sys.stderr.write(str(e))
-      sys.stderr.write('\n')
-      sys.stderr.flush()
-  return None
+  try:
+    args, cell = parser.parse(line, cell, namespace)
+    if args:
+      return args['func'](args, cell)
+  except Exception as e:
+    # e.args[0] is 'exit_0' if --help is provided in line.
+    # In this case don't write anything to stderr.
+    if e.args and e.args[0] == 'exit_0':
+      return
+    sys.stderr.write('\n' + str(e))
+    sys.stderr.flush()
 
 
 def expand_var(v, env):
@@ -334,6 +336,63 @@ def parse_config(config, env, as_dict=True):
   # Now we need to walk the config dictionary recursively replacing any '$name' vars.
   replace_vars(config, env)
   return config
+
+
+def parse_config_for_selected_keys(content, env, keys):
+  """ Parse a config from a magic cell body for selected config keys.
+
+  For example, if 'content' is:
+    config_item1: value1
+    config_item2: value2
+    config_item3: value3
+  and 'keys' are: [config_item1, config_item3]
+
+  The results will be a tuple of
+  1. The parsed config items (dict): {config_item1: value1, config_item3: value3}
+  2. The remaining content (string): config_item2: value2
+
+  Args:
+    content: the input content. A string. It has to be a yaml or JSON string.
+    env: user supplied dictionary for replacing vars (for example, $myvalue).
+    keys: a list of keys to retrieve from content. Note that it only checks top level keys
+        in the dict.
+
+  Returns:
+    A tuple. First is the parsed config including only selected keys. Second is
+      the remaining content.
+
+  Raises:
+    Exception if the content is not a valid yaml or JSON string.
+  """
+
+  config_items = {key: None for key in keys}
+  if not content:
+    return config_items, content
+
+  stripped = content.strip()
+  if len(stripped) == 0:
+    return {}, None
+  elif stripped[0] == '{':
+    config = json.loads(content)
+  else:
+    config = yaml.load(content)
+
+  if not isinstance(config, dict):
+    raise ValueError('Invalid config.')
+
+  for key in keys:
+    config_items[key] = config.pop(key, None)
+
+  replace_vars(config_items, env)
+  if not config:
+    return config_items, None
+
+  if stripped[0] == '{':
+    content_out = json.dumps(config, indent=4)
+  else:
+    content_out = yaml.dump(config, default_flow_style=False)
+
+  return config_items, content_out
 
 
 def validate_config(config, required_keys, optional_keys=None):

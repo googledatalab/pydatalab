@@ -149,7 +149,7 @@ def run_analysis(args):
 
   # Read the schema and input feature types
   schema_list = json.loads(
-      file_io.read_file_to_string(args.schema_file).decode())
+      file_io.read_file_to_string(args.schema_file))
 
   run_numerical_categorical_analysis(args, schema_list)
 

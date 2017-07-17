@@ -114,6 +114,41 @@ class Job(datalab.Job):
     request.execute()
     return Job(job_id)
 
+  @staticmethod
+  def submit_batch_prediction(job_request, job_id=None):
+    """Submit a batch prediction job.
+
+    Args:
+      job_request: the arguments of the training job in a dict. For example,
+          {
+            'version_name': 'projects/my-project/models/my-model/versions/my-version',
+            'data_format': 'TEXT',
+            'input_paths': ['gs://my_bucket/my_file.csv'],
+            'output_path': 'gs://my_bucket/predict_output',
+            'region': 'us-central1',
+            'max_worker_count': 1,
+          }
+      job_id: id for the training job. If None, an id based on timestamp will be generated.
+
+    Returns:
+      A Job object representing the batch prediction job.
+    """
+
+    if job_id is None:
+      job_id = 'prediction_' + datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+
+    job = {
+        'job_id': job_id,
+        'prediction_input': job_request,
+    }
+    context = datalab.Context.default()
+    cloudml = discovery.build('ml', 'v1', credentials=context.credentials)
+    request = cloudml.projects().jobs().create(body=job,
+                                               parent='projects/' + context.project_id)
+    request.headers['user-agent'] = 'GoogleCloudDataLab/1.0'
+    request.execute()
+    return Job(job_id)
+
 
 class Jobs(object):
   """Represents a list of Cloud ML jobs for a project."""

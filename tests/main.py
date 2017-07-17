@@ -34,17 +34,17 @@ import bigquery.view_tests
 import kernel.bigquery_tests
 import kernel.chart_data_tests
 import kernel.chart_tests
-import kernel.commands_tests
 import kernel.html_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import ml.dataset_tests
-import mltoolbox_magic.archive_tests
-import mltoolbox_magic.local_predict_tests
-import mltoolbox_magic.shell_process_tests
+import mltoolbox_code_free_ml.all_tests
 import mltoolbox_structured_data.dl_interface_tests
 import mltoolbox_structured_data.sd_e2e_tests
 import mltoolbox_structured_data.traininglib_tests
+import mlworkbench_magic.archive_tests
+import mlworkbench_magic.local_predict_tests
+import mlworkbench_magic.shell_process_tests
 import stackdriver.commands.monitoring_tests
 import stackdriver.monitoring.group_tests
 import stackdriver.monitoring.metric_tests
@@ -55,6 +55,7 @@ import stackdriver.monitoring.utils_tests
 import storage.api_tests
 import storage.bucket_tests
 import storage.object_tests
+import _util.commands_tests
 import _util.http_tests
 import _util.lru_cache_tests
 import _util.util_tests
@@ -77,7 +78,6 @@ _UNIT_TEST_MODULES = [
     kernel.bigquery_tests,
     kernel.chart_data_tests,
     kernel.chart_tests,
-    kernel.commands_tests,
     kernel.html_tests,
     kernel.storage_tests,
     kernel.utils_tests,
@@ -92,6 +92,7 @@ _UNIT_TEST_MODULES = [
     storage.api_tests,
     storage.bucket_tests,
     storage.object_tests,
+    _util.commands_tests,
     _util.http_tests,
     _util.lru_cache_tests,
     _util.util_tests
@@ -99,12 +100,13 @@ _UNIT_TEST_MODULES = [
 
 
 _INTEGRATION_TEST_MODULES = [
+    mltoolbox_code_free_ml.all_tests,
     mltoolbox_structured_data.dl_interface_tests,
     mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
     mltoolbox_structured_data.traininglib_tests,
-    mltoolbox_magic.local_predict_tests,
-    mltoolbox_magic.shell_process_tests,
-    mltoolbox_magic.archive_tests,
+    mlworkbench_magic.local_predict_tests,
+    mlworkbench_magic.shell_process_tests,
+    mlworkbench_magic.archive_tests,
 ]
 
 

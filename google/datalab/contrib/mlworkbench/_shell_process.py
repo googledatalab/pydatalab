@@ -71,6 +71,7 @@ def run_and_monitor(args, pid_to_wait, std_out_filter_fn=None, cwd=None):
 
       if std_out_filter_fn is None or std_out_filter_fn(line):
         sys.stdout.write(line)
+        # Cannot do sys.stdout.flush(). It appears that too many flush() calls will hang browser.
   finally:
     if monitor_process:
       monitor_process.kill()

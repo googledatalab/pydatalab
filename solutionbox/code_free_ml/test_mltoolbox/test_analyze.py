@@ -16,6 +16,7 @@ from tensorflow.python.lib.io import file_io
 
 import google.datalab as dl
 import google.datalab.bigquery as bq
+import google.datalab.storage as storage
 
 # To make 'import analyze' work without installing it.
 CODE_PATH = os.path.abspath(
@@ -23,6 +24,14 @@ CODE_PATH = os.path.abspath(
 sys.path.append(CODE_PATH)
 
 import analyze  # noqa: E303
+
+# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
+# those tests will not run.
+HAS_CREDENTIALS = True
+try:
+  dl.Context.default().project_id
+except Exception:
+  HAS_CREDENTIALS = False
 
 
 class TestConfigFiles(unittest.TestCase):
@@ -226,8 +235,11 @@ class TestLocalAnalyze(unittest.TestCase):
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['col1', 'count'])
-      self.assertEqual(vocab['col1'].tolist(),
-                       ['quick', 'brown', 'the', 'fox', 'chicken'])
+
+      # vocabs are sorted by count only
+      col1_vocab = vocab['col1'].tolist()
+      self.assertItemsEqual(col1_vocab[:2], ['brown', 'quick'])
+      self.assertItemsEqual(col1_vocab[2:], ['chicken', 'fox', 'the'])
       self.assertEqual(vocab['count'].tolist(), [2, 2, 1, 1, 1])
 
       vocab_str = file_io.read_file_to_string(
@@ -236,12 +248,17 @@ class TestLocalAnalyze(unittest.TestCase):
       vocab = pd.read_csv(six.StringIO(vocab_str),
                           header=None,
                           names=['col2', 'count'])
-      self.assertEqual(vocab['col2'].tolist(), ['raining', 'in', 'pdx', 'kir'])
+
+      # vocabs are sorted by count only
+      col2_vocab = vocab['col2'].tolist()
+      self.assertItemsEqual(col2_vocab[:2], ['in', 'raining'])
+      self.assertItemsEqual(col2_vocab[2:], ['kir', 'pdx'])
       self.assertEqual(vocab['count'].tolist(), [2, 2, 1, 1])
     finally:
       shutil.rmtree(output_folder)
 
 
+@unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
 class TestCloudAnalyzeFromBQTable(unittest.TestCase):
   """Test the analyze functions using data in a BigQuery table.
 
@@ -300,17 +317,22 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
       db.delete(delete_contents=True)
 
 
+@unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
 class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
   """Test the analyze function using BigQuery from csv files that are on GCS."""
 
   @classmethod
   def setUpClass(cls):
-    cls._bucket_root = 'gs://temp_pydatalab_test_%s' % uuid.uuid4().hex
-    subprocess.check_call('gsutil mb %s' % cls._bucket_root, shell=True)
+    cls._bucket_name = 'temp_pydatalab_test_%s' % uuid.uuid4().hex
+    cls._bucket_root = 'gs://%s' % cls._bucket_name
+    storage.Bucket(cls._bucket_name).create()
 
   @classmethod
   def tearDownClass(cls):
-    subprocess.check_call('gsutil -m rm -r %s' % cls._bucket_root, shell=True)
+    bucket = storage.Bucket(cls._bucket_name)
+    for obj in bucket.objects():
+      obj.delete()
+    bucket.delete()
 
   def test_numerics(self):
     test_folder = os.path.join(self._bucket_root, 'test_numerics')
@@ -494,10 +516,10 @@ class TestOneSourceColumnManyFeatures(unittest.TestCase):
                     'img': {'transform': 'image_to_vec'}}, indent=2))
 
       cmd = ['python %s/analyze.py' % CODE_PATH,
-             '--output-dir=' + output_folder,
-             '--csv-file-pattern=' + input_data_path,
-             '--csv-schema-file=' + input_schema_path,
-             '--features-file=' + input_feature_path]
+             '--output=' + output_folder,
+             '--csv=' + input_data_path,
+             '--schema=' + input_schema_path,
+             '--features=' + input_feature_path]
       subprocess.check_call(' '.join(cmd), shell=True)
 
       self.assertTrue(os.path.isfile(os.path.join(output_folder, 'vocab_cat.csv')))

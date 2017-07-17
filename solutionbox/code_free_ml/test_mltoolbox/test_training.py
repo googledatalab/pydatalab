@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
 import base64
+import glob
 import json
 import logging
 import os
+import pandas as pd
 from PIL import Image
 import random
 import shutil
@@ -18,6 +20,15 @@ from tensorflow.python.lib.io import file_io
 
 CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
+
+# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
+# those tests will not run.
+HAS_CREDENTIALS = True
+try:
+  import google.datalab as dl
+  dl.Context.default().project_id
+except Exception:
+  HAS_CREDENTIALS = False
 
 
 def run_exported_model(model_path, csv_data):
@@ -53,6 +64,117 @@ def run_exported_model(model_path, csv_data):
   return result
 
 
+class TestSpecialCharacters(unittest.TestCase):
+  """Test special characters are supported."""
+
+  def testCommaQuote(self):
+    """Test when csv input data has quotes and commas."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'target': {'transform': 'target'},
+          'cat': {'transform': 'one_hot'},
+          'text': {'transform': 'bag_of_words'}}
+      schema = [
+          {'name': 'target', 'type': 'string'},
+          {'name': 'cat', 'type': 'string'},
+          {'name': 'text', 'type': 'string'}]
+      # Target column = cat  column
+      data = [{'cat': 'red,', 'text': 'one, two, three', 'target': 'red,'},
+              {'cat': 'blue"', 'text': 'one, "two"', 'target': 'blue"'},
+              {'cat': '"green"', 'text': '"two', 'target': '"green"'},
+              {'cat': "yellow, 'brown", 'text': "'one, two'", 'target': "yellow, 'brown"}]
+
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(
+          os.path.join(output_dir, 'data.csv'),
+          pd.DataFrame(data, columns=['target', 'cat', 'text']).to_csv(index=False, header=False))
+
+      # Run analysis and check the output vocabs are correctly encoded in csv
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      df_vocab_cat = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_cat.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      self.assertEqual(df_vocab_cat['count'].tolist(), ['1', '1', '1', '1'])
+      self.assertItemsEqual(
+          df_vocab_cat['label'].tolist(),
+          ['blue"', '"green"', "yellow, 'brown", 'red,'])
+
+      df_vocab_target = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_target.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      self.assertEqual(df_vocab_target['count'].tolist(), ['1', '1', '1', '1'])
+      self.assertItemsEqual(
+          df_vocab_target['label'].tolist(),
+          ['blue"', '"green"', "yellow, 'brown", 'red,'])
+
+      df_vocab_text = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_text.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      vocab_text = df_vocab_text['label'].tolist()
+      self.assertEqual(vocab_text[0], 'one,')
+      self.assertItemsEqual(vocab_text[1:], ['two,', '"two"', "'one,", '"two', "two'", 'three'])
+      vocab_count = df_vocab_text['count'].tolist()
+      self.assertEqual(vocab_count[0], '2')
+      self.assertEqual(vocab_count[1:], ['1', '1', '1', '1', '1', '1'])
+
+      # Run transform, and check there are no reported errors.
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--prefix=features_train',
+             '--output=' + os.path.join(output_dir, 'transform')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      error_files = glob.glob(os.path.join(output_dir, 'transform', 'error*'))
+      self.assertEqual(1, len(error_files))
+      self.assertEqual(0, os.path.getsize(error_files[0]))
+
+      # Run training
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_classification',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=500',
+             '--learning-rate=1.0',
+             '--transform']
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['"red,","one, two, three"'])
+
+      # The prediction data is a training row. As the data is samll, the model
+      # should have near 100% accuracy. Check it made the correct prediction.
+      self.assertEqual(result['predicted'], 'red,')
+    finally:
+      shutil.rmtree(output_dir)
+
+
 class TestMultipleFeatures(unittest.TestCase):
   """Test one source column can be used in many features."""
 
@@ -81,24 +203,24 @@ class TestMultipleFeatures(unittest.TestCase):
                                    ''.join(data))
 
       cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
-             '--output-dir=' + os.path.join(output_dir, 'analysis'),
-             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
-             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
-             '--features-file=' + os.path.join(output_dir, 'features.json')]
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
       subprocess.check_call(' '.join(cmd), shell=True)
 
       cmd = ['cd %s && ' % CODE_PATH,
              'python -m trainer.task',
-             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
-             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
-             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
-             '--model-type=linear_regression',
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
              '--max-steps=200',
              '--learning-rate=0.1',
-             '--run-transforms']
+             '--transform']
 
       subprocess.check_call(' '.join(cmd), shell=True)
 
@@ -137,17 +259,17 @@ class TestMultipleFeatures(unittest.TestCase):
                                    ''.join(data))
 
       cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
-             '--output-dir=' + os.path.join(output_dir, 'analysis'),
-             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
-             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
-             '--features-file=' + os.path.join(output_dir, 'features.json')]
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
       subprocess.check_call(' '.join(cmd), shell=True)
 
       cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
-             '--output-dir=' + os.path.join(output_dir, 'transform'),
-             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
-             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
-             '--output-filename-prefix=features']
+             '--output=' + os.path.join(output_dir, 'transform'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--prefix=features']
       subprocess.check_call(' '.join(cmd), shell=True)
 
       # Check tf.example file has the expected features
@@ -169,16 +291,16 @@ class TestMultipleFeatures(unittest.TestCase):
 
       cmd = ['cd %s && ' % CODE_PATH,
              'python -m trainer.task',
-             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
-             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
-             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
-             '--model-type=linear_regression',
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
              '--max-steps=200',
              '--learning-rate=0.1',
-             '--run-transforms']
+             '--transform']
       subprocess.check_call(' '.join(cmd), shell=True)
 
       result = run_exported_model(
@@ -212,30 +334,31 @@ class TestOptionalKeys(unittest.TestCase):
                                    ''.join(data))
 
       cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
-             '--output-dir=' + os.path.join(output_dir, 'analysis'),
-             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
-             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
-             '--features-file=' + os.path.join(output_dir, 'features.json')]
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
       subprocess.check_call(' '.join(cmd), shell=True)
 
       cmd = ['cd %s && ' % CODE_PATH,
              'python -m trainer.task',
-             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
-             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
-             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
-             '--model-type=linear_regression',
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
              '--max-steps=2000',
              '--learning-rate=0.1',
-             '--run-transforms']
+             '--transform']
 
       subprocess.check_call(' '.join(cmd), shell=True)
 
       result = run_exported_model(
           model_path=os.path.join(output_dir, 'training', 'model'),
           csv_data=['20'])
+
       self.assertTrue(abs(40 - result['predicted']) < 5)
     finally:
       shutil.rmtree(output_dir)
@@ -265,23 +388,23 @@ class TestOptionalKeys(unittest.TestCase):
                                    ''.join(data))
 
       cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
-             '--output-dir=' + os.path.join(output_dir, 'analysis'),
-             '--csv-file-pattern=' + os.path.join(output_dir, 'data.csv'),
-             '--csv-schema-file=' + os.path.join(output_dir, 'schema.json'),
-             '--features-file=' + os.path.join(output_dir, 'features.json')]
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
       subprocess.check_call(' '.join(cmd), shell=True)
 
       cmd = ['cd %s && ' % CODE_PATH,
              'python -m trainer.task',
-             '--train-data-paths=' + os.path.join(output_dir, 'data.csv'),
-             '--eval-data-paths=' + os.path.join(output_dir, 'data.csv'),
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
-             '--output-dir-from-analysis-step=' + os.path.join(output_dir, 'analysis'),
-             '--model-type=linear_regression',
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
              '--max-steps=2000',
-             '--run-transforms']
+             '--transform']
 
       subprocess.check_call(' '.join(cmd), shell=True)
 
@@ -502,29 +625,29 @@ class TestTrainer(unittest.TestCase):
     self.make_csv_data(self._csv_predict_filename, 100, problem_type, False, with_image)
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
-           '--output-dir=' + self._analysis_output,
-           '--csv-file-pattern=' + self._csv_train_filename,
-           '--csv-schema-file=' + self._schema_filename,
-           '--features-file=' + self._features_filename]
+           '--output=' + self._analysis_output,
+           '--csv=' + self._csv_train_filename,
+           '--schema=' + self._schema_filename,
+           '--features=' + self._features_filename]
 
     subprocess.check_call(' '.join(cmd), shell=True)
 
   def _run_transform(self):
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
-           '--csv-file-pattern=' + self._csv_train_filename,
-           '--output-dir-from-analysis-step=' + self._analysis_output,
-           '--output-filename-prefix=features_train',
-           '--output-dir=' + self._transform_output,
+           '--csv=' + self._csv_train_filename,
+           '--analysis=' + self._analysis_output,
+           '--prefix=features_train',
+           '--output=' + self._transform_output,
            '--shuffle']
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
-           '--csv-file-pattern=' + self._csv_eval_filename,
-           '--output-dir-from-analysis-step=' + self._analysis_output,
-           '--output-filename-prefix=features_eval',
-           '--output-dir=' + self._transform_output]
+           '--csv=' + self._csv_eval_filename,
+           '--analysis=' + self._analysis_output,
+           '--prefix=features_eval',
+           '--output=' + self._transform_output]
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
@@ -539,11 +662,11 @@ class TestTrainer(unittest.TestCase):
     """
     cmd = ['cd %s && ' % CODE_PATH,
            'python -m trainer.task',
-           '--train-data-paths=' + os.path.join(self._transform_output, 'features_train*'),
-           '--eval-data-paths=' + os.path.join(self._transform_output, 'features_eval*'),
+           '--train=' + os.path.join(self._transform_output, 'features_train*'),
+           '--eval=' + os.path.join(self._transform_output, 'features_eval*'),
            '--job-dir=' + self._train_output,
-           '--output-dir-from-analysis-step=' + self._analysis_output,
-           '--model-type=%s_%s' % (model_type, problem_type),
+           '--analysis=' + self._analysis_output,
+           '--model=%s_%s' % (model_type, problem_type),
            '--train-batch-size=100',
            '--eval-batch-size=50',
            '--max-steps=' + str(self._max_steps)] + extra_args
@@ -561,15 +684,15 @@ class TestTrainer(unittest.TestCase):
     """
     cmd = ['cd %s && ' % CODE_PATH,
            'python -m trainer.task',
-           '--train-data-paths=' + self._csv_train_filename,
-           '--eval-data-paths=' + self._csv_eval_filename,
+           '--train=' + self._csv_train_filename,
+           '--eval=' + self._csv_eval_filename,
            '--job-dir=' + self._train_output,
-           '--output-dir-from-analysis-step=' + self._analysis_output,
-           '--model-type=%s_%s' % (model_type, problem_type),
+           '--analysis=' + self._analysis_output,
+           '--model=%s_%s' % (model_type, problem_type),
            '--train-batch-size=100',
            '--eval-batch-size=50',
            '--max-steps=' + str(self._max_steps),
-           '--run-transforms'] + extra_args
+           '--transform'] + extra_args
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
     subprocess.check_call(' '.join(cmd), shell=True)
@@ -712,6 +835,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
+  @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def testClassificationDNNWithImage(self):
     self._logger.debug('\n\nTesting Classification DNN With Image')
 
