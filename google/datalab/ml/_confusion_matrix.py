@@ -12,6 +12,7 @@
 
 
 import numpy as np
+import itertools
 import json
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -120,6 +121,10 @@ class ConfusionMatrix(object):
     tick_marks = np.arange(len(self._labels))
     plt.xticks(tick_marks, self._labels, rotation=45)
     plt.yticks(tick_marks, self._labels)
+    thresh = self._cm.max() / 2.
+    for i, j in itertools.product(range(self._cm.shape[0]), range(self._cm.shape[1])):
+      plt.text(j, i, self._cm[i, j], horizontalalignment="center",
+               color="white" if self._cm[i, j] > thresh else "black")
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
