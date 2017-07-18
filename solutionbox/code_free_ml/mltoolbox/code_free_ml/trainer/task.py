@@ -435,7 +435,6 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
 # The difference is we need to modify estimator's output layer.
 def make_export_strategy(
         args,
-        keep_target,
         assets_extra,
         features,
         schema,
@@ -454,29 +453,36 @@ def make_export_strategy(
   """
   target_name = feature_transforms.get_target_name(features)
   csv_header = [col['name'] for col in schema]
-  if not keep_target:
-    csv_header.remove(target_name)
+  csv_header_notarget = [col['name'] for col in schema if col['name'] != target_name]
 
   def export_fn(estimator, export_dir_base, checkpoint_path=None, eval_result=None):
     with ops.Graph().as_default() as g:
       contrib_variables.create_global_step(g)
 
-      input_ops = feature_transforms.build_csv_serving_tensors_for_training_step(
-          args.analysis, features, schema, stats, keep_target)
-      model_fn_ops = estimator._call_model_fn(input_ops.features,
+      input_ops_target = feature_transforms.build_csv_serving_tensors_for_training_step(
+          args.analysis, features, schema, stats, keep_target=True)
+      input_ops_notarget = feature_transforms.build_csv_serving_tensors_for_training_step(
+          args.analysis, features, schema, stats, keep_target=False)      
+
+
+      model_fn_ops_target = estimator._call_model_fn(input_ops_target.features,
+                                              None,
+                                              model_fn_lib.ModeKeys.INFER)      
+      model_fn_ops_notarget = estimator._call_model_fn(input_ops_notarget.features,
                                               None,
                                               model_fn_lib.ModeKeys.INFER)
+
       output_fetch_tensors = make_prediction_output_tensors(
           args=args,
           features=features,
-          input_ops=input_ops,
-          model_fn_ops=model_fn_ops,
-          keep_target=keep_target)
+          input_ops=input_ops_notarget,
+          model_fn_ops=model_fn_ops_notarget,
+          keep_target=False)
 
       # Don't use signature_def_utils.predict_signature_def as that renames
       # tensor names if there is only 1 input/output tensor!
       signature_inputs = {key: tf.saved_model.utils.build_tensor_info(tensor)
-                          for key, tensor in six.iteritems(input_ops.default_inputs)}
+                          for key, tensor in six.iteritems(input_ops_notarget.default_inputs)}
       signature_outputs = {key: tf.saved_model.utils.build_tensor_info(tensor)
                            for key, tensor in six.iteritems(output_fetch_tensors)}
       signature_def_map = {
@@ -496,9 +502,9 @@ def make_export_strategy(
       export_dir = saved_model_export_utils.get_timestamped_export_dir(
           export_dir_base)
 
-      if (model_fn_ops.scaffold is not None and
-         model_fn_ops.scaffold.saver is not None):
-        saver_for_restore = model_fn_ops.scaffold.saver
+      if (model_fn_ops_notarget.scaffold is not None and
+         model_fn_ops_notarget.scaffold.saver is not None):
+        saver_for_restore = model_fn_ops_notarget.scaffold.saver
       else:
         saver_for_restore = saver.Saver(sharded=True)
 
@@ -537,10 +543,7 @@ def make_export_strategy(
 
     # save the last model to the model folder.
     # export_dir_base = A/B/intermediate_models/
-    if keep_target:
-      final_dir = os.path.join(args.job_dir, 'evaluation_model')
-    else:
-      final_dir = os.path.join(args.job_dir, 'model')
+    final_dir = os.path.join(args.job_dir, 'models')
     if file_io.is_directory(final_dir):
       file_io.delete_recursively(final_dir)
     file_io.recursive_create_dir(final_dir)
@@ -548,10 +551,7 @@ def make_export_strategy(
 
     return export_dir
 
-  if keep_target:
-    intermediate_dir = 'intermediate_evaluation_models'
-  else:
-    intermediate_dir = 'intermediate_prediction_models'
+  intermediate_dir = 'intermediate_models'
 
   return export_strategy.ExportStrategy(intermediate_dir, export_fn)
 
@@ -693,20 +693,13 @@ def get_experiment_fn(args):
     target_vocab = read_vocab(args, target_column_name)
     estimator = get_estimator(args, output_dir, features, stats, len(target_vocab))
 
-    export_strategy_csv_notarget = make_export_strategy(
+    export_strategy_csv_both = make_export_strategy(
         args=args,
-        keep_target=False,
         assets_extra=additional_assets_without_target,
         features=features,
         schema=schema,
         stats=stats)
-    export_strategy_csv_target = make_export_strategy(
-        args=args,
-        keep_target=True,
-        assets_extra=additional_assets_with_target,
-        features=features,
-        schema=schema,
-        stats=stats)
+
 
     # Build readers for training.
     if args.transform:
@@ -762,7 +755,7 @@ def get_experiment_fn(args):
         train_input_fn=input_reader_for_train,
         eval_input_fn=input_reader_for_eval,
         train_steps=args.max_steps,
-        export_strategies=[export_strategy_csv_notarget, export_strategy_csv_target],
+        export_strategies=[export_strategy_csv_both],
         min_eval_frequency=args.min_eval_frequency,
         eval_steps=None)
 
