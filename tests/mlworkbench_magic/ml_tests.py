@@ -125,7 +125,7 @@ class TestMLMagic(unittest.TestCase):
   @mock.patch('google.datalab.ml.package_and_copy')
   @mock.patch('google.datalab.ml.Job.submit_training')
   @mock.patch('subprocess.Popen')  # Because of the trainer help menu
-  def test_train_csv(self, popen_mock, run_and_monitor_mock,
+  def test_train_csv(self, popen_mock, submit_training_mock,
                      package_and_copy_mock, _show_job_link_mock):
     mlmagic.ml(
         line='train --cloud',
@@ -141,7 +141,7 @@ class TestMLMagic(unittest.TestCase):
             cloud_config:
               job_name: job1
               project_id: id""")
-    job_request = run_and_monitor_mock.call_args[0][0]
+    job_request = submit_training_mock.call_args[0][0]
 
     cmd_list = job_request['args']
 
