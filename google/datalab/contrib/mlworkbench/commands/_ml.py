@@ -262,7 +262,7 @@ def ml(line, cell=None):
       cwd=MLTOOLBOX_CODE_PATH,
       stdout=subprocess.PIPE).communicate()[0]
   package_model_help = ('model_args: a dictionary of model specific args, including:\n\n' +
-                        package_model_help)
+                        package_model_help.decode())
   train_parser.add_cell_argument('model_args', help=package_model_help)
 
   train_parser.add_cell_argument(
@@ -429,7 +429,7 @@ def _analyze(args, cell):
       if 'csv' in training_data and 'schema' in training_data:
         schema = training_data['schema']
         schema_file = _create_json_file(tmpdir, schema, 'schema.json')
-        cmd_args.extend(['--csv', _abs_path(training_data['csv'])])
+        cmd_args.append('--csv=' + _abs_path(training_data['csv']))
         cmd_args.extend(['--schema', schema_file])
       elif 'bigquery_table' in training_data:
         cmd_args.extend(['--bigquery', training_data['bigquery_table']])
@@ -489,7 +489,7 @@ def _transform(args, cell):
   training_data = args['training_data']
   if isinstance(training_data, dict):
     if 'csv' in training_data:
-      cmd_args.extend(['--csv', _abs_path(training_data['csv'])])
+      cmd_args.append('--csv=' + _abs_path(training_data['csv']))
     elif 'bigquery_table' in training_data:
       cmd_args.extend(['--bigquery', training_data['bigquery_table']])
     elif 'bigquery_sql' in training_data:
@@ -499,7 +499,8 @@ def _transform(args, cell):
         cmd_args.extend(['--bigquery', r.full_name])
     else:
       raise ValueError('Invalid training_data dict. '
-                       'Requires either "csv" and "schema", or "bigquery".')
+                       'Requires either "csv", or "bigquery_talbe", or '
+                       '"bigquery_sql".')
   elif isinstance(training_data, google.datalab.ml.CsvDataSet):
     for file_name in training_data.input_files:
       cmd_args.append('--csv=' + _abs_path(file_name))
@@ -521,11 +522,10 @@ def _transform(args, cell):
       cmd_args.extend(['--worker-machine-type', cloud_config['worker_machine_type']])
     if 'project_id' in cloud_config:
       cmd_args.extend(['--project-id', cloud_config['project_id']])
+    else:
+      cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
     if 'job_name' in cloud_config:
       cmd_args.extend(['--job-name', cloud_config['job_name']])
-
-  if '--project-id' not in cmd_args:
-    cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
 
   try:
     tmpdir = None
@@ -552,11 +552,11 @@ def _train(args, cell):
   def _process_train_eval_data(data, arg_name, job_args):
     if isinstance(data, dict):
       if 'csv' in data:
-        job_args.extend([arg_name, _abs_path(data['csv'])])
+        job_args.append(arg_name + '=' + _abs_path(data['csv']))
         if '--transform' not in job_args:
           job_args.append('--transform')
       elif 'transformed' in data:
-        job_args.extend([arg_name, _abs_path(data['transformed'])])
+        job_args.append(arg_name + '=' + _abs_path(data['transformed']))
       else:
         raise ValueError('Invalid training_data dict. '
                          'Requires either "csv" or "transformed".')
@@ -656,7 +656,7 @@ def _batch_predict(args, cell):
     version_name = ('projects/%s/models/%s/versions/%s' %
                     (Context.default().project_id, parts[0], parts[1]))
 
-    cloud_config = args['cloud_config']
+    cloud_config = args['cloud_config'] or {}
     job_id = cloud_config.pop('job_id', None)
     job_request = {
       'version_name': version_name,
