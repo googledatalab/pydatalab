@@ -122,11 +122,13 @@ class ConfusionMatrix(object):
     plt.xticks(tick_marks, self._labels, rotation=45)
     plt.yticks(tick_marks, self._labels)
     if isinstance(self._cm, list):
+      # If cm is created from BigQuery then it is a list.
       thresh = max(max(self._cm)) / 2.
       for i, j in itertools.product(range(len(self._labels)), range(len(self._labels))):
         plt.text(j, i, self._cm[i][j], horizontalalignment="center",
                  color="white" if self._cm[i][j] > thresh else "black")
     else:
+      # If cm is created from csv then it is a sklearn's confusion_matrix.
       thresh = self._cm.max() / 2.
       for i, j in itertools.product(range(len(self._labels)), range(len(self._labels))):
         plt.text(j, i, self._cm[i, j], horizontalalignment="center",
