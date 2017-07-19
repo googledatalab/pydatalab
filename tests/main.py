@@ -71,7 +71,6 @@ import _util.util_tests
 _UNIT_TEST_MODULES = [
     airflow.airflow_tests,
     context_tests,
-    airflow.airflow_tests,
     bigquery.api_tests,
     bigquery.dataset_tests,
     # bigquery.external_data_source_tests, # TODO: enable external data source tests
