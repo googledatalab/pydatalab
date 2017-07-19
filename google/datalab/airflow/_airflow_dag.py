@@ -76,8 +76,8 @@ from datetime import datetime, timedelta
   @staticmethod
   def _get_operator_definition(task_id, task_details):
     operator_type = task_details['type']
-    operator_classname = AirflowDag._get_operator_classname(operator_type)
     param_string = 'task_id=\'{0}_id\''.format(task_id)
+    AirflowDag._add_default_params(task_details, operator_type)
     for param_name, param_value in task_details.iteritems():
       # These are special-types that are relevant to Datalab
       if param_name in  ['type', 'up_stream']:
@@ -87,9 +87,11 @@ from datetime import datetime, timedelta
         param_format_string = ', {0}={1}'
       else:
         param_format_string = ', {0}=\'{1}\''
+      operator_param_name = AirflowDag._get_operator_param_name(param_name,
+                                                                operator_type)
       param_string = param_string + param_format_string.format(
-          AirflowDag._get_operator_param_name(param_name, operator_type),
-          param_value)
+          operator_param_name, param_value)
+    operator_classname = AirflowDag._get_operator_classname(operator_type)
     return '{0} = {1}({2}, dag=dag)\n'.format(
         task_id,
         operator_classname,
@@ -127,3 +129,18 @@ from datetime import datetime, timedelta
       if (param_name == 'query'):
         return 'bql'
     return param_name
+
+  @staticmethod
+  def _add_default_params(task_details, operator_type):
+    if operator_type == 'bq':
+      bq_defaults = {}
+      bq_defaults['destination_dataset_table'] = False
+      bq_defaults['write_disposition'] = 'WRITE_EMPTY'
+      bq_defaults['allow_large_results'] = False
+      bq_defaults['bigquery_conn_id'] = 'bigquery_default'
+      bq_defaults['delegate_to'] = None
+      bq_defaults['udf_config'] = False
+      bq_defaults['use_legacy_sql'] = False
+      for param_name, param_value in bq_defaults.iteritems():
+          if param_name not in task_details:
+            task_details[param_name] = param_value

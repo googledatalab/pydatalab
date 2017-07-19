@@ -40,23 +40,27 @@ class AirflowDagTest(unittest.TestCase):
         operator_def,
         'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\'date\', dag=dag)\n')
 
-
   def test_get_bq_operator_definition(self):
     task_id = 'query_wikipedia'
     task_details = {}
     task_details['type'] = 'bq'
     task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
-    task_details['destination_dataset_table'] = False
-    task_details['write_disposition'] = 'WRITE_EMPTY'
-    task_details['allow_large_results'] = False
-    task_details['bigquery_conn_id'] = 'bigquery_default'
-    task_details['delegate_to'] = None
-    task_details['udf_config'] = False
-    task_details['use_legacy_sql'] = False
     operator_def = AirflowDag._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
         'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=False, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
+
+
+  def test_get_bq_operator_definition_using_non_default_arg(self):
+    task_id = 'query_wikipedia'
+    task_details = {}
+    task_details['type'] = 'bq'
+    task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
+    task_details['destination_dataset_table'] = True
+    operator_def = AirflowDag._get_operator_definition(task_id, task_details)
+    self.assertEqual(
+        operator_def,
+        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=True, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
 
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
@@ -175,11 +179,35 @@ tasks:
     dat_py_file.close()
 
     # Kick off gsutil in subprocess
-    import subprocess
-    subprocess.check_call(['gsutil', '-q', 'cp',
-                           '/usr/local/google/home/rajivpb/IdeaProjects/pydatalab/demo_bq_dag_during_demo.py',
-                           'gs://airflow-staging-test36490808-bucket/dags'])
-    self.assertEqual(py_string, '')
+    #import subprocess
+    #subprocess.check_call(['gsutil', '-q', 'cp',
+    #                       '/usr/local/google/home/rajivpb/IdeaProjects/pydatalab/demo_bq_dag_during_demo.py',
+    #                       'gs://airflow-staging-test36490808-bucket/dags'])
+    expected_py = """
+from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
+from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+from datetime import datetime, timedelta
+
+default_args = {
+    'owner': 'Datalab',
+    'depends_on_past': False,
+    'email': ['rajivpb@google.com'],
+    'start_date': datetime.strptime('Jun 21 2017  1:00AM', '%b %d %Y %I:%M%p'),
+    'end_date': datetime.strptime('Jun 25 2017  1:33PM', '%b %d %Y %I:%M%p'),
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=1),
+}
+
+dag = DAG(dag_id='demo_bq_dag_during_demo', schedule_interval='0-59 * * * *', default_args=default_args)
+
+current_timestamp = BigQueryOperator(task_id='current_timestamp_id', delegate_to=None, udf_config=False, bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
+tomorrows_timestamp = BigQueryOperator(task_id='tomorrows_timestamp_id', delegate_to=None, udf_config=False, bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
+tomorrows_timestamp.set_upstream(current_timestamp)
+"""
+    self.assertEqual(actual_py, expected_py)
 
 
 if __name__ == '__main__':
