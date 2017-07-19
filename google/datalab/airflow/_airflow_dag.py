@@ -68,7 +68,6 @@ from datetime import datetime, timedelta
 
   @staticmethod
   def _decode(content_string):
-    # TODO(rajivpb): Don't do both. Pick one and stick to it.
     try:
       return google.datalab.utils._coders.JsonCoder().decode(content_string)
     except ValueError:
