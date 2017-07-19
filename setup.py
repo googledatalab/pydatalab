@@ -22,6 +22,7 @@ setup(
   namespace_packages=['google', 'datalab'],
   packages=[
     'google.datalab',
+    'google.datalab.airflow',
     'google.datalab.bigquery',
     'google.datalab.bigquery.commands',
     'google.datalab.commands',

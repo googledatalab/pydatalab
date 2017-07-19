@@ -1,4 +1,5 @@
-from google.datalab.utils import _coders
+import google.datalab.utils._coders
+
 from enum import Enum
 
 class AirflowOperator(Enum):
@@ -69,9 +70,9 @@ from datetime import datetime, timedelta
   def _decode(content_string):
     # TODO(rajivpb): Don't do both. Pick one and stick to it.
     try:
-      return _coders.JsonCoder().decode(content_string)
+      return google.datalab.utils._coders.JsonCoder().decode(content_string)
     except ValueError:
-      return _coders.YamlCoder().decode(content_string)
+      return google.datalab.utils._coders.YamlCoder().decode(content_string)
 
   @staticmethod
   def _get_operator_definition(task_id, task_details):
