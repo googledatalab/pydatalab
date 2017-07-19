@@ -45,7 +45,7 @@ class AirflowDagTest(unittest.TestCase):
     task_id = 'query_wikipedia'
     task_details = {}
     task_details['type'] = 'bq'
-    task_details['bql'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
+    task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
     task_details['destination_dataset_table'] = False
     task_details['write_disposition'] = 'WRITE_EMPTY'
     task_details['allow_large_results'] = False
@@ -56,7 +56,7 @@ class AirflowDagTest(unittest.TestCase):
     operator_def = AirflowDag._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
-        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=False, bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
+        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=False, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
 
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
@@ -75,6 +75,10 @@ class AirflowDagTest(unittest.TestCase):
                      'BigQueryOperator')
     self.assertEqual(AirflowDag._get_operator_classname('Unknown'),
                      'UnknownOperator')
+
+  def test_get_operator_param_name(self):
+    self.assertEqual(AirflowDag._get_operator_param_name('query', 'bq'),
+                     'bql')
 
   def test_get_dag_definition(self):
     self.assertEqual(AirflowDag._get_dag_definition('foo', 'bar'),

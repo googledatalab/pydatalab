@@ -75,8 +75,8 @@ from datetime import datetime, timedelta
 
   @staticmethod
   def _get_operator_definition(task_id, task_details):
-    operator_classname = AirflowDag._get_operator_classname(
-        task_details['type'])
+    operator_type = task_details['type']
+    operator_classname = AirflowDag._get_operator_classname(operator_type)
     param_string = 'task_id=\'{0}_id\''.format(task_id)
     for param_name, param_value in task_details.iteritems():
       # These are special-types that are relevant to Datalab
@@ -87,8 +87,9 @@ from datetime import datetime, timedelta
         param_format_string = ', {0}={1}'
       else:
         param_format_string = ', {0}=\'{1}\''
-      param_string = param_string + param_format_string.format(param_name,
-                                                               param_value)
+      param_string = param_string + param_format_string.format(
+          AirflowDag._get_operator_param_name(param_name, operator_type),
+          param_value)
     return '{0} = {1}({2}, dag=dag)\n'.format(
         task_id,
         operator_classname,
@@ -119,3 +120,10 @@ from datetime import datetime, timedelta
       operator_enum = task_detail_type
     operator_classname = '{0}Operator'.format(operator_enum)
     return operator_classname
+
+  @staticmethod
+  def _get_operator_param_name(param_name, operator_type):
+    if (operator_type == 'bq'):
+      if (param_name == 'query'):
+        return 'bql'
+    return param_name
