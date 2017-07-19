@@ -172,17 +172,6 @@ tasks:
 """
     airflow_dag = AirflowDag(dag_spec)
     py_string = airflow_dag.py()
-
-    # Print it to a file
-    dat_py_file = open("demo_bq_dag_during_demo.py", "w")
-    dat_py_file.write(py_string)
-    dat_py_file.close()
-
-    # Kick off gsutil in subprocess
-    #import subprocess
-    #subprocess.check_call(['gsutil', '-q', 'cp',
-    #                       '/usr/local/google/home/rajivpb/IdeaProjects/pydatalab/demo_bq_dag_during_demo.py',
-    #                       'gs://airflow-staging-test36490808-bucket/dags'])
     expected_py = """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -207,7 +196,7 @@ current_timestamp = BigQueryOperator(task_id='current_timestamp_id', delegate_to
 tomorrows_timestamp = BigQueryOperator(task_id='tomorrows_timestamp_id', delegate_to=None, udf_config=False, bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
 tomorrows_timestamp.set_upstream(current_timestamp)
 """
-    self.assertEqual(actual_py, expected_py)
+    self.assertEqual(py_string, expected_py)
 
 
 if __name__ == '__main__':

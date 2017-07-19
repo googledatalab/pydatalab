@@ -21,7 +21,6 @@ import unittest
 
 import airflow.airflow_tests
 import context_tests
-import airflow.airflow_tests
 import bigquery.api_tests
 import bigquery.dataset_tests
 import bigquery.external_data_source_tests
