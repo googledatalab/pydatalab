@@ -24,4 +24,5 @@ from ._cloud_models import Models, ModelVersions
 from ._confusion_matrix import ConfusionMatrix
 from ._feature_slice_view import FeatureSliceView
 from ._cloud_training_config import CloudTrainingConfig
+from ._fasets import *
 from ._util import *
