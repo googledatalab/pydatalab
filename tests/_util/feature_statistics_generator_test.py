@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from feature_statistics_generator import FeatureStatisticsGenerator
+from google.datalab.utils.facets.feature_statistics_generator import FeatureStatisticsGenerator
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.platform import googletest

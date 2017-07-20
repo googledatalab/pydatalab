@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from generic_feature_statistics_generator import GenericFeatureStatisticsGenerator
+from google.datalab.utils.facets.generic_feature_statistics_generator \
+    import GenericFeatureStatisticsGenerator
 import numpy as np
 import pandas as pd
 from tensorflow.python.platform import googletest

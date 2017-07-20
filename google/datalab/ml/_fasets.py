@@ -42,7 +42,7 @@ class FacetsOverview(object):
           document.querySelector("#{html_id}").protoInput = "{protostr}";
         </script>"""
     html = HTML_TEMPLATE.format(html_id=html_id, protostr=protostr)
-    IPython.core.display.display(IPython.core.display.HTML(html))
+    return IPython.core.display.HTML(html)
 
 
 class FacetsDiveview(object):
@@ -69,4 +69,4 @@ class FacetsDiveview(object):
           document.querySelector("#{html_id}").data = data;
         </script>"""
     html = HTML_TEMPLATE.format(html_id=html_id, jsonstr=jsonstr)
-    IPython.core.display.display(IPython.core.display.HTML(html))
+    return IPython.core.display.HTML(html)
