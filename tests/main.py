@@ -38,6 +38,7 @@ import kernel.html_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import ml.dataset_tests
+import ml.facets_tests
 import mltoolbox_code_free_ml.all_tests
 import mltoolbox_structured_data.dl_interface_tests
 import mltoolbox_structured_data.sd_e2e_tests
@@ -57,6 +58,8 @@ import storage.api_tests
 import storage.bucket_tests
 import storage.object_tests
 import _util.commands_tests
+import _util.feature_statistics_generator_test
+import _util.generic_feature_statistics_generator_test
 import _util.http_tests
 import _util.lru_cache_tests
 import _util.util_tests
@@ -83,6 +86,7 @@ _UNIT_TEST_MODULES = [
     kernel.storage_tests,
     kernel.utils_tests,
     ml.dataset_tests,
+    ml.facets_tests,
     mlworkbench_magic.ml_tests,
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,
@@ -95,6 +99,8 @@ _UNIT_TEST_MODULES = [
     storage.bucket_tests,
     storage.object_tests,
     _util.commands_tests,
+    _util.feature_statistics_generator_test,
+    _util.generic_feature_statistics_generator_test,
     _util.http_tests,
     _util.lru_cache_tests,
     _util.util_tests
