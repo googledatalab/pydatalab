@@ -18,8 +18,8 @@ The proto is used as input for the Overview visualization.
 """
 
 import warnings
-from base_feature_statistics_generator import BaseFeatureStatisticsGenerator
-import feature_statistics_pb2 as fs
+from .base_feature_statistics_generator import BaseFeatureStatisticsGenerator
+from . import feature_statistics_pb2 as fs
 
 
 class FeatureStatisticsGenerator(BaseFeatureStatisticsGenerator):

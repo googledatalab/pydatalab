@@ -20,7 +20,7 @@ The proto is used as input for the Overview visualization.
 # flake8: noqa
 
 from functools import partial
-from base_generic_feature_statistics_generator import BaseGenericFeatureStatisticsGenerator
+from .base_generic_feature_statistics_generator import BaseGenericFeatureStatisticsGenerator
 import tensorflow as tf
 
 
