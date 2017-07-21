@@ -760,7 +760,8 @@ class TestTrainer(unittest.TestCase):
         if has_target:
           expected_output_keys.append('target')
         if problem_type == 'classification':
-          expected_output_keys.extend(['score', 'score_2', 'score_3', 'predicted_2', 'predicted_3'])
+          expected_output_keys.extend(
+            ['probability', 'probability_2', 'probability_3', 'predicted_2', 'predicted_3'])
 
         self.assertEqual(1, len(input_alias_map.keys()))
         self.assertItemsEqual(expected_output_keys, output_alias_map.keys())
