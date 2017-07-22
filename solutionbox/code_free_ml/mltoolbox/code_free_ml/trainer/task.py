@@ -172,7 +172,8 @@ def parse_arguments(argv):
   parser.add_argument(
       '--top-n', type=int, default=1, metavar='N',
       help=('For classification problems, the output graph will contain the '
-            'labels and scores for the top n classes.'))
+            'labels and scores for the top n classes. If --top-n=0, then '
+            'all labels and scores are returned.'))
 
   # HP parameters
   parser.add_argument(
@@ -386,15 +387,21 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
     # TODO(brandondutra): get the score of the target label too.
     probabilities = model_fn_ops.predictions['probabilities']
 
+    # if top_n == 0, this means use all the classes.
+    if args.top_n == 0:
+      top_n = probabilities.shape[1].value
+    else:
+      top_n = args.top_n
+
     # get top k labels and their scores.
-    (top_k_values, top_k_indices) = tf.nn.top_k(probabilities, k=args.top_n)
+    (top_k_values, top_k_indices) = tf.nn.top_k(probabilities, k=top_n)
     top_k_labels = table.lookup(tf.to_int64(top_k_indices))
 
-    # Write the top_k values using 2*top_k columns.
-    num_digits = int(math.ceil(math.log(args.top_n, 10)))
+    # Write the top_k values using 2*top_n columns.
+    num_digits = int(math.ceil(math.log(top_n, 10)))
     if num_digits == 0:
       num_digits = 1
-    for i in range(0, args.top_n):
+    for i in range(0, top_n):
       # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
       # makes sorting the columns easy.
       padded_i = str(i + 1).zfill(num_digits)
