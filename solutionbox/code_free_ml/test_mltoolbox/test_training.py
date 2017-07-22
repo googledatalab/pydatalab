@@ -213,7 +213,7 @@ class TestClassificationTopN(unittest.TestCase):
              '--train-batch-size=4',
              '--eval-batch-size=4',
              '--max-steps=1',
-             '--top-n=0',
+             '--top-n=0',  # This parameter is tested in this test!
              '--learning-rate=0.1',
              '--transform']
 

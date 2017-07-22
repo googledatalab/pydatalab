@@ -172,7 +172,7 @@ def parse_arguments(argv):
   parser.add_argument(
       '--top-n', type=int, default=1, metavar='N',
       help=('For classification problems, the output graph will contain the '
-            'labels and scores for the top n classes. If --top-N=0, then '
+            'labels and scores for the top n classes. If --top-n=0, then '
             'all labels and scores are returned.'))
 
   # HP parameters
