@@ -174,6 +174,62 @@ class TestSpecialCharacters(unittest.TestCase):
     finally:
       shutil.rmtree(output_dir)
 
+class TestClassificationTopN(unittest.TestCase):
+  """Test top_n works."""
+
+  def testTopNZero(self):
+    """Test top_n=0 gives all the classes."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'num': {'transform': 'identity'},
+          'target': {'transform': 'target'}}
+      schema = [
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'string'}]
+      data = ['1,1\n', '4,2\n', '5,3\n', '11,1\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_classification',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=1',
+             '--top-n=0',
+             '--learning-rate=0.1',
+             '--transform']
+
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['20'])
+
+      keys = result.keys()
+      self.assertIn('probability', keys)
+      self.assertIn('probability_2', keys)
+      self.assertIn('probability_3', keys)
+      self.assertNotIn('probability_4', keys)
+    finally:
+      shutil.rmtree(output_dir)
 
 class TestMultipleFeatures(unittest.TestCase):
   """Test one source column can be used in many features."""
