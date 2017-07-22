@@ -174,6 +174,7 @@ class TestSpecialCharacters(unittest.TestCase):
     finally:
       shutil.rmtree(output_dir)
 
+
 class TestClassificationTopN(unittest.TestCase):
   """Test top_n works."""
 
@@ -230,6 +231,7 @@ class TestClassificationTopN(unittest.TestCase):
       self.assertNotIn('probability_4', keys)
     finally:
       shutil.rmtree(output_dir)
+
 
 class TestMultipleFeatures(unittest.TestCase):
   """Test one source column can be used in many features."""
