@@ -95,7 +95,13 @@ class TestShellProcess(unittest.TestCase):
     self._logger.debug('TestProcess: killing process %d' % process_to_wait.pid)
     process_to_wait.kill()
     process_to_wait.wait()
-    time.sleep(1)
+
+    # Wait for 10 sec for the process_to_monitor to be killed.
+    for i in range(10):
+      time.sleep(1)
+      if not process_to_monitor.is_running():
+        break
+
     self.assertFalse(process_to_monitor.is_running())
     self._logger.debug('TestProcess: process %d being monitored ' % process_to_monitor.pid +
                        'was also killed successfully after waiting process was killed.')
