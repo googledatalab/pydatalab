@@ -12,3 +12,7 @@
 
 
 from __future__ import absolute_import
+
+from ._local_predict import get_prediction_results, get_probs_for_labels, local_batch_predict
+
+__all__ = ['get_prediction_results', 'get_probs_for_labels', 'local_batch_predict']

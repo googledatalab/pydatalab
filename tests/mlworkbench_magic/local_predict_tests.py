@@ -32,7 +32,7 @@ from tensorflow.python.saved_model import signature_constants
 import unittest
 
 
-from google.datalab.contrib.mlworkbench import _local_predict
+import google.datalab.contrib.mlworkbench as mlw
 
 
 class TestLocalPredictions(unittest.TestCase):
@@ -141,10 +141,12 @@ class TestLocalPredictions(unittest.TestCase):
 
     return data
 
-  def _validate_results(self, df, show_image):
-    expected_columns = set(['key', 'num1', 'text1', 'img_url1', 'var1', 'var2'])
-    if show_image:
-      expected_columns.add('img_url1_image')
+  def _validate_results(self, df, with_source, show_image):
+    expected_columns = set(['key', 'var1', 'var2'])
+    if with_source:
+      expected_columns = expected_columns.union(['num1', 'text1', 'img_url1'])
+      if show_image:
+        expected_columns.add('img_url1_image')
     self.assertEqual(expected_columns, set(df.columns))
     self.assertEqual([1, 2, 5], df['key'].tolist())
     self.assertEqual(3, len(df.index))
@@ -160,14 +162,16 @@ class TestLocalPredictions(unittest.TestCase):
     # show or not show images.
     for missing_values in [True, False]:
       for csv_data in [True, False]:
-        for show_image in [True, False]:
-          self._logger.debug('LocalPredict: ' +
-                             'missing_values=%s, csv_data=%s, show_image=%s' %
-                             (missing_values, csv_data, show_image))
+        for with_source in [True, False]:
+          for show_image in [True, False]:
+            self._logger.debug('LocalPredict: ' +
+                               'missing_values=%s, csv_data=%s, with_source=%s, show_image=%s' %
+                               (missing_values, csv_data, with_source, show_image))
           test_data = self._create_test_data(False, missing_values, csv_data)
-          df = _local_predict.get_prediction_results(
-              model_dir, test_data, headers, ['img_url1'], False, show_image)
-          self._validate_results(df, show_image)
+          df = mlw.get_prediction_results(
+              model_dir, test_data, headers, img_cols=['img_url1'], with_source=with_source,
+              show_image=show_image)
+          self._validate_results(df, with_source, show_image)
 
     # Test data being dataframes, with and without missing values, and embedded images.
     for missing_values in [True, False]:
@@ -175,8 +179,26 @@ class TestLocalPredictions(unittest.TestCase):
                          'missing_values=%s, DataFrame' % missing_values)
       test_data = self._create_test_data(True, missing_values, csv_data=False)
       df_s = pd.DataFrame(test_data).fillna('')
-      df = _local_predict.get_prediction_results(model_dir, df_s, headers, None, False, False)
-      self._validate_results(df, False)
+      df = mlw.get_prediction_results(model_dir, df_s, headers,
+                                      with_source=True, show_image=False)
+      self._validate_results(df, True, False)
+
+  def test_get_probs_for_labels(self):
+    prediction_data = [
+      {'predicted': 'daisy', 'probability': 0.8,
+       'predicted_2': 'rose', 'probability_2': 0.1,
+       'predicted_3': 'sunflower', 'probability_3': 0.05},
+      {'predicted': 'sunflower', 'probability': 0.9,
+       'predicted_2': 'daisy', 'probability_2': 0.01,
+       'predicted_3': 'rose', 'probability_3': 0.02},
+    ]
+    labels = ['daisy', 'rose', 'sunflower']
+    probs = mlw.get_probs_for_labels(labels, pd.DataFrame(prediction_data))
+    expected_probs = [
+      [0.8, 0.1, 0.05],
+      [0.01, 0.02, 0.9],
+    ]
+    self.assertEqual(expected_probs, probs)
 
   def _validate_schema_file(self, output_dir):
     with open(os.path.join(output_dir, 'predict_results_schema.json'), 'r') as f:
@@ -202,8 +224,7 @@ class TestLocalPredictions(unittest.TestCase):
       f.write('\n'.join(test_data))
 
     # Test prediction output as csv file.
-    _local_predict.local_batch_predict(model_dir, prediction_source,
-                                       output_dir, 'csv', batch_size=2)
+    mlw.local_batch_predict(model_dir, prediction_source, output_dir, 'csv', batch_size=2)
     self._validate_schema_file(output_dir)
 
     prediction_results_file = os.path.join(output_dir, 'predict_results_prediction.csv')
@@ -212,8 +233,7 @@ class TestLocalPredictions(unittest.TestCase):
     self.assertEqual([1, 2, 5], list(df['key']))
 
     # Test prediction output as json file.
-    _local_predict.local_batch_predict(model_dir, prediction_source,
-                                       output_dir, 'json', batch_size=1)
+    mlw.local_batch_predict(model_dir, prediction_source, output_dir, 'json', batch_size=1)
     self._validate_schema_file(output_dir)
 
     prediction_results_file = os.path.join(output_dir, 'predict_results_prediction.json')
