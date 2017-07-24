@@ -52,10 +52,6 @@ class TestShellProcess(unittest.TestCase):
          checks the stdout message of the worker process is captured and filtered.
     """
 
-    # TODO: The test is flaky in py3 so disable for py3 for now.
-    if six.PY3:
-      return
-
     # The process will do time.sleep(10) but it will be killed much earlier.
     process_to_wait_args = ['python', '-c', 'import time; time.sleep(10)']
     process_to_wait = subprocess.Popen(process_to_wait_args, env=os.environ)
