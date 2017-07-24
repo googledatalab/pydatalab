@@ -15,6 +15,7 @@ import base64
 import google.datalab as datalab
 from google.datalab.utils.facets.generic_feature_statistics_generator \
     import GenericFeatureStatisticsGenerator
+import pandas as pd
 import six
 
 
@@ -29,6 +30,9 @@ class FacetsOverview(object):
     """
 
     import IPython
+
+    if not isinstance(data, dict) or not all(isinstance(v, pd.DataFrame) for v in data.values()):
+      raise ValueError('Expect a dictionary with values all DataFrames.')
 
     gfsg = GenericFeatureStatisticsGenerator()
     data = [{'name': k, 'table': v} for k, v in six.iteritems(data)]
@@ -56,6 +60,9 @@ class FacetsDiveview(object):
     """
 
     import IPython
+
+    if not isinstance(data, pd.DataFrame):
+      raise ValueError('Expect a DataFrame.')
 
     jsonstr = data.to_json(orient='records')
     # Escape ' and " because the string will be in <script> block.

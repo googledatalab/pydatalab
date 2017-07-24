@@ -23,6 +23,7 @@ import copy
 import csv
 from io import BytesIO
 import json
+import logging
 import numpy as np
 import os
 import pandas as pd
@@ -78,6 +79,11 @@ def _tf_predict(model_dir, input_csvlines):
       if not isinstance(v, (list, np.ndarray)):
         results[k] = [v]
 
+  # Convert bytes to string. In python3 the results may be bytes.
+  for k, v in six.iteritems(results):
+    if any(isinstance(x, bytes) for x in v):
+      results[k] = [x.decode('utf-8') for x in v]
+
   return results
 
 
@@ -88,9 +94,14 @@ def _download_images(data, img_cols):
   for d in data:
     for img_col in img_cols:
       if d.get(img_col, None):
-        with file_io.FileIO(d[img_col], 'rb') as fi:
-          im = Image.open(fi)
-        images[img_col].append(im)
+        if isinstance(d[img_col], Image.Image):
+          # If it is already an Image, just copy and continue.
+          images[img_col].append(d[img_col])
+        else:
+          # Otherwise it is image url. Load the image.
+          with file_io.FileIO(d[img_col], 'rb') as fi:
+            im = Image.open(fi)
+          images[img_col].append(im)
       else:
         images[img_col].append('')
 
@@ -117,9 +128,9 @@ def _get_predicton_csv_lines(data, headers, images):
   csv_lines = []
   for d in data:
     buf = six.StringIO()
-    writer = csv.DictWriter(buf, fieldnames=headers)
+    writer = csv.DictWriter(buf, fieldnames=headers, lineterminator='')
     writer.writerow(d)
-    csv_lines.append(buf.getvalue().rstrip())
+    csv_lines.append(buf.getvalue())
 
   return csv_lines
 
@@ -147,7 +158,7 @@ def _get_display_data_with_images(data, images):
 
 
 def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
-                           cloud=False, show_image=True):
+                           cloud=False, with_source=True, show_image=True):
   """ Predict with a specified model.
 
   It predicts with the model, join source data with prediction results, and formats
@@ -157,14 +168,16 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
     model_dir_or_id: The model directory if cloud is False, or model.version if cloud is True.
     data: Can be a list of dictionaries, a list of csv lines, or a Pandas DataFrame.
     headers: the column names of data. It specifies the order of the columns when
-        serializing to csv lines.
-    img_cols: The image url columns. If specified, the img_urls will be concerted to
+        serializing to csv lines for prediction.
+    img_cols: The image url columns. If specified, the img_urls will be converted to
         base64 encoded image bytes.
-    show_image: When displaying results, whether to add a column for showing images for
-        each image column.
+    with_source: Whether return a joined prediction source and prediction results, or prediction
+        results only.
+    show_image: When displaying prediction source, whether to add a column of image bytes for
+        each image url column.
 
   Returns:
-    A dataframe of joined prediction source and prediction results.
+    A dataframe of joined prediction source and prediction results, or prediction results only.
   """
 
   if img_cols is None:
@@ -177,9 +190,6 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
 
   images = _download_images(data, img_cols)
   predict_data = _get_predicton_csv_lines(data, headers, images)
-  display_data = data
-  if show_image:
-    display_data = _get_display_data_with_images(data, images)
 
   if cloud:
     parts = model_dir_or_id.split('.')
@@ -188,15 +198,72 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
 
     predict_results = ml.ModelVersions(parts[0]).predict(parts[1], predict_data)
   else:
-    predict_results = _tf_predict(model_dir_or_id, predict_data)
+    tf_logging_level = logging.getLogger("tensorflow").level
+    logging.getLogger("tensorflow").setLevel(logging.WARNING)
+    try:
+      predict_results = _tf_predict(model_dir_or_id, predict_data)
+    finally:
+      logging.getLogger("tensorflow").setLevel(tf_logging_level)
 
   df_r = pd.DataFrame(predict_results)
+  if not with_source:
+    return df_r
+
+  display_data = data
+  if show_image:
+    display_data = _get_display_data_with_images(data, images)
+
   df_s = pd.DataFrame(display_data)
   df = pd.concat([df_r, df_s], axis=1)
   # Remove duplicate columns. All 'key' columns are duplicate here.
   df = df.loc[:, ~df.columns.duplicated()]
 
   return df
+
+
+def get_probs_for_labels(labels, prediction_results):
+  """ Given prediction results, get probs of each label for each instance.
+
+  The prediction results are like:
+  [
+    {'predicted': 'daisy', 'prob': 0.8, 'predicted_2': 'rose', 'prob_2': 0.1},
+    {'predicted': 'sunflower', 'prob': 0.9, 'predicted_2': 'daisy', 'prob_2': 0.01},
+    ...
+  ]
+
+  Each instance is ordered by prob. But in some cases probs are needed for fixed
+  order of labels. For example, given labels = ['daisy', 'rose', 'sunflower'], the
+  results of above is expected to be:
+  [
+    [0.8, 0.1, 0.0],
+    [0.01, 0.0, 0.9],
+    ...
+  ]
+  Note that the sum of each instance may not be always 1. If model's top_n is set to
+  none zero, and is less than number of labels, then prediction results may not contain
+  probs for all labels.
+
+  Args:
+    labels: a list of labels specifying the order of the labels.
+    prediction_results: a pandas DataFrame containing prediction results, usually returned
+        by get_prediction_results() call.
+
+  Returns:
+    A list of list of probs for each class.
+  """
+
+  probs = []
+  for i, r in prediction_results.iterrows():
+    probs_one = [0.0] * len(labels)
+    for k, v in six.iteritems(r):
+      if v in labels and k.startswith('predicted'):
+        if k == 'predict':
+          prob_name = 'probability'
+        else:
+          prob_name = 'probability' + k[9:]
+        probs_one[labels.index(v)] = r[prob_name]
+    probs.append(probs_one)
+  return probs
 
 
 def _batch_csv_reader(csv_file, n):

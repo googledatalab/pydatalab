@@ -98,7 +98,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'pytz>=2015.4',
     'pyyaml==3.11',
     'requests==2.9.1',
-    'scikit-learn==0.17.1',
+    'scikit-learn==0.18.2',
     'ipykernel==4.5.2',
     'psutil==4.3.0',
     'jsonschema==2.6.0',
