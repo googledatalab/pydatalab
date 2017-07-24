@@ -31,16 +31,12 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
     pid_to_wait: the process to wait for.
     pids_to_kill: a list of processes to kill after the process of pid_to_wait finishes.
   """
-  print('pid_to_wait ' + str(pid_to_wait))
   if psutil.pid_exists(pid_to_wait):
-    print('pid_to_wait exists')
     psutil.Process(pid=pid_to_wait).wait()
 
-  print('pids_to_kill ' + str(pids_to_kill))
   for pid_to_kill in pids_to_kill:
     if psutil.pid_exists(pid_to_kill):
       p = psutil.Process(pid=pid_to_kill)
-      print('killing ' + str(pid_to_kill))
       p.kill()
 
 
@@ -66,8 +62,7 @@ def run_and_monitor(args, pid_to_wait, std_out_filter_fn=None, cwd=None):
     pids_to_kill = [p.pid]
     script = ('import %s;%s._wait_and_kill(%s, %s)' %
               (__name__, __name__, str(pid_to_wait), str(pids_to_kill)))
-    py_cmd = 'python3' if six.PY3 else 'python'
-    monitor_process = subprocess.Popen([py_cmd, '-c', script], env=os.environ)
+    monitor_process = subprocess.Popen(['python', '-c', script], env=os.environ)
     while p.poll() is None:
       line = p.stdout.readline()
 
