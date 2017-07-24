@@ -32,7 +32,7 @@ class FacetsOverview(object):
     import IPython
 
     if not isinstance(data, dict) or not all(isinstance(v, pd.DataFrame) for v in data.values()):
-      raise ValueError('Expect a dictionary with values all DataFrames.')
+      raise ValueError('Expect a dictionary where the values are all dataframes.')
 
     gfsg = GenericFeatureStatisticsGenerator()
     data = [{'name': k, 'table': v} for k, v in six.iteritems(data)]

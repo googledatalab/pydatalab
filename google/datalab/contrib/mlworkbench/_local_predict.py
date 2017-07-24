@@ -166,7 +166,10 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
 
   Args:
     model_dir_or_id: The model directory if cloud is False, or model.version if cloud is True.
-    data: Can be a list of dictionaries, a list of csv lines, or a Pandas DataFrame.
+    data: Can be a list of dictionaries, a list of csv lines, or a Pandas DataFrame. If it is not
+        a list of csv lines, data will be converted to csv lines first, using the orders specified
+        by headers and then send to model. For images, it can be image gs urls or in-memory PIL
+        images. Images will be converted to base64 encoded strings before prediction.
     headers: the column names of data. It specifies the order of the columns when
         serializing to csv lines for prediction.
     img_cols: The image url columns. If specified, the img_urls will be converted to
@@ -226,8 +229,8 @@ def get_probs_for_labels(labels, prediction_results):
 
   The prediction results are like:
   [
-    {'predicted': 'daisy', 'prob': 0.8, 'predicted_2': 'rose', 'prob_2': 0.1},
-    {'predicted': 'sunflower', 'prob': 0.9, 'predicted_2': 'daisy', 'prob_2': 0.01},
+    {'predicted': 'daisy', 'probability': 0.8, 'predicted_2': 'rose', 'probability_2': 0.1},
+    {'predicted': 'sunflower', 'probability': 0.9, 'predicted_2': 'daisy', 'probability_2': 0.01},
     ...
   ]
 
@@ -240,7 +243,7 @@ def get_probs_for_labels(labels, prediction_results):
     ...
   ]
   Note that the sum of each instance may not be always 1. If model's top_n is set to
-  none zero, and is less than number of labels, then prediction results may not contain
+  none-zero, and is less than number of labels, then prediction results may not contain
   probs for all labels.
 
   Args:
