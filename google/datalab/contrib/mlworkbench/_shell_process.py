@@ -62,7 +62,8 @@ def run_and_monitor(args, pid_to_wait, std_out_filter_fn=None, cwd=None):
     pids_to_kill = [p.pid]
     script = ('import %s;%s._wait_and_kill(%s, %s)' %
               (__name__, __name__, str(pid_to_wait), str(pids_to_kill)))
-    monitor_process = subprocess.Popen(['python', '-c', script], env=os.environ)
+    py_cmd = 'python3' if six.PY3 else 'python'
+    monitor_process = subprocess.Popen([py_cmd, '-c', script], env=os.environ)
     while p.poll() is None:
       line = p.stdout.readline()
 

@@ -52,8 +52,9 @@ class TestShellProcess(unittest.TestCase):
          checks the stdout message of the worker process is captured and filtered.
     """
 
+    py_cmd = 'python3' if six.PY3 else 'python'
     # The process will do time.sleep(10) but it will be killed much earlier.
-    process_to_wait_args = ['python', '-c', 'import time; time.sleep(10)']
+    process_to_wait_args = [py_cmd, '-c', 'import time; time.sleep(10)']
     process_to_wait = subprocess.Popen(process_to_wait_args, env=os.environ)
     self.assertIsNone(process_to_wait.poll())
     self._logger.debug('TestProcess: Started a process %d which will be waited on.' %
@@ -64,10 +65,10 @@ class TestShellProcess(unittest.TestCase):
     # get a chance to output because the worker process should have been killed by
     # monitor process by then.
     worker_process_args = [
-        'python',
+        py_cmd,
         '-c',
         'import time;import sys;print(\'exclude message\');print(\'include message1\');' +
-        'sys.stdout.flush();time.sleep(3);print(\'include message2\');sys.stdout.flush()'
+        'sys.stdout.flush();time.sleep(5);print(\'include message2\');sys.stdout.flush()'
     ]
 
     old_stdout = sys.stdout
@@ -96,8 +97,8 @@ class TestShellProcess(unittest.TestCase):
     process_to_wait.kill()
     process_to_wait.wait()
 
-    # Wait for 10 sec for the process_to_monitor to be killed.
-    for i in range(10):
+    # Wait for 3 sec for the process_to_monitor to be killed.
+    for i in range(3):
       time.sleep(1)
       if not process_to_monitor.is_running():
         break
