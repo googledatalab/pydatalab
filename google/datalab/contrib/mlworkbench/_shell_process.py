@@ -40,7 +40,7 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
   for pid_to_kill in pids_to_kill:
     if psutil.pid_exists(pid_to_kill):
       p = psutil.Process(pid=pid_to_kill)
-      print('killing ' + str(pid))
+      print('killing ' + str(pid_to_kill))
       p.kill()
 
 
