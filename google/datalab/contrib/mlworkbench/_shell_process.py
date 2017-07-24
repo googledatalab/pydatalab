@@ -31,12 +31,16 @@ def _wait_and_kill(pid_to_wait, pids_to_kill):
     pid_to_wait: the process to wait for.
     pids_to_kill: a list of processes to kill after the process of pid_to_wait finishes.
   """
+  print('pid_to_wait ' + str(pid_to_wait))
   if psutil.pid_exists(pid_to_wait):
+    print('pid_to_wait exists')
     psutil.Process(pid=pid_to_wait).wait()
 
+  print('pids_to_kill ' + str(pids_to_kill))
   for pid_to_kill in pids_to_kill:
     if psutil.pid_exists(pid_to_kill):
       p = psutil.Process(pid=pid_to_kill)
+      print('killing ' + str(pid))
       p.kill()
 
 
