@@ -112,8 +112,15 @@ class ConfusionMatrix(object):
       cm[row['target']][row['predicted']] = row['count']
     return ConfusionMatrix(cm, labels)
 
-  def plot(self):
-    """Plot the confusion matrix."""
+  def plot(self, figsize=None):
+    """Plot the confusion matrix.
+
+    Args:
+      figsize: tuple (x, y) of ints. Sets the size of the figure
+    """
+
+    if figsize:
+      fig, ax = plt.subplots(figsize=figsize)
 
     plt.imshow(self._cm, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title('Confusion matrix')
