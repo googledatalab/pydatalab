@@ -176,7 +176,7 @@ class ModelVersions(object):
       path: the Google Cloud Storage path (gs://...) which contains the model files.
       runtime_version: the ML Engine runtime version as a string, example '1.2'.
           See https://cloud.google.com/ml-engine/docs/concepts/runtime-version-list
-          for a list of runtimes. If missing, the ML Engine service will pick one.
+          for a list of runtimes. If None, the ML Engine service will pick one.
 
     Raises: Exception if the path is invalid or does not contain expected files.
             Exception if the service returns invalid response.
@@ -205,8 +205,11 @@ class ModelVersions(object):
     body = {
       'name': version_name,
       'deployment_uri': path,
-      'runtime_version': runtime_version,
     }
+
+    if runtime_version:
+      body['runtime_version'] = runtime_version
+
     response = self._api.projects().models().versions().create(
       body=body, parent=self._full_model_name).execute()
     if 'name' not in response:
