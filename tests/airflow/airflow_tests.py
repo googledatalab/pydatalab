@@ -17,17 +17,17 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
 
-from google.datalab.airflow import AirflowDag
+from google.datalab.airflow import AirflowPipeline
 
 
-class AirflowDagTest(unittest.TestCase):
+class AirflowPipelineTest(unittest.TestCase):
 
   def test_get_dependency_definition_single(self):
-    dependencies = AirflowDag._get_dependency_definition('t2', ['t1'])
+    dependencies = AirflowPipeline._get_dependency_definition('t2', ['t1'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\n')
 
   def test_get_dependency_definition_multiple(self):
-    dependencies = AirflowDag._get_dependency_definition('t2', ['t1', 't3'])
+    dependencies = AirflowPipeline._get_dependency_definition('t2', ['t1', 't3'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\nt2.set_upstream(t3)\n')
 
   def test_get_bash_operator_definition(self):
@@ -35,7 +35,7 @@ class AirflowDagTest(unittest.TestCase):
     task_details = {}
     task_details['type'] = 'bash'
     task_details['bash_command'] = 'date'
-    operator_def = AirflowDag._get_operator_definition(task_id, task_details)
+    operator_def = AirflowPipeline._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
         'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\'date\', dag=dag)\n')
@@ -45,7 +45,7 @@ class AirflowDagTest(unittest.TestCase):
     task_details = {}
     task_details['type'] = 'bq'
     task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
-    operator_def = AirflowDag._get_operator_definition(task_id, task_details)
+    operator_def = AirflowPipeline._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
         'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=False, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
@@ -57,7 +57,7 @@ class AirflowDagTest(unittest.TestCase):
     task_details['type'] = 'bq'
     task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
     task_details['destination_dataset_table'] = True
-    operator_def = AirflowDag._get_operator_definition(task_id, task_details)
+    operator_def = AirflowPipeline._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
         'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=True, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
@@ -68,30 +68,30 @@ class AirflowDagTest(unittest.TestCase):
     task_details['type'] = 'Unknown'
     task_details['foo'] = 'bar'
     task_details['bar_typed'] = False
-    operator_def = AirflowDag._get_operator_definition(task_id, task_details)
+    operator_def = AirflowPipeline._get_operator_definition(task_id, task_details)
     self.assertEqual(operator_def,
                      'id = UnknownOperator(''task_id=\'id_id\', ' +
                      'foo=\'bar\', bar_typed=False, dag=dag)\n')
 
   def test_get_operator_classname(self):
-    self.assertEqual(AirflowDag._get_operator_classname('bash'), 'BashOperator')
-    self.assertEqual(AirflowDag._get_operator_classname('bq'),
+    self.assertEqual(AirflowPipeline._get_operator_classname('bash'), 'BashOperator')
+    self.assertEqual(AirflowPipeline._get_operator_classname('bq'),
                      'BigQueryOperator')
-    self.assertEqual(AirflowDag._get_operator_classname('Unknown'),
+    self.assertEqual(AirflowPipeline._get_operator_classname('Unknown'),
                      'UnknownOperator')
 
   def test_get_operator_param_name(self):
-    self.assertEqual(AirflowDag._get_operator_param_name('query', 'bq'),
+    self.assertEqual(AirflowPipeline._get_operator_param_name('query', 'bq'),
                      'bql')
 
   def test_get_dag_definition(self):
-    self.assertEqual(AirflowDag._get_dag_definition('foo', 'bar'),
+    self.assertEqual(AirflowPipeline._get_dag_definition('foo', 'bar'),
                      'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', ' \
                      'default_args=default_args)\n\n')
 
   def test_default_args(self):
     self.assertEqual(
-        AirflowDag._default_args_format.format(
+        AirflowPipeline._default_args_format.format(
             'foo@bar.com', 'Jun 1 2005  1:33PM', 'Jun 10 2005  1:33PM',
             '%b %d %Y %I:%M%p'), """
     'owner': 'Datalab',
@@ -107,12 +107,13 @@ class AirflowDagTest(unittest.TestCase):
 
   def test_py(self):
     dag_spec = """
-email: foo@bar.com
-start_date: Jun 1 2005  1:33PM
-end_date: Jun 10 2005  1:33PM
-datetime_format: '%b %d %Y %I:%M%p'
 dag_id: test_dag
-schedule_interval: '@hourly'
+email: foo@bar.com
+schedule:
+  start_date: Jun 1 2005  1:33PM
+  end_date: Jun 10 2005  1:33PM
+  datetime_format: '%b %d %Y %I:%M%p'
+  schedule_interval: '@hourly'
 tasks:
   print_pdt_date:
     type: bash
@@ -123,7 +124,7 @@ tasks:
     up_stream:
       - print_pdt_date
 """
-    airflow_dag = AirflowDag(dag_spec)
+    airflow_dag = AirflowPipeline(dag_spec)
     py_string = airflow_dag.py()
     self.assertEqual(py_string, """
 from airflow import DAG
@@ -152,12 +153,13 @@ print_utc_date.set_upstream(print_pdt_date)
 
   def test_py_bq(self):
     dag_spec = """
-email: rajivpb@google.com
-start_date: Jun 21 2017  1:00AM
-end_date: Jun 25 2017  1:33PM
-datetime_format: '%b %d %Y %I:%M%p'
 dag_id: demo_bq_dag_during_demo
-schedule_interval: '0-59 * * * *'
+email: rajivpb@google.com
+schedule:
+  start_date: Jun 21 2017  1:00AM
+  end_date: Jun 25 2017  1:33PM
+  datetime_format: '%b %d %Y %I:%M%p'
+  schedule_interval: '0-59 * * * *'
 tasks:
   current_timestamp:
     type: bq
@@ -170,7 +172,7 @@ tasks:
     up_stream:
       - current_timestamp
 """
-    airflow_dag = AirflowDag(dag_spec)
+    airflow_dag = AirflowPipeline(dag_spec)
     py_string = airflow_dag.py()
     expected_py = """
 from airflow import DAG

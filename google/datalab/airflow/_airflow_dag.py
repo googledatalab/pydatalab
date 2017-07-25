@@ -1,4 +1,5 @@
 import google.datalab.utils._coders
+import datetime
 
 from enum import Enum
 
@@ -6,7 +7,7 @@ class AirflowOperator(Enum):
   BigQuery = 'bq'
   Bash = 'bash'
 
-class AirflowDag(object):
+class AirflowPipeline(object):
   """A coder to encode and decode CloudML metadata."""
 
   _imports = """
@@ -42,25 +43,26 @@ from datetime import datetime, timedelta
 
     dag_spec = self._decode(self._spec_str)
     default_args = 'default_args = {' + \
-                   AirflowDag._default_args_format.format(
-                       dag_spec['email'], dag_spec['start_date'],
-                       dag_spec['end_date'],
-                       dag_spec['datetime_format']) + '}\n\n'
+                   AirflowPipeline._default_args_format.format(
+                       dag_spec['email'],
+                       dag_spec.get('schedule').get('start_date'),
+                       dag_spec.get('schedule').get('end_date'),
+                       dag_spec.get('schedule').get('datetime_format')) + '}\n\n'
 
     dag_definition = self._get_dag_definition(
-        dag_spec['dag_id'], dag_spec['schedule_interval'])
+        dag_spec['dag_id'], dag_spec.get('schedule')['schedule_interval'])
 
     task_definitions = ''
     up_steam_statements = ''
     for task_id, task_details in dag_spec['tasks'].iteritems():
-      task_def = AirflowDag._get_operator_definition(task_id, task_details)
+      task_def = AirflowPipeline._get_operator_definition(task_id, task_details)
       task_definitions = task_definitions + task_def
       dependency_def = \
-        AirflowDag._get_dependency_definition(task_id,
+        AirflowPipeline._get_dependency_definition(task_id,
                                               task_details.get('up_stream', []))
       up_steam_statements = up_steam_statements + dependency_def
 
-    return AirflowDag._imports + \
+    return AirflowPipeline._imports + \
            default_args + \
            dag_definition + \
            task_definitions + \
@@ -77,7 +79,8 @@ from datetime import datetime, timedelta
   def _get_operator_definition(task_id, task_details):
     operator_type = task_details['type']
     param_string = 'task_id=\'{0}_id\''.format(task_id)
-    AirflowDag._add_default_params(task_details, operator_type)
+    AirflowPipeline._add_default_params(task_details, operator_type)
+
     for param_name, param_value in task_details.iteritems():
       # These are special-types that are relevant to Datalab
       if param_name in  ['type', 'up_stream']:
@@ -87,11 +90,13 @@ from datetime import datetime, timedelta
         param_format_string = ', {0}={1}'
       else:
         param_format_string = ', {0}=\'{1}\''
-      operator_param_name = AirflowDag._get_operator_param_name(param_name,
+      operator_param_name = AirflowPipeline._get_operator_param_name(param_name,
                                                                 operator_type)
       param_string = param_string + param_format_string.format(
           operator_param_name, param_value)
-    operator_classname = AirflowDag._get_operator_classname(operator_type)
+
+    operator_classname = AirflowPipeline._get_operator_classname(operator_type)
+
     return '{0} = {1}({2}, dag=dag)\n'.format(
         task_id,
         operator_classname,
