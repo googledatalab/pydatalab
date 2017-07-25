@@ -168,12 +168,13 @@ class ModelVersions(object):
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     return self._api.projects().models().versions().get(name=name).execute()
 
-  def deploy(self, version_name, path):
+  def deploy(self, version_name, path, runtime_version='1.0'):
     """Deploy a model version to the cloud.
 
     Args:
       version_name: the name of the version in short form, such as "v1".
       path: the Google Cloud Storage path (gs://...) which contains the model files.
+      runtime_version: the runtime version as a string.
 
     Raises: Exception if the path is invalid or does not contain expected files.
             Exception if the service returns invalid response.
@@ -202,7 +203,7 @@ class ModelVersions(object):
     body = {
       'name': version_name,
       'deployment_uri': path,
-      'runtime_version': '1.0',
+      'runtime_version': runtime_version,
     }
     response = self._api.projects().models().versions().create(
       body=body, parent=self._full_model_name).execute()
