@@ -107,7 +107,7 @@ class AirflowPipelineTest(unittest.TestCase):
 
   def test_py(self):
     dag_spec = """
-dag_id: test_dag
+pipeline_id: test_dag
 email: foo@bar.com
 schedule:
   start_date: Jun 1 2005  1:33PM
@@ -153,7 +153,7 @@ print_utc_date.set_upstream(print_pdt_date)
 
   def test_py_bq(self):
     dag_spec = """
-dag_id: demo_bq_dag_during_demo
+pipeline_id: demo_bq_dag_during_demo
 email: rajivpb@google.com
 schedule:
   start_date: Jun 21 2017  1:00AM

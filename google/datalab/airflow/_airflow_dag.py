@@ -50,7 +50,7 @@ from datetime import datetime, timedelta
                        dag_spec.get('schedule').get('datetime_format')) + '}\n\n'
 
     dag_definition = self._get_dag_definition(
-        dag_spec['dag_id'], dag_spec.get('schedule')['schedule_interval'])
+        dag_spec['pipeline_id'], dag_spec.get('schedule')['schedule_interval'])
 
     task_definitions = ''
     up_steam_statements = ''
@@ -103,9 +103,9 @@ from datetime import datetime, timedelta
         param_string)
 
   @staticmethod
-  def _get_dag_definition(dag_id, schedule_interval):
+  def _get_dag_definition(pipeline_id, schedule_interval):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
-                     'default_args=default_args)\n\n'.format(dag_id,
+                     'default_args=default_args)\n\n'.format(pipeline_id,
                                                              schedule_interval)
     return dag_definition
 
