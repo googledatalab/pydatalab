@@ -168,13 +168,15 @@ class ModelVersions(object):
     name = ('%s/versions/%s' % (self._full_model_name, version_name))
     return self._api.projects().models().versions().get(name=name).execute()
 
-  def deploy(self, version_name, path, runtime_version='1.0'):
+  def deploy(self, version_name, path, runtime_version=None):
     """Deploy a model version to the cloud.
 
     Args:
       version_name: the name of the version in short form, such as "v1".
       path: the Google Cloud Storage path (gs://...) which contains the model files.
-      runtime_version: the runtime version as a string.
+      runtime_version: the ML Engine runtime version as a string, example '1.2'.
+          See https://cloud.google.com/ml-engine/docs/concepts/runtime-version-list
+          for a list of runtimes. If missing, the ML Engine service will pick one.
 
     Raises: Exception if the path is invalid or does not contain expected files.
             Exception if the service returns invalid response.
