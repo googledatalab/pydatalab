@@ -112,21 +112,21 @@ class ConfusionMatrix(object):
       cm[row['target']][row['predicted']] = row['count']
     return ConfusionMatrix(cm, labels)
 
-  def plot(self, figsize=None):
+  def plot(self, figsize=None, rotation=45):
     """Plot the confusion matrix.
 
     Args:
       figsize: tuple (x, y) of ints. Sets the size of the figure
+      rotation: the rotation angle of the labels on the x-axis.
     """
 
-    if figsize:
-      fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize)
 
-    plt.imshow(self._cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.imshow(self._cm, interpolation='nearest', cmap=plt.cm.Blues, aspect='auto')
     plt.title('Confusion matrix')
     plt.colorbar()
     tick_marks = np.arange(len(self._labels))
-    plt.xticks(tick_marks, self._labels, rotation=45)
+    plt.xticks(tick_marks, self._labels, rotation=rotation)
     plt.yticks(tick_marks, self._labels)
     if isinstance(self._cm, list):
       # If cm is created from BigQuery then it is a list.
