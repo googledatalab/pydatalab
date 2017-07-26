@@ -130,6 +130,9 @@ tasks:
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
+from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
+from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from datetime import datetime, timedelta
 
 default_args = {
@@ -178,6 +181,9 @@ tasks:
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
+from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
+from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from datetime import datetime, timedelta
 
 default_args = {

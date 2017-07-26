@@ -1,19 +1,23 @@
 import google.datalab.utils._coders
-import datetime
 
 from enum import Enum
 
 class AirflowOperator(Enum):
   BigQuery = 'bq'
+  BigQueryTableDelete = 'bq-table-delete'
+  BigQueryToBigQuery = 'bq-to-bq'
+  BigQueryToCloudStorage = 'bq-to-gcs'
   Bash = 'bash'
 
 class AirflowPipeline(object):
-  """A coder to encode and decode CloudML metadata."""
 
   _imports = """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
+from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
+from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from datetime import datetime, timedelta
 
 """
