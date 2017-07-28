@@ -23,6 +23,7 @@ setup(
   packages=[
     'google.datalab',
     'google.datalab.airflow',
+    'google.datalab.airflow.commands',
     'google.datalab.bigquery',
     'google.datalab.bigquery.commands',
     'google.datalab.commands',

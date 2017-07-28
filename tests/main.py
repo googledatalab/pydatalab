@@ -20,6 +20,7 @@ import unittest
 # from the parent folder and run "python tests/main.py"
 
 import airflow.airflow_tests
+import airflow.create_tests
 import context_tests
 import bigquery.api_tests
 import bigquery.dataset_tests
@@ -36,6 +37,7 @@ import kernel.bigquery_tests
 import kernel.chart_data_tests
 import kernel.chart_tests
 import kernel.html_tests
+import kernel.pipeline_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import ml.dataset_tests
@@ -69,6 +71,7 @@ import _util.util_tests
 
 _UNIT_TEST_MODULES = [
     airflow.airflow_tests,
+    airflow.create_tests,
     context_tests,
     bigquery.api_tests,
     bigquery.dataset_tests,
@@ -86,6 +89,7 @@ _UNIT_TEST_MODULES = [
     kernel.chart_data_tests,
     kernel.chart_tests,
     kernel.html_tests,
+    kernel.pipeline_tests,
     kernel.storage_tests,
     kernel.utils_tests,
     ml.dataset_tests,

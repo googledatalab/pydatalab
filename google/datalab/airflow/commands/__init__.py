@@ -13,6 +13,6 @@
 
 from __future__ import absolute_import
 
-from . import _deploy
+from . import _pipeline
 
-__all__ = ['_deploy.py']
+__all__ = ['_pipeline.py']
