@@ -15,13 +15,6 @@ from __future__ import unicode_literals
 import mock
 from oauth2client.client import AccessTokenCredentials
 import unittest
-import json
-import pandas
-from datetime import datetime
-try:
-  from StringIO import StringIO
-except ImportError:
-  from io import StringIO
 
 # import Python so we can mock the parts we need to here.
 import IPython
