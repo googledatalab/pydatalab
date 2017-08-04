@@ -22,7 +22,6 @@ class TestCases(unittest.TestCase):
 
   def test_create_pipeline(self):
     spec_str = """
-pipeline_id: test_dag
 email: foo@bar.com
 schedule:
   start_date: Jun 1 2005  1:33PM
@@ -61,7 +60,7 @@ default_args = {
     'retry_delay': timedelta(minutes=1),
 }
 
-dag = DAG(dag_id='test_dag', schedule_interval='@hourly', default_args=default_args)
+dag = DAG(dag_id='foo_pipeline', schedule_interval='@hourly', default_args=default_args)
 
 print_utc_date = BashOperator(task_id='print_utc_date_id', bash_command='date -u', dag=dag)
 print_pdt_date = BashOperator(task_id='print_pdt_date_id', bash_command='date', dag=dag)
@@ -72,7 +71,7 @@ print_utc_date.set_upstream(print_pdt_date)
   def _create_pipeline(spec_str=None, name=None, env=None):
     if env is None:
       env = {}
-    p = google.datalab.airflow.Pipeline(spec_str)
+    p = google.datalab.airflow.Pipeline(spec_str, name)
     if name:
       env[name] = p
     return p

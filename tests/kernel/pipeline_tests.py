@@ -56,7 +56,6 @@ class TestCases(unittest.TestCase):
 
     # test pipeline creation
     p_body = """
-pipeline_id: test_dag
 email: foo@bar.com
 schedule:
   start_date: Jun 1 2005  1:33PM
@@ -104,7 +103,7 @@ default_args = {
     'retry_delay': timedelta(minutes=1),
 }
 
-dag = DAG(dag_id='test_dag', schedule_interval='@hourly', default_args=default_args)
+dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 
 print_utc_date = BashOperator(task_id='print_utc_date_id', bash_command='date -u', dag=dag)
 print_pdt_date = BashOperator(task_id='print_pdt_date_id', bash_command='date', dag=dag)

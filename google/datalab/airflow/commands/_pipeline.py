@@ -40,7 +40,7 @@ def _create_cell(args, cell_body):
     cell_body: the contents of the cell
   """
   name = args['name']
-  pipeline = google.datalab.airflow.Pipeline(cell_body,
+  pipeline = google.datalab.airflow.Pipeline(cell_body, name,
                                              env=IPython.get_ipython().user_ns)
 
   if name is None:

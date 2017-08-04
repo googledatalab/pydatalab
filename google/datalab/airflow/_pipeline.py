@@ -34,9 +34,10 @@ from datetime import datetime, timedelta
     'retry_delay': timedelta(minutes=1),
 """
 
-  def __init__(self, spec_str, env=None):
+  def __init__(self, spec_str, name=None, env=None):
     self._spec_str = spec_str
     self._env = env or {}
+    self._name = name
 
   @property
   def spec(self):
@@ -56,12 +57,12 @@ from datetime import datetime, timedelta
                        dag_spec.get('schedule').get('datetime_format')) + '}\n\n'
 
     dag_definition = self._get_dag_definition(
-        dag_spec['pipeline_id'], dag_spec.get('schedule')['schedule_interval'])
+        self._name, dag_spec.get('schedule')['schedule_interval'])
 
     task_definitions = ''
     up_steam_statements = ''
     for task_id, task_details in dag_spec['tasks'].iteritems():
-      task_def = Pipeline._get_operator_definition(task_id, task_details)
+      task_def = self._get_operator_definition(task_id, task_details)
       task_definitions = task_definitions + task_def
       dependency_def = \
         Pipeline._get_dependency_definition(task_id,
@@ -81,8 +82,7 @@ from datetime import datetime, timedelta
     except ValueError:
       return google.datalab.utils._coders.YamlCoder().decode(content_string)
 
-  @staticmethod
-  def _get_operator_definition(task_id, task_details):
+  def _get_operator_definition(self, task_id, task_details):
     operator_type = task_details['type']
     param_string = 'task_id=\'{0}_id\''.format(task_id)
     Pipeline._add_default_params(task_details, operator_type)
@@ -98,8 +98,11 @@ from datetime import datetime, timedelta
         param_format_string = ', {0}=\'{1}\''
       operator_param_name = Pipeline._get_operator_param_name(param_name,
                                                               operator_type)
+      operator_param_value = self._get_operator_param_value(param_name,
+                                                                operator_type,
+                                                                param_value)
       param_string = param_string + param_format_string.format(
-          operator_param_name, param_value)
+          operator_param_name, operator_param_value)
 
     operator_classname = Pipeline._get_operator_classname(operator_type)
 
@@ -109,9 +112,9 @@ from datetime import datetime, timedelta
         param_string)
 
   @staticmethod
-  def _get_dag_definition(pipeline_id, schedule_interval):
+  def _get_dag_definition(name, schedule_interval):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
-                     'default_args=default_args)\n\n'.format(pipeline_id,
+                     'default_args=default_args)\n\n'.format(name,
                                                              schedule_interval)
     return dag_definition
 
@@ -141,6 +144,14 @@ from datetime import datetime, timedelta
         return 'bql'
     return param_name
 
+  def _get_operator_param_value(self, param_name, operator_type, param_value):
+    if (operator_type == 'bq'):
+      if (param_name in ['query', 'bql']):
+        bq_query = self._env.get(param_value)
+        if bq_query is not None:
+          return bq_query.sql
+    return param_value
+
   @staticmethod
   def _add_default_params(task_details, operator_type):
     if operator_type == 'bq':
@@ -156,9 +167,9 @@ from datetime import datetime, timedelta
           if param_name not in task_details:
             task_details[param_name] = param_value
 
+
   def execute_async(self, output_options=None, context=None, pipeline_params=None):
     """ Initiate the Airflow job and return an AirflowJob.
-
     Args:
       output_options: a QueryOutput object describing how to execute the query
       context: an optional Context object providing project_id and credentials. If a specific
@@ -251,7 +262,6 @@ from datetime import datetime, timedelta
 
   def execute(self, context=None):
     """ Copy python spec into GCS for Airflow to pick-up.
-
     Args:
       context: an optional Context object providing project_id and credentials. If a specific
           project id or credentials are unspecified, the default ones configured at the global

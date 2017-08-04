@@ -35,7 +35,7 @@ class PipelineTest(unittest.TestCase):
     task_details = {}
     task_details['type'] = 'bash'
     task_details['bash_command'] = 'date'
-    operator_def = airflow.Pipeline._get_operator_definition(task_id, task_details)
+    operator_def = airflow.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
         'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\'date\', dag=dag)\n')
@@ -45,11 +45,10 @@ class PipelineTest(unittest.TestCase):
     task_details = {}
     task_details['type'] = 'bq'
     task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
-    operator_def = airflow.Pipeline._get_operator_definition(task_id, task_details)
+    operator_def = airflow.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
         'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=False, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
-
 
   def test_get_bq_operator_definition_using_non_default_arg(self):
     task_id = 'query_wikipedia'
@@ -57,7 +56,7 @@ class PipelineTest(unittest.TestCase):
     task_details['type'] = 'bq'
     task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
     task_details['destination_dataset_table'] = True
-    operator_def = airflow.Pipeline._get_operator_definition(task_id, task_details)
+    operator_def = airflow.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
         'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=True, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
@@ -68,7 +67,7 @@ class PipelineTest(unittest.TestCase):
     task_details['type'] = 'Unknown'
     task_details['foo'] = 'bar'
     task_details['bar_typed'] = False
-    operator_def = airflow.Pipeline._get_operator_definition(task_id, task_details)
+    operator_def = airflow.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(operator_def,
                      'id = UnknownOperator(''task_id=\'id_id\', ' +
                      'foo=\'bar\', bar_typed=False, dag=dag)\n')
@@ -107,7 +106,6 @@ class PipelineTest(unittest.TestCase):
 
   def test_py_bq(self):
     dag_spec = """
-pipeline_id: demo_bq_dag_during_demo
 email: rajivpb@google.com
 schedule:
   start_date: Jun 21 2017  1:00AM
@@ -126,7 +124,7 @@ tasks:
     up_stream:
       - current_timestamp
 """
-    airflow_dag = airflow.Pipeline(dag_spec)
+    airflow_dag = airflow.Pipeline(dag_spec, 'demo_bq_dag_during_demo')
     expected_py = """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
