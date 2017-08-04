@@ -28,12 +28,12 @@ import google.datalab.utils.commands
 
 
 def _create_cell(args, cell_body):
-  """Implements the Pipeline cell magic used to build SQL objects.
+  """Implements the pipeline cell create magic used to create Pipeline objects.
 
   The supported syntax is:
 
       %%pipeline create <args>
-      [<inline SQL>]
+      [<inline YAML>]
 
   Args:
     args: the optional arguments following '%%pipeline create'.
@@ -44,12 +44,31 @@ def _create_cell(args, cell_body):
                                              env=IPython.get_ipython().user_ns)
 
   if name is None:
-    # TODO(rajivpb): If no name is specified, schedule the pipeline
+    # TODO(rajivpb): If no name is specified, load the pipeline
     pass
   else:
     google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
   # TODO(rajivpb): Temporarily, print spec. Eventually, print better stuff
+  return print(pipeline.py)
+
+
+def _load_line(args):
+  """Implements the pipeline load magic used to load pipelines in 
+  airflow.
+
+  The supported syntax is:
+
+      %%pipeline load <args>
+
+  Args:
+    args: the optional arguments following '%%pipeline load'.
+    cell_body: the contents of the cell
+  """
+  name = args['name']
+  pipeline = google.datalab.utils.commands.notebook_environment()[name]
+
+  # TODO(rajivpb): Temporarily, print. Eventually, copy to GCS
   return print(pipeline.py)
 
 
@@ -64,22 +83,34 @@ def _create_create_subparser(parser):
   return create_parser
 
 
-def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
+def _create_load_subparser(parser):
+  load_parser = parser.subcommand('load', 'Load a pipeline object for '
+                                              'scheduling.')
+  load_parser.add_argument('-n', '--name', help='The name of the pipeline '
+                                                  'object')
+
+  return load_parser
+
+
+def _add_command(
+    parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
   """ Create and initialize a pipeline subcommand handler. """
   sub_parser = subparser_fn(parser)
-  sub_parser.set_defaults(func=lambda args, cell: _dispatch_handler(args, cell, sub_parser, handler,
-                                                                    cell_required=cell_required, cell_prohibited=cell_prohibited))
+  sub_parser.set_defaults(func=lambda args, cell: _dispatch_handler(
+      args, cell, sub_parser, handler, cell_required=cell_required,
+      cell_prohibited=cell_prohibited))
 
 
 def _create_pipeline_parser():
   """ Create the parser for the %pipeline magics.
 
-  Note that because we use the func default handler dispatch mechanism of argparse,
-  our handlers can take only one argument which is the parsed args. So we must create closures
-  for the handlers that bind the cell contents and thus must recreate this parser for each
-  cell upon execution.
+  Note that because we use the func default handler dispatch mechanism of 
+  argparse, our handlers can take only one argument which is the parsed args. So
+  we must create closures for the handlers that bind the cell contents and thus
+  must recreate this parser for each cell upon execution.
   """
-  parser = google.datalab.utils.commands.CommandParser(prog='%pipeline', description="""
+  parser = google.datalab.utils.commands.CommandParser(
+      prog='%pipeline', description="""
 Execute various pipeline-related operations. Use "%pipeline <command> -h"
 for help on a specific command.
   """)
@@ -87,8 +118,9 @@ for help on a specific command.
   # %%pipeline create
   _add_command(parser, _create_create_subparser, _create_cell)
 
-  # %pipeline schedule
-  # _add_command(parser, _create_load_subparser, _load_line, cell_prohibited=True)
+  # %pipeline load
+  _add_command(parser, _create_load_subparser, _load_line,
+               cell_prohibited=True)
 
   return parser
 
@@ -112,9 +144,11 @@ def pipeline(line, cell=None):
   Use %pipeline --help for a list of commands, or %pipeline <command> --help for
   help on a specific command.
   """
-  return google.datalab.utils.commands.handle_magic_line(line, cell, _pipeline_parser)
+  return google.datalab.utils.commands.handle_magic_line(line, cell,
+                                                         _pipeline_parser)
 
-def _dispatch_handler(args, cell, parser, handler, cell_required=False, cell_prohibited=False):
+def _dispatch_handler(
+    args, cell, parser, handler, cell_required=False, cell_prohibited=False):
   """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
 
   Args:
