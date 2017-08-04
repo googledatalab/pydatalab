@@ -43,20 +43,24 @@ def _create_cell(args, cell_body):
   pipeline = google.datalab.airflow.Pipeline(cell_body,
                                              env=IPython.get_ipython().user_ns)
 
-  # TODO(rajivpb): If no name is specified, execute the pipeline instead of defining it
   if name is None:
-    return pipeline.execute().result()
+    # TODO(rajivpb): If no name is specified, schedule the pipeline
+    pass
   else:
     google.datalab.utils.commands.notebook_environment()[name] = pipeline
+
+  # TODO(rajivpb): Temporarily, print spec. Eventually, print better stuff
+  return print(pipeline.py)
 
 
 def _create_create_subparser(parser):
   create_parser = parser.subcommand('create', 'Create and/or execute a '
-                                              'Pipeline object, If a query '
+                                              'Pipeline object. If a pipeline '
                                               'name is not specified, the '
-                                              'query is executed.')
+                                              'pipeline is scheduled.')
   create_parser.add_argument('-n', '--name', help='The name of this Pipeline '
                                                   'object')
+
   return create_parser
 
 
@@ -83,7 +87,7 @@ for help on a specific command.
   # %%pipeline create
   _add_command(parser, _create_create_subparser, _create_cell)
 
-  # %pipeline load
+  # %pipeline schedule
   # _add_command(parser, _create_load_subparser, _load_line, cell_prohibited=True)
 
   return parser
@@ -137,3 +141,22 @@ def _dispatch_handler(args, cell, parser, handler, cell_required=False, cell_pro
 
   return handler(args, cell)
 
+
+
+def _repr_html_pipeline(pipeline):
+  return google.datalab.utils.commands.HtmlBuilder.render_text(pipeline.py, preformatted=True)
+
+
+def _register_html_formatters():
+  try:
+    ipy = IPython.get_ipython()
+    html_formatter = ipy.display_formatter.formatters['text/html']
+
+    html_formatter.for_type_by_name('google.datalab.airflow._pipeline', 'Pipeline', _repr_html_pipeline)
+
+  except TypeError:
+    # For when running unit tests
+    pass
+
+
+_register_html_formatters()
