@@ -19,8 +19,8 @@ import unittest
 # For these tests to work locally, install the package with "pip install -e ."
 # from the parent folder and run "python tests/main.py"
 
-import airflow.airflow_tests
-import airflow.create_tests
+import pipeline.pipeline_tests
+import pipeline.create_tests
 import context_tests
 import bigquery.api_tests
 import bigquery.dataset_tests
@@ -70,8 +70,6 @@ import _util.util_tests
 
 
 _UNIT_TEST_MODULES = [
-    airflow.airflow_tests,
-    airflow.create_tests,
     context_tests,
     bigquery.api_tests,
     bigquery.dataset_tests,
@@ -96,6 +94,8 @@ _UNIT_TEST_MODULES = [
     ml.facets_tests,
     ml.summary_tests,
     mlworkbench_magic.ml_tests,
+    pipeline.create_tests,
+    pipeline.pipeline_tests,
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,
     stackdriver.monitoring.metric_tests,

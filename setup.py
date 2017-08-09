@@ -22,8 +22,6 @@ setup(
   namespace_packages=['google', 'datalab'],
   packages=[
     'google.datalab',
-    'google.datalab.airflow',
-    'google.datalab.airflow.commands',
     'google.datalab.bigquery',
     'google.datalab.bigquery.commands',
     'google.datalab.commands',
@@ -31,6 +29,8 @@ setup(
     'google.datalab.kernel',
     'google.datalab.ml',
     'google.datalab.notebook',
+    'google.datalab.pipeline',
+    'google.datalab.pipeline.commands',
     'google.datalab.stackdriver',
     'google.datalab.stackdriver.commands',
     'google.datalab.stackdriver.monitoring',

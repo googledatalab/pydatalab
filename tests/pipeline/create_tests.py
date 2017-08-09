@@ -15,7 +15,7 @@ from __future__ import unicode_literals
 import unittest
 
 import google.datalab
-import google.datalab.airflow
+import google.datalab.pipeline
 
 
 class TestCases(unittest.TestCase):
@@ -71,7 +71,7 @@ print_utc_date.set_upstream(print_pdt_date)
   def _create_pipeline(spec_str=None, name=None, env=None):
     if env is None:
       env = {}
-    p = google.datalab.airflow.Pipeline(spec_str, name)
+    p = google.datalab.pipeline.Pipeline(spec_str, name)
     if name:
       env[name] = p
     return p

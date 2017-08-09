@@ -98,9 +98,9 @@ from datetime import datetime, timedelta
         param_format_string = ', {0}=\'{1}\''
       operator_param_name = Pipeline._get_operator_param_name(param_name,
                                                               operator_type)
-      operator_param_value = self._get_operator_param_value(param_name,
-                                                                operator_type,
-                                                                param_value)
+      operator_param_value = param_value
+      #operator_param_value = self._get_operator_param_value(
+      #    param_name, operator_type, param_value)
       param_string = param_string + param_format_string.format(
           operator_param_name, operator_param_value)
 

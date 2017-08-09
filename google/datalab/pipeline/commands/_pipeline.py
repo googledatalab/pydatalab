@@ -40,7 +40,7 @@ def _create_cell(args, cell_body):
     cell_body: the contents of the cell
   """
   name = args['name']
-  pipeline = google.datalab.airflow.Pipeline(
+  pipeline = google.datalab.pipeline.Pipeline(
       cell_body, name, env=IPython.get_ipython().user_ns)
 
   if name is None:
@@ -192,7 +192,7 @@ def _register_html_formatters():
     html_formatter = ipy.display_formatter.formatters['text/html']
 
     html_formatter.for_type_by_name(
-        'google.datalab.airflow._pipeline', 'Pipeline', _repr_html_pipeline)
+        'google.datalab.pipeline._pipeline', 'Pipeline', _repr_html_pipeline)
 
   except TypeError:
     # For when running unit tests

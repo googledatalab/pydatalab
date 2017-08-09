@@ -32,8 +32,9 @@ IPython.get_ipython = mock.Mock()
 
 
 import google.datalab  # noqa
-import google.datalab.airflow  # noqa
-import google.datalab.airflow.commands  # noqa
+import google.datalab.pipeline  # noqa
+import google.datalab.pipeline.commands  # noqa
+from google.datalab.bigquery import Query
 import google.datalab.utils.commands  # noqa
 
 
@@ -45,7 +46,7 @@ class TestCases(unittest.TestCase):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return google.datalab.Context(project_id, creds)
 
-  @mock.patch('google.datalab.airflow.Pipeline.py', new_callable=mock.PropertyMock)
+  @mock.patch('google.datalab.pipeline.Pipeline.py', new_callable=mock.PropertyMock)
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
   def test_create_cell_no_name(
@@ -75,8 +76,8 @@ tasks:
 """
 
     # no pipeline name specified. should execute
-    google.datalab.airflow.commands._pipeline._create_cell({'name': None},
-                                                           p_body)
+    google.datalab.pipeline.commands._pipeline._create_cell({'name': None},
+                                                            p_body)
     mock_create_py.assert_called_with()
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
@@ -107,8 +108,8 @@ tasks:
       - print_pdt_date
 """
     # test pipeline creation
-    google.datalab.airflow.commands._pipeline._create_cell({'name': 'p1'},
-                                                           p_body)
+    google.datalab.pipeline.commands._pipeline._create_cell({'name': 'p1'},
+                                                            p_body)
 
     p1 = env['p1']
     self.assertIsNotNone(p1)
@@ -139,4 +140,62 @@ dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 print_utc_date = BashOperator(task_id='print_utc_date_id', bash_command='date -u', dag=dag)
 print_pdt_date = BashOperator(task_id='print_pdt_date_id', bash_command='date', dag=dag)
 print_utc_date.set_upstream(print_pdt_date)
+""")
+
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.Context.default')
+  def test_create_cell_with_variable(
+      self, mock_default_context, mock_notebook_environment):
+    mock_default_context.return_value = TestCases._create_context()
+    env = {}
+    env['foo_query'] = 2#Query('SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
+    mock_notebook_environment.return_value = env
+    #TODO(rajivpb): Possibly not necessary
+    IPython.get_ipython().user_ns = env
+
+    # test pipeline creation
+    p_body = """
+email: foo@bar.com
+schedule:
+  start_date: Jun 1 2005  1:33PM
+  end_date: Jun 10 2005  1:33PM
+  datetime_format: '%b %d %Y %I:%M%p'
+  schedule_interval: '@hourly'
+tasks:
+  print_pdt_date:
+    type: bq
+    query: $foo_query
+"""
+
+    # no pipeline name specified. should execute
+    google.datalab.pipeline.commands._pipeline._create_cell({'name': 'p1'},
+                                                            p_body)
+
+    p1 = env['p1']
+    self.assertIsNotNone(p1)
+    self.assertEqual(p_body, p1.spec)
+    self.assertEqual(p1.py, """
+from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
+from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
+from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
+from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
+from datetime import datetime, timedelta
+
+default_args = {
+    'owner': 'Datalab',
+    'depends_on_past': False,
+    'email': ['foo@bar.com'],
+    'start_date': datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p'),
+    'end_date': datetime.strptime('Jun 10 2005  1:33PM', '%b %d %Y %I:%M%p'),
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=1),
+}
+
+dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
+
+print_pdt_date = BigQueryOperator(task_id='print_pdt_date_id', delegate_to=None, udf_config=False, write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bql='$foo_query', bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
 """)
