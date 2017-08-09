@@ -13,17 +13,17 @@
 # limitations under the License.
 
 
+import collections
 import datetime
 import fnmatch
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-import sys
+import six
+import tensorflow as tf
 
 from tensorflow.core.util import event_pb2
 from tensorflow.python.lib.io import tf_record
-
-from . import _util
 
 
 class Summary(object):
@@ -31,28 +31,32 @@ class Summary(object):
 
   def __init__(self, paths):
     """Initializes an instance of a Summary.
-
     Args:
-      path: a list of paths to directories which hold TensorFlow events files.
+      path: a path or a list of paths to directories which hold TensorFlow events files.
             Can be local path or GCS paths. Wild cards allowed.
     """
 
-    if sys.version_info.major > 2:
-      self._paths = [paths] if isinstance(paths, str) else paths
-    else:
-      self._paths = [paths] if isinstance(paths, basestring) else paths
+    if isinstance(paths, six.string_types):
+      self._paths = [paths]
 
-  def _glob_events_files(self, paths):
+  def _glob_events_files(self, paths, recursive):
+    """Find all tf events files under a list of paths recursively. """
+
     event_files = []
     for path in paths:
-      if path.startswith('gs://'):
-        event_files += _util.glob_files(os.path.join(path, '*.tfevents.*'))
-      else:
-        dirs = _util.glob_files(path)
-        for dir in dirs:
-          for root, _, filenames in os.walk(dir):
-            for filename in fnmatch.filter(filenames, '*.tfevents.*'):
-              event_files.append(os.path.join(root, filename))
+      dirs = tf.gfile.Glob(path)
+      dirs = filter(lambda x: tf.gfile.IsDirectory(x), dirs)
+      for dir in dirs:
+        if recursive:
+          dir_files_pair = [(root, filenames) for root, _, filenames in tf.gfile.Walk(dir)]
+        else:
+          dir_files_pair = [(dir, tf.gfile.ListDirectory(dir))]
+
+        for root, filenames in dir_files_pair:
+          file_names = fnmatch.filter(filenames, '*.tfevents.*')
+          file_paths = [os.path.join(root, x) for x in file_names]
+          file_paths = filter(lambda x: not tf.gfile.IsDirectory(x), file_paths)
+          event_files += file_paths
     return event_files
 
   def list_events(self):
@@ -61,103 +65,81 @@ class Summary(object):
     Returns:
       A dictionary. Key is the name of a event. Value is a set of dirs that contain that event.
     """
-    event_dir_dict = {}
-    for event_file in self._glob_events_files(self._paths):
+    event_dir_dict = collections.defaultdict(set)
+    for event_file in self._glob_events_files(self._paths, recursive=True):
       dir = os.path.dirname(event_file)
-      try:
-        for record in tf_record.tf_record_iterator(event_file):
-          event = event_pb2.Event.FromString(record)
-          if event.summary is None or event.summary.value is None:
+      for record in tf_record.tf_record_iterator(event_file):
+        event = event_pb2.Event.FromString(record)
+        if event.summary is None or event.summary.value is None:
+          continue
+        for value in event.summary.value:
+          if value.simple_value is None or value.tag is None:
             continue
-          for value in event.summary.value:
-            if value.simple_value is None or value.tag is None:
-              continue
-            if value.tag not in event_dir_dict:
-              event_dir_dict[value.tag] = set()
-            event_dir_dict[value.tag].add(dir)
-      except:
-        # It seems current TF (1.0) has a bug when iterating events from a file near the end.
-        # For now just catch and pass.
-        # print('Error in iterating events from file ' + event_file)
-        continue
-    return event_dir_dict
+          event_dir_dict[value.tag].add(dir)
+    return dict(event_dir_dict)
 
   def get_events(self, event_names):
     """Get all events as pandas DataFrames given a list of names.
-
     Args:
       event_names: A list of events to get.
-
     Returns:
-      A list with the same length as event_names. Each element is a dictionary
+      A list with the same length and order as event_names. Each element is a dictionary
           {dir1: DataFrame1, dir2: DataFrame2, ...}.
           Multiple directories may contain events with the same name, but they are different
           events (i.e. 'loss' under trains_set/, and 'loss' under eval_set/.)
     """
 
-    if ((sys.version_info.major > 2 and isinstance(event_names, str)) or
-       (sys.version_info.major <= 2 and isinstance(event_names, basestring))):
+    if isinstance(event_names, six.string_types):
       event_names = [event_names]
 
     all_events = self.list_events()
     dirs_to_look = set()
-    for event, dirs in all_events.iteritems():
+    for event, dirs in six.iteritems(all_events):
       if event in event_names:
         dirs_to_look.update(dirs)
 
-    ret_events = [dict() for i in range(len(event_names))]
-    for dir in dirs_to_look:
-      for event_file in self._glob_events_files([dir]):
-        try:
-          for record in tf_record.tf_record_iterator(event_file):
-            event = event_pb2.Event.FromString(record)
-            if event.summary is None or event.wall_time is None or event.summary.value is None:
-              continue
-
-            event_time = datetime.datetime.fromtimestamp(event.wall_time)
-            for value in event.summary.value:
-              if value.tag not in event_names or value.simple_value is None:
-                continue
-
-              index = event_names.index(value.tag)
-              dir_event_dict = ret_events[index]
-              if dir not in dir_event_dict:
-                dir_event_dict[dir] = pd.DataFrame(
-                    [[event_time, event.step, value.simple_value]],
-                    columns=['time', 'step', 'value'])
-              else:
-                df = dir_event_dict[dir]
-                # Append a row.
-                df.loc[len(df)] = [event_time, event.step, value.simple_value]
-        except:
-          # It seems current TF (1.0) has a bug when iterating events from a file near the end.
-          # For now just catch and pass.
-          # print('Error in iterating events from file ' + event_file)
+    ret_events = [collections.defaultdict(lambda: pd.DataFrame(columns=['time', 'step', 'value']))
+                  for i in range(len(event_names))]
+    for event_file in self._glob_events_files(dirs_to_look, recursive=False):
+      for record in tf_record.tf_record_iterator(event_file):
+        event = event_pb2.Event.FromString(record)
+        if event.summary is None or event.wall_time is None or event.summary.value is None:
           continue
 
-    for dir_event_dict in ret_events:
+        event_time = datetime.datetime.fromtimestamp(event.wall_time)
+        for value in event.summary.value:
+          if value.tag not in event_names or value.simple_value is None:
+            continue
+
+          index = event_names.index(value.tag)
+          dir_event_dict = ret_events[index]
+          dir = os.path.dirname(event_file)
+          # Append a row.
+          df = dir_event_dict[dir]
+          df.loc[len(df)] = [event_time, event.step, value.simple_value]
+
+    for idx, dir_event_dict in enumerate(ret_events):
       for df in dir_event_dict.values():
         df.sort_values(by=['time'], inplace=True)
+      ret_events[idx] = dict(dir_event_dict)
 
     return ret_events
 
   def plot(self, event_names, x_axis='step'):
     """Plots a list of events. Each event (a dir+event_name) is represetented as a line
        in the graph.
-
     Args:
       event_names: A list of events to plot. Each event_name may correspond to multiple events,
           each in a different directory.
       x_axis: whether to use step or time as x axis.
     """
 
-    if ((sys.version_info.major > 2 and isinstance(event_names, str)) or
-       (sys.version_info.major <= 2 and isinstance(event_names, basestring))):
+    if isinstance(event_names, six.string_types):
       event_names = [event_names]
 
     events_list = self.get_events(event_names)
     for event_name, dir_event_dict in zip(event_names, events_list):
-      for dir, df in dir_event_dict.iteritems():
+      for dir, df in six.iteritems(dir_event_dict):
         label = event_name + ':' + dir
         x_column = df['step'] if x_axis == 'step' else df['time']
         plt.plot(x_column, df['value'], label=label)
