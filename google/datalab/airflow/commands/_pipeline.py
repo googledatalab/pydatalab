@@ -20,7 +20,7 @@ try:
   import IPython.core.display
   import IPython.core.magic
 except ImportError:
-  raise Exception('This module can only be loaded in ipython.')
+  raise Exception('This module can only be deployed in ipython.')
 
 import google.datalab.data
 import google.datalab.utils
@@ -40,11 +40,11 @@ def _create_cell(args, cell_body):
     cell_body: the contents of the cell
   """
   name = args['name']
-  pipeline = google.datalab.airflow.Pipeline(cell_body, name,
-                                             env=IPython.get_ipython().user_ns)
+  pipeline = google.datalab.airflow.Pipeline(
+      cell_body, name, env=IPython.get_ipython().user_ns)
 
   if name is None:
-    # TODO(rajivpb): If no name is specified, load the pipeline
+    # TODO(rajivpb): If no name is specified, deploy the pipeline
     pass
   else:
     google.datalab.utils.commands.notebook_environment()[name] = pipeline
@@ -53,16 +53,16 @@ def _create_cell(args, cell_body):
   return print(pipeline.py)
 
 
-def _load_line(args):
-  """Implements the pipeline load magic used to load pipelines in 
+def _deploy_line(args):
+  """Implements the pipeline deploy magic used to deploy pipelines in 
   airflow.
 
   The supported syntax is:
 
-      %%pipeline load <args>
+      %%pipeline deploy <args>
 
   Args:
-    args: the optional arguments following '%%pipeline load'.
+    args: the optional arguments following '%%pipeline deploy'.
     cell_body: the contents of the cell
   """
   name = args['name']
@@ -83,13 +83,13 @@ def _create_create_subparser(parser):
   return create_parser
 
 
-def _create_load_subparser(parser):
-  load_parser = parser.subcommand('load', 'Load a pipeline object for '
+def _create_deploy_subparser(parser):
+  deploy_parser = parser.subcommand('deploy', 'Load a pipeline object for '
                                               'scheduling.')
-  load_parser.add_argument('-n', '--name', help='The name of the pipeline '
+  deploy_parser.add_argument('-n', '--name', help='The name of the pipeline '
                                                   'object')
 
-  return load_parser
+  return deploy_parser
 
 
 def _add_command(
@@ -118,8 +118,8 @@ for help on a specific command.
   # %%pipeline create
   _add_command(parser, _create_create_subparser, _create_cell)
 
-  # %pipeline load
-  _add_command(parser, _create_load_subparser, _load_line,
+  # %pipeline deploy
+  _add_command(parser, _create_deploy_subparser, _deploy_line,
                cell_prohibited=True)
 
   return parser
@@ -149,15 +149,18 @@ def pipeline(line, cell=None):
 
 def _dispatch_handler(
     args, cell, parser, handler, cell_required=False, cell_prohibited=False):
-  """ Makes sure cell magics include cell and line magics don't, before dispatching to handler.
+  """ Makes sure cell magics include cell and line magics don't, before 
+    dispatching to handler.
 
   Args:
     args: the parsed arguments from the magic line.
     cell: the contents of the cell, if any.
     parser: the argument parser for <cmd>; used for error message.
     handler: the handler to call if the cell present/absent check passes.
-    cell_required: True for cell magics, False for line magics that can't be cell magics.
-    cell_prohibited: True for line magics, False for cell magics that can't be line magics.
+    cell_required: True for cell magics, False for line magics that can't be 
+    cell magics.
+    cell_prohibited: True for line magics, False for cell magics that can't be 
+    line magics.
   Returns:
     The result of calling the handler.
   Raises:
@@ -166,7 +169,8 @@ def _dispatch_handler(
   if cell_prohibited:
     if cell and len(cell.strip()):
       parser.print_help()
-      raise Exception('Additional data is not supported with the %s command.' % parser.prog)
+      raise Exception(
+          'Additional data is not supported with the %s command.' % parser.prog)
     return handler(args)
 
   if cell_required and not cell:
@@ -178,7 +182,8 @@ def _dispatch_handler(
 
 
 def _repr_html_pipeline(pipeline):
-  return google.datalab.utils.commands.HtmlBuilder.render_text(pipeline.py, preformatted=True)
+  return google.datalab.utils.commands.HtmlBuilder.render_text(
+      pipeline.py, preformatted=True)
 
 
 def _register_html_formatters():
@@ -186,7 +191,8 @@ def _register_html_formatters():
     ipy = IPython.get_ipython()
     html_formatter = ipy.display_formatter.formatters['text/html']
 
-    html_formatter.for_type_by_name('google.datalab.airflow._pipeline', 'Pipeline', _repr_html_pipeline)
+    html_formatter.for_type_by_name(
+        'google.datalab.airflow._pipeline', 'Pipeline', _repr_html_pipeline)
 
   except TypeError:
     # For when running unit tests

@@ -45,10 +45,11 @@ class TestCases(unittest.TestCase):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return google.datalab.Context(project_id, creds)
 
-  @mock.patch('google.datalab.airflow.Pipeline.execute')
+  @mock.patch('google.datalab.airflow.Pipeline.py', new_callable=mock.PropertyMock)
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_create_cell(self, mock_default_context, mock_notebook_environment, mock_create_execute):
+  def test_create_cell_no_name(
+      self, mock_default_context, mock_notebook_environment, mock_create_py):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
@@ -74,15 +75,45 @@ tasks:
 """
 
     # no pipeline name specified. should execute
-    google.datalab.airflow.commands._pipeline._create_cell({'name': None}, p_body)
-    mock_create_execute.assert_called_with()
+    google.datalab.airflow.commands._pipeline._create_cell({'name': None},
+                                                           p_body)
+    mock_create_py.assert_called_with()
+
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.Context.default')
+  def test_create_cell_with_name(
+      self, mock_default_context, mock_notebook_environment):
+    env = {}
+    mock_default_context.return_value = TestCases._create_context()
+    mock_notebook_environment.return_value = env
+    IPython.get_ipython().user_ns = env
 
     # test pipeline creation
-    google.datalab.airflow.commands._pipeline._create_cell({'name': 'p1'}, p_body)
+    p_body = """
+email: foo@bar.com
+schedule:
+  start_date: Jun 1 2005  1:33PM
+  end_date: Jun 10 2005  1:33PM
+  datetime_format: '%b %d %Y %I:%M%p'
+  schedule_interval: '@hourly'
+tasks:
+  print_pdt_date:
+    type: bash
+    bash_command: date
+  print_utc_date:
+    type: bash
+    bash_command: date -u
+    up_stream:
+      - print_pdt_date
+"""
+    # test pipeline creation
+    google.datalab.airflow.commands._pipeline._create_cell({'name': 'p1'},
+                                                           p_body)
+
     p1 = env['p1']
     self.assertIsNotNone(p1)
     self.assertEqual(p_body, p1.spec)
-    self.assertEqual("""
+    self.assertEqual(p1.py, """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
@@ -108,4 +139,4 @@ dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 print_utc_date = BashOperator(task_id='print_utc_date_id', bash_command='date -u', dag=dag)
 print_pdt_date = BashOperator(task_id='print_pdt_date_id', bash_command='date', dag=dag)
 print_utc_date.set_upstream(print_pdt_date)
-""", p1.py)
+""")
