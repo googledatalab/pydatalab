@@ -18,7 +18,7 @@ from __future__ import unicode_literals
 import unittest
 
 import google.datalab.pipeline as pipeline
-
+import google.datalab.bigquery
 
 class PipelineTest(unittest.TestCase):
 
@@ -44,7 +44,8 @@ class PipelineTest(unittest.TestCase):
     task_id = 'query_wikipedia'
     task_details = {}
     task_details['type'] = 'bq'
-    task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
+    task_details['query'] = google.datalab.bigquery.Query(
+        'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
@@ -54,7 +55,8 @@ class PipelineTest(unittest.TestCase):
     task_id = 'query_wikipedia'
     task_details = {}
     task_details['type'] = 'bq'
-    task_details['query'] = 'SELECT * FROM publicdata.samples.wikipedia LIMIT 5'
+    task_details['query'] = google.datalab.bigquery.Query(
+        'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
     task_details['destination_dataset_table'] = True
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
@@ -105,6 +107,9 @@ class PipelineTest(unittest.TestCase):
 """)
 
   def test_py_bq(self):
+    env = {}
+    env['foo_query'] = google.datalab.bigquery.Query(
+      'INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())')
     dag_spec = """
 email: rajivpb@google.com
 schedule:
@@ -115,16 +120,16 @@ schedule:
 tasks:
   current_timestamp:
     type: bq
-    bql: INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())
+    bql: $foo_query
     use_legacy_sql: False
   tomorrows_timestamp:
     type: bq
-    bql: INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())
+    bql: $foo_query
     use_legacy_sql: False
     up_stream:
       - current_timestamp
 """
-    airflow_dag = pipeline.Pipeline(dag_spec, 'demo_bq_dag_during_demo')
+    airflow_dag = pipeline.Pipeline(dag_spec, 'demo_bq_dag_during_demo', env)
     expected_py = """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator

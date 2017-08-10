@@ -36,18 +36,16 @@ def _create_cell(args, cell_body):
       [<inline YAML>]
 
   Args:
-    args: the optional arguments following '%%pipeline create'.
+    args: the arguments following '%%pipeline create'.
     cell_body: the contents of the cell
   """
-  name = args['name']
-  pipeline = google.datalab.pipeline.Pipeline(
-      cell_body, name, env=IPython.get_ipython().user_ns)
-
+  name = args.get('name')
   if name is None:
-    # TODO(rajivpb): If no name is specified, deploy the pipeline
-    pass
-  else:
-    google.datalab.utils.commands.notebook_environment()[name] = pipeline
+    raise Exception("Pipeline name was not specified.")
+
+  pipeline = google.datalab.pipeline.Pipeline(cell_body, name,
+                                              env=IPython.get_ipython().user_ns)
+  google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
   # TODO(rajivpb): Temporarily, print spec. Eventually, print better stuff
   return print(pipeline.py)

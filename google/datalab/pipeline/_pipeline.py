@@ -1,5 +1,16 @@
-import google.datalab.utils._coders
+# Copyright 2015 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+# in compliance with the License. You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+# is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+# or implied. See the License for the specific language governing permissions and limitations under
+# the License.
 
+from google.datalab import utils
 from enum import Enum
 
 class Operator(Enum):
@@ -34,7 +45,7 @@ from datetime import datetime, timedelta
     'retry_delay': timedelta(minutes=1),
 """
 
-  def __init__(self, spec_str, name=None, env=None):
+  def __init__(self, spec_str, name, env=None):
     self._spec_str = spec_str
     self._env = env or {}
     self._name = name
@@ -48,7 +59,8 @@ from datetime import datetime, timedelta
     if not self._spec_str:
       return None
 
-    dag_spec = self._decode(self._spec_str)
+    dag_spec = utils.commands.parse_config(
+        self._spec_str, self._env)
     default_args = 'default_args = {' + \
                    Pipeline._default_args_format.format(
                        dag_spec['email'],
@@ -75,13 +87,6 @@ from datetime import datetime, timedelta
            task_definitions + \
            up_steam_statements
 
-  @staticmethod
-  def _decode(content_string):
-    try:
-      return google.datalab.utils._coders.JsonCoder().decode(content_string)
-    except ValueError:
-      return google.datalab.utils._coders.YamlCoder().decode(content_string)
-
   def _get_operator_definition(self, task_id, task_details):
     operator_type = task_details['type']
     param_string = 'task_id=\'{0}_id\''.format(task_id)
@@ -99,8 +104,8 @@ from datetime import datetime, timedelta
       operator_param_name = Pipeline._get_operator_param_name(param_name,
                                                               operator_type)
       operator_param_value = param_value
-      #operator_param_value = self._get_operator_param_value(
-      #    param_name, operator_type, param_value)
+      operator_param_value = self._get_operator_param_value(
+          param_name, operator_type, param_value)
       param_string = param_string + param_format_string.format(
           operator_param_name, operator_param_value)
 
@@ -145,11 +150,8 @@ from datetime import datetime, timedelta
     return param_name
 
   def _get_operator_param_value(self, param_name, operator_type, param_value):
-    if (operator_type == 'bq'):
-      if (param_name in ['query', 'bql']):
-        bq_query = self._env.get(param_value)
-        if bq_query is not None:
-          return bq_query.sql
+    if (operator_type == 'bq') and (param_name in ['query', 'bql']):
+        return param_value.sql
     return param_value
 
   @staticmethod

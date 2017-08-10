@@ -31,10 +31,9 @@ IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
 
-import google.datalab  # noqa
+import google.datalab.bigquery
 import google.datalab.pipeline  # noqa
 import google.datalab.pipeline.commands  # noqa
-from google.datalab.bigquery import Query
 import google.datalab.utils.commands  # noqa
 
 
@@ -76,9 +75,9 @@ tasks:
 """
 
     # no pipeline name specified. should execute
-    google.datalab.pipeline.commands._pipeline._create_cell({'name': None},
-                                                            p_body)
-    mock_create_py.assert_called_with()
+    with self.assertRaises(Exception):
+      google.datalab.pipeline.commands._pipeline._create_cell({'name': None},
+                                                              p_body)
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
@@ -148,7 +147,8 @@ print_utc_date.set_upstream(print_pdt_date)
       self, mock_default_context, mock_notebook_environment):
     mock_default_context.return_value = TestCases._create_context()
     env = {}
-    env['foo_query'] = 2#Query('SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
+    env['foo_query'] = google.datalab.bigquery.Query(
+        'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
     mock_notebook_environment.return_value = env
     #TODO(rajivpb): Possibly not necessary
     IPython.get_ipython().user_ns = env
@@ -197,5 +197,5 @@ default_args = {
 
 dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 
-print_pdt_date = BigQueryOperator(task_id='print_pdt_date_id', delegate_to=None, udf_config=False, write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bql='$foo_query', bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
+print_pdt_date = BigQueryOperator(task_id='print_pdt_date_id', delegate_to=None, udf_config=False, write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
 """)
