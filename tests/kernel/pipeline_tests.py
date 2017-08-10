@@ -197,5 +197,5 @@ default_args = {
 
 dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 
-print_pdt_date = BigQueryOperator(task_id='print_pdt_date_id', delegate_to=None, udf_config=False, write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
+print_pdt_date = BigQueryOperator(task_id='print_pdt_date_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)
 """)

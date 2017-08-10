@@ -49,7 +49,7 @@ class PipelineTest(unittest.TestCase):
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
-        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=False, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
+        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', use_legacy_sql=False, dag=dag)\n')
 
   def test_get_bq_operator_definition_using_non_default_arg(self):
     task_id = 'query_wikipedia'
@@ -61,7 +61,7 @@ class PipelineTest(unittest.TestCase):
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
-        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', delegate_to=None, udf_config=False, write_disposition=\'WRITE_EMPTY\', use_legacy_sql=False, destination_dataset_table=True, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', bigquery_conn_id=\'bigquery_default\', allow_large_results=False, dag=dag)\n')
+        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', use_legacy_sql=False, destination_dataset_table=True, dag=dag)\n')
 
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
@@ -153,8 +153,8 @@ default_args = {
 
 dag = DAG(dag_id='demo_bq_dag_during_demo', schedule_interval='0-59 * * * *', default_args=default_args)
 
-current_timestamp = BigQueryOperator(task_id='current_timestamp_id', delegate_to=None, udf_config=False, bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
-tomorrows_timestamp = BigQueryOperator(task_id='tomorrows_timestamp_id', delegate_to=None, udf_config=False, bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', write_disposition='WRITE_EMPTY', use_legacy_sql=False, destination_dataset_table=False, bigquery_conn_id='bigquery_default', allow_large_results=False, dag=dag)
+current_timestamp = BigQueryOperator(task_id='current_timestamp_id', bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', use_legacy_sql=False, dag=dag)
+tomorrows_timestamp = BigQueryOperator(task_id='tomorrows_timestamp_id', bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', use_legacy_sql=False, dag=dag)
 tomorrows_timestamp.set_upstream(current_timestamp)
 """
     self.assertEqual(airflow_dag.py, expected_py)

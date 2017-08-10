@@ -90,22 +90,17 @@ from datetime import datetime, timedelta
   def _get_operator_definition(self, task_id, task_details):
     operator_type = task_details['type']
     param_string = 'task_id=\'{0}_id\''.format(task_id)
-    Pipeline._add_default_params(task_details, operator_type)
+    Pipeline._add_default_override_params(task_details, operator_type)
 
     for param_name, param_value in task_details.iteritems():
       # These are special-types that are relevant to Datalab
       if param_name in  ['type', 'up_stream']:
         continue
-      # If the type is a python non-string (best guess), we don't quote it.
-      if type(param_value) in [int, bool, float, type(None)]:
-        param_format_string = ', {0}={1}'
-      else:
-        param_format_string = ', {0}=\'{1}\''
       operator_param_name = Pipeline._get_operator_param_name(param_name,
                                                               operator_type)
-      operator_param_value = param_value
       operator_param_value = self._get_operator_param_value(
           param_name, operator_type, param_value)
+      param_format_string = Pipeline._get_param_format_string(param_value)
       param_string = param_string + param_format_string.format(
           operator_param_name, operator_param_value)
 
@@ -115,6 +110,13 @@ from datetime import datetime, timedelta
         task_id,
         operator_classname,
         param_string)
+
+  @staticmethod
+  def _get_param_format_string(param_value):
+    # If the type is a python non-string (best guess), we don't quote it.
+    if type(param_value) in [int, bool, float, type(None)]:
+      return ', {0}={1}'
+    return ', {0}=\'{1}\''
 
   @staticmethod
   def _get_dag_definition(name, schedule_interval):
@@ -155,15 +157,9 @@ from datetime import datetime, timedelta
     return param_value
 
   @staticmethod
-  def _add_default_params(task_details, operator_type):
+  def _add_default_override_params(task_details, operator_type):
     if operator_type == 'bq':
       bq_defaults = {}
-      bq_defaults['destination_dataset_table'] = False
-      bq_defaults['write_disposition'] = 'WRITE_EMPTY'
-      bq_defaults['allow_large_results'] = False
-      bq_defaults['bigquery_conn_id'] = 'bigquery_default'
-      bq_defaults['delegate_to'] = None
-      bq_defaults['udf_config'] = False
       bq_defaults['use_legacy_sql'] = False
       for param_name, param_value in bq_defaults.iteritems():
           if param_name not in task_details:
