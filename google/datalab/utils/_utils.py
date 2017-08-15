@@ -263,3 +263,37 @@ def python_portable_string(string, encoding='utf-8'):
     return string.decode(encoding)
 
   raise ValueError('Unsupported type %s' % str(type(string)))
+
+
+_sandboxed_outputs_initialized = False
+def initialize_sandboxed_outputs():
+  """ Initializes global browser state which some visualizations require.
+  """
+
+  global _sandboxed_outputs_initialized
+
+  if _sandboxed_outputs_initialized:
+    return
+  _sandboxed_outputs_initialized = True
+
+  try:
+    import IPython
+  except ImportError:
+    # If not executing within IPython then initialization is unnecessary.
+    return
+
+  def configure_global_state():
+    """ Called for every cell execution to configure the individual output. """
+    IPython.display.display(IPython.core.display.HTML('''
+          <script src="/static/components/requirejs/require.js"></script>
+          <script>
+            requirejs.config({
+              paths: {
+                base: '/static/base',
+              },
+            });
+          </script>
+          '''))
+  IPython.get_ipython().events.register('pre_run_cell', configure_global_state)
+  # Invoke immediately to enable for the current cell.
+  configure_global_state()
