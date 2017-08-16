@@ -20,7 +20,6 @@ import unittest
 # from the parent folder and run "python tests/main.py"
 
 import pipeline.pipeline_tests
-import pipeline.create_tests
 import context_tests
 import bigquery.api_tests
 import bigquery.dataset_tests
@@ -94,7 +93,6 @@ _UNIT_TEST_MODULES = [
     ml.facets_tests,
     ml.summary_tests,
     mlworkbench_magic.ml_tests,
-    pipeline.create_tests,
     pipeline.pipeline_tests,
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,

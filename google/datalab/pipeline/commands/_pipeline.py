@@ -25,7 +25,7 @@ except ImportError:
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
-
+import jsonschema
 
 def _create_cell(args, cell_body):
   """Implements the pipeline cell create magic used to create Pipeline objects.
@@ -47,27 +47,51 @@ def _create_cell(args, cell_body):
                                               env=IPython.get_ipython().user_ns)
   google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
-  # TODO(rajivpb): Temporarily, print spec. Eventually, print better stuff
-  return print(pipeline.py)
+  #bq_params = _get_query_parameters(cell_body)
+  return pipeline.py
+
+  #return print(bq_params)
+  # TODO(rajivpb): Copy the python to Composer's GCS bucket
 
 
-def _deploy_line(args):
-  """Implements the pipeline deploy magic used to deploy pipelines in 
-  airflow.
-
-  The supported syntax is:
-
-      %%pipeline deploy <args>
+# TODO(rajivpb): A lot is common with the one used for bigquery. Refactor.
+def _get_query_parameters(cell_body):
+  """Extract query parameters from cell body if provided
+  Also validates the cell body schema using jsonschema to catch errors before sending the http
+  request. This validation isn't complete, however; it does not validate recursive schemas,
+  but it acts as a good filter against most simple schemas
 
   Args:
-    args: the optional arguments following '%%pipeline deploy'.
-    cell_body: the contents of the cell
-  """
-  name = args['name']
-  pipeline = google.datalab.utils.commands.notebook_environment()[name]
+    args: arguments passed to the magic cell
+    cell_body: body of the magic cell
 
-  # TODO(rajivpb): Temporarily, print. Eventually, copy to GCS
-  return print(pipeline.py)
+  Returns:
+    Validated object containing query parameters
+  """
+
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env=env, as_dict=False)
+
+  # Validate query_params
+  if config:
+    jsonschema.validate(config, google.datalab.bigquery.commands._bigquery.query_params_schema)
+
+    # Parse query_params. We're exposing a simpler schema format than the one actually required
+    # by BigQuery to make magics easier. We need to convert between the two formats
+    parsed_params = []
+    for param in config['parameters']:
+      parsed_params.append({
+        'name': param['name'],
+        'parameterType': {
+          'type': param['type']
+        },
+        'parameterValue': {
+          'value': param['value']
+        }
+      })
+    return parsed_params
+  else:
+    return {}
 
 
 def _create_create_subparser(parser):
@@ -79,15 +103,6 @@ def _create_create_subparser(parser):
                                                   'object')
 
   return create_parser
-
-
-def _create_deploy_subparser(parser):
-  deploy_parser = parser.subcommand('deploy', 'Load a pipeline object for '
-                                              'scheduling.')
-  deploy_parser.add_argument('-n', '--name', help='The name of the pipeline '
-                                                  'object')
-
-  return deploy_parser
 
 
 def _add_command(
@@ -115,10 +130,6 @@ for help on a specific command.
 
   # %%pipeline create
   _add_command(parser, _create_create_subparser, _create_cell)
-
-  # %pipeline deploy
-  _add_command(parser, _create_deploy_subparser, _deploy_line,
-               cell_prohibited=True)
 
   return parser
 

@@ -56,23 +56,7 @@ class TestCases(unittest.TestCase):
     IPython.get_ipython().user_ns = env
 
     # test pipeline creation
-    p_body = """
-email: foo@bar.com
-schedule:
-  start_date: Jun 1 2005  1:33PM
-  end_date: Jun 10 2005  1:33PM
-  datetime_format: '%b %d %Y %I:%M%p'
-  schedule_interval: '@hourly'
-tasks:
-  print_pdt_date:
-    type: bash
-    bash_command: date
-  print_utc_date:
-    type: bash
-    bash_command: date -u
-    up_stream:
-      - print_pdt_date
-"""
+    p_body = 'foo'
 
     # no pipeline name specified. should execute
     with self.assertRaises(Exception):
@@ -81,7 +65,7 @@ tasks:
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_create_cell_with_name(
+  def test_create_cell(
       self, mock_default_context, mock_notebook_environment):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
