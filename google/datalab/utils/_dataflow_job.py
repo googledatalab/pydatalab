@@ -34,9 +34,13 @@ class DataflowJob(_job.Job):
 
     # DataFlow's DataflowPipelineResult does not refresh state, so we have to do it ourselves
     # as a workaround.
-    self._runner_results._job = (
+    # TODO(Change this to use runner_results.state once it refreshes itself)
+    dataflow_internal_job = (
         self._runner_results._runner.dataflow_client.get_job(self._runner_results.job_id()))
-    self._is_complete = self._runner_results.state in ['STOPPED', 'DONE', 'FAILED', 'CANCELLED']
+    self._is_complete = str(dataflow_internal_job.currentState) in ['JOB_STATE_STOPPED',
+                                                                    'JOB_STATE_DONE',
+                                                                    'JOB_STATE_FAILED',
+                                                                    'JOB_STATE_CANCELLED']
     self._fatal_error = getattr(self._runner_results._runner, 'last_error_msg', None)
     # Sometimes Dataflow does not populate runner.last_error_msg even if the job fails.
     if self._fatal_error is None and self._runner_results.state == 'FAILED':
