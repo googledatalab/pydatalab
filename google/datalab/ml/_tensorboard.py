@@ -64,7 +64,7 @@ class TensorBoard(object):
     port = datalab.utils.pick_unused_port()
     args = ['tensorboard', '--logdir=' + logdir, '--port=' + str(port)]
     p = subprocess.Popen(args)
-    retry = 5
+    retry = 10
     while (retry > 0):
       if datalab.utils.is_http_running_on(port):
         url = '/_proxy/%d/' % port
