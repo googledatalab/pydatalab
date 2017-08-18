@@ -19,7 +19,6 @@ import unittest
 # For these tests to work locally, install the package with "pip install -e ."
 # from the parent folder and run "python tests/main.py"
 
-import pipeline.pipeline_tests
 import context_tests
 import bigquery.api_tests
 import bigquery.dataset_tests
@@ -50,6 +49,7 @@ import mlworkbench_magic.archive_tests
 import mlworkbench_magic.local_predict_tests
 import mlworkbench_magic.ml_tests
 import mlworkbench_magic.shell_process_tests
+import pipeline.pipeline_tests
 import stackdriver.commands.monitoring_tests
 import stackdriver.monitoring.group_tests
 import stackdriver.monitoring.metric_tests
