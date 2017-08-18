@@ -14,6 +14,12 @@ from google.datalab import utils
 from enum import Enum
 
 class Operator(Enum):
+  """ Represents a mapping from the Airflow operator class name suffix (i.e. the
+  portion of the class name before the "Operator", and the corresponding string
+  used in the yaml config (in the cell-body of '%pipeline create'). This
+  mapping enables us to onboard additional Airflow operators with minimal code
+  changes.
+  """
   BigQuery = 'bq'
   BigQueryTableDelete = 'bq-table-delete'
   BigQueryToBigQuery = 'bq-to-bq'
