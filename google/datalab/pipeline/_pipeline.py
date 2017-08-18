@@ -21,6 +21,10 @@ class Operator(Enum):
   Bash = 'bash'
 
 class Pipeline(object):
+  """ Represents a Pipeline object that encapsulates an Airflow pipeline spec.
+
+  This object can be used to generate the python airflow spec.
+  """
 
   _imports = """
 from airflow import DAG
@@ -46,16 +50,29 @@ from datetime import datetime, timedelta
 """
 
   def __init__(self, spec_str, name, env=None):
+    """ Initializes an instance of a Pipeline object.
+
+    Args:
+      spec_str: the yaml config (cell body) of the pipeline from Datalab
+      name: name of the pipeline (line argument) from Datalab
+      env: a dictionary containing objects from the pipeline execution context,
+          used to get references to Bigquery SQL objects, and other python
+          objects defined in the notebook.
+    """
     self._spec_str = spec_str
     self._env = env or {}
     self._name = name
 
   @property
-  def spec(self):
+  def _spec(self):
+    """ Get the yaml config for the pipeline."""
     return self._spec_str
 
   @property
   def py(self):
+    """ Gets the airflow python spec for the Pipeline object. This is the
+      input for the Cloud Composer service.
+    """
     if not self._spec_str:
       return None
 
@@ -66,14 +83,15 @@ from datetime import datetime, timedelta
                        dag_spec['email'],
                        dag_spec.get('schedule').get('start_date'),
                        dag_spec.get('schedule').get('end_date'),
-                       dag_spec.get('schedule').get('datetime_format')) + '}\n\n'
+                       dag_spec.get('schedule').get('datetime_format')) + \
+                   '}\n\n'
 
     dag_definition = self._get_dag_definition(
         self._name, dag_spec.get('schedule')['schedule_interval'])
 
     task_definitions = ''
     up_steam_statements = ''
-    for task_id, task_details in dag_spec['tasks'].iteritems():
+    for task_id, task_details in dag_spec['tasks'].items():
       task_def = self._get_operator_definition(task_id, task_details)
       task_definitions = task_definitions + task_def
       dependency_def = \
@@ -88,11 +106,14 @@ from datetime import datetime, timedelta
            up_steam_statements
 
   def _get_operator_definition(self, task_id, task_details):
+    """ Internal helper that gets the Airflow operator for the task with the
+      python parameters.
+    """
     operator_type = task_details['type']
     param_string = 'task_id=\'{0}_id\''.format(task_id)
     Pipeline._add_default_override_params(task_details, operator_type)
 
-    for param_name, param_value in task_details.iteritems():
+    for param_name, param_value in task_details.items():
       # These are special-types that are relevant to Datalab
       if param_name in  ['type', 'up_stream']:
         continue
@@ -127,6 +148,9 @@ from datetime import datetime, timedelta
 
   @staticmethod
   def _get_dependency_definition(task_id, dependencies):
+    """ Internal helper collects all the dependencies of the task, and returns
+      the Airflow equivalent python sytax for specifying them.
+    """
     set_upstream_statements = ''
     for dependency in dependencies:
       set_upstream_statements = set_upstream_statements + \
@@ -137,6 +161,10 @@ from datetime import datetime, timedelta
 
   @staticmethod
   def _get_operator_classname(task_detail_type):
+    """ Internal helper gets the name of the Airflow operator class. We maintain
+      this in an enum, so this method really returns the enum name, concatenated
+      with the string "Operator".
+    """
     try:
       operator_enum = Operator(task_detail_type).name
     except ValueError:
@@ -146,21 +174,36 @@ from datetime import datetime, timedelta
 
   @staticmethod
   def _get_operator_param_name(param_name, operator_type):
+    """ Internal helper gets the name of the python parameter for the Airflow
+      operator class. In some cases, we do not expose the airflow parameter
+      name in its native form, but choose to couch it with a name that's more
+      Datalab friendly. For example, Airflow's BigQueryOperator uses 'bql' for
+      the query string, but we have chosen to expose this as 'query' to the
+      Datalab user. Hence, a few substitutions that are specific to the operator
+      type need to be made.
+    """
     if (operator_type == 'bq'):
       if (param_name == 'query'):
         return 'bql'
     return param_name
 
   def _get_operator_param_value(self, param_name, operator_type, param_value):
+    """ Internal helper gets the python parameter value for the Airflow
+      operator class. It needs to make exceptions that are specific to the
+      operator-type, in some ways similar to _get_operator_param_name.
+    """
     if (operator_type == 'bq') and (param_name in ['query', 'bql']):
         return param_value.sql
     return param_value
 
   @staticmethod
   def _add_default_override_params(task_details, operator_type):
+    """ Internal helper that overrides the defaults of an Airflow operator's
+      parameters, when necessary.
+    """
     if operator_type == 'bq':
       bq_defaults = {}
       bq_defaults['use_legacy_sql'] = False
-      for param_name, param_value in bq_defaults.iteritems():
+      for param_name, param_value in bq_defaults.items():
           if param_name not in task_details:
             task_details[param_name] = param_value
