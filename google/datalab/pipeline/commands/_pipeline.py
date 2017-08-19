@@ -61,8 +61,8 @@ def _create_create_subparser(parser):
   return create_parser
 
 
-def _add_command(
-    parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
+def _add_command(parser, subparser_fn, handler, cell_required=False,
+                 cell_prohibited=False):
   """ Create and initialize a pipeline subcommand handler. """
   sub_parser = subparser_fn(parser)
   sub_parser.set_defaults(func=lambda args, cell: _dispatch_handler(
@@ -73,10 +73,10 @@ def _add_command(
 def _create_pipeline_parser():
   """ Create the parser for the %pipeline magics.
 
-  Note that because we use the func default handler dispatch mechanism of 
-  argparse, our handlers can take only one argument which is the parsed args. So
-  we must create closures for the handlers that bind the cell contents and thus
-  must recreate this parser for each cell upon execution.
+    Note that because we use the func default handler dispatch mechanism of
+    argparse, our handlers can take only one argument which is the parsed args. So
+    we must create closures for the handlers that bind the cell contents and thus
+    must recreate this parser for each cell upon execution.
   """
   parser = google.datalab.utils.commands.CommandParser(
       prog='%pipeline', description="""
@@ -112,9 +112,10 @@ def pipeline(line, cell=None):
   return google.datalab.utils.commands.handle_magic_line(line, cell,
                                                          _pipeline_parser)
 
-def _dispatch_handler(
-    args, cell, parser, handler, cell_required=False, cell_prohibited=False):
-  """ Makes sure cell magics include cell and line magics don't, before 
+
+def _dispatch_handler(args, cell, parser, handler, cell_required=False,
+                      cell_prohibited=False):
+  """ Makes sure cell magics include cell and line magics don't, before
     dispatching to handler.
 
   Args:
@@ -122,10 +123,10 @@ def _dispatch_handler(
     cell: the contents of the cell, if any.
     parser: the argument parser for <cmd>; used for error message.
     handler: the handler to call if the cell present/absent check passes.
-    cell_required: True for cell magics, False for line magics that can't be 
-    cell magics.
-    cell_prohibited: True for line magics, False for cell magics that can't be 
-    line magics.
+    cell_required: True for cell magics, False for line magics that can't be
+      cell magics.
+    cell_prohibited: True for line magics, False for cell magics that can't be
+      line magics.
   Returns:
     The result of calling the handler.
   Raises:
@@ -143,7 +144,6 @@ def _dispatch_handler(
     raise Exception('The %s command requires additional data' % parser.prog)
 
   return handler(args, cell)
-
 
 
 def _repr_html_pipeline(pipeline):

@@ -13,6 +13,7 @@
 from google.datalab import utils
 from enum import Enum
 
+
 class Operator(Enum):
   """ Represents a mapping from the Airflow operator class name suffix (i.e. the
   portion of the class name before the "Operator", and the corresponding string
@@ -25,6 +26,7 @@ class Operator(Enum):
   BigQueryToBigQuery = 'bq-to-bq'
   BigQueryToCloudStorage = 'bq-to-gcs'
   Bash = 'bash'
+
 
 class Pipeline(object):
   """ Represents a Pipeline object that encapsulates an Airflow pipeline spec.
@@ -100,16 +102,13 @@ from datetime import datetime, timedelta
     for (task_id, task_details) in sorted(dag_spec['tasks'].items()):
       task_def = self._get_operator_definition(task_id, task_details)
       task_definitions = task_definitions + task_def
-      dependency_def = \
-        Pipeline._get_dependency_definition(task_id,
-                                            task_details.get('up_stream', []))
+      dependency_def = Pipeline._get_dependency_definition(
+          task_id, task_details.get('up_stream', []))
       up_steam_statements = up_steam_statements + dependency_def
 
-    return Pipeline._imports + \
-           default_args + \
-           dag_definition + \
-           task_definitions + \
-           up_steam_statements
+    return \
+      Pipeline._imports + default_args + dag_definition + task_definitions \
+      + up_steam_statements
 
   def _get_operator_definition(self, task_id, task_details):
     """ Internal helper that gets the Airflow operator for the task with the
@@ -121,7 +120,7 @@ from datetime import datetime, timedelta
 
     for (param_name, param_value) in sorted(task_details.items()):
       # These are special-types that are relevant to Datalab
-      if param_name in  ['type', 'up_stream']:
+      if param_name in ['type', 'up_stream']:
         continue
       operator_param_name = Pipeline._get_operator_param_name(param_name,
                                                               operator_type)
