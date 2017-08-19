@@ -61,7 +61,7 @@ class PipelineTest(unittest.TestCase):
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
-        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', use_legacy_sql=False, destination_dataset_table=True, dag=dag)\n')
+        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', destination_dataset_table=True, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', use_legacy_sql=False, dag=dag)\n')
 
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
@@ -72,7 +72,7 @@ class PipelineTest(unittest.TestCase):
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(operator_def,
                      'id = UnknownOperator(''task_id=\'id_id\', ' +
-                     'foo=\'bar\', bar_typed=False, dag=dag)\n')
+                     'bar_typed=False, foo=\'bar\', dag=dag)\n')
 
   def test_get_operator_classname(self):
     self.assertEqual(pipeline.Pipeline._get_operator_classname('bash'), 'BashOperator')

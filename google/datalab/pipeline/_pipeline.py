@@ -97,7 +97,7 @@ from datetime import datetime, timedelta
 
     task_definitions = ''
     up_steam_statements = ''
-    for task_id, task_details in dag_spec['tasks'].items():
+    for (task_id, task_details) in sorted(dag_spec['tasks'].items()):
       task_def = self._get_operator_definition(task_id, task_details)
       task_definitions = task_definitions + task_def
       dependency_def = \
@@ -119,7 +119,7 @@ from datetime import datetime, timedelta
     param_string = 'task_id=\'{0}_id\''.format(task_id)
     Pipeline._add_default_override_params(task_details, operator_type)
 
-    for param_name, param_value in task_details.items():
+    for (param_name, param_value) in sorted(task_details.items()):
       # These are special-types that are relevant to Datalab
       if param_name in  ['type', 'up_stream']:
         continue

@@ -120,8 +120,8 @@ default_args = {
 
 dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 
-print_utc_date = BashOperator(task_id='print_utc_date_id', bash_command='date -u', dag=dag)
 print_pdt_date = BashOperator(task_id='print_pdt_date_id', bash_command='date', dag=dag)
+print_utc_date = BashOperator(task_id='print_utc_date_id', bash_command='date -u', dag=dag)
 print_utc_date.set_upstream(print_pdt_date)
 """)
 
