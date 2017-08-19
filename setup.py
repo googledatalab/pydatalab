@@ -14,7 +14,7 @@
 
 from setuptools import setup
 
-version = '1.0.1'
+version = '1.1.0'
 
 setup(
   name='datalab',
@@ -59,8 +59,8 @@ setup(
   description='Google Cloud Datalab',
   author='Google',
   author_email='google-cloud-datalab-feedback@googlegroups.com',
-  url='https://github.com/googledatalab/datalab',
-  download_url='https://github.com/googledatalab/datalab/tarball/0.1',
+  url='https://github.com/googledatalab/pydatalab',
+  download_url='https://github.com/googledatalab/pydatalab/archive/v1.1.0.zip',
   keywords=[
     'Google',
     'GCP',
