@@ -17,8 +17,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
 
-import google.datalab.pipeline as pipeline
 import google.datalab.bigquery
+import google.datalab.pipeline._pipeline as pipeline
+
 
 class PipelineTest(unittest.TestCase):
 
@@ -27,7 +28,8 @@ class PipelineTest(unittest.TestCase):
     self.assertEqual(dependencies, 't2.set_upstream(t1)\n')
 
   def test_get_dependency_definition_multiple(self):
-    dependencies = pipeline.Pipeline._get_dependency_definition('t2', ['t1', 't3'])
+    dependencies = pipeline.Pipeline._get_dependency_definition('t2',
+                                                                ['t1', 't3'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\nt2.set_upstream(t3)\n')
 
   def test_get_bash_operator_definition(self):
@@ -35,10 +37,12 @@ class PipelineTest(unittest.TestCase):
     task_details = {}
     task_details['type'] = 'bash'
     task_details['bash_command'] = 'date'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
     self.assertEqual(
         operator_def,
-        'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\'date\', dag=dag)\n')
+        'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', '
+        'bash_command=\'date\', dag=dag)\n')
 
   def test_get_bq_operator_definition(self):
     task_id = 'query_wikipedia'
@@ -46,10 +50,13 @@ class PipelineTest(unittest.TestCase):
     task_details['type'] = 'bq'
     task_details['query'] = google.datalab.bigquery.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
     self.assertEqual(
         operator_def,
-        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', use_legacy_sql=False, dag=dag)\n')
+        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', '
+        'bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', '
+        'use_legacy_sql=False, dag=dag)\n')
 
   def test_get_bq_operator_definition_using_non_default_arg(self):
     task_id = 'query_wikipedia'
@@ -61,7 +68,10 @@ class PipelineTest(unittest.TestCase):
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
-        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', destination_dataset_table=True, bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', use_legacy_sql=False, dag=dag)\n')
+        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', '
+        'destination_dataset_table=True, '
+        'bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', '
+        'use_legacy_sql=False, dag=dag)\n')
 
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
@@ -87,7 +97,7 @@ class PipelineTest(unittest.TestCase):
 
   def test_get_dag_definition(self):
     self.assertEqual(pipeline.Pipeline._get_dag_definition('foo', 'bar'),
-                     'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', ' \
+                     'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', '
                      'default_args=default_args)\n\n')
 
   def test_default_args(self):

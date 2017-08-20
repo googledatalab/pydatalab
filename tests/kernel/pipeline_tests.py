@@ -12,8 +12,12 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import mock
 from oauth2client.client import AccessTokenCredentials
+
+import google.datalab.bigquery
+import google.datalab.pipeline.commands._pipeline  # noqa
+import google.datalab.utils.commands  # noqa
+import mock
 import unittest
 
 # import Python so we can mock the parts we need to here.
@@ -31,12 +35,6 @@ IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
 
-import google.datalab.bigquery
-import google.datalab.pipeline  # noqa
-import google.datalab.pipeline.commands  # noqa
-import google.datalab.utils.commands  # noqa
-
-
 class TestCases(unittest.TestCase):
 
   @staticmethod
@@ -45,11 +43,10 @@ class TestCases(unittest.TestCase):
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return google.datalab.Context(project_id, creds)
 
-  @mock.patch('google.datalab.pipeline.Pipeline.py', new_callable=mock.PropertyMock)
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_create_cell_no_name(
-      self, mock_default_context, mock_notebook_environment, mock_create_py):
+  def test_create_cell_no_name(self, mock_default_context,
+                               mock_notebook_environment):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
@@ -65,8 +62,7 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_create_cell(
-      self, mock_default_context, mock_notebook_environment):
+  def test_create_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
@@ -127,14 +123,14 @@ print_utc_date.set_upstream(print_pdt_date)
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_create_cell_with_variable(
-      self, mock_default_context, mock_notebook_environment):
+  def test_create_cell_with_variable(self, mock_default_context,
+                                     mock_notebook_environment):
     mock_default_context.return_value = TestCases._create_context()
     env = {}
     env['foo_query'] = google.datalab.bigquery.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
     mock_notebook_environment.return_value = env
-    #TODO(rajivpb): Possibly not necessary
+    # TODO(rajivpb): Possibly not necessary
     IPython.get_ipython().user_ns = env
 
     # test pipeline creation
@@ -152,9 +148,7 @@ tasks:
 """
 
     # no pipeline name specified. should execute
-    google.datalab.pipeline.commands._pipeline._create_cell({'name': 'p1'},
-                                                            p_body)
-
+    google.datalab.pipeline.commands._pipeline._create_cell({'name': 'p1'}, p_body)
     p1 = env['p1']
     self.assertIsNotNone(p1)
     self.assertEqual(p_body, p1._spec)

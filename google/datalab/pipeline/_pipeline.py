@@ -106,9 +106,8 @@ from datetime import datetime, timedelta
           task_id, task_details.get('up_stream', []))
       up_steam_statements = up_steam_statements + dependency_def
 
-    return \
-      Pipeline._imports + default_args + dag_definition + task_definitions \
-      + up_steam_statements
+    return Pipeline._imports + default_args + dag_definition + \
+        task_definitions + up_steam_statements
 
   def _get_operator_definition(self, task_id, task_details):
     """ Internal helper that gets the Airflow operator for the task with the
@@ -159,9 +158,7 @@ from datetime import datetime, timedelta
     set_upstream_statements = ''
     for dependency in dependencies:
       set_upstream_statements = set_upstream_statements + \
-                                '{0}.set_upstream({1})'.format(task_id,
-                                                               dependency) + \
-                                '\n'
+          '{0}.set_upstream({1})'.format(task_id, dependency) + '\n'
     return set_upstream_statements
 
   @staticmethod
