@@ -166,7 +166,7 @@ dag = DAG(dag_id='demo_bq_dag_during_demo', schedule_interval='0-59 * * * *', de
 current_timestamp = BigQueryOperator(task_id='current_timestamp_id', bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', use_legacy_sql=False, dag=dag)
 tomorrows_timestamp = BigQueryOperator(task_id='tomorrows_timestamp_id', bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', use_legacy_sql=False, dag=dag)
 tomorrows_timestamp.set_upstream(current_timestamp)
-"""
+""" # noqa
     self.assertEqual(airflow_dag.py, expected_py)
 
 

@@ -15,8 +15,8 @@ from __future__ import unicode_literals
 from oauth2client.client import AccessTokenCredentials
 
 import google.datalab.bigquery
-import google.datalab.pipeline.commands._pipeline  # noqa
-import google.datalab.utils.commands  # noqa
+import google.datalab.pipeline.commands._pipeline
+import google.datalab.utils.commands
 import mock
 import unittest
 
@@ -176,4 +176,5 @@ default_args = {
 dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 
 print_pdt_date = BigQueryOperator(task_id='print_pdt_date_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)
-""")
+"""  # noqa
+    )
