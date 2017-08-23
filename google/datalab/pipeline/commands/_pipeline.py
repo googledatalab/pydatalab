@@ -22,9 +22,7 @@ try:
 except ImportError:
   raise Exception('This module can only be deployed in ipython.')
 
-import google.datalab.data
-import google.datalab.utils
-import google.datalab.utils.commands
+import google
 
 
 def _create_cell(args, cell_body):

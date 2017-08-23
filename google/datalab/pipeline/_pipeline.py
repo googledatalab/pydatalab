@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-from google.datalab import utils
+import google
 from enum import Enum
 
 
@@ -79,7 +79,7 @@ from datetime import datetime, timedelta
     if not self._spec_str:
       return None
 
-    dag_spec = utils.commands.parse_config(
+    dag_spec = google.datalab.utils.commands.parse_config(
         self._spec_str, self._env)
     default_args = 'default_args = {' + \
                    Pipeline._default_args_format.format(

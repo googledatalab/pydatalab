@@ -17,7 +17,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
 
-import google.datalab.bigquery
+import google
 import google.datalab.pipeline._pipeline as pipeline
 
 

@@ -14,9 +14,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from oauth2client.client import AccessTokenCredentials
 
-import google.datalab.bigquery
+import google
 import google.datalab.pipeline.commands._pipeline
-import google.datalab.utils.commands
 import mock
 import unittest
 
