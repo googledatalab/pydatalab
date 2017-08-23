@@ -92,7 +92,7 @@ tasks:
 
     p1 = env['p1']
     self.assertIsNotNone(p1)
-    self.assertEqual(p_body, p1._spec)
+    self.assertEqual(p_body, p1._spec_str)
     self.assertEqual(p1.py, """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -151,7 +151,7 @@ tasks:
     google.datalab.pipeline.commands._pipeline._create_cell({'name': 'p1'}, p_body)
     p1 = env['p1']
     self.assertIsNotNone(p1)
-    self.assertEqual(p_body, p1._spec)
+    self.assertEqual(p_body, p1._spec_str)
     self.assertEqual(p1.py, """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator

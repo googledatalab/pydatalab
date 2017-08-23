@@ -96,7 +96,8 @@ class PipelineTest(unittest.TestCase):
                      'bql')
 
   def test_get_dag_definition(self):
-    self.assertEqual(pipeline.Pipeline._get_dag_definition('foo', 'bar'),
+    test_pipeline = pipeline.Pipeline('', 'foo')
+    self.assertEqual(test_pipeline._get_dag_definition('bar'),
                      'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', '
                      'default_args=default_args)\n\n')
 

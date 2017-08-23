@@ -72,11 +72,6 @@ from datetime import datetime, timedelta
     self._name = name
 
   @property
-  def _spec(self):
-    """ Get the yaml config for the pipeline."""
-    return self._spec_str
-
-  @property
   def py(self):
     """ Gets the airflow python spec for the Pipeline object. This is the
       input for the Cloud Composer service.
@@ -95,7 +90,7 @@ from datetime import datetime, timedelta
                    '}\n\n'
 
     dag_definition = self._get_dag_definition(
-        self._name, dag_spec.get('schedule')['schedule_interval'])
+        dag_spec.get('schedule')['schedule_interval'])
 
     task_definitions = ''
     up_steam_statements = ''
@@ -143,10 +138,9 @@ from datetime import datetime, timedelta
       return ', {0}={1}'
     return ', {0}=\'{1}\''
 
-  @staticmethod
-  def _get_dag_definition(name, schedule_interval):
+  def _get_dag_definition(self, schedule_interval):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
-                     'default_args=default_args)\n\n'.format(name,
+                     'default_args=default_args)\n\n'.format(self._name,
                                                              schedule_interval)
     return dag_definition
 
