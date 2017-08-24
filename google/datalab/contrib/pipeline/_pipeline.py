@@ -41,7 +41,8 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
-from datetime import datetime, timedelta
+from datetime import timedelta
+from pytz import timezone
 
 """
 
@@ -49,8 +50,8 @@ from datetime import datetime, timedelta
     'owner': 'Datalab',
     'depends_on_past': False,
     'email': ['{0}'],
-    'start_date': datetime.strptime('{1}', '{3}'),
-    'end_date': datetime.strptime('{2}', '{3}'),
+    'start_date': {1},
+    'end_date': {2},
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
@@ -81,12 +82,14 @@ from datetime import datetime, timedelta
 
     dag_spec = utils.commands.parse_config(
         self._spec_str, self._env)
+
+    start_date = dag_spec.get('schedule').get('start_date')
+    end_date = dag_spec.get('schedule').get('end_date')
     default_args = 'default_args = {' + \
                    Pipeline._default_args_format.format(
                        dag_spec['email'],
-                       dag_spec.get('schedule').get('start_date'),
-                       dag_spec.get('schedule').get('end_date'),
-                       dag_spec.get('schedule').get('datetime_format')) + \
+                       self._get_datetime_expr(start_date),
+                       self._get_datetime_expr(end_date)) + \
                    '}\n\n'
 
     dag_definition = self._get_dag_definition(
@@ -103,6 +106,12 @@ from datetime import datetime, timedelta
 
     return Pipeline._imports + default_args + dag_definition + \
         task_definitions + up_steam_statements
+
+  @staticmethod
+  def _get_datetime_expr(date_string):
+    expr_format = 'datetime.datetime.strptime(\'{1}\', \'{2}\').replace(tzinfo=timezone(\'UTC\'))'
+    datetime_format = '%Y-%m-%dT%H:%M:%SZ'  # ISO 8601, always UTC
+    return expr_format.format(date_string, date_string, datetime_format)
 
   def _get_operator_definition(self, task_id, task_details):
     """ Internal helper that gets the Airflow operator for the task with the
