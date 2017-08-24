@@ -220,6 +220,8 @@ class TestCases(unittest.TestCase):
     google.datalab.bigquery.commands._bigquery._query_cell({'name': 'q1', 'udfs': None,
                                                             'datasources': None,
                                                             'subqueries': None}, q1_body)
+    mock_query_execute.assert_called_with()
+
     q1 = env['q1']
     self.assertIsNotNone(q1)
     self.assertEqual(q1.udfs, {})

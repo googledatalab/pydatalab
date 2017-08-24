@@ -29,6 +29,8 @@ setup(
     'google.datalab.kernel',
     'google.datalab.ml',
     'google.datalab.notebook',
+    'google.datalab.contrib.pipeline',
+    'google.datalab.contrib.pipeline.commands',
     'google.datalab.stackdriver',
     'google.datalab.stackdriver.commands',
     'google.datalab.stackdriver.monitoring',
