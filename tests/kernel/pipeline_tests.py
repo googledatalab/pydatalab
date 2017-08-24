@@ -40,8 +40,8 @@ class TestCases(unittest.TestCase):
   sample_cell_body = """
 email: foo@bar.com
 schedule:
-  start_date: Jun 1 2005  1:33PM
-  end_date: Jun 10 2005  1:33PM
+  start_date: 2009-05-05T22:28:15Z
+  end_date: 2009-05-06T22:28:15Z
   datetime_format: '%b %d %Y %I:%M%p'
   schedule_interval: '@hourly'
 tasks:
@@ -122,14 +122,15 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
-from datetime import datetime, timedelta
+from datetime import timedelta
+from pytz import timezone
 
 default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
     'email': ['foo@bar.com'],
-    'start_date': datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p'),
-    'end_date': datetime.strptime('Jun 10 2005  1:33PM', '%b %d %Y %I:%M%p'),
+    'start_date': datetime.datetime.strptime('2009-05-05 22:28:15', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
+    'end_date': datetime.datetime.strptime('2009-05-06 22:28:15', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
@@ -141,7 +142,8 @@ dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 print_pdt_date = BashOperator(task_id='print_pdt_date_id', bash_command='date', dag=dag)
 print_utc_date = BashOperator(task_id='print_utc_date_id', bash_command='date -u', dag=dag)
 print_utc_date.set_upstream(print_pdt_date)
-""")
+"""  # noqa
+    )
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
@@ -159,8 +161,8 @@ print_utc_date.set_upstream(print_pdt_date)
     p_body = """
 email: foo@bar.com
 schedule:
-  start_date: Jun 1 2005  1:33PM
-  end_date: Jun 10 2005  1:33PM
+  start_date: 2009-05-05T22:28:15Z
+  end_date: 2009-05-06T22:28:15Z
   datetime_format: '%b %d %Y %I:%M%p'
   schedule_interval: '@hourly'
 tasks:
@@ -181,14 +183,15 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
-from datetime import datetime, timedelta
+from datetime import timedelta
+from pytz import timezone
 
 default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
     'email': ['foo@bar.com'],
-    'start_date': datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p'),
-    'end_date': datetime.strptime('Jun 10 2005  1:33PM', '%b %d %Y %I:%M%p'),
+    'start_date': datetime.datetime.strptime('2009-05-05 22:28:15', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
+    'end_date': datetime.datetime.strptime('2009-05-06 22:28:15', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,

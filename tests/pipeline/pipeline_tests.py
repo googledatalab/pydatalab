@@ -102,21 +102,39 @@ class PipelineTest(unittest.TestCase):
                      'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', '
                      'default_args=default_args)\n\n')
 
+  def test_get_datetime_expr(self):
+    import datetime
+    from pytz import timezone
+    datetime_expr = pipeline.Pipeline._get_datetime_expr('2009-05-05T22:28:15Z')
+    self.assertEqual(datetime_expr,
+                     'datetime.datetime.strptime(\'2009-05-05T22:28:15Z\', '
+                     '\'%Y-%m-%dT%H:%M:%SZ\').replace(tzinfo=timezone(\'UTC\'))')
+    self.assertEqual(eval(datetime_expr),
+                     datetime.datetime(2009, 5, 5, 22, 28, 15,
+                                       tzinfo=timezone('UTC')))
+
+    # Incorrectly formatted strings should throw (in this case without the 'Z')
+    with self.assertRaises(ValueError):
+      eval(pipeline.Pipeline._get_datetime_expr('2009-05-05T22:28:15'))
+
   def test_default_args(self):
     self.assertEqual(
         pipeline.Pipeline._default_args_format.format(
-            'foo@bar.com', 'Jun 1 2005  1:33PM', 'Jun 10 2005  1:33PM',
-            '%b %d %Y %I:%M%p'), """
+            'foo@bar.com',
+            pipeline.Pipeline._get_datetime_expr('2009-05-05T22:28:15Z'),
+            pipeline.Pipeline._get_datetime_expr('2009-05-06T22:28:15Z')),
+"""
     'owner': 'Datalab',
     'depends_on_past': False,
     'email': ['foo@bar.com'],
-    'start_date': datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p'),
-    'end_date': datetime.strptime('Jun 10 2005  1:33PM', '%b %d %Y %I:%M%p'),
+    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15Z', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
+    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15Z', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=1),
-""")
+"""  # noqa
+    )
 
   def test_py_bq(self):
     env = {}
@@ -125,8 +143,8 @@ class PipelineTest(unittest.TestCase):
     dag_spec = """
 email: rajivpb@google.com
 schedule:
-  start_date: Jun 21 2017  1:00AM
-  end_date: Jun 25 2017  1:33PM
+  start_date: 2009-05-05T22:28:15Z
+  end_date: 2009-05-06T22:28:15Z
   datetime_format: '%b %d %Y %I:%M%p'
   schedule_interval: '0-59 * * * *'
 tasks:
@@ -149,14 +167,15 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
-from datetime import datetime, timedelta
+from datetime import timedelta
+from pytz import timezone
 
 default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
     'email': ['rajivpb@google.com'],
-    'start_date': datetime.strptime('Jun 21 2017  1:00AM', '%b %d %Y %I:%M%p'),
-    'end_date': datetime.strptime('Jun 25 2017  1:33PM', '%b %d %Y %I:%M%p'),
+    'start_date': datetime.datetime.strptime('2009-05-05 22:28:15', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
+    'end_date': datetime.datetime.strptime('2009-05-06 22:28:15', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
