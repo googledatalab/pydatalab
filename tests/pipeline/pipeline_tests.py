@@ -15,10 +15,11 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import unittest
 
 import google
-import google.datalab.pipeline._pipeline as pipeline
+import google.datalab.contrib.pipeline._pipeline as pipeline
 
 
 class PipelineTest(unittest.TestCase):

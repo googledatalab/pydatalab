@@ -12,16 +12,16 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from oauth2client.client import AccessTokenCredentials
 
-import google
-import google.datalab.pipeline.commands._pipeline
-import mock
 import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
 import IPython.core.magic
+import mock
+from oauth2client.client import AccessTokenCredentials
+
+import google.datalab.contrib.pipeline.commands._pipeline
 
 
 def noop_decorator(func):
@@ -56,8 +56,8 @@ class TestCases(unittest.TestCase):
 
     # no pipeline name specified. should execute
     with self.assertRaises(Exception):
-      google.datalab.pipeline.commands._pipeline._create_cell({'name': None},
-                                                              p_body)
+      google.datalab.contrib.pipeline.commands._pipeline._create_cell({'name': None},
+                                                                      p_body)
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
@@ -86,8 +86,8 @@ tasks:
       - print_pdt_date
 """
     # test pipeline creation
-    google.datalab.pipeline.commands._pipeline._create_cell({'name': 'p1'},
-                                                            p_body)
+    google.datalab.contrib.pipeline.commands._pipeline._create_cell({'name': 'p1'},
+                                                                    p_body)
 
     p1 = env['p1']
     self.assertIsNotNone(p1)
@@ -147,7 +147,7 @@ tasks:
 """
 
     # no pipeline name specified. should execute
-    google.datalab.pipeline.commands._pipeline._create_cell({'name': 'p1'}, p_body)
+    google.datalab.contrib.pipeline.commands._pipeline._create_cell({'name': 'p1'}, p_body)
     p1 = env['p1']
     self.assertIsNotNone(p1)
     self.assertEqual(p_body, p1._spec_str)
