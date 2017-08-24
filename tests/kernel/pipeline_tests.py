@@ -42,7 +42,6 @@ email: foo@bar.com
 schedule:
   start_date: 2009-05-05T22:28:15Z
   end_date: 2009-05-06T22:28:15Z
-  datetime_format: '%b %d %Y %I:%M%p'
   schedule_interval: '@hourly'
 tasks:
   print_pdt_date:
@@ -163,7 +162,6 @@ email: foo@bar.com
 schedule:
   start_date: 2009-05-05T22:28:15Z
   end_date: 2009-05-06T22:28:15Z
-  datetime_format: '%b %d %Y %I:%M%p'
   schedule_interval: '@hourly'
 tasks:
   print_pdt_date:
