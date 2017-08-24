@@ -36,6 +36,25 @@ IPython.get_ipython = mock.Mock()
 
 class TestCases(unittest.TestCase):
 
+  # test pipeline creation
+  sample_cell_body = """
+email: foo@bar.com
+schedule:
+  start_date: Jun 1 2005  1:33PM
+  end_date: Jun 10 2005  1:33PM
+  datetime_format: '%b %d %Y %I:%M%p'
+  schedule_interval: '@hourly'
+tasks:
+  print_pdt_date:
+    type: bash
+    bash_command: date
+  print_utc_date:
+    type: bash
+    bash_command: date -u
+    up_stream:
+      - print_pdt_date
+"""
+
   @staticmethod
   def _create_context():
     project_id = 'test'
@@ -61,6 +80,28 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
+  def test_create_cell_debug(self, mock_default_context,
+      mock_notebook_environment):
+    env = {}
+    mock_default_context.return_value = TestCases._create_context()
+    mock_notebook_environment.return_value = env
+    IPython.get_ipython().user_ns = env
+
+    # cell output is empty when debug is True
+    output = google.datalab.contrib.pipeline.commands._pipeline._create_cell(
+        {'name': 'foo_pipeline', 'debug': True}, self.sample_cell_body)
+    self.assertTrue(len(output) > 0)
+
+    output = google.datalab.contrib.pipeline.commands._pipeline._create_cell(
+        {'name': 'foo_pipeline', 'debug': False}, self.sample_cell_body)
+    self.assertTrue(output is None)
+
+    output = google.datalab.contrib.pipeline.commands._pipeline._create_cell(
+        {'name': 'foo_pipeline'}, self.sample_cell_body)
+    self.assertTrue(output is None)
+
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.Context.default')
   def test_create_cell(self, mock_default_context, mock_notebook_environment):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
@@ -68,30 +109,12 @@ class TestCases(unittest.TestCase):
     IPython.get_ipython().user_ns = env
 
     # test pipeline creation
-    p_body = """
-email: foo@bar.com
-schedule:
-  start_date: Jun 1 2005  1:33PM
-  end_date: Jun 10 2005  1:33PM
-  datetime_format: '%b %d %Y %I:%M%p'
-  schedule_interval: '@hourly'
-tasks:
-  print_pdt_date:
-    type: bash
-    bash_command: date
-  print_utc_date:
-    type: bash
-    bash_command: date -u
-    up_stream:
-      - print_pdt_date
-"""
-    # test pipeline creation
-    google.datalab.contrib.pipeline.commands._pipeline._create_cell({'name': 'p1'},
-                                                                    p_body)
+    google.datalab.contrib.pipeline.commands._pipeline._create_cell(
+        {'name': 'p1'}, self.sample_cell_body)
 
     p1 = env['p1']
     self.assertIsNotNone(p1)
-    self.assertEqual(p_body, p1._spec_str)
+    self.assertEqual(self.sample_cell_body, p1._spec_str)
     self.assertEqual(p1.py, """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator

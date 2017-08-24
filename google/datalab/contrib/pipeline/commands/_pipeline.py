@@ -45,7 +45,9 @@ def _create_cell(args, cell_body):
       cell_body, name, env=IPython.get_ipython().user_ns)
   google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
-  return pipeline.py
+  debug = args.get('debug')
+  if debug is True:
+    return pipeline.py
 
 
 def _create_create_subparser(parser):
@@ -53,8 +55,11 @@ def _create_create_subparser(parser):
                                               'Pipeline object. If a pipeline '
                                               'name is not specified, the '
                                               'pipeline is scheduled.')
-  create_parser.add_argument('-n', '--name', help='The name of this Pipeline '
-                                                  'object')
+  create_parser.add_argument('-n', '--name', type=str,
+                             help='The name of this Pipeline object.')
+  create_parser.add_argument('-d', '--debug', action='store_true',
+                             default=False,
+                             help='Print the airflow python spec.')
 
   return create_parser
 
