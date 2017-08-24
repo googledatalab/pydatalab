@@ -88,8 +88,8 @@ from pytz import timezone
     default_args = 'default_args = {' + \
                    Pipeline._default_args_format.format(
                        dag_spec['email'],
-                       self._get_datetime_expr(start_date),
-                       self._get_datetime_expr(end_date)) + \
+                       self._get_datetime_expr_str(start_date),
+                       self._get_datetime_expr_str(end_date)) + \
                    '}\n\n'
 
     dag_definition = self._get_dag_definition(
@@ -108,7 +108,7 @@ from pytz import timezone
         task_definitions + up_steam_statements
 
   @staticmethod
-  def _get_datetime_expr(date_string):
+  def _get_datetime_expr_str(date_string):
     expr_format = 'datetime.datetime.strptime(\'{1}\', \'{2}\').replace(tzinfo=timezone(\'UTC\'))'
     datetime_format = '%Y-%m-%dT%H:%M:%SZ'  # ISO 8601, always UTC
     return expr_format.format(date_string, date_string, datetime_format)

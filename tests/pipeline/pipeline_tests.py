@@ -105,7 +105,7 @@ class PipelineTest(unittest.TestCase):
   def test_get_datetime_expr(self):
     import datetime
     from pytz import timezone
-    datetime_expr = pipeline.Pipeline._get_datetime_expr('2009-05-05T22:28:15Z')
+    datetime_expr = pipeline.Pipeline._get_datetime_expr_str('2009-05-05T22:28:15Z')
     self.assertEqual(datetime_expr,
                      'datetime.datetime.strptime(\'2009-05-05T22:28:15Z\', '
                      '\'%Y-%m-%dT%H:%M:%SZ\').replace(tzinfo=timezone(\'UTC\'))')
@@ -115,14 +115,14 @@ class PipelineTest(unittest.TestCase):
 
     # Incorrectly formatted strings should throw (in this case without the 'Z')
     with self.assertRaises(ValueError):
-      eval(pipeline.Pipeline._get_datetime_expr('2009-05-05T22:28:15'))
+      eval(pipeline.Pipeline._get_datetime_expr_str('2009-05-05T22:28:15'))
 
   def test_default_args(self):
     self.assertEqual(
         pipeline.Pipeline._default_args_format.format(
             'foo@bar.com',
-            pipeline.Pipeline._get_datetime_expr('2009-05-05T22:28:15Z'),
-            pipeline.Pipeline._get_datetime_expr('2009-05-06T22:28:15Z')),
+            pipeline.Pipeline._get_datetime_expr_str('2009-05-05T22:28:15Z'),
+            pipeline.Pipeline._get_datetime_expr_str('2009-05-06T22:28:15Z')),
 """
     'owner': 'Datalab',
     'depends_on_past': False,
