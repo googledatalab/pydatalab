@@ -81,7 +81,7 @@ tasks:
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
   def test_create_cell_debug(self, mock_default_context,
-      mock_notebook_environment):
+                             mock_notebook_environment):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
