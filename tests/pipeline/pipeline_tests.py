@@ -16,13 +16,35 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import datetime
 import unittest
+import yaml
+from pytz import timezone
 
 import google
 import google.datalab.contrib.pipeline._pipeline as pipeline
 
 
 class PipelineTest(unittest.TestCase):
+
+  _dag_spec = """
+email: foo@bar.com
+schedule:
+  start_date: 2009-05-05T22:28:15Z
+  end_date: 2009-05-06T22:28:15Z
+  schedule_interval: '0-59 * * * *'
+tasks:
+  current_timestamp:
+    type: bq
+    bql: $foo_query
+    use_legacy_sql: False
+  tomorrows_timestamp:
+    type: bq
+    bql: $foo_query
+    use_legacy_sql: False
+    up_stream:
+      - current_timestamp
+"""
 
   def test_get_dependency_definition_single(self):
     dependencies = pipeline.Pipeline._get_dependency_definition('t2', ['t1'])
@@ -103,36 +125,38 @@ class PipelineTest(unittest.TestCase):
                      'default_args=default_args)\n\n')
 
   def test_get_datetime_expr(self):
-    import datetime
-    from pytz import timezone
-    datetime_expr = pipeline.Pipeline._get_datetime_expr_str('2009-05-05T22:28:15Z')
+    dag_dict = yaml.load(PipelineTest._dag_spec)
+    start_date = dag_dict.get('schedule').get('start_date')
+    datetime_expr = pipeline.Pipeline._get_datetime_expr_str(start_date)
+
     self.assertEqual(datetime_expr,
-                     'datetime.datetime.strptime(\'2009-05-05T22:28:15Z\', '
-                     '\'%Y-%m-%dT%H:%M:%SZ\').replace(tzinfo=timezone(\'UTC\'))')
+                     'datetime.datetime.strptime(\'2009-05-05T22:28:15\', '
+                     '\'%Y-%m-%dT%H:%M:%S\').replace(tzinfo=timezone(\'UTC\'))')
     self.assertEqual(eval(datetime_expr),
                      datetime.datetime(2009, 5, 5, 22, 28, 15,
                                        tzinfo=timezone('UTC')))
 
-    # Incorrectly formatted strings should throw (in this case without the 'Z')
-    with self.assertRaises(ValueError):
-      eval(pipeline.Pipeline._get_datetime_expr_str('2009-05-05T22:28:15'))
-
-  def test_default_args(self):
+  def test_get_default_args(self):
+    import yaml
+    dag_dict = yaml.load(PipelineTest._dag_spec)
     self.assertEqual(
-        pipeline.Pipeline._default_args_format.format(
-            'foo@bar.com',
-            pipeline.Pipeline._get_datetime_expr_str('2009-05-05T22:28:15Z'),
-            pipeline.Pipeline._get_datetime_expr_str('2009-05-06T22:28:15Z')),
+        pipeline.Pipeline._get_default_args(
+            dag_dict['email'],
+            dag_dict.get('schedule').get('start_date'),
+            dag_dict.get('schedule').get('end_date')),
 """
+default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
     'email': ['foo@bar.com'],
-    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15Z', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
-    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15Z', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
+    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
+    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
     'retry_delay': timedelta(minutes=1),
+}
+
 """  # noqa
     )
 
@@ -140,25 +164,8 @@ class PipelineTest(unittest.TestCase):
     env = {}
     env['foo_query'] = google.datalab.bigquery.Query(
       'INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())')
-    dag_spec = """
-email: rajivpb@google.com
-schedule:
-  start_date: 2009-05-05T22:28:15Z
-  end_date: 2009-05-06T22:28:15Z
-  schedule_interval: '0-59 * * * *'
-tasks:
-  current_timestamp:
-    type: bq
-    bql: $foo_query
-    use_legacy_sql: False
-  tomorrows_timestamp:
-    type: bq
-    bql: $foo_query
-    use_legacy_sql: False
-    up_stream:
-      - current_timestamp
-"""
-    airflow_dag = pipeline.Pipeline(dag_spec, 'demo_bq_dag_during_demo', env)
+
+    airflow_dag = pipeline.Pipeline(PipelineTest._dag_spec, 'demo_bq_dag_during_demo', env)
     expected_py = """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -172,9 +179,9 @@ from pytz import timezone
 default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
-    'email': ['rajivpb@google.com'],
-    'start_date': datetime.datetime.strptime('2009-05-05 22:28:15', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
-    'end_date': datetime.datetime.strptime('2009-05-06 22:28:15', '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone('UTC')),
+    'email': ['foo@bar.com'],
+    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
+    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
