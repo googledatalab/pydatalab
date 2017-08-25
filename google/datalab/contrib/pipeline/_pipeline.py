@@ -14,20 +14,6 @@ from google.datalab import utils
 from enum import Enum
 
 
-class Operator(Enum):
-  """ Represents a mapping from the Airflow operator class name suffix (i.e. the
-  portion of the class name before the "Operator", and the corresponding string
-  used in the yaml config (in the cell-body of '%pipeline create'). This
-  mapping enables us to onboard additional Airflow operators with minimal code
-  changes.
-  """
-  BigQuery = 'bq'
-  BigQueryTableDelete = 'bq-table-delete'
-  BigQueryToBigQuery = 'bq-to-bq'
-  BigQueryToCloudStorage = 'bq-to-gcs'
-  Bash = 'bash'
-
-
 class Pipeline(object):
   """ Represents a Pipeline object that encapsulates an Airflow pipeline spec.
 
@@ -132,21 +118,19 @@ default_args = {{
     """
     operator_type = task_details['type']
     param_string = 'task_id=\'{0}_id\''.format(task_id)
-    Pipeline._add_default_override_params(task_details, operator_type)
+    operator_classname = Pipeline._get_operator_classname(operator_type)
 
+    Pipeline._add_default_override_params(task_details, operator_classname)
     for (param_name, param_value) in sorted(task_details.items()):
       # These are special-types that are relevant to Datalab
       if param_name in ['type', 'up_stream']:
         continue
-      operator_param_name = Pipeline._get_operator_param_name(param_name,
-                                                              operator_type)
-      operator_param_value = self._get_operator_param_value(
-          param_name, operator_type, param_value)
       param_format_string = Pipeline._get_param_format_string(param_value)
+      operator_param_name, operator_param_value = \
+        Pipeline._get_operator_param_name_and_value(param_name, param_value,
+                                                    operator_classname)
       param_string = param_string + param_format_string.format(
           operator_param_name, operator_param_value)
-
-    operator_classname = Pipeline._get_operator_classname(operator_type)
 
     return '{0} = {1}({2}, dag=dag)\n'.format(
         task_id,
@@ -180,48 +164,52 @@ default_args = {{
   @staticmethod
   def _get_operator_classname(task_detail_type):
     """ Internal helper gets the name of the Airflow operator class. We maintain
-      this in an enum, so this method really returns the enum name, concatenated
+      this in a map, so this method really returns the enum name, concatenated
       with the string "Operator".
     """
-    try:
-      operator_enum = Operator(task_detail_type).name
-    except ValueError:
-      operator_enum = task_detail_type
-    operator_classname = '{0}Operator'.format(operator_enum)
-    return operator_classname
+    task_type_to_operator_prefix_mapping = {
+      'bq': 'BigQuery',
+      'bq.execute': 'BigQuery',
+      'bq.query': 'BigQuery',
+      'bq-table-delete': 'BigQueryTableDelete',
+      'bq.extract': 'BigQueryToCloudStorage',
+      'bash': 'Bash'
+    }
+    operator_class_prefix = task_type_to_operator_prefix_mapping.get(
+        task_detail_type)
+    format_string = '{0}Operator'
+    if operator_class_prefix is not None:
+      return format_string.format(operator_class_prefix)
+    return format_string.format(task_detail_type)
 
   @staticmethod
-  def _get_operator_param_name(param_name, operator_type):
+  def _get_operator_param_name_and_value(param_name, param_value,
+      operator_class_name):
     """ Internal helper gets the name of the python parameter for the Airflow
       operator class. In some cases, we do not expose the airflow parameter
-      name in its native form, but choose to couch it with a name that's more
-      Datalab friendly. For example, Airflow's BigQueryOperator uses 'bql' for
-      the query string, but we have chosen to expose this as 'query' to the
-      Datalab user. Hence, a few substitutions that are specific to the operator
-      type need to be made.
+      name in its native form, but choose to expose a name that's more standard
+      for Datalab, or one that's more friendly. For example, Airflow's
+      BigQueryOperator uses 'bql' for the query string, but %%bq in Datalab
+      uses the 'query' argument to specify this. Hence, a few substitutions that
+      are specific to the Airflow operator need to be made.
+      Along similar lines, we also need a helper for the parameter value, since
+      this could come from specific properties on python objects that are
+      referred to by the parameter_value.
     """
-    if (operator_type == 'bq'):
+    operator_param_name, operator_param_value = param_name, param_value
+    if (operator_class_name == 'BigQueryOperator'):
       if (param_name == 'query'):
-        return 'bql'
-    return param_name
-
-  def _get_operator_param_value(self, param_name, operator_type, param_value):
-    """ Internal helper gets the python parameter value for the Airflow
-      operator class. It needs to make exceptions that are specific to the
-      operator-type, in some ways similar to _get_operator_param_name.
-    """
-    if (operator_type == 'bq') and (param_name in ['query', 'bql']):
-        return param_value.sql
-    return param_value
+        operator_param_name = 'bql'
+        operator_param_value = param_value.sql
+    return operator_param_name, operator_param_value
 
   @staticmethod
-  def _add_default_override_params(task_details, operator_type):
+  def _add_default_override_params(task_details, operator_class_name):
     """ Internal helper that overrides the defaults of an Airflow operator's
       parameters, when necessary.
     """
-    if operator_type == 'bq':
-      bq_defaults = {}
-      bq_defaults['use_legacy_sql'] = False
+    if operator_class_name == 'BigQueryOperator':
+      bq_defaults = {'use_legacy_sql': False}
       for param_name, param_value in bq_defaults.items():
           if param_name not in task_details:
             task_details[param_name] = param_value

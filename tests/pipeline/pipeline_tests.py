@@ -36,11 +36,11 @@ schedule:
 tasks:
   current_timestamp:
     type: bq
-    bql: $foo_query
+    query: $foo_query
     use_legacy_sql: False
   tomorrows_timestamp:
     type: bq
-    bql: $foo_query
+    query: $foo_query
     use_legacy_sql: False
     up_stream:
       - current_timestamp
@@ -114,9 +114,17 @@ tasks:
     self.assertEqual(pipeline.Pipeline._get_operator_classname('Unknown'),
                      'UnknownOperator')
 
-  def test_get_operator_param_name(self):
-    self.assertEqual(pipeline.Pipeline._get_operator_param_name('query', 'bq'),
-                     'bql')
+  def test_get_operator_param_name_and_value(self):
+    sql_str = 'select * from foo_table'
+    query = google.datalab.bigquery.Query(sql_str)
+    self.assertEqual(pipeline.Pipeline._get_operator_param_name_and_value(
+        'query', query, 'BigQueryOperator'), ('bql', sql_str))
+
+    self.assertEqual(pipeline.Pipeline._get_operator_param_name_and_value(
+        'foo', 'bar', 'BigQueryOperator'), ('foo', 'bar'))
+
+    self.assertEqual(pipeline.Pipeline._get_operator_param_name_and_value(
+        'foo', 'bar', 'UnknownOperator'), ('foo', 'bar'))
 
   def test_get_dag_definition(self):
     test_pipeline = pipeline.Pipeline('', 'foo')
@@ -159,6 +167,26 @@ default_args = {
 
 """  # noqa
     )
+
+  def test_add_default_override_params(self):
+    """ Internal helper that overrides the defaults of an Airflow operator's
+      parameters, when necessary.
+    """
+    task_details = {}
+    operator_class_name = 'BigQueryOperator'
+    pipeline.Pipeline._add_default_override_params(task_details,
+                                                   operator_class_name)
+    self.assertEqual(task_details, {'use_legacy_sql': False})
+
+    task_details = {'use_legacy_sql': True}
+    pipeline.Pipeline._add_default_override_params(task_details,
+                                                   operator_class_name)
+    self.assertEqual(task_details, {'use_legacy_sql': True})
+
+    task_details = {'foo': 'bar'}
+    pipeline.Pipeline._add_default_override_params(task_details,
+                                                   operator_class_name)
+    self.assertEqual(task_details, {'use_legacy_sql': False, 'foo': 'bar'})
 
   def test_py_bq(self):
     env = {}
