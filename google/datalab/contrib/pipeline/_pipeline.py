@@ -125,10 +125,11 @@ default_args = {{
       # These are special-types that are relevant to Datalab
       if param_name in ['type', 'up_stream']:
         continue
-      param_format_string = Pipeline._get_param_format_string(param_value)
       operator_param_name, operator_param_value = \
         Pipeline._get_operator_param_name_and_value(param_name, param_value,
                                                     operator_classname)
+      param_format_string = Pipeline._get_param_format_string(
+          operator_param_value)
       param_string = param_string + param_format_string.format(
           operator_param_name, operator_param_value)
 
@@ -201,6 +202,22 @@ default_args = {{
       if (param_name == 'query'):
         operator_param_name = 'bql'
         operator_param_value = param_value.sql
+    if (operator_class_name == 'BigQueryToCloudStorageOperator'):
+      if (param_name == 'table'):
+        operator_param_name = 'source_project_dataset_table'
+      if (param_name == 'path'):
+        operator_param_name = 'destination_cloud_storage_uris'
+        operator_param_value = '[{0}]'.format(param_value)
+      if (param_name == 'format'):
+        operator_param_name = 'export_format'
+        operator_param_value = 'CSV' if param_value == 'csv' else 'NEWLINE_DELIMITED_JSON'
+      if (param_name == 'delimiter'):
+        operator_param_name = 'field_delimiter'
+      if (param_name == 'compress'):
+        operator_param_name = 'compression'
+        operator_param_value = 'GZIP' if param_value else 'NONE'
+      if (param_name == 'header'):
+        operator_param_name = 'print_header'
     return operator_param_name, operator_param_value
 
   @staticmethod

@@ -67,6 +67,20 @@ tasks:
         'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', '
         'bash_command=\'date\', dag=dag)\n')
 
+  def test_get_bq_extract_operator_definition(self):
+    task_id = 'foo'
+    task_details = {}
+    task_details['type'] = 'bq.extract'
+    task_details['table'] = 'foo_table'
+    task_details['path'] = 'foo_path'
+    task_details['format'] = 'csv'
+    task_details['compress'] = True
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
+    self.assertEqual(
+        operator_def,
+        'foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', compression=\'GZIP\', export_format=\'CSV\', destination_cloud_storage_uris=\'[foo_path]\', source_project_dataset_table=\'foo_table\', dag=dag)\n')
+
   def test_get_bq_operator_definition(self):
     task_id = 'query_wikipedia'
     task_details = {}
