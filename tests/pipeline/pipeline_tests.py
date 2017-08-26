@@ -131,18 +131,6 @@ tasks:
     self.assertEqual(pipeline.Pipeline._get_operator_classname('Unknown'),
                      'UnknownOperator')
 
-  def test_get_operator_param_name_and_value(self):
-    sql_str = 'select * from foo_table'
-    query = google.datalab.bigquery.Query(sql_str)
-    self.assertEqual(pipeline.Pipeline._get_operator_param_name_and_value(
-        'query', query, 'BigQueryOperator'), ('bql', sql_str))
-
-    self.assertEqual(pipeline.Pipeline._get_operator_param_name_and_value(
-        'foo', 'bar', 'BigQueryOperator'), ('foo', 'bar'))
-
-    self.assertEqual(pipeline.Pipeline._get_operator_param_name_and_value(
-        'foo', 'bar', 'UnknownOperator'), ('foo', 'bar'))
-
   def test_get_dag_definition(self):
     test_pipeline = pipeline.Pipeline('', 'foo')
     self.assertEqual(test_pipeline._get_dag_definition('bar'),
