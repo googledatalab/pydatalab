@@ -34,13 +34,11 @@ class BaseGenericFeatureStatisticsGenerator(object):
 
   def ProtoFromDataFrames(self, dataframes):
     """Creates a feature statistics proto from a set of pandas dataframes.
-
     Args:
       dataframes: A list of dicts describing tables for each dataset for the
           proto. Each entry contains a 'table' field of the dataframe of the
             data
           and a 'name' field to identify the dataset in the proto.
-
     Returns:
       The feature statistics proto for the provided tables.
     """
@@ -70,16 +68,13 @@ class BaseGenericFeatureStatisticsGenerator(object):
 
   def DtypeToNumberConverter(self, dtype):
     """Converts a Numpy dtype to a converter method if applicable.
-
       The converter method takes in a numpy array of objects of the provided
       dtype
       and returns a numpy array of the numbers backing that object for
       statistical
       analysis. Returns None if no converter is necessary.
-
     Args:
       dtype: The numpy dtype to make a converter for.
-
     Returns:
       The converter method or None.
     """
@@ -121,9 +116,18 @@ class BaseGenericFeatureStatisticsGenerator(object):
     flattened = flattened[flattened != np.array(None)]
     if converter:
       flattened = converter(flattened)
-    flattened = ([x for x in flattened if str(x) != 'nan']
-                 if data_type == self.fs_proto.STRING else
-                 flattened[~np.isnan(flattened)].tolist())
+    if data_type == self.fs_proto.STRING:
+      flattened_temp = []
+      for x in flattened:
+        try:
+          if str(x) != 'nan':
+            flattened_temp.append(x)
+        except UnicodeEncodeError:
+          if x.encode('utf-8') != 'nan':
+            flattened_temp.append(x)
+      flattened = flattened_temp
+    else:
+      flattened = flattened[~np.isnan(flattened)].tolist()
     missing = orig_size - len(flattened)
     return {
         'vals': flattened,
@@ -134,7 +138,6 @@ class BaseGenericFeatureStatisticsGenerator(object):
 
   def GetDatasetsProto(self, datasets, features=None):
     """Generates the feature stats proto from dictionaries of feature values.
-
     Args:
       datasets: An array of dictionaries, one per dataset, each one containing:
           - 'entries': The dictionary of features in the dataset from the parsed
@@ -145,7 +148,6 @@ class BaseGenericFeatureStatisticsGenerator(object):
           feature statistics for. If set to None then all features in the
             dataset
           are analyzed. Defaults to None.
-
     Returns:
       The feature statistics proto for the provided datasets.
     """
@@ -177,7 +179,7 @@ class BaseGenericFeatureStatisticsGenerator(object):
         # Process the found feature for each dataset.
         for j, dataset in enumerate(datasets):
           feat = all_datasets.datasets[j].features.add(
-              type=feature_type, name=key)
+              type=feature_type, name=str(key))
           value = dataset['entries'].get(key)
           has_data = value is not None and (value['vals'].size != 0
                                             if isinstance(
@@ -234,14 +236,16 @@ class BaseGenericFeatureStatisticsGenerator(object):
                       low_value=float('inf'),
                       high_value=float('inf'),
                       sample_count=num_posinf)
-
               self._PopulateQuantilesHistogram(featstats.histograms.add(),
                                                nums.tolist())
           elif feat.type == self.fs_proto.STRING:
             featstats = feat.string_stats
             commonstats = featstats.common_stats
             if has_data:
-              strs = value['vals']
+              strs = []
+              for item in value['vals']:
+                strs.append(item if hasattr(item, '__len__') else str(item))
+
               featstats.avg_length = np.mean(np.vectorize(len)(strs))
               vals, counts = np.unique(strs, return_counts=True)
               featstats.unique = len(vals)
@@ -252,7 +256,7 @@ class BaseGenericFeatureStatisticsGenerator(object):
                 else:
                   try:
                     printable_val = val[1].decode('UTF-8', 'strict')
-                  except UnicodeDecodeError:
+                  except (UnicodeDecodeError, UnicodeEncodeError):
                     printable_val = '__BYTES_VALUE__'
                 bucket = featstats.rank_histogram.buckets.add(
                     low_rank=val_index,
@@ -267,9 +271,9 @@ class BaseGenericFeatureStatisticsGenerator(object):
             commonstats.num_missing = value['missing']
             commonstats.num_non_missing = (all_datasets.datasets[j].num_examples
                                            - featstats.common_stats.num_missing)
-            commonstats.min_num_values = np.asscalar(np.min(value['counts']))
-            commonstats.max_num_values = np.asscalar(np.max(value['counts']))
-            commonstats.avg_num_values = np.asscalar(np.mean(value['counts']))
+            commonstats.min_num_values = int(np.min(value['counts']).astype(int))
+            commonstats.max_num_values = int(np.max(value['counts']).astype(int))
+            commonstats.avg_num_values = np.mean(value['counts'])
             if 'feat_lens' in value and value['feat_lens']:
               self._PopulateQuantilesHistogram(
                   commonstats.feature_list_length_histogram, value['feat_lens'])
@@ -283,7 +287,6 @@ class BaseGenericFeatureStatisticsGenerator(object):
 
   def _PopulateQuantilesHistogram(self, hist, nums):
     """Fills in the histogram with quantile information from the provided array.
-
     Args:
       hist: A Histogram proto message to fill in.
       nums: A list of numbers to create a quantiles histogram from.
