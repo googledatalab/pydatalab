@@ -17,6 +17,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
+import mock
 import unittest
 import yaml
 from pytz import timezone
@@ -36,11 +37,11 @@ schedule:
 tasks:
   current_timestamp:
     type: bq
-    bql: $foo_query
+    query: $foo_query
     use_legacy_sql: False
   tomorrows_timestamp:
     type: bq
-    bql: $foo_query
+    query: $foo_query
     use_legacy_sql: False
     up_stream:
       - current_timestamp
@@ -67,6 +68,37 @@ tasks:
         'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', '
         'bash_command=\'date\', dag=dag)\n')
 
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
+  def test_get_bq_extract_operator_definition(self, mock_table):
+    mock_table.return_value = google.datalab.bigquery.Table('foo_project.foo_dataset.foo_table')
+    task_id = 'foo'
+    task_details = {}
+    task_details['type'] = 'bq.extract'
+    task_details['table'] = 'foo_project.foo_dataset.foo_table'
+    task_details['path'] = 'foo_path'
+    task_details['format'] = 'csv'
+    task_details['compress'] = True
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
+    self.assertEqual(
+        operator_def,
+        'foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', compression=\'GZIP\', destination_cloud_storage_uris=\'[foo_path]\', export_format=\'CSV\', source_project_dataset_table=\'foo_project.foo_dataset.foo_table\', dag=dag)\n')
+
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
+  def test_get_bq_load_operator_definition(self, mock_table):
+    mock_table.return_value = google.datalab.bigquery.Table('foo_project.foo_dataset.foo_table')
+    task_id = 'foo'
+    task_details = {}
+    task_details['type'] = 'bq.load'
+    task_details['table'] = 'foo_project.foo_dataset.foo_table'
+    task_details['path'] = 'gs://foo_bucket/foo_file.csv'
+    task_details['format'] = 'csv'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
+    self.assertEqual(
+        operator_def,
+        'foo = GoogleCloudStorageToBigQueryOperator(task_id=\'foo_id\', bucket=\'foo_bucket\', destination_project_dataset_table=\'foo_project.foo_dataset.foo_table\', export_format=\'CSV\', source_objects=\'foo_file.csv\', dag=dag)\n')
+
   def test_get_bq_operator_definition(self):
     task_id = 'query_wikipedia'
     task_details = {}
@@ -78,21 +110,6 @@ tasks:
     self.assertEqual(
         operator_def,
         'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', '
-        'bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', '
-        'use_legacy_sql=False, dag=dag)\n')
-
-  def test_get_bq_operator_definition_using_non_default_arg(self):
-    task_id = 'query_wikipedia'
-    task_details = {}
-    task_details['type'] = 'bq'
-    task_details['query'] = google.datalab.bigquery.Query(
-        'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
-    task_details['destination_dataset_table'] = True
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
-    self.assertEqual(
-        operator_def,
-        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', '
-        'destination_dataset_table=True, '
         'bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', '
         'use_legacy_sql=False, dag=dag)\n')
 
@@ -113,10 +130,6 @@ tasks:
                      'BigQueryOperator')
     self.assertEqual(pipeline.Pipeline._get_operator_classname('Unknown'),
                      'UnknownOperator')
-
-  def test_get_operator_param_name(self):
-    self.assertEqual(pipeline.Pipeline._get_operator_param_name('query', 'bq'),
-                     'bql')
 
   def test_get_dag_definition(self):
     test_pipeline = pipeline.Pipeline('', 'foo')
@@ -173,6 +186,7 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
+from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
 from datetime import timedelta
 from pytz import timezone
 

@@ -10,22 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import google
 from google.datalab import utils
-from enum import Enum
-
-
-class Operator(Enum):
-  """ Represents a mapping from the Airflow operator class name suffix (i.e. the
-  portion of the class name before the "Operator", and the corresponding string
-  used in the yaml config (in the cell-body of '%pipeline create'). This
-  mapping enables us to onboard additional Airflow operators with minimal code
-  changes.
-  """
-  BigQuery = 'bq'
-  BigQueryTableDelete = 'bq-table-delete'
-  BigQueryToBigQuery = 'bq-to-bq'
-  BigQueryToCloudStorage = 'bq-to-gcs'
-  Bash = 'bash'
 
 
 class Pipeline(object):
@@ -41,6 +27,7 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
+from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
 from datetime import timedelta
 from pytz import timezone
 """
@@ -134,21 +121,14 @@ default_args = {{
     """
     operator_type = task_details['type']
     param_string = 'task_id=\'{0}_id\''.format(task_id)
-    Pipeline._add_default_override_params(task_details, operator_type)
+    operator_classname = Pipeline._get_operator_classname(operator_type)
 
-    for (param_name, param_value) in sorted(task_details.items()):
-      # These are special-types that are relevant to Datalab
-      if param_name in ['type', 'up_stream']:
-        continue
-      operator_param_name = Pipeline._get_operator_param_name(param_name,
-                                                              operator_type)
-      operator_param_value = self._get_operator_param_value(
-          param_name, operator_type, param_value)
-      param_format_string = Pipeline._get_param_format_string(param_value)
+    operator_param_values = Pipeline._get_operator_param_name_and_values(operator_classname, task_details)
+    for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
+      param_format_string = Pipeline._get_param_format_string(
+          operator_param_value)
       param_string = param_string + param_format_string.format(
           operator_param_name, operator_param_value)
-
-    operator_classname = Pipeline._get_operator_classname(operator_type)
 
     return '{0} = {1}({2}, dag=dag)\n'.format(
         task_id,
@@ -158,7 +138,7 @@ default_args = {{
   @staticmethod
   def _get_param_format_string(param_value):
     # If the type is a python non-string (best guess), we don't quote it.
-    if type(param_value) in [int, bool, float, type(None)]:
+    if type(param_value) in [int, bool, float, type(None), list]:
       return ', {0}={1}'
     return ', {0}=\'{1}\''
 
@@ -182,48 +162,132 @@ default_args = {{
   @staticmethod
   def _get_operator_classname(task_detail_type):
     """ Internal helper gets the name of the Airflow operator class. We maintain
-      this in an enum, so this method really returns the enum name, concatenated
+      this in a map, so this method really returns the enum name, concatenated
       with the string "Operator".
     """
-    try:
-      operator_enum = Operator(task_detail_type).name
-    except ValueError:
-      operator_enum = task_detail_type
-    operator_classname = '{0}Operator'.format(operator_enum)
-    return operator_classname
+    task_type_to_operator_prefix_mapping = {
+      'bq': 'BigQuery',
+      'bq.execute': 'BigQuery',
+      'bq.query': 'BigQuery',
+      'bq.extract': 'BigQueryToCloudStorage',
+      'bq.load': 'GoogleCloudStorageToBigQuery',
+      'bq.table.delete': 'BigQueryTableDelete',
+      'bash': 'Bash'
+    }
+    operator_class_prefix = task_type_to_operator_prefix_mapping.get(
+        task_detail_type)
+    format_string = '{0}Operator'
+    if operator_class_prefix is not None:
+      return format_string.format(operator_class_prefix)
+    return format_string.format(task_detail_type)
 
   @staticmethod
-  def _get_operator_param_name(param_name, operator_type):
+  def _get_operator_param_name_and_values(operator_class_name, task_details):
     """ Internal helper gets the name of the python parameter for the Airflow
       operator class. In some cases, we do not expose the airflow parameter
-      name in its native form, but choose to couch it with a name that's more
-      Datalab friendly. For example, Airflow's BigQueryOperator uses 'bql' for
-      the query string, but we have chosen to expose this as 'query' to the
-      Datalab user. Hence, a few substitutions that are specific to the operator
-      type need to be made.
+      name in its native form, but choose to expose a name that's more standard
+      for Datalab, or one that's more friendly. For example, Airflow's
+      BigQueryOperator uses 'bql' for the query string, but %%bq in Datalab
+      uses the 'query' argument to specify this. Hence, a few substitutions that
+      are specific to the Airflow operator need to be made.
+      Along similar lines, we also need a helper for the parameter value, since
+      this could come from specific properties on python objects that are
+      referred to by the parameter_value.
     """
-    if (operator_type == 'bq'):
-      if (param_name == 'query'):
-        return 'bql'
-    return param_name
-
-  def _get_operator_param_value(self, param_name, operator_type, param_value):
-    """ Internal helper gets the python parameter value for the Airflow
-      operator class. It needs to make exceptions that are specific to the
-      operator-type, in some ways similar to _get_operator_param_name.
-    """
-    if (operator_type == 'bq') and (param_name in ['query', 'bql']):
-        return param_value.sql
-    return param_value
+    operator_task_details = task_details.copy()
+    # These are special-types that are relevant to Datalab
+    if 'type' in operator_task_details.keys():
+      del operator_task_details['type']
+    if 'up_stream' in operator_task_details.keys():
+      del operator_task_details['up_stream']
+    if (operator_class_name == 'BigQueryOperator'):
+      return Pipeline._get_bq_execute_params(operator_task_details)
+    if (operator_class_name == 'BigQueryToCloudStorageOperator'):
+      return Pipeline._get_bq_extract_params(operator_task_details)
+    if (operator_class_name == 'GoogleCloudStorageToBigQueryOperator'):
+      return Pipeline._get_bq_load_params(operator_task_details)
+    return operator_task_details
 
   @staticmethod
-  def _add_default_override_params(task_details, operator_type):
-    """ Internal helper that overrides the defaults of an Airflow operator's
-      parameters, when necessary.
-    """
-    if operator_type == 'bq':
-      bq_defaults = {}
-      bq_defaults['use_legacy_sql'] = False
-      for param_name, param_value in bq_defaults.items():
-          if param_name not in task_details:
-            task_details[param_name] = param_value
+  def _get_bq_execute_params(operator_task_details):
+    bq_defaults = {'use_legacy_sql': False}
+    keys_to_pop = []
+    for (param_name, param_value) in operator_task_details.items():
+      if (param_name == 'query'):
+        operator_task_details['bql'] = param_value.sql
+        keys_to_pop.append('query')
+
+    # We modify operator_task_details here
+    for key in keys_to_pop:
+      del operator_task_details[key]
+
+    # Add defaults
+    if 'use_legacy_sql' not in operator_task_details.keys():
+      operator_task_details['use_legacy_sql'] = False
+
+    return operator_task_details
+
+  @staticmethod
+  def _get_bq_extract_params(operator_task_details):
+    keys_to_pop = []
+    for (param_name, param_value) in operator_task_details.items():
+      if (param_name == 'table'):
+        table = google.datalab.bigquery.commands._bigquery._get_table(param_value)
+        operator_task_details['source_project_dataset_table'] = table.full_name
+        keys_to_pop.append('table')
+      if (param_name == 'path'):
+        operator_task_details['destination_cloud_storage_uris'] = '[{0}]'.format(param_value)
+        keys_to_pop.append('path')
+      if (param_name == 'format'):
+        operator_task_details['export_format'] = 'CSV' if param_value == 'csv' else 'NEWLINE_DELIMITED_JSON'
+        keys_to_pop.append('format')
+      if (param_name == 'delimiter'):
+        operator_task_details['field_delimiter'] = param_value
+        keys_to_pop.append('delimiter')
+      if (param_name == 'compress'):
+        operator_task_details['compression'] = 'GZIP' if param_value else 'NONE'
+        keys_to_pop.append('compress')
+      if (param_name == 'header'):
+        operator_task_details['print_header'] = param_value
+        keys_to_pop.append('header')
+
+
+    # We modify operator_task_details here
+    for key in keys_to_pop:
+      del operator_task_details[key]
+    return operator_task_details
+
+  @staticmethod
+  def _get_bq_load_params(operator_task_details):
+    keys_to_pop = []
+    for (param_name, param_value) in operator_task_details.items():
+      if (param_name == 'table'):
+        table = google.datalab.bigquery.commands._bigquery._get_table(param_value)
+        if not table:
+          table = google.datalab.bigquery.Table(param_value)
+        operator_task_details['destination_project_dataset_table'] = table.full_name
+        # TODO(rajivpb): Ensure that mode == create here.
+        keys_to_pop.append('table')
+      if (param_name == 'path'):
+        bucket, source_object = Pipeline._get_bucket_and_source_object(param_value)
+        operator_task_details['bucket'] = bucket
+        operator_task_details['source_objects'] = source_object
+        keys_to_pop.append('path')
+      if (param_name == 'format'):
+        operator_task_details['export_format'] = 'CSV' if param_value == 'csv' else 'NEWLINE_DELIMITED_JSON'
+        keys_to_pop.append('format')
+      if (param_name == 'delimiter'):
+        operator_task_details['field_delimiter'] = param_value
+        keys_to_pop.append('delimiter')
+      if (param_name == 'skip'):
+        operator_task_details['skip_leading_rows'] = param_value
+        keys_to_pop.append('skip')
+
+    # We modify operator_task_details here
+    for key in keys_to_pop:
+      del operator_task_details[key]
+    return operator_task_details
+
+  @staticmethod
+  def _get_bucket_and_source_object(gcs_path):
+    return gcs_path.split('/')[2], '/'.join(gcs_path.split('/')[3:])
