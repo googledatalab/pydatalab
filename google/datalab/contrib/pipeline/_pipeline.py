@@ -41,20 +41,8 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
-from datetime import datetime, timedelta
-
-"""
-
-  _default_args_format = """
-    'owner': 'Datalab',
-    'depends_on_past': False,
-    'email': ['{0}'],
-    'start_date': datetime.strptime('{1}', '{3}'),
-    'end_date': datetime.strptime('{2}', '{3}'),
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
+from datetime import timedelta
+from pytz import timezone
 """
 
   def __init__(self, spec_str, name, env=None):
@@ -81,14 +69,14 @@ from datetime import datetime, timedelta
 
     dag_spec = utils.commands.parse_config(
         self._spec_str, self._env)
-    default_args = 'default_args = {' + \
-                   Pipeline._default_args_format.format(
-                       dag_spec['email'],
-                       dag_spec.get('schedule').get('start_date'),
-                       dag_spec.get('schedule').get('end_date'),
-                       dag_spec.get('schedule').get('datetime_format')) + \
-                   '}\n\n'
 
+    # Work-around for yaml.load() limitation. Strings that look like datetimes
+    # are parsed into timezone _unaware_ timezone objects.
+    start_datetime_obj = dag_spec.get('schedule').get('start_date')
+    end_datetime_obj = dag_spec.get('schedule').get('end_date')
+
+    default_args = Pipeline._get_default_args(
+        dag_spec['email'], start_datetime_obj, end_datetime_obj)
     dag_definition = self._get_dag_definition(
         dag_spec.get('schedule')['schedule_interval'])
 
@@ -103,6 +91,42 @@ from datetime import datetime, timedelta
 
     return Pipeline._imports + default_args + dag_definition + \
         task_definitions + up_steam_statements
+
+  @staticmethod
+  def _get_default_args(email, start_date, end_date):
+    start_date_str = Pipeline._get_datetime_expr_str(start_date)
+    end_date_str = Pipeline._get_datetime_expr_str(end_date)
+    airflow_default_args_format = """
+default_args = {{
+    'owner': 'Datalab',
+    'depends_on_past': False,
+    'email': ['{0}'],
+    'start_date': {1},
+    'end_date': {2},
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=1),
+}}
+
+"""
+    return airflow_default_args_format.format(email, start_date_str, end_date_str)
+
+  @staticmethod
+  def _get_datetime_expr_str(datetime_obj):
+    # User is expected to always provide start_date and end_date in UTC and in
+    # the %Y-%m-%dT%H:%M:%SZ format (i.e. _with_ the trailing 'Z' to
+    # signify UTC).
+    # However, due to a bug/feature in yaml.load(), strings that look like
+    # datetimes are parsed into timezone *unaware* datetime objects (even if
+    # they do have a timezone 'Z'). To prevent any confusion, we will contrain
+    # the user to only input strings with the 'Z', and will explicitly set the
+    # timezone in the printed code.
+    # TODO(b/64951979): Validate that the 'Z' exists
+    datetime_format = '%Y-%m-%dT%H:%M:%S'  # ISO 8601, timezone unaware
+    # We force UTC timezone
+    expr_format = 'datetime.datetime.strptime(\'{0}\', \'{1}\').replace(tzinfo=timezone(\'UTC\'))'
+    return expr_format.format(datetime_obj.strftime(datetime_format), datetime_format)
 
   def _get_operator_definition(self, task_id, task_details):
     """ Internal helper that gets the Airflow operator for the task with the
