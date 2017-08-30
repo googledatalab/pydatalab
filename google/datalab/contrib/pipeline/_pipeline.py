@@ -118,9 +118,11 @@ default_args = {{
     # the %Y-%m-%dT%H:%M:%SZ format (i.e. _with_ the trailing 'Z' to
     # signify UTC).
     # However, due to a bug/feature in yaml.load(), strings that look like
-    # datetimes are parsed into timezone _unaware_ datetime objects (even if
-    # they do have a timezone). Hence we will be highly restrictive in the
-    # format we accept and will only allow '%Y-%m-%dT%H:%M:%SZ' format.
+    # datetimes are parsed into timezone *unaware* datetime objects (even if
+    # they do have a timezone 'Z'). To prevent any confusion, we will contrain
+    # the user to only input strings with the 'Z', and will explicitly set the
+    # timezone in the printed code.
+    # TODO(b/64951979): Validate that the 'Z' exists
     datetime_format = '%Y-%m-%dT%H:%M:%S'  # ISO 8601, timezone unaware
     # We force UTC timezone
     expr_format = 'datetime.datetime.strptime(\'{0}\', \'{1}\').replace(tzinfo=timezone(\'UTC\'))'
