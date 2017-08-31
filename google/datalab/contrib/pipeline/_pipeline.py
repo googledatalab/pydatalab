@@ -123,7 +123,8 @@ default_args = {{
     param_string = 'task_id=\'{0}_id\''.format(task_id)
     operator_classname = Pipeline._get_operator_classname(operator_type)
 
-    operator_param_values = Pipeline._get_operator_param_name_and_values(operator_classname, task_details)
+    operator_param_values = Pipeline._get_operator_param_name_and_values(
+        operator_classname, task_details)
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
       param_format_string = Pipeline._get_param_format_string(
           operator_param_value)
@@ -210,7 +211,6 @@ default_args = {{
 
   @staticmethod
   def _get_bq_execute_params(operator_task_details):
-    bq_defaults = {'use_legacy_sql': False}
     keys_to_pop = []
     for (param_name, param_value) in operator_task_details.items():
       if (param_name == 'query'):
@@ -239,7 +239,8 @@ default_args = {{
         operator_task_details['destination_cloud_storage_uris'] = '[{0}]'.format(param_value)
         keys_to_pop.append('path')
       if (param_name == 'format'):
-        operator_task_details['export_format'] = 'CSV' if param_value == 'csv' else 'NEWLINE_DELIMITED_JSON'
+        operator_task_details['export_format'] = 'CSV' if param_value == 'csv' \
+          else 'NEWLINE_DELIMITED_JSON'
         keys_to_pop.append('format')
       if (param_name == 'delimiter'):
         operator_task_details['field_delimiter'] = param_value
@@ -250,7 +251,6 @@ default_args = {{
       if (param_name == 'header'):
         operator_task_details['print_header'] = param_value
         keys_to_pop.append('header')
-
 
     # We modify operator_task_details here
     for key in keys_to_pop:
@@ -274,7 +274,8 @@ default_args = {{
         operator_task_details['source_objects'] = source_object
         keys_to_pop.append('path')
       if (param_name == 'format'):
-        operator_task_details['export_format'] = 'CSV' if param_value == 'csv' else 'NEWLINE_DELIMITED_JSON'
+        operator_task_details['export_format'] = 'CSV' if param_value == 'csv' \
+          else 'NEWLINE_DELIMITED_JSON'
         keys_to_pop.append('format')
       if (param_name == 'delimiter'):
         operator_task_details['field_delimiter'] = param_value

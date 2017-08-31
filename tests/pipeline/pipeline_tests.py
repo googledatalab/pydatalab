@@ -82,7 +82,11 @@ tasks:
         task_id, task_details)
     self.assertEqual(
         operator_def,
-        'foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', compression=\'GZIP\', destination_cloud_storage_uris=\'[foo_path]\', export_format=\'CSV\', source_project_dataset_table=\'foo_project.foo_dataset.foo_table\', dag=dag)\n')
+        'foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', '
+        'compression=\'GZIP\', destination_cloud_storage_uris=\'[foo_path]\', '
+        'export_format=\'CSV\', '
+        'source_project_dataset_table=\'foo_project.foo_dataset.foo_table\', '
+        'dag=dag)\n')
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_load_operator_definition(self, mock_table):
@@ -97,7 +101,10 @@ tasks:
         task_id, task_details)
     self.assertEqual(
         operator_def,
-        'foo = GoogleCloudStorageToBigQueryOperator(task_id=\'foo_id\', bucket=\'foo_bucket\', destination_project_dataset_table=\'foo_project.foo_dataset.foo_table\', export_format=\'CSV\', source_objects=\'foo_file.csv\', dag=dag)\n')
+        'foo = GoogleCloudStorageToBigQueryOperator(task_id=\'foo_id\', '
+        'bucket=\'foo_bucket\', '
+        'destination_project_dataset_table=\'foo_project.foo_dataset.foo_table\', '
+        'export_format=\'CSV\', source_objects=\'foo_file.csv\', dag=dag)\n')
 
   def test_get_bq_operator_definition(self):
     task_id = 'query_wikipedia'
