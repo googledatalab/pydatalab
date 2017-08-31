@@ -121,6 +121,7 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
+from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
 from datetime import timedelta
 from pytz import timezone
 
@@ -181,6 +182,7 @@ from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
+from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
 from datetime import timedelta
 from pytz import timezone
 
