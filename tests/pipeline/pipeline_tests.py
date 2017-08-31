@@ -71,11 +71,10 @@ tasks:
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_get_bq_extract_operator_definition(self, mock_table,
-      mock_context_default):
+  def test_get_bq_extract_operator_definition(self, mock_table):
     mock_table.return_value = google.datalab.bigquery.Table(
         'foo_project.foo_dataset.foo_table',
-        context = PipelineTest._create_context())
+        context=PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'bq.extract'
@@ -95,11 +94,10 @@ tasks:
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_get_bq_load_operator_definition(self, mock_table,
-      mock_context_default):
+  def test_get_bq_load_operator_definition(self, mock_table):
     mock_table.return_value = google.datalab.bigquery.Table(
         'foo_project.foo_dataset.foo_table',
-        context = PipelineTest._create_context())
+        context=PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'bq.load'
