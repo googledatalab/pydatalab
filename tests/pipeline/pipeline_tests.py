@@ -20,6 +20,7 @@ import datetime
 import mock
 import unittest
 import yaml
+from oauth2client.client import AccessTokenCredentials
 from pytz import timezone
 
 import google
@@ -68,9 +69,13 @@ tasks:
         'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', '
         'bash_command=\'date\', dag=dag)\n')
 
+  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_get_bq_extract_operator_definition(self, mock_table):
-    mock_table.return_value = google.datalab.bigquery.Table('foo_project.foo_dataset.foo_table')
+  def test_get_bq_extract_operator_definition(self, mock_table,
+      mock_context_default):
+    mock_table.return_value = google.datalab.bigquery.Table(
+        'foo_project.foo_dataset.foo_table',
+        context = PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'bq.extract'
@@ -88,9 +93,13 @@ tasks:
         'source_project_dataset_table=\'foo_project.foo_dataset.foo_table\', '
         'dag=dag)\n')
 
+  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_get_bq_load_operator_definition(self, mock_table):
-    mock_table.return_value = google.datalab.bigquery.Table('foo_project.foo_dataset.foo_table')
+  def test_get_bq_load_operator_definition(self, mock_table,
+      mock_context_default):
+    mock_table.return_value = google.datalab.bigquery.Table(
+        'foo_project.foo_dataset.foo_table',
+        context = PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'bq.load'
@@ -105,6 +114,12 @@ tasks:
         'bucket=\'foo_bucket\', '
         'destination_project_dataset_table=\'foo_project.foo_dataset.foo_table\', '
         'export_format=\'CSV\', source_objects=\'foo_file.csv\', dag=dag)\n')
+
+  @staticmethod
+  def _create_context():
+    project_id = 'test'
+    creds = AccessTokenCredentials('test_token', 'test_ua')
+    return google.datalab.Context(project_id, creds)
 
   def test_get_bq_operator_definition(self):
     task_id = 'query_wikipedia'
