@@ -69,7 +69,6 @@ tasks:
         'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', '
         'bash_command=\'date\', dag=dag)\n')
 
-  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_extract_operator_definition(self, mock_table):
     mock_table.return_value = google.datalab.bigquery.Table(
@@ -92,7 +91,6 @@ tasks:
         'source_project_dataset_table=\'foo_project.foo_dataset.foo_table\', '
         'dag=dag)\n')
 
-  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_load_operator_definition(self, mock_table):
     mock_table.return_value = google.datalab.bigquery.Table(
