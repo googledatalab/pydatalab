@@ -21,7 +21,11 @@ This package is available on PyPI as `datalab`:
 
 ## Using in Jupyter
 
-In a notebook cell, enable with:
+After datalab installation, enable datalab's frontend in Jupyter by running:
+
+    jupyter nbextension install --py datalab.notebook
+    
+Then in a notebook cell, enable datalab's magics with:
 
     %load_ext google.datalab.kernel
 
