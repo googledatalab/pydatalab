@@ -131,6 +131,7 @@ tasks:
                                     'export_format=\'NEWLINE_DELIMITED_JSON\', '
                                     'field_delimiter=\'$\', skip_leading_rows=False, '
                                     'source_objects=\'foo_file.csv\', dag=dag)\n'))
+
   @staticmethod
   def _create_context():
     project_id = 'test'
