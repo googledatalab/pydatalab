@@ -131,13 +131,14 @@ tasks:
                                     'export_format=\'NEWLINE_DELIMITED_JSON\', '
                                     'field_delimiter=\'$\', skip_leading_rows=False, '
                                     'source_objects=\'foo_file.csv\', dag=dag)\n'))
+
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return google.datalab.Context(project_id, creds)
 
-  def test_get_bq_operator_definition(self):
+  def test_get_bq_execute_operator_definition(self):
     task_id = 'query_wikipedia'
     task_details = {}
     task_details['type'] = 'bq'
@@ -150,6 +151,31 @@ tasks:
         'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', '
         'bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', '
         'use_legacy_sql=False, dag=dag)\n')
+
+  def test_get_bq_execute_with_parameters_operator_definition(self):
+    task_id = 'query_wikipedia'
+    task_details = {}
+    task_details['type'] = 'bq'
+    task_details['query'] = google.datalab.bigquery.Query(
+        'SELECT * FROM @table_name WHERE endpoint = '
+        '@endpoint LIMIT 10')
+    task_details['parameters'] = [
+      {
+        'name': 'endpoint',
+        'type': 'STRING',
+        'value': 'Interact3'
+      },
+      {
+        'name': 'table_name',
+        'type': 'STRING',
+        'value': 'cloud-datalab-samples.httplogs.logs_20140615'
+      }
+    ]
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
+    expected = """query_wikipedia = BigQueryOperator(task_id='query_wikipedia_id', bql='SELECT * FROM @table_name WHERE endpoint = @endpoint LIMIT 10', query_params=[{'parameterType': {'type': u'STRING'}, 'parameterValue': {'value': u'Interact3'}, 'name': u'endpoint'}, {'parameterType': {'type': u'STRING'}, 'parameterValue': {'value': u'cloud-datalab-samples.httplogs.logs_20140615'}, 'name': u'table_name'}], use_legacy_sql=False, dag=dag)
+""" # noqa
+    self.assertEqual(operator_def, expected)
 
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
