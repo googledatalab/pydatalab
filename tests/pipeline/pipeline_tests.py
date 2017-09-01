@@ -187,7 +187,6 @@ tasks:
         }
       }
     ]
-    self.maxDiff=None
     self.assertListEqual(actual, expected)
 
   def test_get_unknown_operator_definition(self):

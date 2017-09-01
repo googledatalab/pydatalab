@@ -256,7 +256,7 @@ default_args = {{
           'value': param['value']
         }
       })
-    return sorted(parsed_params)
+    return parsed_params
 
   @staticmethod
   def _get_bq_extract_params(operator_task_details):
