@@ -44,6 +44,7 @@ import google.datalab.utils.commands
 import google.datalab.contrib.mlworkbench._local_predict as _local_predict
 import google.datalab.contrib.mlworkbench._shell_process as _shell_process
 import google.datalab.contrib.mlworkbench._archive as _archive
+import google.datalab.contrib.mlworkbench._prediction_explainer as _prediction_explainer
 
 
 MLTOOLBOX_CODE_PATH = '/datalab/lib/pydatalab/solutionbox/code_free_ml/mltoolbox/code_free_ml/'
@@ -368,6 +369,33 @@ def ml(line, cell=None):
                   url='https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/prediction')))  # noqa
   batch_predict_parser.set_defaults(func=_batch_predict)
 
+  explain_parser = parser.subcommand(
+      'explain',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Explain a prediction.')
+  explain_parser.add_argument('--type', required=True, choices=['text', 'image'],
+                              help='the type of column to explain.')
+  explain_parser.add_argument('--model', required=True,
+                              help='path of the model directory used for prediction.')
+  explain_parser.add_argument('--labels', required=True,
+                              help='comma separated labels to explain.')
+  explain_parser.add_argument('--column_name',
+                              help='the name of the column to explain. Optional if text type ' +
+                                   'and there is only one text column, or image type and ' +
+                                   'there is only one image column.')
+  explain_parser.add_argument('--num_features', type=int,
+                              help='number of features to analyze. In text, it is number of ' +
+                                   'words. In image, it is number of areas.')
+  explain_parser.add_argument('--num_samples', type=int,
+                              help='size of the neighborhood to learn the linear model. ')
+  explain_parser.add_argument('--overview_only', action='store_true', default=False,
+                              help='whether to show only the overview.')
+  explain_parser.add_argument('--detailview_only', action='store_true', default=False,
+                              help='whether to show only the detail views for each label.')
+  explain_parser.add_cell_argument('data', required=True,
+                                   help='Prediction Data. Can be a csv line, or a dict.')
+  explain_parser.set_defaults(func=_explain)
+
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
@@ -675,3 +703,19 @@ def _batch_predict(args, cell):
                                        args['format'],
                                        args['batch_size'])
     print('done.')
+
+
+def _explain(args, cell):
+  if args['type'] == 'text':
+    explainer = _prediction_explainer.PredictionExplainer(args['model'])
+    num_features = args['num_features'] if args['num_features'] else 10
+    num_samples = args['num_samples'] if args['num_samples'] else 5000
+    labels = args['labels'].split(',')
+    instance = explainer.explain_text(labels, args['data'], column_name=args['column_name'],
+                                      num_features=num_features, num_samples=num_samples)
+    if not args['detailview_only']:
+      instance.show_in_notebook()
+
+    if not args['overview_only']:
+      for i in range(len(labels)):
+        instance.as_pyplot_figure(label=i)
