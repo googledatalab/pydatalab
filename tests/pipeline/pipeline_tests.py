@@ -29,7 +29,7 @@ import google.datalab.contrib.pipeline._pipeline as pipeline
 
 class PipelineTest(unittest.TestCase):
 
-  _dag_spec = """
+  _test_pipeline_yaml_spec = """
 email: foo@bar.com
 schedule:
   start_date: 2009-05-05T22:28:15Z
@@ -171,13 +171,13 @@ tasks:
                      'UnknownOperator')
 
   def test_get_dag_definition(self):
-    test_pipeline = pipeline.Pipeline('', 'foo')
+    test_pipeline = pipeline.Pipeline('foo', None)
     self.assertEqual(test_pipeline._get_dag_definition('bar'),
                      'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', '
                      'default_args=default_args)\n\n')
 
   def test_get_datetime_expr(self):
-    dag_dict = yaml.load(PipelineTest._dag_spec)
+    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     start_date = dag_dict.get('schedule').get('start_date')
     datetime_expr = pipeline.Pipeline._get_datetime_expr_str(start_date)
 
@@ -190,7 +190,7 @@ tasks:
 
   def test_get_default_args(self):
     import yaml
-    dag_dict = yaml.load(PipelineTest._dag_spec)
+    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     self.assertEqual(
         pipeline.Pipeline._get_default_args(
             dag_dict['email'],
@@ -217,7 +217,8 @@ default_args = {
     env['foo_query'] = google.datalab.bigquery.Query(
       'INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())')
 
-    airflow_dag = pipeline.Pipeline(PipelineTest._dag_spec, 'demo_bq_dag_during_demo', env)
+    pipeline_spec = pipeline.Pipeline.get_pipeline_spec(PipelineTest._test_pipeline_yaml_spec, env)
+    p1 = pipeline.Pipeline('demo_bq_dag_during_demo', pipeline_spec)
     expected_py = """
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -247,7 +248,7 @@ current_timestamp = BigQueryOperator(task_id='current_timestamp_id', bql='INSERT
 tomorrows_timestamp = BigQueryOperator(task_id='tomorrows_timestamp_id', bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', use_legacy_sql=False, dag=dag)
 tomorrows_timestamp.set_upstream(current_timestamp)
 """ # noqa
-    self.assertEqual(airflow_dag.py, expected_py)
+    self.assertEqual(p1.py, expected_py)
 
 
 if __name__ == '__main__':

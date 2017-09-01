@@ -11,7 +11,6 @@
 # the License.
 
 import google
-import logging
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -51,10 +50,10 @@ class BigQueryLoadOperator(BaseOperator):
     self.quote = quote
 
   def execute(self, context):
-    logging.info('Executing: %s', self.bql)
     bq_table = google.datalab.bigquery._get_table(self.table)
     if not bq_table:
       bq_table = google.datalab.bigquery.Table(self.table)
+
     if self.schema:
       schema = google.datalab.bigquery.Schema(self.schema)
       bq_table.create(schema=schema)

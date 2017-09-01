@@ -32,44 +32,50 @@ from datetime import timedelta
 from pytz import timezone
 """
 
-  def __init__(self, spec_str, name, env=None):
+  def __init__(self, name, pipeline_spec):
     """ Initializes an instance of a Pipeline object.
 
     Args:
-      spec_str: the yaml config (cell body) of the pipeline from Datalab
+      pipeline_spec: Dict with pipeline-spec in key-value form.
+    """
+    self._pipeline_spec = pipeline_spec
+    self._name = name
+
+  @staticmethod
+  def get_pipeline_spec(spec_str, env=None):
+    """
+    Args:
       name: name of the pipeline (line argument) from Datalab
       env: a dictionary containing objects from the pipeline execution context,
           used to get references to Bigquery SQL objects, and other python
           objects defined in the notebook.
+
+    Returns:
+      Dict with pipeline-spec in key-value form.
     """
-    self._spec_str = spec_str
-    self._env = env or {}
-    self._name = name
+    if not spec_str:
+      return None
+    return utils.commands.parse_config(spec_str, env)
 
   @property
   def py(self):
     """ Gets the airflow python spec for the Pipeline object. This is the
       input for the Cloud Composer service.
     """
-    if not self._spec_str:
-      return None
-
-    dag_spec = utils.commands.parse_config(
-        self._spec_str, self._env)
 
     # Work-around for yaml.load() limitation. Strings that look like datetimes
     # are parsed into timezone _unaware_ timezone objects.
-    start_datetime_obj = dag_spec.get('schedule').get('start_date')
-    end_datetime_obj = dag_spec.get('schedule').get('end_date')
+    start_datetime_obj = self._pipeline_spec.get('schedule').get('start_date')
+    end_datetime_obj = self._pipeline_spec.get('schedule').get('end_date')
 
     default_args = Pipeline._get_default_args(
-        dag_spec['email'], start_datetime_obj, end_datetime_obj)
+        self._pipeline_spec['email'], start_datetime_obj, end_datetime_obj)
     dag_definition = self._get_dag_definition(
-        dag_spec.get('schedule')['schedule_interval'])
+        self._pipeline_spec.get('schedule')['schedule_interval'])
 
     task_definitions = ''
     up_steam_statements = ''
-    for (task_id, task_details) in sorted(dag_spec['tasks'].items()):
+    for (task_id, task_details) in sorted(self._pipeline_spec['tasks'].items()):
       task_def = self._get_operator_definition(task_id, task_details)
       task_definitions = task_definitions + task_def
       dependency_def = Pipeline._get_dependency_definition(

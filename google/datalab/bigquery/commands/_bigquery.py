@@ -325,6 +325,9 @@ def _create_pipeline_subparser(parser):
 
   # common arguments
   pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
+  pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name')
+  pipeline_parser.add_argument('-d', '--debug', action='store_true', default=False,
+                               help='Print the airflow python spec.')
   # TODO(rajivpb): I've naively made this a common param. Any objections?
   pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                                action='store_true')
@@ -700,7 +703,7 @@ def _execute_cell(args, cell_body):
 
 # An LRU cache for Tables. This is mostly useful so that when we cross page boundaries
 # when paging through a table we don't have to re-fetch the schema.
-_table_cache = google.datalab.utils.LRUCache(10)
+_existing_table_cache = google.datalab.utils.LRUCache(10)
 
 
 def _get_table(name):
@@ -717,11 +720,11 @@ def _get_table(name):
     return item
   # Else treat this as a BQ table name and return the (cached) table if it exists.
   try:
-    return _table_cache[name]
+    return _existing_table_cache[name]
   except KeyError:
     table = google.datalab.bigquery.Table(name)
     if table.exists():
-      _table_cache[name] = table
+      _existing_table_cache[name] = table
       return table
   return None
 
@@ -928,7 +931,29 @@ def _load_cell(args, cell_body):
 
 
 def _pipeline_cell(args, cell_body):
-  raise NotImplementedError()
+  """Implements the BigQuery pipeline magic
+
+   The supported syntax is:
+
+       %bq pipeline <optional args>
+
+  Args:
+    args: the arguments following '%bq load'.
+    cell_body: optional contents of the cell interpreted as YAML or JSON.
+  Returns:
+    A message about whether the load succeeded or failed.
+  """
+  name = args.get('name')
+  if name is None:
+    raise Exception("Pipeline name was not specified.")
+
+  pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(
+      cell_body, name, env=IPython.get_ipython().user_ns)
+  google.datalab.utils.commands.notebook_environment()[name] = pipeline
+
+  debug = args.get('debug')
+  if debug is True:
+    return pipeline.py
 
 
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):

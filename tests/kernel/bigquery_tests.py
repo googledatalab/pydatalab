@@ -381,7 +381,7 @@ WITH q1 AS (
     t = google.datalab.bigquery.commands._bigquery._get_table(test_table_name)
     self.assertEqual(t.full_name, test_table_name)
 
-    self.assertIn(test_table_name, google.datalab.bigquery.commands._bigquery._table_cache)
+    self.assertIn(test_table_name, google.datalab.bigquery.commands._bigquery._existing_table_cache)
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.Datasets')
