@@ -10,4 +10,4 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-from ._bq_pipeline_operator import _pipeline import BigQueryPipelineOperator  # noqa
+from .bq_load_operator import _pipeline import BigQueryPipelineOperator  # noqa
