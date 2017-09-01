@@ -20,6 +20,7 @@ import datetime
 import mock
 import unittest
 import yaml
+from oauth2client.client import AccessTokenCredentials
 from pytz import timezone
 
 import google
@@ -70,41 +71,72 @@ tasks:
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_extract_operator_definition(self, mock_table):
-    mock_table.return_value = google.datalab.bigquery.Table('foo_project.foo_dataset.foo_table')
+    mock_table.return_value = google.datalab.bigquery.Table(
+        'foo_project.foo_dataset.foo_table',
+        context=PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'bq.extract'
     task_details['table'] = 'foo_project.foo_dataset.foo_table'
     task_details['path'] = 'foo_path'
     task_details['format'] = 'csv'
+    task_details['delimiter'] = '$'
+    task_details['header'] = False
     task_details['compress'] = True
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    self.assertEqual(
-        operator_def,
-        'foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', '
-        'compression=\'GZIP\', destination_cloud_storage_uris=\'[foo_path]\', '
-        'export_format=\'CSV\', '
-        'source_project_dataset_table=\'foo_project.foo_dataset.foo_table\', '
-        'dag=dag)\n')
+    self.assertEqual(operator_def, ('foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', '
+                                    'compression=\'GZIP\', destination_cloud_storage_uris=\''
+                                    '[foo_path]\', export_format=\'CSV\', field_delimiter=\'$\', '
+                                    'print_header=False, source_project_dataset_table=\''
+                                    'foo_project.foo_dataset.foo_table\', dag=dag)\n'))
+
+    task_details['format'] = 'json'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
+    self.assertEqual(operator_def, ('foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', '
+                                    'compression=\'GZIP\', destination_cloud_storage_uris=\''
+                                    '[foo_path]\', export_format=\'NEWLINE_DELIMITED_JSON\', '
+                                    'field_delimiter=\'$\', print_header=False, '
+                                    'source_project_dataset_table=\''
+                                    'foo_project.foo_dataset.foo_table\', dag=dag)\n'))
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_load_operator_definition(self, mock_table):
-    mock_table.return_value = google.datalab.bigquery.Table('foo_project.foo_dataset.foo_table')
+    mock_table.return_value = google.datalab.bigquery.Table(
+        'foo_project.foo_dataset.foo_table',
+        context=PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'bq.load'
     task_details['table'] = 'foo_project.foo_dataset.foo_table'
     task_details['path'] = 'gs://foo_bucket/foo_file.csv'
     task_details['format'] = 'csv'
+    task_details['delimiter'] = '$'
+    task_details['skip'] = False
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    self.assertEqual(
-        operator_def,
-        'foo = GoogleCloudStorageToBigQueryOperator(task_id=\'foo_id\', '
-        'bucket=\'foo_bucket\', '
-        'destination_project_dataset_table=\'foo_project.foo_dataset.foo_table\', '
-        'export_format=\'CSV\', source_objects=\'foo_file.csv\', dag=dag)\n')
+    self.assertEqual(operator_def, ('foo = GoogleCloudStorageToBigQueryOperator(task_id=\'foo_id\','
+                                    ' bucket=\'foo_bucket\', destination_project_dataset_table='
+                                    '\'foo_project.foo_dataset.foo_table\', export_format=\'CSV\', '
+                                    'field_delimiter=\'$\', skip_leading_rows=False, '
+                                    'source_objects=\'foo_file.csv\', dag=dag)\n'))
+
+    task_details['format'] = 'json'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
+    self.assertEqual(operator_def, ('foo = GoogleCloudStorageToBigQueryOperator(task_id=\'foo_id\','
+                                    ' bucket=\'foo_bucket\', destination_project_dataset_table='
+                                    '\'foo_project.foo_dataset.foo_table\', '
+                                    'export_format=\'NEWLINE_DELIMITED_JSON\', '
+                                    'field_delimiter=\'$\', skip_leading_rows=False, '
+                                    'source_objects=\'foo_file.csv\', dag=dag)\n'))
+
+  @staticmethod
+  def _create_context():
+    project_id = 'test'
+    creds = AccessTokenCredentials('test_token', 'test_ua')
+    return google.datalab.Context(project_id, creds)
 
   def test_get_bq_operator_definition(self):
     task_id = 'query_wikipedia'

@@ -184,23 +184,25 @@ default_args = {{
 
   @staticmethod
   def _get_operator_param_name_and_values(operator_class_name, task_details):
-    """ Internal helper gets the name of the python parameter for the Airflow
-      operator class. In some cases, we do not expose the airflow parameter
-      name in its native form, but choose to expose a name that's more standard
-      for Datalab, or one that's more friendly. For example, Airflow's
-      BigQueryOperator uses 'bql' for the query string, but %%bq in Datalab
-      uses the 'query' argument to specify this. Hence, a few substitutions that
-      are specific to the Airflow operator need to be made.
-      Along similar lines, we also need a helper for the parameter value, since
-      this could come from specific properties on python objects that are
-      referred to by the parameter_value.
+    """ Internal helper gets the name of the python parameter for the Airflow operator class. In
+      some cases, we do not expose the airflow parameter name in its native form, but choose to
+      expose a name that's more standard for Datalab, or one that's more friendly. For example,
+      Airflow's BigQueryOperator uses 'bql' for the query string, but we want %%bq users in Datalab
+      to use 'query'. Hence, a few substitutions that are specific to the Airflow operator need to
+      be made.
+
+      Similarly, we the parameter value could come from the notebook's context. All that happens
+      here.
     """
+
+    # We make a clone and then remove 'type' and 'up_stream' since these aren't needed for the
+    # the operator's parameters.
     operator_task_details = task_details.copy()
-    # These are special-types that are relevant to Datalab
     if 'type' in operator_task_details.keys():
       del operator_task_details['type']
     if 'up_stream' in operator_task_details.keys():
       del operator_task_details['up_stream']
+
     if (operator_class_name == 'BigQueryOperator'):
       return Pipeline._get_bq_execute_params(operator_task_details)
     if (operator_class_name == 'BigQueryToCloudStorageOperator'):
@@ -211,82 +213,71 @@ default_args = {{
 
   @staticmethod
   def _get_bq_execute_params(operator_task_details):
-    keys_to_pop = []
-    for (param_name, param_value) in operator_task_details.items():
-      if (param_name == 'query'):
-        operator_task_details['bql'] = param_value.sql
-        keys_to_pop.append('query')
+    if 'query' in operator_task_details:
+      operator_task_details['bql'] = operator_task_details['query'].sql
+      del operator_task_details['query']
 
-    # We modify operator_task_details here
-    for key in keys_to_pop:
-      del operator_task_details[key]
-
-    # Add defaults
-    if 'use_legacy_sql' not in operator_task_details.keys():
+    # Add over-rides of Airflow defaults here.
+    if 'use_legacy_sql' not in operator_task_details:
       operator_task_details['use_legacy_sql'] = False
 
     return operator_task_details
 
   @staticmethod
   def _get_bq_extract_params(operator_task_details):
-    keys_to_pop = []
-    for (param_name, param_value) in operator_task_details.items():
-      if (param_name == 'table'):
-        table = google.datalab.bigquery.commands._bigquery._get_table(param_value)
-        operator_task_details['source_project_dataset_table'] = table.full_name
-        keys_to_pop.append('table')
-      if (param_name == 'path'):
-        operator_task_details['destination_cloud_storage_uris'] = '[{0}]'.format(param_value)
-        keys_to_pop.append('path')
-      if (param_name == 'format'):
-        operator_task_details['export_format'] = 'CSV' if param_value == 'csv' \
-          else 'NEWLINE_DELIMITED_JSON'
-        keys_to_pop.append('format')
-      if (param_name == 'delimiter'):
-        operator_task_details['field_delimiter'] = param_value
-        keys_to_pop.append('delimiter')
-      if (param_name == 'compress'):
-        operator_task_details['compression'] = 'GZIP' if param_value else 'NONE'
-        keys_to_pop.append('compress')
-      if (param_name == 'header'):
-        operator_task_details['print_header'] = param_value
-        keys_to_pop.append('header')
+    if 'table' in operator_task_details:
+      table = google.datalab.bigquery.commands._bigquery._get_table(operator_task_details['table'])
+      operator_task_details['source_project_dataset_table'] = table.full_name
+      del operator_task_details['table']
+    if 'path' in operator_task_details:
+      operator_task_details['destination_cloud_storage_uris'] = '[{0}]'.format(
+          operator_task_details['path'])
+      del operator_task_details['path']
+    if 'format' in operator_task_details:
+      operator_task_details['export_format'] = 'CSV' if operator_task_details['format'] == 'csv' \
+        else 'NEWLINE_DELIMITED_JSON'
+      del operator_task_details['format']
+    if 'delimiter' in operator_task_details:
+      operator_task_details['field_delimiter'] = operator_task_details['delimiter']
+      del operator_task_details['delimiter']
+    if 'compress' in operator_task_details:
+      operator_task_details['compression'] = 'GZIP' if operator_task_details['compress'] else 'NONE'
+      del operator_task_details['compress']
+    if 'header' in operator_task_details:
+      operator_task_details['print_header'] = operator_task_details['header']
+      del operator_task_details['header']
 
-    # We modify operator_task_details here
-    for key in keys_to_pop:
-      del operator_task_details[key]
     return operator_task_details
 
   @staticmethod
   def _get_bq_load_params(operator_task_details):
-    keys_to_pop = []
-    for (param_name, param_value) in operator_task_details.items():
-      if (param_name == 'table'):
-        table = google.datalab.bigquery.commands._bigquery._get_table(param_value)
-        if not table:
-          table = google.datalab.bigquery.Table(param_value)
-        operator_task_details['destination_project_dataset_table'] = table.full_name
+    if 'table' in operator_task_details:
+      table = google.datalab.bigquery.commands._bigquery._get_table(operator_task_details['table'])
+      if not table:
+        table = google.datalab.bigquery.Table(operator_task_details['table'])
         # TODO(rajivpb): Ensure that mode == create here.
-        keys_to_pop.append('table')
-      if (param_name == 'path'):
-        bucket, source_object = Pipeline._get_bucket_and_source_object(param_value)
-        operator_task_details['bucket'] = bucket
-        operator_task_details['source_objects'] = source_object
-        keys_to_pop.append('path')
-      if (param_name == 'format'):
-        operator_task_details['export_format'] = 'CSV' if param_value == 'csv' \
-          else 'NEWLINE_DELIMITED_JSON'
-        keys_to_pop.append('format')
-      if (param_name == 'delimiter'):
-        operator_task_details['field_delimiter'] = param_value
-        keys_to_pop.append('delimiter')
-      if (param_name == 'skip'):
-        operator_task_details['skip_leading_rows'] = param_value
-        keys_to_pop.append('skip')
+      operator_task_details['destination_project_dataset_table'] = table.full_name
+      del operator_task_details['table']
 
-    # We modify operator_task_details here
-    for key in keys_to_pop:
-      del operator_task_details[key]
+    if 'format' in operator_task_details:
+      operator_task_details['export_format'] = 'CSV' if operator_task_details['format'] == 'csv' \
+        else 'NEWLINE_DELIMITED_JSON'
+      del operator_task_details['format']
+
+    if 'delimiter' in operator_task_details:
+      operator_task_details['field_delimiter'] = operator_task_details['delimiter']
+      del operator_task_details['delimiter']
+
+    if 'skip' in operator_task_details:
+      operator_task_details['skip_leading_rows'] = operator_task_details['skip']
+      del operator_task_details['skip']
+
+    if 'path' in operator_task_details:
+      bucket, source_object = Pipeline._get_bucket_and_source_object(operator_task_details['path'])
+      operator_task_details['bucket'] = bucket
+      operator_task_details['source_objects'] = source_object
+      del operator_task_details['path']
+
     return operator_task_details
 
   @staticmethod
