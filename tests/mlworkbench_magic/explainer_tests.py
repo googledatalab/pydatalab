@@ -108,9 +108,11 @@ class TestMLExplainer(unittest.TestCase):
     apple = exp_instance.as_list(label=0)
     self.assertEqual(len(apple), 2)
     for word, score in apple:
+      # "green" and "long" are both negative to "apple"
       self.assertLess(score, 0.0)
 
     cucumber = exp_instance.as_list(label=2)
     self.assertEqual(len(cucumber), 2)
     for word, score in cucumber:
+      # "green" and "long" are both positive to "cucumber"
       self.assertGreater(score, 0.0)
