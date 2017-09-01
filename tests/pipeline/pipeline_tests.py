@@ -173,8 +173,7 @@ tasks:
     ]
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    expected = """query_wikipedia = BigQueryOperator(task_id='query_wikipedia_id', bql='SELECT * FROM @table_name WHERE endpoint = @endpoint LIMIT 10', query_params=[{'parameterType': {'type': u'STRING'}, 'parameterValue': {'value': u'Interact3'}, 'name': u'endpoint'}, {'parameterType': {'type': u'STRING'}, 'parameterValue': {'value': u'cloud-datalab-samples.httplogs.logs_20140615'}, 'name': u'table_name'}], use_legacy_sql=False, dag=dag)
-""" # noqa
+    expected = ('query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', bql=\'SELECT * FROM @table_name WHERE endpoint = @endpoint LIMIT 10\', query_params=[{\'parameterType\': {\'type\': u\'STRING\'}, \'parameterValue\': {\'value\': u\'Interact3\'}, \'name\': u\'endpoint\'}, {\'parameterType\': {\'type\': u\'STRING\'}, \'parameterValue\': {\'value\': u\'cloud-datalab-samples.httplogs.logs_20140615\'}, \'name\': u\'table_name\'}], use_legacy_sql=False, dag=dag)\n') # noqa
     self.assertEqual(operator_def, expected)
 
   def test_get_unknown_operator_definition(self):
