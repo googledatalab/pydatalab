@@ -194,6 +194,11 @@ default_args = {{
 
       Similarly, we the parameter value could come from the notebook's context. All that happens
       here.
+
+      Returns:
+        Dict containing _only_ the keys and values that are required in Airflow operator definition.
+      This requires a substituting existing keys in the dictionary with their Airflow equivalents (
+      i.e. by adding new keys, and removing the existing ones).
     """
 
     # We make a clone and then remove 'type' and 'up_stream' since these aren't needed for the
@@ -234,13 +239,13 @@ default_args = {{
     """Extract query parameters from dict if provided
     Also validates the cell body schema using jsonschema to catch errors. This validation isn't
     complete, however; it does not validate recursive schemas, but it acts as a good filter
-    against most simple schemas
+    against most simple schemas.
 
     Args:
-      operator_task_details: dict of input param names to values
+      operator_task_details: dict of input param names to values.
 
     Returns:
-      Validated object containing query parameters
+      Validated object containing query parameters.
     """
     jsonschema.validate({'parameters': input_query_parameters},
                         google.datalab.bigquery.commands._bigquery.query_params_schema)
