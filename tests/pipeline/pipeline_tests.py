@@ -152,30 +152,43 @@ tasks:
         'bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', '
         'use_legacy_sql=False, dag=dag)\n')
 
-  def test_get_bq_execute_with_parameters_operator_definition(self):
-    task_id = 'query_wikipedia'
+  def test_get_query_params(self):
     task_details = {}
-    task_details['type'] = 'bq'
-    task_details['query'] = google.datalab.bigquery.Query(
-        'SELECT * FROM @table_name WHERE endpoint = '
-        '@endpoint LIMIT 10')
     task_details['parameters'] = [
+        {
+          'name': 'endpoint',
+          'type': 'STRING',
+          'value': 'Interact3'
+        },
+        {
+          'name': 'table_name',
+          'type': 'STRING',
+          'value': 'cloud-datalab-samples.httplogs.logs_20140615'
+        }
+    ]
+    actual = pipeline.Pipeline._get_query_parameters(task_details['parameters'])
+    expected = [
       {
         'name': 'endpoint',
-        'type': 'STRING',
-        'value': 'Interact3'
+        'parameterType': {
+          'type': 'STRING'
+        },
+        'parameterValue': {
+          'value': 'Interact3'
+        }
       },
       {
         'name': 'table_name',
-        'type': 'STRING',
-        'value': 'cloud-datalab-samples.httplogs.logs_20140615'
+        'parameterType': {
+         'type': 'STRING'
+        },
+        'parameterValue': {
+          'value': 'cloud-datalab-samples.httplogs.logs_20140615'
+        }
       }
     ]
-    self.maxDiff = None
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
-        task_id, task_details)
-    expected = ('query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', bql=\'SELECT * FROM @table_name WHERE endpoint = @endpoint LIMIT 10\', query_params=[{\'parameterType\': {\'type\': u\'STRING\'}, \'parameterValue\': {\'value\': u\'Interact3\'}, \'name\': u\'endpoint\'}, {\'parameterType\': {\'type\': u\'STRING\'}, \'parameterValue\': {\'value\': u\'cloud-datalab-samples.httplogs.logs_20140615\'}, \'name\': u\'table_name\'}], use_legacy_sql=False, dag=dag)\n') # noqa
-    self.assertEqual(operator_def, expected)
+    self.maxDiff=None
+    self.assertListEqual(actual, expected)
 
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
