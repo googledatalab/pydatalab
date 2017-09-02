@@ -10,7 +10,6 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
