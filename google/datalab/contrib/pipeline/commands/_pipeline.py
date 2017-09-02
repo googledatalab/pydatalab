@@ -27,12 +27,9 @@ import google
 
 def _create_cell(args, cell_body):
   """Implements the pipeline cell create magic used to create Pipeline objects.
-
   The supported syntax is:
-
       %%pipeline create <args>
       [<inline YAML>]
-
   Args:
     args: the arguments following '%%pipeline create'.
     cell_body: the contents of the cell
@@ -42,9 +39,8 @@ def _create_cell(args, cell_body):
     raise Exception("Pipeline name was not specified.")
 
   pipeline_spec = google.datalab.contrib.pipeline._pipeline.Pipeline.get_pipeline_spec(
-      cell_body, env=IPython.get_ipython().user_ns)
-  pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(
-      name, pipeline_spec)
+      cell_body, IPython.get_ipython().user_ns)
+  pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
   google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
   debug = args.get('debug')

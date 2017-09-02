@@ -332,57 +332,6 @@ def _create_pipeline_subparser(parser):
   pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
                                action='store_true')
 
-  # load arguments
-  pipeline_parser.add_argument(
-      '-lm', '--load_mode', help='One of create (default), append or overwrite for loading data',
-      choices=['create', 'append', 'overwrite'], default='create')
-  pipeline_parser.add_argument('-lf', '--load_format', help='The format of the source file in GCS',
-                               choices=['json', 'csv'], default='csv')
-  pipeline_parser.add_argument('--skip',
-                               help='The number of head lines to skip during load; useful for CSV',
-                               type=int, default=0)
-  pipeline_parser.add_argument('-s', '--strict', help='Whether to reject bad values and jagged '
-                                                      'lines when loading', action='store_true')
-  pipeline_parser.add_argument(
-      '-ld', '--load_delimiter', default=',', help='The inter-field delimiter for CVS (default ,) '
-                                                   'in load file')
-  pipeline_parser.add_argument(
-      '-lq', '--load_quote', default='"', help='The quoted field delimiter for CVS (default ") in '
-                                               'the load file')
-  pipeline_parser.add_argument('-lp', '--load_path', help='The path URL of the GCS load file(s)')
-  pipeline_parser.add_argument('-lt', '--load_table', help='The destination bigquery table name '
-                                                           'for loading.')
-
-  # execute arguments
-  pipeline_parser.add_argument(
-      '-em', '--execute_mode', help='The table creation mode for execution', default='create',
-      choices=['create', 'append', 'overwrite'])
-  pipeline_parser.add_argument(
-      '-l', '--large', help='Whether to allow large results during execution', action='store_true')
-  pipeline_parser.add_argument('-eq', '--execute_query', help='The name of query for execution',
-                               required=True)
-  pipeline_parser.add_argument(
-      '-et', '--extract_table', help='Destination table name for the execution results')
-
-  # extract arguments
-  pipeline_parser.add_argument(
-      '-xf', '--extract_format', choices=['csv', 'json'], default='csv',
-      help='The format to use for the export for extraction.')
-  pipeline_parser.add_argument(
-      '-c', '--compress', action='store_true',
-      help='Whether or not to compress the data after extraction')
-  pipeline_parser.add_argument(
-      '-H', '--header', action='store_true',
-      help='Whether to include a header line (CSV only) in extracted file')
-  pipeline_parser.add_argument(
-      '-xd', '--extract_delimiter', default=',',
-      help='The field delimiter to use (CSV only) for extraction')
-  # TODO(rajivpb): Consider not having this, and defaulting to "SELECT * FROM <composed-table-name>"
-  pipeline_parser.add_argument(
-      '-xq', '--extract_query', default=',', help='The name of query to be used for extraction. ')
-  pipeline_parser.add_argument('-xp', '--extract_path',
-                               help='The path of the destination for extraction')
-
   return pipeline_parser
 
 
@@ -931,29 +880,75 @@ def _load_cell(args, cell_body):
 
 
 def _pipeline_cell(args, cell_body):
-  """Implements the BigQuery pipeline magic
+    """Implements the pipeline subcommand in the %%bq magic.
 
-   The supported syntax is:
+    The supported syntax is:
 
-       %bq pipeline <optional args>
+        %%bq pipeline <args>
+        [<inline YAML>]
 
-  Args:
-    args: the arguments following '%bq load'.
-    cell_body: optional contents of the cell interpreted as YAML or JSON.
-  Returns:
-    A message about whether the load succeeded or failed.
-  """
-  name = args.get('name')
-  if name is None:
-    raise Exception("Pipeline name was not specified.")
+    Args:
+      args: the arguments following '%%bq pipeline'.
+      cell_body: the contents of the cell
+    """
+    name = args.get('name')
+    if name is None:
+        raise Exception("Pipeline name was not specified.")
 
-  pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(
-      cell_body, name, env=IPython.get_ipython().user_ns)
-  google.datalab.utils.commands.notebook_environment()[name] = pipeline
+    bq_pipeline_config = google.datalab.utils.commands.parse_config(
+        cell_body, IPython.get_ipython().user_ns)
 
-  debug = args.get('debug')
-  if debug is True:
-    return pipeline.py
+    load_task_config_name = 'bq_pipeline_load_task'
+    load_task_config = {'type': 'pydatalab.bq.load'}
+    add_load_parameters(load_task_config, bq_pipeline_config)
+
+    # execute_task_config_name = 'bq_pipeline_execute_task'
+    # execute_task_config = {'type': 'pydatalab.bq.execute', 'up_stream': [load_task_config_name]}
+    # add_execute_parameters(load_task_config, bq_pipeline_config)
+
+    # extract_task_config_name = 'bq_pipeline_extract_task'
+    # extract_task_config =
+    # {'type': 'pydatalab.bq.extract', 'up_stream': [execute_task_config_name]}
+    # add_extract_parameters(load_task_config, bq_pipeline_config)
+
+    pipeline_spec = {
+        'email': bq_pipeline_config['email'],
+        'schedule': bq_pipeline_config['schedule'],
+        'tasks': {
+            load_task_config_name: load_task_config,
+            # execute_task_config_name: execute_task_config,
+            # extract_task_config_name: extract_task_config
+        }
+    }
+
+    pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
+    google.datalab.utils.commands.notebook_environment()[name] = pipeline
+
+    debug = args.get('debug')
+    if debug is True:
+        return pipeline.py
+
+
+def add_load_parameters(load_task_config, bq_pipeline_config):
+    load_task_config['table'] = bq_pipeline_config['load_table']
+    load_task_config['path'] = bq_pipeline_config['load_path']
+    load_task_config['mode'] = bq_pipeline_config['load_mode']
+    load_task_config['format'] = bq_pipeline_config['load_format']
+    load_task_config['delimiter'] = bq_pipeline_config['load_delimiter']
+    load_task_config['skip'] = bq_pipeline_config['skip']
+    load_task_config['strict'] = bq_pipeline_config['strict']
+    load_task_config['quote'] = bq_pipeline_config['load_quote']
+    load_task_config['schema'] = bq_pipeline_config['load_schema']
+
+
+def add_execute_parameters(execute_task_config, bq_pipeline_config):
+    # 'execute_mode', 'large','execute_query', 'extract_table'
+    raise NotImplementedError()
+
+
+def add_extract_parameters(extract_task_config, bq_pipeline_config):
+    # 'extract_format', 'compress', 'header', 'extract_delimiter', 'extract_query', 'extract_path'
+    raise NotImplementedError()
 
 
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):

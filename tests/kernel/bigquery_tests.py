@@ -769,6 +769,72 @@ WITH q1 AS (
                                        source_format='csv', csv_options=mock.ANY,
                                        ignore_unknown_values=True)
 
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.bigquery.Table.exists')
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
+  def test_pipeline_cell(self, mock_get_table, mock_table_exists, mock_environment):
+
+    args = {'name': 'bq_pipeline_test', 'debug': True}
+    table = google.datalab.bigquery.Table('project.test.table')
+    mock_get_table.return_value = table
+    mock_table_exists.return_value = True
+    mock_environment.return_value = {}
+
+    cell_body = """
+      email: foo@bar.com
+      schedule:
+          start_date: 2009-05-05T22:28:15Z
+          end_date: 2009-05-06T22:28:15Z
+          schedule_interval: '@hourly'
+      load_schema:
+          - name: col1
+            type: int64
+            mode: NULLABLE
+            description: description1
+          - name: col1
+            type: STRING
+            mode: required
+            description: description1
+      load_table: project.test.table
+      load_mode: create
+      load_path: test/path
+      skip: None
+      load_delimiter: None
+      load_format: None
+      strict: None
+      load_quote: None
+"""
+
+    output = google.datalab.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
+    expected = """
+from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
+from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
+from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
+from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
+from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
+from datetime import timedelta
+from pytz import timezone
+
+default_args = {
+    'owner': 'Datalab',
+    'depends_on_past': False,
+    'email': ['foo@bar.com'],
+    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
+    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=1),
+}
+
+dag = DAG(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args)
+
+bq_pipeline_load_task = BigQueryLoadOperator(task_id='bq_pipeline_load_task_id', delimiter='None', format='None', mode='create', path='test/path', quote='None', schema=[{'mode': 'NULLABLE', 'type': 'int64', 'description': 'description1', 'name': 'col1'}, {'mode': 'required', 'type': 'STRING', 'description': 'description1', 'name': 'col1'}], skip='None', strict='None', table='project.test.table', dag=dag)
+"""  # noqa
+    self.assertEqual(output, expected)
+
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')
   @mock.patch('google.datalab.utils.commands._html.HtmlBuilder.render_chart_data')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
