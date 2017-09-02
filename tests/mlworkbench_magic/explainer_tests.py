@@ -16,6 +16,7 @@ from __future__ import unicode_literals
 import unittest
 import os
 import shutil
+import six
 import tempfile
 
 
@@ -101,6 +102,7 @@ class TestMLExplainer(unittest.TestCase):
               top-n: 0
               max-steps: 300""" % (train_dir, analyze_dir, train_csv, train_csv))
 
+  @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
   def test_text_explainer(self):
     """Test text explainer."""
 
