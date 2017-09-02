@@ -769,17 +769,23 @@ WITH q1 AS (
                                        source_format='csv', csv_options=mock.ANY,
                                        ignore_unknown_values=True)
 
+  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_pipeline_cell(self, mock_get_table, mock_table_exists, mock_environment):
-
-    args = {'name': 'bq_pipeline_test', 'debug': True}
+  def test_pipeline_cell(self, mock_get_table, mock_table_exists, mock_environment,
+                         mock_default_context):
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
     mock_table_exists.return_value = True
-    mock_environment.return_value = {}
 
+    env = {
+      'foo_query': google.datalab.bigquery.Query(
+        'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
+    }
+    mock_environment.return_value = env
+
+    args = {'name': 'bq_pipeline_test', 'debug': True}
     cell_body = """
       email: foo@bar.com
       schedule:
@@ -803,6 +809,16 @@ WITH q1 AS (
       load_format: None
       strict: None
       load_quote: None
+      execute_mode: create
+      large: True
+      execute_query: foo_query
+      extract_table: project.test.table
+      extract_format: None
+      compress: True
+      header: True
+      extract_delimiter: 'g'
+      extract_query: foo_query
+      extract_path: test/path
 """
 
     output = google.datalab.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
@@ -814,6 +830,9 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
+from google.datalab.contrib.pipeline.airflow_operators import BigQueryLoadOperator
+from google.datalab.contrib.pipeline.airflow_operators import BigQueryExecuteOperator
+from google.datalab.contrib.pipeline.airflow_operators import BigQueryExtractOperator
 from datetime import timedelta
 from pytz import timezone
 
@@ -831,7 +850,11 @@ default_args = {
 
 dag = DAG(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args)
 
+bq_pipeline_execute_task = BigQueryExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag)
+bq_pipeline_extract_task = BigQueryExtractOperator(task_id='bq_pipeline_extract_task_id', compress=True, delimiter='g', format='None', header=True, path='test/path', query='foo_query', dag=dag)
 bq_pipeline_load_task = BigQueryLoadOperator(task_id='bq_pipeline_load_task_id', delimiter='None', format='None', mode='create', path='test/path', quote='None', schema=[{'mode': 'NULLABLE', 'type': 'int64', 'description': 'description1', 'name': 'col1'}, {'mode': 'required', 'type': 'STRING', 'description': 'description1', 'name': 'col1'}], skip='None', strict='None', table='project.test.table', dag=dag)
+bq_pipeline_execute_task.set_upstream(bq_pipeline_load_task)
+bq_pipeline_extract_task.set_upstream(bq_pipeline_execute_task)
 """  # noqa
     self.assertEqual(output, expected)
 

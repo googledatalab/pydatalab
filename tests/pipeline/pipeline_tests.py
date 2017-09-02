@@ -227,6 +227,9 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
+from google.datalab.contrib.pipeline.airflow_operators import BigQueryLoadOperator
+from google.datalab.contrib.pipeline.airflow_operators import BigQueryExecuteOperator
+from google.datalab.contrib.pipeline.airflow_operators import BigQueryExtractOperator
 from datetime import timedelta
 from pytz import timezone
 

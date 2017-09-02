@@ -896,28 +896,27 @@ def _pipeline_cell(args, cell_body):
         raise Exception("Pipeline name was not specified.")
 
     bq_pipeline_config = google.datalab.utils.commands.parse_config(
-        cell_body, IPython.get_ipython().user_ns)
+        cell_body, google.datalab.utils.commands.notebook_environment())
 
     load_task_config_name = 'bq_pipeline_load_task'
     load_task_config = {'type': 'pydatalab.bq.load'}
     add_load_parameters(load_task_config, bq_pipeline_config)
 
-    # execute_task_config_name = 'bq_pipeline_execute_task'
-    # execute_task_config = {'type': 'pydatalab.bq.execute', 'up_stream': [load_task_config_name]}
-    # add_execute_parameters(load_task_config, bq_pipeline_config)
+    execute_task_config_name = 'bq_pipeline_execute_task'
+    execute_task_config = {'type': 'pydatalab.bq.execute', 'up_stream': [load_task_config_name]}
+    add_execute_parameters(execute_task_config, bq_pipeline_config)
 
-    # extract_task_config_name = 'bq_pipeline_extract_task'
-    # extract_task_config =
-    # {'type': 'pydatalab.bq.extract', 'up_stream': [execute_task_config_name]}
-    # add_extract_parameters(load_task_config, bq_pipeline_config)
+    extract_task_config_name = 'bq_pipeline_extract_task'
+    extract_task_config = {'type': 'pydatalab.bq.extract', 'up_stream': [execute_task_config_name]}
+    add_extract_parameters(extract_task_config, bq_pipeline_config)
 
     pipeline_spec = {
         'email': bq_pipeline_config['email'],
         'schedule': bq_pipeline_config['schedule'],
         'tasks': {
             load_task_config_name: load_task_config,
-            # execute_task_config_name: execute_task_config,
-            # extract_task_config_name: extract_task_config
+            execute_task_config_name: execute_task_config,
+            extract_task_config_name: extract_task_config
         }
     }
 
@@ -942,13 +941,19 @@ def add_load_parameters(load_task_config, bq_pipeline_config):
 
 
 def add_execute_parameters(execute_task_config, bq_pipeline_config):
-    # 'execute_mode', 'large','execute_query', 'extract_table'
-    raise NotImplementedError()
+    execute_task_config['mode'] = bq_pipeline_config['execute_mode']
+    execute_task_config['large'] = bq_pipeline_config['large']
+    execute_task_config['query'] = bq_pipeline_config['execute_query']
+    execute_task_config['table'] = bq_pipeline_config['extract_table']
 
 
 def add_extract_parameters(extract_task_config, bq_pipeline_config):
-    # 'extract_format', 'compress', 'header', 'extract_delimiter', 'extract_query', 'extract_path'
-    raise NotImplementedError()
+    extract_task_config['format'] = bq_pipeline_config['extract_format']
+    extract_task_config['compress'] = bq_pipeline_config['compress']
+    extract_task_config['header'] = bq_pipeline_config['header']
+    extract_task_config['delimiter'] = bq_pipeline_config['extract_delimiter']
+    extract_task_config['query'] = bq_pipeline_config['extract_query']
+    extract_task_config['path'] = bq_pipeline_config['extract_path']
 
 
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):

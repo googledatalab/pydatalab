@@ -39,7 +39,7 @@ def _create_cell(args, cell_body):
     raise Exception("Pipeline name was not specified.")
 
   pipeline_spec = google.datalab.contrib.pipeline._pipeline.Pipeline.get_pipeline_spec(
-      cell_body, IPython.get_ipython().user_ns)
+      cell_body, google.datalab.utils.commands.notebook_environment())
   pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
   google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
