@@ -786,6 +786,7 @@ WITH q1 AS (
     mock_environment.return_value = env
 
     args = {'name': 'bq_pipeline_test', 'debug': True}
+    # TODO(rajivpb): The references to foo_query need to be resolved.
     cell_body = """
       email: foo@bar.com
       schedule:

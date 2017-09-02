@@ -956,6 +956,18 @@ def add_extract_parameters(extract_task_config, bq_pipeline_config):
     extract_task_config['path'] = bq_pipeline_config['extract_path']
 
 
+table,
+path,
+format,
+delimiter,
+header,
+compress,
+query,
+view,
+query_params,
+nocache,
+billing,
+
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
   """ Create and initialize a bigquery subcommand handler. """
   sub_parser = subparser_fn(parser)
