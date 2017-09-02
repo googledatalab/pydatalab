@@ -23,7 +23,6 @@ import tempfile
 import IPython.core.display
 import IPython.core.magic
 
-import google.datalab.contrib.mlworkbench.commands._ml as mlmagic  # noqa
 from google.datalab.contrib.mlworkbench import PredictionExplainer
 
 
@@ -36,6 +35,8 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
+
+import google.datalab.contrib.mlworkbench.commands._ml as mlmagic  # noqa
 
 
 class TestMLExplainer(unittest.TestCase):
