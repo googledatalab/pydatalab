@@ -317,6 +317,7 @@ def _create_load_subparser(parser):
 
 
 def _create_pipeline_subparser(parser):
+<<<<<<< HEAD
   pipeline_parser = parser.subcommand('pipeline', 'Creates a pipeline to execute a SQL query to '
                                                   'transform data using BigQuery.')
 
@@ -325,6 +326,70 @@ def _create_pipeline_subparser(parser):
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name')
   pipeline_parser.add_argument('-d', '--debug', action='store_true', default=False,
                                help='Print the airflow python spec.')
+=======
+  pipeline_parser = parser.subcommand('pipeline', 'Load from GCS, query, and extract data from GCS '
+                                                  'into a BigQuery table. If creating a new table, '
+                                                  'a schema should be specified in YAML or JSON in '
+                                                  'the cell body, otherwise the schema is inferred '
+                                                  'from existing table.')
+
+  # common arguments
+  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
+  # TODO(rajivpb): I've naively made this a common param. Any objections?
+  pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
+                               action='store_true')
+
+  # load arguments
+  pipeline_parser.add_argument(
+      '-lm', '--load_mode', help='One of create (default), append or overwrite for loading data',
+      choices=['create', 'append', 'overwrite'], default='create')
+  pipeline_parser.add_argument('-lf', '--load_format', help='The format of the source file in GCS',
+                               choices=['json', 'csv'], default='csv')
+  pipeline_parser.add_argument('--skip',
+                               help='The number of head lines to skip during load; useful for CSV',
+                               type=int, default=0)
+  pipeline_parser.add_argument('-s', '--strict', help='Whether to reject bad values and jagged '
+                                                      'lines when loading', action='store_true')
+  pipeline_parser.add_argument(
+      '-ld', '--load_delimiter', default=',', help='The inter-field delimiter for CVS (default ,) '
+                                                   'in load file')
+  pipeline_parser.add_argument(
+      '-lq', '--load_quote', default='"', help='The quoted field delimiter for CVS (default ") in '
+                                               'the load file')
+  pipeline_parser.add_argument('-lp', '--load_path', help='The path URL of the GCS load file(s)')
+  pipeline_parser.add_argument('-lt', '--load_table', help='The destination bigquery table name '
+                                                           'for loading.')
+
+  # execute arguments
+  pipeline_parser.add_argument(
+      '-em', '--execute_mode', help='The table creation mode for execution', default='create',
+      choices=['create', 'append', 'overwrite'])
+  pipeline_parser.add_argument(
+      '-l', '--large', help='Whether to allow large results during execution', action='store_true')
+  pipeline_parser.add_argument('-eq', '--execute_query', help='The name of query for execution',
+                               required=True)
+  pipeline_parser.add_argument(
+      '-et', '--extract_table', help='Destination table name for the execution results')
+
+  # extract arguments
+  pipeline_parser.add_argument(
+      '-xf', '--extract_format', choices=['csv', 'json'], default='csv',
+      help='The format to use for the export for extraction.')
+  pipeline_parser.add_argument(
+      '-c', '--compress', action='store_true',
+      help='Whether or not to compress the data after extraction')
+  pipeline_parser.add_argument(
+      '-H', '--header', action='store_true',
+      help='Whether to include a header line (CSV only) in extracted file')
+  pipeline_parser.add_argument(
+      '-xd', '--extract_delimiter', default=',',
+      help='The field delimiter to use (CSV only) for extraction')
+  # TODO(rajivpb): Consider not having this, and defaulting to "SELECT * FROM <composed-table-name>"
+  pipeline_parser.add_argument(
+      '-xq', '--extract_query', default=',', help='The name of query to be used for extraction. ')
+  pipeline_parser.add_argument('-xp', '--extract_path',
+                               help='The path of the destination for extraction')
+>>>>>>> master
 
   return pipeline_parser
 
@@ -950,6 +1015,7 @@ def add_extract_parameters(extract_task_config, bq_pipeline_config):
     extract_task_config['table'] = bq_pipeline_config['execute_table']
     extract_task_config['path'] = bq_pipeline_config['extract_path']
     extract_task_config['format'] = bq_pipeline_config['extract_format']
+
 
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
   """ Create and initialize a bigquery subcommand handler. """

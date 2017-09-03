@@ -138,7 +138,7 @@ tasks:
     creds = AccessTokenCredentials('test_token', 'test_ua')
     return google.datalab.Context(project_id, creds)
 
-  def test_get_bq_operator_definition(self):
+  def test_get_bq_execute_operator_definition(self):
     task_id = 'query_wikipedia'
     task_details = {}
     task_details['type'] = 'bq.execute'
@@ -151,6 +151,43 @@ tasks:
         'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', '
         'bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', '
         'use_legacy_sql=False, dag=dag)\n')
+
+  def test_get_query_params(self):
+    task_details = {}
+    task_details['parameters'] = [
+        {
+          'name': 'endpoint',
+          'type': 'STRING',
+          'value': 'Interact3'
+        },
+        {
+          'name': 'table_name',
+          'type': 'STRING',
+          'value': 'cloud-datalab-samples.httplogs.logs_20140615'
+        }
+    ]
+    actual = pipeline.Pipeline._get_query_parameters(task_details['parameters'])
+    expected = [
+      {
+        'name': 'endpoint',
+        'parameterType': {
+          'type': 'STRING'
+        },
+        'parameterValue': {
+          'value': 'Interact3'
+        }
+      },
+      {
+        'name': 'table_name',
+        'parameterType': {
+         'type': 'STRING'
+        },
+        'parameterValue': {
+          'value': 'cloud-datalab-samples.httplogs.logs_20140615'
+        }
+      }
+    ]
+    self.assertListEqual(actual, expected)
 
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
