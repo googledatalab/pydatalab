@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google
+import google.datalab.bigquery as bq
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -50,12 +50,12 @@ class LoadOperator(BaseOperator):
     self._quote = quote
 
   def execute(self, context):
-    bq_table = google.datalab.bigquery._get_table(self._table)
+    bq_table = bq._get_table(self._table)
     if not bq_table:
-      bq_table = google.datalab.bigquery.Table(self._table)
+      bq_table = bq.Table(self._table)
 
     if self._schema:
-      schema = google.datalab.bigquery.Schema(self._schema)
+      schema = bq.Schema(self._schema)
       bq_table.create(schema=schema)
     elif bq_table.exists():
       if self._mode == 'create':
@@ -63,7 +63,7 @@ class LoadOperator(BaseOperator):
     else:
       raise Exception('Table does not exist, and no schema specified in cell; cannot load')
 
-    csv_options = google.datalab.bigquery.CSVOptions(delimiter=self._delimiter,
+    csv_options = bq.CSVOptions(delimiter=self._delimiter,
                                                      skip_leading_rows=self._skip,
                                                      allow_jagged_rows=self._strict,
                                                      quote=self._quote)

@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google
+import google.datalab.bigquery as bq
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -39,7 +39,7 @@ class ExtractOperator(BaseOperator):
 
   def execute(self, context):
       if self._table:
-        source_table = google.datalab.bigquery._get_table(self._table)
+        source_table = bq._get_table(self._table)
         if not source_table:
           raise Exception('Could not find table %s' % self._table)
 
