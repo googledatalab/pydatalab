@@ -28,7 +28,6 @@ class BigQueryExtractOperator(BaseOperator):
                query,
                view,
                query_params,
-               nocache,
                billing,
                *args,
                **kwargs):
@@ -42,7 +41,6 @@ class BigQueryExtractOperator(BaseOperator):
     self._query = query
     self._view = view
     self._query_params = query_params if query else None
-    self._nocache = nocache
     self._billing = billing
 
   def execute(self, context):
@@ -64,9 +62,11 @@ class BigQueryExtractOperator(BaseOperator):
                           ('view ' + self._view if self._view else 'query ' + self._query))
         query = source if self._query else google.datalab.bigquery.Query.from_view(source)
 
+        # use_cache is False because we don't want to use previously cached results in pipeline
+        # runs.
         output_options = google.datalab.bigquery.QueryOutput.file(
             path=self._path, format=self._format, csv_delimiter=self._delimiter,
-            csv_header=self._header, compress=self._compress, use_cache=not self._nocache)
+            csv_header=self._header, compress=self._compress, use_cache=False)
         # TODO(rajivpb): What goes into context?
         job = query.execute(
             output_options,

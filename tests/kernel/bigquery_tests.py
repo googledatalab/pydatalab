@@ -793,34 +793,34 @@ WITH q1 AS (
           start_date: 2009-05-05T22:28:15Z
           end_date: 2009-05-06T22:28:15Z
           schedule_interval: '@hourly'
-      load_schema:
+      load_format: None
+      load_delimiter: None
+      load_mode: create
+      load_path: test/path
+      quote: None
+      schema:
           - name: col1
             type: int64
             mode: NULLABLE
             description: description1
-          - name: col1
+          - name: col2
             type: STRING
             mode: required
             description: description1
-      load_table: project.test.table
-      load_mode: create
-      load_path: test/path
-      skip: None
-      load_delimiter: None
-      load_format: None
       strict: None
-      load_quote: None
-      execute_mode: create
+      skip: None
+      load_table: project.test.table
       large: True
-      execute_query: foo_query
-      extract_table: project.test.table
-      extract_format: None
+      execute_mode: create
+      query: foo_query
+      execute_table: project.test.table
+      billing: 'foo'
       compress: True
-      header: True
       extract_delimiter: 'g'
-      extract_query: foo_query
+      header: True
       extract_path: test/path
-"""
+      extract_format: None
+ """
 
     output = google.datalab.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
     expected = """
@@ -852,8 +852,8 @@ default_args = {
 dag = DAG(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args)
 
 bq_pipeline_execute_task = BigQueryExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag)
-bq_pipeline_extract_task = BigQueryExtractOperator(task_id='bq_pipeline_extract_task_id', compress=True, delimiter='g', format='None', header=True, path='test/path', query='foo_query', dag=dag)
-bq_pipeline_load_task = BigQueryLoadOperator(task_id='bq_pipeline_load_task_id', delimiter='None', format='None', mode='create', path='test/path', quote='None', schema=[{'mode': 'NULLABLE', 'type': 'int64', 'description': 'description1', 'name': 'col1'}, {'mode': 'required', 'type': 'STRING', 'description': 'description1', 'name': 'col1'}], skip='None', strict='None', table='project.test.table', dag=dag)
+bq_pipeline_extract_task = BigQueryExtractOperator(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter='g', format='None', header=True, path='test/path', table='project.test.table', dag=dag)
+bq_pipeline_load_task = BigQueryLoadOperator(task_id='bq_pipeline_load_task_id', delimiter='None', format='None', mode='create', path='test/path', quote='None', schema=[{'mode': 'NULLABLE', 'type': 'int64', 'description': 'description1', 'name': 'col1'}, {'mode': 'required', 'type': 'STRING', 'description': 'description1', 'name': 'col2'}], skip='None', strict='None', table='project.test.table', dag=dag)
 bq_pipeline_execute_task.set_upstream(bq_pipeline_load_task)
 bq_pipeline_extract_task.set_upstream(bq_pipeline_execute_task)
 """  # noqa

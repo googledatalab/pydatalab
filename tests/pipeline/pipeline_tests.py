@@ -37,11 +37,11 @@ schedule:
   schedule_interval: '0-59 * * * *'
 tasks:
   current_timestamp:
-    type: bq
+    type: bq.execute
     query: $foo_query
     use_legacy_sql: False
   tomorrows_timestamp:
-    type: bq
+    type: bq.execute
     query: $foo_query
     use_legacy_sql: False
     up_stream:
@@ -141,7 +141,7 @@ tasks:
   def test_get_bq_operator_definition(self):
     task_id = 'query_wikipedia'
     task_details = {}
-    task_details['type'] = 'bq'
+    task_details['type'] = 'bq.execute'
     task_details['query'] = google.datalab.bigquery.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
@@ -165,7 +165,7 @@ tasks:
 
   def test_get_operator_classname(self):
     self.assertEqual(pipeline.Pipeline._get_operator_classname('bash'), 'BashOperator')
-    self.assertEqual(pipeline.Pipeline._get_operator_classname('bq'),
+    self.assertEqual(pipeline.Pipeline._get_operator_classname('bq.execute'),
                      'BigQueryOperator')
     self.assertEqual(pipeline.Pipeline._get_operator_classname('Unknown'),
                      'UnknownOperator')

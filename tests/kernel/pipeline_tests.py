@@ -168,7 +168,7 @@ schedule:
   schedule_interval: '@hourly'
 tasks:
   print_pdt_date:
-    type: bq
+    type: bq.execute
     query: $foo_query
 """
 

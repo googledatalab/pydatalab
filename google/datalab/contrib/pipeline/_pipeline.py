@@ -177,15 +177,12 @@ default_args = {{
     """
     task_type_to_operator_prefix_mapping = {
       'bash': 'Bash',
-      'bq': 'BigQuery',
       'bq.execute': 'BigQuery',
-      'bq.query': 'BigQuery',
       'bq.extract': 'BigQueryToCloudStorage',
       'bq.load': 'GoogleCloudStorageToBigQuery',
-      'bq.table.delete': 'BigQueryTableDelete',
-      'pydatalab.bq.load': 'BigQueryLoad',
       'pydatalab.bq.execute': 'BigQueryExecute',
       'pydatalab.bq.extract': 'BigQueryExtract',
+      'pydatalab.bq.load': 'BigQueryLoad',
     }
     operator_class_prefix = task_type_to_operator_prefix_mapping.get(
         task_detail_type)

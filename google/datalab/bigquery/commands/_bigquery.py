@@ -317,20 +317,14 @@ def _create_load_subparser(parser):
 
 
 def _create_pipeline_subparser(parser):
-  pipeline_parser = parser.subcommand('pipeline', 'Load from GCS, query, and extract data from GCS '
-                                                  'into a BigQuery table. If creating a new table, '
-                                                  'a schema should be specified in YAML or JSON in '
-                                                  'the cell body, otherwise the schema is inferred '
-                                                  'from existing table.')
+  pipeline_parser = parser.subcommand('pipeline', 'Creates a pipeline to execute a SQL query to '
+                                                  'transform data using BigQuery.')
 
   # common arguments
   pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name')
   pipeline_parser.add_argument('-d', '--debug', action='store_true', default=False,
                                help='Print the airflow python spec.')
-  # TODO(rajivpb): I've naively made this a common param. Any objections?
-  pipeline_parser.add_argument('-nc', '--nocache', help='Don\'t use previously cached results',
-                               action='store_true')
 
   return pipeline_parser
 
@@ -929,44 +923,33 @@ def _pipeline_cell(args, cell_body):
 
 
 def add_load_parameters(load_task_config, bq_pipeline_config):
-    load_task_config['table'] = bq_pipeline_config['load_table']
-    load_task_config['path'] = bq_pipeline_config['load_path']
-    load_task_config['mode'] = bq_pipeline_config['load_mode']
     load_task_config['format'] = bq_pipeline_config['load_format']
     load_task_config['delimiter'] = bq_pipeline_config['load_delimiter']
+    load_task_config['mode'] = bq_pipeline_config['load_mode']
+    load_task_config['path'] = bq_pipeline_config['load_path']
+    load_task_config['quote'] = bq_pipeline_config['quote']
+    load_task_config['schema'] = bq_pipeline_config['schema']
     load_task_config['skip'] = bq_pipeline_config['skip']
     load_task_config['strict'] = bq_pipeline_config['strict']
-    load_task_config['quote'] = bq_pipeline_config['load_quote']
-    load_task_config['schema'] = bq_pipeline_config['load_schema']
+    load_task_config['table'] = bq_pipeline_config['load_table']
 
 
 def add_execute_parameters(execute_task_config, bq_pipeline_config):
-    execute_task_config['mode'] = bq_pipeline_config['execute_mode']
     execute_task_config['large'] = bq_pipeline_config['large']
-    execute_task_config['query'] = bq_pipeline_config['execute_query']
-    execute_task_config['table'] = bq_pipeline_config['extract_table']
+    execute_task_config['mode'] = bq_pipeline_config['execute_mode']
+    execute_task_config['query'] = bq_pipeline_config['query']
+    execute_task_config['table'] = bq_pipeline_config['execute_table']
 
 
 def add_extract_parameters(extract_task_config, bq_pipeline_config):
-    extract_task_config['format'] = bq_pipeline_config['extract_format']
+    extract_task_config['billing'] = bq_pipeline_config['billing']
     extract_task_config['compress'] = bq_pipeline_config['compress']
-    extract_task_config['header'] = bq_pipeline_config['header']
     extract_task_config['delimiter'] = bq_pipeline_config['extract_delimiter']
-    extract_task_config['query'] = bq_pipeline_config['extract_query']
+    extract_task_config['header'] = bq_pipeline_config['header']
+    # The source table for the extract operation is the destination of the execute operation
+    extract_task_config['table'] = bq_pipeline_config['execute_table']
     extract_task_config['path'] = bq_pipeline_config['extract_path']
-
-
-table,
-path,
-format,
-delimiter,
-header,
-compress,
-query,
-view,
-query_params,
-nocache,
-billing,
+    extract_task_config['format'] = bq_pipeline_config['extract_format']
 
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
   """ Create and initialize a bigquery subcommand handler. """
