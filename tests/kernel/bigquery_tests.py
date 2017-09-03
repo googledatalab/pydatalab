@@ -878,6 +878,7 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
         }
     ]
 
+    # group(1) has the string that follows the "schema=", i.e. the list of dicts.
     actual_schema = eval(pattern.match(output).group(1))
     self.assertListEqual(expected_schema, actual_schema)
 
