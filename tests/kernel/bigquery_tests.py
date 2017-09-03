@@ -881,7 +881,6 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
     actual_schema = eval(pattern.match(output).group(1))
     self.assertListEqual(expected_schema, actual_schema)
 
-
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')
   @mock.patch('google.datalab.utils.commands._html.HtmlBuilder.render_chart_data')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
