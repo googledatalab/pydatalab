@@ -25,9 +25,6 @@ class BigQueryExtractOperator(BaseOperator):
                delimiter,
                header,
                compress,
-               query,
-               view,
-               query_params,
                billing,
                *args,
                **kwargs):
@@ -38,9 +35,6 @@ class BigQueryExtractOperator(BaseOperator):
     self._delimiter = delimiter
     self._header = header
     self._compress = compress
-    self._query = query
-    self._view = view
-    self._query_params = query_params if query else None
     self._billing = billing
 
   def execute(self, context):
@@ -54,26 +48,8 @@ class BigQueryExtractOperator(BaseOperator):
             format='CSV' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON',
             csv_delimiter=self._delimiter, csv_header=self._header,
             compress=self._compress)
-      elif self._query or self._view:
-        source_name = self._view or self._query
-        source = google.datalab.utils.commands.get_notebook_item(source_name)
-        if not source:
-          raise Exception('Could not find ' +
-                          ('view ' + self._view if self._view else 'query ' + self._query))
-        query = source if self._query else google.datalab.bigquery.Query.from_view(source)
-
-        # use_cache is False because we don't want to use previously cached results in pipeline
-        # runs.
-        output_options = google.datalab.bigquery.QueryOutput.file(
-            path=self._path, format=self._format, csv_delimiter=self._delimiter,
-            csv_header=self._header, compress=self._compress, use_cache=False)
-        # TODO(rajivpb): What goes into context?
-        job = query.execute(
-            output_options,
-            context=google.datalab.bigquery._construct_context_for_args({'billing': self._billing}),
-            query_params=self._query_params)
       else:
-        raise Exception('A query, table, or view is needed to extract')
+        raise Exception('A table is needed to extract')
 
       if job.failed:
         raise Exception('Extract failed: %s' % str(job.fatal_error))
