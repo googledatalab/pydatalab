@@ -831,9 +831,9 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
-from google.datalab.contrib.pipeline.airflow_operators import BigQueryLoadOperator
-from google.datalab.contrib.pipeline.airflow_operators import BigQueryExecuteOperator
-from google.datalab.contrib.pipeline.airflow_operators import BigQueryExtractOperator
+from google.datalab.contrib.bigquery.operators import LoadOperator
+from google.datalab.contrib.bigquery.operators import ExecuteOperator
+from google.datalab.contrib.bigquery.operators import ExtractOperator
 from datetime import timedelta
 from pytz import timezone
 
@@ -851,9 +851,9 @@ default_args = {
 
 dag = DAG(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args)
 
-bq_pipeline_execute_task = BigQueryExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag)
-bq_pipeline_extract_task = BigQueryExtractOperator(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter='g', format='None', header=True, path='test/path', table='project.test.table', dag=dag)
-bq_pipeline_load_task = BigQueryLoadOperator(task_id='bq_pipeline_load_task_id', delimiter='None', format='None', mode='create', path='test/path', quote='None', schema=[{'mode': 'NULLABLE', 'type': 'int64', 'description': 'description1', 'name': 'col1'}, {'mode': 'required', 'type': 'STRING', 'description': 'description1', 'name': 'col2'}], skip='None', strict='None', table='project.test.table', dag=dag)
+bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag)
+bq_pipeline_extract_task = ExtractOperator(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter='g', format='None', header=True, path='test/path', table='project.test.table', dag=dag)
+bq_pipeline_load_task = LoadOperator(task_id='bq_pipeline_load_task_id', delimiter='None', format='None', mode='create', path='test/path', quote='None', schema=[{'mode': 'NULLABLE', 'type': 'int64', 'description': 'description1', 'name': 'col1'}, {'mode': 'required', 'type': 'STRING', 'description': 'description1', 'name': 'col2'}], skip='None', strict='None', table='project.test.table', dag=dag)
 bq_pipeline_execute_task.set_upstream(bq_pipeline_load_task)
 bq_pipeline_extract_task.set_upstream(bq_pipeline_execute_task)
 """  # noqa

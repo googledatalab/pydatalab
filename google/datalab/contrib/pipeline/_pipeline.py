@@ -29,9 +29,9 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
-from google.datalab.contrib.pipeline.airflow_operators import BigQueryLoadOperator
-from google.datalab.contrib.pipeline.airflow_operators import BigQueryExecuteOperator
-from google.datalab.contrib.pipeline.airflow_operators import BigQueryExtractOperator
+from google.datalab.contrib.bigquery.operators import LoadOperator
+from google.datalab.contrib.bigquery.operators import ExecuteOperator
+from google.datalab.contrib.bigquery.operators import ExtractOperator
 from datetime import timedelta
 from pytz import timezone
 """
@@ -149,7 +149,7 @@ default_args = {{
   @staticmethod
   def _get_param_format_string(param_value):
     # If the type is a python non-string (best guess), we don't quote it.
-    if type(param_value) in [int, bool, float, type(None), list]:
+    if type(param_value) in [int, bool, float, type(None), list, dict]:
       return ', {0}={1}'
     return ', {0}=\'{1}\''
 
@@ -181,9 +181,9 @@ default_args = {{
       'bq.execute': 'BigQuery',
       'bq.extract': 'BigQueryToCloudStorage',
       'bq.load': 'GoogleCloudStorageToBigQuery',
-      'pydatalab.bq.execute': 'BigQueryExecute',
-      'pydatalab.bq.extract': 'BigQueryExtract',
-      'pydatalab.bq.load': 'BigQueryLoad',
+      'pydatalab.bq.execute': 'Execute',
+      'pydatalab.bq.extract': 'Extract',
+      'pydatalab.bq.load': 'Load',
     }
     operator_class_prefix = task_type_to_operator_prefix_mapping.get(
         task_detail_type)

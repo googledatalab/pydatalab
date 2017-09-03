@@ -15,7 +15,7 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
 
-class BigQueryLoadOperator(BaseOperator):
+class LoadOperator(BaseOperator):
   """Implements the BigQuery load magic used to load data from GCS to a table.
    The supported syntax is:
        %bq load <optional args>
