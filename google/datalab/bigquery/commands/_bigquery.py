@@ -923,33 +923,52 @@ def _pipeline_cell(args, cell_body):
 
 
 def add_load_parameters(load_task_config, bq_pipeline_config):
-    load_task_config['format'] = bq_pipeline_config['load_format']
-    load_task_config['delimiter'] = bq_pipeline_config['load_delimiter']
-    load_task_config['mode'] = bq_pipeline_config['load_mode']
+    # One of 'csv' (default) or 'json' for the format of the load file
+    load_task_config['format'] = bq_pipeline_config.get('load_format', 'csv')
+    # The inter-field delimiter for CVS (default ,) in the load file
+    load_task_config['delimiter'] = bq_pipeline_config.get('load_delimiter', ',')
+    # One of 'create' (default), 'append' or 'overwrite' for loading data into BigQuery
+    load_task_config['mode'] = bq_pipeline_config.get('load_mode', 'create')
+    # The path URL of the GCS load file(s)
     load_task_config['path'] = bq_pipeline_config['load_path']
-    load_task_config['quote'] = bq_pipeline_config['quote']
+    # The quoted field delimiter for CVS (default ") in the load file
+    load_task_config['quote'] = bq_pipeline_config.get('quote', '"')
+    # The schema of the destination bigquery table
     load_task_config['schema'] = bq_pipeline_config['schema']
-    load_task_config['skip'] = bq_pipeline_config['skip']
-    load_task_config['strict'] = bq_pipeline_config['strict']
+    # The number of head lines (default is 0) to skip during load; useful for CSV
+    load_task_config['skip'] = bq_pipeline_config.get('skip', 0)
+    # Reject bad values and jagged lines when loading (default True)
+    load_task_config['strict'] = bq_pipeline_config.get('strict', True)
+    # The destination bigquery table name for loading
     load_task_config['table'] = bq_pipeline_config['load_table']
 
 
 def add_execute_parameters(execute_task_config, bq_pipeline_config):
-    execute_task_config['large'] = bq_pipeline_config['large']
-    execute_task_config['mode'] = bq_pipeline_config['execute_mode']
+    # Allow large results during execution; defaults to True because this is a common in pipelines
+    execute_task_config['large'] = bq_pipeline_config.get('large', True)
+    # One of 'create' (default), 'append' or 'overwrite' for the destination table in BigQuery
+    execute_task_config['mode'] = bq_pipeline_config.get('execute_mode', 'create')
+    # The name of query for execution
     execute_task_config['query'] = bq_pipeline_config['query']
+    # Destination table name for the execution results
     execute_task_config['table'] = bq_pipeline_config['execute_table']
 
 
 def add_extract_parameters(extract_task_config, bq_pipeline_config):
+    # TODO(rajivpb): The billing parameter should really be an arg and not in the yaml cell_body
     extract_task_config['billing'] = bq_pipeline_config['billing']
-    extract_task_config['compress'] = bq_pipeline_config['compress']
-    extract_task_config['delimiter'] = bq_pipeline_config['extract_delimiter']
-    extract_task_config['header'] = bq_pipeline_config['header']
+    # Compress the extract file (default True)
+    extract_task_config['compress'] = bq_pipeline_config.get('compress', True)
+    # The inter-field delimiter for CVS (default ,) in the extract file
+    extract_task_config['delimiter'] = bq_pipeline_config.get('extract_delimiter', ',')
+    # Include a header (default True) in the extract file
+    extract_task_config['header'] = bq_pipeline_config.get('header', True)
     # The source table for the extract operation is the destination of the execute operation
     extract_task_config['table'] = bq_pipeline_config['execute_table']
+    # The destination GCS path for the extract file
     extract_task_config['path'] = bq_pipeline_config['extract_path']
-    extract_task_config['format'] = bq_pipeline_config['extract_format']
+    # One of 'csv' (default) or 'json' for the format of the extract file
+    extract_task_config['format'] = bq_pipeline_config.get('extract_format', 'csv')
 
 
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
