@@ -12,11 +12,13 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import mock
 from oauth2client.client import AccessTokenCredentials
-import unittest
 import json
+import mock
 import pandas
+import re
+import unittest
+
 from datetime import datetime
 try:
   from StringIO import StringIO
@@ -823,7 +825,8 @@ WITH q1 AS (
  """
 
     output = google.datalab.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
-    expected = """
+
+    pattern = re.compile("""
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
@@ -840,24 +843,44 @@ from pytz import timezone
 default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
-    'email': ['foo@bar.com'],
-    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
+    'email': \['foo@bar.com'\],
+    'start_date': datetime.datetime.strptime\('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S'\).replace\(tzinfo=timezone\('UTC'\)\),
+    'end_date': datetime.datetime.strptime\('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S'\).replace\(tzinfo=timezone\('UTC'\)\),
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=1),
+    'retry_delay': timedelta\(minutes=1\),
 }
 
-dag = DAG(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args)
+dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag)
-bq_pipeline_extract_task = ExtractOperator(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter='g', format='None', header=True, path='test/path', table='project.test.table', dag=dag)
-bq_pipeline_load_task = LoadOperator(task_id='bq_pipeline_load_task_id', delimiter='None', format='None', mode='create', path='test/path', quote='None', schema=[{'mode': 'NULLABLE', 'type': 'int64', 'description': 'description1', 'name': 'col1'}, {'mode': 'required', 'type': 'STRING', 'description': 'description1', 'name': 'col2'}], skip='None', strict='None', table='project.test.table', dag=dag)
-bq_pipeline_execute_task.set_upstream(bq_pipeline_load_task)
-bq_pipeline_extract_task.set_upstream(bq_pipeline_execute_task)
-"""  # noqa
-    self.assertEqual(output, expected)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter='g', format='None', header=True, path='test/path', table='project.test.table', dag=dag\)
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter='None', format='None', mode='create', path='test/path', quote='None', schema=(.*), skip='None', strict='None', table='project.test.table', dag=dag\)
+bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
+bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
+""")  # noqa
+
+    self.assertIsNotNone(pattern.match(output))
+
+    expected_schema = [
+        {
+            'mode': 'NULLABLE',
+            'type': 'int64',
+            'description': 'description1',
+            'name': 'col1',
+        },
+        {
+            'mode': 'required',
+            'type': 'STRING',
+            'description': 'description1',
+            'name': 'col2',
+        }
+    ]
+
+    actual_schema = eval(pattern.match(output).group(1))
+    self.assertListEqual(expected_schema, actual_schema)
+
 
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')
   @mock.patch('google.datalab.utils.commands._html.HtmlBuilder.render_chart_data')

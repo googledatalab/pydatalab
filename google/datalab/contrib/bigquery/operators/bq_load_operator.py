@@ -63,10 +63,8 @@ class LoadOperator(BaseOperator):
     else:
       raise Exception('Table does not exist, and no schema specified in cell; cannot load')
 
-    csv_options = bq.CSVOptions(delimiter=self._delimiter,
-                                                     skip_leading_rows=self._skip,
-                                                     allow_jagged_rows=self._strict,
-                                                     quote=self._quote)
+    csv_options = bq.CSVOptions(delimiter=self._delimiter, skip_leading_rows=self._skip,
+                                allow_jagged_rows=self._strict, quote=self._quote)
     job = bq_table.load(self._path, mode=self._mode,
                         source_format=('csv' if self._format == 'csv' else
                                        'NEWLINE_DELIMITED_JSON'),
