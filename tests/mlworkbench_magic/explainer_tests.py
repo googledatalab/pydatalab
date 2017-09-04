@@ -14,6 +14,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
+from PIL import Image
+import numpy as np
 import os
 import shutil
 import six
@@ -64,8 +66,8 @@ class TestMLExplainer(unittest.TestCase):
     with open(train_csv, 'w') as f:
       f.write(test_data)
 
-    analyze_dir = os.path.join(self._test_dir, 'analysis')
-    train_dir = os.path.join(self._test_dir, 'train')
+    analyze_dir = os.path.join(self._test_dir, 'analysistxt')
+    train_dir = os.path.join(self._test_dir, 'traintxt')
 
     mlmagic.ml(
         line='analyze',
@@ -102,12 +104,83 @@ class TestMLExplainer(unittest.TestCase):
               top-n: 0
               max-steps: 300""" % (train_dir, analyze_dir, train_csv, train_csv))
 
+  def _create_image_test_data(self):
+    image_path1 = os.path.join(self._test_dir, 'img1.jpg')
+    image_path2 = os.path.join(self._test_dir, 'img2.jpg')
+    image_path3 = os.path.join(self._test_dir, 'img3.jpg')
+    Image.new('RGBA', size=(128, 128), color=(155, 211, 64)).save(image_path1, "JPEG")
+    Image.new('RGB', size=(64, 64), color=(111, 21, 86)).save(image_path2, "JPEG")
+    Image.new('RGBA', size=(16, 16), color=(255, 21, 1)).save(image_path3, "JPEG")
+    test_data = """1,1.2,word1 word2,%s,true
+2,3.2,word2 word3,%s,false
+5,-2.1,word3 word4,%s,true""" % (image_path1, image_path2, image_path3)
+
+    train_csv = os.path.join(self._test_dir, 'train.csv')
+    with open(train_csv, 'w') as f:
+      f.write(test_data)
+
+    analyze_dir = os.path.join(self._test_dir, 'analysisimg')
+    transform_dir = os.path.join(self._test_dir, 'transformimg')
+    train_dir = os.path.join(self._test_dir, 'trainimg')
+
+    mlmagic.ml(
+        line='analyze',
+        cell="""\
+            output: %s
+            training_data:
+              csv: %s
+              schema:
+                - name: key
+                  type: INTEGER
+                - name: num
+                  type: FLOAT
+                - name: text
+                  type: STRING
+                - name: img_url
+                  type: STRING
+                - name: target
+                  type: STRING
+            features:
+              key:
+                transform: key
+              num:
+                transform: scale
+              text:
+                transform: bag_of_words
+              img_url:
+                transform: image_to_vec
+              target:
+                transform: target""" % (analyze_dir, train_csv))
+
+    mlmagic.ml(
+        line='transform',
+        cell="""\
+            output: %s
+            analysis: %s
+            prefix: train
+            training_data:
+              csv: %s""" % (transform_dir, analyze_dir, train_csv))
+
+    mlmagic.ml(
+        line='train',
+        cell="""\
+            output: %s
+            analysis: %s
+            training_data:
+              transformed: %s/train-*
+            evaluation_data:
+              transformed: %s/train-*
+            model_args:
+              model: linear_classification
+              top-n: 0
+              max-steps: 200""" % (train_dir, analyze_dir, transform_dir, transform_dir))
+
   @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
   def test_text_explainer(self):
     """Test text explainer."""
 
     self._create_text_test_data()
-    explainer = PredictionExplainer(os.path.join(self._test_dir, 'train', 'model'))
+    explainer = PredictionExplainer(os.path.join(self._test_dir, 'traintxt', 'model'))
     exp_instance = explainer.explain_text(['apple', 'lime', 'cucumber'], '4,green long')
     apple = exp_instance.as_list(label=0)
     self.assertEqual(len(apple), 2)
@@ -120,3 +193,22 @@ class TestMLExplainer(unittest.TestCase):
     for word, score in cucumber:
       # "green" and "long" are both positive to "cucumber"
       self.assertGreater(score, 0.0)
+
+  @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
+  def test_image_explainer(self):
+    """Test image explainer."""
+
+    self._create_image_test_data()
+    explainer = PredictionExplainer(os.path.join(self._test_dir, 'trainimg', 'model'))
+    exp_instance = explainer.explain_image(
+        ['true', 'false'],
+        '4,2.0,word2 word1,%s' % os.path.join(self._test_dir, 'img1.jpg'),
+        num_samples=50)
+
+    for i in range(2):
+      image, mask = exp_instance.get_image_and_mask(i, positive_only=False, num_features=3,
+                                                    )
+      # image's dimension is length*width*channel
+      self.assertEqual(len(np.asarray(image).shape), 3)
+      # mask's dimension is length*width
+      self.assertEqual(len(np.asarray(mask).shape), 2)
