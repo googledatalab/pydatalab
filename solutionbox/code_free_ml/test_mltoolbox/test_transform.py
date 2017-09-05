@@ -6,10 +6,10 @@ import os
 import pandas as pd
 from PIL import Image
 import shutil
+from six.moves.urllib.request import urlopen
 import subprocess
 import tempfile
 import unittest
-import urllib2
 import uuid
 
 import tensorflow as tf
@@ -60,7 +60,7 @@ class TestTransformRawData(unittest.TestCase):
     url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
            'flower_photos/inception_v3_2016_08_28.ckpt')
     checkpoint_path = os.path.join(cls.working_dir, "checkpoint")
-    response = urllib2.urlopen(url)
+    response = urlopen(url)
     with open(checkpoint_path, 'w') as f:
       f.write(response.read())
 

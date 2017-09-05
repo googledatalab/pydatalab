@@ -19,8 +19,8 @@ import numpy as np
 import os
 import shutil
 import six
+from six.moves.urllib.request import urlopen
 import tempfile
-import urllib2
 
 
 # import Python so we can mock the parts we need to here.
@@ -129,7 +129,7 @@ class TestMLExplainer(unittest.TestCase):
     url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
            'flower_photos/inception_v3_2016_08_28.ckpt')
     checkpoint_path = os.path.join(self._test_dir, "checkpoint")
-    response = urllib2.urlopen(url)
+    response = urlopen(url)
     with open(checkpoint_path, 'w') as f:
       f.write(response.read())
 

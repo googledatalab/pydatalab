@@ -9,11 +9,11 @@ import pandas as pd
 from PIL import Image
 import random
 import shutil
+from six.moves.urllib.request import urlopen
 import subprocess
 import sys
 import tempfile
 import unittest
-import urllib2
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
@@ -511,7 +511,7 @@ class TestTrainer(unittest.TestCase):
     url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
            'flower_photos/inception_v3_2016_08_28.ckpt')
     self._checkpoint_path = os.path.join(self._test_dir, "checkpoint")
-    response = urllib2.urlopen(url)
+    response = urlopen(url)
     with open(self._checkpoint_path, 'w') as f:
       f.write(response.read())
 
