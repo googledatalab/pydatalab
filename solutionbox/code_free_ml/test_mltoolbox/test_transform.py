@@ -6,6 +6,7 @@ import os
 import pandas as pd
 from PIL import Image
 import shutil
+from six.moves.urllib.request import urlopen
 import subprocess
 import tempfile
 import unittest
@@ -54,6 +55,15 @@ class TestTransformRawData(unittest.TestCase):
     image3 = Image.new('RGBA', size=(800, 600), color=(33, 55, 77))
     image3.save(img3_file)
 
+    # Download inception checkpoint. Note that gs url doesn't work because
+    # we may not have gcloud signed in when running the test.
+    url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
+           'flower_photos/inception_v3_2016_08_28.ckpt')
+    checkpoint_path = os.path.join(cls.working_dir, "checkpoint")
+    response = urlopen(url)
+    with open(checkpoint_path, 'wb') as f:
+      f.write(response.read())
+
     # Make csv input file
     cls.csv_input_filepath = os.path.join(cls.source_dir, 'input.csv')
     file_io.write_string_to_file(
@@ -74,7 +84,7 @@ class TestTransformRawData(unittest.TestCase):
                 'target_col': {'transform': 'target'},
                 'cat_col': {'transform': 'one_hot'},
                 'num_col': {'transform': 'identity'},
-                'img_col': {'transform': 'image_to_vec'}}
+                'img_col': {'transform': 'image_to_vec', 'checkpoint': checkpoint_path}}
     features_file = os.path.join(cls.source_dir, 'features.json')
     file_io.write_string_to_file(features_file, json.dumps(features))
     cmd = ['python ' + os.path.join(CODE_PATH, 'analyze.py'),
