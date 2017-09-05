@@ -130,7 +130,7 @@ class TestMLExplainer(unittest.TestCase):
            'flower_photos/inception_v3_2016_08_28.ckpt')
     checkpoint_path = os.path.join(self._test_dir, "checkpoint")
     response = urlopen(url)
-    with open(checkpoint_path, 'w') as f:
+    with open(checkpoint_path, 'wb') as f:
       f.write(response.read())
 
     mlmagic.ml(

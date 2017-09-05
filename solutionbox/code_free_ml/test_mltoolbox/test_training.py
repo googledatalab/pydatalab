@@ -512,7 +512,7 @@ class TestTrainer(unittest.TestCase):
            'flower_photos/inception_v3_2016_08_28.ckpt')
     self._checkpoint_path = os.path.join(self._test_dir, "checkpoint")
     response = urlopen(url)
-    with open(self._checkpoint_path, 'w') as f:
+    with open(self._checkpoint_path, 'wb') as f:
       f.write(response.read())
 
   def tearDown(self):
