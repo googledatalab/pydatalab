@@ -41,10 +41,10 @@ class PredictionExplainer(object):
         self._headers = [x['name'] for x in schema]
         self._text_columns, self._image_columns = [], []
         for k, v in six.iteritems(features):
-          if v['transform'] in ['image_to_vec']:
-            self._image_columns.append(v['source_column'])
-          elif v['transform'] in ['bag_of_words', 'tfidf']:
-            self._text_columns.append(v['source_column'])
+            if v['transform'] in ['image_to_vec']:
+                self._image_columns.append(v['source_column'])
+            elif v['transform'] in ['bag_of_words', 'tfidf']:
+                self._text_columns.append(v['source_column'])
 
     def _make_text_predict_fn(self, labels, instance, column_to_explain):
         """Create a predict_fn that can be used by LIME text explainer. """
