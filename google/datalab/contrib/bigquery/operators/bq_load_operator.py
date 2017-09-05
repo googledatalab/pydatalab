@@ -38,7 +38,7 @@ class LoadOperator(BaseOperator):
                schema=None,
                *args,
                **kwargs):
-    super(BaseOperator, self).__init__(*args, **kwargs)
+    super(LoadOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
     self._schema = schema

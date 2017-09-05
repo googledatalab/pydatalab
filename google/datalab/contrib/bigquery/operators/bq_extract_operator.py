@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google.datalab.bigquery as bq
+import google
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -18,28 +18,18 @@ from airflow.utils.decorators import apply_defaults
 class ExtractOperator(BaseOperator):
 
   @apply_defaults
-  def __init__(self,
-               table,
-               path,
-               format,
-               delimiter,
-               header,
-               compress,
-               billing,
-               *args,
-               **kwargs):
-    super(BaseOperator, self).__init__(*args, **kwargs)
+  def __init__(self, table, path, format, delimiter, header, compress, *args, **kwargs):
+    super(ExtractOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
     self._format = format
     self._delimiter = delimiter
     self._header = header
     self._compress = compress
-    self._billing = billing
 
   def execute(self, context):
       if self._table:
-        source_table = bq._get_table(self._table)
+        source_table = google.datalab.bigquery.commands._bigquery._get_table(self._table)
         if not source_table:
           raise Exception('Could not find table %s' % self._table)
 

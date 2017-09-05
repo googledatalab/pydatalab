@@ -256,20 +256,21 @@ default_args = {{
     Returns:
       Validated object containing query parameters.
     """
-    jsonschema.validate({'parameters': input_query_parameters},
-                        google.datalab.bigquery.commands._bigquery.query_params_schema)
-
     parsed_params = []
-    for param in input_query_parameters:
-      parsed_params.append({
-        'name': param['name'],
-        'parameterType': {
-          'type': param['type']
-        },
-        'parameterValue': {
-          'value': param['value']
-        }
-      })
+    if input_query_parameters:
+      jsonschema.validate({'parameters': input_query_parameters},
+                          google.datalab.bigquery.commands._bigquery.query_params_schema)
+
+      for param in input_query_parameters:
+        parsed_params.append({
+          'name': param['name'],
+          'parameterType': {
+            'type': param['type']
+          },
+          'parameterValue': {
+            'value': param['value']
+          }
+        })
     return parsed_params
 
   @staticmethod
