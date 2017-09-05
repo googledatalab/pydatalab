@@ -35,6 +35,7 @@ import kernel.bigquery_tests
 import kernel.chart_data_tests
 import kernel.chart_tests
 import kernel.html_tests
+import kernel.pipeline_tests
 import kernel.storage_tests
 import kernel.utils_tests
 import ml.dataset_tests
@@ -48,6 +49,7 @@ import mlworkbench_magic.archive_tests
 import mlworkbench_magic.local_predict_tests
 import mlworkbench_magic.ml_tests
 import mlworkbench_magic.shell_process_tests
+import pipeline.pipeline_tests
 import stackdriver.commands.monitoring_tests
 import stackdriver.monitoring.group_tests
 import stackdriver.monitoring.metric_tests
@@ -84,12 +86,14 @@ _UNIT_TEST_MODULES = [
     kernel.chart_data_tests,
     kernel.chart_tests,
     kernel.html_tests,
+    kernel.pipeline_tests,
     kernel.storage_tests,
     kernel.utils_tests,
     ml.dataset_tests,
     ml.facets_tests,
     ml.summary_tests,
     mlworkbench_magic.ml_tests,
+    pipeline.pipeline_tests,
     stackdriver.commands.monitoring_tests,
     stackdriver.monitoring.group_tests,
     stackdriver.monitoring.metric_tests,
