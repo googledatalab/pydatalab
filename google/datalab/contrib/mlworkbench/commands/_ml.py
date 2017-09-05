@@ -147,8 +147,10 @@ def ml(line, cell=None):
                    transform of it.
               "transform: tfidf"
                    treats the string column as text and make TFIDF transform of it.
-              "transform: image_to_vec"
-                   from image gs url to embeddings.
+              "transform: image_to_vec
+               checkpoint: gs://b/o"
+                   from image gs url to embeddings. "checkpoint" is a inception v3
+                   checkpoint. If absent, a default checkpoint is used.
               "transform: target"
                    denotes the column is the target. If the schema type of this
                    column is string, a one_hot encoding is automatically applied.

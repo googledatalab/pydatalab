@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import urllib2
 
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
@@ -20,15 +21,6 @@ from tensorflow.python.lib.io import file_io
 
 CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
-
-# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
-# those tests will not run.
-HAS_CREDENTIALS = True
-try:
-  import google.datalab as dl
-  dl.Context.default().project_id
-except Exception:
-  HAS_CREDENTIALS = False
 
 
 def run_exported_model(model_path, csv_data):
@@ -514,6 +506,15 @@ class TestTrainer(unittest.TestCase):
     self._schema_filename = os.path.join(self._test_dir, 'schema_file.json')
     self._features_filename = os.path.join(self._test_dir, 'features_file.json')
 
+    # Download inception checkpoint. Note that gs url doesn't work because
+    # we may not have gcloud signed in when running the test.
+    url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
+           'flower_photos/inception_v3_2016_08_28.ckpt')
+    self._checkpoint_path = os.path.join(self._test_dir, "checkpoint")
+    response = urllib2.urlopen(url)
+    with open(self._checkpoint_path, 'w') as f:
+      f.write(response.read())
+
   def tearDown(self):
     self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
     shutil.rmtree(self._test_dir)
@@ -656,7 +657,7 @@ class TestTrainer(unittest.TestCase):
         'target': {'transform': 'target'},
         'key': {'transform': 'key'}}
     if with_image:
-      features['image'] = {'transform': 'image_to_vec'}
+      features['image'] = {'transform': 'image_to_vec', 'checkpoint': self._checkpoint_path}
 
     schema = [
         {'name': 'key', 'type': 'integer'},
@@ -894,7 +895,6 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def testClassificationDNNWithImage(self):
     self._logger.debug('\n\nTesting Classification DNN With Image')
 

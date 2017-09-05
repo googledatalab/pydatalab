@@ -14,13 +14,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
-import google.datalab
 from PIL import Image
 import numpy as np
 import os
 import shutil
 import six
 import tempfile
+import urllib2
 
 
 # import Python so we can mock the parts we need to here.
@@ -28,15 +28,6 @@ import IPython.core.display
 import IPython.core.magic
 
 from google.datalab.contrib.mlworkbench import PredictionExplainer
-
-
-# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
-# those tests will not run.
-HAS_CREDENTIALS = True
-try:
-  google.datalab.Context.default().project_id
-except Exception:
-  HAS_CREDENTIALS = False
 
 
 def noop_decorator(func):
@@ -133,6 +124,15 @@ class TestMLExplainer(unittest.TestCase):
     transform_dir = os.path.join(self._test_dir, 'transformimg')
     train_dir = os.path.join(self._test_dir, 'trainimg')
 
+    # Download inception checkpoint. Note that gs url doesn't work because
+    # we may not have gcloud signed in when running the test.
+    url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
+           'flower_photos/inception_v3_2016_08_28.ckpt')
+    checkpoint_path = os.path.join(self._test_dir, "checkpoint")
+    response = urllib2.urlopen(url)
+    with open(checkpoint_path, 'w') as f:
+      f.write(response.read())
+
     mlmagic.ml(
         line='analyze',
         cell="""\
@@ -159,8 +159,9 @@ class TestMLExplainer(unittest.TestCase):
                 transform: bag_of_words
               img_url:
                 transform: image_to_vec
+                checkpoint: %s
               target:
-                transform: target""" % (analyze_dir, train_csv))
+                transform: target""" % (analyze_dir, train_csv, checkpoint_path))
 
     mlmagic.ml(
         line='transform',
@@ -204,8 +205,7 @@ class TestMLExplainer(unittest.TestCase):
       # "green" and "long" are both positive to "cucumber"
       self.assertGreater(score, 0.0)
 
-  @unittest.skipIf(not six.PY2 or not HAS_CREDENTIALS,
-                   'Integration test that invokes mlworkbench with DataFlow.')
+  @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
   def test_image_explainer(self):
     """Test image explainer."""
 
