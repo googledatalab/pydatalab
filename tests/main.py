@@ -129,13 +129,10 @@ _INTEGRATION_TEST_MODULES = [
 
 def parse_arguments(argv):
   """Parse command line arguments.
-
   Args:
     argv: list of command line arguments, including program name.
-
   Returns:
     An argparse Namespace object.
-
   Raises:
     ValueError: for bad parameters
   """
