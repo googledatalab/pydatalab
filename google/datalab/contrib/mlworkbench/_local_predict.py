@@ -157,6 +157,21 @@ def _get_display_data_with_images(data, images):
   return display_data
 
 
+def get_model_schema_and_features(model_dir):
+  """Get a local model's schema and features config.
+
+  Args:
+    model_dir: local or GCS path of a model.
+  Returns:
+    A tuple of schema (list) and features config (dict).
+  """
+  schema_file = os.path.join(model_dir, 'assets.extra', 'schema.json')
+  schema = json.loads(file_io.read_file_to_string(schema_file).decode())
+  features_file = os.path.join(model_dir, 'assets.extra', 'features.json')
+  features_config = json.loads(file_io.read_file_to_string(features_file).decode())
+  return schema, features_config
+
+
 def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
                            cloud=False, with_source=True, show_image=True):
   """ Predict with a specified model.
