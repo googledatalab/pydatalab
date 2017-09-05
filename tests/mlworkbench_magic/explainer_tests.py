@@ -185,8 +185,7 @@ class TestMLExplainer(unittest.TestCase):
               top-n: 0
               max-steps: 200""" % (train_dir, analyze_dir, transform_dir, transform_dir))
 
-  @unittest.skipIf(not six.PY2 or not HAS_CREDENTIALS,
-                   'Integration test that invokes mlworkbench with DataFlow.')
+  @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
   def test_text_explainer(self):
     """Test text explainer."""
 
@@ -205,7 +204,8 @@ class TestMLExplainer(unittest.TestCase):
       # "green" and "long" are both positive to "cucumber"
       self.assertGreater(score, 0.0)
 
-  @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
+  @unittest.skipIf(not six.PY2 or not HAS_CREDENTIALS,
+                   'Integration test that invokes mlworkbench with DataFlow.')
   def test_image_explainer(self):
     """Test image explainer."""
 
