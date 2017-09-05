@@ -65,11 +65,12 @@ class FacetsOverview(object):
 class FacetsDiveview(object):
   """Represents A facets overview. """
 
-  def plot(self, data):
+  def plot(self, data, height=1000):
     """ Plots a detail view of data.
 
     Args:
       data: a Pandas dataframe.
+      height: the height of the output.
     """
 
     import IPython
@@ -81,10 +82,10 @@ class FacetsDiveview(object):
     html_id = 'f' + datalab.utils.commands.Html.next_id()
     HTML_TEMPLATE = """
         <link rel="import" href="/nbextensions/gcpdatalab/extern/facets-jupyter.html">
-        <facets-dive id="{html_id}" height="600"></facets-dive>
+        <facets-dive id="{html_id}" height="{height}"></facets-dive>
         <script>
           var data = {jsonstr};
           document.querySelector("#{html_id}").data = data;
         </script>"""
-    html = HTML_TEMPLATE.format(html_id=html_id, jsonstr=jsonstr)
+    html = HTML_TEMPLATE.format(html_id=html_id, jsonstr=jsonstr, height=height)
     return IPython.core.display.HTML(html)
