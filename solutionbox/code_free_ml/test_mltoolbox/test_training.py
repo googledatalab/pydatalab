@@ -514,6 +514,8 @@ class TestTrainer(unittest.TestCase):
     response = urlopen(url)
     with open(self._checkpoint_path, 'wb') as f:
       f.write(response.read())
+    checkpoint_size = os.path.getsize(self._checkpoint_path)
+    self._logger.debug('\n\ncheck point downloaded size is ' + str(checkpoint_size))
 
   def tearDown(self):
     self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
