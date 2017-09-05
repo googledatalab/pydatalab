@@ -13,11 +13,11 @@
 from __future__ import absolute_import
 import datetime
 import mock
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
 from google.cloud.monitoring import Query as BaseQuery
 
+import google.auth
 import google.datalab
 import google.datalab.stackdriver.monitoring as gcm
 
@@ -33,7 +33,7 @@ INSTANCE_IDS = ['1234567890123456789', '9876543210987654321']
 class TestCases(unittest.TestCase):
 
   def setUp(self):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     self.context = google.datalab.Context(PROJECT, creds)
 
   @mock.patch('google.datalab.Context.default')
@@ -44,8 +44,8 @@ class TestCases(unittest.TestCase):
 
     expected_client = gcm._utils.make_client(context=self.context)
     self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(query._client._connection.credentials,
+                     expected_client._connection.credentials)
 
     self.assertEqual(query._filter.metric_type, BaseQuery.DEFAULT_METRIC_TYPE)
 
@@ -69,8 +69,8 @@ class TestCases(unittest.TestCase):
 
     expected_client = gcm._utils.make_client(context=self.context)
     self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(query._client._connection.credentials,
+                     expected_client._connection.credentials)
 
     self.assertEqual(query._filter.metric_type, UPTIME_METRIC)
 

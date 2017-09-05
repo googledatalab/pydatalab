@@ -19,8 +19,8 @@ import unittest
 import IPython
 import IPython.core.magic
 import mock
-from oauth2client.client import AccessTokenCredentials
 
+import google.auth
 import google.datalab.contrib.pipeline.commands._pipeline
 
 
@@ -57,7 +57,7 @@ tasks:
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')

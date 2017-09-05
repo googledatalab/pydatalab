@@ -88,7 +88,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'mock==2.0.0',
     'future==0.16.0',
     'futures==3.0.5',
-    'google-cloud==0.19.0',
+    'google-cloud==0.27.0',
     'google-api-python-client==1.6.2',
     'seaborn==0.7.0',
     'plotly==1.12.5',
