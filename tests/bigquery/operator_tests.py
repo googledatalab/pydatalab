@@ -13,13 +13,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from oauth2client.client import AccessTokenCredentials
-import json
 import mock
 import unittest
 
 
 # import Python so we can mock the parts we need to here.
-import IPython
 import IPython.core.magic
 
 
@@ -80,13 +78,12 @@ class TestCases(unittest.TestCase):
     # TODO(rajivpb): Mock output_options, context, and query_params for a more complete test.
     mock_query_execute.assert_called_once()
 
-  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.Table.create')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.Table.load')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_load_operator(self, mock_get_table, mock_table_load, mock_table_exists,
-                     mock_table_create, mock_default_context):
+                         mock_table_create):
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='create', format=None, delimiter=None,
                                    skip=None, strict=None, quote=None, schema=None)
