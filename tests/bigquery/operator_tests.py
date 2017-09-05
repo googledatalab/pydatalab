@@ -18,11 +18,6 @@ import mock
 import unittest
 
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
 # import Python so we can mock the parts we need to here.
 import IPython
 import IPython.core.magic
@@ -37,14 +32,14 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import google.datalab
-import google.datalab.bigquery
-import google.datalab.bigquery.commands
-import google.datalab.utils.commands
+import google.datalab  # noqa
+import google.datalab.bigquery  # noqa
+import google.datalab.bigquery.commands  # noqa
+import google.datalab.utils.commands  # noqa
 
-from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator
-from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator
-from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator
+from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator  # noqa
+from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator  # noqa
+from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator  # noqa
 
 
 class TestCases(unittest.TestCase):
@@ -59,9 +54,9 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_extract_operator(self, mock_get_table, mock_table_extract):
     mock_get_table.return_value = None
-    extract_operator = ExtractOperator(task_id='test_extract_operator',
-      table='test_table', path='test_path', format=None, delimiter=None, header=None,
-      compress=None, billing=None)
+    extract_operator = ExtractOperator(task_id='test_extract_operator', table='test_table',
+                                       path='test_path', format=None, delimiter=None, header=None,
+                                       compress=None, billing=None)
     with self.assertRaisesRegexp(Exception, 'Could not find table test_table'):
       extract_operator.execute(context=None)
 
@@ -146,4 +141,3 @@ class TestCases(unittest.TestCase):
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='csv', csv_options=mock.ANY,
                                          ignore_unknown_values=True)
-

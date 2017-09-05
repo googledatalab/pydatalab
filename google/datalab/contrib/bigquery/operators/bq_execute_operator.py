@@ -16,6 +16,7 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from google.datalab.contrib.pipeline._pipeline import Pipeline
 
+
 class ExecuteOperator(BaseOperator):
 
   @apply_defaults
@@ -34,5 +35,4 @@ class ExecuteOperator(BaseOperator):
                                           allow_large_results=True)
     # TODO(rajivpb): Check about constructing a fake dictionary of args with just the billing info
     py_context = bq.commands._bigquery._construct_context_for_args({'billing': self._billing})
-    r = query.execute(output_options, context=py_context, query_params=query_params)
-
+    query.execute(output_options, context=py_context, query_params=query_params)
