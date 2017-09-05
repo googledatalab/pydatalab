@@ -33,6 +33,6 @@ class ExecuteOperator(BaseOperator):
     output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
                                           allow_large_results=True)
     # TODO(rajivpb): Check about constructing a fake dictionary of args with just the billing info
-    context = bq.commands._bigquery._construct_context_for_args(
-      {'billing': self._billing})
-    r = query.execute(output_options, context=context, query_params=query_params)
+    py_context = bq.commands._bigquery._construct_context_for_args({'billing': self._billing})
+    r = query.execute(output_options, context=py_context, query_params=query_params)
+
