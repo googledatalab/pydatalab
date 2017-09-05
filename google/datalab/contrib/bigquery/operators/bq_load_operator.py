@@ -11,6 +11,7 @@
 # the License.
 
 import google.datalab.bigquery as bq
+from google.datalab.bigquery.commands._bigquery import _get_table
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -26,17 +27,7 @@ class LoadOperator(BaseOperator):
     A message about whether the load succeeded or failed.
   """
   @apply_defaults
-  def __init__(self,
-               table,
-               path,
-               mode,
-               format,
-               delimiter,
-               skip,
-               strict,
-               quote,
-               schema=None,
-               *args,
+  def __init__(self, table, path, mode, format, delimiter, skip, strict, quote, schema=None, *args,
                **kwargs):
     super(LoadOperator, self).__init__(*args, **kwargs)
     self._table = table
@@ -50,7 +41,7 @@ class LoadOperator(BaseOperator):
     self._quote = quote
 
   def execute(self, context):
-    bq_table = bq._get_table(self._table)
+    bq_table = _get_table(self._table)
     if not bq_table:
       bq_table = bq.Table(self._table)
 

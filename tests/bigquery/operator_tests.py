@@ -85,59 +85,56 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.Table.load')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_load_cell(self, mock_get_table, mock_table_load, mock_table_exists,
+  def test_load_operator(self, mock_get_table, mock_table_load, mock_table_exists,
                      mock_table_create, mock_default_context):
-      args = {'table': 'project.test.table', 'mode': 'create', 'path': 'test/path', 'skip': None,
-              'csv': None, 'delimiter': None, 'format': None, 'strict': None, 'quote': None}
+      load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
+                                   path='test/path', mode='create', format=None, delimiter=None,
+                                   skip=None, strict=None, quote=None, schema=None)
       context = self._create_context()
       table = google.datalab.bigquery.Table('project.test.table')
       mock_get_table.return_value = table
       mock_table_exists.return_value = True
-      job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
-                                                        'test_sql', context)
 
       with self.assertRaisesRegexp(Exception, 'already exists; use --append or --overwrite'):
-          google.datalab.bigquery.commands._bigquery._load_cell(args, None)
+        load_operator.execute(context=None)
 
       mock_table_exists.return_value = False
 
       with self.assertRaisesRegexp(Exception, 'Table does not exist, and no schema specified'):
-          google.datalab.bigquery.commands._bigquery._load_cell(args, None)
+        load_operator.execute(context=None)
 
-      cell_body = {
-          'schema': [
-              {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
-              {'name': 'col1', 'type': 'STRING', 'mode': 'required', 'description': 'description1'}
-          ]
-      }
+      schema = [
+          {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
+          {'name': 'col1', 'type': 'STRING', 'mode': 'required', 'description': 'description1'}
+      ]
+      load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
+                                   path='test/path', mode='create', format=None, delimiter=None,
+                                   skip=None, strict=None, quote=None, schema=schema)
+      job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
+                                                        'test_sql', context)
       mock_table_load.return_value = job
       job._is_complete = True
       job._fatal_error = 'fatal error'
-
       with self.assertRaisesRegexp(Exception, 'Load failed: fatal error'):
-          google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body))
+        load_operator.execute(context=None)
 
       job._fatal_error = None
       job._errors = 'error'
-
       with self.assertRaisesRegexp(Exception, 'Load completed with errors: error'):
-          google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body))
+        load_operator.execute(context=None)
 
       job._errors = None
-
-      google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body))
-
+      load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='create',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=True)
 
       mock_get_table.return_value = None
       mock_table_exists.return_value = True
-      args['mode'] = 'append'
-      args['format'] = 'csv'
-
-      google.datalab.bigquery.commands._bigquery._load_cell(args, None)
-
+      load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
+                                   path='test/path', mode='append', format='csv', delimiter=None,
+                                   skip=None, strict=None, quote=None, schema=schema)
+      load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='csv', csv_options=mock.ANY,
                                          ignore_unknown_values=True)
