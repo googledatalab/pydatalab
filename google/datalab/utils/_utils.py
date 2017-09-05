@@ -265,16 +265,17 @@ def python_portable_string(string, encoding='utf-8'):
   raise ValueError('Unsupported type %s' % str(type(string)))
 
 
-_sandboxed_outputs_initialized = False
+_sandboxed_output_hook = None
+
+
 def initialize_sandboxed_outputs():
   """ Initializes global browser state which some visualizations require.
   """
 
-  global _sandboxed_outputs_initialized
+  global _sandboxed_output_hook
 
-  if _sandboxed_outputs_initialized:
+  if _sandboxed_output_hook:
     return
-  _sandboxed_outputs_initialized = True
 
   try:
     import IPython
@@ -294,6 +295,21 @@ def initialize_sandboxed_outputs():
             });
           </script>
           '''))
-  IPython.get_ipython().events.register('pre_run_cell', configure_global_state)
+  _sandboxed_output_hook = configure_global_state
+  IPython.get_ipython().events.register('pre_run_cell', _sandboxed_output_hook)
   # Invoke immediately to enable for the current cell.
   configure_global_state()
+
+
+def uninitialize_sandboxed_outputs():
+  """ Uninitializes initialize_sandboxed_outputs()
+  """
+  global _sandboxed_output_hook
+
+  if not _sandboxed_output_hook:
+    return
+
+  import IPython
+
+  IPython.get_ipython().events.unregister('pre_run_cell', _sandboxed_output_hook)
+  _sandboxed_output_hook = None
