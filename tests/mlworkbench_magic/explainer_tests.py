@@ -14,6 +14,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
+import google.datalab
 from PIL import Image
 import numpy as np
 import os
@@ -27,6 +28,15 @@ import IPython.core.display
 import IPython.core.magic
 
 from google.datalab.contrib.mlworkbench import PredictionExplainer
+
+
+# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
+# those tests will not run.
+HAS_CREDENTIALS = True
+try:
+  google.datalab.Context.default().project_id
+except Exception:
+  HAS_CREDENTIALS = False
 
 
 def noop_decorator(func):
@@ -175,7 +185,8 @@ class TestMLExplainer(unittest.TestCase):
               top-n: 0
               max-steps: 200""" % (train_dir, analyze_dir, transform_dir, transform_dir))
 
-  @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
+  @unittest.skipIf(not six.PY2 or not HAS_CREDENTIALS,
+                   'Integration test that invokes mlworkbench with DataFlow.')
   def test_text_explainer(self):
     """Test text explainer."""
 
