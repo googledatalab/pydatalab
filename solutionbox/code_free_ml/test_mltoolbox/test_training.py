@@ -679,9 +679,9 @@ class TestTrainer(unittest.TestCase):
     if with_image:
       self.make_image_files()
 
-    self.make_csv_data(self._csv_train_filename, 200, problem_type, True, with_image)
-    self.make_csv_data(self._csv_eval_filename, 100, problem_type, True, with_image)
-    self.make_csv_data(self._csv_predict_filename, 100, problem_type, False, with_image)
+    self.make_csv_data(self._csv_train_filename, 50, problem_type, True, with_image)
+    self.make_csv_data(self._csv_eval_filename, 30, problem_type, True, with_image)
+    self.make_csv_data(self._csv_predict_filename, 10, problem_type, False, with_image)
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
            '--output=' + self._analysis_output,
@@ -871,8 +871,7 @@ class TestTrainer(unittest.TestCase):
         model_type=model_type,
         extra_args=['--top-n=3',
                     '--hidden-layer-size1=10',
-                    '--hidden-layer-size2=5',
-                    '--hidden-layer-size3=2'])
+                    '--hidden-layer-size2=2'])
     self._check_model(
         problem_type=problem_type,
         model_type=model_type)
