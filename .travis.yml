@@ -1,17 +1,6 @@
 language: python
 dist: trusty
-addons:
-  apt:
-    source:
-    - ubuntu-toolchain-r-test
-    packages:
-    - build-essential
-    - google-chrome-stable
-    - libcairo2-dev
-    - libjpeg8-dev
-    - libpango1.0-dev
-    - libgif-dev
-    - g++-4.8
+sudo: required
 
 matrix:
   include:
@@ -30,6 +19,17 @@ before_install:
   # We use tox for actually running tests.
   - pip install --upgrade pip tox
   
+install:
+- if [ -n "${SERVICE_ACCOUNT_KEY}" ]; then
+    echo "${SERVICE_ACCOUNT_KEY}" > ~/datalab-travis-build-bot.json;
+  else
+    openssl aes-256-cbc -K "$encrypted_a0ecf488aafb_key" -iv "$encrypted_a0ecf488aafb_iv"
+      -in .build-bot.json -out ~/datalab-travis-build-bot.json -d;
+  fi
+
+env:
+  - GOOGLE_APPLICATION_CREDENTIALS=~/datalab-travis-build-bot.json
+
 script:
   # tox reads its configuration from tox.ini.
   - tox -e $TOX_ENV
