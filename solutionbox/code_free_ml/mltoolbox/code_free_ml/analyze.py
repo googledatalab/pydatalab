@@ -103,7 +103,9 @@ def parse_arguments(argv):
              {"transform": "bag_of_words"}: bag of words transform for string
                 columns.
              {"transform": "tfidf"}: TFIDF transform for string columns.
-             {"transform": "image_to_vec"}: From image gs url to embeddings.
+             {"transform": "image_to_vec", "checkpoint": "gs://b/o"}: From image
+                gs url to embeddings. "checkpoint" is a inception v3 checkpoint.
+                If absent, a default checkpoint is used.
              {"transform": "target"}: denotes what column is the target. If the
                 schema type of this column is string, a one_hot encoding is
                 automatically applied. If type is numerical, a identity transform
