@@ -67,10 +67,12 @@ class TestCases(unittest.TestCase):
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
 
+  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.Query.execute')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
-  def test_execute_operator(self, mock_get_notebook_item, mock_query_execute):
+  def test_execute_operator(self, mock_get_notebook_item, mock_query_execute, mock_context_default):
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
+    mock_context_default.return_value = self._create_context()
     execute_operator = ExecuteOperator(
       task_id='test_execute_operator', query='test_sql', parameters=None, table='test_table',
       mode=None, billing='test_billing')
@@ -78,17 +80,15 @@ class TestCases(unittest.TestCase):
     # TODO(rajivpb): Mock output_options, context, and query_params for a more complete test.
     mock_query_execute.assert_called_once()
 
-  @mock.patch('google.datalab.bigquery.Table.create')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.Table.load')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_load_operator(self, mock_get_table, mock_table_load, mock_table_exists,
-                         mock_table_create):
+  def test_load_operator(self, mock_get_table, mock_table_load, mock_table_exists):
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='create', format=None, delimiter=None,
                                    skip=None, strict=None, quote=None, schema=None)
       context = self._create_context()
-      table = google.datalab.bigquery.Table('project.test.table')
+      table = google.datalab.bigquery.Table('project.test.table', context)
       mock_get_table.return_value = table
       mock_table_exists.return_value = True
 
