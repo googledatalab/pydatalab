@@ -1,6 +1,18 @@
 language: python
 dist: trusty
-sudo: false
+sudo: required
+addons:
+  apt:
+    source:
+    - ubuntu-toolchain-r-test
+    packages:
+    - build-essential
+    - google-chrome-stable
+    - libcairo2-dev
+    - libjpeg8-dev
+    - libpango1.0-dev
+    - libgif-dev
+    - g++-4.8
 
 matrix:
   include:
