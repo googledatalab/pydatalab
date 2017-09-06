@@ -681,7 +681,7 @@ class TestTrainer(unittest.TestCase):
 
     self.make_csv_data(self._csv_train_filename, 50, problem_type, True, with_image)
     self.make_csv_data(self._csv_eval_filename, 30, problem_type, True, with_image)
-    self.make_csv_data(self._csv_predict_filename, Z10, problem_type, False, with_image)
+    self.make_csv_data(self._csv_predict_filename, 10, problem_type, False, with_image)
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
            '--output=' + self._analysis_output,
