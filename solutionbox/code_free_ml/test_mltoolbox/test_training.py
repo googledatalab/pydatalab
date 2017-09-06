@@ -506,17 +506,6 @@ class TestTrainer(unittest.TestCase):
     self._schema_filename = os.path.join(self._test_dir, 'schema_file.json')
     self._features_filename = os.path.join(self._test_dir, 'features_file.json')
 
-    # Download inception checkpoint. Note that gs url doesn't work because
-    # we may not have gcloud signed in when running the test.
-    url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
-           'flower_photos/inception_v3_2016_08_28.ckpt')
-    self._checkpoint_path = os.path.join(self._test_dir, "checkpoint")
-    response = urlopen(url)
-    with open(self._checkpoint_path, 'wb') as f:
-      f.write(response.read())
-    checkpoint_size = os.path.getsize(self._checkpoint_path)
-    self._logger.debug('\n\ncheck point downloaded size is ' + str(checkpoint_size))
-
   def tearDown(self):
     self._logger.debug('TestTrainer: removing test dir ' + self._test_dir)
     shutil.rmtree(self._test_dir)
@@ -659,7 +648,16 @@ class TestTrainer(unittest.TestCase):
         'target': {'transform': 'target'},
         'key': {'transform': 'key'}}
     if with_image:
-      features['image'] = {'transform': 'image_to_vec', 'checkpoint': self._checkpoint_path}
+      # Download inception checkpoint. Note that gs url doesn't work because
+      # we may not have gcloud signed in when running the test.
+      url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
+             'flower_photos/inception_v3_2016_08_28.ckpt')
+      checkpoint_path = os.path.join(self._test_dir, "checkpoint")
+      response = urlopen(url)
+      with open(checkpoint_path, 'wb') as f:
+        f.write(response.read())
+
+      features['image'] = {'transform': 'image_to_vec', 'checkpoint': checkpoint_path}
 
     schema = [
         {'name': 'key', 'type': 'integer'},
