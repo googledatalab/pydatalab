@@ -1,6 +1,5 @@
 language: python
 dist: trusty
-sudo: required
 addons:
   apt:
     source:
