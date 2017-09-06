@@ -56,6 +56,418 @@ def run_exported_model(model_path, csv_data):
   return result
 
 
+class TestSpecialCharacters(unittest.TestCase):
+  """Test special characters are supported."""
+
+  def testCommaQuote(self):
+    """Test when csv input data has quotes and commas."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'target': {'transform': 'target'},
+          'cat': {'transform': 'one_hot'},
+          'text': {'transform': 'bag_of_words'}}
+      schema = [
+          {'name': 'target', 'type': 'string'},
+          {'name': 'cat', 'type': 'string'},
+          {'name': 'text', 'type': 'string'}]
+      # Target column = cat  column
+      data = [{'cat': 'red,', 'text': 'one, two, three', 'target': 'red,'},
+              {'cat': 'blue"', 'text': 'one, "two"', 'target': 'blue"'},
+              {'cat': '"green"', 'text': '"two', 'target': '"green"'},
+              {'cat': "yellow, 'brown", 'text': "'one, two'", 'target': "yellow, 'brown"}]
+
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(
+          os.path.join(output_dir, 'data.csv'),
+          pd.DataFrame(data, columns=['target', 'cat', 'text']).to_csv(index=False, header=False))
+
+      # Run analysis and check the output vocabs are correctly encoded in csv
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      df_vocab_cat = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_cat.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      self.assertEqual(df_vocab_cat['count'].tolist(), ['1', '1', '1', '1'])
+      self.assertItemsEqual(
+          df_vocab_cat['label'].tolist(),
+          ['blue"', '"green"', "yellow, 'brown", 'red,'])
+
+      df_vocab_target = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_target.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      self.assertEqual(df_vocab_target['count'].tolist(), ['1', '1', '1', '1'])
+      self.assertItemsEqual(
+          df_vocab_target['label'].tolist(),
+          ['blue"', '"green"', "yellow, 'brown", 'red,'])
+
+      df_vocab_text = pd.read_csv(
+          os.path.join(output_dir, 'analysis', 'vocab_text.csv'),
+          header=None,
+          names=['label', 'count'],
+          dtype=str,
+          na_filter=False)
+      vocab_text = df_vocab_text['label'].tolist()
+      self.assertEqual(vocab_text[0], 'one,')
+      self.assertItemsEqual(vocab_text[1:], ['two,', '"two"', "'one,", '"two', "two'", 'three'])
+      vocab_count = df_vocab_text['count'].tolist()
+      self.assertEqual(vocab_count[0], '2')
+      self.assertEqual(vocab_count[1:], ['1', '1', '1', '1', '1', '1'])
+
+      # Run transform, and check there are no reported errors.
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--prefix=features_train',
+             '--output=' + os.path.join(output_dir, 'transform')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      error_files = glob.glob(os.path.join(output_dir, 'transform', 'error*'))
+      self.assertEqual(1, len(error_files))
+      self.assertEqual(0, os.path.getsize(error_files[0]))
+
+      # Run training
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_classification',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=500',
+             '--learning-rate=1.0',
+             '--transform']
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['"red,","one, two, three"'])
+
+      # The prediction data is a training row. As the data is samll, the model
+      # should have near 100% accuracy. Check it made the correct prediction.
+      self.assertEqual(result['predicted'], 'red,')
+    finally:
+      shutil.rmtree(output_dir)
+
+
+class TestClassificationTopN(unittest.TestCase):
+  """Test top_n works."""
+
+  def testTopNZero(self):
+    """Test top_n=0 gives all the classes."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'num': {'transform': 'identity'},
+          'target': {'transform': 'target'}}
+      schema = [
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'string'}]
+      data = ['1,1\n', '4,2\n', '5,3\n', '11,1\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_classification',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=1',
+             '--top-n=0',  # This parameter is tested in this test!
+             '--learning-rate=0.1',
+             '--transform']
+
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['20'])
+
+      keys = result.keys()
+      self.assertIn('probability', keys)
+      self.assertIn('probability_2', keys)
+      self.assertIn('probability_3', keys)
+      self.assertNotIn('probability_4', keys)
+    finally:
+      shutil.rmtree(output_dir)
+
+
+class TestMultipleFeatures(unittest.TestCase):
+  """Test one source column can be used in many features."""
+
+  def testMultipleColumnsRaw(self):
+    """Test training starting from raw csv."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'num': {'transform': 'identity'},
+          'num2': {'transform': 'key', 'source_column': 'num'},
+          'target': {'transform': 'target'},
+          'text': {'transform': 'bag_of_words'},
+          'text2': {'transform': 'tfidf', 'source_column': 'text'},
+          'text3': {'transform': 'key', 'source_column': 'text'}}
+      schema = [
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'float'},
+          {'name': 'text', 'type': 'string'}]
+      data = ['1,2,hello world\n', '4,8,bye moon\n', '5,10,hello moon\n', '11,22,moon moon\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_regression',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=200',
+             '--learning-rate=0.1',
+             '--transform']
+
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['20,hello moon'])
+
+      # check keys were made
+      self.assertEqual(20, result['num2'])
+      self.assertEqual('hello moon', result['text3'])
+    finally:
+      shutil.rmtree(output_dir)
+
+  def testMultipleColumnsTransformed(self):
+    """Test training starting from tf.example."""
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'num': {'transform': 'identity'},
+          'num2': {'transform': 'key', 'source_column': 'num'},
+          'target': {'transform': 'target'},
+          'text': {'transform': 'bag_of_words'},
+          'text2': {'transform': 'tfidf', 'source_column': 'text'},
+          'text3': {'transform': 'key', 'source_column': 'text'}}
+      schema = [
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'float'},
+          {'name': 'text', 'type': 'string'}]
+      data = ['1,2,hello world\n', '4,8,bye moon\n', '5,10,hello moon\n', '11,22,moon moon\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'transform.py'),
+             '--output=' + os.path.join(output_dir, 'transform'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--prefix=features']
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      # Check tf.example file has the expected features
+      file_list = file_io.get_matching_files(os.path.join(output_dir, 'transform', 'features*'))
+      options = tf.python_io.TFRecordOptions(
+          compression_type=tf.python_io.TFRecordCompressionType.GZIP)
+      record_iter = tf.python_io.tf_record_iterator(path=file_list[0], options=options)
+      tf_example = tf.train.Example()
+      tf_example.ParseFromString(next(record_iter))
+
+      self.assertEqual(1, len(tf_example.features.feature['num'].int64_list.value))
+      self.assertEqual(1, len(tf_example.features.feature['num2'].int64_list.value))
+      self.assertEqual(1, len(tf_example.features.feature['target'].float_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text_ids'].int64_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text_weights'].float_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text2_ids'].int64_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text2_weights'].float_list.value))
+      self.assertEqual(1, len(tf_example.features.feature['text3'].bytes_list.value))
+
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_regression',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=200',
+             '--learning-rate=0.1',
+             '--transform']
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['20,hello moon'])
+
+      # check keys were made
+      self.assertEqual(20, result['num2'])
+      self.assertEqual('hello moon', result['text3'])
+    finally:
+      shutil.rmtree(output_dir)
+
+
+class TestOptionalKeys(unittest.TestCase):
+  def testNoKeys(self):
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'num': {'transform': 'identity'},
+          'target': {'transform': 'target'}}
+      schema = [
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'float'}]
+      data = ['1,2\n', '4,8\n', '5,10\n', '11,22\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_regression',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=2000',
+             '--learning-rate=0.1',
+             '--transform']
+
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['20'])
+
+      self.assertTrue(abs(40 - result['predicted']) < 5)
+    finally:
+      shutil.rmtree(output_dir)
+
+  def testManyKeys(self):
+    output_dir = tempfile.mkdtemp()
+    try:
+      features = {
+          'keyint': {'transform': 'key'},
+          'keyfloat': {'transform': 'key'},
+          'keystr': {'transform': 'key'},
+          'num': {'transform': 'identity'},
+          'target': {'transform': 'target'}}
+      schema = [
+          {'name': 'keyint', 'type': 'integer'},
+          {'name': 'keyfloat', 'type': 'float'},
+          {'name': 'keystr', 'type': 'string'},
+          {'name': 'num', 'type': 'integer'},
+          {'name': 'target', 'type': 'float'}]
+      data = ['1,1.5,one,1,2\n', '2,2.5,two,4,8\n', '3,3.5,three,5,10\n']
+      file_io.recursive_create_dir(output_dir)
+      file_io.write_string_to_file(os.path.join(output_dir, 'schema.json'),
+                                   json.dumps(schema, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'features.json'),
+                                   json.dumps(features, indent=2))
+      file_io.write_string_to_file(os.path.join(output_dir, 'data.csv'),
+                                   ''.join(data))
+
+      cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
+             '--output=' + os.path.join(output_dir, 'analysis'),
+             '--csv=' + os.path.join(output_dir, 'data.csv'),
+             '--schema=' + os.path.join(output_dir, 'schema.json'),
+             '--features=' + os.path.join(output_dir, 'features.json')]
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      cmd = ['cd %s && ' % CODE_PATH,
+             'python -m trainer.task',
+             '--train=' + os.path.join(output_dir, 'data.csv'),
+             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--job-dir=' + os.path.join(output_dir, 'training'),
+             '--analysis=' + os.path.join(output_dir, 'analysis'),
+             '--model=linear_regression',
+             '--train-batch-size=4',
+             '--eval-batch-size=4',
+             '--max-steps=2000',
+             '--transform']
+
+      subprocess.check_call(' '.join(cmd), shell=True)
+
+      result = run_exported_model(
+          model_path=os.path.join(output_dir, 'training', 'model'),
+          csv_data=['7,4.5,hello,1'])
+      self.assertEqual(7, result['keyint'])
+      self.assertAlmostEqual(4.5, result['keyfloat'])
+      self.assertEqual('hello', result['keystr'])
+    finally:
+      shutil.rmtree(output_dir)
+
+
 class TestTrainer(unittest.TestCase):
   """Tests training.
 
@@ -420,7 +832,70 @@ class TestTrainer(unittest.TestCase):
         self.assertItemsEqual(expected_output_keys, result.keys())
         self.assertEqual([12, 11], result['key'].flatten().tolist())
 
-  def testClassificationDNNWithImage(self):
+  def testClassificationLinear(self):
+    self._logger.debug('\n\nTesting Classification Linear')
+
+    problem_type = 'classification'
+    model_type = 'linear'
+    self._run_analyze(problem_type)
+    self._run_training_raw(
+        problem_type=problem_type,
+        model_type=model_type,
+        extra_args=['--top-n=3'])
+    self._check_model(
+        problem_type=problem_type,
+        model_type=model_type)
+
+  def testRegressionLinear(self):
+    self._logger.debug('\n\nTesting Regression Linear')
+
+    problem_type = 'regression'
+    model_type = 'linear'
+    self._run_analyze(problem_type)
+    self._run_transform()
+    self._run_training_transform(
+        problem_type=problem_type,
+        model_type=model_type)
+    self._check_model(
+        problem_type=problem_type,
+        model_type=model_type)
+
+  def testClassificationDNN(self):
+    self._logger.debug('\n\nTesting Classification DNN')
+
+    problem_type = 'classification'
+    model_type = 'dnn'
+    self._run_analyze(problem_type)
+    self._run_transform()
+    self._run_training_transform(
+        problem_type=problem_type,
+        model_type=model_type,
+        extra_args=['--top-n=3',
+                    '--hidden-layer-size1=10',
+                    '--hidden-layer-size2=5',
+                    '--hidden-layer-size3=2'])
+    self._check_model(
+        problem_type=problem_type,
+        model_type=model_type)
+
+  def testRegressionDNN(self):
+    self._logger.debug('\n\nTesting Regression DNN')
+
+    problem_type = 'regression'
+    model_type = 'dnn'
+    self._run_analyze(problem_type)
+    self._run_training_raw(
+        problem_type=problem_type,
+        model_type=model_type,
+        extra_args=['--top-n=3',
+                    '--hidden-layer-size1=10',
+                    '--hidden-layer-size2=5',
+                    '--hidden-layer-size3=2'])
+    self._check_model(
+        problem_type=problem_type,
+        model_type=model_type)
+
+  def _testClassificationDNNWithImage(self):
     self._logger.debug('\n\nTesting Classification DNN With Image')
 
     problem_type = 'classification'
