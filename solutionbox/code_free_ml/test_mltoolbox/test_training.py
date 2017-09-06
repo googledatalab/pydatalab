@@ -860,24 +860,6 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def testClassificationDNN(self):
-    self._logger.debug('\n\nTesting Classification DNN')
-
-    problem_type = 'classification'
-    model_type = 'dnn'
-    self._run_analyze(problem_type)
-    self._run_transform()
-    self._run_training_transform(
-        problem_type=problem_type,
-        model_type=model_type,
-        extra_args=['--top-n=3',
-                    '--hidden-layer-size1=10',
-                    '--hidden-layer-size2=5',
-                    '--hidden-layer-size3=2'])
-    self._check_model(
-        problem_type=problem_type,
-        model_type=model_type)
-
   def testRegressionDNN(self):
     self._logger.debug('\n\nTesting Regression DNN')
 
@@ -895,7 +877,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def _testClassificationDNNWithImage(self):
+  def testClassificationDNNWithImage(self):
     self._logger.debug('\n\nTesting Classification DNN With Image')
 
     problem_type = 'classification'
@@ -905,10 +887,8 @@ class TestTrainer(unittest.TestCase):
     self._run_training_transform(
         problem_type=problem_type,
         model_type=model_type,
-        extra_args=['--top-n=3',
-                    '--hidden-layer-size1=10',
-                    '--hidden-layer-size2=5',
-                    '--hidden-layer-size3=2'])
+        extra_args=['--top-n=1',
+                    '--hidden-layer-size1=10'])
     self._check_model(
         problem_type=problem_type,
         model_type=model_type,
