@@ -47,6 +47,7 @@ import mltoolbox_structured_data.dl_interface_tests
 import mltoolbox_structured_data.sd_e2e_tests
 import mltoolbox_structured_data.traininglib_tests
 import mlworkbench_magic.archive_tests
+import mlworkbench_magic.explainer_tests
 import mlworkbench_magic.local_predict_tests
 import mlworkbench_magic.ml_tests
 import mlworkbench_magic.shell_process_tests
@@ -121,6 +122,7 @@ _INTEGRATION_TEST_MODULES = [
     mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
     mltoolbox_structured_data.traininglib_tests,
     mlworkbench_magic.local_predict_tests,
+    mlworkbench_magic.explainer_tests,
     # TODO: the test fails in travis only. Need to investigate.
     # mlworkbench_magic.shell_process_tests,
     mlworkbench_magic.archive_tests,

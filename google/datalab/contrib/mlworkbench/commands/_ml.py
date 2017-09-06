@@ -27,9 +27,11 @@ import argparse
 import json
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
 import numpy as np
 import shutil
 import six
+from skimage.segmentation import mark_boundaries
 import subprocess
 import tempfile
 import textwrap
@@ -44,6 +46,7 @@ import google.datalab.utils.commands
 import google.datalab.contrib.mlworkbench._local_predict as _local_predict
 import google.datalab.contrib.mlworkbench._shell_process as _shell_process
 import google.datalab.contrib.mlworkbench._archive as _archive
+import google.datalab.contrib.mlworkbench._prediction_explainer as _prediction_explainer
 
 
 MLTOOLBOX_CODE_PATH = '/datalab/lib/pydatalab/solutionbox/code_free_ml/mltoolbox/code_free_ml/'
@@ -144,8 +147,10 @@ def ml(line, cell=None):
                    transform of it.
               "transform: tfidf"
                    treats the string column as text and make TFIDF transform of it.
-              "transform: image_to_vec"
-                   from image gs url to embeddings.
+              "transform: image_to_vec
+               checkpoint: gs://b/o"
+                   from image gs url to embeddings. "checkpoint" is a inception v3
+                   checkpoint. If absent, a default checkpoint is used.
               "transform: target"
                    denotes the column is the target. If the schema type of this
                    column is string, a one_hot encoding is automatically applied.
@@ -303,11 +308,13 @@ def ml(line, cell=None):
   predict_parser.add_argument('--model', required=True,
                               help='The model path if not --cloud, or the id in '
                                    'the form of model.version if --cloud.')
-  predict_parser.add_argument('--headers', required=True,
-                              help='The comma seperated headers of the prediction data. '
+  predict_parser.add_argument('--headers',
+                              help='Online models only. ' +
+                                   'The comma seperated headers of the prediction data. ' +
                                    'Order must match the training order.')
   predict_parser.add_argument('--image_columns',
-                              help='Comma seperated headers of image URL columns. '
+                              help='Online models only. ' +
+                                   'Comma seperated headers of image URL columns. ' +
                                    'Required if prediction data contains image URL columns.')
   predict_parser.add_argument('--no_show_image', action='store_true', default=False,
                               help='If not set, add a column of images in output.')
@@ -367,6 +374,41 @@ def ml(line, cell=None):
               max_worker_count: see reference in "region".""".format(
                   url='https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/prediction')))  # noqa
   batch_predict_parser.set_defaults(func=_batch_predict)
+
+  explain_parser = parser.subcommand(
+      'explain',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Explain a prediction.')
+  explain_parser.add_argument('--type', required=True, choices=['text', 'image'],
+                              help='the type of column to explain.')
+  explain_parser.add_argument('--model', required=True,
+                              help='path of the model directory used for prediction.')
+  explain_parser.add_argument('--labels', required=True,
+                              help='comma separated labels to explain.')
+  explain_parser.add_argument('--column_name',
+                              help='the name of the column to explain. Optional if text type ' +
+                                   'and there is only one text column, or image type and ' +
+                                   'there is only one image column.')
+  explain_parser.add_argument('--num_features', type=int,
+                              help='number of features to analyze. In text, it is number of ' +
+                                   'words. In image, it is number of areas.')
+  explain_parser.add_argument('--num_samples', type=int,
+                              help='size of the neighborhood to learn the linear model. ')
+  explain_parser.add_argument('--overview_only', action='store_true', default=False,
+                              help='whether to show only the overview. For text only.')
+  explain_parser.add_argument('--detailview_only', action='store_true', default=False,
+                              help='whether to show only the detail views for each label. ' +
+                                   'For text only.')
+  explain_parser.add_argument('--include_negative', action='store_true', default=False,
+                              help='whether to show only positive areas. For image only.')
+  explain_parser.add_argument('--hide_color', type=int, default=0,
+                              help='the color to use for perturbed area. If -1, average of ' +
+                                   'each channel is used for each channel. For image only.')
+  explain_parser.add_argument('--batch_size', type=int, default=100,
+                              help='size of batches passed to prediction. For image only.')
+  explain_parser.add_cell_argument('data', required=True,
+                                   help='Prediction Data. Can be a csv line, or a dict.')
+  explain_parser.set_defaults(func=_explain)
 
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
@@ -613,8 +655,19 @@ def _train(args, cell):
 
 
 def _predict(args, cell):
-  headers = args['headers'].split(',')
-  img_cols = args['image_columns'].split(',') if args['image_columns'] else []
+  if args['cloud']:
+    headers, img_cols = None, None
+    if args['headers']:
+      headers = args['headers'].split(',')
+    if args['image_columns']:
+      img_cols = args['image_columns'].split(',')
+  else:
+    schema, features = _local_predict.get_model_schema_and_features(args['model'])
+    headers = [x['name'] for x in schema]
+    img_cols = []
+    for k, v in six.iteritems(features):
+      if v['transform'] in ['image_to_vec']:
+        img_cols.append(v['source_column'])
 
   data = args['prediction_data']
   df = _local_predict.get_prediction_results(
@@ -675,3 +728,33 @@ def _batch_predict(args, cell):
                                        args['format'],
                                        args['batch_size'])
     print('done.')
+
+
+def _explain(args, cell):
+  explainer = _prediction_explainer.PredictionExplainer(args['model'])
+  labels = args['labels'].split(',')
+  if args['type'] == 'text':
+    num_features = args['num_features'] if args['num_features'] else 10
+    num_samples = args['num_samples'] if args['num_samples'] else 5000
+    exp = explainer.explain_text(labels, args['data'], column_name=args['column_name'],
+                                 num_features=num_features, num_samples=num_samples)
+    if not args['detailview_only']:
+      exp.show_in_notebook()
+
+    if not args['overview_only']:
+      for i in range(len(labels)):
+        exp.as_pyplot_figure(label=i)
+
+  elif args['type'] == 'image':
+    num_features = args['num_features'] if args['num_features'] else 3
+    num_samples = args['num_samples'] if args['num_samples'] else 300
+    hide_color = None if args['hide_color'] == -1 else args['hide_color']
+    exp = explainer.explain_image(labels, args['data'], column_name=args['column_name'],
+                                  num_samples=num_samples, batch_size=args['batch_size'],
+                                  hide_color=hide_color)
+    for i in range(len(labels)):
+      image, mask = exp.get_image_and_mask(i, positive_only=not args['include_negative'],
+                                           num_features=num_features, hide_rest=False)
+      fig = plt.figure()
+      fig.suptitle(labels[i], fontsize=16)
+      plt.imshow(mark_boundaries(image, mask))

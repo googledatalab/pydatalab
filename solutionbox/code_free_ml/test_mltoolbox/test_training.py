@@ -9,6 +9,7 @@ import pandas as pd
 from PIL import Image
 import random
 import shutil
+from six.moves.urllib.request import urlopen
 import subprocess
 import sys
 import tempfile
@@ -20,15 +21,6 @@ from tensorflow.python.lib.io import file_io
 
 CODE_PATH = os.path.abspath(os.path.join(
     os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
-
-# Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
-# those tests will not run.
-HAS_CREDENTIALS = True
-try:
-  import google.datalab as dl
-  dl.Context.default().project_id
-except Exception:
-  HAS_CREDENTIALS = False
 
 
 def run_exported_model(model_path, csv_data):
@@ -656,7 +648,16 @@ class TestTrainer(unittest.TestCase):
         'target': {'transform': 'target'},
         'key': {'transform': 'key'}}
     if with_image:
-      features['image'] = {'transform': 'image_to_vec'}
+      # Download inception checkpoint. Note that gs url doesn't work because
+      # we may not have gcloud signed in when running the test.
+      url = ('https://storage.googleapis.com/cloud-ml-data/img/' +
+             'flower_photos/inception_v3_2016_08_28.ckpt')
+      checkpoint_path = os.path.join(self._test_dir, "checkpoint")
+      response = urlopen(url)
+      with open(checkpoint_path, 'wb') as f:
+        f.write(response.read())
+
+      features['image'] = {'transform': 'image_to_vec', 'checkpoint': checkpoint_path}
 
     schema = [
         {'name': 'key', 'type': 'integer'},
@@ -678,9 +679,9 @@ class TestTrainer(unittest.TestCase):
     if with_image:
       self.make_image_files()
 
-    self.make_csv_data(self._csv_train_filename, 200, problem_type, True, with_image)
-    self.make_csv_data(self._csv_eval_filename, 100, problem_type, True, with_image)
-    self.make_csv_data(self._csv_predict_filename, 100, problem_type, False, with_image)
+    self.make_csv_data(self._csv_train_filename, 50, problem_type, True, with_image)
+    self.make_csv_data(self._csv_eval_filename, 30, problem_type, True, with_image)
+    self.make_csv_data(self._csv_predict_filename, 10, problem_type, False, with_image)
 
     cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
            '--output=' + self._analysis_output,
@@ -859,24 +860,6 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type)
 
-  def testClassificationDNN(self):
-    self._logger.debug('\n\nTesting Classification DNN')
-
-    problem_type = 'classification'
-    model_type = 'dnn'
-    self._run_analyze(problem_type)
-    self._run_transform()
-    self._run_training_transform(
-        problem_type=problem_type,
-        model_type=model_type,
-        extra_args=['--top-n=3',
-                    '--hidden-layer-size1=10',
-                    '--hidden-layer-size2=5',
-                    '--hidden-layer-size3=2'])
-    self._check_model(
-        problem_type=problem_type,
-        model_type=model_type)
-
   def testRegressionDNN(self):
     self._logger.debug('\n\nTesting Regression DNN')
 
@@ -888,13 +871,11 @@ class TestTrainer(unittest.TestCase):
         model_type=model_type,
         extra_args=['--top-n=3',
                     '--hidden-layer-size1=10',
-                    '--hidden-layer-size2=5',
-                    '--hidden-layer-size3=2'])
+                    '--hidden-layer-size2=2'])
     self._check_model(
         problem_type=problem_type,
         model_type=model_type)
 
-  @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def testClassificationDNNWithImage(self):
     self._logger.debug('\n\nTesting Classification DNN With Image')
 
@@ -906,9 +887,7 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type,
         extra_args=['--top-n=3',
-                    '--hidden-layer-size1=10',
-                    '--hidden-layer-size2=5',
-                    '--hidden-layer-size3=2'])
+                    '--hidden-layer-size1=10'])
     self._check_model(
         problem_type=problem_type,
         model_type=model_type,

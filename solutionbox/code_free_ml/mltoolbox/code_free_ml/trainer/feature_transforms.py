@@ -220,7 +220,7 @@ def _bag_of_words(x):
   return _bow(x)
 
 
-def _make_image_to_vec_tito(tmp_dir=None):
+def _make_image_to_vec_tito(tmp_dir=None, checkpoint=None):
   """Creates a tensor-in-tensor-out function that produces embeddings from image bytes.
 
   Image to embedding is implemented with Tensorflow's inception v3 model and a pretrained
@@ -229,6 +229,8 @@ def _make_image_to_vec_tito(tmp_dir=None):
   Args:
     tmp_dir: a local directory that is used for downloading the checkpoint. If
       non, a temp folder will be made and deleted.
+    checkpoint: the inception v3 checkpoint gs or local path. If None, default checkpoint
+      is used.
 
   Returns: a tensor-in-tensor-out function that takes image string tensor and returns embeddings.
   """
@@ -310,9 +312,9 @@ def _make_image_to_vec_tito(tmp_dir=None):
 
     return _tito_out
 
-  return _tito_from_checkpoint(_image_to_vec,
-                               INCEPTION_V3_CHECKPOINT,
-                               INCEPTION_EXCLUDED_VARIABLES)
+  if not checkpoint:
+    checkpoint = INCEPTION_V3_CHECKPOINT
+  return _tito_from_checkpoint(_image_to_vec, checkpoint, INCEPTION_EXCLUDED_VARIABLES)
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 # end of transform functions
@@ -395,7 +397,8 @@ def make_preprocessing_fn(output_dir, features, keep_target):
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
           result[name] = _string_to_int(inputs[source_column], vocab)
       elif transform_name == IMAGE_TRANSFORM:
-        make_image_to_vec_fn = _make_image_to_vec_tito()
+        make_image_to_vec_fn = _make_image_to_vec_tito(
+            checkpoint=transform.get('checkpoint', None))
         result[name] = make_image_to_vec_fn(inputs[source_column])
       else:
         raise ValueError('unknown transform %s' % transform_name)
@@ -404,7 +407,7 @@ def make_preprocessing_fn(output_dir, features, keep_target):
   return preprocessing_fn
 
 
-def get_transfrormed_feature_info(features, schema):
+def get_transformed_feature_info(features, schema):
   """Returns information about the transformed features.
 
   Returns:
@@ -741,7 +744,7 @@ def build_tfexample_transfored_training_input_fn(schema,
           allow_smaller_final_batch=allow_smaller_final_batch)
 
     feature_spec = {}
-    feature_info = get_transfrormed_feature_info(features, schema)
+    feature_info = get_transformed_feature_info(features, schema)
     for name, info in six.iteritems(feature_info):
       if info['size'] is None:
         feature_spec[name] = tf.VarLenFeature(dtype=info['dtype'])
