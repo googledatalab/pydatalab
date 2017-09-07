@@ -80,15 +80,18 @@ class TestCases(unittest.TestCase):
     # TODO(rajivpb): Mock output_options, context, and query_params for a more complete test.
     mock_query_execute.assert_called_once()
 
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.Table.load')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_load_operator(self, mock_get_table, mock_table_load, mock_table_exists):
+  def test_load_operator(self, mock_get_table, mock_table_load, mock_table_exists,
+                         mock_api_tables_insert, mock_context_default):
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='create', format=None, delimiter=None,
                                    skip=None, strict=None, quote=None, schema=None)
-      context = self._create_context()
-      table = google.datalab.bigquery.Table('project.test.table', context)
+      mock_context_default.return_value = self._create_context()
+      table = google.datalab.bigquery.Table('project.test.table', mock_context_default)
       mock_get_table.return_value = table
       mock_table_exists.return_value = True
 
@@ -108,10 +111,11 @@ class TestCases(unittest.TestCase):
                                    path='test/path', mode='create', format=None, delimiter=None,
                                    skip=None, strict=None, quote=None, schema=schema)
       job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
-                                                        'test_sql', context)
+                                                        'test_sql', None)
       mock_table_load.return_value = job
       job._is_complete = True
       job._fatal_error = 'fatal error'
+      mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
       with self.assertRaisesRegexp(Exception, 'Load failed: fatal error'):
         load_operator.execute(context=None)
 
