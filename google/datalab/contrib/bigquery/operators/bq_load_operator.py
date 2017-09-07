@@ -11,7 +11,6 @@
 # the License.
 
 import google.datalab.bigquery as bq
-from google.datalab.bigquery.commands._bigquery import _get_table
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -41,7 +40,7 @@ class LoadOperator(BaseOperator):
     self._quote = quote
 
   def execute(self, context):
-    bq_table = _get_table(self._table)
+    bq_table = bq.commands._bigquery._get_table(self._table)
     if not bq_table:
       bq_table = bq.Table(self._table)
 
