@@ -27,6 +27,7 @@ setup(
     'google.datalab.commands',
     'google.datalab.contrib',
     'google.datalab.contrib.bigquery',
+    'google.datalab.contrib.bigquery.commands',
     'google.datalab.contrib.bigquery.operators',
     'google.datalab.contrib.mlworkbench',
     'google.datalab.contrib.mlworkbench.commands',

@@ -824,7 +824,7 @@ WITH q1 AS (
       extract_format: None
  """
 
-    output = google.datalab.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
+    output = google.datalab.contrib.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
 
     pattern = re.compile("""
 from airflow import DAG

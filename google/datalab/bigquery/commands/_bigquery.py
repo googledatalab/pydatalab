@@ -30,11 +30,14 @@ import json
 import re
 
 import google.datalab.bigquery
-from google.datalab.bigquery._query_output import QueryOutput
-from google.datalab.bigquery._sampling import Sampling
+import google.datalab.contrib
+import google.datalab.contrib.bigquery.commands._bigquery
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
+
+from google.datalab.bigquery._query_output import QueryOutput
+from google.datalab.bigquery._sampling import Sampling
 
 BIGQUERY_DATATYPES = ['STRING', 'BYTES', 'INTEGER', 'INT64', 'FLOAT', 'FLOAT64', 'BOOLEAN',
                       'BOOL', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']
@@ -886,201 +889,6 @@ def _load_cell(args, cell_body):
     raise Exception('Load completed with errors: %s' % str(job.errors))
 
 
-def _pipeline_cell(args, cell_body):
-    """Implements the pipeline subcommand in the %%bq magic.
-
-    The supported syntax is:
-
-        %%bq pipeline <args>
-        [<inline YAML>]
-
-    Args:
-      args: the arguments following '%%bq pipeline'.
-      cell_body: the contents of the cell
-    """
-    name = args.get('name')
-    if name is None:
-        raise Exception("Pipeline name was not specified.")
-
-    bq_pipeline_config = google.datalab.utils.commands.parse_config(
-        cell_body, google.datalab.utils.commands.notebook_environment())
-
-    load_task_config_name = 'bq_pipeline_load_task'
-    load_task_config = {'type': 'pydatalab.bq.load'}
-    add_load_parameters(load_task_config, bq_pipeline_config)
-
-    execute_task_config_name = 'bq_pipeline_execute_task'
-    execute_task_config = {'type': 'pydatalab.bq.execute', 'up_stream': [load_task_config_name]}
-    add_execute_parameters(execute_task_config, bq_pipeline_config)
-
-    extract_task_config_name = 'bq_pipeline_extract_task'
-    extract_task_config = {'type': 'pydatalab.bq.extract', 'up_stream': [execute_task_config_name]}
-    add_extract_parameters(extract_task_config, bq_pipeline_config)
-
-    pipeline_spec = {
-        'email': bq_pipeline_config['email'],
-        'schedule': bq_pipeline_config['schedule'],
-    }
-
-    # These sections are only set when they aren't None
-    pipeline_spec['tasks'] = {}
-    if load_task_config:
-        pipeline_spec['tasks'][load_task_config_name] = load_task_config
-    if execute_task_config:
-        pipeline_spec['tasks'][execute_task_config_name] = execute_task_config
-    if extract_task_config:
-        pipeline_spec['tasks'][extract_task_config_name] = extract_task_config
-
-    if not load_task_config and not execute_task_config and not extract_task_config:
-        raise Exception('Pipeline has no tasks to execute.')
-
-    pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
-    google.datalab.utils.commands.notebook_environment()[name] = pipeline
-
-    debug = args.get('debug')
-    if debug is True:
-        return pipeline.py
-
-
-def _pipeline2_cell(args, cell_body):
-    """Implements the pipeline subcommand in the %%bq magic.
-
-    The supported syntax is:
-
-        %%bq pipeline <args>
-        [<inline YAML>]
-
-    Args:
-      args: the arguments following '%%bq pipeline'.
-      cell_body: the contents of the cell
-    """
-    name = args.get('name')
-    if name is None:
-        raise Exception("Pipeline name was not specified.")
-
-    bq_pipeline_config = google.datalab.utils.commands.parse_config(
-        cell_body, google.datalab.utils.commands.notebook_environment())
-
-    load_task_config_name = 'bq_pipeline_load_task'
-    load_task_config = {'type': 'pydatalab.bq.load'}
-    add_load_parameters2(load_task_config, bq_pipeline_config['input'])
-
-    execute_task_config_name = 'bq_pipeline_execute_task'
-    execute_task_config = {'type': 'pydatalab.bq.execute', 'up_stream': [load_task_config_name]}
-    add_execute_parameters2(execute_task_config, bq_pipeline_config['input'])
-
-    extract_task_config_name = 'bq_pipeline_extract_task'
-    extract_task_config = {'type': 'pydatalab.bq.extract', 'up_stream': [execute_task_config_name]}
-    add_extract_parameters2(extract_task_config, bq_pipeline_config['output'])
-
-    pipeline_spec = {
-        'email': bq_pipeline_config['email'],
-        'schedule': bq_pipeline_config['schedule'],
-    }
-
-    # These sections are only set when they aren't None
-    pipeline_spec['tasks'] = {}
-    if load_task_config:
-        pipeline_spec['tasks'][load_task_config_name] = load_task_config
-    if execute_task_config:
-        pipeline_spec['tasks'][execute_task_config_name] = execute_task_config
-    if extract_task_config:
-        pipeline_spec['tasks'][extract_task_config_name] = extract_task_config
-
-    if not load_task_config and not execute_task_config and not extract_task_config:
-        raise Exception('Pipeline has no tasks to execute.')
-
-    pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
-    google.datalab.utils.commands.notebook_environment()[name] = pipeline
-
-    debug = args.get('debug')
-    if debug is True:
-        return pipeline.py
-
-
-def add_load_parameters(load_task_config, bq_pipeline_config):
-    # One of 'csv' (default) or 'json' for the format of the load file
-    load_task_config['format'] = bq_pipeline_config.get('load_format', 'csv')
-    # The inter-field delimiter for CVS (default ,) in the load file
-    load_task_config['delimiter'] = bq_pipeline_config.get('load_delimiter', ',')
-    # One of 'create' (default), 'append' or 'overwrite' for loading data into BigQuery
-    load_task_config['mode'] = bq_pipeline_config.get('load_mode', 'create')
-    # The path URL of the GCS load file(s); if absent, we return None as there is
-    # nothing to load
-    if 'load_path' in bq_pipeline_config:
-        load_task_config['path'] = bq_pipeline_config['load_path']
-    else:
-        return None
-    # The quoted field delimiter for CVS (default ") in the load file
-    load_task_config['quote'] = bq_pipeline_config.get('quote', '"')
-    # The schema of the destination bigquery table
-    load_task_config['schema'] = bq_pipeline_config['schema']
-    # The number of head lines (default is 0) to skip during load; useful for CSV
-    load_task_config['skip'] = bq_pipeline_config.get('skip', 0)
-    # Reject bad values and jagged lines when loading (default True)
-    load_task_config['strict'] = bq_pipeline_config.get('strict', True)
-    # The destination bigquery table name for loading; if absent, we return None as there is
-    # nothing to load
-    if 'load_table' in bq_pipeline_config:
-        load_task_config['table'] = bq_pipeline_config['load_table']
-    else:
-        return None
-    # TODO(rajivpb): Consider raising an exception if 'path' is present and 'table' is not
-
-
-def add_execute_parameters(execute_task_config, bq_pipeline_config):
-    # Allow large results during execution; defaults to True because this is a common in pipelines
-    execute_task_config['large'] = bq_pipeline_config.get('large', True)
-    # One of 'create' (default), 'append' or 'overwrite' for the destination table in BigQuery
-    execute_task_config['mode'] = bq_pipeline_config.get('execute_mode', 'create')
-    # The name of query for execution; if absent, we return None as we assume that there is
-    # no query to execute
-    if 'query' in bq_pipeline_config:
-        execute_task_config['query'] = bq_pipeline_config['query']
-    else:
-        return None
-    # Destination table name for the execution results; defaults to None as this is
-    # not required (the user may just want to execute a query)
-    execute_task_config['table'] = bq_pipeline_config.get('execute_table', None)
-
-
-def add_extract_parameters(extract_task_config, bq_pipeline_config):
-    # TODO(rajivpb): The billing parameter should really be an arg and not in the yaml cell_body
-    extract_task_config['billing'] = bq_pipeline_config['billing']
-    # Compress the extract file (default True)
-    extract_task_config['compress'] = bq_pipeline_config.get('compress', True)
-    # The inter-field delimiter for CVS (default ,) in the extract file
-    extract_task_config['delimiter'] = bq_pipeline_config.get('extract_delimiter', ',')
-    # Include a header (default True) in the extract file
-    extract_task_config['header'] = bq_pipeline_config.get('header', True)
-    # The source table for the extract operation is the destination of the execute operation; if
-    # absent we return None since we assume that there is no extract step.
-    if 'execute_table' in bq_pipeline_config:
-        extract_task_config['table'] = bq_pipeline_config['execute_table']
-    else:
-        return None
-    # The destination GCS path for the extract file; if absent we return None since we assume that
-    # there is no extract step.
-    if 'extract_path' in bq_pipeline_config:
-        extract_task_config['path'] = bq_pipeline_config['extract_path']
-    else:
-        return None
-    # One of 'csv' (default) or 'json' for the format of the extract file
-    extract_task_config['format'] = bq_pipeline_config.get('extract_format', 'csv')
-
-
-def add_load_parameters2(load_task_config, bq_pipeline_config_input):
-    pass
-
-
-def add_execute_parameters2(execute_task_config, bq_pipeline_config_input):
-    pass
-
-
-def add_extract_parameters2(extract_task_config, bq_pipeline_config_input):
-    pass
-
-
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
   """ Create and initialize a bigquery subcommand handler. """
   sub_parser = subparser_fn(parser)
@@ -1135,10 +943,14 @@ for help on a specific command.
   _add_command(parser, _create_load_subparser, _load_cell)
 
   # %bq pipeline
-  _add_command(parser, _create_pipeline_subparser, _pipeline_cell)
+  _add_command(parser,
+               google.datalab.contrib.bigquery.commands._bigquery._create_pipeline_subparser,
+               google.datalab.contrib.bigquery.commands._bigquery._pipeline_cell)
 
   # %bq pipeline2
-  _add_command(parser, _create_pipeline2_subparser, _pipeline2_cell)
+  _add_command(parser,
+               google.datalab.contrib.bigquery.commands._bigquery._create_pipeline2_subparser,
+               google.datalab.contrib.bigquery.commands._bigquery._pipeline2_cell)
 
   return parser
 
