@@ -567,7 +567,7 @@ def _transform(args, cell):
     if 'job_name' in cloud_config:
       cmd_args.extend(['--job-name', cloud_config['job_name']])
 
-  if args['cloud'] and (not cloud_config or 'project-id' not in cloud_config):
+  if args['cloud'] and (not cloud_config or 'project_id' not in cloud_config):
     cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
 
   try:
