@@ -918,7 +918,7 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
                   type: STRING
                   mode: required
                   description: description1
-        transformation:
+        transformation:e
             query: foo_query
         output:
             billing: 'foo'
@@ -963,7 +963,6 @@ bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
 
-      print output
       self.assertIsNotNone(pattern.match(output))
 
       expected_schema = [
