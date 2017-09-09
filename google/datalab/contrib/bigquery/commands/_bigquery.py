@@ -444,7 +444,7 @@ def _add_extract_parameters2(extract_task_config, execute_task_config, bq_pipeli
       return None
 
     # TODO(rajivpb): The billing parameter should really be an arg and not in the yaml cell_body
-    extract_task_config['billing'] = bq_pipeline_output_config['billing']
+    extract_task_config['billing'] = bq_pipeline_output_config.get('billing', None)
     # Compress the extract file (default True)
     extract_task_config['compress'] = bq_pipeline_output_config.get('compress', True)
     # The inter-field delimiter for CVS (default ,) in the extract file
