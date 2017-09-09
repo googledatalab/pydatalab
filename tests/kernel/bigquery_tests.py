@@ -918,7 +918,7 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
                   type: STRING
                   mode: required
                   description: description1
-        transformation:e
+        transformation:
             query: foo_query
         output:
             billing: 'foo'
