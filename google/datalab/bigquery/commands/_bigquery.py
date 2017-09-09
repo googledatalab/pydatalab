@@ -854,9 +854,10 @@ def _extract_cell(args, cell_body):
     if not source:
       raise Exception('Could not find table %s' % args['table'])
 
+    csv_delimiter = args['delimiter'] if args['format'] == 'csv' else None
     job = source.extract(args['path'],
-                         format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
-                         csv_delimiter=args['delimiter'], csv_header=args['header'],
+                         format=args['format'],
+                         csv_delimiter=csv_delimiter, csv_header=args['header'],
                          compress=args['compress'])
   elif args['query'] or args['view']:
     source_name = args['view'] or args['query']
@@ -918,7 +919,7 @@ def _load_cell(args, cell_body):
                                                    quote=args['quote'])
   job = table.load(args['path'],
                    mode=args['mode'],
-                   source_format=('csv' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
+                   source_format=args['format'],
                    csv_options=csv_options,
                    ignore_unknown_values=not args['strict'])
   if job.failed:
