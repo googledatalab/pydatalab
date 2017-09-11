@@ -16,10 +16,15 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import oauth2client.client
 import json
 import os
 import subprocess
+
+import oauth2client.client
+import google.auth
+import google.auth.exceptions
+import google.auth.credentials
+import google.auth._oauth2client
 
 
 # TODO(ojarjur): This limits the APIs against which Datalab can be called
@@ -61,9 +66,8 @@ def get_credentials():
       overriding these the defaults should suffice.
   """
   try:
-    credentials = oauth2client.client.GoogleCredentials.get_application_default()
-    if credentials.create_scoped_required():
-      credentials = credentials.create_scoped(CREDENTIAL_SCOPES)
+    credentials, _ = google.auth.default()
+    credentials = google.auth.credentials.with_scopes_if_required(credentials, CREDENTIAL_SCOPES)
     return credentials
   except Exception as e:
 
@@ -75,9 +79,10 @@ def get_credentials():
       # Use the first gcloud one we find
       for entry in creds['data']:
         if entry['key']['type'] == 'google-cloud-sdk':
-          return oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+          creds = oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+          return google.auth._oauth2client.convert(creds)
 
-    if type(e) == oauth2client.client.ApplicationDefaultCredentialsError:
+    if type(e) == google.auth.exceptions.DefaultCredentialsError:
       # If we are in Datalab container, change the message to be about signing in.
       if _in_datalab_docker():
         raise Exception('No application credentials found. Perhaps you should sign in.')

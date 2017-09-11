@@ -94,6 +94,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'plotly==1.12.5',
     'httplib2==0.10.3',
     'oauth2client==2.2.0',
+    'google_auth_httplib2==0.0.2',
     'pandas>=0.17.1',
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',

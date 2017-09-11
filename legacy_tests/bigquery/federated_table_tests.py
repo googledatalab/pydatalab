@@ -14,9 +14,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import collections
 import mock
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
+import google.auth
 import datalab.bigquery
 import datalab.context
 import datalab.utils
@@ -175,5 +175,5 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return datalab.context.Context(project_id, creds)
