@@ -914,7 +914,7 @@ def _load_cell(args, cell_body):
     # schema can be an instance of google.datalab.bigquery.Schema
     # if $var is used in cell input.
     if not isinstance(schema, google.datalab.bigquery.Schema):
-      jsonschema.validate(schema, table_schema_schema)
+      jsonschema.validate(config, table_schema_schema)
       schema = google.datalab.bigquery.Schema(schema)
     table.create(schema=schema)
   elif not table.exists():
@@ -924,11 +924,8 @@ def _load_cell(args, cell_body):
                                                    skip_leading_rows=args['skip'],
                                                    allow_jagged_rows=not args['strict'],
                                                    quote=args['quote'])
-  # For create mode, we already created the table above so mode is set to append.
-  # Otherwise API is going to return failure.
-  mode = 'append' if args['mode'] == 'create' else args['mode']
   job = table.load(args['path'],
-                   mode=mode,
+                   mode=args['mode'],
                    source_format=args['format'],
                    csv_options=csv_options,
                    ignore_unknown_values=not args['strict'])
