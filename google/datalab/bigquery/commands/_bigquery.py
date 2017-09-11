@@ -902,23 +902,33 @@ def _load_cell(args, cell_body):
   if not table:
     table = google.datalab.bigquery.Table(name)
 
-  if cell_body:
-    schema = google.datalab.utils.commands.parse_config(cell_body, None, False)
-    jsonschema.validate(schema, table_schema_schema)
-    schema = google.datalab.bigquery.Schema(schema['schema'])
+  if args['mode'] == 'create':
+    if table.exists():
+      raise Exception('table %s already exists; use "append" or "overwrite" as mode.' % name)
+    if not cell_body or 'schema' not in cell_body:
+      raise Exception('Table does not exist, and no schema specified in cell; cannot load.')
+
+    env = google.datalab.utils.commands.notebook_environment()
+    config = google.datalab.utils.commands.parse_config(cell_body, env, False)
+    schema = config['schema']
+    # schema can be an instance of google.datalab.bigquery.Schema
+    # if $var is used in cell input.
+    if not isinstance(schema, google.datalab.bigquery.Schema):
+      jsonschema.validate(schema, table_schema_schema)
+      schema = google.datalab.bigquery.Schema(schema)
     table.create(schema=schema)
-  elif table.exists():
-    if args['mode'] == 'create':
-      raise Exception('%s already exists; use --append or --overwrite' % name)
-  else:
-    raise Exception('Table does not exist, and no schema specified in cell; cannot load')
+  elif not table.exists():
+    raise Exception('table %s does not exist; use "create" as mode.' % name)
 
   csv_options = google.datalab.bigquery.CSVOptions(delimiter=args['delimiter'],
                                                    skip_leading_rows=args['skip'],
                                                    allow_jagged_rows=not args['strict'],
                                                    quote=args['quote'])
+  # For create mode, we already created the table above so mode is set to append.
+  # Otherwise API is going to return failure.
+  mode = 'append' if args['mode'] == 'create' else args['mode']
   job = table.load(args['path'],
-                   mode=args['mode'],
+                   mode=mode,
                    source_format=args['format'],
                    csv_options=csv_options,
                    ignore_unknown_values=not args['strict'])
