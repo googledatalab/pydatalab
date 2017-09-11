@@ -723,7 +723,7 @@ WITH q1 AS (
     job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
                                                       'test_sql', context)
 
-    with self.assertRaisesRegexp(Exception, 'already exists; use --append or --overwrite'):
+    with self.assertRaisesRegexp(Exception, 'already exists; use "append" or "overwrite" as mode.'):
       google.datalab.bigquery.commands._bigquery._load_cell(args, None)
 
     mock_table_exists.return_value = False
