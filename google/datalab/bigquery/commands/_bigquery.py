@@ -911,8 +911,9 @@ def _load_cell(args, cell_body):
     env = google.datalab.utils.commands.notebook_environment()
     config = google.datalab.utils.commands.parse_config(cell_body, env, False)
     schema = config['schema']
-    # schema can be an instance of google.datalab.bigquery.Schema
-    # if $var is used in cell input.
+    # schema can be an instance of google.datalab.bigquery.Schema.
+    # For example, user can run "my_schema = bq.Schema.from_data(df)" in a previous cell and
+    # specify "schema: $my_schema" in cell input.
     if not isinstance(schema, google.datalab.bigquery.Schema):
       jsonschema.validate(config, table_schema_schema)
       schema = google.datalab.bigquery.Schema(schema)
