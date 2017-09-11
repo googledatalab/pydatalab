@@ -147,8 +147,10 @@ def ml(line, cell=None):
                    transform of it.
               "transform: tfidf"
                    treats the string column as text and make TFIDF transform of it.
-              "transform: image_to_vec"
-                   from image gs url to embeddings.
+              "transform: image_to_vec
+               checkpoint: gs://b/o"
+                   from image gs url to embeddings. "checkpoint" is a inception v3
+                   checkpoint. If absent, a default checkpoint is used.
               "transform: target"
                    denotes the column is the target. If the schema type of this
                    column is string, a one_hot encoding is automatically applied.
@@ -233,7 +235,7 @@ def ml(line, cell=None):
             tranaformed: path/to/transformed/eval
           model_args:
             model: linear_regression
-          cloud:
+          cloud_config:
             region: us-central1"""))
   train_parser.add_argument('--analysis', required=True,
                             help='path of analysis output directory.')
@@ -562,10 +564,11 @@ def _transform(args, cell):
       cmd_args.extend(['--worker-machine-type', cloud_config['worker_machine_type']])
     if 'project_id' in cloud_config:
       cmd_args.extend(['--project-id', cloud_config['project_id']])
-    else:
-      cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
     if 'job_name' in cloud_config:
       cmd_args.extend(['--job-name', cloud_config['job_name']])
+
+  if args['cloud'] and (not cloud_config or 'project_id' not in cloud_config):
+    cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
 
   try:
     tmpdir = None
@@ -700,21 +703,24 @@ def _batch_predict(args, cell):
                      'Do you want local run or cloud run?')
 
   if args['cloud']:
-    parts = args['model'].split('.')
-    if len(parts) != 2:
-      raise ValueError('Invalid model name for cloud prediction. Use "model.version".')
-
-    version_name = ('projects/%s/models/%s/versions/%s' %
-                    (Context.default().project_id, parts[0], parts[1]))
-
-    cloud_config = args['cloud_config'] or {}
-    job_id = cloud_config.pop('job_id', None)
     job_request = {
-      'version_name': version_name,
       'data_format': 'TEXT',
       'input_paths': file_io.get_matching_files(args['prediction_data']['csv']),
       'output_path': args['output'],
     }
+    if args['model'].startswith('gs://'):
+      job_request['uri'] = args['model']
+    else:
+      parts = args['model'].split('.')
+      if len(parts) != 2:
+        raise ValueError('Invalid model name for cloud prediction. Use "model.version".')
+
+      version_name = ('projects/%s/models/%s/versions/%s' %
+                      (Context.default().project_id, parts[0], parts[1]))
+      job_request['version_name'] = version_name
+
+    cloud_config = args['cloud_config'] or {}
+    job_id = cloud_config.pop('job_id', None)
     job_request.update(cloud_config)
     job = datalab_ml.Job.submit_batch_prediction(job_request, job_id)
     _show_job_link(job)

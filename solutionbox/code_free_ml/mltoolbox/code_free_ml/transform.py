@@ -491,7 +491,7 @@ def preprocess(pipeline, args):
        >> beam.ParDo(transform_dofn).with_outputs('errors', main='main'))
 
   _ = (transformed_data
-        | 'SerializeExamples' >> beam.Map(serialize_example, feature_transforms.get_transfrormed_feature_info(features, schema))
+        | 'SerializeExamples' >> beam.Map(serialize_example, feature_transforms.get_transformed_feature_info(features, schema))
         | 'WriteExamples'
         >> beam.io.WriteToTFRecord(
             os.path.join(args.output, args.prefix),

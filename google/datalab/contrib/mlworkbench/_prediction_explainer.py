@@ -17,8 +17,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import csv
-from lime.lime_text import LimeTextExplainer
-from lime.lime_image import LimeImageExplainer
 import numpy as np
 from PIL import Image
 import six
@@ -107,6 +105,8 @@ class PredictionExplainer(object):
               but there are multiple text columns in model input.
         """
 
+        from lime.lime_text import LimeTextExplainer
+
         if len(self._text_columns) > 1 and not column_name:
             raise ValueError('There are multiple text columns in the input of the model. ' +
                              'Please specify "column_name".')
@@ -154,6 +154,8 @@ class PredictionExplainer(object):
           ValueError if the given image column is not found in model input or column_name is None
               but there are multiple image columns in model input.
         """
+
+        from lime.lime_image import LimeImageExplainer
 
         if len(self._image_columns) > 1 and not column_name:
             raise ValueError('There are multiple image columns in the input of the model. ' +
