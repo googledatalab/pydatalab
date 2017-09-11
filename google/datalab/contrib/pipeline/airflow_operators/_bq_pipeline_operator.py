@@ -10,11 +10,13 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+from airflow.models import BaseOperator
+from airflow.utils.decorators import apply_defaults
 
-from __future__ import absolute_import
 
-from ._local_predict import get_prediction_results, get_probs_for_labels, local_batch_predict
-from ._prediction_explainer import PredictionExplainer
-
-__all__ = ['get_prediction_results', 'get_probs_for_labels', 'local_batch_predict',
-           'PredictionExplainer']
+class BigQueryPipelineOperator(BaseOperator):
+  """
+  """
+  @apply_defaults
+  def __init__(self):
+    raise NotImplementedError()

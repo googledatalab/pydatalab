@@ -14,7 +14,7 @@
 
 from setuptools import setup
 
-version = '1.0.1'
+version = '1.1.0'
 
 setup(
   name='datalab',
@@ -29,6 +29,8 @@ setup(
     'google.datalab.kernel',
     'google.datalab.ml',
     'google.datalab.notebook',
+    'google.datalab.contrib.pipeline',
+    'google.datalab.contrib.pipeline.commands',
     'google.datalab.stackdriver',
     'google.datalab.stackdriver.commands',
     'google.datalab.stackdriver.monitoring',
@@ -59,8 +61,8 @@ setup(
   description='Google Cloud Datalab',
   author='Google',
   author_email='google-cloud-datalab-feedback@googlegroups.com',
-  url='https://github.com/googledatalab/datalab',
-  download_url='https://github.com/googledatalab/datalab/tarball/0.1',
+  url='https://github.com/googledatalab/pydatalab',
+  download_url='https://github.com/googledatalab/pydatalab/archive/v1.1.0.zip',
   keywords=[
     'Google',
     'GCP',
@@ -98,6 +100,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'pytz>=2015.4',
     'pyyaml==3.11',
     'requests==2.9.1',
+    'scikit-image==0.13.0',
     'scikit-learn==0.18.2',
     'ipykernel==4.5.2',
     'psutil==4.3.0',

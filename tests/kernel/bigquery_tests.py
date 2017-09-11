@@ -220,6 +220,8 @@ class TestCases(unittest.TestCase):
     google.datalab.bigquery.commands._bigquery._query_cell({'name': 'q1', 'udfs': None,
                                                             'datasources': None,
                                                             'subqueries': None}, q1_body)
+    mock_query_execute.assert_called_with()
+
     q1 = env['q1']
     self.assertIsNotNone(q1)
     self.assertEqual(q1.udfs, {})
@@ -669,7 +671,7 @@ WITH q1 AS (
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_extract_cell_table(self, mock_get_notebook_item, mock_get_table, mock_table_extract):
-    args = {'table': 'test-table', 'path': 'test-path', 'format': None, 'delimiter': None,
+    args = {'table': 'test-table', 'path': 'test-path', 'format': 'json', 'delimiter': None,
             'header': None, 'compress': None, 'nocache': None}
     mock_get_table.return_value = None
     with self.assertRaisesRegexp(Exception, 'Could not find table test-table'):
@@ -682,7 +684,7 @@ WITH q1 AS (
     mock_table_extract.return_value.errors = None
     self.assertEqual(google.datalab.bigquery.commands._bigquery._extract_cell(args, None),
                      'test-results')
-    mock_table_extract.assert_called_with('test-path', format='NEWLINE_DELIMITED_JSON',
+    mock_table_extract.assert_called_with('test-path', format='json',
                                           csv_delimiter=None, csv_header=None, compress=None)
 
   @mock.patch('google.datalab.Context.default')
@@ -713,7 +715,7 @@ WITH q1 AS (
   def test_load_cell(self, mock_get_table, mock_table_load, mock_table_exists,
                      mock_table_create, mock_default_context):
     args = {'table': 'project.test.table', 'mode': 'create', 'path': 'test/path', 'skip': None,
-            'csv': None, 'delimiter': None, 'format': None, 'strict': None, 'quote': None}
+            'csv': None, 'delimiter': None, 'format': 'csv', 'strict': None, 'quote': None}
     context = self._create_context()
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
@@ -753,7 +755,7 @@ WITH q1 AS (
     google.datalab.bigquery.commands._bigquery._load_cell(args, json.dumps(cell_body))
 
     mock_table_load.assert_called_with('test/path', mode='create',
-                                       source_format='NEWLINE_DELIMITED_JSON',
+                                       source_format='csv',
                                        csv_options=mock.ANY, ignore_unknown_values=True)
 
     mock_get_table.return_value = None
