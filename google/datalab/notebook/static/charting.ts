@@ -422,7 +422,7 @@ module Charting {
       this.optionsCache = {};
       this.hasIPython = false;
       try {
-        if (IPython) {
+        if (IPython && IPython.notebook) {
           this.hasIPython = true;
         }
       } catch (e) {
@@ -1013,9 +1013,11 @@ module Charting {
       data = this.convertListToDataTable(data);
     }
 
+    // If there is no IPython instance, assume that this is being executed in a sandboxed output
+    // environment and render immediately.
     // If we have a datalab session, we can go ahead and draw the chart; if not, add code to do the
     // drawing to an event handler for when the kernel is ready.
-    if (IPython.notebook.kernel.is_connected()) {
+    if (!this.hasIPython || IPython.notebook.kernel.is_connected()) {
       _render(driver, dom, chartStyle, controlIds, data, options, refreshData, refreshInterval,
           totalRows)
     } else {

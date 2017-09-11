@@ -32,6 +32,7 @@ import google.datalab.bigquery.commands
 import google.datalab.commands
 import google.datalab.stackdriver.commands
 import google.datalab.storage.commands
+import google.datalab.utils
 import google.datalab.utils.commands
 
 _orig_request = _httplib2.Http.request
@@ -120,6 +121,9 @@ def load_ipython_extension(shell):
   except TypeError:
     pass
 
+  # Enable support for sandboxed outputs by default.
+  google.datalab.utils.initialize_sandboxed_outputs()
+
 
 def unload_ipython_extension(shell):
   _shell.InteractiveShell.run_cell_magic = _orig_run_cell_magic
@@ -131,4 +135,6 @@ def unload_ipython_extension(shell):
     del _IPython.get_ipython().user_ns['set_project_id']
   except Exception:
     pass  # We mock IPython for tests so we need this.
+
+  google.datalab.utils.uninitialize_sandboxed_outputs()
   # TODO(gram): unregister imports/magics/etc.
