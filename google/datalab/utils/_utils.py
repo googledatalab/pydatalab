@@ -164,6 +164,19 @@ def get_config_dir():
   return config_dir
 
 
+def _convert_oauth2client_creds(credentials):
+  new_credentials = google.oauth2.credentials.Credentials(
+    token=credentials.access_token,
+    refresh_token=credentials.refresh_token,
+    token_uri=credentials.token_uri,
+    client_id=credentials.client_id,
+    client_secret=credentials.client_secret,
+    scopes=credentials.scopes)
+
+  new_credentials._expires = credentials.token_expiry
+  return new_credentials
+
+
 def get_credentials():
   """ Get the credentials to use. We try application credentials first, followed by
       user credentials. The path to the application credentials can be overridden
@@ -188,7 +201,7 @@ def get_credentials():
       for entry in creds['data']:
         if entry['key']['type'] == 'google-cloud-sdk':
           creds = oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
-          return google.auth._oauth2client.convert(creds)
+          return _convert_oauth2client_creds(creds)
 
     if type(e) == google.auth.exceptions.DefaultCredentialsError:
       # If we are in Datalab container, change the message to be about signing in.
