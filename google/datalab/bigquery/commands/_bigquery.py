@@ -947,11 +947,6 @@ for help on a specific command.
                google.datalab.contrib.bigquery.commands._bigquery._create_pipeline_subparser,
                google.datalab.contrib.bigquery.commands._bigquery._pipeline_cell)
 
-  # %bq pipeline2
-  _add_command(parser,
-               google.datalab.contrib.bigquery.commands._bigquery._create_pipeline2_subparser,
-               google.datalab.contrib.bigquery.commands._bigquery._pipeline2_cell)
-
   return parser
 
 

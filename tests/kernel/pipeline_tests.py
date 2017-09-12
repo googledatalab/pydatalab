@@ -101,55 +101,7 @@ tasks:
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_create_cell(self, mock_default_context, mock_notebook_environment):
-    env = {}
-    mock_default_context.return_value = TestCases._create_context()
-    mock_notebook_environment.return_value = env
-    IPython.get_ipython().user_ns = env
-
-    # test pipeline creation
-    google.datalab.contrib.pipeline.commands._pipeline._create_cell(
-        {'name': 'p1'}, self.sample_cell_body)
-
-    p1 = env['p1']
-    self.assertIsNotNone(p1)
-    self.assertEqual(p1.py, """
-from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
-from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
-from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
-from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
-from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator
-from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator
-from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator
-from datetime import timedelta
-from pytz import timezone
-
-default_args = {
-    'owner': 'Datalab',
-    'depends_on_past': False,
-    'email': ['foo@bar.com'],
-    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
-}
-
-dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
-
-print_pdt_date = BashOperator(task_id='print_pdt_date_id', bash_command='date', dag=dag)
-print_utc_date = BashOperator(task_id='print_utc_date_id', bash_command='date -u', dag=dag)
-print_utc_date.set_upstream(print_pdt_date)
-"""  # noqa
-    )
-
-  @mock.patch('google.datalab.utils.commands.notebook_environment')
-  @mock.patch('google.datalab.Context.default')
-  def test_create_cell_with_variable(self, mock_default_context,
+  def test_create_cell_golden(self, mock_default_context,
                                      mock_notebook_environment):
     mock_default_context.return_value = TestCases._create_context()
     env = {}
@@ -167,9 +119,17 @@ schedule:
   end_date: 2009-05-06T22:28:15Z
   schedule_interval: '@hourly'
 tasks:
-  print_pdt_date:
+  foo_task_1:
     type: bq.execute
     query: $foo_query
+  foo_task_2:
+    type: bash
+    bash_command: date
+  foo_task_3:
+    type: bash
+    bash_command: date -u
+    up_stream:
+      - print_pdt_date
 """
 
     # no pipeline name specified. should execute
@@ -204,6 +164,9 @@ default_args = {
 
 dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 
-print_pdt_date = BigQueryOperator(task_id='print_pdt_date_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)
+foo_task_1 = BigQueryOperator(task_id='foo_task_1_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)
+foo_task_2 = BashOperator(task_id='foo_task_2_id', bash_command='date', dag=dag)
+foo_task_3 = BashOperator(task_id='foo_task_3_id', bash_command='date -u', dag=dag)
+foo_task_3.set_upstream(print_pdt_date)
 """  # noqa
     )
