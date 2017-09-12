@@ -185,8 +185,7 @@ tasks:
     pattern = re.compile("""bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=0, strict=True, table='project.test.table', dag=dag\)""")  # noqa
 
     # group(1) has the string that follows the "schema=", i.e. the list of dicts.
-    actual_schema = eval(pattern.match(actual).group(1))
-    self.assertListEqual(schema, actual_schema)
+    self.assertEqual(pattern.match(actual).group(1), str(schema))
 
   def test_get_pydatalab_bq_execute_operator_definition(self):
     task_id = 'bq_pipeline_execute_task'
