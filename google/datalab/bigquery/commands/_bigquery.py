@@ -816,9 +816,10 @@ def _extract_cell(args, cell_body):
     if not source:
       raise Exception('Could not find table %s' % args['table'])
 
+    csv_delimiter = args['delimiter'] if args['format'] == 'csv' else None
     job = source.extract(args['path'],
-                         format='CSV' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON',
-                         csv_delimiter=args['delimiter'], csv_header=args['header'],
+                         format=args['format'],
+                         csv_delimiter=csv_delimiter, csv_header=args['header'],
                          compress=args['compress'])
   elif args['query'] or args['view']:
     source_name = args['view'] or args['query']
@@ -863,16 +864,24 @@ def _load_cell(args, cell_body):
   if not table:
     table = google.datalab.bigquery.Table(name)
 
-  if cell_body:
-    schema = google.datalab.utils.commands.parse_config(cell_body, None, False)
-    jsonschema.validate(schema, table_schema_schema)
-    schema = google.datalab.bigquery.Schema(schema['schema'])
+  if args['mode'] == 'create':
+    if table.exists():
+      raise Exception('table %s already exists; use "append" or "overwrite" as mode.' % name)
+    if not cell_body or 'schema' not in cell_body:
+      raise Exception('Table does not exist, and no schema specified in cell; cannot load.')
+
+    env = google.datalab.utils.commands.notebook_environment()
+    config = google.datalab.utils.commands.parse_config(cell_body, env, False)
+    schema = config['schema']
+    # schema can be an instance of google.datalab.bigquery.Schema.
+    # For example, user can run "my_schema = bq.Schema.from_data(df)" in a previous cell and
+    # specify "schema: $my_schema" in cell input.
+    if not isinstance(schema, google.datalab.bigquery.Schema):
+      jsonschema.validate(config, table_schema_schema)
+      schema = google.datalab.bigquery.Schema(schema)
     table.create(schema=schema)
-  elif table.exists():
-    if args['mode'] == 'create':
-      raise Exception('%s already exists; use --append or --overwrite' % name)
-  else:
-    raise Exception('Table does not exist, and no schema specified in cell; cannot load')
+  elif not table.exists():
+    raise Exception('table %s does not exist; use "create" as mode.' % name)
 
   csv_options = google.datalab.bigquery.CSVOptions(delimiter=args['delimiter'],
                                                    skip_leading_rows=args['skip'],
@@ -880,7 +889,7 @@ def _load_cell(args, cell_body):
                                                    quote=args['quote'])
   job = table.load(args['path'],
                    mode=args['mode'],
-                   source_format=('csv' if args['format'] == 'csv' else 'NEWLINE_DELIMITED_JSON'),
+                   source_format=args['format'],
                    csv_options=csv_options,
                    ignore_unknown_values=not args['strict'])
   if job.failed:
