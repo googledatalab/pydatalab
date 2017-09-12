@@ -13,17 +13,16 @@
 # limitations under the License.
 """Tests for google3.third_party.py.google.datalab.utils._file."""
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import datetime
 import mock
+import re
 import unittest
 import yaml
 from oauth2client.client import AccessTokenCredentials
 from pytz import timezone
 
-import google
+import google.datalab
+import google.datalab.bigquery as bq
 import google.datalab.contrib.pipeline._pipeline as pipeline
 
 
@@ -48,6 +47,12 @@ tasks:
       - current_timestamp
 """
 
+  @staticmethod
+  def _create_context():
+    project_id = 'test'
+    creds = AccessTokenCredentials('test_token', 'test_ua')
+    return google.datalab.Context(project_id, creds)
+
   def test_get_dependency_definition_single(self):
     dependencies = pipeline.Pipeline._get_dependency_definition('t2', ['t1'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\n')
@@ -70,8 +75,23 @@ tasks:
         'bash_command=\'date\', dag=dag)\n')
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
+  def test_get_bq_execute_operator_definition(self, mock_table):
+    mock_table.return_value = bq.Table(
+        'foo_project.foo_dataset.foo_table',
+        context=PipelineTest._create_context())
+
+    task_id = 'foo'
+    task_details = {}
+    task_details['type'] = 'bq.execute'
+    task_details['query'] = google.datalab.bigquery.Query(
+      'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
+    self.assertEqual(operator_def, "foo = BigQueryOperator(task_id='foo_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)\n")  #noqa
+
+  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_extract_operator_definition(self, mock_table):
-    mock_table.return_value = google.datalab.bigquery.Table(
+    mock_table.return_value = bq.Table(
         'foo_project.foo_dataset.foo_table',
         context=PipelineTest._create_context())
     task_id = 'foo'
@@ -103,7 +123,7 @@ tasks:
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_load_operator_definition(self, mock_table):
-    mock_table.return_value = google.datalab.bigquery.Table(
+    mock_table.return_value = bq.Table(
         'foo_project.foo_dataset.foo_table',
         context=PipelineTest._create_context())
     task_id = 'foo'
@@ -132,25 +152,71 @@ tasks:
                                     'field_delimiter=\'$\', skip_leading_rows=False, '
                                     'source_objects=\'foo_file.csv\', dag=dag)\n'))
 
-  @staticmethod
-  def _create_context():
-    project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
-    return google.datalab.Context(project_id, creds)
-
-  def test_get_bq_execute_operator_definition(self):
-    task_id = 'query_wikipedia'
+  def test_get_pydatalab_bq_load_operator_definition(self):
+    task_id = 'bq_pipeline_load_task'
     task_details = {}
-    task_details['type'] = 'bq.execute'
-    task_details['query'] = google.datalab.bigquery.Query(
-        'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+    task_details['type'] = 'pydatalab.bq.load'
+    task_details['delimiter'] = ','
+    task_details['format'] = 'csv'
+    task_details['mode'] = 'create'
+    task_details['path'] = 'test/path'
+    task_details['quote'] = '"'
+    schema = [
+      {
+        'mode': 'NULLABLE',
+        'type': 'int64',
+        'description': 'description1',
+        'name': 'col1',
+      },
+      {
+        'mode': 'required',
+        'type': 'STRING',
+        'description': 'description1',
+        'name': 'col2',
+      }
+    ]
+    task_details['schema'] = schema
+    task_details['skip'] = 0
+    task_details['strict'] = True
+    task_details['table'] = 'project.test.table'
+
+    actual = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    self.assertEqual(
-        operator_def,
-        'query_wikipedia = BigQueryOperator(task_id=\'query_wikipedia_id\', '
-        'bql=\'SELECT * FROM publicdata.samples.wikipedia LIMIT 5\', '
-        'use_legacy_sql=False, dag=dag)\n')
+    pattern = re.compile("""bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=0, strict=True, table='project.test.table', dag=dag\)""")  # noqa
+
+    # group(1) has the string that follows the "schema=", i.e. the list of dicts.
+    actual_schema = eval(pattern.match(actual).group(1))
+    self.assertListEqual(schema, actual_schema)
+
+  def test_get_pydatalab_bq_execute_operator_definition(self):
+    task_id = 'bq_pipeline_execute_task'
+    task_details = {}
+    task_details['type'] = 'pydatalab.bq.execute'
+    task_details['large'] = True
+    task_details['mode'] = 'create'
+    task_details['query'] = 'foo_query'
+    task_details['table'] = 'project.test.table'
+
+    actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
+    expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag)
+"""  # noqa
+    self.assertEqual(actual, expected)
+
+  def test_get_pydatalab_bq_extract_operator_definition(self):
+    task_id = 'bq_pipeline_extract_task'
+    task_details = {}
+    task_details['type'] = 'pydatalab.bq.extract'
+    task_details['billing'] = 'foo'
+    task_details['compress'] = True
+    task_details['delimiter'] = ','
+    task_details['format'] = 'csv'
+    task_details['header'] = True
+    task_details['path'] = 'test/path'
+
+    actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
+    expected = """bq_pipeline_extract_task = ExtractOperator(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter=',', format='csv', header=True, path='test/path', dag=dag)
+"""  # noqa
+    self.assertEqual(actual, expected)
 
   def test_get_query_params(self):
     task_details = {}
@@ -248,47 +314,6 @@ default_args = {
 
 """  # noqa
     )
-
-  def test_py_bq(self):
-    env = {}
-    env['foo_query'] = google.datalab.bigquery.Query(
-      'INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())')
-
-    pipeline_spec = pipeline.Pipeline.get_pipeline_spec(PipelineTest._test_pipeline_yaml_spec, env)
-    p1 = pipeline.Pipeline('demo_bq_dag_during_demo', pipeline_spec)
-    expected_py = """
-from airflow import DAG
-from airflow.operators.bash_operator import BashOperator
-from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTableDeleteOperator
-from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
-from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
-from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
-from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator
-from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator
-from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator
-from datetime import timedelta
-from pytz import timezone
-
-default_args = {
-    'owner': 'Datalab',
-    'depends_on_past': False,
-    'email': ['foo@bar.com'],
-    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
-}
-
-dag = DAG(dag_id='demo_bq_dag_during_demo', schedule_interval='0-59 * * * *', default_args=default_args)
-
-current_timestamp = BigQueryOperator(task_id='current_timestamp_id', bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', use_legacy_sql=False, dag=dag)
-tomorrows_timestamp = BigQueryOperator(task_id='tomorrows_timestamp_id', bql='INSERT INTO rajivpb_demo.the_datetime_table (the_datetime) VALUES (CURRENT_DATETIME())', use_legacy_sql=False, dag=dag)
-tomorrows_timestamp.set_upstream(current_timestamp)
-""" # noqa
-    self.assertEqual(p1.py, expected_py)
 
 
 if __name__ == '__main__':
