@@ -776,7 +776,7 @@ WITH q1 AS (
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_pipeline_cell(self, mock_get_table, mock_table_exists, mock_environment,
-                          mock_default_context):
+                         mock_default_context):
       table = google.datalab.bigquery.Table('project.test.table')
       mock_get_table.return_value = table
       mock_table_exists.return_value = True
