@@ -12,11 +12,11 @@
 
 from __future__ import absolute_import
 import mock
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
 import google.cloud.monitoring
 
+import google.auth
 import datalab.context
 import datalab.stackdriver.monitoring as gcm
 
@@ -49,8 +49,8 @@ class TestCases(unittest.TestCase):
 
     expected_client = gcm._utils.make_client(context=self.context)
     self.assertEqual(descriptors._client.project, expected_client.project)
-    self.assertEqual(descriptors._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(descriptors._client._connection.credentials,
+                     expected_client._connection.credentials)
 
     self.assertIsNone(descriptors._filter_string)
     self.assertIsNone(descriptors._type_prefix)
@@ -65,8 +65,8 @@ class TestCases(unittest.TestCase):
     expected_client = gcm._utils.make_client(
         context=context, project_id=PROJECT)
     self.assertEqual(descriptors._client.project, expected_client.project)
-    self.assertEqual(descriptors._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(descriptors._client._connection.credentials,
+                     expected_client._connection.credentials)
 
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
     self.assertEqual(descriptors._type_prefix, TYPE_PREFIX)
@@ -160,7 +160,7 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_context(project_id='test'):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return datalab.context.Context(project_id, creds)
 
   @staticmethod

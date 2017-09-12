@@ -16,13 +16,14 @@ from builtins import range
 import datetime as dt
 import collections
 import mock
-from oauth2client.client import AccessTokenCredentials
 import pandas
 import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
 import IPython.core.magic
+
+import google.auth
 
 
 IPython.core.magic.register_line_cell_magic = mock.Mock()
@@ -430,5 +431,5 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)

@@ -12,9 +12,9 @@
 
 from __future__ import absolute_import
 import mock
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
+import google.auth
 import datalab.context
 import datalab.stackdriver.monitoring as gcm
 
@@ -27,8 +27,8 @@ class TestCases(unittest.TestCase):
     client = gcm._utils.make_client(project_id, context)
 
     self.assertEqual(client.project, project_id)
-    self.assertEqual(client.connection.credentials, context.credentials)
-    self.assertEqual(client._connection_class.USER_AGENT, 'pydatalab/v0')
+    self.assertEqual(client._connection.credentials, context.credentials)
+    self.assertEqual(client._connection.USER_AGENT, 'pydatalab/v0')
 
   @mock.patch('datalab.context._context.Context.default')
   def test_make_client_w_defaults(self, mock_context_default):
@@ -38,10 +38,10 @@ class TestCases(unittest.TestCase):
 
     self.assertEqual(client.project, default_context.project_id)
     self.assertEqual(
-        client.connection.credentials, default_context.credentials)
-    self.assertEqual(client._connection_class.USER_AGENT, 'pydatalab/v0')
+        client._connection.credentials, default_context.credentials)
+    self.assertEqual(client._connection.USER_AGENT, 'pydatalab/v0')
 
   @staticmethod
   def _create_context(project_id='test'):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return datalab.context.Context(project_id, creds)

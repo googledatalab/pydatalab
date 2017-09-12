@@ -26,6 +26,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import httplib2
+import google_auth_httplib2
 import logging
 
 
@@ -135,7 +136,7 @@ class Http(object):
     if credentials is not None:
       # Make a copy of the shared http instance before we modify it.
       http = copy.copy(http)
-      http = credentials.authorize(http)
+      http = google_auth_httplib2.AuthorizedHttp(credentials)
     if stats is not None:
       stats['duration'] = datetime.datetime.utcnow()
 

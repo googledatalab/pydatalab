@@ -12,13 +12,13 @@
 
 from __future__ import absolute_import
 import mock
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
 from google.cloud.monitoring import Resource
 from google.cloud.monitoring import Metric
 from google.cloud.monitoring import TimeSeries
 
+import google.auth
 import datalab.context
 import datalab.stackdriver.monitoring as gcm
 
@@ -35,7 +35,7 @@ INSTANCE_IDS = ['1234567890123456789', '9876543210987654321']
 class TestCases(unittest.TestCase):
 
   def setUp(self):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     context = datalab.context.Context(PROJECT, creds)
     self.query = gcm.Query(METRIC_TYPE, context=context)
 

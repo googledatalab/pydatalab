@@ -12,11 +12,11 @@
 
 from __future__ import absolute_import
 import mock
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
 import pandas
 
+import google.auth
 import google.datalab
 import google.datalab.stackdriver.commands._monitoring as monitoring_commands
 
@@ -105,5 +105,5 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_context(project_id):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)

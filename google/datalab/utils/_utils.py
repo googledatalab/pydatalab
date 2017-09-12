@@ -30,6 +30,10 @@ import types
 import os
 import json
 import oauth2client.client
+import google.auth
+import google.auth.exceptions
+import google.auth.credentials
+import google.auth._oauth2client
 
 
 def print_exception_with_last_stack(e):
@@ -160,6 +164,19 @@ def get_config_dir():
   return config_dir
 
 
+def _convert_oauth2client_creds(credentials):
+  new_credentials = google.oauth2.credentials.Credentials(
+    token=credentials.access_token,
+    refresh_token=credentials.refresh_token,
+    token_uri=credentials.token_uri,
+    client_id=credentials.client_id,
+    client_secret=credentials.client_secret,
+    scopes=credentials.scopes)
+
+  new_credentials._expires = credentials.token_expiry
+  return new_credentials
+
+
 def get_credentials():
   """ Get the credentials to use. We try application credentials first, followed by
       user credentials. The path to the application credentials can be overridden
@@ -170,9 +187,8 @@ def get_credentials():
       overriding these the defaults should suffice.
   """
   try:
-    credentials = oauth2client.client.GoogleCredentials.get_application_default()
-    if credentials.create_scoped_required():
-      credentials = credentials.create_scoped(CREDENTIAL_SCOPES)
+    credentials, _ = google.auth.default()
+    credentials = google.auth.credentials.with_scopes_if_required(credentials, CREDENTIAL_SCOPES)
     return credentials
   except Exception as e:
 
@@ -184,9 +200,10 @@ def get_credentials():
       # Use the first gcloud one we find
       for entry in creds['data']:
         if entry['key']['type'] == 'google-cloud-sdk':
-          return oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+          creds = oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+          return _convert_oauth2client_creds(creds)
 
-    if type(e) == oauth2client.client.ApplicationDefaultCredentialsError:
+    if type(e) == google.auth.exceptions.DefaultCredentialsError:
       # If we are in Datalab container, change the message to be about signing in.
       if _in_datalab_docker():
         raise Exception('No application credentials found. Perhaps you should sign in.')

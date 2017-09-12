@@ -12,9 +12,9 @@
 
 from __future__ import absolute_import
 import mock
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
+import google.auth
 import datalab.context
 import datalab.stackdriver.monitoring as gcm
 
@@ -46,8 +46,8 @@ class TestCases(unittest.TestCase):
 
     expected_client = gcm._utils.make_client(context=self.context)
     self.assertEqual(groups._client.project, expected_client.project)
-    self.assertEqual(groups._client.connection.credentials,
-                     expected_client.connection.credentials)
+    self.assertEqual(groups._client._connection.credentials,
+                     expected_client._connection.credentials)
 
   @mock.patch('google.cloud.monitoring.Client.list_groups')
   def test_list(self, mock_api_list_groups):
@@ -116,7 +116,7 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_context(project_id='test'):
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return datalab.context.Context(project_id, creds)
 
   @staticmethod
