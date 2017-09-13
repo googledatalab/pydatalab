@@ -18,12 +18,14 @@ import mock
 import re
 import unittest
 import yaml
-from oauth2client.client import AccessTokenCredentials
 from pytz import timezone
 
+import google.auth
 import google.datalab
 import google.datalab.bigquery as bq
 import google.datalab.contrib.pipeline._pipeline as pipeline
+
+import google.auth
 
 
 class PipelineTest(unittest.TestCase):
@@ -50,7 +52,7 @@ tasks:
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
   def test_get_dependency_definition_single(self):

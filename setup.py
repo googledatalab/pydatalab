@@ -93,7 +93,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'mock==2.0.0',
     'future==0.16.0',
     'futures==3.0.5',
-    'google-cloud==0.19.0',
+    'google-cloud==0.27.0',
     'google-api-python-client==1.6.2',
     'seaborn==0.7.0',
     'plotly==1.12.5',
@@ -104,6 +104,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     # does not seem to have the fix. We should unpin after installing a version of airflow that's
     # built from HEAD.
     'pandas==0.19.1',
+    'google_auth_httplib2==0.0.2',
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
     'pytz>=2015.4',

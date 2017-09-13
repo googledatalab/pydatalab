@@ -20,7 +20,8 @@ import os
 
 import google.datalab.utils._utils as _utils
 from datetime import datetime
-import oauth2client.client
+import google.auth
+import google.auth.exceptions
 
 
 class TestCases(unittest.TestCase):
@@ -91,16 +92,17 @@ class TestCases(unittest.TestCase):
       self.assertEquals(_utils.get_config_dir(), 'test\\path\\gcloud')
 
   @mock.patch('google.datalab.utils._utils._in_datalab_docker')
-  @mock.patch('oauth2client.client.GoogleCredentials.get_application_default')
+  @mock.patch('google.auth.credentials.with_scopes_if_required')
+  @mock.patch('google.auth.default')
   @mock.patch('os.path.exists')
-  def test_get_credentials_from_file(self, mock_path_exists, mock_get_default_creds,
-                                     mock_in_datalab):
+  def test_get_credentials_from_file(self, mock_path_exists, mock_google_auth_default,
+                                     mock_with_scopes_if_required, mock_in_datalab):
     # If application default credentials exist, use them
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
+    mock_google_auth_default.return_value = [creds, '']
     _utils.get_credentials()
-    mock_get_default_creds.assert_has_calls([
-      mock.call().create_scoped_required(),
-      mock.call().create_scoped(_utils.CREDENTIAL_SCOPES)
-    ], any_order=True)
+    mock_google_auth_default.assert_called_once()
+    mock_with_scopes_if_required.assert_called_once()
 
     # If application default credentials are not defined, should load from file
     test_creds = '''
@@ -123,10 +125,10 @@ class TestCases(unittest.TestCase):
       }
     '''
     with mock.patch('google.datalab.utils._utils.open', mock.mock_open(read_data=test_creds)):
-      mock_get_default_creds.side_effect = Exception
+      mock_google_auth_default.side_effect = Exception
       cred = _utils.get_credentials()
 
-      self.assertEquals(cred.access_token, 'test-access-token')
+      self.assertEquals(cred.token, 'test-access-token')
 
     mock_path_exists.return_value = False
     with self.assertRaises(Exception):
@@ -134,7 +136,7 @@ class TestCases(unittest.TestCase):
 
     # If default creds are not defined, and no file exists with credentials, throw
     # something more meaningful.
-    mock_get_default_creds.side_effect = oauth2client.client.ApplicationDefaultCredentialsError
+    mock_google_auth_default.side_effect = google.auth.exceptions.DefaultCredentialsError
     with self.assertRaisesRegexp(Exception,
                                  'No application credentials found. Perhaps you should sign in'):
       cred = _utils.get_credentials()

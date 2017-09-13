@@ -12,7 +12,6 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from oauth2client.client import AccessTokenCredentials
 import json
 import mock
 import pandas
@@ -20,6 +19,7 @@ import re
 import unittest
 
 from datetime import datetime
+import google.auth
 try:
   from StringIO import StringIO
 except ImportError:
@@ -273,7 +273,7 @@ WITH q1 AS (
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
