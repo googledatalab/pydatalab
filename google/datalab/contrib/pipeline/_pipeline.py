@@ -22,6 +22,7 @@ class Pipeline(object):
   """
 
   _imports = """
+import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator

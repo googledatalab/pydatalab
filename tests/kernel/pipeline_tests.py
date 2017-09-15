@@ -136,6 +136,7 @@ tasks:
     p1 = env['p1']
     self.assertIsNotNone(p1)
     self.assertEqual(p1.py, """
+import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
