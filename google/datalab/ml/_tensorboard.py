@@ -38,7 +38,7 @@ class TensorBoard(object):
     parser.add_argument('--logdir')
     parser.add_argument('--port')
     for p in psutil.process_iter():
-      if p.name() != 'tensorboard':
+      if p.name() != 'tensorboard' or p.status() == psutil.STATUS_ZOMBIE:
         continue
       cmd_args = p.cmdline()
       del cmd_args[0:2]  # remove 'python' and 'tensorboard'

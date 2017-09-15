@@ -410,6 +410,28 @@ def ml(line, cell=None):
                                    help='Prediction Data. Can be a csv line, or a dict.')
   explain_parser.set_defaults(func=_explain)
 
+  tensorboard_parser = parser.subcommand(
+      'tensorboard',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Start/stop/list TensorBoard instances.')
+  tensorboard_sub_commands = tensorboard_parser.add_subparsers(dest='command')
+
+  tensorboard_start_parser = tensorboard_sub_commands.add_parser(
+      'start', help='Start a tensorboard instance.')
+  tensorboard_start_parser.add_argument('--logdir', required=True,
+                                        help='The local or GCS logdir path.')
+  tensorboard_start_parser.set_defaults(func=_tensorboard_start)
+
+  tensorboard_stop_parser = tensorboard_sub_commands.add_parser(
+      'stop', help='Stop a tensorboard instance.')
+  tensorboard_stop_parser.add_argument('--pid', required=True, type=int,
+                                       help='The pid of the tensorboard instance.')
+  tensorboard_stop_parser.set_defaults(func=_tensorboard_stop)
+
+  tensorboard_list_parser = tensorboard_sub_commands.add_parser(
+      'list', help='List tensorboard instances.')
+  tensorboard_list_parser.set_defaults(func=_tensorboard_list)
+
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
@@ -762,3 +784,15 @@ def _explain(args, cell):
       fig = plt.figure()
       fig.suptitle(labels[i], fontsize=16)
       plt.imshow(mark_boundaries(image, mask))
+
+
+def _tensorboard_start(args, cell):
+  datalab_ml.TensorBoard.start(args['logdir'])
+
+
+def _tensorboard_stop(args, cell):
+  datalab_ml.TensorBoard.stop(args['pid'])
+
+
+def _tensorboard_list(args, cell):
+  return datalab_ml.TensorBoard.list()

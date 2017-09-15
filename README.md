@@ -30,6 +30,8 @@ See further details [Jupyter Kernel and Notebook Extensions](https://github.com/
 Then in a notebook cell, enable datalab's magics with:
 
     %load_ext google.datalab.kernel
+    
+(Note: If you hit an error "module traceback cannot be imported", try setting the following environment variable: CLOUDSDK_PYTHON_SITEPACKAGES=1)
 
 Alternatively add this to your `ipython_config.py` file in your profile:
 
