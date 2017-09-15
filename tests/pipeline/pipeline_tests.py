@@ -60,8 +60,7 @@ tasks:
     self.assertEqual(dependencies, 't2.set_upstream(t1)\n')
 
   def test_get_dependency_definition_multiple(self):
-    dependencies = pipeline.Pipeline._get_dependency_definition('t2',
-                                                                ['t1', 't3'])
+    dependencies = pipeline.Pipeline._get_dependency_definition('t2', ['t1', 't3'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\nt2.set_upstream(t3)\n')
 
   def test_get_bash_operator_definition(self):
@@ -69,19 +68,40 @@ tasks:
     task_details = {}
     task_details['type'] = 'bash'
     task_details['bash_command'] = 'date'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
-        task_id, task_details)
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
         operator_def,
         'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', '
         'bash_command=\'date\', dag=dag)\n')
+
+  def test_get_templated_bash_operator_definition(self):
+    task_id = 'foo_task'
+    task_details = {}
+    task_details['type'] = 'bash'
+    task_details['bash_command'] = 'echo "{{ ds }}"'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
+    self.assertEqual(
+      operator_def,
+      """foo_task = BashOperator(task_id='foo_task_id', bash_command='echo "{{ ds }}"', dag=dag)
+""")  # noqa
+
+  def test_get_templated_bash_bq_definition(self):
+    task_id = 'foo_task'
+    task_details = {}
+    task_details['type'] = 'bq.execute'
+    task_details['query'] = google.datalab.bigquery.Query(
+      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds }}`')
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
+    self.assertEqual(
+      operator_def,
+      """foo_task = BigQueryOperator(task_id='foo_task_id', bql='SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds }}`', use_legacy_sql=False, dag=dag)
+""")  # noqa
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_execute_operator_definition(self, mock_table):
     mock_table.return_value = bq.Table(
         'foo_project.foo_dataset.foo_table',
         context=PipelineTest._create_context())
-
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'bq.execute'
