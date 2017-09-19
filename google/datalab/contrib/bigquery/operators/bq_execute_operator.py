@@ -12,6 +12,7 @@
 
 import google
 import google.datalab.bigquery as bq
+import pickle
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from google.datalab.contrib.pipeline._pipeline import Pipeline
@@ -20,19 +21,18 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 class ExecuteOperator(BaseOperator):
 
   @apply_defaults
-  def __init__(self, query, parameters, table, mode, billing, *args, **kwargs):
+  def __init__(self, query, parameters, table, mode, py_context_str, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)
     self._query = query
     self._table = table
     self._mode = mode
     self._parameters = parameters
-    self._billing = billing
+    self._py_context_str = py_context_str
 
   def execute(self, context):
     query = google.datalab.utils.commands.get_notebook_item(self._query)
     query_params = Pipeline._get_query_parameters(self._parameters)
     output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
                                           allow_large_results=True)
-    # TODO(rajivpb): Check about constructing a fake dictionary of args with just the billing info
-    py_context = bq.commands._bigquery._construct_context_for_args({'billing': self._billing})
+    py_context = pickle.loads(self._py_context_str)
     query.execute(output_options, context=py_context, query_params=query_params)

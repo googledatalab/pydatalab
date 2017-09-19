@@ -26,6 +26,7 @@ import bigquery.external_data_source_tests
 import bigquery.jobs_tests
 import bigquery.operator_tests
 import bigquery.parser_tests
+import bigquery.pipeline_tests
 import bigquery.query_tests
 import bigquery.sampling_tests
 import bigquery.schema_tests
@@ -79,6 +80,7 @@ _UNIT_TEST_MODULES = [
     bigquery.jobs_tests,
     bigquery.operator_tests,
     bigquery.parser_tests,
+    bigquery.pipeline_tests,
     bigquery.query_tests,
     bigquery.sampling_tests,
     bigquery.schema_tests,

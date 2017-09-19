@@ -332,19 +332,6 @@ def _create_pipeline_subparser(parser):
   return pipeline_parser
 
 
-def _create_pipeline2_subparser(parser):
-  pipeline_parser = parser.subcommand('pipeline2', 'Creates a pipeline to execute a SQL query to '
-                                                   'transform data using BigQuery.')
-
-  # common arguments
-  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
-  pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name')
-  pipeline_parser.add_argument('-d', '--debug', action='store_true', default=False,
-                               help='Print the airflow python spec.')
-
-  return pipeline_parser
-
-
 def _construct_context_for_args(args):
   """Construct a new Context for the parsed arguments.
 

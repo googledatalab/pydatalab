@@ -12,12 +12,11 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
-
-import jsonschema
 import google.datalab.bigquery
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
+import pickle
 
 
 def _create_pipeline_subparser(parser):
@@ -25,91 +24,14 @@ def _create_pipeline_subparser(parser):
                                                   'transform data using BigQuery.')
 
   # common arguments
-  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
-  pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name')
+  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier',
+                               required=True)
+  pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
+                               required=True)
   pipeline_parser.add_argument('-d', '--debug', action='store_true', default=False,
-                               help='Print the airflow python spec.')
+                               help='Print the airflow python spec.', required=True)
 
   return pipeline_parser
-
-
-def _create_pipeline2_subparser(parser):
-  pipeline_parser = parser.subcommand('pipeline2', 'Creates a pipeline to execute a SQL query to '
-                                                   'transform data using BigQuery.')
-
-  # common arguments
-  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier')
-  pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name')
-  pipeline_parser.add_argument('-d', '--debug', action='store_true', default=False,
-                               help='Print the airflow python spec.')
-
-  return pipeline_parser
-
-
-def _construct_context_for_args(args):
-  """Construct a new Context for the parsed arguments.
-
-  Args:
-    args: the dictionary of magic arguments.
-  Returns:
-    A new Context based on the current default context, but with any explicitly
-      specified arguments overriding the default's config.
-  """
-  global_default_context = google.datalab.Context.default()
-  config = {}
-  for key in global_default_context.config:
-    config[key] = global_default_context.config[key]
-
-  billing_tier_arg = args.get('billing', None)
-  if billing_tier_arg:
-    config['bigquery_billing_tier'] = billing_tier_arg
-
-  return google.datalab.Context(
-    project_id=global_default_context.project_id,
-    credentials=global_default_context.credentials,
-    config=config)
-
-
-def _get_query_parameters(args, cell_body):
-  """Extract query parameters from cell body if provided
-  Also validates the cell body schema using jsonschema to catch errors before sending the http
-  request. This validation isn't complete, however; it does not validate recursive schemas,
-  but it acts as a good filter against most simple schemas
-
-  Args:
-    args: arguments passed to the magic cell
-    cell_body: body of the magic cell
-
-  Returns:
-    Validated object containing query parameters
-  """
-
-  env = google.datalab.utils.commands.notebook_environment()
-  config = google.datalab.utils.commands.parse_config(cell_body, env=env, as_dict=False)
-  sql = args['query']
-  if sql is None:
-    raise Exception('Cannot extract query parameters in non-query cell')
-
-  # Validate query_params
-  if config:
-    jsonschema.validate(config, google.datalab.bigquery.commands._bigquery.query_params_schema)
-
-    # Parse query_params. We're exposing a simpler schema format than the one actually required
-    # by BigQuery to make magics easier. We need to convert between the two formats
-    parsed_params = []
-    for param in config['parameters']:
-      parsed_params.append({
-        'name': param['name'],
-        'parameterType': {
-          'type': param['type']
-        },
-        'parameterValue': {
-          'value': param['value']
-        }
-      })
-    return parsed_params
-  else:
-    return {}
 
 
 def _pipeline_cell(args, cell_body):
@@ -130,45 +52,52 @@ def _pipeline_cell(args, cell_body):
 
     bq_pipeline_config = google.datalab.utils.commands.parse_config(
         cell_body, google.datalab.utils.commands.notebook_environment())
-
-    load_task_config_name = 'bq_pipeline_load_task'
-    load_task_config = {'type': 'pydatalab.bq.load'}
-    _add_load_parameters(load_task_config, bq_pipeline_config.get('input', None))
-
-    execute_task_config_name = 'bq_pipeline_execute_task'
-    execute_task_config = {'type': 'pydatalab.bq.execute', 'up_stream': [load_task_config_name]}
-    _add_execute_parameters(execute_task_config, bq_pipeline_config['transformation'])
-
-    extract_task_config_name = 'bq_pipeline_extract_task'
-    extract_task_config = {'type': 'pydatalab.bq.extract', 'up_stream': [execute_task_config_name]}
-    _add_extract_parameters(extract_task_config, execute_task_config, bq_pipeline_config['output'])
-
-    pipeline_spec = {
-        'email': bq_pipeline_config['email'],
-        'schedule': bq_pipeline_config['schedule'],
-    }
-
-    # These sections are only set when they aren't None
-    pipeline_spec['tasks'] = {}
-    if load_task_config:
-        pipeline_spec['tasks'][load_task_config_name] = load_task_config
-    if execute_task_config:
-        pipeline_spec['tasks'][execute_task_config_name] = execute_task_config
-    if extract_task_config:
-        pipeline_spec['tasks'][extract_task_config_name] = extract_task_config
-
-    if not load_task_config and not execute_task_config and not extract_task_config:
-        raise Exception('Pipeline has no tasks to execute.')
-
+    context = google.datalab.bigquery.commands._bigquery._construct_context_for_args(args)
+    pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config, context)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
     debug = args.get('debug')
     if debug is True:
-        return pipeline.py
+      return pipeline.py
 
 
-def _add_load_parameters(load_task_config, bq_pipeline_input_config):
+def _get_pipeline_spec_from_config(bq_pipeline_config, context):
+  input_config = bq_pipeline_config.get('input', None)
+  transformation_config = bq_pipeline_config.get('transformation', None)
+  output_config = bq_pipeline_config.get('output', None)
+
+  load_task_config_name = 'bq_pipeline_load_task'
+  execute_task_config_name = 'bq_pipeline_execute_task'
+  extract_task_config_name = 'bq_pipeline_extract_task'
+
+  load_task_config = _get_load_parameters(input_config)
+  execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config,
+                                                context)
+  extract_task_config = _get_extract_parameters(execute_task_config_name, execute_task_config,
+                                                output_config)
+
+  pipeline_spec = {
+    'email': bq_pipeline_config['email'],
+    'schedule': bq_pipeline_config['schedule'],
+  }
+
+  pipeline_spec['tasks'] = {}
+  if load_task_config:
+    pipeline_spec['tasks'][load_task_config_name] = load_task_config
+  if execute_task_config:
+    pipeline_spec['tasks'][execute_task_config_name] = execute_task_config
+  if extract_task_config:
+    pipeline_spec['tasks'][extract_task_config_name] = extract_task_config
+
+  if not load_task_config and not execute_task_config and not extract_task_config:
+    raise Exception('Pipeline has no tasks to execute.')
+
+  return pipeline_spec
+
+
+def _get_load_parameters(bq_pipeline_input_config):
+    load_task_config = {'type': 'pydatalab.bq.load'}
     path_exists = False
     if 'path' in bq_pipeline_input_config:
       # The path URL of the GCS load file(s).
@@ -185,7 +114,7 @@ def _add_load_parameters(load_task_config, bq_pipeline_input_config):
     if 'schema' in bq_pipeline_input_config:
       # The schema of the destination bigquery table
       load_task_config['schema'] = bq_pipeline_input_config['schema']
-    schema_exists = True
+      schema_exists = True
 
     # We now figure out whether a load operation is required
     if table_exists:
@@ -218,27 +147,28 @@ def _add_load_parameters(load_task_config, bq_pipeline_input_config):
     if path_exists:
       # One of 'csv' (default) or 'json' for the format of the load file.
       load_task_config['format'] = bq_pipeline_input_config.get('format', 'csv')
-
       # The inter-field delimiter for CVS (default ,) in the load file
       load_task_config['delimiter'] = bq_pipeline_input_config.get('delimiter', ',')
-
       # The quoted field delimiter for CVS (default ") in the load file
       load_task_config['quote'] = bq_pipeline_input_config.get('quote', '"')
-
       # The number of head lines (default is 0) to skip during load; useful for CSV
       load_task_config['skip'] = bq_pipeline_input_config.get('skip', 0)
-
       # Reject bad values and jagged lines when loading (default True)
       load_task_config['strict'] = bq_pipeline_input_config.get('strict', True)
     # Some parameter validation
     elif any(key in bq_pipeline_input_config for key in ['format', 'delimiter', 'quote', 'skip',
                                                          'strict']):
-        raise Exception('Path is not specified, but at least one file option is.')
+      raise Exception('Path is not specified, but at least one file option is.')
 
     return load_task_config
 
 
-def _add_execute_parameters(execute_task_config, bq_pipeline_transformation_config):
+def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config, context):
+    execute_task_config = {
+      'type': 'pydatalab.bq.execute',
+      'up_stream': [load_task_config_name]
+    }
+
     # The name of query for execution; if absent, we return None as we assume that there is
     # no query to execute
     if 'query' in bq_pipeline_transformation_config:
@@ -249,15 +179,21 @@ def _add_execute_parameters(execute_task_config, bq_pipeline_transformation_conf
       return None
 
     # Allow large results during execution; defaults to True because this is a common in pipelines
-    execute_task_config['large'] = bq_pipeline_transformation_config.get('large', True)
-    # One of 'create' (default), 'append' or 'overwrite' for the destination table in BigQuery
+    # TODO(rajivpb): Explain why the -1 is necessary
+    execute_task_config['py_context'] = pickle.dumps(context, -1)
 
+    # One of 'create' (default), 'append' or 'overwrite' for the destination table in BigQuery
     execute_task_config['mode'] = bq_pipeline_transformation_config.get('mode', 'create')
 
     return execute_task_config
 
 
-def _add_extract_parameters(extract_task_config, execute_task_config, bq_pipeline_output_config):
+def _get_extract_parameters(execute_task_config_name, execute_task_config,
+                            bq_pipeline_output_config):
+    extract_task_config = {
+      'type': 'pydatalab.bq.extract',
+      'up_stream': [execute_task_config_name]
+    }
     # Destination table name for the execution results. When present, this will need to be set in
     # execute_task_config. When absent, it means that there is extraction to be done, so we return
     # None.
@@ -293,3 +229,5 @@ def _add_extract_parameters(extract_task_config, execute_task_config, bq_pipelin
 
     # One of 'csv' (default) or 'json' for the format of the extract file
     extract_task_config['format'] = bq_pipeline_output_config.get('format', 'csv')
+
+    return extract_task_config
