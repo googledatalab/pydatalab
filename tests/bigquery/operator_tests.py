@@ -37,9 +37,9 @@ import google.datalab.bigquery  # noqa
 import google.datalab.bigquery.commands  # noqa
 import google.datalab.utils.commands  # noqa
 
-from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator  # noqa
-from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator  # noqa
-from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator  # noqa
+from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator  # noqa
+from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator  # noqa
+from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator  # noqa
 
 
 class TestCases(unittest.TestCase):

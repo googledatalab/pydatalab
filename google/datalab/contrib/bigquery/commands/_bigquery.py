@@ -41,7 +41,8 @@ def _pipeline_cell(args, cell_body):
 
         %%bq pipeline <args>
         [<inline YAML>]
-
+        TODO(rajivpb): Add schema here so that it's clear from the documentation what the expected
+        format is. https://github.com/googledatalab/pydatalab/issues/499.
     Args:
       args: the arguments following '%%bq pipeline'.
       cell_body: the contents of the cell
