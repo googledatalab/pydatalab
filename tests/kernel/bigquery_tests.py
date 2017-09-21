@@ -780,7 +780,7 @@ WITH q1 AS (
       table = google.datalab.bigquery.Table('project.test.table')
       mock_get_table.return_value = table
       mock_table_exists.return_value = True
-
+      mock_default_context.return_value = google.datalab.Context('test_project_id', None)
       env = {
         'foo_query': google.datalab.bigquery.Query(
           'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
@@ -846,7 +846,7 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', large=True, mode='create', py_context=(.*), query='foo_query', table='project.test.table', dag=dag\)
 bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter=',', format='csv', header=True, path='test/path', dag=dag\)
 bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=0, strict=True, table='project.test.table', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
