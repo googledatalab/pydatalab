@@ -19,7 +19,10 @@ import six
 import sys
 import unittest
 import yaml
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from google.datalab.utils.commands import CommandParser
 
