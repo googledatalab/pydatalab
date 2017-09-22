@@ -72,9 +72,6 @@ import _util.http_tests
 import _util.lru_cache_tests
 import _util.util_tests
 
-# This is for suppressing TF warnings in the unit-test output
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-
 
 _UNIT_TEST_MODULES = [
     context_tests,
