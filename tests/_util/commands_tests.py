@@ -111,7 +111,7 @@ class TestCases(unittest.TestCase):
 
     # 'string3' is a cell arg. Argparse will raise Exception after finding an unrecognized param.
     with self.assertRaisesRegexp(Exception, 'unrecognized arguments: --string3 value3'):
-      with TestCases.redirect_stderr(StringIO.StringIO()):
+      with TestCases.redirect_stderr(StringIO()):
         parser.parse('subcommand1 subcommand2 -s value1 --string3 value3', 'a: b')
 
     # 'string4' is required but missing.
