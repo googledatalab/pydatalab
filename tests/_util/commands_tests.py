@@ -14,15 +14,26 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import argparse
+import contextlib
 import six
 import sys
 import unittest
 import yaml
+import StringIO
 
 from google.datalab.utils.commands import CommandParser
 
 
 class TestCases(unittest.TestCase):
+
+  @staticmethod
+  @contextlib.contextmanager
+  # Redirects some stderr temporarily; can be used to prevent console output from some tests.
+  def redirect_stderr(target):
+    original = sys.stderr
+    sys.stderr = target
+    yield
+    sys.stderr = original
 
   def test_subcommand_line(self):
 
@@ -96,8 +107,9 @@ class TestCases(unittest.TestCase):
       parser.parse('subcommand1 subcommand2 -s value1 --duparg v1', 'duparg: v2')
 
     # 'string3' is a cell arg. Argparse will raise Exception after finding an unrecognized param.
-    with self.assertRaises(Exception):
-      parser.parse('subcommand1 subcommand2 -s value1 --string3 value3', 'a: b')
+    with self.assertRaisesRegexp(Exception, 'unrecognized arguments: --string3 value3'):
+      with TestCases.redirect_stderr(StringIO.StringIO()):
+        parser.parse('subcommand1 subcommand2 -s value1 --string3 value3', 'a: b')
 
     # 'string4' is required but missing.
     subcommand2.add_cell_argument('string4', required=True, help='string4 help.')
