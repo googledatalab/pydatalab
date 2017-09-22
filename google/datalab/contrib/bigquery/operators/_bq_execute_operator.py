@@ -12,7 +12,6 @@
 
 import google
 import google.datalab.bigquery as bq
-import pickle
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from google.datalab.contrib.pipeline._pipeline import Pipeline
@@ -21,18 +20,25 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 class ExecuteOperator(BaseOperator):
 
   @apply_defaults
-  def __init__(self, query, parameters, table, mode, py_context_str, *args, **kwargs):
+  def __init__(self, sql, udfs=None, data_sources=None, subqueries=None, parameters=None,
+               table=None, mode=None, cell_args=None, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)
-    self._query = query
+    self._sql = sql
+    self._udfs = udfs
+    self._data_sources = data_sources
+    self._subqueries = subqueries
     self._table = table
     self._mode = mode
     self._parameters = parameters
-    self._py_context_str = py_context_str
+    self._cell_args = cell_args
 
   def execute(self, context):
-    query = google.datalab.utils.commands.get_notebook_item(self._query)
+    query = google.datalab.bigquery.Query(sql=self._sql, udfs=self._udfs,
+                                          data_sources=self._data_sources,
+                                          subqueries=self._subqueries)
     query_params = Pipeline._get_query_parameters(self._parameters)
     output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
                                           allow_large_results=True)
-    py_context = pickle.loads(self._py_context_str)
-    query.execute(output_options, context=py_context, query_params=query_params)
+    pydatalab_context = google.datalab.bigquery.commands._bigquery._construct_context_for_args(
+      self._cell_args)
+    query.execute(output_options, context=pydatalab_context, query_params=query_params)

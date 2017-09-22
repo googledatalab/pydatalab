@@ -46,7 +46,7 @@ class TestCases(unittest.TestCase):
     }
     mock_environment.return_value = env
 
-    args = {'name': 'bq_pipeline_test', 'debug': True}
+    args = {'name': 'bq_pipeline_test', 'debug': True, 'billing': 'foo_billing'}
     # TODO(rajivpb): The references to foo_query need to be resolved.
     cell_body = """
             email: foo@bar.com
@@ -69,7 +69,6 @@ class TestCases(unittest.TestCase):
             transformation:
                 query: foo_query
             output:
-                billing: 'foo'
                 path: test/path
                 table: project.test.table
        """
@@ -105,7 +104,7 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', large=True, mode='create', py_context=(.*), query='foo_query', table='project.test.table', dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', cell_args=(.*), large=True, mode='create', query='foo_query', table='project.test.table', dag=dag\)
 bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter=',', format='csv', header=True, path='test/path', dag=dag\)
 bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=0, strict=True, table='project.test.table', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
@@ -129,9 +128,9 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
       }
     ]
 
-    # group(1) has the string that follows the "py_context=", i.e. the list of dicts.
-    actual_context = pickle.loads(pattern.match(output).group(1))
-    self.assertEqual(context, actual_context)
+    # group(1) has the string that follows the "cell_args=", i.e. the list of dicts.
+    actual_args = pickle.loads(pattern.match(output).group(1))
+    self.assertEqual(args, actual_args)
 
     # group(2) has the string that follows the "schema=", i.e. the list of dicts.
     actual_schema = eval(pattern.match(output).group(2))

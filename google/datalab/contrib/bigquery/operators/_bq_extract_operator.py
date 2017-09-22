@@ -18,7 +18,7 @@ from airflow.utils.decorators import apply_defaults
 class ExtractOperator(BaseOperator):
 
   @apply_defaults
-  def __init__(self, table, path, format, delimiter, header, compress, *args, **kwargs):
+  def __init__(self, table, path, format, delimiter, header, compress, cell_args, *args, **kwargs):
     super(ExtractOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
@@ -26,23 +26,26 @@ class ExtractOperator(BaseOperator):
     self._delimiter = delimiter
     self._header = header
     self._compress = compress
+    self._cell_args = cell_args
 
   def execute(self, context):
-      if self._table:
-        source_table = google.datalab.bigquery.commands._bigquery._get_table(self._table)
-        if not source_table:
-          raise Exception('Could not find table %s' % self._table)
+    pydatalab_context = google.datalab.bigquery.commands._bigquery._construct_context_for_args(
+      self._cell_args)
+    if self._table:
+      source_table = google.datalab.bigquery.Table(self._table, context=pydatalab_context)
+      if not source_table:
+        raise Exception('Could not find table %s' % self._table)
 
-        job = source_table.extract(
-            self._path,
-            format='CSV' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON',
-            csv_delimiter=self._delimiter, csv_header=self._header,
-            compress=self._compress)
-      else:
-        raise Exception('A table is needed to extract')
+      job = source_table.extract(
+          self._path,
+          format='CSV' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON',
+          csv_delimiter=self._delimiter, csv_header=self._header,
+          compress=self._compress)
+    else:
+      raise Exception('A table is needed to extract')
 
-      if job.failed:
-        raise Exception('Extract failed: %s' % str(job.fatal_error))
-      elif job.errors:
-        raise Exception('Extract completed with errors: %s' % str(job.errors))
-      return job.result()
+    if job.failed:
+      raise Exception('Extract failed: %s' % str(job.fatal_error))
+    elif job.errors:
+      raise Exception('Extract completed with errors: %s' % str(job.errors))
+    return job.result()

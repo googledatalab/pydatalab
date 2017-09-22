@@ -12,7 +12,6 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from oauth2client.client import AccessTokenCredentials
 import google.datalab.contrib.pipeline._pipeline as pipeline
 import mock
 import pickle
@@ -52,20 +51,21 @@ class TestCases(unittest.TestCase):
     return google.datalab.Context(project_id, creds)
 
   @mock.patch('google.datalab.bigquery.Table.extract')
-  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_extract_operator(self, mock_get_table, mock_table_extract):
-    mock_get_table.return_value = None
+  @mock.patch('google.datalab.bigquery.Table')
+  def test_extract_operator(self, mock_table, mock_table_extract):
+    mock_table.return_value = None
+    cell_args = {'billing': 'foo_billing'}
     extract_operator = ExtractOperator(task_id='test_extract_operator', table='test_table',
                                        path='test_path', format=None, delimiter=None, header=None,
-                                       compress=None, billing=None)
+                                       compress=None, cell_args=cell_args)
     with self.assertRaisesRegexp(Exception, 'Could not find table test_table'):
       extract_operator.execute(context=None)
 
-    mock_get_table.return_value = google.datalab.bigquery.Table('project.test.table',
-                                                                TestCases._create_context())
+    mock_table.return_value = google.datalab.bigquery.Table('project.test.table',
+                                                            TestCases._create_context())
     mock_table_extract.return_value.result = lambda: 'test-results'
-    mock_table_extract.return_value.failed = False
-    mock_table_extract.return_value.errors = None
+    #mock_table_extract.return_value.failed = False
+    #mock_table_extract.return_value.errors = None
     self.assertEqual(extract_operator.execute(context=None), 'test-results')
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
@@ -78,27 +78,22 @@ class TestCases(unittest.TestCase):
     task_details = {}
     task_details['type'] = 'pydatalab.bq.execute'
     task_details['query'] = 'test_sql'
-    context = TestCases._create_context()
-    task_details['py_context'] = pickle.dumps(context, -1)
     task_details['mode'] = 'create'
+    task_details['cell_args'] = {'billing': 'test_billing'}
 
-    actual_operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id,
-                                                                                 task_details)
-    pattern = re.compile("""foo = ExecuteOperator\(task_id='foo_id', mode='create', py_context=(.*), query='test_sql', dag=dag\)
-""")  # noqa
-    print(actual_operator_def)
-    self.assertIsNotNone(pattern.match(actual_operator_def))
-    # group(1) has the string that follows the "py_context=", i.e. the list of dicts.
+    actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
+    expected = """foo = ExecuteOperator(task_id='foo_id', cell_args={u'billing': u'test_billing'}, mode='create', query='test_sql', dag=dag)\n"""  # noqa
+    self.assertEqual(actual, expected)
 
   @mock.patch('google.datalab.bigquery.Query.execute')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
-  def test_execute_operator(self, mock_get_notebook_item, mock_query_execute):
+  def execute_operator(self, mock_get_notebook_item, mock_query_execute):
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
-    context = google.datalab.Context('test', None)
+    cell_args = {'billing': 'test_billing'}
     # This statement is required even though it seems like it's not. Go figure.
     execute_operator = ExecuteOperator(
       task_id='test_execute_operator', query='test_sql', parameters=None, table='test_table',
-      mode=None, py_context_str=pickle.dumps(context, -1))
+      mode=None, **cell_args)
     execute_operator.execute(context=None)
     # TODO(rajivpb): Mock output_options and query_params for a more complete test.
     mock_query_execute.assert_called_once()

@@ -53,6 +53,7 @@ import mlworkbench_magic.explainer_tests
 import mlworkbench_magic.local_predict_tests
 import mlworkbench_magic.ml_tests
 import mlworkbench_magic.shell_process_tests
+import os
 import pipeline.pipeline_tests
 import stackdriver.commands.monitoring_tests
 import stackdriver.monitoring.group_tests
@@ -70,6 +71,9 @@ import _util.generic_feature_statistics_generator_test
 import _util.http_tests
 import _util.lru_cache_tests
 import _util.util_tests
+
+# This is for suppressing TF warnings in the unit-test output
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 
 _UNIT_TEST_MODULES = [

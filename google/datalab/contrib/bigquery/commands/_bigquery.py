@@ -54,7 +54,7 @@ def _pipeline_cell(args, cell_body):
     bq_pipeline_config = google.datalab.utils.commands.parse_config(
         cell_body, google.datalab.utils.commands.notebook_environment())
     context = google.datalab.bigquery.commands._bigquery._construct_context_for_args(args)
-    pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config, context)
+    pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config, args)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
@@ -63,7 +63,7 @@ def _pipeline_cell(args, cell_body):
       return pipeline.py
 
 
-def _get_pipeline_spec_from_config(bq_pipeline_config, context):
+def _get_pipeline_spec_from_config(bq_pipeline_config, cell_args):
   input_config = bq_pipeline_config.get('input', None)
   transformation_config = bq_pipeline_config.get('transformation', None)
   output_config = bq_pipeline_config.get('output', None)
@@ -74,7 +74,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config, context):
 
   load_task_config = _get_load_parameters(input_config)
   execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config,
-                                                context)
+                                                cell_args)
   extract_task_config = _get_extract_parameters(execute_task_config_name, execute_task_config,
                                                 output_config)
 
@@ -164,7 +164,7 @@ def _get_load_parameters(bq_pipeline_input_config):
     return load_task_config
 
 
-def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config, context):
+def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config, cell_args):
     execute_task_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': [load_task_config_name]
@@ -181,7 +181,7 @@ def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_co
 
     # Allow large results during execution; defaults to True because this is a common in pipelines
     # TODO(rajivpb): Explain why the -1 is necessary
-    execute_task_config['py_context'] = pickle.dumps(context, -1)
+    execute_task_config['cell_args'] = cell_args
 
     # One of 'create' (default), 'append' or 'overwrite' for the destination table in BigQuery
     execute_task_config['mode'] = bq_pipeline_transformation_config.get('mode', 'create')
@@ -215,9 +215,6 @@ def _get_extract_parameters(execute_task_config_name, execute_task_config,
                                                           'header']):
         raise Exception('Path is not specified, but at least one file option is.')
       return None
-
-    # TODO(rajivpb): The billing parameter should really be an arg and not in the yaml cell_body
-    extract_task_config['billing'] = bq_pipeline_output_config.get('billing', None)
 
     # Compress the extract file (default True)
     extract_task_config['compress'] = bq_pipeline_output_config.get('compress', True)
