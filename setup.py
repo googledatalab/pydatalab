@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
+# To publish to PyPi use: python setup.py bdist_wheel upload -r pypi 
 
 from setuptools import setup
 
