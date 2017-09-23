@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-# To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
+# To publish to PyPi use: python setup.py bdist_wheel upload -r pypi 
 
 from setuptools import setup
 
@@ -85,6 +85,7 @@ Support package for Google Cloud Datalab. This provides cell magics and Python A
 for accessing Google's Cloud Platform services such as Google BigQuery.
   """,
   install_requires=[
+    'airflow==1.8.0',
     'mock==2.0.0',
     'future==0.16.0',
     'futures==3.0.5',
