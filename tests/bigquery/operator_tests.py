@@ -53,13 +53,13 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery.Table.extract')
   def test_extract_operator(self, mock_table_extract):
     cell_args = {'billing': 'foo_billing'}
-    extract_operator = ExtractOperator(task_id='test_extract_operator', table='test_table',
-                                       path='test_path', format=None, delimiter=None, header=None,
-                                       compress=None, cell_args=cell_args)
+    extract_operator = ExtractOperator(
+      task_id='test_extract_operator',table='test_project.test_table', path='test_path',
+      format=None, delimiter=None, header=None, compress=None, cell_args=cell_args)
 
     mock_table_extract.return_value.result = lambda: 'test-results'
-    mock_table_extract.return_value.failed = False
-    mock_table_extract.return_value.errors = None
+    #mock_table_extract.return_value.failed = False
+    #mock_table_extract.return_value.errors = None
     self.assertEqual(extract_operator.execute(context=None), 'test-results')
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
