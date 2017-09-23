@@ -44,9 +44,11 @@ from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOper
 
 class TestCases(unittest.TestCase):
 
+  test_project_id = 'test_project'
+
   @staticmethod
   def _create_context():
-    project_id = 'test'
+    project_id = TestCases.test_project_id
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
@@ -54,12 +56,13 @@ class TestCases(unittest.TestCase):
   def test_extract_operator(self, mock_table_extract):
     cell_args = {'billing': 'foo_billing'}
     extract_operator = ExtractOperator(
-      task_id='test_extract_operator',table='test_project.test_table', path='test_path',
-      format=None, delimiter=None, header=None, compress=None, cell_args=cell_args)
+      task_id='test_extract_operator',table=TestCases.test_project_id+'.test_table',
+      path='test_path', format=None, delimiter=None, header=None, compress=None,
+      cell_args=cell_args)
 
     mock_table_extract.return_value.result = lambda: 'test-results'
-    #mock_table_extract.return_value.failed = False
-    #mock_table_extract.return_value.errors = None
+    mock_table_extract.return_value.failed = False
+    mock_table_extract.return_value.errors = None
     self.assertEqual(extract_operator.execute(context=None), 'test-results')
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
