@@ -34,7 +34,14 @@ class TestSummary(unittest.TestCase):
     shutil.rmtree(self._test_dir)
 
   def _create_events(self):
+    # This is for suppressing TF warnings in the unit-test output of the form "The TensorFlow
+    # library wasn't compiled to use SSE4.2/AVX instructions..."
+    # TODO(rajivpb): Remove if this is no longer necessary.
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     with tf.Session(graph=tf.Graph()) as sess:
+      del os.environ['TF_CPP_MIN_LOG_LEVEL']
+      # Just making sure that this is unset so that os.environ is as before
+      self.assertIsNone(os.environ.get('TF_CPP_MIN_LOG_LEVEL'))
       train_num = tf.placeholder(dtype=tf.float32, shape=[])
       eval_num1 = tf.multiply(train_num, 2)
       eval_num2 = tf.add(eval_num1, 10)
@@ -82,7 +89,7 @@ class TestSummary(unittest.TestCase):
     df = events_list[0][train_dir]
     self.assertEqual(list(range(0, 10)), df['step'].tolist())
     self.assertEqual(list(range(1, 11)), df['value'].tolist())
-    self.assertIsInstance(df['time'][0], pd.tslib.Timestamp)
+    self.assertIsInstance(df['time'][0], pd.Timestamp)
 
     df = events_list[1][eval_dir]
     self.assertEqual(list(range(0, 10)), df['step'].tolist())
