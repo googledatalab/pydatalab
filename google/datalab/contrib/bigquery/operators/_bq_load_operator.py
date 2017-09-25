@@ -26,8 +26,8 @@ class LoadOperator(BaseOperator):
     A message about whether the load succeeded or failed.
   """
   @apply_defaults
-  def __init__(self, table, path, mode, format, delimiter, skip, strict, quote, cell_args, *args,
-               **kwargs):
+  def __init__(self, table, path, mode, format, delimiter, skip, strict, quote, schema, cell_args,
+               *args, **kwargs):
     super(LoadOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
@@ -37,6 +37,7 @@ class LoadOperator(BaseOperator):
     self._skip = skip
     self._strict = strict
     self._quote = quote
+    self._schema = schema
     self._cell_args = cell_args
 
   def execute(self, context):
@@ -44,15 +45,16 @@ class LoadOperator(BaseOperator):
       pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
       table = google.datalab.bigquery.Table(self._table, context=pydatalab_context)
 
-    # Some parameter validation
-    if table.exists():
-      if self._mode == 'create':
+    if self._mode == 'create':
+      if table.exists():
         raise Exception(
           "%s already exists; mode should be \'append\' or \'overwrite\'" % self._table)
-    else:
-      if self._mode != 'create':
+      if not self._schema:
         raise Exception(
-          "%s does not exist; mode should be \'create\'" % self._table)
+          '%s does not exist, and no schema specified in cell; cannot load.' % self._table)
+      table.create(schema=self._schema)
+    elif not table.exists():
+      raise Exception('%s does not exist; mode should be \'create\'' % self._table)
 
     csv_options = google.datalab.bigquery.CSVOptions(
       delimiter=self._delimiter, skip_leading_rows=self._skip, allow_jagged_rows=self._strict,

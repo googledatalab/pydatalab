@@ -53,7 +53,6 @@ import mlworkbench_magic.explainer_tests
 import mlworkbench_magic.local_predict_tests
 import mlworkbench_magic.ml_tests
 import mlworkbench_magic.shell_process_tests
-import os
 import pipeline.pipeline_tests
 import stackdriver.commands.monitoring_tests
 import stackdriver.monitoring.group_tests

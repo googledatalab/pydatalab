@@ -10,12 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import google.datalab.contrib.pipeline._pipeline as pipeline
 import mock
 import unittest
-
 
 # import Python so we can mock the parts we need to here.
 import IPython.core.magic
@@ -56,7 +53,7 @@ class TestCases(unittest.TestCase):
     mock_context_default.return_value = TestCases._create_context()
     cell_args = {'billing': 'foo_billing'}
     extract_operator = ExtractOperator(
-      task_id='test_extract_operator',table=TestCases.test_project_id+'.test_table',
+      task_id='test_extract_operator', table=TestCases.test_project_id + '.test_table',
       path='test_path', format=None, delimiter=None, header=None, compress=None,
       cell_args=cell_args)
 
@@ -79,7 +76,7 @@ class TestCases(unittest.TestCase):
     task_details['cell_args'] = {'billing': 'test_billing'}
 
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
-    expected = """foo = ExecuteOperator(task_id='foo_id', cell_args={u'billing': u'test_billing'}, mode='create', query='test_sql', dag=dag)\n"""  # noqa
+    expected = """foo = ExecuteOperator(task_id='foo_id', cell_args={'billing': 'test_billing'}, mode='create', query='test_sql', dag=dag)\n"""  # noqa
     self.assertEqual(actual, expected)
 
   @mock.patch('google.datalab.bigquery.Query.execute')
@@ -107,7 +104,8 @@ class TestCases(unittest.TestCase):
       mock_table_exists.return_value = True
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='create', format=None, delimiter=None,
-                                   skip=None, strict=None, quote=None, cell_args=cell_args)
+                                   skip=None, strict=None, quote=None, schema=None,
+                                   cell_args=cell_args)
       with self.assertRaisesRegexp(
               Exception,
               "project.test.table already exists; mode should be \'append\' or \'overwrite\'"):
@@ -116,14 +114,21 @@ class TestCases(unittest.TestCase):
       mock_table_exists.return_value = False
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='append', format=None, delimiter=None,
-                                   skip=None, strict=None, quote=None, cell_args=cell_args)
+                                   skip=None, strict=None, quote=None, schema=None,
+                                   cell_args=cell_args)
       with self.assertRaisesRegexp(Exception,
                                    'project.test.table does not exist; mode should be \'create\''):
         load_operator.execute(context=None)
 
+      schema = [
+        {"type": "INTEGER", "name": "key"},
+        {"type": "FLOAT", "name": "var1"},
+        {"type": "FLOAT", "name": "var2"}
+      ]
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='create', format=None, delimiter=None,
-                                   skip=None, strict=None, quote=None, cell_args=cell_args)
+                                   skip=None, strict=None, quote=None, schema=schema,
+                                   cell_args=cell_args)
       job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
                                                         'test_sql', None)
       mock_table_load.return_value = job
@@ -147,7 +152,8 @@ class TestCases(unittest.TestCase):
       mock_table_exists.return_value = True
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='append', format='csv', delimiter=None,
-                                   skip=None, strict=None, quote=None, cell_args=cell_args)
+                                   skip=None, strict=None, quote=None, schema=schema,
+                                   cell_args=cell_args)
       load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='csv', csv_options=mock.ANY,

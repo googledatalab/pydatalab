@@ -93,7 +93,7 @@ from pytz import timezone
   def _get_default_args(start, end):
     start_date_str = Pipeline._get_datetime_expr_str(start)
     end_date_str = Pipeline._get_datetime_expr_str(end)
-    #TODO(rajivpb): Get the email address in some other way.
+    # TODO(rajivpb): Get the email address in some other way.
     airflow_default_args_format = """
 default_args = {{
     'owner': 'Datalab',
