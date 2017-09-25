@@ -52,8 +52,10 @@ class TestCases(unittest.TestCase):
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
+  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.Table.extract')
-  def test_extract_operator(self, mock_table_extract):
+  def test_extract_operator(self, mock_table_extract, mock_context_default):
+    mock_context_default.return_value = TestCases._create_context()
     cell_args = {'billing': 'foo_billing'}
     extract_operator = ExtractOperator(
       task_id='test_extract_operator',table=TestCases.test_project_id+'.test_table',

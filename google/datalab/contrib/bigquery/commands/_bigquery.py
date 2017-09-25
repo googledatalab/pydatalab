@@ -16,7 +16,6 @@ import google.datalab.bigquery
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
-import pickle
 
 
 def _create_pipeline_subparser(parser):

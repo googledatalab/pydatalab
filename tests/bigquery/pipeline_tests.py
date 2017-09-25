@@ -15,7 +15,6 @@
 import google
 import google.auth
 import mock
-import pickle
 import re
 import unittest
 
@@ -104,8 +103,8 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', cell_args=(.*), large=True, mode='create', query='foo_query', table='project.test.table', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter=',', format='csv', header=True, path='test/path', dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', cell_args=(.*), mode='create', query='foo_query', table='project.test.table', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', compress=True, delimiter=',', format='csv', header=True, path='test/path', dag=dag\)
 bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=0, strict=True, table='project.test.table', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
@@ -113,25 +112,18 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 
     self.assertIsNotNone(pattern.match(output))
 
-    expected_schema = [
-      {
-        'mode': 'NULLABLE',
-        'type': 'int64',
-        'description': 'description1',
-        'name': 'col1',
-      },
-      {
-        'mode': 'required',
-        'type': 'STRING',
-        'description': 'description1',
-        'name': 'col2',
-      }
-    ]
-
     # group(1) has the string that follows the "cell_args=", i.e. the list of dicts.
-    actual_args = pickle.loads(pattern.match(output).group(1))
-    self.assertEqual(args, actual_args)
+    actual_args_str = pattern.match(output).group(1)
+    expected_args_str = '{0}'.format(args)
+    self.assertEqual(expected_args_str, actual_args_str)
 
     # group(2) has the string that follows the "schema=", i.e. the list of dicts.
-    actual_schema = eval(pattern.match(output).group(2))
-    self.assertListEqual(expected_schema, actual_schema)
+    actual_schema_str = pattern.match(output).group(2)
+    self.assertIn("'type': 'int64'", actual_schema_str)
+    self.assertIn("'mode': 'NULLABLE'", actual_schema_str)
+    self.assertIn("'name': 'col1'", actual_schema_str)
+    self.assertIn("'description': 'description1'", actual_schema_str)
+    self.assertIn("'type': 'STRING'", actual_schema_str)
+    self.assertIn("'mode': 'required'", actual_schema_str)
+    self.assertIn("'name': 'col2'", actual_schema_str)
+    self.assertIn("'description': 'description1'", actual_schema_str)
