@@ -63,7 +63,7 @@ from pytz import timezone
     return utils.commands.parse_config(spec_str, env)
 
   @property
-  def py(self):
+  def get_airflow_spec(self):
     """ Gets the airflow python spec for the Pipeline object. This is the
       input for the Cloud Composer service.
     """
@@ -178,10 +178,6 @@ default_args = {{
       with the string "Operator".
     """
     task_type_to_operator_prefix_mapping = {
-      'bash': 'Bash',
-      'bq.execute': 'BigQuery',
-      'bq.extract': 'BigQueryToCloudStorage',
-      'bq.load': 'GoogleCloudStorageToBigQuery',
       'pydatalab.bq.execute': 'Execute',
       'pydatalab.bq.extract': 'Extract',
       'pydatalab.bq.load': 'Load',

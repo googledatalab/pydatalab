@@ -66,7 +66,7 @@ tasks:
   def test_get_bash_operator_definition(self):
     task_id = 'print_pdt_date'
     task_details = {}
-    task_details['type'] = 'bash'
+    task_details['type'] = 'Bash'
     task_details['bash_command'] = 'date'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
@@ -77,7 +77,7 @@ tasks:
   def test_get_templated_bash_operator_definition(self):
     task_id = 'foo_task'
     task_details = {}
-    task_details['type'] = 'bash'
+    task_details['type'] = 'Bash'
     task_details['bash_command'] = 'echo "{{ ds }}"'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
@@ -88,7 +88,7 @@ tasks:
   def test_get_templated_bash_bq_definition(self):
     task_id = 'foo_task'
     task_details = {}
-    task_details['type'] = 'bq.execute'
+    task_details['type'] = 'BigQuery'
     task_details['query'] = google.datalab.bigquery.Query(
       'SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds }}`')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
@@ -104,7 +104,7 @@ tasks:
         context=PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
-    task_details['type'] = 'bq.execute'
+    task_details['type'] = 'BigQuery'
     task_details['query'] = google.datalab.bigquery.Query(
       'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
@@ -118,7 +118,7 @@ tasks:
         context=PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
-    task_details['type'] = 'bq.extract'
+    task_details['type'] = 'BigQueryToCloudStorage'
     task_details['table'] = 'foo_project.foo_dataset.foo_table'
     task_details['path'] = 'foo_path'
     task_details['format'] = 'csv'
@@ -150,7 +150,7 @@ tasks:
         context=PipelineTest._create_context())
     task_id = 'foo'
     task_details = {}
-    task_details['type'] = 'bq.load'
+    task_details['type'] = 'GoogleCloudStorageToBigQuery'
     task_details['table'] = 'foo_project.foo_dataset.foo_table'
     task_details['path'] = 'gs://foo_bucket/foo_file.csv'
     task_details['format'] = 'csv'
@@ -287,10 +287,7 @@ tasks:
                      'id = UnknownOperator(''task_id=\'id_id\', ' +
                      'bar_typed=False, foo=\'bar\', dag=dag)\n')
 
-  def test_get_operator_classname(self):
-    self.assertEqual(pipeline.Pipeline._get_operator_classname('bash'), 'BashOperator')
-    self.assertEqual(pipeline.Pipeline._get_operator_classname('bq.execute'),
-                     'BigQueryOperator')
+  def test_get_random_operator_classname(self):
     self.assertEqual(pipeline.Pipeline._get_operator_classname('Unknown'),
                      'UnknownOperator')
 

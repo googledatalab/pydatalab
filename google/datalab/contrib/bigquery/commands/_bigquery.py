@@ -59,7 +59,7 @@ def _pipeline_cell(args, cell_body):
 
     debug = args.get('debug')
     if debug is True:
-      return pipeline.py
+      return pipeline.get_airflow_spec
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config, cell_args):
@@ -117,6 +117,8 @@ def _get_load_parameters(bq_pipeline_input_config):
       schema_exists = True
 
     # We now figure out whether a load operation is required
+    # TODO(rajivpb): This is spaghetti code; refactor this to make it clearer.
+    # TODO(rajivpb): This needs better unit-test coverage.
     if table_exists:
       if path_exists:
         if schema_exists:

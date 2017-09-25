@@ -45,7 +45,7 @@ def _create_cell(args, cell_body):
 
   debug = args.get('debug')
   if debug is True:
-    return pipeline.py
+    return pipeline.get_airflow_spec
 
 
 def _create_create_subparser(parser):
@@ -149,7 +149,7 @@ def _dispatch_handler(args, cell, parser, handler, cell_required=False,
 
 def _repr_html_pipeline(pipeline):
   return google.datalab.utils.commands.HtmlBuilder.render_text(
-      pipeline.py, preformatted=True)
+      pipeline.get_airflow_spec, preformatted=True)
 
 
 def _register_html_formatters():

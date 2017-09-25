@@ -119,13 +119,13 @@ schedule:
   schedule_interval: '@hourly'
 tasks:
   foo_task_1:
-    type: bq.execute
+    type: BigQuery
     query: $foo_query
   foo_task_2:
-    type: bash
+    type: Bash
     bash_command: date
   foo_task_3:
-    type: bash
+    type: Bash
     bash_command: date -u
     up_stream:
       - print_pdt_date
@@ -135,7 +135,7 @@ tasks:
     google.datalab.contrib.pipeline.commands._pipeline._create_cell({'name': 'p1'}, p_body)
     p1 = env['p1']
     self.assertIsNotNone(p1)
-    self.assertEqual(p1.py, """
+    self.assertEqual(p1.get_airflow_spec, """
 import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -169,4 +169,4 @@ foo_task_2 = BashOperator(task_id='foo_task_2_id', bash_command='date', dag=dag)
 foo_task_3 = BashOperator(task_id='foo_task_3_id', bash_command='date -u', dag=dag)
 foo_task_3.set_upstream(print_pdt_date)
 """  # noqa
-    )
+                     )
