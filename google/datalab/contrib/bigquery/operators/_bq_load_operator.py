@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google.datalab.bigquery as bq
+import google
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -26,39 +26,40 @@ class LoadOperator(BaseOperator):
     A message about whether the load succeeded or failed.
   """
   @apply_defaults
-  def __init__(self, table, path, mode, format, delimiter, skip, strict, quote, schema=None, *args,
+  def __init__(self, table, path, mode, format, delimiter, skip, strict, quote, cell_args, *args,
                **kwargs):
     super(LoadOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
-    self._schema = schema
     self._mode = mode
     self._delimiter = delimiter
     self._format = format
     self._skip = skip
     self._strict = strict
     self._quote = quote
+    self._cell_args = cell_args
 
   def execute(self, context):
-    bq_table = bq.commands._bigquery._get_table(self._table)
-    if not bq_table:
-      bq_table = bq.Table(self._table)
+    if self._table:
+      pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
+      table = google.datalab.bigquery.Table(self._table, context=pydatalab_context)
 
-    if self._schema:
-      schema = bq.Schema(self._schema)
-      bq_table.create(schema=schema)
-    elif bq_table.exists():
+    # Some parameter validation
+    if table.exists():
       if self._mode == 'create':
-        raise Exception('%s already exists; use --append or --overwrite' % self._table)
+        raise Exception(
+          "%s already exists; mode should be \'append\' or \'overwrite\'" % self._table)
     else:
-      raise Exception('Table does not exist, and no schema specified in cell; cannot load')
+      if self._mode != 'create':
+        raise Exception(
+          "%s does not exist; mode should be \'create\'" % self._table)
 
-    csv_options = bq.CSVOptions(delimiter=self._delimiter, skip_leading_rows=self._skip,
-                                allow_jagged_rows=self._strict, quote=self._quote)
-    job = bq_table.load(self._path, mode=self._mode,
-                        source_format=('csv' if self._format == 'csv' else
-                                       'NEWLINE_DELIMITED_JSON'),
-                        csv_options=csv_options, ignore_unknown_values=not self._strict)
+    csv_options = google.datalab.bigquery.CSVOptions(
+      delimiter=self._delimiter, skip_leading_rows=self._skip, allow_jagged_rows=self._strict,
+      quote=self._quote)
+    job = table.load(self._path, mode=self._mode,
+                     source_format=('csv' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON'),
+                     csv_options=csv_options, ignore_unknown_values=not self._strict)
     if job.failed:
       raise Exception('Load failed: %s' % str(job.fatal_error))
     elif job.errors:

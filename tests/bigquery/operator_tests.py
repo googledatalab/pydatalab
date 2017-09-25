@@ -101,32 +101,31 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.Table.load')
-  @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_load_operator(self, mock_get_table, mock_table_load, mock_table_exists,
-                         mock_api_tables_insert, mock_context_default):
+  def test_load_operator(self, mock_table_load, mock_table_exists, mock_api_tables_insert,
+                         mock_context_default):
+      mock_context_default.return_value = self._create_context()
+      cell_args = {'billing': 'test_billing'}
+
+      mock_table_exists.return_value = True
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='create', format=None, delimiter=None,
-                                   skip=None, strict=None, quote=None, schema=None)
-      mock_context_default.return_value = self._create_context()
-      table = google.datalab.bigquery.Table('project.test.table', mock_context_default)
-      mock_get_table.return_value = table
-      mock_table_exists.return_value = True
-
-      with self.assertRaisesRegexp(Exception, 'already exists; use --append or --overwrite'):
+                                   skip=None, strict=None, quote=None, cell_args=cell_args)
+      with self.assertRaisesRegexp(
+              Exception,
+              "project.test.table already exists; mode should be \'append\' or \'overwrite\'"):
         load_operator.execute(context=None)
 
       mock_table_exists.return_value = False
-
-      with self.assertRaisesRegexp(Exception, 'Table does not exist, and no schema specified'):
+      load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
+                                   path='test/path', mode='append', format=None, delimiter=None,
+                                   skip=None, strict=None, quote=None, cell_args=cell_args)
+      with self.assertRaisesRegexp(Exception,
+                                   'project.test.table does not exist; mode should be \'create\''):
         load_operator.execute(context=None)
 
-      schema = [
-          {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
-          {'name': 'col1', 'type': 'STRING', 'mode': 'required', 'description': 'description1'}
-      ]
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='create', format=None, delimiter=None,
-                                   skip=None, strict=None, quote=None, schema=schema)
+                                   skip=None, strict=None, quote=None, cell_args=cell_args)
       job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
                                                         'test_sql', None)
       mock_table_load.return_value = job
@@ -147,11 +146,10 @@ class TestCases(unittest.TestCase):
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=True)
 
-      mock_get_table.return_value = None
       mock_table_exists.return_value = True
       load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
                                    path='test/path', mode='append', format='csv', delimiter=None,
-                                   skip=None, strict=None, quote=None, schema=schema)
+                                   skip=None, strict=None, quote=None, cell_args=cell_args)
       load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='csv', csv_options=mock.ANY,
