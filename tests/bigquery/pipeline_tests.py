@@ -27,6 +27,68 @@ class TestCases(unittest.TestCase):
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
+  def test_get_load_parameters(self):
+    input_config = {
+      'path': 'test_path',
+      'table': 'test_table',
+      'schema': 'test_schema'
+    }
+    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
+      input_config)
+    expected_load_config = {
+      'type': 'pydatalab.bq.load',
+      'format': 'csv',
+      'quote': '"',
+      'strict': True,
+      'delimiter': ',',
+      'skip': 0,
+      'path': 'test_path',
+      'table': 'test_table',
+      'schema': 'test_schema',
+      'mode': 'create'
+    }
+    self.assertDictEqual(actual_load_config, expected_load_config)
+
+    input_config = {
+      'path': 'test_path',
+      'table': 'test_table',
+    }
+    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
+      input_config)
+    self.assertEqual(actual_load_config['mode'], 'append')
+
+    input_config = {
+      'table': 'test_table',
+      'schema': 'test_schema'
+    }
+    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
+      input_config)
+    self.assertIsNone(actual_load_config)
+
+    input_config = {
+      'schema': 'test_schema'
+    }
+    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
+      input_config)
+    self.assertIsNone(actual_load_config)
+
+    input_config = {
+      'path': 'test_path',
+    }
+    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
+      input_config)
+    expected_load_config = {
+      'type': 'pydatalab.bq.load',
+      'format': 'csv',
+      'quote': '"',
+      'strict': True,
+      'delimiter': ',',
+      'skip': 0,
+      'path': 'test_path',
+    }
+    self.assertDictEqual(actual_load_config, expected_load_config)
+
+
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.bigquery.Table.exists')

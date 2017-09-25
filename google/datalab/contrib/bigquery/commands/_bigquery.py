@@ -123,22 +123,18 @@ def _get_load_parameters(bq_pipeline_input_config):
           # schema is specified, we assume that the table needs to be created.
           load_task_config['mode'] = 'create'
         else:
-          # If a schema is not specified, we assume that the table needs to be appended
-          # TODO(rajivpb): This might also mean that we need to auto-detect the schema.
+          # If a schema is not specified, we assume that the table needs to be appended, since this
+          # is the most likely scenario for users running pipelines.
+          # TODO(rajivpb): Is the above assumption reasonable?
           load_task_config['mode'] = 'append'
       else:
-        if schema_exists:
-          # Some parameter validation
-          raise Exception('Schema is specified, but path is absent.')
-        else:
-          pass
         # If table exists, but a path does not, then we have our data in BQ already and no load is
         # required.
         return None
     else:
       # If the table doesn't exist, but a path does, then it's likely an extended data-source (and
-      # the schema needs to be either present or auto-detected).
-      # TODO(rajivpb): Do we need to do anything special for extended data-sources?
+      # the schema would need to be either present or auto-detected).
+      # TODO(rajivpb): Do we need to do anything special for external data-sources?
       if not path_exists:
         # If neither table or path exist, there is no load to be done.
         return None
