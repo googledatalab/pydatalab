@@ -114,8 +114,6 @@ def _get_load_parameters(bq_pipeline_input_config):
       schema_exists = True
 
     # We now figure out whether a load operation is required
-    # TODO(rajivpb): This is spaghetti code; refactor this to make it clearer.
-    # TODO(rajivpb): This needs better unit-test coverage.
     if table_exists:
       if path_exists:
         if schema_exists:
@@ -134,7 +132,6 @@ def _get_load_parameters(bq_pipeline_input_config):
     else:
       # If the table doesn't exist, but a path does, then it's likely an extended data-source (and
       # the schema would need to be either present or auto-detected).
-      # TODO(rajivpb): Do we need to do anything special for external data-sources?
       if not path_exists:
         # If neither table or path exist, there is no load to be done.
         return None
@@ -174,7 +171,6 @@ def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_co
       return None
 
     # Allow large results during execution; defaults to True because this is a common in pipelines
-    # TODO(rajivpb): Explain why the -1 is necessary
     execute_task_config['cell_args'] = cell_args
 
     # One of 'create' (default), 'append' or 'overwrite' for the destination table in BigQuery
