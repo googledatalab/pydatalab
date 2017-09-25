@@ -792,7 +792,6 @@ WITH q1 AS (
       args = {'name': 'bq_pipeline_test', 'debug': True, 'billing': 'foo_billing'}
       # TODO(rajivpb): The references to foo_query need to be resolved.
       cell_body = """
-              email: foo@bar.com
               schedule:
                   start: 2009-05-05T22:28:15Z
                   end: 2009-05-06T22:28:15Z

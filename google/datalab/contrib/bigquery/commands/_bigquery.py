@@ -76,9 +76,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config, cell_args):
                                                 cell_args)
   extract_task_config = _get_extract_parameters(execute_task_config_name, execute_task_config,
                                                 output_config)
-
   pipeline_spec = {
-    'email': bq_pipeline_config['email'],
     'schedule': bq_pipeline_config['schedule'],
   }
 

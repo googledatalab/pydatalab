@@ -38,7 +38,6 @@ class TestCases(unittest.TestCase):
 
   # test pipeline creation
   sample_cell_body = """
-email: foo@bar.com
 schedule:
   start: 2009-05-05T22:28:15Z
   end: 2009-05-06T22:28:15Z
@@ -112,7 +111,6 @@ tasks:
 
     # test pipeline creation
     p_body = """
-email: foo@bar.com
 schedule:
   start: 2009-05-05T22:28:15Z
   end: 2009-05-06T22:28:15Z

@@ -73,8 +73,7 @@ from pytz import timezone
     start_datetime_obj = self._pipeline_spec.get('schedule').get('start')
     end_datetime_obj = self._pipeline_spec.get('schedule').get('end')
 
-    default_args = Pipeline._get_default_args(
-        self._pipeline_spec['email'], start_datetime_obj, end_datetime_obj)
+    default_args = Pipeline._get_default_args(start_datetime_obj, end_datetime_obj)
     dag_definition = self._get_dag_definition(
         self._pipeline_spec.get('schedule')['interval'])
 
@@ -91,16 +90,17 @@ from pytz import timezone
         task_definitions + up_steam_statements
 
   @staticmethod
-  def _get_default_args(email, start, end):
+  def _get_default_args(start, end):
     start_date_str = Pipeline._get_datetime_expr_str(start)
     end_date_str = Pipeline._get_datetime_expr_str(end)
+    #TODO(rajivpb): Get the email address in some other way.
     airflow_default_args_format = """
 default_args = {{
     'owner': 'Datalab',
     'depends_on_past': False,
-    'email': ['{0}'],
-    'start_date': {1},
-    'end_date': {2},
+    'email': ['foo@bar.com'],
+    'start_date': {0},
+    'end_date': {1},
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
@@ -108,7 +108,7 @@ default_args = {{
 }}
 
 """
-    return airflow_default_args_format.format(email, start_date_str, end_date_str)
+    return airflow_default_args_format.format(start_date_str, end_date_str)
 
   @staticmethod
   def _get_datetime_expr_str(datetime_obj):

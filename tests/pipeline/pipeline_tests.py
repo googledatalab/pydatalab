@@ -31,7 +31,6 @@ import google.auth
 class PipelineTest(unittest.TestCase):
 
   _test_pipeline_yaml_spec = """
-email: foo@bar.com
 schedule:
   start: 2009-05-05T22:28:15Z
   end: 2009-05-06T22:28:15Z
@@ -313,10 +312,8 @@ tasks:
     import yaml
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     self.assertEqual(
-        pipeline.Pipeline._get_default_args(
-            dag_dict['email'],
-            dag_dict.get('schedule').get('start'),
-            dag_dict.get('schedule').get('end')),
+      pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
+                                          dag_dict.get('schedule').get('end')),
 """
 default_args = {
     'owner': 'Datalab',
