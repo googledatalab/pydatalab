@@ -974,7 +974,7 @@ WITH q1 AS (
 
     args = {'billing': 'billing_value'}
     default_context = google.datalab.Context.default()
-    c = google.datalab.bigquery.commands._bigquery._construct_context_for_args(args)
+    c = google.datalab.Context._construct_context_for_args(args)
 
     # make sure it's not the same object
     self.assertNotEqual(c, default_context)
@@ -985,7 +985,7 @@ WITH q1 AS (
     self.assertEqual(c.config, {'bigquery_billing_tier': 'billing_value'})
 
     default_context.config['test_prop'] = 'test_val'
-    c = google.datalab.bigquery.commands._bigquery._construct_context_for_args(args)
+    c = google.datalab.Context._construct_context_for_args(args)
     # make sure other properties in default context were copied
     self.assertEqual(c.config, {'bigquery_billing_tier': 'billing_value', 'test_prop': 'test_val'})
 

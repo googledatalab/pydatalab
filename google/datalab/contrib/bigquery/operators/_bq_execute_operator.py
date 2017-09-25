@@ -33,12 +33,10 @@ class ExecuteOperator(BaseOperator):
     self._cell_args = cell_args
 
   def execute(self, context):
-    query = google.datalab.bigquery.Query(sql=self._sql, udfs=self._udfs,
-                                          data_sources=self._data_sources,
-                                          subqueries=self._subqueries)
+    query = google.datalab.bigquery.Query(
+      sql=self._sql, udfs=self._udfs, data_sources=self._data_sources, subqueries=self._subqueries)
+    output_options = bq.QueryOutput.table(
+      name=self._table, mode=self._mode, use_cache=False, allow_large_results=True)
+    pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
     query_params = Pipeline._get_query_parameters(self._parameters)
-    output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
-                                          allow_large_results=True)
-    pydatalab_context = google.datalab.bigquery.commands._bigquery._construct_context_for_args(
-      self._cell_args)
     query.execute(output_options, context=pydatalab_context, query_params=query_params)

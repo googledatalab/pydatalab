@@ -52,7 +52,7 @@ def _pipeline_cell(args, cell_body):
 
     bq_pipeline_config = google.datalab.utils.commands.parse_config(
         cell_body, google.datalab.utils.commands.notebook_environment())
-    context = google.datalab.bigquery.commands._bigquery._construct_context_for_args(args)
+    context = google.datalab.Context._construct_context_for_args(args)
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config, args)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     google.datalab.utils.commands.notebook_environment()[name] = pipeline

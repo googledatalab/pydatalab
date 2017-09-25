@@ -265,6 +265,30 @@ def get_default_project_id():
   return None
 
 
+def _construct_context_for_args(args):
+  """Construct a new Context for the parsed arguments.
+
+  Args:
+    args: the dictionary of magic arguments.
+  Returns:
+    A new Context based on the current default context, but with any explicitly
+      specified arguments overriding the default's config.
+  """
+  global_default_context = google.datalab.Context.default()
+  config = {}
+  for key in global_default_context.config:
+    config[key] = global_default_context.config[key]
+
+  billing_tier_arg = args.get('billing', None)
+  if billing_tier_arg:
+    config['bigquery_billing_tier'] = billing_tier_arg
+
+  return google.datalab.Context(
+    project_id=global_default_context.project_id,
+    credentials=global_default_context.credentials,
+    config=config)
+
+
 def python_portable_string(string, encoding='utf-8'):
   """Converts bytes into a string type.
 

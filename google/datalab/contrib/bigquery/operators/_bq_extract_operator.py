@@ -29,13 +29,12 @@ class ExtractOperator(BaseOperator):
     self._cell_args = cell_args
 
   def execute(self, context):
-    pydatalab_context = google.datalab.bigquery.commands._bigquery._construct_context_for_args(
-      self._cell_args)
+
     if self._table:
+      pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
       source_table = google.datalab.bigquery.Table(self._table, context=pydatalab_context)
       if not source_table:
         raise Exception('Could not find table %s' % self._table)
-
       job = source_table.extract(
           self._path,
           format='CSV' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON',
