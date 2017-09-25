@@ -70,13 +70,13 @@ from pytz import timezone
 
     # Work-around for yaml.load() limitation. Strings that look like datetimes
     # are parsed into timezone _unaware_ timezone objects.
-    start_datetime_obj = self._pipeline_spec.get('schedule').get('start_date')
-    end_datetime_obj = self._pipeline_spec.get('schedule').get('end_date')
+    start_datetime_obj = self._pipeline_spec.get('schedule').get('start')
+    end_datetime_obj = self._pipeline_spec.get('schedule').get('end')
 
     default_args = Pipeline._get_default_args(
         self._pipeline_spec['email'], start_datetime_obj, end_datetime_obj)
     dag_definition = self._get_dag_definition(
-        self._pipeline_spec.get('schedule')['schedule_interval'])
+        self._pipeline_spec.get('schedule')['interval'])
 
     task_definitions = ''
     up_steam_statements = ''
@@ -91,9 +91,9 @@ from pytz import timezone
         task_definitions + up_steam_statements
 
   @staticmethod
-  def _get_default_args(email, start_date, end_date):
-    start_date_str = Pipeline._get_datetime_expr_str(start_date)
-    end_date_str = Pipeline._get_datetime_expr_str(end_date)
+  def _get_default_args(email, start, end):
+    start_date_str = Pipeline._get_datetime_expr_str(start)
+    end_date_str = Pipeline._get_datetime_expr_str(end)
     airflow_default_args_format = """
 default_args = {{
     'owner': 'Datalab',
@@ -112,7 +112,7 @@ default_args = {{
 
   @staticmethod
   def _get_datetime_expr_str(datetime_obj):
-    # User is expected to always provide start_date and end_date in UTC and in
+    # User is expected to always provide start and end in UTC and in
     # the %Y-%m-%dT%H:%M:%SZ format (i.e. _with_ the trailing 'Z' to
     # signify UTC).
     # However, due to a bug/feature in yaml.load(), strings that look like

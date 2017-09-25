@@ -33,9 +33,9 @@ class PipelineTest(unittest.TestCase):
   _test_pipeline_yaml_spec = """
 email: foo@bar.com
 schedule:
-  start_date: 2009-05-05T22:28:15Z
-  end_date: 2009-05-06T22:28:15Z
-  schedule_interval: '0-59 * * * *'
+  start: 2009-05-05T22:28:15Z
+  end: 2009-05-06T22:28:15Z
+  interval: '0-59 * * * *'
 tasks:
   current_timestamp:
     type: bq.execute
@@ -299,8 +299,8 @@ tasks:
 
   def test_get_datetime_expr(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
-    start_date = dag_dict.get('schedule').get('start_date')
-    datetime_expr = pipeline.Pipeline._get_datetime_expr_str(start_date)
+    start = dag_dict.get('schedule').get('start')
+    datetime_expr = pipeline.Pipeline._get_datetime_expr_str(start)
 
     self.assertEqual(datetime_expr,
                      'datetime.datetime.strptime(\'2009-05-05T22:28:15\', '
@@ -315,8 +315,8 @@ tasks:
     self.assertEqual(
         pipeline.Pipeline._get_default_args(
             dag_dict['email'],
-            dag_dict.get('schedule').get('start_date'),
-            dag_dict.get('schedule').get('end_date')),
+            dag_dict.get('schedule').get('start'),
+            dag_dict.get('schedule').get('end')),
 """
 default_args = {
     'owner': 'Datalab',

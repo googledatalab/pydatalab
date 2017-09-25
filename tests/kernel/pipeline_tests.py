@@ -40,9 +40,9 @@ class TestCases(unittest.TestCase):
   sample_cell_body = """
 email: foo@bar.com
 schedule:
-  start_date: 2009-05-05T22:28:15Z
-  end_date: 2009-05-06T22:28:15Z
-  schedule_interval: '@hourly'
+  start: 2009-05-05T22:28:15Z
+  end: 2009-05-06T22:28:15Z
+  interval: '@hourly'
 tasks:
   print_pdt_date:
     type: bash
@@ -114,9 +114,9 @@ tasks:
     p_body = """
 email: foo@bar.com
 schedule:
-  start_date: 2009-05-05T22:28:15Z
-  end_date: 2009-05-06T22:28:15Z
-  schedule_interval: '@hourly'
+  start: 2009-05-05T22:28:15Z
+  end: 2009-05-06T22:28:15Z
+  interval: '@hourly'
 tasks:
   foo_task_1:
     type: BigQuery

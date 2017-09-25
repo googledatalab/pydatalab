@@ -14,8 +14,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import google.datalab.contrib.pipeline._pipeline as pipeline
 import mock
-import pickle
-import re
 import unittest
 
 
