@@ -115,6 +115,9 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'ipykernel==4.5.2',
     'psutil==4.3.0',
     'jsonschema==2.6.0',
+    # six needs to be pinned to 1.10.0 to work-around an apache_beam bug:
+    # https://stackoverflow.com/questions/46300173/import-apache-beam-metaclass-conflict
+    'six==1.10.0',
   ],
   package_data={
     'google.datalab.notebook': [
