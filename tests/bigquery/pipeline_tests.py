@@ -88,7 +88,6 @@ class TestCases(unittest.TestCase):
     }
     self.assertDictEqual(actual_load_config, expected_load_config)
 
-
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.bigquery.Table.exists')
