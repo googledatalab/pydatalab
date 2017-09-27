@@ -17,6 +17,8 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 import argparse
+import json
+import os
 import pandas as pd
 import psutil
 import subprocess
@@ -26,13 +28,25 @@ import google.datalab as datalab
 
 
 class TensorBoard(object):
-  """Start, shutdown, and list TensorBoard instances.
-  """
+  """Start, shutdown, and list TensorBoard instances."""
+
+  @staticmethod
+  def _get_base_path():
+    """Get base path from environment variable. If not exists, returns ''."""
+
+    if 'DATALAB_SETTINGS_OVERRIDES' not in os.environ:
+      return ''
+
+    try:
+      settings = json.loads(os.environ['DATALAB_SETTINGS_OVERRIDES'])
+      return settings.get('datalabBasePath', '')
+    except:
+      return ''
 
   @staticmethod
   def list():
-    """List running TensorBoard instances.
-    """
+    """List running TensorBoard instances."""
+
     running_list = []
     parser = argparse.ArgumentParser()
     parser.add_argument('--logdir')
@@ -67,7 +81,8 @@ class TensorBoard(object):
     retry = 10
     while (retry > 0):
       if datalab.utils.is_http_running_on(port):
-        url = '/_proxy/%d/' % port
+        basepath = TensorBoard._get_base_path()
+        url = '%s/_proxy/%d/' % (basepath.rstrip('/'), port)
         html = '<p>TensorBoard was started successfully with pid %d. ' % p.pid
         html += 'Click <a href="%s" target="_blank">here</a> to access it.</p>' % url
         IPython.display.display_html(html, raw=True)
