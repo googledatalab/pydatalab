@@ -112,6 +112,20 @@ class ConfusionMatrix(object):
       cm[row['target']][row['predicted']] = row['count']
     return ConfusionMatrix(cm, labels)
 
+  def to_dataframe(self):
+    """Convert the confusion matrix to a dataframe.
+
+    Returns:
+      A DataFrame with "target", "predicted", "count" columns.
+    """
+
+    data = []
+    for target_index, target_row in enumerate(self._cm):
+      for predicted_index, count in enumerate(target_row):
+        data.append((self._labels[target_index], self._labels[predicted_index], count))
+
+    return pd.DataFrame(data, columns=['target', 'predicted', 'count'])
+
   def plot(self, figsize=None, rotation=45):
     """Plot the confusion matrix.
 

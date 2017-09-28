@@ -432,6 +432,36 @@ def ml(line, cell=None):
       'list', help='List tensorboard instances.')
   tensorboard_list_parser.set_defaults(func=_tensorboard_list)
 
+  evaluate_parser = parser.subcommand(
+      'evaluate',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Analyze model evaluation results, such as confusion matrix, ROC.')
+  evaluate_sub_commands = evaluate_parser.add_subparsers(dest='command')
+
+  evaluate_cm_parser = evaluate_sub_commands.add_parser(
+      'confusion_matrix', help='Get confusion matrix from evaluation results.')
+  evaluate_cm_parser.add_argument('--plot', action='store_true', default=False,
+                                  help='Whether to plot confusion matrix as graph.')
+  evaluate_cm_parser.add_cell_argument(
+      'data',
+      required=True,
+      help=textwrap.dedent("""\
+          prediction results data. It is can be csv or bigquery. For example:
+            data:
+              csv: path/to/file.csv
+              headers: target,predicted,class_prob1,,,
+          or
+            data:
+              bigquery: image_classification_results.flower
+          or
+            data:
+              bigquery: select target, predicted from mytable where ...
+          note that you can use pre-defined queries (%%bq query --name), such as
+            data:
+              bigquery: $my_query
+      """))
+  evaluate_cm_parser.set_defaults(func=_evaluate_cm)
+
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
@@ -796,3 +826,18 @@ def _tensorboard_stop(args, cell):
 
 def _tensorboard_list(args, cell):
   return datalab_ml.TensorBoard.list()
+
+
+def _evaluate_cm(args, cell):
+  data = args['data']
+  if 'csv' in data:
+    if 'headers' not in data:
+      raise ValueError('csv data requires headers.')
+    headers = [x.strip() for x in data['headers'].split(',')]
+    cm = datalab_ml.ConfusionMatrix.from_csv(data['csv'], headers=headers)
+  elif 'bigquery' in data:
+    cm = datalab_ml.ConfusionMatrix.from_bigquery(data['bigquery'])
+  if args['plot']:
+    return cm.plot()
+  else:
+    return cm.to_dataframe()
