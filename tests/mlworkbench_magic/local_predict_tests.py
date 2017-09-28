@@ -112,9 +112,9 @@ class TestLocalPredictions(unittest.TestCase):
     image_path1 = os.path.join(self._test_dir, 'img1.jpg')
     image_path2 = os.path.join(self._test_dir, 'img2.jpg')
     image_path3 = os.path.join(self._test_dir, 'img3.jpg')
-    Image.new('RGBA', size=(128, 128), color=(155, 211, 64)).save(image_path1, "JPEG")
+    Image.new('RGB', size=(128, 128), color=(155, 211, 64)).save(image_path1, "JPEG")
     Image.new('RGB', size=(64, 64), color=(111, 21, 86)).save(image_path2, "JPEG")
-    Image.new('RGBA', size=(16, 16), color=(255, 21, 1)).save(image_path3, "JPEG")
+    Image.new('RGB', size=(16, 16), color=(255, 21, 1)).save(image_path3, "JPEG")
 
     data = [
         {'key': 1, 'num1': 4.1, 'text1': '32', 'img_url1': image_path1},
@@ -184,6 +184,8 @@ class TestLocalPredictions(unittest.TestCase):
       self._validate_results(df, True, False)
 
   def test_get_probs_for_labels(self):
+    """Test get_probs_for_labels when top-n is set to non-zero (default)."""
+
     prediction_data = [
       {'predicted': 'daisy', 'probability': 0.8,
        'predicted_2': 'rose', 'probability_2': 0.1,
@@ -191,6 +193,21 @@ class TestLocalPredictions(unittest.TestCase):
       {'predicted': 'sunflower', 'probability': 0.9,
        'predicted_2': 'daisy', 'probability_2': 0.01,
        'predicted_3': 'rose', 'probability_3': 0.02},
+    ]
+    labels = ['daisy', 'rose', 'sunflower']
+    probs = mlw.get_probs_for_labels(labels, pd.DataFrame(prediction_data))
+    expected_probs = [
+      [0.8, 0.1, 0.05],
+      [0.01, 0.02, 0.9],
+    ]
+    self.assertEqual(expected_probs, probs)
+
+  def test_get_probs_for_labels_topn_0(self):
+    """Test get_probs_for_labels when top-n is set to zero."""
+
+    prediction_data = [
+      {'predicted': 'daisy', 'daisy': 0.8, 'rose': 0.1, 'sunflower': 0.05},
+      {'predicted': 'sunflower', 'sunflower': 0.9, 'daisy': 0.01, 'rose': 0.02}
     ]
     labels = ['daisy', 'rose', 'sunflower']
     probs = mlw.get_probs_for_labels(labels, pd.DataFrame(prediction_data))

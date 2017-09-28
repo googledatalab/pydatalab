@@ -217,10 +217,10 @@ class TestClassificationTopN(unittest.TestCase):
           csv_data=['20'])
 
       keys = result.keys()
-      self.assertIn('probability', keys)
-      self.assertIn('probability_2', keys)
-      self.assertIn('probability_3', keys)
-      self.assertNotIn('probability_4', keys)
+      self.assertIn('predicted', keys)
+      self.assertIn('1', keys)
+      self.assertIn('2', keys)
+      self.assertIn('3', keys)
     finally:
       shutil.rmtree(output_dir)
 
