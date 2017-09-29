@@ -40,6 +40,7 @@ import kernel.html_tests
 import kernel.pipeline_tests
 import kernel.storage_tests
 import kernel.utils_tests
+import ml.confusion_matrix_tests
 import ml.dataset_tests
 import ml.facets_tests
 import ml.summary_tests
@@ -95,6 +96,7 @@ _UNIT_TEST_MODULES = [
     kernel.pipeline_tests,
     kernel.storage_tests,
     kernel.utils_tests,
+    ml.confusion_matrix_tests,
     ml.dataset_tests,
     ml.facets_tests,
     ml.summary_tests,

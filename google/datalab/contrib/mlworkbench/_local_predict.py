@@ -240,7 +240,7 @@ def get_prediction_results(model_dir_or_id, data, headers, img_cols=None,
 
 
 def get_probs_for_labels(labels, prediction_results):
-  """ Given prediction results, get probs of each label for each instance.
+  """ Given ML Workbench prediction results, get probs of each label for each instance.
 
   The prediction results are like:
   [
@@ -271,17 +271,30 @@ def get_probs_for_labels(labels, prediction_results):
   """
 
   probs = []
-  for i, r in prediction_results.iterrows():
-    probs_one = [0.0] * len(labels)
-    for k, v in six.iteritems(r):
-      if v in labels and k.startswith('predicted'):
-        if k == 'predict':
-          prob_name = 'probability'
-        else:
-          prob_name = 'probability' + k[9:]
-        probs_one[labels.index(v)] = r[prob_name]
-    probs.append(probs_one)
-  return probs
+  if 'probability' in prediction_results:
+    # 'probability' exists so top-n is set to none zero, and results are like
+    # "predicted, predicted_2,...,probability,probability_2,...
+    for i, r in prediction_results.iterrows():
+      probs_one = [0.0] * len(labels)
+      for k, v in six.iteritems(r):
+        if v in labels and k.startswith('predicted'):
+          if k == 'predict':
+            prob_name = 'probability'
+          else:
+            prob_name = 'probability' + k[9:]
+          probs_one[labels.index(v)] = r[prob_name]
+      probs.append(probs_one)
+    return probs
+  else:
+    # 'probability' does not exist, so top-n is set to zero. Results are like
+    # "predicted, class_name1, class_name2,...
+    for i, r in prediction_results.iterrows():
+      probs_one = [0.0] * len(labels)
+      for k, v in six.iteritems(r):
+        if k in labels:
+          probs_one[labels.index(k)] = v
+      probs.append(probs_one)
+    return probs
 
 
 def _batch_csv_reader(csv_file, n):
