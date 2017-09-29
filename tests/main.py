@@ -41,6 +41,7 @@ import kernel.utils_tests
 import ml.confusion_matrix_tests
 import ml.dataset_tests
 import ml.facets_tests
+import ml.metrics_tests
 import ml.summary_tests
 import ml.tensorboard_tests
 import mltoolbox_code_free_ml.all_tests
@@ -95,6 +96,7 @@ _UNIT_TEST_MODULES = [
     ml.confusion_matrix_tests,
     ml.dataset_tests,
     ml.facets_tests,
+    ml.metrics_tests,
     ml.summary_tests,
     mlworkbench_magic.ml_tests,
     pipeline.pipeline_tests,
