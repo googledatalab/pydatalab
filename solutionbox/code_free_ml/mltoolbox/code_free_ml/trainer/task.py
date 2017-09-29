@@ -172,8 +172,10 @@ def parse_arguments(argv):
   parser.add_argument(
       '--top-n', type=int, default=1, metavar='N',
       help=('For classification problems, the output graph will contain the '
-            'labels and scores for the top n classes. If --top-n=0, then '
-            'all labels and scores are returned.'))
+            'labels and scores for the top n classes, and results will be in the form of '
+            '"predicted, predicted_2, ..., probability, probability_2, ...". '
+            'If --top-n=0, then all labels and scores are returned in the form of '
+            '"predicted, class_name1, class_name2,...".'))
 
   # HP parameters
   parser.add_argument(
@@ -374,9 +376,9 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
   if is_classification_model(args.model):
 
     # build maps from ints to the origional categorical strings.
-    string_values = read_vocab(args, target_name)
+    class_names = read_vocab(args, target_name)
     table = tf.contrib.lookup.index_to_string_table_from_tensor(
-        mapping=string_values,
+        mapping=class_names,
         default_value='UNKNOWN')
 
     # Get the label of the input target.
@@ -387,45 +389,51 @@ def make_prediction_output_tensors(args, features, input_ops, model_fn_ops,
     # TODO(brandondutra): get the score of the target label too.
     probabilities = model_fn_ops.predictions['probabilities']
 
-    # if top_n == 0, this means use all the classes.
+    # if top_n == 0, this means use all the classes. We will use class names as
+    # probabilities labels.
     if args.top_n == 0:
-      top_n = probabilities.shape[1].value
+      predicted_index = tf.argmax(probabilities, axis=1)
+      predicted = table.lookup(predicted_index)
+      outputs.update({PG_CLASSIFICATION_FIRST_LABEL: predicted})
+      probabilities_list = tf.unstack(probabilities, axis=1)
+      for class_name, p in zip(class_names, probabilities_list):
+        outputs[class_name] = p
     else:
       top_n = args.top_n
 
-    # get top k labels and their scores.
-    (top_k_values, top_k_indices) = tf.nn.top_k(probabilities, k=top_n)
-    top_k_labels = table.lookup(tf.to_int64(top_k_indices))
+      # get top k labels and their scores.
+      (top_k_values, top_k_indices) = tf.nn.top_k(probabilities, k=top_n)
+      top_k_labels = table.lookup(tf.to_int64(top_k_indices))
 
-    # Write the top_k values using 2*top_n columns.
-    num_digits = int(math.ceil(math.log(top_n, 10)))
-    if num_digits == 0:
-      num_digits = 1
-    for i in range(0, top_n):
-      # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
-      # makes sorting the columns easy.
-      padded_i = str(i + 1).zfill(num_digits)
+      # Write the top_k values using 2*top_n columns.
+      num_digits = int(math.ceil(math.log(top_n, 10)))
+      if num_digits == 0:
+        num_digits = 1
+      for i in range(0, top_n):
+        # Pad i based on the size of k. So if k = 100, i = 23 -> i = '023'. This
+        # makes sorting the columns easy.
+        padded_i = str(i + 1).zfill(num_digits)
 
-      if i == 0:
-        label_alias = PG_CLASSIFICATION_FIRST_LABEL
-      else:
-        label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
+        if i == 0:
+          label_alias = PG_CLASSIFICATION_FIRST_LABEL
+        else:
+          label_alias = PG_CLASSIFICATION_LABEL_TEMPLATE % padded_i
 
-      label_tensor_name = (tf.squeeze(
-          tf.slice(top_k_labels, [0, i], [tf.shape(top_k_labels)[0], 1])))
+        label_tensor_name = (tf.squeeze(
+            tf.slice(top_k_labels, [0, i], [tf.shape(top_k_labels)[0], 1])))
 
-      if i == 0:
-        score_alias = PG_CLASSIFICATION_FIRST_SCORE
-      else:
-        score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
+        if i == 0:
+          score_alias = PG_CLASSIFICATION_FIRST_SCORE
+        else:
+          score_alias = PG_CLASSIFICATION_SCORE_TEMPLATE % padded_i
 
-      score_tensor_name = (tf.squeeze(
-          tf.slice(top_k_values,
-                   [0, i],
-                   [tf.shape(top_k_values)[0], 1])))
+        score_tensor_name = (tf.squeeze(
+            tf.slice(top_k_values,
+                     [0, i],
+                     [tf.shape(top_k_values)[0], 1])))
 
-      outputs.update({label_alias: label_tensor_name,
-                      score_alias: score_tensor_name})
+        outputs.update({label_alias: label_tensor_name,
+                        score_alias: score_tensor_name})
 
   else:
     if keep_target:
