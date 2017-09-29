@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google
+import google.datalab.bigquery as bq
 import jsonschema
 from google.datalab import utils
 
@@ -256,7 +256,7 @@ default_args = {{
     parsed_params = []
     if input_query_parameters:
       jsonschema.validate({'parameters': input_query_parameters},
-                          google.datalab.bigquery.commands._bigquery.query_params_schema)
+                          bq.commands._bigquery.query_params_schema)
 
       for param in input_query_parameters:
         parsed_params.append({
@@ -273,7 +273,7 @@ default_args = {{
   @staticmethod
   def _get_bq_extract_params(operator_task_details):
     if 'table' in operator_task_details:
-      table = google.datalab.bigquery.commands._bigquery._get_table(operator_task_details['table'])
+      table = bq.commands._bigquery._get_table(operator_task_details['table'])
       operator_task_details['source_project_dataset_table'] = table.full_name
       del operator_task_details['table']
     if 'path' in operator_task_details:
@@ -299,9 +299,9 @@ default_args = {{
   @staticmethod
   def _get_bq_load_params(operator_task_details):
     if 'table' in operator_task_details:
-      table = google.datalab.bigquery.commands._bigquery._get_table(operator_task_details['table'])
+      table = bq.commands._bigquery._get_table(operator_task_details['table'])
       if not table:
-        table = google.datalab.bigquery.Table(operator_task_details['table'])
+        table = bq.Table(operator_task_details['table'])
         # TODO(rajivpb): Ensure that mode == create here.
       operator_task_details['destination_project_dataset_table'] = table.full_name
       del operator_task_details['table']

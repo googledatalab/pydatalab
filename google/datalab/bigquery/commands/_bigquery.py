@@ -30,8 +30,7 @@ import json
 import re
 
 import google.datalab.bigquery
-import google.datalab.contrib
-import google.datalab.contrib.bigquery.commands._bigquery
+import google.datalab.contrib.bigquery as contrib_bq
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
@@ -903,8 +902,8 @@ for help on a specific command.
 
   # %bq pipeline
   _add_command(parser,
-               google.datalab.contrib.bigquery.commands._bigquery._create_pipeline_subparser,
-               google.datalab.contrib.bigquery.commands._bigquery._pipeline_cell)
+               contrib_bq.commands._bigquery._create_pipeline_subparser,
+               contrib_bq.commands._bigquery._pipeline_cell)
 
   return parser
 

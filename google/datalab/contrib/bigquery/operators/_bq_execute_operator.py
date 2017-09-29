@@ -11,6 +11,7 @@
 # the License.
 
 import google
+import google.datalab.bigquery as bq
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 from google.datalab.contrib.pipeline._pipeline import Pipeline
@@ -32,10 +33,10 @@ class ExecuteOperator(BaseOperator):
     self._cell_args = cell_args
 
   def execute(self, context):
-    query = google.datalab.bigquery.Query(
+    query = bq.Query(
       sql=self._sql, udfs=self._udfs, data_sources=self._data_sources, subqueries=self._subqueries)
-    output_options = google.datalab.bigquery.QueryOutput.table(
-      name=self._table, mode=self._mode, use_cache=False, allow_large_results=True)
+    output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
+                                          allow_large_results=True)
     pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
     query_params = Pipeline._get_query_parameters(self._parameters)
     query.execute(output_options, context=pydatalab_context, query_params=query_params)

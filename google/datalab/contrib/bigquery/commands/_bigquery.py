@@ -12,10 +12,7 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
-import google.datalab.bigquery
-import google.datalab.data
-import google.datalab.utils
-import google.datalab.utils.commands
+import google.datalab.utils as utils
 
 
 def _create_pipeline_subparser(parser):
@@ -50,11 +47,11 @@ def _pipeline_cell(args, cell_body):
     if name is None:
         raise Exception("Pipeline name was not specified.")
 
-    bq_pipeline_config = google.datalab.utils.commands.parse_config(
-        cell_body, google.datalab.utils.commands.notebook_environment())
+    bq_pipeline_config = utils.commands.parse_config(
+        cell_body, utils.commands.notebook_environment())
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config, args)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
-    google.datalab.utils.commands.notebook_environment()[name] = pipeline
+    utils.commands.notebook_environment()[name] = pipeline
 
     debug = args.get('debug')
     if debug is True:

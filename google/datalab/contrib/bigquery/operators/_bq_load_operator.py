@@ -11,6 +11,7 @@
 # the License.
 
 import google
+import google.datalab.bigquery as bq
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
@@ -43,7 +44,7 @@ class LoadOperator(BaseOperator):
   def execute(self, context):
     if self._table:
       pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
-      table = google.datalab.bigquery.Table(self._table, context=pydatalab_context)
+      table = bq.Table(self._table, context=pydatalab_context)
 
     if self._mode == 'create':
       if table.exists():
@@ -56,7 +57,7 @@ class LoadOperator(BaseOperator):
     elif not table.exists():
       raise Exception('%s does not exist; mode should be \'create\'' % self._table)
 
-    csv_options = google.datalab.bigquery.CSVOptions(
+    csv_options = bq.CSVOptions(
       delimiter=self._delimiter, skip_leading_rows=self._skip, allow_jagged_rows=self._strict,
       quote=self._quote)
     job = table.load(self._path, mode=self._mode,
