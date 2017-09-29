@@ -43,7 +43,7 @@ class LoadOperator(BaseOperator):
 
   def execute(self, context):
     if self._table:
-      pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
+      pydatalab_context = google.datalab.Context.default()
       table = bq.Table(self._table, context=pydatalab_context)
 
     if self._mode == 'create':

@@ -14,6 +14,7 @@
 
 import google
 import google.auth
+import google.datalab.contrib.bigquery.commands._bigquery as bq
 import mock
 import re
 import unittest
@@ -33,8 +34,7 @@ class TestCases(unittest.TestCase):
       'table': 'test_table',
       'schema': 'test_schema'
     }
-    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
-      input_config)
+    actual_load_config = bq._get_load_parameters(input_config)
     expected_load_config = {
       'type': 'pydatalab.bq.load',
       'format': 'csv',
@@ -53,30 +53,26 @@ class TestCases(unittest.TestCase):
       'path': 'test_path',
       'table': 'test_table',
     }
-    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
-      input_config)
+    actual_load_config = bq._get_load_parameters(input_config)
     self.assertEqual(actual_load_config['mode'], 'append')
 
     input_config = {
       'table': 'test_table',
       'schema': 'test_schema'
     }
-    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
-      input_config)
+    actual_load_config = bq._get_load_parameters(input_config)
     self.assertIsNone(actual_load_config)
 
     input_config = {
       'schema': 'test_schema'
     }
-    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
-      input_config)
+    actual_load_config = bq._get_load_parameters(input_config)
     self.assertIsNone(actual_load_config)
 
     input_config = {
       'path': 'test_path',
     }
-    actual_load_config = google.datalab.contrib.bigquery.commands._bigquery._get_load_parameters(
-      input_config)
+    actual_load_config = bq._get_load_parameters(input_config)
     expected_load_config = {
       'type': 'pydatalab.bq.load',
       'format': 'csv',
@@ -88,12 +84,46 @@ class TestCases(unittest.TestCase):
     }
     self.assertDictEqual(actual_load_config, expected_load_config)
 
+    input_config = {
+      'path': 'test_path',
+      'format': 'json'
+    }
+    actual_load_config = bq._get_load_parameters(input_config)
+    expected_load_config = {
+      'type': 'pydatalab.bq.load',
+      'format': 'json',
+      'path': 'test_path',
+    }
+    self.assertDictEqual(actual_load_config, expected_load_config)
+
+  def test_get_extract_parameters(self):
+    input_config = {
+      'path': 'test_path',
+      'table': 'test_table',
+    }
+    execute_config = {}
+    actual_extract_config = bq._get_extract_parameters('foo_execute_task', execute_config,
+                                                       input_config)
+    expected_extract_config = {
+      'type': 'pydatalab.bq.extract',
+      'up_stream': ['foo_execute_task'],
+      'format': 'csv',
+      'delimiter': ',',
+      'header': True,
+      'compress': True,
+      'path': 'test_path',
+      'table': 'test_table',
+    }
+
+    self.assertDictEqual(actual_extract_config, expected_extract_config)
+    self.assertDictEqual(execute_config, {'table': 'test_table'})
+
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_pipeline_cell(self, mock_get_table, mock_table_exists, mock_environment,
-                         mock_default_context):
+  def test_pipeline_cell_golden(self, mock_get_table, mock_table_exists, mock_environment,
+                                mock_default_context):
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
     mock_table_exists.return_value = True
@@ -106,7 +136,7 @@ class TestCases(unittest.TestCase):
     }
     mock_environment.return_value = env
 
-    args = {'name': 'bq_pipeline_test', 'debug': True, 'billing': 'foo_billing'}
+    args = {'name': 'bq_pipeline_test', 'debug': True}
     # TODO(rajivpb): The references to foo_query need to be resolved.
     cell_body = """
             schedule:
@@ -116,6 +146,12 @@ class TestCases(unittest.TestCase):
             input:
                 path: test/path
                 table: project.test.table
+                csv:
+                  header: True
+                  strict: False
+                  quote: '"'
+                  skip: 5
+                  delimiter: ','
                 schema:
                     - name: col1
                       type: int64
@@ -132,7 +168,7 @@ class TestCases(unittest.TestCase):
                 table: project.test.table
        """
 
-    output = google.datalab.contrib.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
+    output = bq._pipeline_cell(args, cell_body)
 
     pattern = re.compile("""
 import datetime
@@ -163,22 +199,18 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', cell_args=(.*), mode='create', query='foo_query', table='project.test.table', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', compress=True, delimiter=',', format='csv', header=True, path='test/path', dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=0, strict=True, table='project.test.table', dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', mode='create', query='foo_query', table='project.test.table', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', compress=True, delimiter=',', format='csv', header=True, path='test/path', table='project.test.table', dag=dag\)
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=5, strict=False, table='project.test.table', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
 
+    print(output)
     self.assertIsNotNone(pattern.match(output))
 
-    # group(1) has the string that follows the "cell_args=", i.e. the list of dicts.
-    actual_args_str = pattern.match(output).group(1)
-    expected_args_str = '{0}'.format(args)
-    self.assertEqual(expected_args_str, actual_args_str)
-
-    # group(2) has the string that follows the "schema=", i.e. the list of dicts.
-    actual_schema_str = pattern.match(output).group(2)
+    # group(1) has the string that follows the "schema=", i.e. the list of dicts.
+    actual_schema_str = pattern.match(output).group(1)
     self.assertIn("'type': 'int64'", actual_schema_str)
     self.assertIn("'mode': 'NULLABLE'", actual_schema_str)
     self.assertIn("'name': 'col1'", actual_schema_str)

@@ -21,7 +21,7 @@ class ExecuteOperator(BaseOperator):
 
   @apply_defaults
   def __init__(self, sql, udfs=None, data_sources=None, subqueries=None, parameters=None,
-               table=None, mode=None, cell_args=None, *args, **kwargs):
+               table=None, mode=None, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)
     self._sql = sql
     self._udfs = udfs
@@ -30,13 +30,12 @@ class ExecuteOperator(BaseOperator):
     self._table = table
     self._mode = mode
     self._parameters = parameters
-    self._cell_args = cell_args
 
   def execute(self, context):
     query = bq.Query(
       sql=self._sql, udfs=self._udfs, data_sources=self._data_sources, subqueries=self._subqueries)
     output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
                                           allow_large_results=True)
-    pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
+    pydatalab_context = google.datalab.Context.default()
     query_params = Pipeline._get_query_parameters(self._parameters)
     query.execute(output_options, context=pydatalab_context, query_params=query_params)

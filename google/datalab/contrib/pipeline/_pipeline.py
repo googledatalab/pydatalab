@@ -215,6 +215,8 @@ default_args = {{
     if 'up_stream' in operator_task_details.keys():
       del operator_task_details['up_stream']
 
+    # We special-case certain operators if we do some translation of the parameter names. This is
+    # usually the case when we use syntactic sugar to expose the functionality.
     if (operator_class_name == 'BigQueryOperator'):
       return Pipeline._get_bq_execute_params(operator_task_details)
     if (operator_class_name == 'BigQueryToCloudStorageOperator'):
@@ -256,7 +258,7 @@ default_args = {{
     parsed_params = []
     if input_query_parameters:
       jsonschema.validate({'parameters': input_query_parameters},
-                          bq.commands._bigquery.query_params_schema)
+                          bq.commands._bigquery.BigQuerySchema.QUERY_PARAMS_SCHEMA)
 
       for param in input_query_parameters:
         parsed_params.append({

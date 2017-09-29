@@ -18,7 +18,7 @@ from airflow.utils.decorators import apply_defaults
 class ExtractOperator(BaseOperator):
 
   @apply_defaults
-  def __init__(self, table, path, format, delimiter, header, compress, cell_args, *args, **kwargs):
+  def __init__(self, table, path, format, delimiter, header, compress, *args, **kwargs):
     super(ExtractOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
@@ -26,12 +26,11 @@ class ExtractOperator(BaseOperator):
     self._delimiter = delimiter
     self._header = header
     self._compress = compress
-    self._cell_args = cell_args
 
   def execute(self, context):
 
     if self._table:
-      pydatalab_context = google.datalab.Context._construct_context_for_args(self._cell_args)
+      pydatalab_context = google.datalab.Context.default()
       source_table = google.datalab.bigquery.Table(self._table, context=pydatalab_context)
       if not source_table:
         raise Exception('Could not find table %s' % self._table)

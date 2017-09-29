@@ -30,7 +30,7 @@ import json
 import re
 
 import google.datalab.bigquery
-import google.datalab.contrib.bigquery as contrib_bq
+import google.datalab.contrib.bigquery.commands._bigquery as contrib_bq
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
@@ -38,68 +38,72 @@ import google.datalab.utils.commands
 from google.datalab.bigquery._query_output import QueryOutput
 from google.datalab.bigquery._sampling import Sampling
 
-BIGQUERY_DATATYPES = ['STRING', 'BYTES', 'INTEGER', 'INT64', 'FLOAT', 'FLOAT64', 'BOOLEAN',
-                      'BOOL', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']
-BIGQUERY_DATATYPES_LOWER = [t.lower() for t in BIGQUERY_DATATYPES]
-BIGQUERY_MODES = ['NULLABLE', 'REQUIRED', 'REPEATED']
-BIGQUERY_MODES_LOWER = [m.lower() for m in BIGQUERY_MODES]
 
-table_schema_schema = {
-  'definitions': {
-    'field': {
-      'title': 'field',
-      'type': 'object',
-      'properties': {
-        'name': {'type': 'string'},
-        'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
-        'mode': {'type': 'string', 'enum': BIGQUERY_MODES + BIGQUERY_MODES_LOWER},
-        'description': {'type': 'string'},
-        'fields': {
-          'type': 'array',
-          'items': {
-            'allOf': [{'$ref': '#/definitions/field'}]
+class BigQuerySchema(object):
+  """A container class for commonly used BQ-related constants."""
+
+  BIGQUERY_DATATYPES = ['STRING', 'BYTES', 'INTEGER', 'INT64', 'FLOAT', 'FLOAT64', 'BOOLEAN',
+                        'BOOL', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']
+  BIGQUERY_DATATYPES_LOWER = [t.lower() for t in BIGQUERY_DATATYPES]
+  BIGQUERY_MODES = ['NULLABLE', 'REQUIRED', 'REPEATED']
+  BIGQUERY_MODES_LOWER = [m.lower() for m in BIGQUERY_MODES]
+
+  TABLE_SCHEMA_SCHEMA = {
+    'definitions': {
+      'field': {
+        'title': 'field',
+        'type': 'object',
+        'properties': {
+          'name': {'type': 'string'},
+          'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
+          'mode': {'type': 'string', 'enum': BIGQUERY_MODES + BIGQUERY_MODES_LOWER},
+          'description': {'type': 'string'},
+          'fields': {
+            'type': 'array',
+            'items': {
+              'allOf': [{'$ref': '#/definitions/field'}]
+            }
           }
-        }
-      },
-      'required': ['name', 'type'],
-      'additionalProperties': False
-    }
-  },
-  'type': 'object',
-  'properties': {
-    'schema': {
-      'type': 'array',
-      'items': {
-        'allOf': [{'$ref': '#/definitions/field'}]
+        },
+        'required': ['name', 'type'],
+        'additionalProperties': False
       }
-    }
-  },
-  'required': ['schema'],
-  'additionalProperties': False
-}
-
-query_params_schema = {
-  'type': 'object',
-  'properties': {
-    'parameters': {
-      'type': 'array',
-      'items': [
-        {
-          'type': 'object',
-          'properties': {
-            'name': {'type': 'string'},
-            'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
-            'value': {'type': ['string', 'integer']}
-          },
-          'required': ['name', 'type', 'value'],
-          'additionalProperties': False
+    },
+    'type': 'object',
+    'properties': {
+      'schema': {
+        'type': 'array',
+        'items': {
+          'allOf': [{'$ref': '#/definitions/field'}]
         }
-      ]
-    }
-  },
-  'required': ['parameters'],
-  'additionalProperties': False
-}
+      }
+    },
+    'required': ['schema'],
+    'additionalProperties': False
+  }
+
+  QUERY_PARAMS_SCHEMA = {
+    'type': 'object',
+    'properties': {
+      'parameters': {
+        'type': 'array',
+        'items': [
+          {
+            'type': 'object',
+            'properties': {
+              'name': {'type': 'string'},
+              'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
+              'value': {'type': ['string', 'integer']}
+            },
+            'required': ['name', 'type', 'value'],
+            'additionalProperties': False
+          }
+        ]
+      }
+    },
+    'required': ['parameters'],
+    'additionalProperties': False
+  }
 
 
 def _create_dataset_subparser(parser):
@@ -370,7 +374,7 @@ def _get_query_parameters(args, cell_body):
 
   # Validate query_params
   if config:
-    jsonschema.validate(config, query_params_schema)
+    jsonschema.validate(config, BigQuerySchema.QUERY_PARAMS_SCHEMA)
 
     # Parse query_params. We're exposing a simpler schema format than the one actually required
     # by BigQuery to make magics easier. We need to convert between the two formats
@@ -431,7 +435,7 @@ def _sample_cell(args, cell_body):
   sampling = Sampling._auto(method=args['method'], fields=fields, count=count, percent=percent,
                             key_field=args['key_field'], ascending=(args['order'] == 'ascending'))
 
-  context = google.datalab.Context._construct_context_for_args(args)
+  context = google.datalab.utils._utils._construct_context_for_args(args)
 
   if view:
     query = google.datalab.bigquery.Query.from_view(view)
@@ -472,7 +476,7 @@ def _dryrun_cell(args, cell_body):
   if args['verbose']:
     print(query.sql)
 
-  context = google.datalab.Context._construct_context_for_args(args)
+  context = google.datalab.utils._utils._construct_context_for_args(args)
   result = query.dry_run(context=context)
   return google.datalab.bigquery._query_stats.QueryStats(total_bytes=result['totalBytesProcessed'],
                                                          is_cached=result['cacheHit'])
@@ -538,7 +542,7 @@ def _datasource_cell(args, cell_body):
   record = google.datalab.utils.commands.parse_config(
       cell_body, google.datalab.utils.commands.notebook_environment(), as_dict=False)
 
-  jsonschema.validate(record, table_schema_schema)
+  jsonschema.validate(record, BigQuerySchema.TABLE_SCHEMA_SCHEMA)
   schema = google.datalab.bigquery.Schema(record['schema'])
 
   # Finally build the datasource object
@@ -604,7 +608,7 @@ def _execute_cell(args, cell_body):
     output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
                                        use_cache=not args['nocache'],
                                        allow_large_results=args['large'])
-  context = google.datalab.Context._construct_context_for_args(args)
+  context = google.datalab.utils._utils._construct_context_for_args(args)
   r = query.execute(output_options, context=context, query_params=query_params)
   return r.result()
 
@@ -720,7 +724,7 @@ def _table_cell(args, cell_body):
       try:
         record = google.datalab.utils.commands.parse_config(
             cell_body, google.datalab.utils.commands.notebook_environment(), as_dict=False)
-        jsonschema.validate(record, table_schema_schema)
+        jsonschema.validate(record, BigQuerySchema.TABLE_SCHEMA_SCHEMA)
         schema = google.datalab.bigquery.Schema(record['schema'])
         google.datalab.bigquery.Table(args['name']).create(schema=schema,
                                                            overwrite=args['overwrite'])
@@ -783,7 +787,7 @@ def _extract_cell(args, cell_body):
                                       csv_delimiter=args['delimiter'],
                                       csv_header=args['header'], compress=args['compress'],
                                       use_cache=not args['nocache'])
-    context = google.datalab.Context._construct_context_for_args(args)
+    context = google.datalab.utils._utils._construct_context_for_args(args)
     job = query.execute(output_options, context=context, query_params=query_params)
   else:
     raise Exception('A query, table, or view is needed to extract')
@@ -826,7 +830,7 @@ def _load_cell(args, cell_body):
     # For example, user can run "my_schema = bq.Schema.from_data(df)" in a previous cell and
     # specify "schema: $my_schema" in cell input.
     if not isinstance(schema, google.datalab.bigquery.Schema):
-      jsonschema.validate(config, table_schema_schema)
+      jsonschema.validate(config, BigQuerySchema.TABLE_SCHEMA_SCHEMA)
       schema = google.datalab.bigquery.Schema(schema)
     table.create(schema=schema)
   elif not table.exists():
@@ -902,8 +906,8 @@ for help on a specific command.
 
   # %bq pipeline
   _add_command(parser,
-               contrib_bq.commands._bigquery._create_pipeline_subparser,
-               contrib_bq.commands._bigquery._pipeline_cell)
+               contrib_bq._create_pipeline_subparser,
+               contrib_bq._pipeline_cell)
 
   return parser
 

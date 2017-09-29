@@ -12,6 +12,7 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
+import google
 import google.datalab.utils as utils
 
 
@@ -24,8 +25,6 @@ def _create_pipeline_subparser(parser):
                                required=True)
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)
-  pipeline_parser.add_argument('-d', '--debug', action='store_true', default=False,
-                               help='Print the airflow python spec.', required=True)
 
   return pipeline_parser
 
@@ -53,9 +52,8 @@ def _pipeline_cell(args, cell_body):
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
 
-    debug = args.get('debug')
-    if debug is True:
-      return pipeline.get_airflow_spec
+    # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
+    return pipeline.get_airflow_spec
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config, cell_args):
@@ -68,8 +66,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config, cell_args):
   extract_task_config_name = 'bq_pipeline_extract_task'
 
   load_task_config = _get_load_parameters(input_config)
-  execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config,
-                                                cell_args)
+  execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config)
   extract_task_config = _get_extract_parameters(execute_task_config_name, execute_task_config,
                                                 output_config)
   pipeline_spec = {
@@ -136,23 +133,23 @@ def _get_load_parameters(bq_pipeline_input_config):
     if path_exists:
       # One of 'csv' (default) or 'json' for the format of the load file.
       load_task_config['format'] = bq_pipeline_input_config.get('format', 'csv')
-      # The inter-field delimiter for CVS (default ,) in the load file
-      load_task_config['delimiter'] = bq_pipeline_input_config.get('delimiter', ',')
-      # The quoted field delimiter for CVS (default ") in the load file
-      load_task_config['quote'] = bq_pipeline_input_config.get('quote', '"')
-      # The number of head lines (default is 0) to skip during load; useful for CSV
-      load_task_config['skip'] = bq_pipeline_input_config.get('skip', 0)
-      # Reject bad values and jagged lines when loading (default True)
-      load_task_config['strict'] = bq_pipeline_input_config.get('strict', True)
-    # Some parameter validation
-    elif any(key in bq_pipeline_input_config for key in ['format', 'delimiter', 'quote', 'skip',
-                                                         'strict']):
-      raise Exception('Path is not specified, but at least one file option is.')
+      if load_task_config['format'] == 'csv':
+        csv_config = bq_pipeline_input_config.get('csv', {})
+        # The inter-field delimiter for CVS (default ,) in the load file
+        load_task_config['delimiter'] = csv_config.get('delimiter', ',')
+        # The quoted field delimiter for CVS (default ") in the load file
+        load_task_config['quote'] = csv_config.get('quote', '"')
+        # The number of head lines (default is 0) to skip during load; useful for CSV
+        load_task_config['skip'] = csv_config.get('skip', 0)
+        # Reject bad values and jagged lines when loading (default True)
+        load_task_config['strict'] = csv_config.get('strict', True)
+    elif 'format' in bq_pipeline_input_config:  # Some parameter validation
+      raise Exception('Path is not specified, but a format is.')
 
     return load_task_config
 
 
-def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config, cell_args):
+def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config):
     execute_task_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': [load_task_config_name]
@@ -160,15 +157,14 @@ def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_co
 
     # The name of query for execution; if absent, we return None as we assume that there is
     # no query to execute
-    if 'query' in bq_pipeline_transformation_config:
-      execute_task_config['query'] = bq_pipeline_transformation_config['query']
-    else:
+    if 'query' not in bq_pipeline_transformation_config:
       if any(key in bq_pipeline_transformation_config for key in ['large', 'mode']):
         raise Exception('Query is not specified, but at least one query option is.')
       return None
 
-    # Allow large results during execution; defaults to True because this is a common in pipelines
-    execute_task_config['cell_args'] = cell_args
+    execute_task_config['query'] = bq_pipeline_transformation_config['query']
+
+    # TODO(rajivpb): There is no unit-test coverage of this.
 
     # One of 'create' (default), 'append' or 'overwrite' for the destination table in BigQuery
     execute_task_config['mode'] = bq_pipeline_transformation_config.get('mode', 'create')
@@ -182,37 +178,33 @@ def _get_extract_parameters(execute_task_config_name, execute_task_config,
       'type': 'pydatalab.bq.extract',
       'up_stream': [execute_task_config_name]
     }
+
     # Destination table name for the execution results. When present, this will need to be set in
-    # execute_task_config. When absent, it means that there is extraction to be done, so we return
-    # None.
-    if 'table' in bq_pipeline_output_config:
-      execute_task_config['table'] = bq_pipeline_output_config['table']
-    else:
+    # execute_task_config. When absent, it means that there is no extraction to be done, so we
+    # return None.
+    if 'table' not in bq_pipeline_output_config:
       return None
 
-    if 'path' in bq_pipeline_output_config:
-      extract_task_config['path'] = bq_pipeline_output_config['path']
-      # Some parameter validation
-      if 'table' not in execute_task_config:
-        raise Exception('Path is specified but table is not.')
-    else:
-      # If a path is not specified, there is nothing to extract, so we return None after doing a
-      # few parameter checks.
-      if any(key in bq_pipeline_output_config for key in ['compress', 'delimiter', 'format',
-                                                          'header']):
-        raise Exception('Path is not specified, but at least one file option is.')
+    execute_task_config['table'] = bq_pipeline_output_config['table']
+    extract_task_config['table'] = bq_pipeline_output_config['table']
+
+    extract_task_config['path'] = bq_pipeline_output_config.get('path')
+    if not extract_task_config['path']:
+      # If a path is not specified, there is nothing to extract, so we return None after making
+      # sure that format is not specified.
+      if 'format' in bq_pipeline_output_config:
+        raise Exception('Path is not specified, but format is.')
       return None
 
-    # Compress the extract file (default True)
-    extract_task_config['compress'] = bq_pipeline_output_config.get('compress', True)
-
-    # The inter-field delimiter for CVS (default ,) in the extract file
-    extract_task_config['delimiter'] = bq_pipeline_output_config.get('delimiter', ',')
-
-    # Include a header (default True) in the extract file
-    extract_task_config['header'] = bq_pipeline_output_config.get('header', True)
-
-    # One of 'csv' (default) or 'json' for the format of the extract file
+    # One of 'csv' (default) or 'json' for the format of the load file.
     extract_task_config['format'] = bq_pipeline_output_config.get('format', 'csv')
+    if extract_task_config['format'] == 'csv':
+      csv_config = bq_pipeline_output_config.get('csv', {})
+      # The inter-field delimiter for CVS (default ,) in the extract file
+      extract_task_config['delimiter'] = csv_config.get('delimiter', ',')
+      # Include a header (default True) in the extract file
+      extract_task_config['header'] = csv_config.get('header', True)
+      # Compress the extract file (default True)
+      extract_task_config['compress'] = csv_config.get('compress', True)
 
     return extract_task_config
