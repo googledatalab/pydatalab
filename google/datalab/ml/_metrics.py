@@ -88,7 +88,7 @@ class Metrics(object):
       a Metrics instance.
 
     Args:
-      bigquery: A BigQuery table name or a query.
+      sql: A BigQuery table name or a query.
     """
 
     if isinstance(sql, bq.Query):
@@ -126,7 +126,7 @@ class Metrics(object):
     """Get accuracy numbers for each target and overall.
 
     Returns:
-      A DataFrame with two columns: 'class' and 'accuracy'. It contains the overall
+      A DataFrame with two columns: 'class' and 'accuracy'. It also contains the overall
       accuracy with class being '_all'.
 
     Raises:
@@ -147,13 +147,14 @@ class Metrics(object):
         total_count = len(df[(df['target'] == label)])
         accuracy_results.append({
             'target': label,
-            'accuracy': float(correct_count) / total_count,
+            'accuracy': float(correct_count) / total_count if total_count > 0 else 0,
             'count': total_count
         })
 
       total_correct_count = len(df[(df['target'] == df['predicted'])])
-      total_accuracy = float(total_correct_count) / len(df)
-      accuracy_results.append({'target': '_all', 'accuracy': total_accuracy, 'count': len(df)})
+      if len(df) > 0:
+        total_accuracy = float(total_correct_count) / len(df)
+        accuracy_results.append({'target': '_all', 'accuracy': total_accuracy, 'count': len(df)})
       return pd.DataFrame(accuracy_results)
     elif self._bigquery:
       query = bq.Query("""
@@ -184,7 +185,7 @@ FROM
 
     Raises:
       Exception if the CSV headers do not include 'target' or 'predicted', or BigQuery
-      does not return 'target' or 'predicted' column. Or if target or predicted is not
+      does not return 'target' or 'predicted' column, or if target or predicted is not
       number.
     """
 
@@ -194,6 +195,7 @@ FROM
         raise ValueError('Cannot find "target" or "predicted" column')
 
       df = df[['target', 'predicted']].apply(pd.to_numeric)
+      # if df is empty or contains non-numeric, scikit learn will raise error.
       mse = mean_squared_error(df['target'], df['predicted'])
       return math.sqrt(mse)
     elif self._bigquery:
@@ -203,6 +205,8 @@ SELECT
 FROM
   %s""" % self._bigquery)
       df = self._get_data_from_bigquery([query])
+      if df.empty:
+        return None
       return df['rmse'][0]
 
   def mae(self):
@@ -213,7 +217,7 @@ FROM
 
     Raises:
       Exception if the CSV headers do not include 'target' or 'predicted', or BigQuery
-      does not return 'target' or 'predicted' column. Or if target or predicted is not
+      does not return 'target' or 'predicted' column, or if target or predicted is not
       number.
     """
 
@@ -232,6 +236,8 @@ SELECT
 FROM
   %s""" % self._bigquery)
       df = self._get_data_from_bigquery([query])
+      if df.empty:
+        return None
       return df['mae'][0]
 
   def percentile_nearest(self, percentile):
@@ -245,7 +251,7 @@ FROM
 
     Raises:
       Exception if the CSV headers do not include 'target' or 'predicted', or BigQuery
-      does not return 'target' or 'predicted' column. Or if target or predicted is not
+      does not return 'target' or 'predicted' column, or if target or predicted is not
       number.
     """
 
@@ -265,4 +271,6 @@ FROM
   %s
 LIMIT 1""" % (float(percentile) / 100, self._bigquery))
       df = self._get_data_from_bigquery([query])
+      if df.empty:
+        return None
       return df['percentile'][0]
