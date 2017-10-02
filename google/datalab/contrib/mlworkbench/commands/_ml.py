@@ -831,6 +831,7 @@ def _tensorboard_list(args, cell):
 
 
 def _get_evaluation_csv_schema(csv_file):
+  # ML Workbench produces predict_results_schema.json in local batch prediction.
   schema_file = os.path.join(os.path.dirname(csv_file), 'predict_results_schema.json')
   if not file_io.file_exists(schema_file):
     raise ValueError('csv data requires headers.')
