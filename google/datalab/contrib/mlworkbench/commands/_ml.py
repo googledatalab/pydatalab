@@ -435,32 +435,34 @@ def ml(line, cell=None):
   evaluate_parser = parser.subcommand(
       'evaluate',
       formatter_class=argparse.RawTextHelpFormatter,
-      help='Analyze model evaluation results, such as confusion matrix, ROC.')
+      help='Analyze model evaluation results, such as confusion matrix, ROC, RMSE.')
   evaluate_sub_commands = evaluate_parser.add_subparsers(dest='command')
+
+  def _add_data_params_for_evaluate(parser):
+    parser.add_argument('--csv', help='csv file path patterns.')
+    parser.add_argument('--headers',
+                        help='csv file headers. Required if csv is specified and ' +
+                             'predict_results_schema.json does not exist in the same directory.')
+    parser.add_argument('--bigquery',
+                        help='can be bigquery table, query as a string, or ' +
+                             'a pre-defined query (%%bq query --name).')
 
   evaluate_cm_parser = evaluate_sub_commands.add_parser(
       'confusion_matrix', help='Get confusion matrix from evaluation results.')
+  _add_data_params_for_evaluate(evaluate_cm_parser)
   evaluate_cm_parser.add_argument('--plot', action='store_true', default=False,
                                   help='Whether to plot confusion matrix as graph.')
-  evaluate_cm_parser.add_cell_argument(
-      'data',
-      required=True,
-      help=textwrap.dedent("""\
-          prediction results data. It is can be csv or bigquery. For example:
-            data:
-              csv: path/to/file.csv
-              headers: target,predicted,class_prob1,,,
-          or
-            data:
-              bigquery: image_classification_results.flower
-          or
-            data:
-              bigquery: select target, predicted from mytable where ...
-          note that you can use pre-defined queries (%%bq query --name), such as
-            data:
-              bigquery: $my_query
-      """))
   evaluate_cm_parser.set_defaults(func=_evaluate_cm)
+
+  evaluate_accuracy_parser = evaluate_sub_commands.add_parser(
+      'accuracy', help='Get accuracy results from classification evaluation results.')
+  _add_data_params_for_evaluate(evaluate_accuracy_parser)
+  evaluate_accuracy_parser.set_defaults(func=_evaluate_accuracy)
+
+  evaluate_regression_parser = evaluate_sub_commands.add_parser(
+      'regression', help='Get regression metrics from evaluation results.')
+  _add_data_params_for_evaluate(evaluate_regression_parser)
+  evaluate_regression_parser.set_defaults(func=_evaluate_regression)
 
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
@@ -828,16 +830,80 @@ def _tensorboard_list(args, cell):
   return datalab_ml.TensorBoard.list()
 
 
+def _get_evaluation_csv_schema(csv_file):
+  schema_file = os.path.join(os.path.dirname(csv_file), 'predict_results_schema.json')
+  if not file_io.file_exists(schema_file):
+    raise ValueError('csv data requires headers.')
+  return schema_file
+
+
 def _evaluate_cm(args, cell):
-  data = args['data']
-  if 'csv' in data:
-    if 'headers' not in data:
-      raise ValueError('csv data requires headers.')
-    headers = [x.strip() for x in data['headers'].split(',')]
-    cm = datalab_ml.ConfusionMatrix.from_csv(data['csv'], headers=headers)
-  elif 'bigquery' in data:
-    cm = datalab_ml.ConfusionMatrix.from_bigquery(data['bigquery'])
+  if args['csv']:
+    if args['headers']:
+      headers = args['headers'].split(',')
+      cm = datalab_ml.ConfusionMatrix.from_csv(args['csv'], headers=headers)
+    else:
+      schema_file = _get_evaluation_csv_schema(args['csv'])
+      cm = datalab_ml.ConfusionMatrix.from_csv(args['csv'], schema_file=schema_file)
+  elif args['bigquery']:
+    cm = datalab_ml.ConfusionMatrix.from_bigquery(args['bigquery'])
+  else:
+    raise ValueError('Either csv or bigquery is needed.')
+
   if args['plot']:
     return cm.plot()
   else:
     return cm.to_dataframe()
+
+
+def _evaluate_accuracy(args, cell):
+  if args['csv']:
+    if args['headers']:
+      headers = args['headers'].split(',')
+      metrics = datalab_ml.Metrics.from_csv(args['csv'], headers=headers)
+    else:
+      schema_file = _get_evaluation_csv_schema(args['csv'])
+      metrics = datalab_ml.Metrics.from_csv(args['csv'], schema_file=schema_file)
+  elif args['bigquery']:
+    metrics = datalab_ml.Metrics.from_bigquery(args['bigquery'])
+  else:
+    raise ValueError('Either csv or bigquery is needed.')
+
+  return metrics.accuracy()
+
+
+def _evaluate_regression(args, cell):
+  if args['csv']:
+    if args['headers']:
+      headers = args['headers'].split(',')
+      metrics = datalab_ml.Metrics.from_csv(args['csv'], headers=headers)
+    else:
+      schema_file = _get_evaluation_csv_schema(args['csv'])
+      metrics = datalab_ml.Metrics.from_csv(args['csv'], schema_file=schema_file)
+  elif args['bigquery']:
+    metrics = datalab_ml.Metrics.from_bigquery(args['bigquery'])
+  else:
+    raise ValueError('Either csv or bigquery is needed.')
+
+  metrics_dict = []
+  metrics_dict.append({
+      'metric': 'Root Mean Square Error',
+      'value': metrics.rmse()
+  })
+  metrics_dict.append({
+      'metric': 'Mean Absolute Error',
+      'value': metrics.mae()
+  })
+  metrics_dict.append({
+      'metric': '50 Percentile Absolute Error',
+      'value': metrics.percentile_nearest(50)
+  })
+  metrics_dict.append({
+      'metric': '90 Percentile Absolute Error',
+      'value': metrics.percentile_nearest(90)
+  })
+  metrics_dict.append({
+      'metric': '99 Percentile Absolute Error',
+      'value': metrics.percentile_nearest(99)
+  })
+  return pd.DataFrame(metrics_dict)
