@@ -94,7 +94,8 @@ for help on a specific command.
 _pipeline_parser = _create_pipeline_parser()
 
 
-@IPython.core.magic.register_line_cell_magic
+# TODO(rajivpb): Uncomment this to remove '%pipeline'
+# @IPython.core.magic.register_line_cell_magic
 def pipeline(line, cell=None):
   """Implements the pipeline cell magic for ipython notebooks.
 
@@ -110,8 +111,7 @@ def pipeline(line, cell=None):
   Use %pipeline --help for a list of commands, or %pipeline <command> --help for
   help on a specific command.
   """
-  return google.datalab.utils.commands.handle_magic_line(line, cell,
-                                                         _pipeline_parser)
+  return google.datalab.utils.commands.handle_magic_line(line, cell, _pipeline_parser)
 
 
 def _dispatch_handler(args, cell, parser, handler, cell_required=False,
