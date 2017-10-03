@@ -48,7 +48,7 @@ def _pipeline_cell(args, cell_body):
 
     bq_pipeline_config = utils.commands.parse_config(
         cell_body, utils.commands.notebook_environment())
-    pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config, args)
+    pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
 
@@ -56,7 +56,7 @@ def _pipeline_cell(args, cell_body):
     return pipeline.get_airflow_spec
 
 
-def _get_pipeline_spec_from_config(bq_pipeline_config, cell_args):
+def _get_pipeline_spec_from_config(bq_pipeline_config):
   input_config = bq_pipeline_config.get('input', None)
   transformation_config = bq_pipeline_config.get('transformation', None)
   output_config = bq_pipeline_config.get('output', None)
@@ -127,24 +127,25 @@ def _get_load_parameters(bq_pipeline_input_config):
       # If the table doesn't exist, but a path does, then it's likely an extended data-source (and
       # the schema would need to be either present or auto-detected).
       if not path_exists:
+        if 'format' in bq_pipeline_input_config:  # Some parameter validation
+          raise Exception('Path is not specified, but a format is.')
         # If neither table or path exist, there is no load to be done.
         return None
 
-    if path_exists:
-      # One of 'csv' (default) or 'json' for the format of the load file.
-      load_task_config['format'] = bq_pipeline_input_config.get('format', 'csv')
-      if load_task_config['format'] == 'csv':
-        csv_config = bq_pipeline_input_config.get('csv', {})
-        # The inter-field delimiter for CVS (default ,) in the load file
-        load_task_config['delimiter'] = csv_config.get('delimiter', ',')
-        # The quoted field delimiter for CVS (default ") in the load file
-        load_task_config['quote'] = csv_config.get('quote', '"')
-        # The number of head lines (default is 0) to skip during load; useful for CSV
-        load_task_config['skip'] = csv_config.get('skip', 0)
-        # Reject bad values and jagged lines when loading (default True)
-        load_task_config['strict'] = csv_config.get('strict', True)
-    elif 'format' in bq_pipeline_input_config:  # Some parameter validation
-      raise Exception('Path is not specified, but a format is.')
+    assert(path_exists == True)
+
+    # One of 'csv' (default) or 'json' for the format of the load file.
+    load_task_config['format'] = bq_pipeline_input_config.get('format', 'csv')
+    if load_task_config['format'] == 'csv':
+      csv_config = bq_pipeline_input_config.get('csv', {})
+      # The inter-field delimiter for CVS (default ,) in the load file
+      load_task_config['delimiter'] = csv_config.get('delimiter', ',')
+      # The quoted field delimiter for CVS (default ") in the load file
+      load_task_config['quote'] = csv_config.get('quote', '"')
+      # The number of head lines (default is 0) to skip during load; useful for CSV
+      load_task_config['skip'] = csv_config.get('skip', 0)
+      # Reject bad values and jagged lines when loading (default True)
+      load_task_config['strict'] = csv_config.get('strict', True)
 
     return load_task_config
 

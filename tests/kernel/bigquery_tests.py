@@ -830,7 +830,7 @@ WITH q1 AS (
 
   dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-  bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', cell_args=(.*), mode='create', query='foo_query', table='project.test.table', dag=dag\)
+  bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', mode='create', query='foo_query', table='project.test.table', dag=dag\)
   bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', compress=True, delimiter=',', format='csv', header=True, path='test/path', dag=dag\)
   bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=0, strict=True, table='project.test.table', dag=dag\)
   bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
@@ -839,13 +839,8 @@ WITH q1 AS (
 
       self.assertIsNotNone(pattern.match(output))
 
-      # group(1) has the string that follows the "cell_args=", i.e. the list of dicts.
-      actual_args_str = pattern.match(output).group(1)
-      expected_args_str = '{0}'.format(args)
-      self.assertEqual(expected_args_str, actual_args_str)
-
-      # group(2) has the string that follows the "schema=", i.e. the list of dicts.
-      actual_schema_str = pattern.match(output).group(2)
+      # group(1) has the string that follows the "schema=", i.e. the list of dicts.
+      actual_schema_str = pattern.match(output).group(1)
       self.assertIn("'type': 'int64'", actual_schema_str)
       self.assertIn("'mode': 'NULLABLE'", actual_schema_str)
       self.assertIn("'name': 'col1'", actual_schema_str)

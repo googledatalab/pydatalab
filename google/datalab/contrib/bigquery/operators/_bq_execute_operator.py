@@ -20,20 +20,15 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 class ExecuteOperator(BaseOperator):
 
   @apply_defaults
-  def __init__(self, sql, udfs=None, data_sources=None, subqueries=None, parameters=None,
-               table=None, mode=None, *args, **kwargs):
+  def __init__(self, sql, parameters=None, table=None, mode=None, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)
     self._sql = sql
-    self._udfs = udfs
-    self._data_sources = data_sources
-    self._subqueries = subqueries
     self._table = table
     self._mode = mode
     self._parameters = parameters
 
   def execute(self, context):
-    query = bq.Query(
-      sql=self._sql, udfs=self._udfs, data_sources=self._data_sources, subqueries=self._subqueries)
+    query = bq.Query(sql=self._sql)
     output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
                                           allow_large_results=True)
     pydatalab_context = google.datalab.Context.default()
