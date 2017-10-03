@@ -132,7 +132,7 @@ def _get_load_parameters(bq_pipeline_input_config):
         # If neither table or path exist, there is no load to be done.
         return None
 
-    assert(path_exists == True)
+    assert(path_exists is True)
 
     # One of 'csv' (default) or 'json' for the format of the load file.
     load_task_config['format'] = bq_pipeline_input_config.get('format', 'csv')

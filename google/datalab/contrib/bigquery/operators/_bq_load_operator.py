@@ -27,7 +27,8 @@ class LoadOperator(BaseOperator):
     A message about whether the load succeeded or failed.
   """
   @apply_defaults
-  def __init__(self, table, path, mode, format, delimiter, skip, strict, quote, schema, *args, **kwargs):
+  def __init__(self, table, path, mode, format, delimiter, skip, strict, quote, schema, *args,
+               **kwargs):
     super(LoadOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path

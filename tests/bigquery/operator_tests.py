@@ -82,7 +82,8 @@ class TestCases(unittest.TestCase):
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
     # This statement is required even though it seems like it's not. Go figure.
     execute_operator = ExecuteOperator(
-      task_id='test_execute_operator', sql='test_sql', parameters=None, table='test_table', mode=None)
+      task_id='test_execute_operator', sql='test_sql', parameters=None, table='test_table',
+      mode=None)
     execute_operator.execute(context=None)
     # TODO(rajivpb): Mock output_options and query_params for a more complete test.
     mock_query_execute.assert_called_once()
