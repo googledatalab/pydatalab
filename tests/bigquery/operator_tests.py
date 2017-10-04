@@ -52,8 +52,8 @@ class TestCases(unittest.TestCase):
   def test_extract_operator(self, mock_table_extract, mock_context_default):
     mock_context_default.return_value = TestCases._create_context()
     extract_operator = ExtractOperator(table=TestCases.test_project_id + '.test_table',
-                                       path='test_path', format=None, delimiter=None, header=None,
-                                       compress=None, task_id='test_extract_operator')
+                                       path='test_path', format=None,
+                                       task_id='test_extract_operator')
 
     mock_table_extract.return_value.result = lambda: 'test-results'
     mock_table_extract.return_value.failed = False
