@@ -1035,7 +1035,7 @@ def _model_list(args, cell):
       df = df.replace(np.nan, '', regex=True)
       return df
     else:
-      print 'No models found.'
+      print('No models found.')
 
 
 def _model_delete(args, cell):
