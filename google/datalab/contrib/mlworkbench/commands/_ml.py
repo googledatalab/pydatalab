@@ -498,6 +498,48 @@ def ml(line, cell=None):
   _add_data_params_for_evaluate(evaluate_regression_parser)
   evaluate_regression_parser.set_defaults(func=_evaluate_regression)
 
+  model_parser = parser.subcommand(
+      'model',
+      help='Models and versions management such as deployment, deletion, listing.')
+  model_sub_commands = model_parser.add_subparsers(dest='command')
+  model_list_parser = model_sub_commands.add_parser(
+      'list', help='List models and versions.')
+  model_list_parser.add_argument('--name',
+                                 help='If absent, list all models of specified or current ' +
+                                      'project. If provided, list all versions of the ' +
+                                      'model.')
+  model_list_parser.add_argument('--project',
+                                 help='The project to list model(s) or version(s). If absent, ' +
+                                      'use Datalab\'s default project.')
+  model_list_parser.set_defaults(func=_model_list)
+
+  model_delete_parser = model_sub_commands.add_parser(
+      'delete', help='Delete models or versions.')
+  model_delete_parser.add_argument('--name', required=True,
+                                   help='If no "." in the name, try deleting the specified ' +
+                                        'model. If "model.version" is provided, try deleting ' +
+                                        'the specified version.')
+  model_delete_parser.add_argument('--project',
+                                   help='The project to delete model or version. If absent, ' +
+                                        'use Datalab\'s default project.')
+  model_delete_parser.set_defaults(func=_model_delete)
+
+  model_deploy_parser = model_sub_commands.add_parser(
+      'deploy', help='Deploy a model version.')
+  model_deploy_parser.add_argument('--name', required=True,
+                                   help='Must be model.version to indicate the model ' +
+                                        'and version name to deploy.')
+  model_deploy_parser.add_argument('--path', required=True,
+                                   help='The GCS path of the model to be deployed.')
+  model_deploy_parser.add_argument('--runtime_version', required=True,
+                                   help='The TensorFlow version to use for this model. ' +
+                                        'For example, "1.2.1". If you ran the model locally, ' +
+                                        'you can check TF version by running "tf.__version__".')
+  model_deploy_parser.add_argument('--project',
+                                   help='The project to deploy a model version. If absent, ' +
+                                        'use Datalab\'s default project.')
+  model_deploy_parser.set_defaults(func=_model_deploy)
+
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
@@ -972,3 +1014,58 @@ def _evaluate_roc(args, cell):
     plt.show()
   else:
     return df
+
+
+def _model_list(args, cell):
+  if args['name']:
+    # model name provided. List versions of that model.
+    versions = datalab_ml.ModelVersions(args['name'], project_id=args['project'])
+    versions = list(versions.get_iterator())
+    df = pd.DataFrame(versions)
+    df['name'] = df['name'].apply(lambda x: x.split('/')[-1])
+    df = df.replace(np.nan, '', regex=True)
+    return df
+  else:
+    # List all models.
+    models = list(datalab_ml.Models(project_id=args['project']).get_iterator())
+    if len(models) > 0:
+      df = pd.DataFrame(models)
+      df['name'] = df['name'].apply(lambda x: x.split('/')[-1])
+      df['defaultVersion'] = df['defaultVersion'].apply(lambda x: x['name'].split('/')[-1])
+      df = df.replace(np.nan, '', regex=True)
+      return df
+    else:
+      print 'No models found.'
+
+
+def _model_delete(args, cell):
+  parts = args['name'].split('.')
+  if len(parts) == 1:
+    models = datalab_ml.Models(project_id=args['project'])
+    models.delete(parts[0])
+  elif len(parts) == 2:
+    versions = datalab_ml.ModelVersions(parts[0], project_id=args['project'])
+    versions.delete(parts[1])
+  else:
+    raise ValueError('Too many "." in name. Use "model" or "model.version".')
+
+
+def _model_deploy(args, cell):
+  parts = args['name'].split('.')
+  if len(parts) == 2:
+    model_name, version_name = parts[0], parts[1]
+    model_exists = False
+    try:
+      # If describe() works, the model already exists.
+      datalab_ml.Models(project_id=args['project']).get_model_details(model_name)
+      model_exists = True
+    except:
+      pass
+
+    if not model_exists:
+      datalab_ml.Models(project_id=args['project']).create(model_name)
+
+    versions = datalab_ml.ModelVersions(model_name, project_id=args['project'])
+    versions.deploy(version_name, args['path'], runtime_version=args['runtime_version'])
+  else:
+    raise ValueError('Name must be like "model.version".')
