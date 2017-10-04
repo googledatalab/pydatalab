@@ -76,9 +76,11 @@ class TestCases(unittest.TestCase):
     expected = """foo = ExecuteOperator(task_id='foo_id', mode='create', query='test_sql', dag=dag)\n"""  # noqa
     self.assertEqual(actual, expected)
 
+  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.Query.execute')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
-  def test_execute_operator(self, mock_get_notebook_item, mock_query_execute):
+  def test_execute_operator(self, mock_get_notebook_item, mock_query_execute, mock_context_default):
+    mock_context_default.return_value = self._create_context()
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
     # This statement is required even though it seems like it's not. Go figure.
     execute_operator = ExecuteOperator(
