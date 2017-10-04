@@ -588,6 +588,8 @@ WITH q1 AS (
     rendered = bq.commands._bigquery._table_cell(args, None)
     expected_html1 = 'bq.renderSchema(dom, [{"type": "string", "name": "col1"}]);'
     expected_html2 = 'bq.renderSchema(dom, [{"name": "col1", "type": "string"}]);'
+    print('hi!')
+    print(rendered)
     self.assertTrue(expected_html1 in rendered or expected_html2 in rendered)
 
   @mock.patch('google.datalab.Context.default')

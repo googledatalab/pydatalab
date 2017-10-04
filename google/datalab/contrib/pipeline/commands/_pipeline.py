@@ -94,8 +94,7 @@ for help on a specific command.
 _pipeline_parser = _create_pipeline_parser()
 
 
-# TODO(rajivpb): Uncomment this to remove '%pipeline'
-# @IPython.core.magic.register_line_cell_magic
+# TODO(rajivpb): Decorate this with '@IPython.core.magic.register_line_cell_magic'
 def pipeline(line, cell=None):
   """Implements the pipeline cell magic for ipython notebooks.
 
