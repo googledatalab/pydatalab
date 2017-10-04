@@ -459,6 +459,40 @@ def ml(line, cell=None):
   _add_data_params_for_evaluate(evaluate_accuracy_parser)
   evaluate_accuracy_parser.set_defaults(func=_evaluate_accuracy)
 
+  evaluate_pr_parser = evaluate_sub_commands.add_parser(
+      'precision_recall', help='Get precision recall metrics from evaluation results.')
+  _add_data_params_for_evaluate(evaluate_pr_parser)
+  evaluate_pr_parser.add_argument('--plot', action='store_true', default=False,
+                                  help='Whether to plot precision recall as graph.')
+  evaluate_pr_parser.add_argument('--num_thresholds', type=int, default=20,
+                                  help='Number of thresholds which determines how many ' +
+                                       'points in the graph.')
+  evaluate_pr_parser.add_argument('--target_class', required=True,
+                                  help='The target class to determine correctness of ' +
+                                       'a prediction.')
+  evaluate_pr_parser.add_argument('--probability_column',
+                                  help='The name of the column holding the probability ' +
+                                       'value of the target class. If absent, the value ' +
+                                       'of target class is used.')
+  evaluate_pr_parser.set_defaults(func=_evaluate_pr)
+
+  evaluate_roc_parser = evaluate_sub_commands.add_parser(
+      'roc', help='Get ROC metrics from evaluation results.')
+  _add_data_params_for_evaluate(evaluate_roc_parser)
+  evaluate_roc_parser.add_argument('--plot', action='store_true', default=False,
+                                   help='Whether to plot ROC as graph.')
+  evaluate_roc_parser.add_argument('--num_thresholds', type=int, default=20,
+                                   help='Number of thresholds which determines how many ' +
+                                        'points in the graph.')
+  evaluate_roc_parser.add_argument('--target_class', required=True,
+                                   help='The target class to determine correctness of ' +
+                                        'a prediction.')
+  evaluate_roc_parser.add_argument('--probability_column',
+                                   help='The name of the column holding the probability ' +
+                                        'value of the target class. If absent, the value ' +
+                                        'of target class is used.')
+  evaluate_roc_parser.set_defaults(func=_evaluate_roc)
+
   evaluate_regression_parser = evaluate_sub_commands.add_parser(
       'regression', help='Get regression metrics from evaluation results.')
   _add_data_params_for_evaluate(evaluate_regression_parser)
@@ -857,7 +891,7 @@ def _evaluate_cm(args, cell):
     return cm.to_dataframe()
 
 
-def _evaluate_accuracy(args, cell):
+def _create_metrics(args):
   if args['csv']:
     if args['headers']:
       headers = args['headers'].split(',')
@@ -870,22 +904,16 @@ def _evaluate_accuracy(args, cell):
   else:
     raise ValueError('Either csv or bigquery is needed.')
 
+  return metrics
+
+
+def _evaluate_accuracy(args, cell):
+  metrics = _create_metrics(args)
   return metrics.accuracy()
 
 
 def _evaluate_regression(args, cell):
-  if args['csv']:
-    if args['headers']:
-      headers = args['headers'].split(',')
-      metrics = datalab_ml.Metrics.from_csv(args['csv'], headers=headers)
-    else:
-      schema_file = _get_evaluation_csv_schema(args['csv'])
-      metrics = datalab_ml.Metrics.from_csv(args['csv'], schema_file=schema_file)
-  elif args['bigquery']:
-    metrics = datalab_ml.Metrics.from_bigquery(args['bigquery'])
-  else:
-    raise ValueError('Either csv or bigquery is needed.')
-
+  metrics = _create_metrics(args)
   metrics_dict = []
   metrics_dict.append({
       'metric': 'Root Mean Square Error',
@@ -908,3 +936,39 @@ def _evaluate_regression(args, cell):
       'value': metrics.percentile_nearest(99)
   })
   return pd.DataFrame(metrics_dict)
+
+
+def _evaluate_pr(args, cell):
+  metrics = _create_metrics(args)
+  df = metrics.precision_recall(args['num_thresholds'], args['target_class'],
+                                probability_column=args['probability_column'])
+  if args['plot']:
+    plt.plot(df['recall'], df['precision'],
+             label='Precision-Recall curve for class ' + args['target_class'])
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title('Precision-Recall')
+    plt.legend(loc="lower left")
+    plt.show()
+  else:
+    return df
+
+
+def _evaluate_roc(args, cell):
+  metrics = _create_metrics(args)
+  df = metrics.roc(args['num_thresholds'], args['target_class'],
+                   probability_column=args['probability_column'])
+  if args['plot']:
+    plt.plot(df['fpr'], df['tpr'],
+             label='ROC curve for class ' + args['target_class'])
+    plt.xlabel('fpr')
+    plt.ylabel('tpr')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title('ROC')
+    plt.legend(loc="lower left")
+    plt.show()
+  else:
+    return df

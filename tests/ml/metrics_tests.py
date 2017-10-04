@@ -48,6 +48,39 @@ class TestMetrics(unittest.TestCase):
     self.assertEqual(dict_counts, dict_counts_from_results)
     self.assertEqual(dict_accuracy, dict_accuracy_from_results)
 
+  def test_precision_recall(self):
+    """test Metrics's accuracy()."""
+
+    self._create_classification_csv_files_with_probs('color.csv', 500)
+    metrics = Metrics.from_csv(os.path.join(self._test_dir, 'color.csv'),
+                               headers=['target', 'blue', 'key'])
+    pr = metrics.precision_recall(10, 'blue')
+    self.assertEqual(10, len(pr))
+    # When threshold = 0.0 recall should be 1.0
+    self.assertAlmostEqual(1.0, pr[pr['threshold'] == 0.0]['recall'][0])
+    # Recall values should be desc ordered.
+    for i in range(9):
+      self.assertAlmostEqual(float(i) / 10, pr['threshold'][i])
+      self.assertGreater(pr['recall'][i], pr['recall'][i + 1])
+
+  def test_roc(self):
+    """test Metrics's roc()."""
+
+    self._create_classification_csv_files_with_probs('color.csv', 500)
+    metrics = Metrics.from_csv(os.path.join(self._test_dir, 'color.csv'),
+                               headers=['target', 'blue', 'key'])
+    roc = metrics.roc(10, 'blue')
+    # note that roc includes both threshold 0.0 and 1.0.
+    self.assertEqual(11, len(roc))
+
+    # When threshold = 0.0 fpr and tpr should be 1.0
+    self.assertAlmostEqual(1.0, roc[roc['threshold'] == 0.0]['fpr'][0])
+    self.assertAlmostEqual(1.0, roc[roc['threshold'] == 0.0]['tpr'][0])
+
+    # When threshold = 1.0 fpr and tpr should be 0.0
+    self.assertAlmostEqual(0.0, roc[roc['threshold'] == 1.0]['fpr'][10])
+    self.assertAlmostEqual(0.0, roc[roc['threshold'] == 1.0]['tpr'][10])
+
   def test_rmse(self):
     """test Metrics's accuracy()."""
 
@@ -115,6 +148,18 @@ class TestMetrics(unittest.TestCase):
         '_all': float(dict_correct_counts['_all']) / dict_counts['_all'],
     }
     return dict_counts, dict_accuracy
+
+  def _create_classification_csv_files_with_probs(self, filename, num_lines):
+    """Makes classification csv data files."""
+
+    index = 0
+    full_file_name = os.path.join(self._test_dir, filename)
+    with open(full_file_name, 'w') as f:
+      writer = csv.writer(f)
+      for r in range(num_lines):
+        target = random.choice(['red', 'blue', 'green'])
+        prob = random.uniform(0, 1)
+        writer.writerow([target, prob, index])
 
   def _create_regression_csv_file(self):
     """Makes a single regression csv data file."""
