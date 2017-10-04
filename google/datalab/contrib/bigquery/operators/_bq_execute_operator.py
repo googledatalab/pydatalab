@@ -33,4 +33,7 @@ class ExecuteOperator(BaseOperator):
                                           allow_large_results=True)
     pydatalab_context = google.datalab.Context.default()
     query_params = Pipeline._get_query_parameters(self._parameters)
-    query.execute(output_options, context=pydatalab_context, query_params=query_params)
+    job = query.execute(output_options, context=pydatalab_context, query_params=query_params)
+    if job is not None:
+      job.wait()
+    return job
