@@ -32,7 +32,7 @@ class TestMetrics(unittest.TestCase):
   def tearDown(self):
     shutil.rmtree(self._test_dir)
 
-  def _test_accuracy(self):
+  def test_accuracy(self):
     """test Metrics's accuracy()."""
 
     dict_counts, dict_accuracy = self._create_classification_csv_files(
@@ -48,7 +48,7 @@ class TestMetrics(unittest.TestCase):
     self.assertEqual(dict_counts, dict_counts_from_results)
     self.assertEqual(dict_accuracy, dict_accuracy_from_results)
 
-  def _test_precision_recall(self):
+  def test_precision_recall(self):
     """test Metrics's accuracy()."""
 
     self._create_classification_csv_files_with_probs('color.csv', 500)
@@ -81,7 +81,7 @@ class TestMetrics(unittest.TestCase):
     self.assertAlmostEqual(0.0, roc[roc['threshold'] == 1.0]['fpr'][10])
     self.assertAlmostEqual(0.0, roc[roc['threshold'] == 1.0]['tpr'][10])
 
-  def _test_rmse(self):
+  def test_rmse(self):
     """test Metrics's accuracy()."""
 
     truth = self._create_regression_csv_file()
@@ -90,7 +90,7 @@ class TestMetrics(unittest.TestCase):
     rmse = metrics.rmse()
     self.assertEqual(truth['rmse'], rmse)
 
-  def _test_mae(self):
+  def test_mae(self):
     """test Metrics's accuracy()."""
 
     truth = self._create_regression_csv_file()
@@ -99,7 +99,7 @@ class TestMetrics(unittest.TestCase):
     mae = metrics.mae()
     self.assertEqual(truth['mae'], mae)
 
-  def _test_percentile(self):
+  def test_percentile(self):
     """test Metrics's accuracy()."""
 
     truth = self._create_regression_csv_file()
