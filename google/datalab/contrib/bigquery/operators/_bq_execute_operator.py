@@ -33,4 +33,6 @@ class ExecuteOperator(BaseOperator):
                                           allow_large_results=True)
     pydatalab_context = google.datalab.Context.default()
     query_params = Pipeline._get_query_parameters(self._parameters)
+    # TODO(rajivpb): Is this a sync or an async operation? Unlike load(), this does not wrap its
+    # async counterpart with a job.wait(). Test and wait if necessary.
     query.execute(output_options, context=pydatalab_context, query_params=query_params)
