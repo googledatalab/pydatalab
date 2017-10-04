@@ -48,7 +48,7 @@ from pytz import timezone
 
   @staticmethod
   def get_pipeline_spec(spec_str, env=None):
-    """
+    """ Gets a dict representation of the pipeline-spec, given a yaml string.
     Args:
       name: name of the pipeline (line argument) from Datalab
       env: a dictionary containing objects from the pipeline execution context,
@@ -64,8 +64,7 @@ from pytz import timezone
 
   @property
   def get_airflow_spec(self):
-    """ Gets the airflow python spec for the Pipeline object. This is the
-      input for the Cloud Composer service.
+    """ Gets the airflow python spec (Composer service input) for the Pipeline object.
     """
 
     # Work-around for yaml.load() limitation. Strings that look like datetimes

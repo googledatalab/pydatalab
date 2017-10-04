@@ -52,8 +52,8 @@ class TestCases(unittest.TestCase):
   def test_extract_operator(self, mock_table_extract, mock_context_default):
     mock_context_default.return_value = TestCases._create_context()
     extract_operator = ExtractOperator(table=TestCases.test_project_id + '.test_table',
-                                       path='test_path', format=None, delimiter=None, header=None,
-                                       compress=None, task_id='test_extract_operator')
+                                       path='test_path', format=None,
+                                       task_id='test_extract_operator')
 
     mock_table_extract.return_value.result = lambda: 'test-results'
     mock_table_extract.return_value.failed = False
@@ -82,7 +82,8 @@ class TestCases(unittest.TestCase):
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
     # This statement is required even though it seems like it's not. Go figure.
     execute_operator = ExecuteOperator(
-      task_id='test_execute_operator', sql='test_sql', parameters=None, table='test_table', mode=None)
+      task_id='test_execute_operator', sql='test_sql', parameters=None, table='test_table',
+      mode=None)
     execute_operator.execute(context=None)
     # TODO(rajivpb): Mock output_options and query_params for a more complete test.
     mock_query_execute.assert_called_once()
@@ -96,18 +97,18 @@ class TestCases(unittest.TestCase):
       mock_context_default.return_value = self._create_context()
 
       mock_table_exists.return_value = True
-      load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
-                                   path='test/path', mode='create', format=None, delimiter=None,
-                                   skip=None, strict=None, quote=None, schema=None)
+      load_operator = LoadOperator(table='project.test.table', path='test/path', mode='create',
+                                   format=None, csv_options=None, schema=None,
+                                   task_id='test_operator_id')
       with self.assertRaisesRegexp(
               Exception,
               "project.test.table already exists; mode should be \'append\' or \'overwrite\'"):
         load_operator.execute(context=None)
 
       mock_table_exists.return_value = False
-      load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
-                                   path='test/path', mode='append', format=None, delimiter=None,
-                                   skip=None, strict=None, quote=None, schema=None)
+      load_operator = LoadOperator(table='project.test.table', path='test/path', mode='append',
+                                   format=None, csv_options=None, schema=None,
+                                   task_id='test_operator_id')
       with self.assertRaisesRegexp(Exception,
                                    'project.test.table does not exist; mode should be \'create\''):
         load_operator.execute(context=None)
@@ -117,9 +118,9 @@ class TestCases(unittest.TestCase):
         {"type": "FLOAT", "name": "var1"},
         {"type": "FLOAT", "name": "var2"}
       ]
-      load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
-                                   path='test/path', mode='create', format=None, delimiter=None,
-                                   skip=None, strict=None, quote=None, schema=schema)
+      load_operator = LoadOperator(table='project.test.table', path='test/path', mode='create',
+                                   format=None, csv_options=None, schema=schema,
+                                   task_id='test_operator_id')
       job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
                                                         'test_sql', None)
       mock_table_load.return_value = job
@@ -141,9 +142,9 @@ class TestCases(unittest.TestCase):
                                          csv_options=mock.ANY, ignore_unknown_values=True)
 
       mock_table_exists.return_value = True
-      load_operator = LoadOperator(task_id='test_operator_id', table='project.test.table',
-                                   path='test/path', mode='append', format='csv', delimiter=None,
-                                   skip=None, strict=None, quote=None, schema=schema)
+      load_operator = LoadOperator(table='project.test.table', path='test/path', mode='append',
+                                   format='csv', csv_options=None, schema=schema,
+                                   task_id='test_operator_id')
       load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='csv', csv_options=mock.ANY,
