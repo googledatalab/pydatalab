@@ -136,16 +136,7 @@ def _get_load_parameters(bq_pipeline_input_config):
 
     # One of 'csv' (default) or 'json' for the format of the load file.
     load_task_config['format'] = bq_pipeline_input_config.get('format', 'csv')
-    if load_task_config['format'] == 'csv':
-      csv_config = bq_pipeline_input_config.get('csv', {})
-      # The inter-field delimiter for CVS (default ,) in the load file
-      load_task_config['delimiter'] = csv_config.get('delimiter', ',')
-      # The quoted field delimiter for CVS (default ") in the load file
-      load_task_config['quote'] = csv_config.get('quote', '"')
-      # The number of head lines (default is 0) to skip during load; useful for CSV
-      load_task_config['skip'] = csv_config.get('skip', 0)
-      # Reject bad values and jagged lines when loading (default True)
-      load_task_config['strict'] = csv_config.get('strict', True)
+    load_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
 
     return load_task_config
 
@@ -199,13 +190,6 @@ def _get_extract_parameters(execute_task_config_name, execute_task_config,
 
     # One of 'csv' (default) or 'json' for the format of the load file.
     extract_task_config['format'] = bq_pipeline_output_config.get('format', 'csv')
-    if extract_task_config['format'] == 'csv':
-      csv_config = bq_pipeline_output_config.get('csv', {})
-      # The inter-field delimiter for CVS (default ,) in the extract file
-      extract_task_config['delimiter'] = csv_config.get('delimiter', ',')
-      # Include a header (default True) in the extract file
-      extract_task_config['header'] = csv_config.get('header', True)
-      # Compress the extract file (default True)
-      extract_task_config['compress'] = csv_config.get('compress', True)
+    extract_task_config['csv_options'] = bq_pipeline_output_config.get('csv')
 
     return extract_task_config

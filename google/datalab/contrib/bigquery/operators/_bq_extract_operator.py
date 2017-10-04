@@ -18,12 +18,12 @@ from airflow.utils.decorators import apply_defaults
 class ExtractOperator(BaseOperator):
 
   @apply_defaults
-  def __init__(self, table, path, format=None, csv_options=None, *args, **kwargs):
+  def __init__(self, table, path, format, csv_options=None, *args, **kwargs):
     super(ExtractOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
     self._format = format
-    self._csv_options = csv_options
+    self._csv_options = csv_options or {}
 
   def execute(self, context):
 
@@ -34,9 +34,8 @@ class ExtractOperator(BaseOperator):
         raise Exception('Could not find table %s' % self._table)
       job = source_table.extract(
         self._path, format='CSV' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON',
-        csv_delimiter=self._csv_options.get('delimiter') if self._csv_options else None,
-        csv_header=self._csv_options.get('header') if self._csv_options else None,
-        compress=self._csv_options.get('compress') if self._csv_options else None)
+        csv_delimiter=self._csv_options.get('delimiter'),
+        csv_header=self._csv_options.get('header'), compress=self._csv_options.get('compress'))
     else:
       raise Exception('A table is needed to extract')
 

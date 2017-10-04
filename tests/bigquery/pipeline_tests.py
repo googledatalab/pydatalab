@@ -32,20 +32,24 @@ class TestCases(unittest.TestCase):
     input_config = {
       'path': 'test_path',
       'table': 'test_table',
-      'schema': 'test_schema'
+      'schema': 'test_schema',
+      'csv': {
+        'delimiter': ';',
+        'skip': 9
+      },
     }
     actual_load_config = bq._get_load_parameters(input_config)
     expected_load_config = {
       'type': 'pydatalab.bq.load',
       'format': 'csv',
-      'quote': '"',
-      'strict': True,
-      'delimiter': ',',
-      'skip': 0,
       'path': 'test_path',
       'table': 'test_table',
       'schema': 'test_schema',
-      'mode': 'create'
+      'mode': 'create',
+      'csv_options': {
+        'delimiter': ';',
+        'skip': 9
+      }
     }
     self.assertDictEqual(actual_load_config, expected_load_config)
 
@@ -76,10 +80,7 @@ class TestCases(unittest.TestCase):
     expected_load_config = {
       'type': 'pydatalab.bq.load',
       'format': 'csv',
-      'quote': '"',
-      'strict': True,
-      'delimiter': ',',
-      'skip': 0,
+      'csv_options': None,
       'path': 'test_path',
     }
     self.assertDictEqual(actual_load_config, expected_load_config)
@@ -93,6 +94,7 @@ class TestCases(unittest.TestCase):
       'type': 'pydatalab.bq.load',
       'format': 'json',
       'path': 'test_path',
+      'csv_options': None
     }
     self.assertDictEqual(actual_load_config, expected_load_config)
 
@@ -108,9 +110,7 @@ class TestCases(unittest.TestCase):
       'type': 'pydatalab.bq.extract',
       'up_stream': ['foo_execute_task'],
       'format': 'csv',
-      'delimiter': ',',
-      'header': True,
-      'compress': True,
+      'csv_options': None,
       'path': 'test_path',
       'table': 'test_table',
     }
@@ -200,16 +200,24 @@ default_args = {
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
 bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', mode='create', query='foo_query', table='project.test.table', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', compress=True, delimiter=',', format='csv', header=True, path='test/path', table='project.test.table', dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=5, strict=False, table='project.test.table', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='test/path', table='project.test.table', dag=dag\)
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='test/path', schema=(.*), table='project.test.table', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
 
     self.assertIsNotNone(pattern.match(output))
 
-    # group(1) has the string that follows the "schema=", i.e. the list of dicts.
-    actual_schema_str = pattern.match(output).group(1)
+    # group(1) has the string that follows the "csv_options=", for the load operator.
+    actual_csv_options_dict_str = pattern.match(output).group(1)
+    self.assertIn("\'header\': True", actual_csv_options_dict_str)
+    self.assertIn("\'delimiter\': \',\'", actual_csv_options_dict_str)
+    self.assertIn("\'skip\': 5", actual_csv_options_dict_str)
+    self.assertIn("\'strict\': False", actual_csv_options_dict_str)
+    self.assertIn("\'quote\': \'\"\'", actual_csv_options_dict_str)
+
+    # group(2) has the string that follows the "schema=", i.e. the list of dicts.
+    actual_schema_str = pattern.match(output).group(2)
     self.assertIn("'type': 'int64'", actual_schema_str)
     self.assertIn("'mode': 'NULLABLE'", actual_schema_str)
     self.assertIn("'name': 'col1'", actual_schema_str)

@@ -27,17 +27,13 @@ class LoadOperator(BaseOperator):
     A message about whether the load succeeded or failed.
   """
   @apply_defaults
-  def __init__(self, table, path, mode, format, delimiter, skip, strict, quote, schema, *args,
-               **kwargs):
+  def __init__(self, table, path, mode, format, schema, csv_options=None, *args, **kwargs):
     super(LoadOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
     self._mode = mode
-    self._delimiter = delimiter
     self._format = format
-    self._skip = skip
-    self._strict = strict
-    self._quote = quote
+    self._csv_options = csv_options or {}
     self._schema = schema
 
   def execute(self, context):
@@ -57,11 +53,12 @@ class LoadOperator(BaseOperator):
       raise Exception('%s does not exist; mode should be \'create\'' % self._table)
 
     csv_options = bq.CSVOptions(
-      delimiter=self._delimiter, skip_leading_rows=self._skip, allow_jagged_rows=self._strict,
-      quote=self._quote)
+      delimiter=self._csv_options.get('delimiter'), skip_leading_rows=self._csv_options.get('skip'),
+      allow_jagged_rows=self._csv_options.get('strict'), quote=self._csv_options.get('quote'))
     job = table.load(self._path, mode=self._mode,
                      source_format=('csv' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON'),
-                     csv_options=csv_options, ignore_unknown_values=not self._strict)
+                     csv_options=csv_options,
+                     ignore_unknown_values=not self._csv_options.get('strict'))
     if job.failed:
       raise Exception('Load failed: %s' % str(job.fatal_error))
     elif job.errors:
