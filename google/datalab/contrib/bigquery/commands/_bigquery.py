@@ -19,13 +19,8 @@ import google.datalab.utils as utils
 def _create_pipeline_subparser(parser):
   pipeline_parser = parser.subcommand('pipeline', 'Creates a pipeline to execute a SQL query to '
                                                   'transform data using BigQuery.')
-
-  # common arguments
-  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier',
-                               required=True)
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)
-
   return pipeline_parser
 
 
