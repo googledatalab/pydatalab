@@ -115,7 +115,11 @@ class TestCases(unittest.TestCase):
 
     self.assertDictEqual(actual_extract_config, expected_extract_config)
 
-  def test_get_execute_parameters(self):
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
+  def test_get_execute_parameters(self, mock_environment):
+    mock_environment.return_value = google.datalab.bigquery.Query(
+        'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint')
+
     transformation_config = {
       'query': 'foo_query'
     }
@@ -123,38 +127,38 @@ class TestCases(unittest.TestCase):
       'table': 'foo_table',
       'mode': 'foo_mode'
     }
-    parameters_config = [{
-      'name': 'endpoint',
-      'type': 'STRING',
-      'value': 'Interact2'
-    }]
+    parameters_config = [
+      {
+        'type': 'STRING',
+        'name': 'endpoint',
+        'value': 'Interact2'
+      },
+      {
+        'type': 'INTEGER',
+        'name': 'column',
+        'value': '1234'
+      }
+    ]
     actual_execute_config = bq._get_execute_parameters('foo_load_task', transformation_config,
                                                        output_config, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-      'query': 'foo_query',
+      'query': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'up_stream': ['foo_load_task'],
       'table': 'foo_table',
       'mode': 'foo_mode',
-      'parameters': [{
-        'type': 'STRING',
-        'name': 'endpoint',
-        'value': 'Interact2'
-      }]
+      'parameters': parameters_config
     }
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
+    # With empty output config
     actual_execute_config = bq._get_execute_parameters('foo_load_task', transformation_config,
                                                        {}, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-      'query': 'foo_query',
+      'query': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'up_stream': ['foo_load_task'],
-      'parameters': [{
-        'type': 'STRING',
-        'name': 'endpoint',
-        'value': 'Interact2'
-      }]
+      'parameters': parameters_config
     }
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
@@ -174,7 +178,7 @@ class TestCases(unittest.TestCase):
       'foo_query': google.datalab.bigquery.Query(
         'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint'),
       'endpoint': 'Interact2',
-      'job_id': 'foo_job_id'
+      'job_id': '1234'
     }
     mock_environment.return_value = env
 
@@ -264,7 +268,7 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
     self.assertIn("'value': 'Interact2'", actual_parameter_dict_str)
     self.assertIn("'type': 'INTEGER'", actual_parameter_dict_str)
     self.assertIn("'name': 'column'", actual_parameter_dict_str)
-    self.assertIn("'value': 'foo_job_id'", actual_parameter_dict_str)
+    self.assertIn("'value': '1234'", actual_parameter_dict_str)
 
     # String that follows the "csv_options=", for the load operator.
     actual_csv_options_dict_str = pattern.match(output).group(2)
