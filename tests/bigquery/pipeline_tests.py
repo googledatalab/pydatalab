@@ -164,29 +164,24 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_pipeline_cell_golden(self, mock_get_table, mock_table_exists, mock_environment,
+  def test_pipeline_cell_golden(self, mock_get_table, mock_table_exists, mock_notebook_item, mock_environment,
                                 mock_default_context):
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
     mock_table_exists.return_value = True
     context = TestCases._create_context()
     mock_default_context.return_value = context
+    mock_notebook_item.return_value = google.datalab.bigquery.Query(
+        'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint')
 
     env = {
-      'foo_query': google.datalab.bigquery.Query(
-        'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint'),
       'endpoint': 'Interact2',
       'job_id': '1234'
     }
     mock_environment.return_value = env
-    print 'mock_environment is '
-    print google.datalab.utils.commands.notebook_environment()
-    print 'query is '
-    print google.datalab.utils.commands.get_notebook_item('foo_query')
-    print 'get_item returns '
-    print google.datalab.utils.get_item(google.datalab.utils.commands.notebook_environment(), 'foo_query')
     args = {'name': 'bq_pipeline_test'}
     # TODO(rajivpb): The references to foo_query need to be resolved.
     cell_body = """
