@@ -46,8 +46,10 @@ def _pipeline_cell(args, cell_body):
     if name is None:
         raise Exception("Pipeline name was not specified.")
 
-    bq_pipeline_config = utils.commands.parse_config(
-        cell_body, utils.commands.notebook_environment())
+    bq_pipeline_config = utils.commands.parse_config(cell_body,
+                                                     utils.commands.notebook_environment())
+    print('hi')
+    print(bq_pipeline_config)
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
@@ -68,9 +70,8 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
 
   load_task_config = _get_load_parameters(input_config)
   execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config,
-                                                parameters_config)
-  extract_task_config = _get_extract_parameters(execute_task_config_name, execute_task_config,
-                                                output_config)
+                                                output_config, parameters_config)
+  extract_task_config = _get_extract_parameters(execute_task_config_name, output_config)
   pipeline_spec = {
     'schedule': bq_pipeline_config['schedule'],
   }
@@ -144,7 +145,7 @@ def _get_load_parameters(bq_pipeline_input_config):
 
 
 def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config,
-                            bq_pipeline_parameters_config):
+                            bq_pipeline_output_config, bq_pipeline_parameters_config):
     execute_task_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': [load_task_config_name]
@@ -155,14 +156,17 @@ def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_co
     if 'query' not in bq_pipeline_transformation_config:
       # TODO(rajivpb): Log this: 'Query is not specified, but at least one query option is.')
       return None
-
-    execute_task_config['query'] = bq_pipeline_transformation_config['query']
+    query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
+    execute_task_config['query'] = query.sql
+    if 'table' in bq_pipeline_output_config:
+        execute_task_config['table'] = bq_pipeline_output_config['table']
+    if 'mode' in bq_pipeline_output_config:
+        execute_task_config['mode'] = bq_pipeline_output_config['mode']
     execute_task_config['parameters'] = bq_pipeline_parameters_config
     return execute_task_config
 
 
-def _get_extract_parameters(execute_task_config_name, execute_task_config,
-                            bq_pipeline_output_config):
+def _get_extract_parameters(execute_task_config_name, bq_pipeline_output_config):
     extract_task_config = {
       'type': 'pydatalab.bq.extract',
       'up_stream': [execute_task_config_name]
@@ -174,7 +178,6 @@ def _get_extract_parameters(execute_task_config_name, execute_task_config,
     if 'table' not in bq_pipeline_output_config:
       return None
 
-    execute_task_config['table'] = bq_pipeline_output_config['table']
     extract_task_config['table'] = bq_pipeline_output_config['table']
 
     extract_task_config['path'] = bq_pipeline_output_config.get('path')
