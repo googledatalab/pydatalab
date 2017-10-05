@@ -48,8 +48,6 @@ def _pipeline_cell(args, cell_body):
 
     bq_pipeline_config = utils.commands.parse_config(cell_body,
                                                      utils.commands.notebook_environment())
-    print('hi')
-    print(bq_pipeline_config)
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline

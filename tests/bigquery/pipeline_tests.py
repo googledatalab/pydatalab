@@ -116,8 +116,8 @@ class TestCases(unittest.TestCase):
     self.assertDictEqual(actual_extract_config, expected_extract_config)
 
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
-  def test_get_execute_parameters(self, mock_environment):
-    mock_environment.return_value = google.datalab.bigquery.Query(
+  def test_get_execute_parameters(self, mock_notebook_item):
+    mock_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint')
 
     transformation_config = {
@@ -181,7 +181,12 @@ class TestCases(unittest.TestCase):
       'job_id': '1234'
     }
     mock_environment.return_value = env
-
+    print 'mock_environment is '
+    print google.datalab.utils.commands.notebook_environment()
+    print 'query is '
+    print google.datalab.utils.commands.get_notebook_item('foo_query')
+    print 'get_item returns '
+    print google.datalab.utils.get_item(google.datalab.utils.commands.notebook_environment(), 'foo_query')
     args = {'name': 'bq_pipeline_test'}
     # TODO(rajivpb): The references to foo_query need to be resolved.
     cell_body = """
