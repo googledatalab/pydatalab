@@ -155,7 +155,7 @@ def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_co
       # TODO(rajivpb): Log this: 'Query is not specified, but at least one query option is.')
       return None
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
-    execute_task_config['query'] = query.sql
+    execute_task_config['sql'] = query.sql
     if 'table' in bq_pipeline_output_config:
         execute_task_config['table'] = bq_pipeline_output_config['table']
     if 'mode' in bq_pipeline_output_config:

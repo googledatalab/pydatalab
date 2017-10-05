@@ -143,7 +143,7 @@ class TestCases(unittest.TestCase):
                                                        output_config, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-      'query': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'up_stream': ['foo_load_task'],
       'table': 'foo_table',
       'mode': 'foo_mode',
@@ -156,7 +156,7 @@ class TestCases(unittest.TestCase):
                                                        {}, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-      'query': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'up_stream': ['foo_load_task'],
       'parameters': parameters_config
     }
@@ -232,9 +232,9 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
-from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator
-from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator
-from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator
+from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator
+from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
+from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 from datetime import timedelta
 from pytz import timezone
 
@@ -252,7 +252,7 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), query='SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint', table='project.test.output_table', dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql='SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint', table='project.test.output_table', dag=dag\)
 bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='test/path', table='project.test.output_table', dag=dag\)
 bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='test/path', schema=(.*), table='project.test.input_table', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
