@@ -35,6 +35,7 @@ from skimage.segmentation import mark_boundaries
 import subprocess
 import tempfile
 import textwrap
+import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 import urllib
 
@@ -531,10 +532,10 @@ def ml(line, cell=None):
                                         'and version name to deploy.')
   model_deploy_parser.add_argument('--path', required=True,
                                    help='The GCS path of the model to be deployed.')
-  model_deploy_parser.add_argument('--runtime_version', required=True,
+  model_deploy_parser.add_argument('--runtime_version',
                                    help='The TensorFlow version to use for this model. ' +
-                                        'For example, "1.2.1". If you ran the model locally, ' +
-                                        'you can check TF version by running "tf.__version__".')
+                                        'For example, "1.2.1". If absent, the current ' +
+                                        'TensorFlow version installed in Datalab will be used.')
   model_deploy_parser.add_argument('--project',
                                    help='The project to deploy a model version. If absent, ' +
                                         'use Datalab\'s default project.')
@@ -928,7 +929,7 @@ def _evaluate_cm(args, cell):
     raise ValueError('Either csv or bigquery is needed.')
 
   if args['plot']:
-    return cm.plot()
+    return cm.plot(figsize=(15, 15), rotation=90)
   else:
     return cm.to_dataframe()
 
@@ -1066,6 +1067,9 @@ def _model_deploy(args, cell):
       datalab_ml.Models(project_id=args['project']).create(model_name)
 
     versions = datalab_ml.ModelVersions(model_name, project_id=args['project'])
-    versions.deploy(version_name, args['path'], runtime_version=args['runtime_version'])
+    runtime_version = args['runtime_version']
+    if not runtime_version:
+      runtime_version = tf.__version__
+    versions.deploy(version_name, args['path'], runtime_version=runtime_version)
   else:
     raise ValueError('Name must be like "model.version".')
