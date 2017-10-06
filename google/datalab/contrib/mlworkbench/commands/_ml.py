@@ -35,6 +35,7 @@ from skimage.segmentation import mark_boundaries
 import subprocess
 import tempfile
 import textwrap
+import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 import urllib
 
@@ -459,10 +460,86 @@ def ml(line, cell=None):
   _add_data_params_for_evaluate(evaluate_accuracy_parser)
   evaluate_accuracy_parser.set_defaults(func=_evaluate_accuracy)
 
+  evaluate_pr_parser = evaluate_sub_commands.add_parser(
+      'precision_recall', help='Get precision recall metrics from evaluation results.')
+  _add_data_params_for_evaluate(evaluate_pr_parser)
+  evaluate_pr_parser.add_argument('--plot', action='store_true', default=False,
+                                  help='Whether to plot precision recall as graph.')
+  evaluate_pr_parser.add_argument('--num_thresholds', type=int, default=20,
+                                  help='Number of thresholds which determines how many ' +
+                                       'points in the graph.')
+  evaluate_pr_parser.add_argument('--target_class', required=True,
+                                  help='The target class to determine correctness of ' +
+                                       'a prediction.')
+  evaluate_pr_parser.add_argument('--probability_column',
+                                  help='The name of the column holding the probability ' +
+                                       'value of the target class. If absent, the value ' +
+                                       'of target class is used.')
+  evaluate_pr_parser.set_defaults(func=_evaluate_pr)
+
+  evaluate_roc_parser = evaluate_sub_commands.add_parser(
+      'roc', help='Get ROC metrics from evaluation results.')
+  _add_data_params_for_evaluate(evaluate_roc_parser)
+  evaluate_roc_parser.add_argument('--plot', action='store_true', default=False,
+                                   help='Whether to plot ROC as graph.')
+  evaluate_roc_parser.add_argument('--num_thresholds', type=int, default=20,
+                                   help='Number of thresholds which determines how many ' +
+                                        'points in the graph.')
+  evaluate_roc_parser.add_argument('--target_class', required=True,
+                                   help='The target class to determine correctness of ' +
+                                        'a prediction.')
+  evaluate_roc_parser.add_argument('--probability_column',
+                                   help='The name of the column holding the probability ' +
+                                        'value of the target class. If absent, the value ' +
+                                        'of target class is used.')
+  evaluate_roc_parser.set_defaults(func=_evaluate_roc)
+
   evaluate_regression_parser = evaluate_sub_commands.add_parser(
       'regression', help='Get regression metrics from evaluation results.')
   _add_data_params_for_evaluate(evaluate_regression_parser)
   evaluate_regression_parser.set_defaults(func=_evaluate_regression)
+
+  model_parser = parser.subcommand(
+      'model',
+      help='Models and versions management such as deployment, deletion, listing.')
+  model_sub_commands = model_parser.add_subparsers(dest='command')
+  model_list_parser = model_sub_commands.add_parser(
+      'list', help='List models and versions.')
+  model_list_parser.add_argument('--name',
+                                 help='If absent, list all models of specified or current ' +
+                                      'project. If provided, list all versions of the ' +
+                                      'model.')
+  model_list_parser.add_argument('--project',
+                                 help='The project to list model(s) or version(s). If absent, ' +
+                                      'use Datalab\'s default project.')
+  model_list_parser.set_defaults(func=_model_list)
+
+  model_delete_parser = model_sub_commands.add_parser(
+      'delete', help='Delete models or versions.')
+  model_delete_parser.add_argument('--name', required=True,
+                                   help='If no "." in the name, try deleting the specified ' +
+                                        'model. If "model.version" is provided, try deleting ' +
+                                        'the specified version.')
+  model_delete_parser.add_argument('--project',
+                                   help='The project to delete model or version. If absent, ' +
+                                        'use Datalab\'s default project.')
+  model_delete_parser.set_defaults(func=_model_delete)
+
+  model_deploy_parser = model_sub_commands.add_parser(
+      'deploy', help='Deploy a model version.')
+  model_deploy_parser.add_argument('--name', required=True,
+                                   help='Must be model.version to indicate the model ' +
+                                        'and version name to deploy.')
+  model_deploy_parser.add_argument('--path', required=True,
+                                   help='The GCS path of the model to be deployed.')
+  model_deploy_parser.add_argument('--runtime_version',
+                                   help='The TensorFlow version to use for this model. ' +
+                                        'For example, "1.2.1". If absent, the current ' +
+                                        'TensorFlow version installed in Datalab will be used.')
+  model_deploy_parser.add_argument('--project',
+                                   help='The project to deploy a model version. If absent, ' +
+                                        'use Datalab\'s default project.')
+  model_deploy_parser.set_defaults(func=_model_deploy)
 
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
@@ -852,12 +929,12 @@ def _evaluate_cm(args, cell):
     raise ValueError('Either csv or bigquery is needed.')
 
   if args['plot']:
-    return cm.plot()
+    return cm.plot(figsize=(15, 15), rotation=90)
   else:
     return cm.to_dataframe()
 
 
-def _evaluate_accuracy(args, cell):
+def _create_metrics(args):
   if args['csv']:
     if args['headers']:
       headers = args['headers'].split(',')
@@ -870,22 +947,16 @@ def _evaluate_accuracy(args, cell):
   else:
     raise ValueError('Either csv or bigquery is needed.')
 
+  return metrics
+
+
+def _evaluate_accuracy(args, cell):
+  metrics = _create_metrics(args)
   return metrics.accuracy()
 
 
 def _evaluate_regression(args, cell):
-  if args['csv']:
-    if args['headers']:
-      headers = args['headers'].split(',')
-      metrics = datalab_ml.Metrics.from_csv(args['csv'], headers=headers)
-    else:
-      schema_file = _get_evaluation_csv_schema(args['csv'])
-      metrics = datalab_ml.Metrics.from_csv(args['csv'], schema_file=schema_file)
-  elif args['bigquery']:
-    metrics = datalab_ml.Metrics.from_bigquery(args['bigquery'])
-  else:
-    raise ValueError('Either csv or bigquery is needed.')
-
+  metrics = _create_metrics(args)
   metrics_dict = []
   metrics_dict.append({
       'metric': 'Root Mean Square Error',
@@ -908,3 +979,97 @@ def _evaluate_regression(args, cell):
       'value': metrics.percentile_nearest(99)
   })
   return pd.DataFrame(metrics_dict)
+
+
+def _evaluate_pr(args, cell):
+  metrics = _create_metrics(args)
+  df = metrics.precision_recall(args['num_thresholds'], args['target_class'],
+                                probability_column=args['probability_column'])
+  if args['plot']:
+    plt.plot(df['recall'], df['precision'],
+             label='Precision-Recall curve for class ' + args['target_class'])
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title('Precision-Recall')
+    plt.legend(loc="lower left")
+    plt.show()
+  else:
+    return df
+
+
+def _evaluate_roc(args, cell):
+  metrics = _create_metrics(args)
+  df = metrics.roc(args['num_thresholds'], args['target_class'],
+                   probability_column=args['probability_column'])
+  if args['plot']:
+    plt.plot(df['fpr'], df['tpr'],
+             label='ROC curve for class ' + args['target_class'])
+    plt.xlabel('fpr')
+    plt.ylabel('tpr')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    plt.title('ROC')
+    plt.legend(loc="lower left")
+    plt.show()
+  else:
+    return df
+
+
+def _model_list(args, cell):
+  if args['name']:
+    # model name provided. List versions of that model.
+    versions = datalab_ml.ModelVersions(args['name'], project_id=args['project'])
+    versions = list(versions.get_iterator())
+    df = pd.DataFrame(versions)
+    df['name'] = df['name'].apply(lambda x: x.split('/')[-1])
+    df = df.replace(np.nan, '', regex=True)
+    return df
+  else:
+    # List all models.
+    models = list(datalab_ml.Models(project_id=args['project']).get_iterator())
+    if len(models) > 0:
+      df = pd.DataFrame(models)
+      df['name'] = df['name'].apply(lambda x: x.split('/')[-1])
+      df['defaultVersion'] = df['defaultVersion'].apply(lambda x: x['name'].split('/')[-1])
+      df = df.replace(np.nan, '', regex=True)
+      return df
+    else:
+      print('No models found.')
+
+
+def _model_delete(args, cell):
+  parts = args['name'].split('.')
+  if len(parts) == 1:
+    models = datalab_ml.Models(project_id=args['project'])
+    models.delete(parts[0])
+  elif len(parts) == 2:
+    versions = datalab_ml.ModelVersions(parts[0], project_id=args['project'])
+    versions.delete(parts[1])
+  else:
+    raise ValueError('Too many "." in name. Use "model" or "model.version".')
+
+
+def _model_deploy(args, cell):
+  parts = args['name'].split('.')
+  if len(parts) == 2:
+    model_name, version_name = parts[0], parts[1]
+    model_exists = False
+    try:
+      # If describe() works, the model already exists.
+      datalab_ml.Models(project_id=args['project']).get_model_details(model_name)
+      model_exists = True
+    except:
+      pass
+
+    if not model_exists:
+      datalab_ml.Models(project_id=args['project']).create(model_name)
+
+    versions = datalab_ml.ModelVersions(model_name, project_id=args['project'])
+    runtime_version = args['runtime_version']
+    if not runtime_version:
+      runtime_version = tf.__version__
+    versions.deploy(version_name, args['path'], runtime_version=runtime_version)
+  else:
+    raise ValueError('Name must be like "model.version".')

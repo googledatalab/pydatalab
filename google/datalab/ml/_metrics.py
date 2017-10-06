@@ -177,6 +177,200 @@ FROM
       df = self._get_data_from_bigquery([query, query_all])
       return df
 
+  def roc(self, num_thresholds, target_class, probability_column=None):
+    """Get true positive rate, false positive rate values from evaluation results.
+
+    Args:
+      num_thresholds: an integer. Number of thresholds.
+      target_class: a string indciating the target class, i.e. "daisy" in flower classification.
+      probability_column: the name of the probability column. If None, defaults to
+          value of target_class.
+
+    Returns:
+      A DataFrame with columns: 'tpr', 'fpr', 'threshold' with number of rows
+      equal to num_thresholds.
+
+    Raises:
+      Exception if the CSV headers do not include 'target' or probability_column, or BigQuery
+      does not return 'target' or probability_column column.
+    """
+
+    if not probability_column:
+      probability_column = target_class
+
+    thresholds = np.linspace(0, 1, num_thresholds + 1)
+    if self._input_csv_files:
+      df = self._get_data_from_csv_files()
+      if 'target' not in df or probability_column not in df:
+        raise ValueError('Cannot find "target" or "%s" column' % probability_column)
+
+      total_positive = sum(1 for x in df['target'] if x == target_class)
+      total_negative = len(df) - total_positive
+      true_positives, false_positives = [], []
+      for threshold in thresholds:
+        true_positive_count = len(df[(df[probability_column] > threshold) &
+                                  (df['target'] == target_class)])
+        false_positive_count = len(df[(df[probability_column] > threshold) &
+                                   (df['target'] != target_class)])
+        true_positives.append(true_positive_count)
+        false_positives.append(false_positive_count)
+
+      data = []
+      for tp, fp, t in zip(true_positives, false_positives, thresholds):
+        tpr = (float)(tp) / total_positive if total_positive > 0. else 0.
+        fpr = (float)(fp) / total_negative if total_negative > 0. else 0.
+        data.append({'tpr': tpr, 'fpr': fpr, 'threshold': t})
+      return pd.DataFrame(data)
+
+    elif self._bigquery:
+      true_positive_query = bq.Query("""
+        SELECT
+          COUNT(*) as true_positive
+        FROM
+          %s
+        CROSS JOIN
+          (SELECT * FROM UNNEST ([%s]) as t)
+        WHERE
+          %s > t AND target = '%s'
+        GROUP BY t
+        ORDER BY t
+      """ % (self._bigquery, ','.join(map(str, thresholds)), probability_column, target_class))
+
+      false_positive_query = bq.Query("""
+        SELECT
+          COUNT(*) as false_positive
+        FROM
+          %s
+        CROSS JOIN
+          (SELECT * FROM UNNEST ([%s]) as t)
+        WHERE
+          %s > t AND target != '%s'
+        GROUP BY t
+        ORDER BY t
+      """ % (self._bigquery, ','.join(map(str, thresholds)), probability_column, target_class))
+
+      total_positive_query = bq.Query("""
+        SELECT
+          COUNT(*) as total_positive
+        FROM
+          %s
+        WHERE
+          target = '%s'
+      """ % (self._bigquery, target_class))
+
+      total_negative_query = bq.Query("""
+        SELECT
+          COUNT(*) as total_negative
+        FROM
+          %s
+        WHERE
+          target != '%s'
+      """ % (self._bigquery, target_class))
+
+      true_positives = true_positive_query.execute().result()
+      false_positives = false_positive_query.execute().result()
+      total_positive = total_positive_query.execute().result()[0]['total_positive']
+      total_negative = total_negative_query.execute().result()[0]['total_negative']
+      data = []
+      for tp, fp, t in zip(true_positives, false_positives, thresholds):
+        tpr = (float)(tp['true_positive']) / total_positive if total_positive > 0. else 0.
+        fpr = (float)(fp['false_positive']) / total_negative if total_negative > 0. else 0.
+        data.append({'tpr': tpr, 'fpr': fpr, 'threshold': t})
+      data.append({'tpr': 0., 'fpr': 0., 'threshold': 1.0})
+      return pd.DataFrame(data)
+
+  def precision_recall(self, num_thresholds, target_class, probability_column=None):
+    """Get precision, recall values from evaluation results.
+
+    Args:
+      num_thresholds: an integer. Number of thresholds.
+      target_class: a string indciating the target class, i.e. "daisy" in flower classification.
+      probability_column: the name of the probability column. If None, defaults to
+          value of target_class.
+
+    Returns:
+      A DataFrame with columns: 'threshold', 'precision', 'recall' with number of rows
+      equal to num_thresholds.
+
+    Raises:
+      Exception if the CSV headers do not include 'target' or probability_column, or BigQuery
+      does not return 'target' or probability_column column.
+    """
+
+    if not probability_column:
+      probability_column = target_class
+
+    # threshold = 1.0 is excluded.
+    thresholds = np.linspace(0, 1, num_thresholds + 1)[0:-1]
+    if self._input_csv_files:
+      df = self._get_data_from_csv_files()
+      if 'target' not in df or probability_column not in df:
+        raise ValueError('Cannot find "target" or "%s" column' % probability_column)
+
+      total_target = sum(1 for x in df['target'] if x == target_class)
+      total_predicted = []
+      correct_predicted = []
+      for threshold in thresholds:
+        predicted_count = sum(1 for x in df[probability_column] if x > threshold)
+        total_predicted.append(predicted_count)
+        correct_count = len(df[(df[probability_column] > threshold) &
+                            (df['target'] == target_class)])
+        correct_predicted.append(correct_count)
+
+      data = []
+      for p, c, t in zip(total_predicted, correct_predicted, thresholds):
+        precision = (float)(c) / p if p > 0. else 0.
+        recall = (float)(c) / total_target if total_target > 0. else 0.
+        data.append({'precision': precision, 'recall': recall, 'threshold': t})
+      return pd.DataFrame(data)
+
+    elif self._bigquery:
+      total_predicted_query = bq.Query("""
+        SELECT
+          COUNT(*) as total_predicted
+        FROM
+          %s
+        CROSS JOIN
+          (SELECT * FROM UNNEST ([%s]) as t)
+        WHERE
+          %s > t
+        GROUP BY t
+        ORDER BY t
+      """ % (self._bigquery, ','.join(map(str, thresholds)), probability_column))
+
+      correct_predicted_query = bq.Query("""
+        SELECT
+          COUNT(*) as correct_predicted
+        FROM
+          %s
+        CROSS JOIN
+          (SELECT * FROM UNNEST ([%s]) as t)
+        WHERE
+          %s > t AND target='%s'
+        GROUP BY t
+        ORDER BY t
+      """ % (self._bigquery, ','.join(map(str, thresholds)), probability_column, target_class))
+
+      total_target_query = bq.Query("""
+        SELECT
+          COUNT(*) as total_target
+        FROM
+          %s
+        WHERE
+          target='%s'
+      """ % (self._bigquery, target_class))
+
+      total_predicted = total_predicted_query.execute().result()
+      correct_predicted = correct_predicted_query.execute().result()
+      total_target = total_target_query.execute().result()[0]['total_target']
+      data = []
+      for p, c, t in zip(total_predicted, correct_predicted, thresholds):
+        precision = ((float)(c['correct_predicted']) / p['total_predicted']
+                     if p['total_predicted'] > 0. else 0.)
+        recall = (float)(c['correct_predicted']) / total_target if total_target > 0. else 0.
+        data.append({'precision': precision, 'recall': recall, 'threshold': t})
+      return pd.DataFrame(data)
+
   def rmse(self):
     """Get RMSE for regression model evaluation results.
 
@@ -200,10 +394,10 @@ FROM
       return math.sqrt(mse)
     elif self._bigquery:
       query = bq.Query("""
-SELECT
-  SQRT(SUM(ABS(predicted-target) * ABS(predicted-target)) / COUNT(*)) as rmse
-FROM
-  %s""" % self._bigquery)
+        SELECT
+          SQRT(SUM(ABS(predicted-target) * ABS(predicted-target)) / COUNT(*)) as rmse
+        FROM
+          %s""" % self._bigquery)
       df = self._get_data_from_bigquery([query])
       if df.empty:
         return None
@@ -231,10 +425,10 @@ FROM
       return mae
     elif self._bigquery:
       query = bq.Query("""
-SELECT
-  SUM(ABS(predicted-target)) / COUNT(*) as mae
-FROM
-  %s""" % self._bigquery)
+        SELECT
+          SUM(ABS(predicted-target)) / COUNT(*) as mae
+        FROM
+          %s""" % self._bigquery)
       df = self._get_data_from_bigquery([query])
       if df.empty:
         return None
@@ -265,11 +459,11 @@ FROM
       return np.percentile(abs_errors, percentile, interpolation='nearest')
     elif self._bigquery:
       query = bq.Query("""
-SELECT
-  PERCENTILE_DISC(ABS(predicted-target), %f) OVER() AS percentile
-FROM
-  %s
-LIMIT 1""" % (float(percentile) / 100, self._bigquery))
+        SELECT
+          PERCENTILE_DISC(ABS(predicted-target), %f) OVER() AS percentile
+        FROM
+          %s
+        LIMIT 1""" % (float(percentile) / 100, self._bigquery))
       df = self._get_data_from_bigquery([query])
       if df.empty:
         return None
