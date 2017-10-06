@@ -153,10 +153,7 @@ default_args = {{
       param_string = param_string % self._airflow_macros
       full_param_string = full_param_string + param_string
 
-    return '{0} = {1}({2}, dag=dag)\n'.format(
-        task_id,
-        operator_classname,
-      full_param_string)
+    return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_classname, full_param_string)
 
   @staticmethod
   def _get_param_format_string(param_value):
