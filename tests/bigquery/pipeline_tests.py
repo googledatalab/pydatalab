@@ -199,14 +199,14 @@ class TestCases(unittest.TestCase):
                   skip: 5
                   delimiter: ','
                 schema:
-                    - name: col1
-                      type: int64
-                      mode: NULLABLE
-                      description: description1
-                    - name: col2
-                      type: STRING
-                      mode: required
-                      description: description1
+                  - name: col1
+                    type: int64
+                    mode: NULLABLE
+                    description: description1
+                  - name: col2
+                    type: STRING
+                    mode: required
+                    description: description1
             transformation:
                 query: foo_query
             output:
@@ -218,7 +218,7 @@ class TestCases(unittest.TestCase):
                   value: $endpoint
                 - name: column
                   type: INTEGER
-                  value: $job_id       
+                  value: $job_id
     """
 
     output = bq._pipeline_cell(args, cell_body)
@@ -272,11 +272,11 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 
     # String that follows the "csv_options=", for the load operator.
     actual_csv_options_dict_str = pattern.match(output).group(2)
-    self.assertIn("\'header\': True", actual_csv_options_dict_str)
-    self.assertIn("\'delimiter\': \',\'", actual_csv_options_dict_str)
-    self.assertIn("\'skip\': 5", actual_csv_options_dict_str)
-    self.assertIn("\'strict\': False", actual_csv_options_dict_str)
-    self.assertIn("\'quote\': \'\"\'", actual_csv_options_dict_str)
+    self.assertIn("'header': True", actual_csv_options_dict_str)
+    self.assertIn("'delimiter': ','", actual_csv_options_dict_str)
+    self.assertIn("'skip': 5", actual_csv_options_dict_str)
+    self.assertIn("'strict': False", actual_csv_options_dict_str)
+    self.assertIn("'quote': '\"'", actual_csv_options_dict_str)
 
     # String that follows the "schema=", i.e. the list of dicts.
     actual_schema_str = pattern.match(output).group(3)
