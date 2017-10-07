@@ -27,12 +27,9 @@ import google
 
 def _create_cell(args, cell_body):
   """Implements the pipeline cell create magic used to create Pipeline objects.
-
   The supported syntax is:
-
       %%pipeline create <args>
       [<inline YAML>]
-
   Args:
     args: the arguments following '%%pipeline create'.
     cell_body: the contents of the cell
@@ -41,13 +38,14 @@ def _create_cell(args, cell_body):
   if name is None:
     raise Exception("Pipeline name was not specified.")
 
-  pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(
-      cell_body, name, env=IPython.get_ipython().user_ns)
+  pipeline_spec = google.datalab.contrib.pipeline._pipeline.Pipeline.get_pipeline_spec(
+      cell_body, google.datalab.utils.commands.notebook_environment())
+  pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
   google.datalab.utils.commands.notebook_environment()[name] = pipeline
 
   debug = args.get('debug')
   if debug is True:
-    return pipeline.py
+    return pipeline.get_airflow_spec
 
 
 def _create_create_subparser(parser):
@@ -96,7 +94,7 @@ for help on a specific command.
 _pipeline_parser = _create_pipeline_parser()
 
 
-@IPython.core.magic.register_line_cell_magic
+# TODO(rajivpb): Decorate this with '@IPython.core.magic.register_line_cell_magic'
 def pipeline(line, cell=None):
   """Implements the pipeline cell magic for ipython notebooks.
 
@@ -112,8 +110,7 @@ def pipeline(line, cell=None):
   Use %pipeline --help for a list of commands, or %pipeline <command> --help for
   help on a specific command.
   """
-  return google.datalab.utils.commands.handle_magic_line(line, cell,
-                                                         _pipeline_parser)
+  return google.datalab.utils.commands.handle_magic_line(line, cell, _pipeline_parser)
 
 
 def _dispatch_handler(args, cell, parser, handler, cell_required=False,
@@ -151,7 +148,7 @@ def _dispatch_handler(args, cell, parser, handler, cell_required=False,
 
 def _repr_html_pipeline(pipeline):
   return google.datalab.utils.commands.HtmlBuilder.render_text(
-      pipeline.py, preformatted=True)
+      pipeline.get_airflow_spec, preformatted=True)
 
 
 def _register_html_formatters():
