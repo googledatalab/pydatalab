@@ -10,8 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google
-import jsonschema
+import google.datalab.bigquery as bigquery
 from google.datalab import utils
 
 
@@ -22,6 +21,7 @@ class Pipeline(object):
   """
 
   _imports = """
+import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
@@ -29,48 +29,55 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
+from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator
+from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator
+from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator
 from datetime import timedelta
 from pytz import timezone
 """
 
-  def __init__(self, spec_str, name, env=None):
+  def __init__(self, name, pipeline_spec):
     """ Initializes an instance of a Pipeline object.
 
     Args:
-      spec_str: the yaml config (cell body) of the pipeline from Datalab
+      pipeline_spec: Dict with pipeline-spec in key-value form.
+    """
+    self._pipeline_spec = pipeline_spec
+    self._name = name
+
+  @staticmethod
+  def get_pipeline_spec(spec_str, env=None):
+    """ Gets a dict representation of the pipeline-spec, given a yaml string.
+    Args:
       name: name of the pipeline (line argument) from Datalab
       env: a dictionary containing objects from the pipeline execution context,
           used to get references to Bigquery SQL objects, and other python
           objects defined in the notebook.
+
+    Returns:
+      Dict with pipeline-spec in key-value form.
     """
-    self._spec_str = spec_str
-    self._env = env or {}
-    self._name = name
+    if not spec_str:
+      return None
+    return utils.commands.parse_config(spec_str, env)
 
   @property
-  def py(self):
-    """ Gets the airflow python spec for the Pipeline object. This is the
-      input for the Cloud Composer service.
+  def get_airflow_spec(self):
+    """ Gets the airflow python spec (Composer service input) for the Pipeline object.
     """
-    if not self._spec_str:
-      return None
-
-    dag_spec = utils.commands.parse_config(
-        self._spec_str, self._env)
 
     # Work-around for yaml.load() limitation. Strings that look like datetimes
     # are parsed into timezone _unaware_ timezone objects.
-    start_datetime_obj = dag_spec.get('schedule').get('start_date')
-    end_datetime_obj = dag_spec.get('schedule').get('end_date')
+    start_datetime_obj = self._pipeline_spec.get('schedule').get('start')
+    end_datetime_obj = self._pipeline_spec.get('schedule').get('end')
 
-    default_args = Pipeline._get_default_args(
-        dag_spec['email'], start_datetime_obj, end_datetime_obj)
+    default_args = Pipeline._get_default_args(start_datetime_obj, end_datetime_obj)
     dag_definition = self._get_dag_definition(
-        dag_spec.get('schedule')['schedule_interval'])
+        self._pipeline_spec.get('schedule')['interval'])
 
     task_definitions = ''
     up_steam_statements = ''
-    for (task_id, task_details) in sorted(dag_spec['tasks'].items()):
+    for (task_id, task_details) in sorted(self._pipeline_spec['tasks'].items()):
       task_def = self._get_operator_definition(task_id, task_details)
       task_definitions = task_definitions + task_def
       dependency_def = Pipeline._get_dependency_definition(
@@ -81,16 +88,17 @@ from pytz import timezone
         task_definitions + up_steam_statements
 
   @staticmethod
-  def _get_default_args(email, start_date, end_date):
-    start_date_str = Pipeline._get_datetime_expr_str(start_date)
-    end_date_str = Pipeline._get_datetime_expr_str(end_date)
+  def _get_default_args(start, end):
+    start_date_str = Pipeline._get_datetime_expr_str(start)
+    end_date_str = Pipeline._get_datetime_expr_str(end)
+    # TODO(rajivpb): Get the email address in some other way.
     airflow_default_args_format = """
 default_args = {{
     'owner': 'Datalab',
     'depends_on_past': False,
-    'email': ['{0}'],
-    'start_date': {1},
-    'end_date': {2},
+    'email': ['foo@bar.com'],
+    'start_date': {0},
+    'end_date': {1},
     'email_on_failure': True,
     'email_on_retry': False,
     'retries': 1,
@@ -98,11 +106,11 @@ default_args = {{
 }}
 
 """
-    return airflow_default_args_format.format(email, start_date_str, end_date_str)
+    return airflow_default_args_format.format(start_date_str, end_date_str)
 
   @staticmethod
   def _get_datetime_expr_str(datetime_obj):
-    # User is expected to always provide start_date and end_date in UTC and in
+    # User is expected to always provide start and end in UTC and in
     # the %Y-%m-%dT%H:%M:%SZ format (i.e. _with_ the trailing 'Z' to
     # signify UTC).
     # However, due to a bug/feature in yaml.load(), strings that look like
@@ -140,7 +148,7 @@ default_args = {{
   @staticmethod
   def _get_param_format_string(param_value):
     # If the type is a python non-string (best guess), we don't quote it.
-    if type(param_value) in [int, bool, float, type(None), list]:
+    if type(param_value) in [int, bool, float, type(None), list, dict]:
       return ', {0}={1}'
     return ', {0}=\'{1}\''
 
@@ -168,13 +176,9 @@ default_args = {{
       with the string "Operator".
     """
     task_type_to_operator_prefix_mapping = {
-      'bq': 'BigQuery',
-      'bq.execute': 'BigQuery',
-      'bq.query': 'BigQuery',
-      'bq.extract': 'BigQueryToCloudStorage',
-      'bq.load': 'GoogleCloudStorageToBigQuery',
-      'bq.table.delete': 'BigQueryTableDelete',
-      'bash': 'Bash'
+      'pydatalab.bq.execute': 'Execute',
+      'pydatalab.bq.extract': 'Extract',
+      'pydatalab.bq.load': 'Load',
     }
     operator_class_prefix = task_type_to_operator_prefix_mapping.get(
         task_detail_type)
@@ -209,6 +213,8 @@ default_args = {{
     if 'up_stream' in operator_task_details.keys():
       del operator_task_details['up_stream']
 
+    # We special-case certain operators if we do some translation of the parameter names. This is
+    # usually the case when we use syntactic sugar to expose the functionality.
     if (operator_class_name == 'BigQueryOperator'):
       return Pipeline._get_bq_execute_params(operator_task_details)
     if (operator_class_name == 'BigQueryToCloudStorageOperator'):
@@ -247,26 +253,24 @@ default_args = {{
     Returns:
       Validated object containing query parameters.
     """
-    jsonschema.validate({'parameters': input_query_parameters},
-                        google.datalab.bigquery.commands._bigquery.query_params_schema)
-
     parsed_params = []
-    for param in input_query_parameters:
-      parsed_params.append({
-        'name': param['name'],
-        'parameterType': {
-          'type': param['type']
-        },
-        'parameterValue': {
-          'value': param['value']
-        }
-      })
+    if input_query_parameters:
+      for param in input_query_parameters:
+        parsed_params.append({
+          'name': param['name'],
+          'parameterType': {
+            'type': param['type']
+          },
+          'parameterValue': {
+            'value': param['value']
+          }
+        })
     return parsed_params
 
   @staticmethod
   def _get_bq_extract_params(operator_task_details):
     if 'table' in operator_task_details:
-      table = google.datalab.bigquery.commands._bigquery._get_table(operator_task_details['table'])
+      table = bigquery.commands._bigquery._get_table(operator_task_details['table'])
       operator_task_details['source_project_dataset_table'] = table.full_name
       del operator_task_details['table']
     if 'path' in operator_task_details:
@@ -292,9 +296,9 @@ default_args = {{
   @staticmethod
   def _get_bq_load_params(operator_task_details):
     if 'table' in operator_task_details:
-      table = google.datalab.bigquery.commands._bigquery._get_table(operator_task_details['table'])
+      table = bigquery.commands._bigquery._get_table(operator_task_details['table'])
       if not table:
-        table = google.datalab.bigquery.Table(operator_task_details['table'])
+        table = bigquery.Table(operator_task_details['table'])
         # TODO(rajivpb): Ensure that mode == create here.
       operator_task_details['destination_project_dataset_table'] = table.full_name
       del operator_task_details['table']
