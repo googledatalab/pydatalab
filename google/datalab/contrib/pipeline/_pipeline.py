@@ -10,9 +10,8 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google
+import google.cloud.storage as gcs
 import google.datalab.bigquery as bigquery
-from google.cloud import storage
 from google.datalab import utils
 
 
@@ -75,19 +74,17 @@ from pytz import timezone
 
   # TODO(rajivpb): Un-hardcode the bucket. https://github.com/googledatalab/pydatalab/issues/501
   def write_to_gcs(self):
-    pydatalab_context = google.datalab.Context.default()
-    client = storage.client.Client(project=pydatalab_context.project_id,
-                                   credentials=pydatalab_context.credentials)
+    client = gcs.Client()
     bucket = client.get_bucket('airflow-staging-test36490808-bucket')
     filename = 'dags/{0}.py'.format(self._name)
-    blob = storage.blob.Blob(filename, bucket)
+    blob = gcs.Blob(filename, bucket)
     blob.upload_from_string(self._get_airflow_spec())
 
   @staticmethod
   def get_pipeline_spec(spec_str, env=None):
     """ Gets a dict representation of the pipeline-spec, given a yaml string.
     Args:
-      name: name of the pipeline (line argument) from Datalab
+      spec_str: string representation of the pipeline's yaml spec
       env: a dictionary containing objects from the pipeline execution context,
           used to get references to Bigquery SQL objects, and other python
           objects defined in the notebook.

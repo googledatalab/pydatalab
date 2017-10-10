@@ -122,13 +122,17 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
-  def test_pipeline_cell_golden(self, mock_get_table, mock_table_exists, mock_environment,
-                                mock_default_context):
+  @mock.patch('google.cloud.storage.Blob')
+  @mock.patch('google.cloud.storage.Client.get_bucket')
+  def test_pipeline_cell_golden(self, mock_client_get_bucket, mock_blob_class, mock_get_table,
+                                mock_table_exists, mock_environment, mock_default_context):
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
     mock_table_exists.return_value = True
     context = TestCases._create_context()
     mock_default_context.return_value = context
+    mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
+    mock_blob = mock_blob_class.return_value
 
     env = {
       'foo_query': google.datalab.bigquery.Query(
@@ -226,3 +230,5 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
     self.assertIn("'mode': 'required'", actual_schema_str)
     self.assertIn("'name': 'col2'", actual_schema_str)
     self.assertIn("'description': 'description1'", actual_schema_str)
+
+    mock_blob.upload_from_string.assert_called_with(output)
