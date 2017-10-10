@@ -15,7 +15,6 @@ from __future__ import unicode_literals
 import json
 import mock
 import pandas
-import re
 import six
 import unittest
 
@@ -769,7 +768,7 @@ WITH q1 AS (
 
       args = {'name': 'bq_pipeline_test'}
       small_cell_body = """
-              email: foo1@test.com
+              emails: foo1@test.com
               schedule:
                   start: 2009-05-05T22:28:15Z
                   end: 2009-05-06T22:28:15Z

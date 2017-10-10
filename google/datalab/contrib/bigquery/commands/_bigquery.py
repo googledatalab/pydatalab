@@ -75,7 +75,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
     pipeline_spec['tasks'][execute_task_config_name] = execute_task_config
   if extract_task_config:
     pipeline_spec['tasks'][extract_task_config_name] = extract_task_config
-  pipeline_spec['email'] = bq_pipeline_config.get('email')
+  pipeline_spec['emails'] = bq_pipeline_config.get('emails')
 
   if not load_task_config and not execute_task_config and not extract_task_config:
     raise Exception('Pipeline has no tasks to execute.')

@@ -111,7 +111,7 @@ tasks:
 
     # test pipeline creation
     p_body = """
-email: foo1@test.com,foo2@test.com
+emails: foo1@test.com,foo2@test.com
 schedule:
   start: 2009-05-05T22:28:15Z
   end: 2009-05-06T22:28:15Z

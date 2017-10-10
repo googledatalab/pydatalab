@@ -31,7 +31,7 @@ import google.auth
 class PipelineTest(unittest.TestCase):
 
   _test_pipeline_yaml_spec = """
-email: foo1@test.com,foo2@test.com
+emails: foo1@test.com,foo2@test.com
 schedule:
   start: 2009-05-05T22:28:15Z
   end: 2009-05-06T22:28:15Z
@@ -309,15 +309,14 @@ tasks:
                      datetime.datetime(2009, 5, 5, 22, 28, 15,
                                        tzinfo=timezone('UTC')))
 
-  def test_get_default_args(self):
-    # email is specified
+  def test_get_default_args_with_email(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
                                                  dag_dict.get('schedule').get('end'),
-                                                 dag_dict.get('email'))
+                                                 dag_dict.get('emails'))
     self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
 
-    # email is not specified
+  def test_get_default_args_without_email(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
                                                  dag_dict.get('schedule').get('end'),

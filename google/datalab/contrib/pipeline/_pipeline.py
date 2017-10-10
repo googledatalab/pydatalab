@@ -72,7 +72,7 @@ from pytz import timezone
     end_datetime_obj = self._pipeline_spec.get('schedule').get('end')
 
     default_args = Pipeline._get_default_args(start_datetime_obj, end_datetime_obj,
-                                              self._pipeline_spec.get('email'))
+                                              self._pipeline_spec.get('emails'))
     dag_definition = self._get_dag_definition(
         self._pipeline_spec.get('schedule')['interval'])
 
