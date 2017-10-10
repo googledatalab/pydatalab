@@ -10,7 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import cloudstorage as gcs
 import google.datalab.bigquery as bigquery
+import os
 from google.datalab import utils
 
 
@@ -84,8 +86,9 @@ from pytz import timezone
           task_id, task_details.get('up_stream', []))
       up_steam_statements = up_steam_statements + dependency_def
 
-    return Pipeline._imports + default_args + dag_definition + \
-        task_definitions + up_steam_statements
+    self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
+        up_steam_statements
+    return self._airflow_spec
 
   @staticmethod
   def _get_default_args(start, end):
@@ -327,3 +330,23 @@ default_args = {{
   @staticmethod
   def _get_bucket_and_source_object(gcs_path):
     return gcs_path.split('/')[2], '/'.join(gcs_path.split('/')[3:])
+
+  def _write_dag_to_gcs(self):
+    """Create a file.
+
+    The retry_params specified in the open call will override the default
+    retry params for this particular file handle.
+
+    Args:
+      filename: filename.
+    """
+    # TODO(rajivpb): Currently, this is the default bucket and needs to be replaced with the actual
+    # bucket where composer's expects the dag files.
+    from google.appengine.api import app_identity
+    bucket_name = os.environ.get('BUCKET_NAME',
+                                 app_identity.get_default_gcs_bucket_name())
+    bucket = '/' + bucket_name
+    filename = bucket + '/demo_test_dag.py'
+    gcs_file = gcs.open(filename, 'w', content_type='text/plain')
+    gcs_file.write(self._airflow_spec)
+    gcs_file.close()
