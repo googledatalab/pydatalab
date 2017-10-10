@@ -46,6 +46,7 @@ def _pipeline_cell(args, cell_body):
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
+    pipeline.write_to_gcs()
 
     # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
     return pipeline._get_airflow_spec()
