@@ -15,7 +15,6 @@ from __future__ import unicode_literals
 import json
 import mock
 import pandas
-import re
 import six
 import unittest
 
