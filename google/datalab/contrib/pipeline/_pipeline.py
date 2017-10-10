@@ -10,8 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import google
 import google.datalab.bigquery as bigquery
-from gcloud import storage
+from google.cloud import storage
 from google.datalab import utils
 
 
@@ -74,10 +75,12 @@ from pytz import timezone
 
   # TODO(rajivpb): Un-hardcode the bucket. https://github.com/googledatalab/pydatalab/issues/501
   def write_to_gcs(self):
-    client = storage.Client()
+    pydatalab_context = google.datalab.Context.default()
+    client = storage.client.Client(project=pydatalab_context.project_id,
+                                   credentials=pydatalab_context.credentials)
     bucket = client.get_bucket('airflow-staging-test36490808-bucket')
     filename = 'dags/{0}.py'.format(self._name)
-    blob = storage.Blob(filename, bucket)
+    blob = storage.blob.Blob(filename, bucket)
     blob.upload_from_string(self._get_airflow_spec())
 
   @staticmethod

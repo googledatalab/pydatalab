@@ -50,7 +50,7 @@ tasks:
 
   @staticmethod
   def _create_context():
-    project_id = 'test'
+    project_id = 'test.project'
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
@@ -308,8 +308,10 @@ tasks:
                      datetime.datetime(2009, 5, 5, 22, 28, 15,
                                        tzinfo=timezone('UTC')))
 
-  @mock.patch('gcloud.storage.Blob')
-  def test_write_to_gcs(self, mock_blob_class):
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.cloud.storage.blob.Blob')
+  def test_write_to_gcs(self, mock_context, mock_blob_class):
+    mock_context.return_value = PipelineTest._create_context()
     mock_blob = mock_blob_class.return_value
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     test_pipeline = pipeline.Pipeline('foo_pipeline', dag_dict)
