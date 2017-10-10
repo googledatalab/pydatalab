@@ -143,6 +143,7 @@ class TestCases(unittest.TestCase):
     args = {'name': 'bq_pipeline_test', 'debug': True}
     # TODO(rajivpb): The references to foo_query need to be resolved.
     cell_body = """
+            emails: foo1@test.com,foo2@test.com
             schedule:
                 start: 2009-05-05T22:28:15Z
                 end: 2009-05-06T22:28:15Z
@@ -192,7 +193,7 @@ from pytz import timezone
 default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
-    'email': \['foo@bar.com'\],
+    'email': \['foo1@test.com', 'foo2@test.com'\],
     'start_date': datetime.datetime.strptime\('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S'\).replace\(tzinfo=timezone\('UTC'\)\),
     'end_date': datetime.datetime.strptime\('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S'\).replace\(tzinfo=timezone\('UTC'\)\),
     'email_on_failure': True,

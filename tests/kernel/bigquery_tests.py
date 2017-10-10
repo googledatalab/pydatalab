@@ -754,6 +754,37 @@ WITH q1 AS (
                                        source_format='csv', csv_options=mock.ANY,
                                        ignore_unknown_values=True)
 
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.utils.commands.notebook_environment')
+  def test_pipeline_cell(self, mock_environment, mock_default_context):
+    context = TestCases._create_context()
+    mock_default_context.return_value = context
+
+    env = {
+      'foo_query': bq.Query(
+        'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
+    }
+    mock_environment.return_value = env
+
+    args = {'name': 'bq_pipeline_test'}
+    small_cell_body = """
+            emails: foo1@test.com
+            schedule:
+                start: 2009-05-05T22:28:15Z
+                end: 2009-05-06T22:28:15Z
+                interval: '@hourly'
+            input:
+                table: project.test.table
+            transformation:
+                query: foo_query
+            output:
+                table: project.test.table
+       """
+
+    actual = google.datalab.contrib.bigquery.commands._bigquery._pipeline_cell(args,
+                                                                                 small_cell_body)
+    self.assertIn("'email': ['foo1@test.com']", actual)
+
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')
   @mock.patch('google.datalab.utils.commands._html.HtmlBuilder.render_chart_data')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')

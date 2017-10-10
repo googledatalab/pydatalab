@@ -31,6 +31,7 @@ import google.auth
 class PipelineTest(unittest.TestCase):
 
   _test_pipeline_yaml_spec = """
+emails: foo1@test.com,foo2@test.com
 schedule:
   start: 2009-05-05T22:28:15Z
   end: 2009-05-06T22:28:15Z
@@ -318,26 +319,19 @@ tasks:
     test_pipeline.write_to_gcs()
     mock_blob.upload_from_string.assert_called_with(test_pipeline._get_airflow_spec())
 
-  def test_get_default_args(self):
+  def test_get_default_args_with_email(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
-    self.assertEqual(
-      pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
-                                          dag_dict.get('schedule').get('end')),
-"""
-default_args = {
-    'owner': 'Datalab',
-    'depends_on_past': False,
-    'email': ['foo@bar.com'],
-    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
-}
+    actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
+                                                 dag_dict.get('schedule').get('end'),
+                                                 dag_dict.get('emails'))
+    self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
 
-"""  # noqa
-    )
+  def test_get_default_args_without_email(self):
+    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
+    actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
+                                                 dag_dict.get('schedule').get('end'),
+                                                 None)
+    self.assertIn("'email': None", actual)
 
 
 if __name__ == '__main__':
