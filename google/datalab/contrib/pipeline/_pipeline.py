@@ -11,7 +11,6 @@
 # the License.
 
 import google.datalab.bigquery as bigquery
-import os
 from gcloud import storage
 from google.datalab import utils
 

@@ -20,7 +20,6 @@ import unittest
 import yaml
 from pytz import timezone
 
-import gcloud.storage
 import google.auth
 import google.datalab
 import google.datalab.bigquery as bq
