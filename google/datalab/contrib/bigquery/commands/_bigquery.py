@@ -48,7 +48,7 @@ def _pipeline_cell(args, cell_body):
     utils.commands.notebook_environment()[name] = pipeline
 
     # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
-    return pipeline.get_airflow_spec
+    return pipeline._get_airflow_spec()
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config):

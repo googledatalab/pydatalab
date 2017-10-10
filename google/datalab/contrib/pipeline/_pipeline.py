@@ -10,9 +10,9 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import cloudstorage as gcs
 import google.datalab.bigquery as bigquery
 import os
+from gcloud import storage
 from google.datalab import utils
 
 
@@ -47,24 +47,7 @@ from pytz import timezone
     self._pipeline_spec = pipeline_spec
     self._name = name
 
-  @staticmethod
-  def get_pipeline_spec(spec_str, env=None):
-    """ Gets a dict representation of the pipeline-spec, given a yaml string.
-    Args:
-      name: name of the pipeline (line argument) from Datalab
-      env: a dictionary containing objects from the pipeline execution context,
-          used to get references to Bigquery SQL objects, and other python
-          objects defined in the notebook.
-
-    Returns:
-      Dict with pipeline-spec in key-value form.
-    """
-    if not spec_str:
-      return None
-    return utils.commands.parse_config(spec_str, env)
-
-  @property
-  def get_airflow_spec(self):
+  def _get_airflow_spec(self):
     """ Gets the airflow python spec (Composer service input) for the Pipeline object.
     """
 
@@ -89,6 +72,30 @@ from pytz import timezone
     self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
         up_steam_statements
     return self._airflow_spec
+
+  # TODO(rajivpb): Un-hardcode the bucket. https://github.com/googledatalab/pydatalab/issues/501
+  def write_to_gcs(self):
+    client = storage.Client()
+    bucket = client.get_bucket('airflow-staging-test36490808-bucket')
+    filename = 'dags/{0}.py'.format(self._name)
+    blob = storage.Blob(filename, bucket)
+    blob.upload_from_string(self._get_airflow_spec())
+
+  @staticmethod
+  def get_pipeline_spec(spec_str, env=None):
+    """ Gets a dict representation of the pipeline-spec, given a yaml string.
+    Args:
+      name: name of the pipeline (line argument) from Datalab
+      env: a dictionary containing objects from the pipeline execution context,
+          used to get references to Bigquery SQL objects, and other python
+          objects defined in the notebook.
+
+    Returns:
+      Dict with pipeline-spec in key-value form.
+    """
+    if not spec_str:
+      return None
+    return utils.commands.parse_config(spec_str, env)
 
   @staticmethod
   def _get_default_args(start, end):
@@ -330,23 +337,3 @@ default_args = {{
   @staticmethod
   def _get_bucket_and_source_object(gcs_path):
     return gcs_path.split('/')[2], '/'.join(gcs_path.split('/')[3:])
-
-  def _write_dag_to_gcs(self):
-    """Create a file.
-
-    The retry_params specified in the open call will override the default
-    retry params for this particular file handle.
-
-    Args:
-      filename: filename.
-    """
-    # TODO(rajivpb): Currently, this is the default bucket and needs to be replaced with the actual
-    # bucket where composer's expects the dag files.
-    from google.appengine.api import app_identity
-    bucket_name = os.environ.get('BUCKET_NAME',
-                                 app_identity.get_default_gcs_bucket_name())
-    bucket = '/' + bucket_name
-    filename = bucket + '/demo_test_dag.py'
-    gcs_file = gcs.open(filename, 'w', content_type='text/plain')
-    gcs_file.write(self._airflow_spec)
-    gcs_file.close()

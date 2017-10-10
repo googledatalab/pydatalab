@@ -20,6 +20,7 @@ import unittest
 import yaml
 from pytz import timezone
 
+import gcloud.storage
 import google.auth
 import google.datalab
 import google.datalab.bigquery as bq
@@ -308,8 +309,15 @@ tasks:
                      datetime.datetime(2009, 5, 5, 22, 28, 15,
                                        tzinfo=timezone('UTC')))
 
+  @mock.patch('gcloud.storage.Blob')
+  def test_write_to_gcs(self, mock_blob_class):
+    mock_blob = mock_blob_class.return_value
+    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
+    test_pipeline = pipeline.Pipeline('foo_pipeline', dag_dict)
+    test_pipeline.write_to_gcs()
+    mock_blob.upload_from_string.assert_called_with(test_pipeline._get_airflow_spec())
+
   def test_get_default_args(self):
-    import yaml
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     self.assertEqual(
       pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),

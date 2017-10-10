@@ -133,7 +133,7 @@ tasks:
     google.datalab.contrib.pipeline.commands._pipeline._create_cell({'name': 'p1'}, p_body)
     p1 = env['p1']
     self.assertIsNotNone(p1)
-    self.assertEqual(p1.get_airflow_spec, """
+    self.assertEqual(p1._get_airflow_spec(), """
 import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
