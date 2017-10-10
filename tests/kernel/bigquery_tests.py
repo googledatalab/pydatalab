@@ -782,7 +782,7 @@ WITH q1 AS (
        """
 
     actual = google.datalab.contrib.bigquery.commands._bigquery._pipeline_cell(args,
-                                                                                 small_cell_body)
+                                                                               small_cell_body)
     self.assertIn("'email': ['foo1@test.com']", actual)
 
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')
