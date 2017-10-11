@@ -637,7 +637,7 @@ class TestTrainer(unittest.TestCase):
               str_tfidf=str_tfidf)
         f.write(csv_line)
 
-  def _run_analyze(self, problem_type, with_image=False):
+  def _create_schema_features(self, problem_type, with_image=False):
     features = {
         'num_id': {'transform': 'identity'},
         'num_scale': {'transform': 'scale', 'value': 4},
@@ -683,6 +683,9 @@ class TestTrainer(unittest.TestCase):
     self.make_csv_data(self._csv_eval_filename, 30, problem_type, True, with_image)
     self.make_csv_data(self._csv_predict_filename, 10, problem_type, False, with_image)
 
+  def _run_analyze(self, problem_type, with_image=False):
+
+    self._create_schema_features(problem_type, with_image=with_image)
     cmd = ['python %s' % os.path.join(CODE_PATH, 'analyze.py'),
            '--output=' + self._analysis_output,
            '--csv=' + self._csv_train_filename,
@@ -751,6 +754,30 @@ class TestTrainer(unittest.TestCase):
            '--train-batch-size=100',
            '--eval-batch-size=50',
            '--max-steps=' + str(self._max_steps),
+           '--transform'] + extra_args
+
+    self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
+    subprocess.check_call(' '.join(cmd), shell=True)
+
+  def _run_training_with_analysis(self, problem_type, model_type, extra_args=[]):
+    """Runs training starting from raw csv data.
+
+    Args:
+      problem_type: 'regression' or 'classification'
+      model_type: 'linear' or 'dnn'
+      extra_args: list of strings to pass to the trainer.
+    """
+    cmd = ['cd %s && ' % CODE_PATH,
+           'python -m trainer.task',
+           '--train=' + self._csv_train_filename,
+           '--eval=' + self._csv_eval_filename,
+           '--job-dir=' + self._train_output,
+           '--model=%s_%s' % (model_type, problem_type),
+           '--train-batch-size=100',
+           '--eval-batch-size=50',
+           '--max-steps=' + str(self._max_steps),
+           '--features=' + self._features_filename,
+           '--schema=' + self._schema_filename,
            '--transform'] + extra_args
 
     self._logger.debug('Running subprocess: %s \n\n' % ' '.join(cmd))
@@ -892,6 +919,17 @@ class TestTrainer(unittest.TestCase):
         problem_type=problem_type,
         model_type=model_type,
         with_image=True)
+
+  def testTrainingWithAnalysis(self):
+    self._logger.debug('\n\nTesting Training with Analysis')
+    self._create_schema_features('classification')
+    self._run_training_with_analysis(
+        problem_type='classification',
+        model_type='linear',
+        extra_args=['--top-n=3'])
+    self._check_model(
+        problem_type='classification',
+        model_type='linear')
 
 
 if __name__ == '__main__':

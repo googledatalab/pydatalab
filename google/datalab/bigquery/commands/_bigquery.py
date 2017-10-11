@@ -42,11 +42,11 @@ from google.datalab.bigquery._sampling import Sampling
 class BigQuerySchema(object):
   """A container class for commonly used BQ-related constants."""
 
-  BIGQUERY_DATATYPES = ['STRING', 'BYTES', 'INTEGER', 'INT64', 'FLOAT', 'FLOAT64', 'BOOLEAN',
-                        'BOOL', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']
-  BIGQUERY_DATATYPES_LOWER = [t.lower() for t in BIGQUERY_DATATYPES]
-  BIGQUERY_MODES = ['NULLABLE', 'REQUIRED', 'REPEATED']
-  BIGQUERY_MODES_LOWER = [m.lower() for m in BIGQUERY_MODES]
+  DATATYPES = ['STRING', 'BYTES', 'INTEGER', 'INT64', 'FLOAT', 'FLOAT64', 'BOOLEAN', 'BOOL',
+               'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']
+  DATATYPES_LOWER = [t.lower() for t in DATATYPES]
+  MODES = ['NULLABLE', 'REQUIRED', 'REPEATED']
+  MODES_LOWER = [m.lower() for m in MODES]
 
   TABLE_SCHEMA_SCHEMA = {
     'definitions': {
@@ -55,8 +55,8 @@ class BigQuerySchema(object):
         'type': 'object',
         'properties': {
           'name': {'type': 'string'},
-          'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
-          'mode': {'type': 'string', 'enum': BIGQUERY_MODES + BIGQUERY_MODES_LOWER},
+          'type': {'type': 'string', 'enum': DATATYPES + DATATYPES_LOWER},
+          'mode': {'type': 'string', 'enum': MODES + MODES_LOWER},
           'description': {'type': 'string'},
           'fields': {
             'type': 'array',
@@ -92,7 +92,7 @@ class BigQuerySchema(object):
             'type': 'object',
             'properties': {
               'name': {'type': 'string'},
-              'type': {'type': 'string', 'enum': BIGQUERY_DATATYPES + BIGQUERY_DATATYPES_LOWER},
+              'type': {'type': 'string', 'enum': DATATYPES + DATATYPES_LOWER},
               'value': {'type': ['string', 'integer']}
             },
             'required': ['name', 'type', 'value'],

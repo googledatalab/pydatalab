@@ -19,13 +19,8 @@ import google.datalab.utils as utils
 def _create_pipeline_subparser(parser):
   pipeline_parser = parser.subcommand('pipeline', 'Creates a pipeline to execute a SQL query to '
                                                   'transform data using BigQuery.')
-
-  # common arguments
-  pipeline_parser.add_argument('-b', '--billing', type=int, help='BigQuery billing tier',
-                               required=True)
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)
-
   return pipeline_parser
 
 
@@ -46,8 +41,8 @@ def _pipeline_cell(args, cell_body):
     if name is None:
         raise Exception("Pipeline name was not specified.")
 
-    bq_pipeline_config = utils.commands.parse_config(cell_body,
-                                                     utils.commands.notebook_environment())
+    bq_pipeline_config = utils.commands.parse_config(
+        cell_body, utils.commands.notebook_environment())
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
@@ -57,10 +52,10 @@ def _pipeline_cell(args, cell_body):
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config):
-  input_config = bq_pipeline_config.get('input', None)
-  transformation_config = bq_pipeline_config.get('transformation', None)
-  output_config = bq_pipeline_config.get('output', None)
-  parameters_config = bq_pipeline_config.get('parameters', None)
+  input_config = bq_pipeline_config.get('input')
+  transformation_config = bq_pipeline_config.get('transformation')
+  output_config = bq_pipeline_config.get('output')
+  parameters_config = bq_pipeline_config.get('parameters')
 
   load_task_config_name = 'bq_pipeline_load_task'
   execute_task_config_name = 'bq_pipeline_execute_task'
@@ -81,6 +76,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
     pipeline_spec['tasks'][execute_task_config_name] = execute_task_config
   if extract_task_config:
     pipeline_spec['tasks'][extract_task_config_name] = extract_task_config
+  pipeline_spec['emails'] = bq_pipeline_config.get('emails')
 
   if not load_task_config and not execute_task_config and not extract_task_config:
     raise Exception('Pipeline has no tasks to execute.')
@@ -177,7 +173,6 @@ def _get_extract_parameters(execute_task_config_name, bq_pipeline_output_config)
       return None
 
     extract_task_config['table'] = bq_pipeline_output_config['table']
-
     extract_task_config['path'] = bq_pipeline_output_config.get('path')
     if not extract_task_config['path']:
       # If a path is not specified, there is nothing to extract, so we return None after making

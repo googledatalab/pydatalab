@@ -187,12 +187,13 @@ class TestCases(unittest.TestCase):
     args = {'name': 'bq_pipeline_test'}
     # TODO(rajivpb): The references to foo_query need to be resolved.
     cell_body = """
+            emails: foo1@test.com,foo2@test.com
             schedule:
                 start: 2009-05-05T22:28:15Z
                 end: 2009-05-06T22:28:15Z
                 interval: '@hourly'
             input:
-                path: gs://bucket/cloud-datalab-samples-httplogs_{{ ds }}
+                path: gs://bucket/cloud-datalab-samples-httplogs_%(ds)s
                 table: $input_table_format
                 csv:
                   header: True
@@ -212,7 +213,7 @@ class TestCases(unittest.TestCase):
             transformation:
                 query: foo_query
             output:
-                path: gs://bucket/cloud-datalab-samples-endpoints_{{ ds }}
+                path: gs://bucket/cloud-datalab-samples-endpoints_%(ds)s.csv
                 table: $output_table_format
             parameters:
                 - name: endpoint
@@ -243,7 +244,7 @@ from pytz import timezone
 default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
-    'email': \['foo@bar.com'\],
+    'email': \['foo1@test.com', 'foo2@test.com'\],
     'start_date': datetime.datetime.strptime\('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S'\).replace\(tzinfo=timezone\('UTC'\)\),
     'end_date': datetime.datetime.strptime\('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S'\).replace\(tzinfo=timezone\('UTC'\)\),
     'email_on_failure': True,
@@ -255,7 +256,7 @@ default_args = {
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
 bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql='SELECT @column FROM cloud-datalab-samples.httplogs.logs_{{ ds }} where endpoint=@endpoint', table='cloud-datalab-samples.endpoints.logs_{{ ds }}', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds }}', table='cloud-datalab-samples.endpoints.logs_{{ ds }}', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds }}.csv', table='cloud-datalab-samples.endpoints.logs_{{ ds }}', dag=dag\)
 bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='gs://bucket/cloud-datalab-samples-httplogs_{{ ds }}', schema=(.*), table='cloud-datalab-samples.httplogs.logs_{{ ds }}', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)

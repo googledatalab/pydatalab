@@ -36,16 +36,10 @@ from datetime import timedelta
 from pytz import timezone
 """
 
+  # These are documented here: https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables  # noqa
   _airflow_macros = {
-    'ds': '{{ ds }}',
-    'yesterday_ds': '{{ yesterday_ds }}',
-    'ds_nodash': '{{ ds_nodash }}',
-    'yesterday_ds_nodash': '{{ yesterday_ds_nodash }}',
-    'tomorrow_ds': '{{ tomorrow_ds }}',
-    'tomorrow_ds_nodash': '{{ tomorrow_ds_nodash }}',
-    'ts': '{{ ts }}',
-    'ts_nodash': '{{ ts_nodash }}',
-    'execution_date': '{{ execution_date }}',
+    'ds': '{{ ds }}',  # the execution date as YYYY-MM-DD
+    'ts': '{{ ts }}',  # same as execution_date.isoformat()
   }
 
   def __init__(self, name, pipeline_spec):
@@ -83,7 +77,8 @@ from pytz import timezone
     start_datetime_obj = self._pipeline_spec.get('schedule').get('start')
     end_datetime_obj = self._pipeline_spec.get('schedule').get('end')
 
-    default_args = Pipeline._get_default_args(start_datetime_obj, end_datetime_obj)
+    default_args = Pipeline._get_default_args(start_datetime_obj, end_datetime_obj,
+                                              self._pipeline_spec.get('emails'))
     dag_definition = self._get_dag_definition(
         self._pipeline_spec.get('schedule')['interval'])
 
@@ -100,15 +95,20 @@ from pytz import timezone
         task_definitions + up_steam_statements
 
   @staticmethod
-  def _get_default_args(start, end):
+  def _get_default_args(start, end, emails):
     start_date_str = Pipeline._get_datetime_expr_str(start)
     end_date_str = Pipeline._get_datetime_expr_str(end)
+
+    email_list = emails
+    if emails:
+      email_list = emails.split(',')
+
     # TODO(rajivpb): Get the email address in some other way.
     airflow_default_args_format = """
 default_args = {{
     'owner': 'Datalab',
     'depends_on_past': False,
-    'email': ['foo@bar.com'],
+    'email': {2},
     'start_date': {0},
     'end_date': {1},
     'email_on_failure': True,
@@ -118,7 +118,7 @@ default_args = {{
 }}
 
 """
-    return airflow_default_args_format.format(start_date_str, end_date_str)
+    return airflow_default_args_format.format(start_date_str, end_date_str, email_list)
 
   @staticmethod
   def _get_datetime_expr_str(datetime_obj):
@@ -154,6 +154,7 @@ default_args = {{
       full_param_string = full_param_string + param_string
 
     return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_classname, full_param_string)
+
 
   @staticmethod
   def _get_param_format_string(param_value):
