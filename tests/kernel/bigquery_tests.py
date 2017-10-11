@@ -764,7 +764,7 @@ WITH q1 AS (
     context = TestCases._create_context()
     mock_default_context.return_value = context
     mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
-    mock_blob = mock_blob_class.return_value
+    mock_blob = mock_blob_class.return_value  # noqa
 
     env = {
       'foo_query': bq.Query(
