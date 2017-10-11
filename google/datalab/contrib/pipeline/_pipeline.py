@@ -155,7 +155,6 @@ default_args = {{
 
     return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_classname, full_param_string)
 
-
   @staticmethod
   def _get_param_format_string(param_value):
     # If the type is a python non-string (best guess), we don't quote it.
