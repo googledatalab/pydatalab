@@ -36,6 +36,18 @@ from datetime import timedelta
 from pytz import timezone
 """
 
+  _airflow_macros = {
+    'ds': '{{ ds }}',
+    'yesterday_ds': '{{ yesterday_ds }}',
+    'ds_nodash': '{{ ds_nodash }}',
+    'yesterday_ds_nodash': '{{ yesterday_ds_nodash }}',
+    'tomorrow_ds': '{{ tomorrow_ds }}',
+    'tomorrow_ds_nodash': '{{ tomorrow_ds_nodash }}',
+    'ts': '{{ ts }}',
+    'ts_nodash': '{{ ts_nodash }}',
+    'execution_date': '{{ execution_date }}',
+  }
+
   def __init__(self, name, pipeline_spec):
     """ Initializes an instance of a Pipeline object.
 
@@ -131,11 +143,11 @@ default_args = {{
     return expr_format.format(datetime_obj.strftime(datetime_format), datetime_format)
 
   def _get_operator_definition(self, task_id, task_details):
-    """ Internal helper that gets the Airflow operator for the task with the
-      python parameters.
+    """ Internal helper that gets the definition of the airflow operator for the task with the
+      python parameters. All the parameters are also expanded with the airflow macros.
     """
     operator_type = task_details['type']
-    param_string = 'task_id=\'{0}_id\''.format(task_id)
+    full_param_string = 'task_id=\'{0}_id\''.format(task_id)
     operator_classname = Pipeline._get_operator_classname(operator_type)
 
     operator_param_values = Pipeline._get_operator_param_name_and_values(
@@ -143,13 +155,14 @@ default_args = {{
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
       param_format_string = Pipeline._get_param_format_string(
           operator_param_value)
-      param_string = param_string + param_format_string.format(
-          operator_param_name, operator_param_value)
+      param_string = param_format_string.format(operator_param_name, operator_param_value)
+      param_string = param_string % self._airflow_macros
+      full_param_string = full_param_string + param_string
 
     return '{0} = {1}({2}, dag=dag)\n'.format(
         task_id,
         operator_classname,
-        param_string)
+      full_param_string)
 
   @staticmethod
   def _get_param_format_string(param_value):
