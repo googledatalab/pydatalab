@@ -10,6 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import google.cloud.storage as gcs
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
 
@@ -51,24 +52,7 @@ from pytz import timezone
     self._pipeline_spec = pipeline_spec
     self._name = name
 
-  @staticmethod
-  def get_pipeline_spec(spec_str, env=None):
-    """ Gets a dict representation of the pipeline-spec, given a yaml string.
-    Args:
-      name: name of the pipeline (line argument) from Datalab
-      env: a dictionary containing objects from the pipeline execution context,
-          used to get references to Bigquery SQL objects, and other python
-          objects defined in the notebook.
-
-    Returns:
-      Dict with pipeline-spec in key-value form.
-    """
-    if not spec_str:
-      return None
-    return utils.commands.parse_config(spec_str, env)
-
-  @property
-  def get_airflow_spec(self):
+  def _get_airflow_spec(self):
     """ Gets the airflow python spec (Composer service input) for the Pipeline object.
     """
 
@@ -91,8 +75,33 @@ from pytz import timezone
           task_id, task_details.get('up_stream', []))
       up_steam_statements = up_steam_statements + dependency_def
 
-    return Pipeline._imports + default_args + dag_definition + \
-        task_definitions + up_steam_statements
+    self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
+        up_steam_statements
+    return self._airflow_spec
+
+  # TODO(rajivpb): Un-hardcode the bucket. https://github.com/googledatalab/pydatalab/issues/501
+  def write_to_gcs(self):
+    client = gcs.Client()
+    bucket = client.get_bucket('airflow-staging-test36490808-bucket')
+    filename = 'dags/{0}.py'.format(self._name)
+    blob = gcs.Blob(filename, bucket)
+    blob.upload_from_string(self._get_airflow_spec())
+
+  @staticmethod
+  def get_pipeline_spec(spec_str, env=None):
+    """ Gets a dict representation of the pipeline-spec, given a yaml string.
+    Args:
+      spec_str: string representation of the pipeline's yaml spec
+      env: a dictionary containing objects from the pipeline execution context,
+          used to get references to Bigquery SQL objects, and other python
+          objects defined in the notebook.
+
+    Returns:
+      Dict with pipeline-spec in key-value form.
+    """
+    if not spec_str:
+      return None
+    return utils.commands.parse_config(spec_str, env)
 
   @staticmethod
   def _get_default_args(start, end, emails):
