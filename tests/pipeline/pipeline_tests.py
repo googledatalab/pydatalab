@@ -31,6 +31,7 @@ import google.auth
 class PipelineTest(unittest.TestCase):
 
   _test_pipeline_yaml_spec = """
+emails: foo1@test.com,foo2@test.com
 schedule:
   start: 2009-05-05T22:28:15Z
   end: 2009-05-06T22:28:15Z
@@ -77,19 +78,19 @@ tasks:
     task_id = 'foo_task'
     task_details = {}
     task_details['type'] = 'Bash'
-    task_details['bash_command'] = 'echo "{{ ds }}"'
+    task_details['bash_command'] = 'echo {{ ds }}'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
-      """foo_task = BashOperator(task_id='foo_task_id', bash_command='echo "{{ ds }}"', dag=dag)
+      """foo_task = BashOperator(task_id='foo_task_id', bash_command='echo {{ ds }}', dag=dag)
 """)  # noqa
 
-  def test_get_templated_bash_bq_definition(self):
+  def test_get_templated_bq_definition(self):
     task_id = 'foo_task'
     task_details = {}
     task_details['type'] = 'BigQuery'
     task_details['query'] = google.datalab.bigquery.Query(
-      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds }}`')
+      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_%(ds)s`')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
@@ -308,27 +309,19 @@ tasks:
                      datetime.datetime(2009, 5, 5, 22, 28, 15,
                                        tzinfo=timezone('UTC')))
 
-  def test_get_default_args(self):
-    import yaml
+  def test_get_default_args_with_email(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
-    self.assertEqual(
-      pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
-                                          dag_dict.get('schedule').get('end')),
-"""
-default_args = {
-    'owner': 'Datalab',
-    'depends_on_past': False,
-    'email': ['foo@bar.com'],
-    'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
-}
+    actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
+                                                 dag_dict.get('schedule').get('end'),
+                                                 dag_dict.get('emails'))
+    self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
 
-"""  # noqa
-    )
+  def test_get_default_args_without_email(self):
+    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
+    actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
+                                                 dag_dict.get('schedule').get('end'),
+                                                 None)
+    self.assertIn("'email': None", actual)
 
 
 if __name__ == '__main__':

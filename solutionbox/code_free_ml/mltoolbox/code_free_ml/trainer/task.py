@@ -45,6 +45,7 @@ from tensorflow.python.util import compat
 
 
 from . import feature_transforms
+from . import feature_analysis
 
 # Constants for the Prediction Graph fetch tensors.
 PG_TARGET = 'target'  # from input
@@ -86,13 +87,22 @@ class DatalabParser():
         '--eval', type=str, required=True, action='append', metavar='FILE')
     self.full_parser.add_argument('--job-dir', type=str, required=True)
     self.full_parser.add_argument(
-        '--analysis', type=str, required=True,
+        '--analysis', type=str,
         metavar='ANALYSIS_OUTPUT_DIR',
         help=('Output folder of analysis. Should contain the schema, stats, and '
-              'vocab files. Path must be on GCS if running cloud training.'))
+              'vocab files. Path must be on GCS if running cloud training. ' +
+              'If absent, --schema and --features must be provided and ' +
+              'the master trainer will do analysis locally.'))
     self.full_parser.add_argument(
         '--transform', action='store_true', default=False,
-        help='If used, input data is raw csv that needs transformation.')
+        help='If used, input data is raw csv that needs transformation. If analysis ' +
+             'is required to run in trainerm this is automatically set to true.')
+    self.full_parser.add_argument(
+        '--schema', type=str,
+        help='Schema of the training csv file. Only needed if analysis is required.')
+    self.full_parser.add_argument(
+        '--features', type=str,
+        help='Feature transform config. Only needed if analysis is required.')
 
   def make_datalab_help_action(self):
     """Custom action for --datalab-help.
@@ -184,38 +194,35 @@ def parse_arguments(argv):
 
   # Training input parameters
   parser.add_argument(
-      '--max-steps', type=int, default=5000, metavar='N',
-      help='Maximum number of training steps to perform.')
+      '--max-steps', type=int, metavar='N',
+      help='Maximum number of training steps to perform. If unspecified, will '
+           'honor "max-epochs".')
   parser.add_argument(
-      '--max-epochs', type=int, metavar='N',
-      help=('Maximum number of training data epochs on which to train. If '
-            'both "max-step" and "max-epochs" are specified, the training '
-            'job will run for "max-steps" or "num-epochs", whichever occurs '
-            'first. If unspecified will run for "max-steps". If using '
-            'num-epochs and the last training batch is not full, the last '
-            'batch will not be used.'))
+      '--max-epochs', type=int, default=1000, metavar='N',
+      help='Maximum number of training data epochs on which to train. If '
+           'both "max-steps" and "max-epochs" are specified, the training '
+           'job will run for "max-steps" or "num-epochs", whichever occurs '
+           'first. If early stopping is enabled, training may also stop '
+           'earlier.')
   parser.add_argument(
-      '--train-batch-size', type=int, default=100, metavar='N',
+      '--train-batch-size', type=int, default=64, metavar='N',
       help='How many training examples are used per step. If num-epochs is '
            'used, the last batch may not be full.')
   parser.add_argument(
-      '--eval-batch-size', type=int, default=100, metavar='N',
+      '--eval-batch-size', type=int, default=64, metavar='N',
       help='Batch size during evaluation. Larger values increase performance '
            'but also increase peak memory usgae on the master node. One pass '
            'over the full eval set is performed per evaluation run.')
   parser.add_argument(
-      '--min-eval-frequency', type=int, default=100, metavar='N',
+      '--min-eval-frequency', type=int, default=1000, metavar='N',
       help='Minimum number of training steps between evaluations. Evaluation '
            'does not occur if no new checkpoint is available, hence, this is '
-           'the minimum. If 0, the evaluation will only happen after training. '
-           'If more frequent evaluation is desired, decrease '
-           'save-checkpoints-secs. Increase min-eval-frequency to run evaluaton '
-           'less often.')
-
-  # other parameters
+           'the minimum. If 0, the evaluation will only happen after training. ')
   parser.add_argument(
-      '--save-checkpoints-secs', type=int, default=600, metavar='N',
-      help='How often the model should be checkpointed/saved in seconds.')
+      '--early_stopping_num_evals', type=int, default=3,
+      help='Automatic training stop after results of specified number of evals '
+           'in a row show the model performance does not improve. Set to 0 to '
+           'disable early stopping.')
 
   args, remaining_args = parser.parse_known_args(args=argv[1:])
 
@@ -581,9 +588,9 @@ def get_estimator(args, output_dir, features, stats, target_vocab_size):
   # Build tf.learn features
   feature_columns = build_feature_columns(features, stats, args.model)
 
-  # Set how often to run checkpointing in terms of time.
+  # Set how often to run checkpointing in terms of steps.
   config = tf.contrib.learn.RunConfig(
-      save_checkpoints_secs=args.save_checkpoints_secs)
+      save_checkpoints_steps=args.min_eval_frequency)
 
   train_dir = os.path.join(output_dir, 'train')
   if args.model == 'dnn_regression':
@@ -772,11 +779,29 @@ def get_experiment_fn(args):
           randomize_input=False,
           reader_num_threads=multiprocessing.cpu_count())
 
+    if args.early_stopping_num_evals == 0:
+      train_monitors = None
+    else:
+      if is_classification_model(args.model):
+        early_stop_monitor = tf.contrib.learn.monitors.ValidationMonitor(
+            input_fn=input_reader_for_eval,
+            every_n_steps=args.min_eval_frequency,
+            early_stopping_rounds=(args.early_stopping_num_evals * args.min_eval_frequency),
+            early_stopping_metric='accuracy',
+            early_stopping_metric_minimize=False)
+      else:
+        early_stop_monitor = tf.contrib.learn.monitors.ValidationMonitor(
+            input_fn=input_reader_for_eval,
+            every_n_steps=args.min_eval_frequency,
+            early_stopping_rounds=(args.early_stopping_num_evals * args.min_eval_frequency))
+      train_monitors = [early_stop_monitor]
+
     return tf.contrib.learn.Experiment(
         estimator=estimator,
         train_input_fn=input_reader_for_train,
         eval_input_fn=input_reader_for_eval,
         train_steps=args.max_steps,
+        train_monitors=train_monitors,
         export_strategies=[export_strategy_csv_notarget, export_strategy_csv_target],
         min_eval_frequency=args.min_eval_frequency,
         eval_steps=None)
@@ -785,8 +810,36 @@ def get_experiment_fn(args):
   return get_experiment
 
 
+def local_analysis(args):
+  if args.analysis:
+    # Already analyzed.
+    return
+
+  if not args.schema or not args.features:
+    raise ValueError('Either --analysis, or both --schema and --features are provided.')
+
+  tf_config = json.loads(os.environ.get('TF_CONFIG', '{}'))
+  cluster_spec = tf_config.get('cluster', {})
+  if len(cluster_spec.get('worker', [])) > 0:
+    raise ValueError('If "schema" and "features" are provided, local analysis will run and ' +
+                     'only BASIC scale-tier (no workers node) is supported.')
+
+  if cluster_spec and not (args.schema.startswith('gs://') and args.features.startswith('gs://')):
+    raise ValueError('Cloud trainer requires GCS paths for --schema and --features.')
+
+  print('Running analysis.')
+  schema = json.loads(file_io.read_file_to_string(args.schema).decode())
+  features = json.loads(file_io.read_file_to_string(args.features).decode())
+  args.analysis = os.path.join(args.job_dir, 'analysis')
+  args.transform = True
+  file_io.recursive_create_dir(args.analysis)
+  feature_analysis.run_local_analysis(args.analysis, args.train, schema, features)
+  print('Analysis done.')
+
+
 def main(argv=None):
   args = parse_arguments(sys.argv if argv is None else argv)
+  local_analysis(args)
 
   tf.logging.set_verbosity(tf.logging.INFO)
   learn_runner.run(

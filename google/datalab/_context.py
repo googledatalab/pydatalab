@@ -82,6 +82,16 @@ class Context(object):
     """ Set the config property for the context. """
     self._config = config
 
+  def override(self, project=None, zone=None, credentials=None, config=None):
+    project = project or self._project
+    zone = zone or self._zone
+    credentials = credentials or self._credentials
+    if not config:
+      config = dict(self._config)
+    else:
+      config = dict(self._config, **config)
+    return Context(project, zone, credentials, config)
+
   @staticmethod
   def _is_signed_in():
     """ If the user has signed in or it is on GCE VM with default credential."""

@@ -111,6 +111,7 @@ tasks:
 
     # test pipeline creation
     p_body = """
+emails: foo1@test.com,foo2@test.com
 schedule:
   start: 2009-05-05T22:28:15Z
   end: 2009-05-06T22:28:15Z
@@ -142,16 +143,16 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
-from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator
-from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator
-from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator
+from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator
+from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
+from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 from datetime import timedelta
 from pytz import timezone
 
 default_args = {
     'owner': 'Datalab',
     'depends_on_past': False,
-    'email': ['foo@bar.com'],
+    'email': ['foo1@test.com', 'foo2@test.com'],
     'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
     'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
     'email_on_failure': True,
