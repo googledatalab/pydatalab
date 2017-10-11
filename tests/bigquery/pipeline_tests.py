@@ -179,7 +179,9 @@ class TestCases(unittest.TestCase):
 
     env = {
       'endpoint': 'Interact2',
-      'job_id': '1234'
+      'job_id': '1234',
+      'input_table_format': 'cloud-datalab-samples.httplogs.logs_%(ds)s',
+      'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(ds)s'
     }
     mock_environment.return_value = env
     args = {'name': 'bq_pipeline_test'}
@@ -191,8 +193,8 @@ class TestCases(unittest.TestCase):
                 end: 2009-05-06T22:28:15Z
                 interval: '@hourly'
             input:
-                path: test/path
-                table: project.test.input_table
+                path: gs://bucket/cloud-datalab-samples-httplogs_%(ds)s
+                table: $input_table_format
                 csv:
                   header: True
                   strict: False
@@ -211,8 +213,8 @@ class TestCases(unittest.TestCase):
             transformation:
                 query: foo_query
             output:
-                path: test/path
-                table: project.test.output_table
+                path: gs://bucket/cloud-datalab-samples-endpoints_%(ds)s.csv
+                table: $output_table_format
             parameters:
                 - name: endpoint
                   type: STRING
@@ -253,9 +255,9 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql='SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint', table='project.test.output_table', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='test/path', table='project.test.output_table', dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='test/path', schema=(.*), table='project.test.input_table', dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql='SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint', table='cloud-datalab-samples.endpoints.logs_{{ ds }}', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds }}.csv', table='cloud-datalab-samples.endpoints.logs_{{ ds }}', dag=dag\)
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='gs://bucket/cloud-datalab-samples-httplogs_{{ ds }}', schema=(.*), table='cloud-datalab-samples.httplogs.logs_{{ ds }}', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
