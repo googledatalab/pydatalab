@@ -755,8 +755,9 @@ WITH q1 AS (
                                        ignore_unknown_values=True)
 
   @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.cloud.storage.Client')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
-  def test_pipeline_cell(self, mock_environment, mock_default_context):
+  def test_pipeline_cell(self, mock_environment, mock_default_context, mock_client):
     context = TestCases._create_context()
     mock_default_context.return_value = context
 
