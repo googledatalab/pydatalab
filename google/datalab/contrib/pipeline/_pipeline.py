@@ -36,9 +36,12 @@ from datetime import timedelta
 from pytz import timezone
 """
 
+  # These are documented here: https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables  # noqa
   _airflow_macros = {
-    'ds': '{{ ds }}',
-    'ts': '{{ ts }}',
+    'ds': '{{ ds }}',  # the execution date as YYYY-MM-DD
+    'ts': '{{ ts }}',  # same as execution_date.isoformat()
+    'yesterday_ds': '{{yesterday_ds}}',  # yesterday’s date as YYYY-MM-DD
+    'tomorrow_ds': '{{tomorrow_ds}}',  # tomorrow’s date as YYYY-MM-DD
   }
 
   def __init__(self, name, pipeline_spec):
