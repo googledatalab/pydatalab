@@ -51,7 +51,7 @@ tasks:
 
   @staticmethod
   def _create_context():
-    project_id = 'test.project'
+    project_id = 'project'
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
