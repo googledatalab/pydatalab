@@ -38,14 +38,7 @@ from pytz import timezone
 
   _airflow_macros = {
     'ds': '{{ ds }}',
-    'yesterday_ds': '{{ yesterday_ds }}',
-    'ds_nodash': '{{ ds_nodash }}',
-    'yesterday_ds_nodash': '{{ yesterday_ds_nodash }}',
-    'tomorrow_ds': '{{ tomorrow_ds }}',
-    'tomorrow_ds_nodash': '{{ tomorrow_ds_nodash }}',
     'ts': '{{ ts }}',
-    'ts_nodash': '{{ ts_nodash }}',
-    'execution_date': '{{ execution_date }}',
   }
 
   def __init__(self, name, pipeline_spec):
@@ -162,7 +155,7 @@ default_args = {{
     return '{0} = {1}({2}, dag=dag)\n'.format(
         task_id,
         operator_classname,
-      full_param_string)
+        full_param_string)
 
   @staticmethod
   def _get_param_format_string(param_value):
