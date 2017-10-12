@@ -30,12 +30,22 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
-from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator
-from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator
-from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator
+from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator
+from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
+from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 from datetime import timedelta
 from pytz import timezone
 """
+
+  # These are documented here:
+  # https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables
+  _airflow_macros = {
+    # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
+    'ds': '{{ ds_nodash }}',
+    # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons, i.e. in
+    # the YYYYMMDDTHHMMSSmmmmmm format.
+    'ts': '{{ ts_nodash }}',
+  }
 
   def __init__(self, name, pipeline_spec):
     """ Initializes an instance of a Pipeline object.
@@ -140,11 +150,11 @@ default_args = {{
     return expr_format.format(datetime_obj.strftime(datetime_format), datetime_format)
 
   def _get_operator_definition(self, task_id, task_details):
-    """ Internal helper that gets the Airflow operator for the task with the
-      python parameters.
+    """ Internal helper that gets the definition of the airflow operator for the task with the
+      python parameters. All the parameters are also expanded with the airflow macros.
     """
     operator_type = task_details['type']
-    param_string = 'task_id=\'{0}_id\''.format(task_id)
+    full_param_string = 'task_id=\'{0}_id\''.format(task_id)
     operator_classname = Pipeline._get_operator_classname(operator_type)
 
     operator_param_values = Pipeline._get_operator_param_name_and_values(
@@ -152,13 +162,11 @@ default_args = {{
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
       param_format_string = Pipeline._get_param_format_string(
           operator_param_value)
-      param_string = param_string + param_format_string.format(
-          operator_param_name, operator_param_value)
+      param_string = param_format_string.format(operator_param_name, operator_param_value)
+      param_string = param_string % self._airflow_macros
+      full_param_string = full_param_string + param_string
 
-    return '{0} = {1}({2}, dag=dag)\n'.format(
-        task_id,
-        operator_classname,
-        param_string)
+    return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_classname, full_param_string)
 
   @staticmethod
   def _get_param_format_string(param_value):
