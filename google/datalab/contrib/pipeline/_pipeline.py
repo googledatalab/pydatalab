@@ -37,10 +37,14 @@ from datetime import timedelta
 from pytz import timezone
 """
 
-  # These are documented here: https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables  # noqa
+  # These are documented here:
+  # https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables
   _airflow_macros = {
-    'ds': '{{ ds }}',  # the execution date as YYYY-MM-DD
-    'ts': '{{ ts }}',  # same as execution_date.isoformat()
+    # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
+    'ds': '{{ ds_nodash }}',
+    # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons, i.e. in
+    # the YYYYMMDDTHHMMSSmmmmmm format.
+    'ts': '{{ ts_nodash }}',
   }
 
   def __init__(self, name, pipeline_spec):

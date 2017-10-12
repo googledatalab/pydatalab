@@ -149,7 +149,6 @@ def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_co
     # The name of query for execution; if absent, we return None as we assume that there is
     # no query to execute
     if 'query' not in bq_pipeline_transformation_config:
-      # TODO(rajivpb): Log this: 'Query is not specified, but at least one query option is.')
       return None
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     execute_task_config['sql'] = query.sql
