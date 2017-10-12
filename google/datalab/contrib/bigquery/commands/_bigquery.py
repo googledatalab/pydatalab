@@ -56,15 +56,16 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   input_config = bq_pipeline_config.get('input')
   transformation_config = bq_pipeline_config.get('transformation')
   output_config = bq_pipeline_config.get('output')
+  parameters_config = bq_pipeline_config.get('parameters')
 
   load_task_config_name = 'bq_pipeline_load_task'
   execute_task_config_name = 'bq_pipeline_execute_task'
   extract_task_config_name = 'bq_pipeline_extract_task'
 
   load_task_config = _get_load_parameters(input_config)
-  execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config)
-  extract_task_config = _get_extract_parameters(execute_task_config_name, execute_task_config,
-                                                output_config)
+  execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config,
+                                                output_config, parameters_config)
+  extract_task_config = _get_extract_parameters(execute_task_config_name, output_config)
   pipeline_spec = {
     'schedule': bq_pipeline_config['schedule'],
   }
@@ -138,7 +139,8 @@ def _get_load_parameters(bq_pipeline_input_config):
     return load_task_config
 
 
-def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config):
+def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config,
+                            bq_pipeline_output_config, bq_pipeline_parameters_config):
     execute_task_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': [load_task_config_name]
@@ -147,22 +149,18 @@ def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_co
     # The name of query for execution; if absent, we return None as we assume that there is
     # no query to execute
     if 'query' not in bq_pipeline_transformation_config:
-      if any(key in bq_pipeline_transformation_config for key in ['large', 'mode']):
-        raise Exception('Query is not specified, but at least one query option is.')
       return None
-
-    execute_task_config['query'] = bq_pipeline_transformation_config['query']
-
-    # TODO(rajivpb): There is no unit-test coverage of this.
-
-    # One of 'create' (default), 'append' or 'overwrite' for the destination table in BigQuery
-    execute_task_config['mode'] = bq_pipeline_transformation_config.get('mode', 'create')
-
+    query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
+    execute_task_config['sql'] = query.sql
+    if 'table' in bq_pipeline_output_config:
+        execute_task_config['table'] = bq_pipeline_output_config['table']
+    if 'mode' in bq_pipeline_output_config:
+        execute_task_config['mode'] = bq_pipeline_output_config['mode']
+    execute_task_config['parameters'] = bq_pipeline_parameters_config
     return execute_task_config
 
 
-def _get_extract_parameters(execute_task_config_name, execute_task_config,
-                            bq_pipeline_output_config):
+def _get_extract_parameters(execute_task_config_name, bq_pipeline_output_config):
     extract_task_config = {
       'type': 'pydatalab.bq.extract',
       'up_stream': [execute_task_config_name]
@@ -174,9 +172,7 @@ def _get_extract_parameters(execute_task_config_name, execute_task_config,
     if 'table' not in bq_pipeline_output_config:
       return None
 
-    execute_task_config['table'] = bq_pipeline_output_config['table']
     extract_task_config['table'] = bq_pipeline_output_config['table']
-
     extract_task_config['path'] = bq_pipeline_output_config.get('path')
     if not extract_task_config['path']:
       # If a path is not specified, there is nothing to extract, so we return None after making

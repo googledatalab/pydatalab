@@ -758,20 +758,16 @@ WITH q1 AS (
   @mock.patch('google.cloud.storage.Client')
   @mock.patch('google.cloud.storage.Blob')
   @mock.patch('google.cloud.storage.Client.get_bucket')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
-  def test_pipeline_cell(self, mock_environment, mock_client_get_bucket, mock_blob_class,
-                         mock_client, mock_default_context):
+  def test_pipeline_cell(self, mock_env, mock_get_notebook_item, mock_client_get_bucket,
+                         mock_blob_class, mock_client, mock_default_context):
     context = TestCases._create_context()
     mock_default_context.return_value = context
     mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
-    mock_blob = mock_blob_class.return_value  # noqa
-
-    env = {
-      'foo_query': bq.Query(
+    mock_blob_class.return_value  # noqa
+    mock_get_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
-    }
-    mock_environment.return_value = env
-
     args = {'name': 'bq_pipeline_test'}
     small_cell_body = """
             emails: foo1@test.com
