@@ -215,11 +215,11 @@ tasks:
     task_details['type'] = 'pydatalab.bq.execute'
     task_details['large'] = True
     task_details['mode'] = 'create'
-    task_details['query'] = 'foo_query'
+    task_details['sql'] = 'foo_query'
     task_details['table'] = 'project.test.table'
 
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
-    expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag)
+    expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', sql='foo_query', table='project.test.table', dag=dag)
 """  # noqa
     self.assertEqual(actual, expected)
 
