@@ -103,9 +103,7 @@ class TestCases(unittest.TestCase):
       'path': 'test_path',
       'table': 'test_table',
     }
-    execute_config = {}
-    actual_extract_config = bq._get_extract_parameters('foo_execute_task', execute_config,
-                                                       input_config)
+    actual_extract_config = bq._get_extract_parameters('foo_execute_task', input_config)
     expected_extract_config = {
       'type': 'pydatalab.bq.extract',
       'up_stream': ['foo_execute_task'],
@@ -116,18 +114,65 @@ class TestCases(unittest.TestCase):
     }
 
     self.assertDictEqual(actual_extract_config, expected_extract_config)
-    self.assertDictEqual(execute_config, {'table': 'test_table'})
 
-  @mock.patch('google.cloud.storage.Client')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
+  def test_get_execute_parameters(self, mock_notebook_item):
+    mock_notebook_item.return_value = google.datalab.bigquery.Query(
+        'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint')
+
+    transformation_config = {
+      'query': 'foo_query'
+    }
+    output_config = {
+      'table': 'foo_table',
+      'mode': 'foo_mode'
+    }
+    parameters_config = [
+      {
+        'type': 'STRING',
+        'name': 'endpoint',
+        'value': 'Interact2'
+      },
+      {
+        'type': 'INTEGER',
+        'name': 'column',
+        'value': '1234'
+      }
+    ]
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', transformation_config,
+                                                       output_config, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'up_stream': ['foo_load_task'],
+      'table': 'foo_table',
+      'mode': 'foo_mode',
+      'parameters': parameters_config
+    }
+    self.assertDictEqual(actual_execute_config, expected_execute_config)
+
+    # With empty output config
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', transformation_config,
+                                                       {}, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'up_stream': ['foo_load_task'],
+      'parameters': parameters_config
+    }
+    self.assertDictEqual(actual_execute_config, expected_execute_config)
+
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   @mock.patch('google.cloud.storage.Blob')
+  @mock.patch('google.cloud.storage.Client')
   @mock.patch('google.cloud.storage.Client.get_bucket')
-  def test_pipeline_cell_golden(self, mock_client_get_bucket, mock_blob_class, mock_get_table,
-                                mock_table_exists, mock_environment, mock_default_context,
-                                mock_client):
+  def test_pipeline_cell_golden(self, mock_client_get_bucket, mock_client, mock_blob_class,
+                                mock_get_table, mock_table_exists, mock_notebook_item,
+                                mock_environment, mock_default_context):
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
     mock_table_exists.return_value = True
@@ -137,12 +182,16 @@ class TestCases(unittest.TestCase):
     mock_blob = mock_blob_class.return_value
 
     env = {
-      'foo_query': google.datalab.bigquery.Query(
-        'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
+      'endpoint': 'Interact2',
+      'job_id': '1234',
+      'input_table_format': 'cloud-datalab-samples.httplogs.logs_%(ds)s',
+      'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(ds)s'
     }
-    mock_environment.return_value = env
+    mock_notebook_item.return_value = google.datalab.bigquery.Query(
+        'SELECT @column FROM {0} where endpoint=@endpoint'.format(env['input_table_format']))
 
-    args = {'name': 'bq_pipeline_test', 'debug': True}
+    mock_environment.return_value = env
+    args = {'name': 'bq_pipeline_test'}
     # TODO(rajivpb): The references to foo_query need to be resolved.
     cell_body = """
             emails: foo1@test.com,foo2@test.com
@@ -151,8 +200,8 @@ class TestCases(unittest.TestCase):
                 end: 2009-05-06T22:28:15Z
                 interval: '@hourly'
             input:
-                path: test/path
-                table: project.test.table
+                path: gs://bucket/cloud-datalab-samples-httplogs_%(ds)s
+                table: $input_table_format
                 csv:
                   header: True
                   strict: False
@@ -160,20 +209,27 @@ class TestCases(unittest.TestCase):
                   skip: 5
                   delimiter: ','
                 schema:
-                    - name: col1
-                      type: int64
-                      mode: NULLABLE
-                      description: description1
-                    - name: col2
-                      type: STRING
-                      mode: required
-                      description: description1
+                  - name: col1
+                    type: int64
+                    mode: NULLABLE
+                    description: description1
+                  - name: col2
+                    type: STRING
+                    mode: required
+                    description: description1
             transformation:
                 query: foo_query
             output:
-                path: test/path
-                table: project.test.table
-       """
+                path: gs://bucket/cloud-datalab-samples-endpoints_%(ds)s.csv
+                table: $output_table_format
+            parameters:
+                - name: endpoint
+                  type: STRING
+                  value: $endpoint
+                - name: column
+                  type: INTEGER
+                  value: $job_id
+    """
 
     output = bq._pipeline_cell(args, cell_body)
 
@@ -186,9 +242,9 @@ from airflow.contrib.operators.bigquery_table_delete_operator import BigQueryTab
 from airflow.contrib.operators.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from airflow.contrib.operators.bigquery_to_gcs import BigQueryToCloudStorageOperator
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
-from google.datalab.contrib.bigquery.operators.bq_load_operator import LoadOperator
-from google.datalab.contrib.bigquery.operators.bq_execute_operator import ExecuteOperator
-from google.datalab.contrib.bigquery.operators.bq_extract_operator import ExtractOperator
+from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator
+from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
+from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 from datetime import timedelta
 from pytz import timezone
 
@@ -206,25 +262,34 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', mode='create', query='foo_query', table='project.test.table', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='test/path', table='project.test.table', dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='test/path', schema=(.*), table='project.test.table', dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql='SELECT @column FROM cloud-datalab-samples.httplogs.logs_{{ ds_nodash }} where endpoint=@endpoint', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}', schema=(.*), table='cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
 
     self.assertIsNotNone(pattern.match(output))
 
-    # group(1) has the string that follows the "csv_options=", for the load operator.
-    actual_csv_options_dict_str = pattern.match(output).group(1)
-    self.assertIn("\'header\': True", actual_csv_options_dict_str)
-    self.assertIn("\'delimiter\': \',\'", actual_csv_options_dict_str)
-    self.assertIn("\'skip\': 5", actual_csv_options_dict_str)
-    self.assertIn("\'strict\': False", actual_csv_options_dict_str)
-    self.assertIn("\'quote\': \'\"\'", actual_csv_options_dict_str)
+    # String that follows the "parameters=", for the execute operator.
+    actual_parameter_dict_str = pattern.match(output).group(1)
+    self.assertIn("'type': 'STRING'", actual_parameter_dict_str)
+    self.assertIn("'name': 'endpoint'", actual_parameter_dict_str)
+    self.assertIn("'value': 'Interact2'", actual_parameter_dict_str)
+    self.assertIn("'type': 'INTEGER'", actual_parameter_dict_str)
+    self.assertIn("'name': 'column'", actual_parameter_dict_str)
+    self.assertIn("'value': '1234'", actual_parameter_dict_str)
 
-    # group(2) has the string that follows the "schema=", i.e. the list of dicts.
-    actual_schema_str = pattern.match(output).group(2)
+    # String that follows the "csv_options=", for the load operator.
+    actual_csv_options_dict_str = pattern.match(output).group(2)
+    self.assertIn("'header': True", actual_csv_options_dict_str)
+    self.assertIn("'delimiter': ','", actual_csv_options_dict_str)
+    self.assertIn("'skip': 5", actual_csv_options_dict_str)
+    self.assertIn("'strict': False", actual_csv_options_dict_str)
+    self.assertIn("'quote': '\"'", actual_csv_options_dict_str)
+
+    # String that follows the "schema=", i.e. the list of dicts.
+    actual_schema_str = pattern.match(output).group(3)
     self.assertIn("'type': 'int64'", actual_schema_str)
     self.assertIn("'mode': 'NULLABLE'", actual_schema_str)
     self.assertIn("'name': 'col1'", actual_schema_str)

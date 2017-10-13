@@ -78,23 +78,23 @@ tasks:
     task_id = 'foo_task'
     task_details = {}
     task_details['type'] = 'Bash'
-    task_details['bash_command'] = 'echo "{{ ds }}"'
+    task_details['bash_command'] = 'echo {{ ds }}'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
-      """foo_task = BashOperator(task_id='foo_task_id', bash_command='echo "{{ ds }}"', dag=dag)
+      """foo_task = BashOperator(task_id='foo_task_id', bash_command='echo {{ ds }}', dag=dag)
 """)  # noqa
 
-  def test_get_templated_bash_bq_definition(self):
+  def test_get_templated_bq_definition(self):
     task_id = 'foo_task'
     task_details = {}
     task_details['type'] = 'BigQuery'
     task_details['query'] = google.datalab.bigquery.Query(
-      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds }}`')
+      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_%(ds)s`')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
-      """foo_task = BigQueryOperator(task_id='foo_task_id', bql='SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds }}`', use_legacy_sql=False, dag=dag)
+      """foo_task = BigQueryOperator(task_id='foo_task_id', bql='SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}`', use_legacy_sql=False, dag=dag)
 """)  # noqa
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
@@ -215,11 +215,11 @@ tasks:
     task_details['type'] = 'pydatalab.bq.execute'
     task_details['large'] = True
     task_details['mode'] = 'create'
-    task_details['query'] = 'foo_query'
+    task_details['sql'] = 'foo_query'
     task_details['table'] = 'project.test.table'
 
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
-    expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', query='foo_query', table='project.test.table', dag=dag)
+    expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', sql='foo_query', table='project.test.table', dag=dag)
 """  # noqa
     self.assertEqual(actual, expected)
 

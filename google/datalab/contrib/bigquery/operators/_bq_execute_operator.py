@@ -29,8 +29,11 @@ class ExecuteOperator(BaseOperator):
 
   def execute(self, context):
     query = bq.Query(sql=self._sql)
+    # allow_large_results is set to False because setting it True requires the destination table to
+    # be specified.
+    # use_cache is set to False since this is most likely the case for all pipeline scenarios
     output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
-                                          allow_large_results=True)
+                                          allow_large_results=False)
     pydatalab_context = google.datalab.Context.default()
     query_params = Pipeline._get_query_parameters(self._parameters)
     # TODO(rajivpb): Is this a sync or an async operation? Unlike load(), this does not wrap its
