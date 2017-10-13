@@ -188,27 +188,6 @@ class TestMLMagic(unittest.TestCase):
     self.assertTrue(find_startswith_endswith(cmd_list, '--eval=', 'eval_tfrecord.tar.gz'))
     self.assertTrue(find_key_value(cmd_list, '--key', 'value'))
 
-  @mock.patch('IPython.display.display')
-  @mock.patch('google.datalab.contrib.mlworkbench._local_predict.get_prediction_results')
-  @mock.patch('subprocess.Popen')  # Because of the trainer help menu
-  def test_predict_csv(self, popen_mock, get_prediction_results_mock, display_mock):
-
-    # Don't run prediction on a real graph, just return 1 value.
-    df = pd.DataFrame({'col1': ['key1'], 'col2': ['value1'], 'col3': ['value2']})
-    get_prediction_results_mock.return_value = df
-
-    mlmagic.ml(
-        line='predict --cloud',
-        cell="""\
-            model: model.version
-            headers: col1,col2,col3
-            image_columns: col3
-            prediction_data:
-              - key1,value1,value2""")
-
-    # Check it was printed
-    self.assertEqual(1, display_mock.call_count)
-
   @mock.patch('google.datalab.contrib.mlworkbench.commands._ml._show_job_link')
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.ml.Job.submit_batch_prediction')
