@@ -26,12 +26,9 @@ class ExtractOperator(BaseOperator):
     self._csv_options = csv_options or {}
 
   def execute(self, context):
-
     if self._table:
       pydatalab_context = google.datalab.Context.default()
       source_table = google.datalab.bigquery.Table(self._table, context=pydatalab_context)
-      if not source_table:
-        raise Exception('Could not find table %s' % self._table)
       job = source_table.extract(
         self._path, format='CSV' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON',
         csv_delimiter=self._csv_options.get('delimiter'),
