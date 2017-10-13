@@ -24,6 +24,7 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 import argparse
+import collections
 import json
 import os
 import pandas as pd
@@ -40,7 +41,6 @@ from tensorflow.python.lib.io import file_io
 import urllib
 
 import google.datalab
-import google.datalab.bigquery as bq
 from google.datalab import Context
 import google.datalab.ml as datalab_ml
 import google.datalab.utils.commands
@@ -70,6 +70,61 @@ def ml(line, cell=None):
           Use "%ml <command> -h" for help on a specific command.
       """))
 
+  dataset_parser = parser.subcommand(
+      'dataset',
+      formatter_class=argparse.RawTextHelpFormatter,
+      help='Create or explore datasets.')
+  dataset_sub_commands = dataset_parser.add_subparsers(dest='command')
+  dataset_create_parser = dataset_sub_commands.add_parser(
+      'create', help='Create datasets', formatter_class=argparse.RawTextHelpFormatter,
+      epilog=textwrap.dedent("""\
+          Example usage:
+
+          %%ml dataset
+          name: mydata
+          format: csv
+          train: path/to/train.csv
+          eval: path/to/eval.csv
+          schema:
+            - name: news_label
+              type: STRING
+            - name: text
+              type: STRING"""))
+
+  dataset_create_parser.add_argument('--name', required=True,
+                                     help='the name of the dataset to define. ')
+  dataset_create_parser.add_argument('--format', required=True,
+                                     choices=['csv', 'bigquery', 'transformed'],
+                                     help='The format of the data.')
+  dataset_create_parser.add_argument('--train', required=True,
+                                     help='The path of the training file pattern if format ' +
+                                          'is csv or transformed, or table name if format ' +
+                                          'is bigquery.')
+  dataset_create_parser.add_argument('--eval', required=True,
+                                     help='The path of the eval file pattern if format ' +
+                                          'is csv or transformed, or table name if format ' +
+                                          'is bigquery.')
+  dataset_create_parser.add_cell_argument('schema',
+                                          help='yaml representation of CSV schema, or path to ' +
+                                          'schema file. Only needed if format is csv.')
+  dataset_create_parser.set_defaults(func=_dataset_create)
+
+  dataset_explore_parser = dataset_sub_commands.add_parser(
+      'explore', help='Explore training data.')
+  dataset_explore_parser.add_argument('--name', required=True,
+                                      help='The name of the dataset to explore.')
+
+  dataset_explore_parser.add_argument('--overview', action='store_true', default=False,
+                                      help='Plot overview of sampled data. Set "sample_size" ' +
+                                           'to change the default sample size.')
+  dataset_explore_parser.add_argument('--facets', action='store_true', default=False,
+                                      help='Plot facets view of sampled data. Set ' +
+                                           '"sample_size" to change the default sample size.')
+  dataset_explore_parser.add_argument('--sample_size', type=int, default=1000,
+                                      help='sample size for overview or facets view. Only ' +
+                                           'used if either --overview or --facets is set.')
+  dataset_explore_parser.set_defaults(func=_dataset_explore)
+
   analyze_parser = parser.subcommand(
       'analyze',
       formatter_class=argparse.RawTextHelpFormatter,
@@ -80,17 +135,7 @@ def ml(line, cell=None):
 
           %%ml analyze [--cloud]
           output: path/to/dir
-          training_data:
-            csv: path/to/csv
-            schema:
-              - name: serialId
-                type: STRING
-              - name: num1
-                type: FLOAT
-              - name: num2
-                type: INTEGER
-              - name: text1
-                type: STRING
+          training_data: $mydataset
           features:
             serialId:
               transform: key
@@ -117,13 +162,7 @@ def ml(line, cell=None):
   analyze_parser.add_cell_argument(
     'training_data',
     required=True,
-    help=textwrap.dedent("""\
-        training data. It is one of the following:
-            csv (example "csv: file.csv"), or
-            bigquery_table (example: "bigquery_table: project.dataset.table"), or
-            bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0"), or
-            a variable defined as google.datalab.ml.CsvDataSet or
-                google.datalab.ml.BigQueryDataSet."""))
+    help="""Training data. A dataset defined by "%%ml dataset".""")
   analyze_parser.add_cell_argument(
       'features',
       required=True,
@@ -168,13 +207,11 @@ def ml(line, cell=None):
       epilog=textwrap.dedent("""\
           Example usage:
 
-          %%ml transform --cloud [--shuffle]
+          %%ml transform [--cloud] [--shuffle]
           analysis: path/to/analysis_output_folder
           output: path/to/dir
-          prefix: my_filename
           batch_size: 100
-          training_data:
-            csv: path/to/csv
+          training_data: $mydataset
           cloud:
             num_workers: 3
             worker_machine_type: n1-standard-1
@@ -183,10 +220,6 @@ def ml(line, cell=None):
                                 help='path of analysis output directory.')
   transform_parser.add_argument('--output', required=True,
                                 help='path of output directory.')
-  transform_parser.add_argument(
-      '--prefix', required=True, metavar='NAME',
-      help='The prefix of the output file name. The output files will be like '
-           'NAME_00000_of_00005.tar.gz')
   transform_parser.add_argument('--cloud', action='store_true', default=False,
                                 help='whether to run transform in cloud or local.')
   transform_parser.add_argument('--shuffle', action='store_true', default=False,
@@ -200,11 +233,7 @@ def ml(line, cell=None):
   transform_parser.add_cell_argument(
       'training_data',
       required=True,
-      help=textwrap.dedent("""\
-          Training data. A dict containing one of the following:
-              csv (example: "csv: file.csv"), or
-              bigquery_table (example: "bigquery_table: project.dataset.table"), or
-              bigquery_sql (example: "bigquery_sql: select * from table where num1 > 1.0")"""))
+      help="""Training data. A dataset defined by "%%ml dataset".""")
   transform_parser.add_cell_argument(
       'cloud_config',
       help=textwrap.dedent("""\
@@ -227,13 +256,10 @@ def ml(line, cell=None):
       epilog=textwrap.dedent("""\
           Example usage:
 
-          %%ml train --cloud
+          %%ml train [--cloud]
           analysis: path/to/analysis_output
           output: path/to/dir
-          training_data:
-            transformed: path/to/transformed/train
-          evaluation_data:
-            tranaformed: path/to/transformed/eval
+          training_data: $mydataset
           model_args:
             model: linear_regression
           cloud_config:
@@ -250,18 +276,7 @@ def ml(line, cell=None):
   train_parser.add_cell_argument(
       'training_data',
       required=True,
-      help=textwrap.dedent("""\
-          Training data. It is either raw csv file pattern, or transformed file pattern.
-              For example:
-              "training_data:
-                csv: /path/to/csv/mycsv*.csv"
-
-              or
-
-              "training_data:
-                transformed: /path/to/transformed-*" """))
-  train_parser.add_cell_argument('evaluation_data', required=True,
-                                 help='same as training_data.')
+      help="""Training data. A dataset defined by "%%ml dataset".""")
 
   package_model_help = subprocess.Popen(
       ['python', '-m', 'trainer.task', '--datalab-help'],
@@ -307,20 +322,9 @@ def ml(line, cell=None):
           model: path/to/model
           prediction_data: $my_data"""))
   predict_parser.add_argument('--model', required=True,
-                              help='The model path if not --cloud, or the id in '
-                                   'the form of model.version if --cloud.')
-  predict_parser.add_argument('--headers',
-                              help='Online models only. ' +
-                                   'The comma seperated headers of the prediction data. ' +
-                                   'Order must match the training order.')
-  predict_parser.add_argument('--image_columns',
-                              help='Online models only. ' +
-                                   'Comma seperated headers of image URL columns. ' +
-                                   'Required if prediction data contains image URL columns.')
+                              help='The model path.')
   predict_parser.add_argument('--no_show_image', action='store_true', default=False,
                               help='If not set, add a column of images in output.')
-  predict_parser.add_argument('--cloud', action='store_true', default=False,
-                              help='whether to run prediction in cloud or local.')
   predict_parser.add_cell_argument(
       'prediction_data',
       required=True,
@@ -544,6 +548,9 @@ def ml(line, cell=None):
   return google.datalab.utils.commands.handle_magic_line(line, cell, parser)
 
 
+DataSet = collections.namedtuple('DataSet', ['train', 'eval'])
+
+
 def _abs_path(path):
   """Convert a non-GCS path to its absolute path.
 
@@ -583,6 +590,17 @@ def _show_job_link(job):
   IPython.display.display_html(html, raw=True)
 
 
+def get_dataset_from_arg(dataset_arg):
+  if isinstance(dataset_arg, DataSet):
+    return dataset_arg
+
+  if isinstance(dataset_arg, six.string_types):
+    return google.datalab.utils.commands.notebook_environment()[dataset_arg]
+
+  raise ValueError('Invalid dataset reference "%s". ' % dataset_arg +
+                   'Expect a dataset defined with "%%ml dataset create".')
+
+
 def _analyze(args, cell):
   # For now, always run python2. If needed we can run python3 when the current kernel
   # is py3. Since now our transform cannot work on py3 anyway, I would rather run
@@ -591,41 +609,25 @@ def _analyze(args, cell):
   if args['cloud']:
     cmd_args.append('--cloud')
 
-  training_data = args['training_data']
+  training_data = get_dataset_from_arg(args['training_data'])
+
   if args['cloud']:
     tmpdir = os.path.join(args['output'], 'tmp')
   else:
     tmpdir = tempfile.mkdtemp()
 
   try:
-    if isinstance(training_data, dict):
-      if 'csv' in training_data and 'schema' in training_data:
-        schema = training_data['schema']
-        schema_file = _create_json_file(tmpdir, schema, 'schema.json')
-        cmd_args.append('--csv=' + _abs_path(training_data['csv']))
-        cmd_args.extend(['--schema', schema_file])
-      elif 'bigquery_table' in training_data:
-        cmd_args.extend(['--bigquery', training_data['bigquery_table']])
-      elif 'bigquery_sql' in training_data:
-        # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
-        print('Creating temporary table that will be deleted in 24 hours')
-        r = bq.Query(training_data['bigquery_sql']).execute().result()
-        cmd_args.extend(['--bigquery', r.full_name])
-      else:
-        raise ValueError('Invalid training_data dict. '
-                         'Requires either "csv_file_pattern" and "csv_schema", or "bigquery".')
-    elif isinstance(training_data, google.datalab.ml.CsvDataSet):
-      schema_file = _create_json_file(tmpdir, training_data.schema, 'schema.json')
-      for file_name in training_data.input_files:
+    if isinstance(training_data.train, datalab_ml.CsvDataSet):
+      csv_data = training_data.train
+      schema_file = _create_json_file(tmpdir, csv_data.schema, 'schema.json')
+      for file_name in csv_data.input_files:
         cmd_args.append('--csv=' + _abs_path(file_name))
-
       cmd_args.extend(['--schema', schema_file])
-    elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
-      # TODO: Support query too once command line supports query.
-      cmd_args.extend(['--bigquery', training_data.table])
+    elif isinstance(training_data.train, datalab_ml.BigQueryDataSet):
+      bq_data = training_data.train
+      cmd_args.extend(['--bigquery', bq_data.table])
     else:
-      raise ValueError('Invalid training data. Requires either a dict, '
-                       'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
+      raise ValueError('Unexpected training data type. Only csv or bigquery are supported.')
 
     features = args['features']
     features_file = _create_json_file(tmpdir, features, 'features.json')
@@ -649,8 +651,7 @@ def _transform(args, cell):
 
   cmd_args = ['python', 'transform.py',
               '--output', _abs_path(args['output']),
-              '--analysis', _abs_path(args['analysis']),
-              '--prefix', args['prefix']]
+              '--analysis', _abs_path(args['analysis'])]
   if args['cloud']:
     cmd_args.append('--cloud')
     cmd_args.append('--async')
@@ -658,30 +659,6 @@ def _transform(args, cell):
     cmd_args.append('--shuffle')
   if args['batch_size']:
     cmd_args.extend(['--batch-size', str(args['batch_size'])])
-
-  training_data = args['training_data']
-  if isinstance(training_data, dict):
-    if 'csv' in training_data:
-      cmd_args.append('--csv=' + _abs_path(training_data['csv']))
-    elif 'bigquery_table' in training_data:
-      cmd_args.extend(['--bigquery', training_data['bigquery_table']])
-    elif 'bigquery_sql' in training_data:
-        # see https://cloud.google.com/bigquery/querying-data#temporary_and_permanent_tables
-        print('Creating temporary table that will be deleted in 24 hours')
-        r = bq.Query(training_data['bigquery_sql']).execute().result()
-        cmd_args.extend(['--bigquery', r.full_name])
-    else:
-      raise ValueError('Invalid training_data dict. '
-                       'Requires either "csv", or "bigquery_talbe", or '
-                       '"bigquery_sql".')
-  elif isinstance(training_data, google.datalab.ml.CsvDataSet):
-    for file_name in training_data.input_files:
-      cmd_args.append('--csv=' + _abs_path(file_name))
-  elif isinstance(training_data, google.datalab.ml.BigQueryDataSet):
-    cmd_args.extend(['--bigquery', training_data.table])
-  else:
-    raise ValueError('Invalid training data. Requires either a dict, '
-                     'a google.datalab.ml.CsvDataSet, or a google.datalab.ml.BigQueryDataSet.')
 
   cloud_config = args['cloud_config']
   if cloud_config:
@@ -701,18 +678,31 @@ def _transform(args, cell):
   if args['cloud'] and (not cloud_config or 'project_id' not in cloud_config):
     cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
 
-  try:
-    tmpdir = None
-    if args['package']:
-      tmpdir = tempfile.mkdtemp()
-      code_path = os.path.join(tmpdir, 'package')
-      _archive.extract_archive(args['package'], code_path)
+  training_data = get_dataset_from_arg(args['training_data'])
+  data_names = ('train', 'eval')
+  for name in data_names:
+    cmd_args_copy = list(cmd_args)
+    if isinstance(vars(training_data)[name], datalab_ml.CsvDataSet):
+      for file_name in vars(training_data)[name].input_files:
+        cmd_args_copy.append('--csv=' + _abs_path(file_name))
+    elif isinstance(vars(training_data)[name], datalab_ml.BigQueryDataSet):
+      cmd_args_copy.extend(['--bigquery', vars(training_data)[name].table])
     else:
-      code_path = MLTOOLBOX_CODE_PATH
-    _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=code_path)
-  finally:
-    if tmpdir:
-      shutil.rmtree(tmpdir)
+      raise ValueError('Unexpected training data type. Only csv or bigquery are supported.')
+
+    cmd_args_copy.extend(['--prefix', name])
+    try:
+      tmpdir = None
+      if args['package']:
+        tmpdir = tempfile.mkdtemp()
+        code_path = os.path.join(tmpdir, 'package')
+        _archive.extract_archive(args['package'], code_path)
+      else:
+        code_path = MLTOOLBOX_CODE_PATH
+      _shell_process.run_and_monitor(cmd_args_copy, os.getpid(), cwd=code_path)
+    finally:
+      if tmpdir:
+        shutil.rmtree(tmpdir)
 
 
 def _train(args, cell):
@@ -723,26 +713,19 @@ def _train(args, cell):
   job_args = ['--job-dir', _abs_path(args['output']),
               '--analysis', _abs_path(args['analysis'])]
 
-  def _process_train_eval_data(data, arg_name, job_args):
-    if isinstance(data, dict):
-      if 'csv' in data:
-        job_args.append(arg_name + '=' + _abs_path(data['csv']))
-        if '--transform' not in job_args:
-          job_args.append('--transform')
-      elif 'transformed' in data:
-        job_args.append(arg_name + '=' + _abs_path(data['transformed']))
-      else:
-        raise ValueError('Invalid training_data dict. '
-                         'Requires either "csv" or "transformed".')
-    elif isinstance(data, google.datalab.ml.CsvDataSet):
-      for file_name in data.input_files:
-        job_args.append(arg_name + '=' + _abs_path(file_name))
+  training_data = get_dataset_from_arg(args['training_data'])
+  data_names = ('train', 'eval')
+  for name in data_names:
+    if (isinstance(vars(training_data)[name], datalab_ml.CsvDataSet) or
+       isinstance(vars(training_data)[name], datalab_ml.TransformedDataSet)):
+      for file_name in vars(training_data)[name].input_files:
+        job_args.append('--%s=%s' % (name, _abs_path(file_name)))
     else:
-      raise ValueError('Invalid training data. Requires either a dict, or '
-                       'a google.datalab.ml.CsvDataSet')
+      raise ValueError('Unexpected training data type. ' +
+                       'Only csv and transformed type are supported.')
 
-  _process_train_eval_data(args['training_data'], '--train', job_args)
-  _process_train_eval_data(args['evaluation_data'], '--eval', job_args)
+  if isinstance(training_data.train, datalab_ml.CsvDataSet):
+    job_args.append('--transform')
 
   # TODO(brandondutra) document that any model_args that are file paths must
   # be given as an absolute path
@@ -787,23 +770,16 @@ def _train(args, cell):
 
 
 def _predict(args, cell):
-  if args['cloud']:
-    headers, img_cols = None, None
-    if args['headers']:
-      headers = args['headers'].split(',')
-    if args['image_columns']:
-      img_cols = args['image_columns'].split(',')
-  else:
-    schema, features = _local_predict.get_model_schema_and_features(args['model'])
-    headers = [x['name'] for x in schema]
-    img_cols = []
-    for k, v in six.iteritems(features):
-      if v['transform'] in ['image_to_vec']:
-        img_cols.append(v['source_column'])
+  schema, features = _local_predict.get_model_schema_and_features(args['model'])
+  headers = [x['name'] for x in schema]
+  img_cols = []
+  for k, v in six.iteritems(features):
+    if v['transform'] in ['image_to_vec']:
+      img_cols.append(v['source_column'])
 
   data = args['prediction_data']
   df = _local_predict.get_prediction_results(
-      args['model'], data, headers, img_cols=img_cols, cloud=args['cloud'],
+      args['model'], data, headers, img_cols=img_cols, cloud=False,
       show_image=not args['no_show_image'])
 
   def _show_img(img_bytes):
@@ -1073,3 +1049,58 @@ def _model_deploy(args, cell):
     versions.deploy(version_name, args['path'], runtime_version=runtime_version)
   else:
     raise ValueError('Name must be like "model.version".')
+
+
+def _dataset_create(args, cell):
+  if args['format'] == 'csv':
+    if not args['schema']:
+      raise ValueError('schema is required if format is csv.')
+
+    schema, schema_file = None, None
+    if isinstance(args['schema'], six.string_types):
+      schema_file = args['schema']
+    elif isinstance(args['schema'], list):
+      schema = args['schema']
+    else:
+      raise ValueError('schema should either be a file path, or a dictionary.')
+
+    train_dataset = datalab_ml.CsvDataSet(args['train'], schema=schema, schema_file=schema_file)
+    eval_dataset = datalab_ml.CsvDataSet(args['eval'], schema=schema, schema_file=schema_file)
+  elif args['format'] == 'bigquery':
+    train_dataset = datalab_ml.BigQueryDataSet(table=args['train'])
+    eval_dataset = datalab_ml.BigQueryDataSet(table=args['eval'])
+  elif args['format'] == 'transformed':
+    train_dataset = datalab_ml.TransformedDataSet(args['train'])
+    eval_dataset = datalab_ml.TransformedDataSet(args['eval'])
+  else:
+    raise ValueError('Invalid data format.')
+
+  dataset = DataSet(train_dataset, eval_dataset)
+  google.datalab.utils.commands.notebook_environment()[args['name']] = dataset
+
+
+def _dataset_explore(args, cell):
+
+  dataset = get_dataset_from_arg(args['name'])
+  print('train data instances: %d' % dataset.train.size)
+  print('eval data instances: %d' % dataset.eval.size)
+
+  if args['overview'] or args['facets']:
+    if isinstance(dataset.train, datalab_ml.TransformedDataSet):
+      raise ValueError('transformed data does not support overview or facets.')
+
+    print('Sampled %s instances for each.' % args['sample_size'])
+    sample_train_df = dataset.train.sample(args['sample_size'])
+    sample_eval_df = dataset.eval.sample(args['sample_size'])
+    if args['overview']:
+      overview = datalab_ml.FacetsOverview().plot({'train': sample_train_df,
+                                                   'eval': sample_eval_df})
+      IPython.display.display(overview)
+    if args['facets']:
+      sample_train_df['_source'] = pd.Series(['train'] * len(sample_train_df),
+                                             index=sample_train_df.index)
+      sample_eval_df['_source'] = pd.Series(['eval'] * len(sample_eval_df),
+                                            index=sample_eval_df.index)
+      df_merged = pd.concat([sample_train_df, sample_eval_df])
+      diveview = datalab_ml.FacetsDiveview().plot(df_merged)
+      IPython.display.display(diveview)

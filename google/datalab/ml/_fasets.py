@@ -65,7 +65,7 @@ class FacetsOverview(object):
 class FacetsDiveview(object):
   """Represents A facets overview. """
 
-  def plot(self, data, height=1000):
+  def plot(self, data, height=1000, render_large_data=False):
     """ Plots a detail view of data.
 
     Args:
@@ -77,6 +77,10 @@ class FacetsDiveview(object):
 
     if not isinstance(data, pd.DataFrame):
       raise ValueError('Expect a DataFrame.')
+
+    if (len(data) > 10000 and not render_large_data):
+      raise ValueError('Facets dive may not work well with more than 10000 rows. ' +
+                       'Reduce data or set "render_large_data" to True.')
 
     jsonstr = data.to_json(orient='records')
     html_id = 'f' + datalab.utils.commands.Html.next_id()

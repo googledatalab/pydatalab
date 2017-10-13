@@ -33,6 +33,8 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
+IPython.get_ipython = mock.Mock()
+IPython.get_ipython().user_ns = {}
 
 import google.datalab.contrib.mlworkbench.commands._ml as mlmagic  # noqa
 
@@ -67,12 +69,23 @@ class TestMLMagic(unittest.TestCase):
   @mock.patch('subprocess.Popen')  # Because of the trainer help menu
   def test_analyze_csv_local(self, popen_mock, run_and_monitor_mock):
     mlmagic.ml(
+      line='dataset create',
+      cell="""\
+          format: csv
+          train: ./taxi/train.csv
+          eval: ./taxi/eval.csv
+          name: taxi_data
+          schema:
+              - name: unique_key
+                type: STRING
+              - name: fare
+                type: FLOAT"""
+    )
+    mlmagic.ml(
         line='analyze',
         cell="""\
             output: my_out_dir
-            training_data:
-              csv: file*.csv
-              schema: dummy_schema
+            training_data: taxi_data
             features: dummy_features""")
     cmd_list = run_and_monitor_mock.call_args[0][0]
     # cmd_list = [u'python', u'analyze.py', u'--output', 'path/my_out_dir',
@@ -84,19 +97,31 @@ class TestMLMagic(unittest.TestCase):
     self.assertIn('--schema', cmd_list)
     self.assertIn('--features', cmd_list)
     self.assertTrue(find_key_endswith(cmd_list, '--output', 'my_out_dir'))
-    self.assertTrue(find_startswith_endswith(cmd_list, '--csv=', 'file*.csv'))
+    self.assertTrue(find_startswith_endswith(cmd_list, '--csv=', 'train.csv'))
 
   @mock.patch('google.datalab.contrib.mlworkbench._shell_process.run_and_monitor')
   @mock.patch('subprocess.Popen')  # Because of the trainer help menu
   def test_transform_csv(self, popen_mock, run_and_monitor_mock):
     mlmagic.ml(
-        line='transform --prefix my_prefix --shuffle --cloud',
+      line='dataset create',
+      cell="""\
+          format: csv
+          train: ./taxi/train.csv
+          eval: ./taxi/eval.csv
+          name: taxi_data
+          schema:
+              - name: unique_key
+                type: STRING
+              - name: fare
+                type: FLOAT"""
+    )
+    mlmagic.ml(
+        line='transform --shuffle --cloud',
         cell="""\
             output: my_out_dir
             analysis: my_analyze_dir
             batch_size: 123
-            training_data:
-              csv: file*.csv
+            training_data: taxi_data
             cloud_config:
               project_id: my_id
               num_workers: 987
@@ -113,9 +138,11 @@ class TestMLMagic(unittest.TestCase):
 
     self.assertTrue(find_key_endswith(cmd_list, '--output', 'my_out_dir'))
     self.assertTrue(find_key_endswith(cmd_list, '--analysis', 'my_analyze_dir'))
-    self.assertTrue(find_key_value(cmd_list, '--prefix', 'my_prefix'))
+    self.assertTrue(find_key_value(cmd_list, '--prefix', 'train') or
+                    find_key_value(cmd_list, '--prefix', 'eval'))
     self.assertTrue(find_key_value(cmd_list, '--batch-size', '123'))
-    self.assertTrue(find_startswith_endswith(cmd_list, '--csv=', 'file*.csv'))
+    self.assertTrue(find_startswith_endswith(cmd_list, '--csv=', 'train.csv') or
+                    find_startswith_endswith(cmd_list, '--csv=', 'eval.csv'))
     self.assertTrue(find_key_value(cmd_list, '--project-id', 'my_id'))
     self.assertTrue(find_key_value(cmd_list, '--num-workers', '987'))
     self.assertTrue(find_key_value(cmd_list, '--worker-machine-type', 'BLUE'))
@@ -128,14 +155,19 @@ class TestMLMagic(unittest.TestCase):
   def test_train_csv(self, popen_mock, submit_training_mock,
                      package_and_copy_mock, _show_job_link_mock):
     mlmagic.ml(
+      line='dataset create',
+      cell="""\
+          format: transformed
+          train: ./taxi/train_tfrecord.tar.gz
+          eval: ./taxi/eval_tfrecord.tar.gz
+          name: taxi_data_transformed"""
+    )
+    mlmagic.ml(
         line='train --cloud',
         cell="""\
             output: gs://my_out_dir
             analysis: my_analyze_dir
-            training_data:
-              csv: file*.csv
-            evaluation_data:
-              transformed: file*.tfrecords.gz
+            training_data: $taxi_data_transformed
             model_args:
               key: value
             cloud_config:
@@ -152,9 +184,8 @@ class TestMLMagic(unittest.TestCase):
 
     self.assertTrue(find_key_value(cmd_list, '--job-dir', 'gs://my_out_dir'))
     self.assertTrue(find_key_endswith(cmd_list, '--analysis', 'my_analyze_dir'))
-    self.assertTrue(find_startswith_endswith(cmd_list, '--train=', 'file*.csv'))
-    self.assertIn('--transform', cmd_list)
-    self.assertTrue(find_startswith_endswith(cmd_list, '--eval=', '*.tfrecords.gz'))
+    self.assertTrue(find_startswith_endswith(cmd_list, '--train=', 'train_tfrecord.tar.gz'))
+    self.assertTrue(find_startswith_endswith(cmd_list, '--eval=', 'eval_tfrecord.tar.gz'))
     self.assertTrue(find_key_value(cmd_list, '--key', 'value'))
 
   @mock.patch('IPython.display.display')

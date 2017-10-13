@@ -19,7 +19,7 @@ from __future__ import absolute_import
 from ._job import Jobs, Job
 from ._summary import Summary
 from ._tensorboard import TensorBoard
-from ._dataset import CsvDataSet, BigQueryDataSet
+from ._dataset import CsvDataSet, BigQueryDataSet, TransformedDataSet
 from ._cloud_models import Models, ModelVersions
 from ._confusion_matrix import ConfusionMatrix
 from ._feature_slice_view import FeatureSliceView
