@@ -16,7 +16,6 @@ from __future__ import unicode_literals
 import unittest
 import mock
 import os
-import pandas as pd
 
 
 # import Python so we can mock the parts we need to here.

@@ -682,11 +682,11 @@ def _transform(args, cell):
   data_names = ('train', 'eval')
   for name in data_names:
     cmd_args_copy = list(cmd_args)
-    if isinstance(vars(training_data)[name], datalab_ml.CsvDataSet):
-      for file_name in vars(training_data)[name].input_files:
+    if isinstance(getattr(training_data, name), datalab_ml.CsvDataSet):
+      for file_name in getattr(training_data, name).input_files:
         cmd_args_copy.append('--csv=' + _abs_path(file_name))
-    elif isinstance(vars(training_data)[name], datalab_ml.BigQueryDataSet):
-      cmd_args_copy.extend(['--bigquery', vars(training_data)[name].table])
+    elif isinstance(getattr(training_data, name), datalab_ml.BigQueryDataSet):
+      cmd_args_copy.extend(['--bigquery', getattr(training_data, name).table])
     else:
       raise ValueError('Unexpected training data type. Only csv or bigquery are supported.')
 
@@ -716,9 +716,9 @@ def _train(args, cell):
   training_data = get_dataset_from_arg(args['training_data'])
   data_names = ('train', 'eval')
   for name in data_names:
-    if (isinstance(vars(training_data)[name], datalab_ml.CsvDataSet) or
-       isinstance(vars(training_data)[name], datalab_ml.TransformedDataSet)):
-      for file_name in vars(training_data)[name].input_files:
+    if (isinstance(getattr(training_data, name), datalab_ml.CsvDataSet) or
+       isinstance(getattr(training_data, name), datalab_ml.TransformedDataSet)):
+      for file_name in getattr(training_data, name).input_files:
         job_args.append('--%s=%s' % (name, _abs_path(file_name)))
     else:
       raise ValueError('Unexpected training data type. ' +
