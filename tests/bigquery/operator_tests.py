@@ -69,11 +69,11 @@ class TestCases(unittest.TestCase):
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'pydatalab.bq.execute'
-    task_details['query'] = 'test_sql'
+    task_details['sql'] = 'test_sql'
     task_details['mode'] = 'create'
 
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
-    expected = """foo = ExecuteOperator(task_id='foo_id', mode='create', query='test_sql', dag=dag)\n"""  # noqa
+    expected = """foo = ExecuteOperator(task_id='foo_id', mode='create', sql='test_sql', dag=dag)\n"""  # noqa
     self.assertEqual(actual, expected)
 
   @mock.patch('google.datalab.Context.default')
