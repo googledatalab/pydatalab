@@ -901,7 +901,8 @@ for help on a specific command.
   _add_command(parser, _create_load_subparser, _load_cell)
 
   # %bq pipeline
-  _add_command(parser, contrib_bq._create_pipeline_subparser, contrib_bq._pipeline_cell)
+  _add_command(parser, contrib_bq._create_pipeline_subparser, contrib_bq._pipeline_cell,
+               cell_required=True)
 
   return parser
 
