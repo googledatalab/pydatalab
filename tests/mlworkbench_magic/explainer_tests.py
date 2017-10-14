@@ -15,6 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
 from PIL import Image
+import mock
 import numpy as np
 import os
 import shutil
@@ -39,6 +40,8 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.core.display.HTML = lambda x: x
 IPython.core.display.JSON = lambda x: x
+IPython.get_ipython = mock.Mock()
+IPython.get_ipython().user_ns = {}
 
 import google.datalab.contrib.mlworkbench.commands._ml as mlmagic  # noqa
 
@@ -71,47 +74,51 @@ class TestMLExplainer(unittest.TestCase):
     train_dir = os.path.join(self._test_dir, 'traintxt')
 
     mlmagic.ml(
-        line='analyze',
+        line='dataset create',
         cell="""\
-            output: %s
-            training_data:
-              csv: %s
-              schema:
+            format: csv
+            name: mytext
+            schema:
                 - name: key
                   type: INTEGER
                 - name: text
                   type: STRING
                 - name: target
                   type: STRING
+            train: %s
+            eval: %s""" % (train_csv, train_csv))
+
+    mlmagic.ml(
+        line='analyze',
+        cell="""\
+            output: %s
+            training_data: mytext
             features:
               key:
                 transform: key
               text:
                 transform: bag_of_words
               target:
-                transform: target""" % (analyze_dir, train_csv))
+                transform: target""" % (analyze_dir))
 
     mlmagic.ml(
         line='train',
         cell="""\
             output: %s
             analysis: %s
-            training_data:
-              csv: %s
-            evaluation_data:
-              csv: %s
+            training_data: mytext
             model_args:
               model: linear_classification
               top-n: 0
-              max-steps: 300""" % (train_dir, analyze_dir, train_csv, train_csv))
+              max-steps: 300""" % (train_dir, analyze_dir))
 
   def _create_image_test_data(self):
     image_path1 = os.path.join(self._test_dir, 'img1.jpg')
     image_path2 = os.path.join(self._test_dir, 'img2.jpg')
     image_path3 = os.path.join(self._test_dir, 'img3.jpg')
-    Image.new('RGBA', size=(128, 128), color=(155, 211, 64)).save(image_path1, "JPEG")
+    Image.new('RGB', size=(128, 128), color=(155, 211, 64)).save(image_path1, "JPEG")
     Image.new('RGB', size=(64, 64), color=(111, 21, 86)).save(image_path2, "JPEG")
-    Image.new('RGBA', size=(16, 16), color=(255, 21, 1)).save(image_path3, "JPEG")
+    Image.new('RGB', size=(16, 16), color=(255, 21, 1)).save(image_path3, "JPEG")
     test_data = """1,1.2,word1 word2,%s,true
 2,3.2,word2 word3,%s,false
 5,-2.1,word3 word4,%s,true""" % (image_path1, image_path2, image_path3)
@@ -134,22 +141,29 @@ class TestMLExplainer(unittest.TestCase):
       f.write(response.read())
 
     mlmagic.ml(
+        line='dataset create',
+        cell="""\
+            format: csv
+            name: myds
+            schema:
+              - name: key
+                type: INTEGER
+              - name: num
+                type: FLOAT
+              - name: text
+                type: STRING
+              - name: img_url
+                type: STRING
+              - name: target
+                type: STRING
+            train: %s
+            eval: %s""" % (train_csv, train_csv))
+
+    mlmagic.ml(
         line='analyze',
         cell="""\
             output: %s
-            training_data:
-              csv: %s
-              schema:
-                - name: key
-                  type: INTEGER
-                - name: num
-                  type: FLOAT
-                - name: text
-                  type: STRING
-                - name: img_url
-                  type: STRING
-                - name: target
-                  type: STRING
+            training_data: myds
             features:
               key:
                 transform: key
@@ -161,30 +175,33 @@ class TestMLExplainer(unittest.TestCase):
                 transform: image_to_vec
                 checkpoint: %s
               target:
-                transform: target""" % (analyze_dir, train_csv, checkpoint_path))
+                transform: target""" % (analyze_dir, checkpoint_path))
 
     mlmagic.ml(
         line='transform',
         cell="""\
             output: %s
             analysis: %s
-            prefix: train
-            training_data:
-              csv: %s""" % (transform_dir, analyze_dir, train_csv))
+            training_data: myds""" % (transform_dir, analyze_dir))
+
+    mlmagic.ml(
+        line='dataset create',
+        cell="""\
+            format: transformed
+            name: transformed_ds
+            train: %s/train-*
+            eval: %s/eval-*""" % (transform_dir, transform_dir))
 
     mlmagic.ml(
         line='train',
         cell="""\
             output: %s
             analysis: %s
-            training_data:
-              transformed: %s/train-*
-            evaluation_data:
-              transformed: %s/train-*
+            training_data: transformed_ds
             model_args:
               model: linear_classification
               top-n: 0
-              max-steps: 200""" % (train_dir, analyze_dir, transform_dir, transform_dir))
+              max-steps: 200""" % (train_dir, analyze_dir))
 
   @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
   def test_text_explainer(self):
