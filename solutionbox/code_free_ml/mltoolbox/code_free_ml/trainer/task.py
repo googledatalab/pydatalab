@@ -219,10 +219,14 @@ def parse_arguments(argv):
            'does not occur if no new checkpoint is available, hence, this is '
            'the minimum. If 0, the evaluation will only happen after training. ')
   parser.add_argument(
-      '--early_stopping_num_evals', type=int, default=3,
+      '--early-stopping-num_evals', type=int, default=3,
       help='Automatic training stop after results of specified number of evals '
            'in a row show the model performance does not improve. Set to 0 to '
            'disable early stopping.')
+  parser.add_argument(
+      '--logging-level', choices=['error', 'warning', 'info'],
+      help='The TF logging level. If absent, use info for cloud training '
+           'and warning for local training.')
 
   args, remaining_args = parser.parse_known_args(args=argv[1:])
 
@@ -837,11 +841,26 @@ def local_analysis(args):
   print('Analysis done.')
 
 
+def set_logging_level(args):
+  if 'TF_CONFIG' in os.environ:
+    tf.logging.set_verbosity(tf.logging.INFO)
+  else:
+    tf.logging.set_verbosity(tf.logging.ERROR)
+  if args.logging_level == 'error':
+    tf.logging.set_verbosity(tf.logging.ERROR)
+  elif args.logging_level == 'warning':
+    tf.logging.set_verbosity(tf.logging.WARN)
+  elif args.logging_level == 'info':
+    tf.logging.set_verbosity(tf.logging.INFO)
+
+
 def main(argv=None):
   args = parse_arguments(sys.argv if argv is None else argv)
   local_analysis(args)
+  set_logging_level(args)
+  # Supress TensorFlow Debugging info.
+  os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-  tf.logging.set_verbosity(tf.logging.INFO)
   learn_runner.run(
       experiment_fn=get_experiment_fn(args),
       output_dir=args.job_dir)

@@ -761,8 +761,10 @@ def _train(args, cell):
       job_id = cloud_config.get('job_id', None)
       job = datalab_ml.Job.submit_training(job_request, job_id)
       _show_job_link(job)
+      datalab_ml.TensorBoard.start(args['output'])
     else:
       cmd_args = ['python', '-m', 'trainer.task'] + job_args
+      datalab_ml.TensorBoard.start(args['output'])
       _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=code_path)
   finally:
     if tmpdir:
