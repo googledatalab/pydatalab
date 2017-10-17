@@ -38,6 +38,8 @@ class Summary(object):
 
     if isinstance(paths, six.string_types):
       self._paths = [paths]
+    else:
+      self._paths = paths
 
   def _glob_events_files(self, paths, recursive):
     """Find all tf events files under a list of paths recursively. """
