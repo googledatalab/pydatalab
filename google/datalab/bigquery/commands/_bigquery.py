@@ -1112,10 +1112,11 @@ def _register_html_formatters():
     html_formatter = ipy.display_formatter.formatters['text/html']
 
     html_formatter.for_type_by_name('google.datalab.bigquery._query', 'Query', _repr_html_query)
-    html_formatter.for_type_by_name('google.datalab.bigquery._query_results_table', 'QueryResultsTable',
-                                    _repr_html_query_results_table)
+    html_formatter.for_type_by_name('google.datalab.bigquery._query_results_table',
+                                    'QueryResultsTable', _repr_html_query_results_table)
     html_formatter.for_type_by_name('google.datalab.bigquery._table', 'Table', _repr_html_table)
-    html_formatter.for_type_by_name('google.datalab.bigquery._schema', 'Schema', _repr_html_table_schema)
+    html_formatter.for_type_by_name('google.datalab.bigquery._schema', 'Schema',
+                                    _repr_html_table_schema)
   except TypeError:
     # For when running unit tests
     pass
