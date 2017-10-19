@@ -512,6 +512,8 @@ def main(argv=None):
     pipeline_name = 'DataflowRunner'
   else:
     pipeline_name = 'DirectRunner'
+    # Suppress TF cpp warnings.
+    os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
   options = {
       'job_name': args.job_name,

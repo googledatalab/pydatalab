@@ -92,7 +92,7 @@ class TestMLExplainer(unittest.TestCase):
         line='analyze',
         cell="""\
             output: %s
-            training_data: mytext
+            data: mytext
             features:
               key:
                 transform: key
@@ -106,7 +106,7 @@ class TestMLExplainer(unittest.TestCase):
         cell="""\
             output: %s
             analysis: %s
-            training_data: mytext
+            data: mytext
             model_args:
               model: linear_classification
               top-n: 0
@@ -163,7 +163,7 @@ class TestMLExplainer(unittest.TestCase):
         line='analyze',
         cell="""\
             output: %s
-            training_data: myds
+            data: myds
             features:
               key:
                 transform: key
@@ -182,7 +182,7 @@ class TestMLExplainer(unittest.TestCase):
         cell="""\
             output: %s
             analysis: %s
-            training_data: myds""" % (transform_dir, analyze_dir))
+            data: myds""" % (transform_dir, analyze_dir))
 
     mlmagic.ml(
         line='dataset create',
@@ -197,7 +197,7 @@ class TestMLExplainer(unittest.TestCase):
         cell="""\
             output: %s
             analysis: %s
-            training_data: transformed_ds
+            data: transformed_ds
             model_args:
               model: linear_classification
               top-n: 0
