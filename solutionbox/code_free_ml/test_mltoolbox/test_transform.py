@@ -46,13 +46,13 @@ class TestTransformRawData(unittest.TestCase):
 
     # Make test image files.
     img1_file = os.path.join(cls.source_dir, 'img1.jpg')
-    image1 = Image.new('RGBA', size=(300, 300), color=(155, 0, 0))
+    image1 = Image.new('RGB', size=(300, 300), color=(155, 0, 0))
     image1.save(img1_file)
     img2_file = os.path.join(cls.source_dir, 'img2.jpg')
-    image2 = Image.new('RGBA', size=(50, 50), color=(125, 240, 0))
+    image2 = Image.new('RGB', size=(50, 50), color=(125, 240, 0))
     image2.save(img2_file)
     img3_file = os.path.join(cls.source_dir, 'img3.jpg')
-    image3 = Image.new('RGBA', size=(800, 600), color=(33, 55, 77))
+    image3 = Image.new('RGB', size=(800, 600), color=(33, 55, 77))
     image3.save(img3_file)
 
     # Download inception checkpoint. Note that gs url doesn't work because
