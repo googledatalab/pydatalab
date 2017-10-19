@@ -237,7 +237,7 @@ def _make_image_to_vec_tito(tmp_dir=None, checkpoint=None):
 
   def _image_to_vec(image_str_tensor):
 
-    def _decode_and_resize(image_str_tensor):
+    def _decode_and_resize(image_tensor):
       """Decodes jpeg string, resizes it and returns a uint8 tensor."""
 
       # These constants are set by Inception v3's expectations.
@@ -245,8 +245,22 @@ def _make_image_to_vec_tito(tmp_dir=None, checkpoint=None):
       width = 299
       channels = 3
 
-      image = tf.where(tf.equal(image_str_tensor, ''), IMAGE_DEFAULT_STRING, image_str_tensor)
-      image = tf.decode_base64(image)
+      image_tensor = tf.where(tf.equal(image_tensor, ''), IMAGE_DEFAULT_STRING, image_tensor)
+
+      # Fork by whether image_tensor value is a file path, or a base64 encoded string.
+      slash_positions = tf.equal(tf.string_split([image_tensor], delimiter="").values, '/')
+      is_file_path = tf.cast(tf.count_nonzero(slash_positions), tf.bool)
+
+      # The following two functions are required for tf.cond. Note that we can not replace them
+      # with lambda. According to TF docs, if using inline lambda, both branches of condition
+      # will be executed. The workaround is to use a function call.
+      def _read_file():
+        return tf.read_file(image_tensor)
+
+      def _decode_base64():
+        return tf.decode_base64(image_tensor)
+
+      image = tf.cond(is_file_path, lambda: _read_file(), lambda: _decode_base64())
       image = tf.image.decode_jpeg(image, channels=channels)
       image = tf.expand_dims(image, 0)
       image = tf.image.resize_bilinear(image, [height, width], align_corners=False)
