@@ -135,7 +135,7 @@ def ml(line, cell=None):
 
           %%ml analyze [--cloud]
           output: path/to/dir
-          training_data: $mydataset
+          data: $mydataset
           features:
             serialId:
               transform: key
@@ -160,7 +160,7 @@ def ml(line, cell=None):
                               help='A local or GCS tarball path to use as the source. '
                                    'If not set, the default source package will be used.')
   analyze_parser.add_cell_argument(
-    'training_data',
+    'data',
     required=True,
     help="""Training data. A dataset defined by "%%ml dataset".""")
   analyze_parser.add_cell_argument(
@@ -211,7 +211,7 @@ def ml(line, cell=None):
           analysis: path/to/analysis_output_folder
           output: path/to/dir
           batch_size: 100
-          training_data: $mydataset
+          data: $mydataset
           cloud:
             num_workers: 3
             worker_machine_type: n1-standard-1
@@ -231,7 +231,7 @@ def ml(line, cell=None):
                                 help='A local or GCS tarball path to use as the source. '
                                      'If not set, the default source package will be used.')
   transform_parser.add_cell_argument(
-      'training_data',
+      'data',
       required=True,
       help="""Training data. A dataset defined by "%%ml dataset".""")
   transform_parser.add_cell_argument(
@@ -259,7 +259,7 @@ def ml(line, cell=None):
           %%ml train [--cloud]
           analysis: path/to/analysis_output
           output: path/to/dir
-          training_data: $mydataset
+          data: $mydataset
           model_args:
             model: linear_regression
           cloud_config:
@@ -274,7 +274,7 @@ def ml(line, cell=None):
                             help='A local or GCS tarball path to use as the source. '
                                  'If not set, the default source package will be used.')
   train_parser.add_cell_argument(
-      'training_data',
+      'data',
       required=True,
       help="""Training data. A dataset defined by "%%ml dataset".""")
 
@@ -307,7 +307,7 @@ def ml(line, cell=None):
           %%ml predict
           headers: key,num
           model: path/to/model
-          prediction_data:
+          data:
             - key1,value1
             - key2,value2
 
@@ -320,13 +320,13 @@ def ml(line, cell=None):
           %%ml predict
           headers: key,num
           model: path/to/model
-          prediction_data: $my_data"""))
+          data: $my_data"""))
   predict_parser.add_argument('--model', required=True,
                               help='The model path.')
   predict_parser.add_argument('--no_show_image', action='store_true', default=False,
                               help='If not set, add a column of images in output.')
   predict_parser.add_cell_argument(
-      'prediction_data',
+      'data',
       required=True,
       help=textwrap.dedent("""\
           Prediction data can be
@@ -349,7 +349,7 @@ def ml(line, cell=None):
       model: path/to/model
       output: path/to/output
       format: csv
-      prediction_data:
+      data:
         csv: path/to/file_pattern"""))
   batch_predict_parser.add_argument('--model', required=True,
                                     help='The model path if not --cloud, or the id in '
@@ -367,7 +367,7 @@ def ml(line, cell=None):
   batch_predict_parser.add_argument('--cloud', action='store_true', default=False,
                                     help='whether to run prediction in cloud or local.')
   batch_predict_parser.add_cell_argument(
-      'prediction_data',
+      'data',
       required=True,
       help='Data to predict with. Only csv is supported.')
   batch_predict_parser.add_cell_argument(
@@ -457,6 +457,8 @@ def ml(line, cell=None):
   _add_data_params_for_evaluate(evaluate_cm_parser)
   evaluate_cm_parser.add_argument('--plot', action='store_true', default=False,
                                   help='Whether to plot confusion matrix as graph.')
+  evaluate_cm_parser.add_argument('--size', type=int, default=10,
+                                  help='The size of the confusion matrix.')
   evaluate_cm_parser.set_defaults(func=_evaluate_cm)
 
   evaluate_accuracy_parser = evaluate_sub_commands.add_parser(
@@ -609,7 +611,7 @@ def _analyze(args, cell):
   if args['cloud']:
     cmd_args.append('--cloud')
 
-  training_data = get_dataset_from_arg(args['training_data'])
+  training_data = get_dataset_from_arg(args['data'])
 
   if args['cloud']:
     tmpdir = os.path.join(args['output'], 'tmp')
@@ -678,7 +680,7 @@ def _transform(args, cell):
   if args['cloud'] and (not cloud_config or 'project_id' not in cloud_config):
     cmd_args.extend(['--project-id', google.datalab.Context.default().project_id])
 
-  training_data = get_dataset_from_arg(args['training_data'])
+  training_data = get_dataset_from_arg(args['data'])
   data_names = ('train', 'eval')
   for name in data_names:
     cmd_args_copy = list(cmd_args)
@@ -713,7 +715,7 @@ def _train(args, cell):
   job_args = ['--job-dir', _abs_path(args['output']),
               '--analysis', _abs_path(args['analysis'])]
 
-  training_data = get_dataset_from_arg(args['training_data'])
+  training_data = get_dataset_from_arg(args['data'])
   data_names = ('train', 'eval')
   for name in data_names:
     if (isinstance(getattr(training_data, name), datalab_ml.CsvDataSet) or
@@ -779,7 +781,7 @@ def _predict(args, cell):
     if v['transform'] in ['image_to_vec']:
       img_cols.append(v['source_column'])
 
-  data = args['prediction_data']
+  data = args['data']
   df = _local_predict.get_prediction_results(
       args['model'], data, headers, img_cols=img_cols, cloud=False,
       show_image=not args['no_show_image'])
@@ -814,7 +816,7 @@ def _batch_predict(args, cell):
   if args['cloud']:
     job_request = {
       'data_format': 'TEXT',
-      'input_paths': file_io.get_matching_files(args['prediction_data']['csv']),
+      'input_paths': file_io.get_matching_files(args['data']['csv']),
       'output_path': args['output'],
     }
     if args['model'].startswith('gs://'):
@@ -836,7 +838,7 @@ def _batch_predict(args, cell):
   else:
     print('local prediction...')
     _local_predict.local_batch_predict(args['model'],
-                                       args['prediction_data']['csv'],
+                                       args['data']['csv'],
                                        args['output'],
                                        args['format'],
                                        args['batch_size'])
@@ -907,7 +909,7 @@ def _evaluate_cm(args, cell):
     raise ValueError('Either csv or bigquery is needed.')
 
   if args['plot']:
-    return cm.plot(figsize=(15, 15), rotation=90)
+    return cm.plot(figsize=(args['size'], args['size']), rotation=90)
   else:
     return cm.to_dataframe()
 

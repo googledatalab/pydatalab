@@ -263,7 +263,7 @@ class TestGraphBuilding(unittest.TestCase):
   @unittest.skipIf(not HAS_CREDENTIALS, 'GCS access missing')
   def test_make_transform_graph_images(self):
 
-    print('Testing make_transform_graph with image_to_vec.' +
+    print('Testing make_transform_graph with image_to_vec. ' +
           'It may take a few minutes because it needs to download a large inception checkpoint.')
 
     def _open_and_encode_image(img_url):
@@ -282,17 +282,22 @@ class TestGraphBuilding(unittest.TestCase):
       schema = [{'name': 'img', 'type': 'STRING'}]
       features = {'img': {'transform': 'image_to_vec', 'source_column': 'img'}}
 
+      # Test transformation with encoded image content.
       img_string1 = _open_and_encode_image(
           'gs://cloud-ml-data/img/flower_photos/daisy/15207766_fc2f1d692c_n.jpg')
       img_string2 = _open_and_encode_image(
           'gs://cloud-ml-data/img/flower_photos/dandelion/8980164828_04fbf64f79_n.jpg')
-      input_data = [img_string1, img_string2]
+      # Test transformation with direct file path.
+      img_string3 = 'gs://cloud-ml-data/img/flower_photos/daisy/15207766_fc2f1d692c_n.jpg'
+      img_string4 = 'gs://cloud-ml-data/img/flower_photos/dandelion/8980164828_04fbf64f79_n.jpg'
+      input_data = [img_string1, img_string2, img_string3, img_string4]
       results = self._run_graph(output_folder, features, schema, stats, input_data)
       embeddings = results['img']
-      self.assertEqual(len(embeddings), 2)
+      self.assertEqual(len(embeddings), 4)
       self.assertEqual(len(embeddings[0]), 2048)
       self.assertEqual(embeddings[0].dtype, np.float32)
       self.assertTrue(any(x != 0.0 for x in embeddings[1]))
+      self.assertTrue(any(x != 0.0 for x in embeddings[3]))
 
     finally:
       shutil.rmtree(output_folder)

@@ -84,7 +84,7 @@ class TestMLMagic(unittest.TestCase):
         line='analyze',
         cell="""\
             output: my_out_dir
-            training_data: taxi_data
+            data: taxi_data
             features: dummy_features""")
     cmd_list = run_and_monitor_mock.call_args[0][0]
     # cmd_list = [u'python', u'analyze.py', u'--output', 'path/my_out_dir',
@@ -120,7 +120,7 @@ class TestMLMagic(unittest.TestCase):
             output: my_out_dir
             analysis: my_analyze_dir
             batch_size: 123
-            training_data: taxi_data
+            data: taxi_data
             cloud_config:
               project_id: my_id
               num_workers: 987
@@ -166,7 +166,7 @@ class TestMLMagic(unittest.TestCase):
         cell="""\
             output: gs://my_out_dir
             analysis: my_analyze_dir
-            training_data: $taxi_data_transformed
+            data: $taxi_data_transformed
             model_args:
               key: value
             cloud_config:
@@ -202,7 +202,7 @@ class TestMLMagic(unittest.TestCase):
             output: gs://output
             format: json
             batch_size: 10
-            prediction_data:
+            data:
               csv: %s""" % os.path.abspath(__file__))
 
     job_args = submit_batch_prediction_mock.call_args[0][0]
