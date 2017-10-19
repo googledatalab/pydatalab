@@ -17,8 +17,10 @@ from airflow.utils.decorators import apply_defaults
 
 class ExtractOperator(BaseOperator):
 
+  template_fields = ('_table', '_path')
+
   @apply_defaults
-  def __init__(self, table, path, format, csv_options=None, *args, **kwargs):
+  def __init__(self, table, path, format='csv', csv_options=None, *args, **kwargs):
     super(ExtractOperator, self).__init__(*args, **kwargs)
     self._table = table
     self._path = path
