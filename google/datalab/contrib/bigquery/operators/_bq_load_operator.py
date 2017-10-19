@@ -26,8 +26,11 @@ class LoadOperator(BaseOperator):
   Returns:
     A message about whether the load succeeded or failed.
   """
+
+  template_fields = ('_table', '_path')
+
   @apply_defaults
-  def __init__(self, table, path, mode='append', format=None, schema=None, csv_options=None, *args,
+  def __init__(self, table, path, mode='append', format='csv', schema=None, csv_options=None, *args,
                **kwargs):
     super(LoadOperator, self).__init__(*args, **kwargs)
     self._table = table

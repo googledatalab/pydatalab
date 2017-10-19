@@ -19,6 +19,8 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 
 class ExecuteOperator(BaseOperator):
 
+  template_fields = ('_sql', '_table')
+
   @apply_defaults
   def __init__(self, sql, parameters=None, table=None, mode=None, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)

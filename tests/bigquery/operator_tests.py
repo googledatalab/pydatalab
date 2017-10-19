@@ -151,3 +151,25 @@ class TestCases(unittest.TestCase):
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='csv', csv_options=mock.ANY,
                                          ignore_unknown_values=True)
+
+  def test_defaults_execute_operator(self):
+    execute_operator = ExecuteOperator(task_id='foo_task_id', sql='foo_sql')
+    self.assertIsNone(execute_operator._parameters)
+    self.assertIsNone(execute_operator._table)
+    self.assertIsNone(execute_operator._mode)
+
+    self.assertEqual(execute_operator.template_fields, ('_sql', '_table'))
+
+  def test_default_parameters_extract_operator(self):
+    extract_operator = ExtractOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
+    self.assertEquals(extract_operator._format, 'csv')
+    self.assertDictEqual(extract_operator._csv_options, {})
+    self.assertEqual(extract_operator.template_fields, ('_table', '_path'))
+
+  def test_default_parameters_load_operator(self):
+    load_operator = LoadOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
+    self.assertEquals(load_operator._format, 'csv')
+    self.assertEquals(load_operator._mode, 'append')
+    self.assertIsNone(load_operator._schema)
+    self.assertDictEqual(load_operator._csv_options, {})
+    self.assertEqual(load_operator.template_fields, ('_table', '_path'))
