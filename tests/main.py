@@ -75,14 +75,65 @@ import _util.util_tests
 
 
 _UNIT_TEST_MODULES = [
-
+    context_tests,
+    bigquery.api_tests,
+    bigquery.dataset_tests,
+    # bigquery.external_data_source_tests, # TODO: enable external data source tests
+    bigquery.jobs_tests,
+    bigquery.operator_tests,
+    bigquery.parser_tests,
+    bigquery.pipeline_tests,
+    bigquery.query_tests,
+    bigquery.sampling_tests,
+    bigquery.schema_tests,
+    bigquery.table_tests,
+    bigquery.udf_tests,
+    bigquery.view_tests,
+    bigquery.sampling_tests,
+    kernel.bigquery_tests,
+    kernel.chart_data_tests,
+    kernel.chart_tests,
+    kernel.html_tests,
+    kernel.pipeline_tests,
+    kernel.storage_tests,
+    kernel.utils_tests,
+    ml.confusion_matrix_tests,
+    ml.dataset_tests,
+    ml.facets_tests,
+    ml.metrics_tests,
+    ml.summary_tests,
     mlworkbench_magic.ml_tests,
-
+    pipeline.pipeline_tests,
+    stackdriver.commands.monitoring_tests,
+    stackdriver.monitoring.group_tests,
+    stackdriver.monitoring.metric_tests,
+    stackdriver.monitoring.resource_tests,
+    stackdriver.monitoring.query_metadata_tests,
+    stackdriver.monitoring.query_tests,
+    stackdriver.monitoring.utils_tests,
+    storage.api_tests,
+    storage.bucket_tests,
+    storage.object_tests,
+    _util.commands_tests,
+    _util.feature_statistics_generator_test,
+    _util.generic_feature_statistics_generator_test,
+    _util.http_tests,
+    _util.lru_cache_tests,
+    _util.util_tests
 ]
 
 
 _INTEGRATION_TEST_MODULES = [
-
+    ml.tensorboard_tests,
+    mltoolbox_code_free_ml.all_tests,
+    mltoolbox_structured_data.dl_interface_tests,
+    mltoolbox_structured_data.sd_e2e_tests,  # Not everything runs in Python 3.
+    mltoolbox_structured_data.traininglib_tests,
+    mlworkbench_magic.local_predict_tests,
+    mlworkbench_magic.explainer_tests,
+    # TODO: the test fails in travis only. Need to investigate.
+    # mlworkbench_magic.shell_process_tests,
+    mlworkbench_magic.archive_tests,
 ]
 
 
