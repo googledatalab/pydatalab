@@ -27,6 +27,7 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
+import airflow
 import google.datalab  # noqa
 import google.datalab.bigquery  # noqa
 import google.datalab.bigquery.commands  # noqa
@@ -55,10 +56,43 @@ class TestCases(unittest.TestCase):
                                        path='test_path', format=None,
                                        task_id='test_extract_operator')
 
+    # Happy path
     mock_table_extract.return_value.result = lambda: 'test-results'
     mock_table_extract.return_value.failed = False
     mock_table_extract.return_value.errors = None
     self.assertEqual(extract_operator.execute(context=None), 'test-results')
+    mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
+                                          csv_delimiter=None, csv_header=None, compress=None)
+
+    # Extract failed
+    mock_table_extract.return_value.result = lambda: 'test-results'
+    mock_table_extract.return_value.failed = True
+    mock_table_extract.return_value.errors = None
+    with self.assertRaisesRegexp(Exception, "Extract failed:"):
+      extract_operator.execute(context=None)
+
+    # Extract completed with errors
+    mock_table_extract.return_value.result = lambda: 'test-results'
+    mock_table_extract.return_value.failed = False
+    mock_table_extract.return_value.errors = 'foo_error'
+    with self.assertRaisesRegexp(Exception, 'Extract completed with errors: foo_error'):
+      extract_operator.execute(context=None)
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Table.extract')
+  @mock.patch('airflow.models.TaskInstance')
+  def test_extract_operator_with_temporary_table(self, mock_task_instance, mock_table_extract,
+                                                 mock_context_default):
+    mock_context_default.return_value = TestCases._create_context()
+    mock_task_instance.xcom_pull.return_value = TestCases.test_project_id + '.test_table'
+    extract_operator = ExtractOperator(path='test_path', format=None,
+                                       task_id='test_extract_operator')
+
+    mock_table_extract.return_value.result = lambda: 'test-results'
+    mock_table_extract.return_value.failed = False
+    mock_table_extract.return_value.errors = None
+    self.assertEqual(extract_operator.execute(context={'task_instance': mock_task_instance}),
+                     'test-results')
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
 
@@ -78,17 +112,18 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.Query.execute')
+  @mock.patch('google.datalab.bigquery._query_job.QueryJob')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
-  def test_execute_operator(self, mock_get_notebook_item, mock_query_execute, mock_context_default):
+  def test_execute_operator(self, mock_get_notebook_item, mock_query_job, mock_query_execute,
+                            mock_context_default):
     mock_context_default.return_value = self._create_context()
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
-    # This statement is required even though it seems like it's not. Go figure.
-    execute_operator = ExecuteOperator(
-      task_id='test_execute_operator', sql='test_sql', parameters=None, table='test_table',
-      mode=None)
-    execute_operator.execute(context=None)
-    # TODO(rajivpb): Mock output_options and query_params for a more complete test.
-    mock_query_execute.assert_called_once()
+
+    execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql')
+    mock_query_execute.return_value = mock_query_job
+    query_results_table_name = 'foo_table'
+    mock_query_job.result.return_value.name = query_results_table_name
+    self.assertEqual(execute_operator.execute(context=None), query_results_table_name)
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')

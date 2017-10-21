@@ -31,14 +31,14 @@ class ExecuteOperator(BaseOperator):
 
   def execute(self, context):
     query = bq.Query(sql=self._sql)
-    # allow_large_results is set to False because setting it True requires the destination table to
-    # be specified.
-    # use_cache is set to False since this is most likely the case for all pipeline scenarios
+    # allow_large_results is False because setting it True requires the destination table
+    # use_cache is False since this is most likely the case in pipeline scenarios
     output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
                                           allow_large_results=False)
+
     pydatalab_context = google.datalab.Context.default()
     query_params = Pipeline._get_query_parameters(self._parameters)
     job = query.execute(output_options, context=pydatalab_context, query_params=query_params)
-    # returning the name of the table used for the results so that it could be used by downstream
-    # tasks if they need it.
+
+    # Returning the table-name here makes it available for downstream task instances.
     return job.result().name
