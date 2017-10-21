@@ -27,7 +27,6 @@ IPython.core.magic.register_line_magic = noop_decorator
 IPython.core.magic.register_cell_magic = noop_decorator
 IPython.get_ipython = mock.Mock()
 
-import airflow
 import google.datalab  # noqa
 import google.datalab.bigquery  # noqa
 import google.datalab.bigquery.commands  # noqa
