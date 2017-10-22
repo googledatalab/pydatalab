@@ -39,13 +39,10 @@ class ExtractOperator(BaseOperator):
       # The task id of the execute task is created by concatenating 'bq_pipeline_execute_task'
       # and '_id'. This is currently being hard-coded, but consider making this a parameter.
       # It could require substantial changes to the underlying object model of Pipeline.
-      self._table = task_instance.xcom_pull(task_ids='bq_pipeline_execute_task_id')
+      execute_task_output = task_instance.xcom_pull(task_ids='bq_pipeline_execute_task_id')
+      self._table = execute_task_output.get('table')
 
-    if not self._table:
-      raise Exception('A table is needed to extract.')
-
-    pydatalab_context = google.datalab.Context.default()
-    source_table = google.datalab.bigquery.Table(self._table, context=pydatalab_context)
+    source_table = google.datalab.bigquery.Table(self._table, context=None)
     job = source_table.extract(
       self._path, format='CSV' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON',
       csv_delimiter=self._csv_options.get('delimiter'),
@@ -55,4 +52,6 @@ class ExtractOperator(BaseOperator):
       raise Exception('Extract failed: %s' % str(job.fatal_error))
     elif job.errors:
       raise Exception('Extract completed with errors: %s' % str(job.errors))
-    return job.result()
+    return {
+      'result': job.result()
+    }

@@ -42,8 +42,7 @@ class LoadOperator(BaseOperator):
 
   def execute(self, context):
     if self._table:
-      pydatalab_context = google.datalab.Context.default()
-      table = bq.Table(self._table, context=pydatalab_context)
+      table = bq.Table(self._table, context=None)
 
     if self._mode == 'create':
       if table.exists():
@@ -67,3 +66,7 @@ class LoadOperator(BaseOperator):
       raise Exception('Load failed: %s' % str(job.fatal_error))
     elif job.errors:
       raise Exception('Load completed with errors: %s' % str(job.errors))
+
+    return {
+      'result': job.result()
+    }

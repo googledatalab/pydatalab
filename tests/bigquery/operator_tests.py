@@ -40,6 +40,7 @@ from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOper
 class TestCases(unittest.TestCase):
 
   test_project_id = 'test_project'
+  test_table_name = 'project.test.table'
 
   @staticmethod
   def _create_context():
@@ -59,7 +60,7 @@ class TestCases(unittest.TestCase):
     mock_table_extract.return_value.result = lambda: 'test-results'
     mock_table_extract.return_value.failed = False
     mock_table_extract.return_value.errors = None
-    self.assertEqual(extract_operator.execute(context=None), 'test-results')
+    self.assertDictEqual(extract_operator.execute(context=None), {'result': 'test-results'})
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
 
@@ -83,15 +84,15 @@ class TestCases(unittest.TestCase):
   def test_extract_operator_with_temporary_table(self, mock_task_instance, mock_table_extract,
                                                  mock_context_default):
     mock_context_default.return_value = TestCases._create_context()
-    mock_task_instance.xcom_pull.return_value = TestCases.test_project_id + '.test_table'
+    mock_task_instance.xcom_pull.return_value = {'table': TestCases.test_project_id + '.test_table'}
     extract_operator = ExtractOperator(path='test_path', format=None,
                                        task_id='test_extract_operator')
 
     mock_table_extract.return_value.result = lambda: 'test-results'
     mock_table_extract.return_value.failed = False
     mock_table_extract.return_value.errors = None
-    self.assertEqual(extract_operator.execute(context={'task_instance': mock_task_instance}),
-                     'test-results')
+    self.assertDictEqual(extract_operator.execute(context={'task_instance': mock_task_instance}),
+                     {'result': 'test-results'})
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
 
@@ -111,10 +112,11 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery.Query.execute')
+  @mock.patch('google.datalab.bigquery.QueryOutput.table')
   @mock.patch('google.datalab.bigquery._query_job.QueryJob')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
-  def test_execute_operator(self, mock_get_notebook_item, mock_query_job, mock_query_execute,
-                            mock_context_default):
+  def test_execute_operator(self, mock_get_notebook_item, mock_query_job, mock_query_output_table,
+                            mock_query_execute, mock_context_default):
     mock_context_default.return_value = self._create_context()
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
 
@@ -122,7 +124,9 @@ class TestCases(unittest.TestCase):
     mock_query_execute.return_value = mock_query_job
     query_results_table_name = 'foo_table'
     mock_query_job.result.return_value.name = query_results_table_name
-    self.assertEqual(execute_operator.execute(context=None), query_results_table_name)
+    self.assertDictEqual(execute_operator.execute(context=None), {'table': query_results_table_name})
+    mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
+                                               allow_large_results=False)
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
@@ -133,7 +137,7 @@ class TestCases(unittest.TestCase):
       mock_context_default.return_value = self._create_context()
 
       mock_table_exists.return_value = True
-      load_operator = LoadOperator(table='project.test.table', path='test/path', mode='create',
+      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='create',
                                    format=None, csv_options=None, schema=None,
                                    task_id='test_operator_id')
       with self.assertRaisesRegexp(
@@ -142,7 +146,7 @@ class TestCases(unittest.TestCase):
         load_operator.execute(context=None)
 
       mock_table_exists.return_value = False
-      load_operator = LoadOperator(table='project.test.table', path='test/path', mode='append',
+      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
                                    format=None, csv_options=None, schema=None,
                                    task_id='test_operator_id')
       with self.assertRaisesRegexp(Exception,
@@ -154,10 +158,10 @@ class TestCases(unittest.TestCase):
         {"type": "FLOAT", "name": "var1"},
         {"type": "FLOAT", "name": "var2"}
       ]
-      load_operator = LoadOperator(table='project.test.table', path='test/path', mode='create',
+      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='create',
                                    format=None, csv_options=None, schema=schema,
                                    task_id='test_operator_id')
-      job = google.datalab.bigquery._query_job.QueryJob('test_id', 'project.test.table',
+      job = google.datalab.bigquery._query_job.QueryJob('test_id', TestCases.test_table_name,
                                                         'test_sql', None)
       mock_table_load.return_value = job
       job._is_complete = True
@@ -172,16 +176,22 @@ class TestCases(unittest.TestCase):
         load_operator.execute(context=None)
 
       job._errors = None
-      load_operator.execute(context=None)
+      query_results_table = load_operator.execute(context=None)['result'].name
+      self.assertEqual(query_results_table.project_id, 'project')
+      self.assertEqual(query_results_table.dataset_id, 'test')
+      self.assertEqual(query_results_table.table_id, 'table')
       mock_table_load.assert_called_with('test/path', mode='create',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=True)
 
       mock_table_exists.return_value = True
-      load_operator = LoadOperator(table='project.test.table', path='test/path', mode='append',
+      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
                                    format='csv', csv_options=None, schema=schema,
                                    task_id='test_operator_id')
-      load_operator.execute(context=None)
+      query_results_table = load_operator.execute(context=None)['result'].name
+      self.assertEqual(query_results_table.project_id, 'project')
+      self.assertEqual(query_results_table.dataset_id, 'test')
+      self.assertEqual(query_results_table.table_id, 'table')
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='csv', csv_options=mock.ANY,
                                          ignore_unknown_values=True)
