@@ -10,7 +10,6 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google
 import google.datalab.bigquery as bq
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
@@ -31,13 +30,15 @@ class ExecuteOperator(BaseOperator):
 
   def execute(self, context):
     query = bq.Query(sql=self._sql)
-    # allow_large_results is set to False because setting it True requires the destination table to
-    # be specified.
-    # use_cache is set to False since this is most likely the case for all pipeline scenarios
+    # use_cache is False since this is most likely the case in pipeline scenarios
+    # allow_large_results can be True only if table is specified (i.e. when it's not None)
     output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
-                                          allow_large_results=False)
-    pydatalab_context = google.datalab.Context.default()
+                                          allow_large_results=self._table is not None)
+
     query_params = Pipeline._get_query_parameters(self._parameters)
-    # TODO(rajivpb): Is this a sync or an async operation? Unlike load(), this does not wrap its
-    # async counterpart with a job.wait(). Test and wait if necessary.
-    query.execute(output_options, context=pydatalab_context, query_params=query_params)
+    job = query.execute(output_options, context=None, query_params=query_params)
+
+    # Returning the table-name here makes it available for downstream task instances.
+    return {
+      'table': job.result().name
+    }
