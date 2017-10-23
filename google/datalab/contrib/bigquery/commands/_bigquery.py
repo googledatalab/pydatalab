@@ -58,25 +58,25 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   output_config = bq_pipeline_config.get('output')
   parameters_config = bq_pipeline_config.get('parameters')
 
-  load_task_config_name = 'bq_pipeline_load_task'
-  execute_task_config_name = 'bq_pipeline_execute_task'
-  extract_task_config_name = 'bq_pipeline_extract_task'
+  load_task_id = 'bq_pipeline_load_task'
+  execute_task_id = 'bq_pipeline_execute_task'
+  extract_task_id = 'bq_pipeline_extract_task'
 
   load_task_config = _get_load_parameters(input_config)
-  execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config,
+  execute_task_config = _get_execute_parameters(load_task_id, transformation_config,
                                                 output_config, parameters_config)
-  extract_task_config = _get_extract_parameters(execute_task_config_name, output_config)
+  extract_task_config = _get_extract_parameters(execute_task_id, output_config)
   pipeline_spec = {
     'schedule': bq_pipeline_config['schedule'],
   }
 
   pipeline_spec['tasks'] = {}
   if load_task_config:
-    pipeline_spec['tasks'][load_task_config_name] = load_task_config
+    pipeline_spec['tasks'][load_task_id] = load_task_config
   if execute_task_config:
-    pipeline_spec['tasks'][execute_task_config_name] = execute_task_config
+    pipeline_spec['tasks'][execute_task_id] = execute_task_config
   if extract_task_config:
-    pipeline_spec['tasks'][extract_task_config_name] = extract_task_config
+    pipeline_spec['tasks'][extract_task_id] = extract_task_config
   pipeline_spec['emails'] = bq_pipeline_config.get('emails')
 
   if not load_task_config and not execute_task_config and not extract_task_config:
@@ -139,11 +139,11 @@ def _get_load_parameters(bq_pipeline_input_config):
     return load_task_config
 
 
-def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config,
+def _get_execute_parameters(load_task_id, bq_pipeline_transformation_config,
                             bq_pipeline_output_config, bq_pipeline_parameters_config):
     execute_task_config = {
       'type': 'pydatalab.bq.execute',
-      'up_stream': [load_task_config_name]
+      'up_stream': [load_task_id]
     }
 
     # The name of query for execution; if absent, we return None as we assume that there is
@@ -160,19 +160,17 @@ def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_co
     return execute_task_config
 
 
-def _get_extract_parameters(execute_task_config_name, bq_pipeline_output_config):
+def _get_extract_parameters(execute_task_id, bq_pipeline_output_config):
     extract_task_config = {
       'type': 'pydatalab.bq.extract',
-      'up_stream': [execute_task_config_name]
+      'up_stream': [execute_task_id]
     }
 
-    # Destination table name for the execution results. When present, this will need to be set in
-    # execute_task_config. When absent, it means that there is no extraction to be done, so we
-    # return None.
-    if 'table' not in bq_pipeline_output_config:
-      return None
+    # If a temporary table from the bigquery results is being used, this will not be present in the
+    # output section.
+    if 'table' in bq_pipeline_output_config:
+      extract_task_config['table'] = bq_pipeline_output_config['table']
 
-    extract_task_config['table'] = bq_pipeline_output_config['table']
     extract_task_config['path'] = bq_pipeline_output_config.get('path')
     if not extract_task_config['path']:
       # If a path is not specified, there is nothing to extract, so we return None after making
