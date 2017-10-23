@@ -36,7 +36,7 @@ class ExecuteOperator(BaseOperator):
                                           allow_large_results=self._table is not None)
 
     query_params = Pipeline._get_query_parameters(self._parameters)
-    job = query.execute(output_options, context=None, query_params=query_params)
+    job = query.execute(output_options, query_params=query_params)
 
     # Returning the table-name here makes it available for downstream task instances.
     return {
