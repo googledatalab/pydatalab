@@ -92,7 +92,7 @@ class TestCases(unittest.TestCase):
     mock_table_extract.return_value.failed = False
     mock_table_extract.return_value.errors = None
     self.assertDictEqual(extract_operator.execute(context={'task_instance': mock_task_instance}),
-                     {'result': 'test-results'})
+                         {'result': 'test-results'})
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
 
@@ -124,7 +124,8 @@ class TestCases(unittest.TestCase):
     mock_query_execute.return_value = mock_query_job
     query_results_table_name = 'foo_table'
     mock_query_job.result.return_value.name = query_results_table_name
-    self.assertDictEqual(execute_operator.execute(context=None), {'table': query_results_table_name})
+    self.assertDictEqual(execute_operator.execute(context=None),
+                         {'table': query_results_table_name})
     mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
                                                allow_large_results=False)
 
