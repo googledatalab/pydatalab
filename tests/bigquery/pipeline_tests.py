@@ -41,11 +41,9 @@ class TestCases(unittest.TestCase):
     actual_load_config = bq._get_load_parameters(input_config)
     expected_load_config = {
       'type': 'pydatalab.bq.load',
-      'format': 'csv',
       'path': 'test_path',
       'table': 'test_table',
       'schema': 'test_schema',
-      'mode': 'create',
       'csv_options': {
         'delimiter': ';',
         'skip': 9
@@ -54,13 +52,6 @@ class TestCases(unittest.TestCase):
     self.assertDictEqual(actual_load_config, expected_load_config)
 
     input_config = {
-      'path': 'test_path',
-      'table': 'test_table',
-    }
-    actual_load_config = bq._get_load_parameters(input_config)
-    self.assertEqual(actual_load_config['mode'], 'append')
-
-    input_config = {
       'table': 'test_table',
       'schema': 'test_schema'
     }
@@ -77,26 +68,7 @@ class TestCases(unittest.TestCase):
       'path': 'test_path',
     }
     actual_load_config = bq._get_load_parameters(input_config)
-    expected_load_config = {
-      'type': 'pydatalab.bq.load',
-      'format': 'csv',
-      'csv_options': None,
-      'path': 'test_path',
-    }
-    self.assertDictEqual(actual_load_config, expected_load_config)
-
-    input_config = {
-      'path': 'test_path',
-      'format': 'json'
-    }
-    actual_load_config = bq._get_load_parameters(input_config)
-    expected_load_config = {
-      'type': 'pydatalab.bq.load',
-      'format': 'json',
-      'path': 'test_path',
-      'csv_options': None
-    }
-    self.assertDictEqual(actual_load_config, expected_load_config)
+    self.assertIsNone(actual_load_config)
 
   def test_get_extract_parameters(self):
     input_config = {
@@ -107,8 +79,6 @@ class TestCases(unittest.TestCase):
     expected_extract_config = {
       'type': 'pydatalab.bq.extract',
       'up_stream': ['foo_execute_task'],
-      'format': 'csv',
-      'csv_options': None,
       'path': 'test_path',
       'table': 'test_table',
     }
@@ -263,12 +233,13 @@ default_args = {
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
 bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql='SELECT @column FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}` where endpoint=@endpoint', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}', schema=(.*), table='cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path='gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}', schema=(.*), table='cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
 
+    print(output)
     self.assertIsNotNone(pattern.match(output))
 
     # String that follows the "parameters=", for the execute operator.

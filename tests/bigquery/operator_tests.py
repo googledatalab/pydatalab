@@ -131,35 +131,40 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
+  @mock.patch('google.datalab.bigquery.Table.create')
   @mock.patch('google.datalab.bigquery.Table.exists')
   @mock.patch('google.datalab.bigquery.Table.load')
-  def test_load_operator(self, mock_table_load, mock_table_exists, mock_api_tables_insert,
-                         mock_context_default):
+  def test_load_operator(self, mock_table_load, mock_table_exists, mock_table_create,
+                         mock_api_tables_insert, mock_context_default):
       mock_context_default.return_value = self._create_context()
 
       mock_table_exists.return_value = True
-      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='create',
-                                   format=None, csv_options=None, schema=None,
-                                   task_id='test_operator_id')
-      with self.assertRaisesRegexp(
-              Exception,
-              "project.test.table already exists; mode should be \'append\' or \'overwrite\'"):
-        load_operator.execute(context=None)
-
-      mock_table_exists.return_value = False
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
                                    format=None, csv_options=None, schema=None,
                                    task_id='test_operator_id')
-      with self.assertRaisesRegexp(Exception,
-                                   'project.test.table does not exist; mode should be \'create\''):
+      with self.assertRaisesRegexp(Exception, 'Load failed'):
         load_operator.execute(context=None)
+      mock_table_load.assert_called_with('test/path', mode='append',
+                                         source_format='NEWLINE_DELIMITED_JSON',
+                                         csv_options=mock.ANY, ignore_unknown_values=True)
+
+      mock_table_exists.return_value = False
+      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
+                                   format=None, csv_options={}, schema={},
+                                   task_id='test_operator_id')
+      with self.assertRaisesRegexp(Exception, 'Load failed'):
+        load_operator.execute(context=None)
+      mock_table_load.assert_called_with('test/path', mode='append',
+                                         source_format='NEWLINE_DELIMITED_JSON',
+                                         csv_options=mock.ANY, ignore_unknown_values=True)
+      mock_table_create.assert_called_with(schema={})
 
       schema = [
         {"type": "INTEGER", "name": "key"},
         {"type": "FLOAT", "name": "var1"},
         {"type": "FLOAT", "name": "var2"}
       ]
-      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='create',
+      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
                                    format=None, csv_options=None, schema=schema,
                                    task_id='test_operator_id')
       job = google.datalab.bigquery._query_job.QueryJob('test_id', TestCases.test_table_name,
@@ -181,7 +186,7 @@ class TestCases(unittest.TestCase):
       self.assertEqual(query_results_table.project_id, 'project')
       self.assertEqual(query_results_table.dataset_id, 'test')
       self.assertEqual(query_results_table.table_id, 'table')
-      mock_table_load.assert_called_with('test/path', mode='create',
+      mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=True)
 
