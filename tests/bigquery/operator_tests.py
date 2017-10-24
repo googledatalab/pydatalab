@@ -155,7 +155,7 @@ class TestCases(unittest.TestCase):
 
       # Table does not exist
       mock_table_exists.return_value = False
-      csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote':'"'}
+      csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote': '"'}
       schema = [
         {"type": "INTEGER", "name": "key"},
         {"type": "FLOAT", "name": "var1"},
@@ -174,7 +174,6 @@ class TestCases(unittest.TestCase):
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=False)
       mock_table_create.assert_called_with(schema=schema)
-
 
       # Table load fails
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
