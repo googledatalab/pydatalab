@@ -162,6 +162,7 @@ class TestCases(unittest.TestCase):
       'data_source': 'foo_data_source',
       'path': 'test_path',
       'schema': 'test_schema',
+      'source_format': 'csv',
       'csv_options': {
         'delimiter': ';',
         'skip': 9,

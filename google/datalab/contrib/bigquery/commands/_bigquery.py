@@ -141,6 +141,9 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
         if 'max_bad_records' in bq_pipeline_input_config:
             execute_task_config['max_bad_records'] = bq_pipeline_input_config['max_bad_records']
 
+        if 'format' in bq_pipeline_input_config:
+          execute_task_config['source_format'] = bq_pipeline_input_config.get('format')
+
         if 'csv' in bq_pipeline_input_config:
           execute_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
 

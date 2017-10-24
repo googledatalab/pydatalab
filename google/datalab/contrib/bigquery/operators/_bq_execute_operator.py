@@ -22,7 +22,7 @@ class ExecuteOperator(BaseOperator):
 
   @apply_defaults
   def __init__(self, sql, parameters=None, table=None, mode=None, data_source=None, path=None,
-               csv_options=None, schema=None, max_bad_records=10, *args, **kwargs):
+               format=None, csv_options=None, schema=None, max_bad_records=None, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)
     self._sql = sql
     self._table = table
@@ -30,27 +30,33 @@ class ExecuteOperator(BaseOperator):
     self._parameters = parameters
     self._data_source = data_source
     self._path = path
+    self._format = format
     self._csv_options = csv_options or {}
     self._schema = schema
     self._max_bad_records = max_bad_records
 
   def execute(self, context):
+    kwargs = {}
     if self._data_source:
-      kwargs = {}
-      if 'delimiter' in self._csv_options:
-        kwargs['delimiter'] = self._csv_options['delimiter']
-      if 'skip' in self._csv_options:
-        kwargs['skip_leading_rows'] = self._csv_options['skip']
-      if 'strict' in self._csv_options:
-        kwargs['allow_jagged_rows'] = self._csv_options['strict']
-      if 'quote' in self._csv_options:
-        kwargs['quote'] = self._csv_options['quote']
+      if self._csv_options and self._csv_options.__len__() > 1:
+        csv_kwargs = {}
+        if 'delimiter' in self._csv_options:
+          csv_kwargs['delimiter'] = self._csv_options['delimiter']
+        if 'skip' in self._csv_options:
+          csv_kwargs['skip_leading_rows'] = self._csv_options['skip']
+        if 'strict' in self._csv_options:
+          csv_kwargs['allow_jagged_rows'] = self._csv_options['strict']
+        if 'quote' in self._csv_options:
+          csv_kwargs['quote'] = self._csv_options['quote']
+          kwargs['csv_options'] = bq.CSVOptions(**csv_kwargs)
 
-      external_data_source = bq.ExternalDataSource(source=self._path,
-                                                   csv_options=bq.CSVOptions(**kwargs),
-                                                   schema=self._schema,
-                                                   max_bad_records=self._max_bad_records)
+      if self._format:
+        kwargs['source_format'] = self._format
 
+      if self._max_bad_records:
+        kwargs['max_bad_records'] = self._max_bad_records
+
+      external_data_source = bq.ExternalDataSource(source=self._path, schema=self._schema, **kwargs)
       query = bq.Query(sql=self._sql, data_sources={self._data_source: external_data_source})
     else:
       query = bq.Query(sql=self._sql)
