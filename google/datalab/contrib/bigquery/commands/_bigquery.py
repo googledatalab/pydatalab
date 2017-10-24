@@ -63,7 +63,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   extract_task_id = 'bq_pipeline_extract_task'
 
   load_task_config = _get_load_parameters(input_config)
-  execute_task_config = _get_execute_parameters(load_task_id, transformation_config,
+  execute_task_config = _get_execute_parameters(load_task_id, input_config, transformation_config,
                                                 output_config, parameters_config)
   extract_task_config = _get_extract_parameters(execute_task_id, output_config)
   pipeline_spec = {
@@ -131,17 +131,18 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
     if 'data_source' in bq_pipeline_input_config:
         execute_task_config['data_source'] = bq_pipeline_input_config['data_source']
 
-    if 'path' in bq_pipeline_input_config:
-        execute_task_config['path'] = bq_pipeline_input_config['path']
+        # All the below are applicable only if data_source is specified
+        if 'path' in bq_pipeline_input_config:
+            execute_task_config['path'] = bq_pipeline_input_config['path']
 
-    if 'schema' in bq_pipeline_input_config:
-        execute_task_config['schema'] = bq_pipeline_input_config['schema']
+        if 'schema' in bq_pipeline_input_config:
+            execute_task_config['schema'] = bq_pipeline_input_config['schema']
 
-    if 'max_bad_records' in bq_pipeline_input_config:
-        execute_task_config['max_bad_records'] = bq_pipeline_input_config['max_bad_records']
+        if 'max_bad_records' in bq_pipeline_input_config:
+            execute_task_config['max_bad_records'] = bq_pipeline_input_config['max_bad_records']
 
-    if 'csv' in bq_pipeline_input_config:
-      execute_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
+        if 'csv' in bq_pipeline_input_config:
+          execute_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
 
     # Stuff from the transformation config
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])

@@ -35,7 +35,7 @@ class ExecuteOperator(BaseOperator):
     self._max_bad_records = max_bad_records
 
   def execute(self, context):
-    if self._data_source_name:
+    if self._data_source:
       kwargs = {}
       if 'delimiter' in self._csv_options:
         kwargs['delimiter'] = self._csv_options['delimiter']

@@ -117,12 +117,12 @@ class TestCases(unittest.TestCase):
         'value': '1234'
       }
     ]
-    actual_execute_config = bq._get_execute_parameters('foo_load_task', transformation_config,
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        output_config, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'up_stream': ['foo_load_task'],
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'table': 'foo_table',
       'mode': 'foo_mode',
       'parameters': parameters_config
@@ -130,12 +130,42 @@ class TestCases(unittest.TestCase):
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
     # With empty output config
-    actual_execute_config = bq._get_execute_parameters('foo_load_task', transformation_config,
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        {}, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'up_stream': ['foo_load_task'],
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'parameters': parameters_config
+    }
+    self.assertDictEqual(actual_execute_config, expected_execute_config)
+
+    input_config = {
+      'path': 'test_path',
+      'table': 'test_table',
+      'schema': 'test_schema',
+      'data_source': 'foo_data_source',
+      'mode': 'append',
+      'format': 'csv',
+      'csv': {
+        'delimiter': ';',
+        'skip': 9
+      },
+    }
+
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
+                                                       transformation_config, {}, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'up_stream': ['foo_load_task'],
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'data_source': 'foo_data_source',
+      'path': 'test_path',
+      'schema': 'test_schema',
+      'csv_options': {
+        'delimiter': ';',
+        'skip': 9,
+      },
       'parameters': parameters_config
     }
     self.assertDictEqual(actual_execute_config, expected_execute_config)

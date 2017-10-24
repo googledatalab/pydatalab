@@ -114,13 +114,29 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.bigquery.Query.execute')
   @mock.patch('google.datalab.bigquery.QueryOutput.table')
   @mock.patch('google.datalab.bigquery._query_job.QueryJob')
-  @mock.patch('google.datalab.utils.commands.get_notebook_item')
-  def test_execute_operator(self, mock_get_notebook_item, mock_query_job, mock_query_output_table,
-                            mock_query_execute, mock_context_default):
+  def test_execute_operator(self, mock_query_job, mock_query_output_table, mock_query_execute,
+                            mock_context_default):
     mock_context_default.return_value = self._create_context()
-    mock_get_notebook_item.return_value = google.datalab.bigquery.Query('test_sql')
 
     execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql')
+    mock_query_execute.return_value = mock_query_job
+    query_results_table_name = 'foo_table'
+    mock_query_job.result.return_value.name = query_results_table_name
+    self.assertDictEqual(execute_operator.execute(context=None),
+                         {'table': query_results_table_name})
+    mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
+                                               allow_large_results=False)
+
+  @mock.patch('google.datalab.Context.default')
+  @mock.patch('google.datalab.bigquery.Query.execute')
+  @mock.patch('google.datalab.bigquery.QueryOutput.table')
+  @mock.patch('google.datalab.bigquery._query_job.QueryJob')
+  def test_execute_operator_with_data_source(self, mock_query_job, mock_query_output_table,
+                                             mock_query_execute, mock_context_default):
+    mock_context_default.return_value = self._create_context()
+
+    execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql',
+                                       data_source='foo_data_source')
     mock_query_execute.return_value = mock_query_job
     query_results_table_name = 'foo_table'
     mock_query_job.result.return_value.name = query_results_table_name
