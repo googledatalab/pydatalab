@@ -33,6 +33,8 @@ class TestCases(unittest.TestCase):
       'path': 'test_path',
       'table': 'test_table',
       'schema': 'test_schema',
+      'mode': 'append',
+      'format': 'csv',
       'csv': {
         'delimiter': ';',
         'skip': 9
@@ -44,6 +46,8 @@ class TestCases(unittest.TestCase):
       'path': 'test_path',
       'table': 'test_table',
       'schema': 'test_schema',
+      'mode': 'append',
+      'format': 'csv',
       'csv_options': {
         'delimiter': ';',
         'skip': 9
@@ -51,6 +55,7 @@ class TestCases(unittest.TestCase):
     }
     self.assertDictEqual(actual_load_config, expected_load_config)
 
+    # Path is absent
     input_config = {
       'table': 'test_table',
       'schema': 'test_schema'
@@ -58,14 +63,17 @@ class TestCases(unittest.TestCase):
     actual_load_config = bq._get_load_parameters(input_config)
     self.assertIsNone(actual_load_config)
 
+    # Path and table are absent
     input_config = {
       'schema': 'test_schema'
     }
     actual_load_config = bq._get_load_parameters(input_config)
     self.assertIsNone(actual_load_config)
 
+    # Table is absent
     input_config = {
       'path': 'test_path',
+      'schema': 'test_schema'
     }
     actual_load_config = bq._get_load_parameters(input_config)
     self.assertIsNone(actual_load_config)
@@ -239,7 +247,6 @@ bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
 
-    print(output)
     self.assertIsNotNone(pattern.match(output))
 
     # String that follows the "parameters=", for the execute operator.
