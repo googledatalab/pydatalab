@@ -22,6 +22,20 @@ import unittest
 
 class TestCases(unittest.TestCase):
 
+  test_input_config = {
+    'path': 'test_path',
+    'table': 'test_table',
+    'schema': 'test_schema',
+    'mode': 'append',
+    'format': 'csv',
+    'csv': {
+      'delimiter': ';',
+      'skip': 9,
+      'strict': False,
+      'quote': '"'
+    },
+  }
+
   @staticmethod
   def _create_context():
     project_id = 'test'
@@ -29,18 +43,7 @@ class TestCases(unittest.TestCase):
     return google.datalab.Context(project_id, creds)
 
   def test_get_load_parameters(self):
-    input_config = {
-      'path': 'test_path',
-      'table': 'test_table',
-      'schema': 'test_schema',
-      'mode': 'append',
-      'format': 'csv',
-      'csv': {
-        'delimiter': ';',
-        'skip': 9
-      },
-    }
-    actual_load_config = bq._get_load_parameters(input_config)
+    actual_load_config = bq._get_load_parameters(TestCases.test_input_config)
     expected_load_config = {
       'type': 'pydatalab.bq.load',
       'path': 'test_path',
@@ -48,10 +51,7 @@ class TestCases(unittest.TestCase):
       'schema': 'test_schema',
       'mode': 'append',
       'format': 'csv',
-      'csv_options': {
-        'delimiter': ';',
-        'skip': 9
-      }
+      'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
     }
     self.assertDictEqual(actual_load_config, expected_load_config)
 
@@ -138,22 +138,11 @@ class TestCases(unittest.TestCase):
       'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'parameters': parameters_config
     }
+
+    input_config = TestCases.test_input_config
+    input_config['data_source'] = 'foo_data_source'
     self.assertDictEqual(actual_execute_config, expected_execute_config)
-
-    input_config = {
-      'path': 'test_path',
-      'table': 'test_table',
-      'schema': 'test_schema',
-      'data_source': 'foo_data_source',
-      'mode': 'append',
-      'format': 'csv',
-      'csv': {
-        'delimiter': ';',
-        'skip': 9
-      },
-    }
-
-    actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', TestCases.test_input_config,
                                                        transformation_config, {}, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
@@ -163,12 +152,10 @@ class TestCases(unittest.TestCase):
       'path': 'test_path',
       'schema': 'test_schema',
       'source_format': 'csv',
-      'csv_options': {
-        'delimiter': ';',
-        'skip': 9,
-      },
+      'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
       'parameters': parameters_config
     }
+
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
   @mock.patch('google.datalab.Context.default')
