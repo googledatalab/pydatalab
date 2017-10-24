@@ -41,6 +41,11 @@ class TestCases(unittest.TestCase):
 
   test_project_id = 'test_project'
   test_table_name = 'project.test.table'
+  test_schema = [
+      {"type": "INTEGER", "name": "key"},
+      {"type": "FLOAT", "name": "var1"},
+      {"type": "FLOAT", "name": "var2"}
+  ]
 
   @staticmethod
   def _create_context():
@@ -128,22 +133,31 @@ class TestCases(unittest.TestCase):
                                                allow_large_results=False)
 
   @mock.patch('google.datalab.Context.default')
-  @mock.patch('google.datalab.bigquery.Query.execute')
+  @mock.patch('google.datalab.bigquery.ExternalDataSource')
+  @mock.patch('google.datalab.bigquery.Query')
   @mock.patch('google.datalab.bigquery.QueryOutput.table')
   @mock.patch('google.datalab.bigquery._query_job.QueryJob')
   def test_execute_operator_with_data_source(self, mock_query_job, mock_query_output_table,
-                                             mock_query_execute, mock_context_default):
+                                             mock_query_class, mock_external_data_source,
+                                             mock_context_default):
     mock_context_default.return_value = self._create_context()
-
+    csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote': '"'}
     execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql',
-                                       data_source='foo_data_source')
-    mock_query_execute.return_value = mock_query_job
-    query_results_table_name = 'foo_table'
-    mock_query_job.result.return_value.name = query_results_table_name
+                                       data_source='foo_data_source', path='foo_path',
+                                       max_bad_records=20, schema=TestCases.test_schema,
+                                       csv_options=csv_options)
+    mock_query_instance = mock_query_class.return_value
+    mock_query_instance.execute.return_value = mock_query_job
+    mock_query_job.result.return_value.name = 'foo_table'
     self.assertDictEqual(execute_operator.execute(context=None),
-                         {'table': query_results_table_name})
+                         {'table': 'foo_table'})
     mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
                                                allow_large_results=False)
+    mock_query_class.assert_called_with(
+        sql='test_sql', data_sources={'foo_data_source': mock_external_data_source.return_value})
+    mock_external_data_source.assert_called_with(source='foo_path', max_bad_records=20,
+                                                 csv_options=mock.ANY,
+                                                 schema=TestCases.test_schema)
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')
@@ -172,14 +186,9 @@ class TestCases(unittest.TestCase):
       # Table does not exist
       mock_table_exists.return_value = False
       csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote': '"'}
-      schema = [
-        {"type": "INTEGER", "name": "key"},
-        {"type": "FLOAT", "name": "var1"},
-        {"type": "FLOAT", "name": "var2"}
-      ]
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
-                                   format=None, csv_options=csv_options, schema=schema,
-                                   task_id='test_operator_id')
+                                   format=None, csv_options=csv_options,
+                                   schema=TestCases.test_schema, task_id='test_operator_id')
       mock_job = mock.Mock()
       mock_job.result.return_value = 'test-result'
       mock_job.failed = False
@@ -189,11 +198,11 @@ class TestCases(unittest.TestCase):
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=False)
-      mock_table_create.assert_called_with(schema=schema)
+      mock_table_create.assert_called_with(schema=TestCases.test_schema)
 
       # Table load fails
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
-                                   format=None, csv_options=None, schema=schema,
+                                   format=None, csv_options=None, schema=TestCases.test_schema,
                                    task_id='test_operator_id')
       mock_job = mock.Mock()
       mock_job.failed = True
@@ -204,7 +213,7 @@ class TestCases(unittest.TestCase):
 
       # Table load completes with errors
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
-                                   format=None, csv_options=None, schema=schema,
+                                   format=None, csv_options=None, schema=TestCases.test_schema,
                                    task_id='test_operator_id')
       mock_job = mock.Mock()
       mock_job.failed = False

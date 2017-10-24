@@ -48,7 +48,8 @@ class ExecuteOperator(BaseOperator):
 
       external_data_source = bq.ExternalDataSource(source=self._path,
                                                    csv_options=bq.CSVOptions(**kwargs),
-                                                   schema=self._schema, max_bad_records=10)
+                                                   schema=self._schema,
+                                                   max_bad_records=self._max_bad_records)
 
       query = bq.Query(sql=self._sql, data_sources={self._data_source: external_data_source})
     else:
