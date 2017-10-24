@@ -138,69 +138,65 @@ class TestCases(unittest.TestCase):
                          mock_api_tables_insert, mock_context_default):
       mock_context_default.return_value = self._create_context()
 
+      # Table exists
       mock_table_exists.return_value = True
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
                                    format=None, csv_options=None, schema=None,
                                    task_id='test_operator_id')
-      with self.assertRaisesRegexp(Exception, 'Load failed'):
-        load_operator.execute(context=None)
+      mock_job = mock.Mock()
+      mock_job.result.return_value = 'test-result'
+      mock_job.failed = False
+      mock_job.errors = False
+      mock_table_load.return_value = mock_job
+      self.assertDictEqual(load_operator.execute(context=None), {'result': 'test-result'})
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=True)
 
+      # Table does not exist
       mock_table_exists.return_value = False
-      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
-                                   format=None, csv_options={}, schema={},
-                                   task_id='test_operator_id')
-      with self.assertRaisesRegexp(Exception, 'Load failed'):
-        load_operator.execute(context=None)
-      mock_table_load.assert_called_with('test/path', mode='append',
-                                         source_format='NEWLINE_DELIMITED_JSON',
-                                         csv_options=mock.ANY, ignore_unknown_values=True)
-      mock_table_create.assert_called_with(schema={})
-
+      csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote':'"'}
       schema = [
         {"type": "INTEGER", "name": "key"},
         {"type": "FLOAT", "name": "var1"},
         {"type": "FLOAT", "name": "var2"}
       ]
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
+                                   format=None, csv_options=csv_options, schema=schema,
+                                   task_id='test_operator_id')
+      mock_job = mock.Mock()
+      mock_job.result.return_value = 'test-result'
+      mock_job.failed = False
+      mock_job.errors = False
+      mock_table_load.return_value = mock_job
+      self.assertDictEqual(load_operator.execute(context=None), {'result': 'test-result'})
+      mock_table_load.assert_called_with('test/path', mode='append',
+                                         source_format='NEWLINE_DELIMITED_JSON',
+                                         csv_options=mock.ANY, ignore_unknown_values=False)
+      mock_table_create.assert_called_with(schema=schema)
+
+
+      # Table load fails
+      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
                                    format=None, csv_options=None, schema=schema,
                                    task_id='test_operator_id')
-      job = google.datalab.bigquery._query_job.QueryJob('test_id', TestCases.test_table_name,
-                                                        'test_sql', None)
-      mock_table_load.return_value = job
-      job._is_complete = True
-      job._fatal_error = 'fatal error'
-      mock_api_tables_insert.return_value = {'selfLink': 'http://foo'}
+      mock_job = mock.Mock()
+      mock_job.failed = True
+      mock_job.fatal_error = 'fatal error'
+      mock_table_load.return_value = mock_job
       with self.assertRaisesRegexp(Exception, 'Load failed: fatal error'):
         load_operator.execute(context=None)
 
-      job._fatal_error = None
-      job._errors = 'error'
+      # Table load completes with errors
+      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
+                                   format=None, csv_options=None, schema=schema,
+                                   task_id='test_operator_id')
+      mock_job = mock.Mock()
+      mock_job.failed = False
+      mock_job.errors = 'error'
+      mock_table_load.return_value = mock_job
       with self.assertRaisesRegexp(Exception, 'Load completed with errors: error'):
         load_operator.execute(context=None)
-
-      job._errors = None
-      query_results_table = load_operator.execute(context=None)['result'].name
-      self.assertEqual(query_results_table.project_id, 'project')
-      self.assertEqual(query_results_table.dataset_id, 'test')
-      self.assertEqual(query_results_table.table_id, 'table')
-      mock_table_load.assert_called_with('test/path', mode='append',
-                                         source_format='NEWLINE_DELIMITED_JSON',
-                                         csv_options=mock.ANY, ignore_unknown_values=True)
-
-      mock_table_exists.return_value = True
-      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
-                                   format='csv', csv_options=None, schema=schema,
-                                   task_id='test_operator_id')
-      query_results_table = load_operator.execute(context=None)['result'].name
-      self.assertEqual(query_results_table.project_id, 'project')
-      self.assertEqual(query_results_table.dataset_id, 'test')
-      self.assertEqual(query_results_table.table_id, 'table')
-      mock_table_load.assert_called_with('test/path', mode='append',
-                                         source_format='csv', csv_options=mock.ANY,
-                                         ignore_unknown_values=True)
 
   def test_defaults_execute_operator(self):
     execute_operator = ExecuteOperator(task_id='foo_task_id', sql='foo_sql')
