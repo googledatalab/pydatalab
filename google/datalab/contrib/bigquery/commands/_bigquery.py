@@ -114,8 +114,9 @@ def _get_load_parameters(bq_pipeline_input_config):
     return load_task_config
 
 
-def _get_execute_parameters(load_task_id, bq_pipeline_transformation_config,
-                            bq_pipeline_output_config, bq_pipeline_parameters_config):
+def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
+                            bq_pipeline_transformation_config, bq_pipeline_output_config,
+                            bq_pipeline_parameters_config):
     execute_task_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': [load_task_id]
@@ -126,15 +127,34 @@ def _get_execute_parameters(load_task_id, bq_pipeline_transformation_config,
     if 'query' not in bq_pipeline_transformation_config:
       return None
 
+    # Stuff from the input config
+    if 'data_source' in bq_pipeline_input_config:
+        execute_task_config['data_source'] = bq_pipeline_input_config['data_source']
+
+    if 'path' in bq_pipeline_input_config:
+        execute_task_config['path'] = bq_pipeline_input_config['path']
+
+    if 'schema' in bq_pipeline_input_config:
+        execute_task_config['schema'] = bq_pipeline_input_config['schema']
+
+    if 'max_bad_records' in bq_pipeline_input_config:
+        execute_task_config['max_bad_records'] = bq_pipeline_input_config['max_bad_records']
+
+    if 'csv' in bq_pipeline_input_config:
+      execute_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
+
+    # Stuff from the transformation config
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     execute_task_config['sql'] = query.sql
 
+    # Stuff from the output config
     if 'table' in bq_pipeline_output_config:
         execute_task_config['table'] = bq_pipeline_output_config['table']
 
     if 'mode' in bq_pipeline_output_config:
         execute_task_config['mode'] = bq_pipeline_output_config['mode']
 
+    # Stuff from the parameters config
     execute_task_config['parameters'] = bq_pipeline_parameters_config
 
     return execute_task_config
@@ -146,18 +166,16 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_output_config):
       'up_stream': [execute_task_id]
     }
 
+    # If a path is not specified, there is no extract to be done, so we return None
+    if 'path' not in bq_pipeline_output_config:
+      return None
+
+    extract_task_config['path'] = bq_pipeline_output_config.get('path')
+
     # If a temporary table from the bigquery results is being used, this will not be present in the
     # output section.
     if 'table' in bq_pipeline_output_config:
       extract_task_config['table'] = bq_pipeline_output_config['table']
-
-    extract_task_config['path'] = bq_pipeline_output_config.get('path')
-    if not extract_task_config['path']:
-      # If a path is not specified, there is nothing to extract, so we return None after making
-      # sure that format is not specified.
-      if 'format' in bq_pipeline_output_config:
-        raise Exception('Path is not specified, but format is.')
-      return None
 
     if 'format' in bq_pipeline_output_config:
       extract_task_config['format'] = bq_pipeline_output_config.get('format')
