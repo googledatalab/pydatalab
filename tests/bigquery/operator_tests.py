@@ -145,7 +145,7 @@ class TestCases(unittest.TestCase):
     execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql',
                                        data_source='foo_data_source', path='foo_path',
                                        max_bad_records=20, schema=TestCases.test_schema,
-                                       csv_options=csv_options)
+                                       csv_options=csv_options, format='csv')
     mock_query_instance = mock_query_class.return_value
     mock_query_instance.execute.return_value = mock_query_job
     mock_query_job.result.return_value.name = 'foo_table'
@@ -155,9 +155,9 @@ class TestCases(unittest.TestCase):
                                                allow_large_results=False)
     mock_query_class.assert_called_with(
         sql='test_sql', data_sources={'foo_data_source': mock_external_data_source.return_value})
-    mock_external_data_source.assert_called_with(source='foo_path', max_bad_records=20,
-                                                 csv_options=mock.ANY,
-                                                 schema=TestCases.test_schema)
+    mock_external_data_source.assert_called_with(
+      source='foo_path', max_bad_records=20, csv_options=mock.ANY, source_format='csv',
+      schema=google.datalab.bigquery.Schema(TestCases.test_schema))
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.bigquery._api.Api.tables_insert')

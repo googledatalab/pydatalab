@@ -56,7 +56,8 @@ class ExecuteOperator(BaseOperator):
       if self._max_bad_records:
         kwargs['max_bad_records'] = self._max_bad_records
 
-      external_data_source = bq.ExternalDataSource(source=self._path, schema=self._schema, **kwargs)
+      external_data_source = bq.ExternalDataSource(
+        source=self._path, schema=bq.Schema(self._schema), **kwargs)
       query = bq.Query(sql=self._sql, data_sources={self._data_source: external_data_source})
     else:
       query = bq.Query(sql=self._sql)
