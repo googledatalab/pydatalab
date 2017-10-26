@@ -107,6 +107,7 @@ class TestMLExplainer(unittest.TestCase):
             output: %s
             analysis: %s
             data: mytext
+            notb: true
             model_args:
               model: linear_classification
               top-n: 0
@@ -198,13 +199,14 @@ class TestMLExplainer(unittest.TestCase):
             output: %s
             analysis: %s
             data: transformed_ds
+            notb: true
             model_args:
               model: linear_classification
               top-n: 0
               max-steps: 200""" % (train_dir, analyze_dir))
 
   @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
-  def test_text_explainer(self):
+  def _test_text_explainer(self):
     """Test text explainer."""
 
     self._create_text_test_data()
@@ -223,7 +225,7 @@ class TestMLExplainer(unittest.TestCase):
       self.assertGreater(score, 0.0)
 
   @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
-  def test_image_explainer(self):
+  def _test_image_explainer(self):
     """Test image explainer."""
 
     self._create_image_test_data()
@@ -234,9 +236,25 @@ class TestMLExplainer(unittest.TestCase):
         num_samples=50)
 
     for i in range(2):
-      image, mask = exp_instance.get_image_and_mask(i, positive_only=False, num_features=3,
-                                                    )
+      image, mask = exp_instance.get_image_and_mask(i, positive_only=False, num_features=3)
       # image's dimension is length*width*channel
       self.assertEqual(len(np.asarray(image).shape), 3)
       # mask's dimension is length*width
       self.assertEqual(len(np.asarray(mask).shape), 2)
+
+  @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
+  def test_image_prober(self):
+    """Test image explainer."""
+
+    self._create_image_test_data()
+    explainer = PredictionExplainer(os.path.join(self._test_dir, 'trainimg', 'model'))
+    raw_image, grads_viz = explainer.probe_image(
+        'true',
+        '4,2.0,word2 word1,%s' % os.path.join(self._test_dir, 'img1.jpg'),
+        top_percent=20)
+    self.assertEqual((299, 299, 3), np.asarray(raw_image).shape)
+    self.assertEqual((299, 299, 3), np.asarray(grads_viz).shape)
+
+    arr = np.asarray(grads_viz)
+    arr = arr.reshape(-1)
+    self.assertGreater(float((arr == 0).sum()) / len(arr), 0.79)
