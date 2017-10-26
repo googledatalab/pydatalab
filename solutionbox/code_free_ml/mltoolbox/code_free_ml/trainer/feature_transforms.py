@@ -220,13 +220,15 @@ def _bag_of_words(x):
   return _bow(x)
 
 
-def _make_image_to_vec_tito(tmp_dir=None, checkpoint=None):
+def _make_image_to_vec_tito(feature_name, tmp_dir=None, checkpoint=None):
   """Creates a tensor-in-tensor-out function that produces embeddings from image bytes.
 
   Image to embedding is implemented with Tensorflow's inception v3 model and a pretrained
   checkpoint. It returns 1x2048 'PreLogits' embeddings for each image.
 
   Args:
+    feature_name: The name of the feature. Used only to identify the image tensors so
+      we can get gradients for probe in image prediction explaining.
     tmp_dir: a local directory that is used for downloading the checkpoint. If
       non, a temp folder will be made and deleted.
     checkpoint: the inception v3 checkpoint gs or local path. If None, default checkpoint
@@ -275,6 +277,8 @@ def _make_image_to_vec_tito(tmp_dir=None, checkpoint=None):
     # string from dynamic batches.
     image = tf.map_fn(_decode_and_resize, image_str_tensor, back_prop=False, dtype=tf.uint8)
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+    # "gradients_[feature_name]" will be used for computing integrated gradients.
+    image = tf.identity(image, name='gradients_' + feature_name)
     image = tf.subtract(image, 0.5)
     inception_input = tf.multiply(image, 2.0)
 
@@ -412,7 +416,7 @@ def make_preprocessing_fn(output_dir, features, keep_target):
           result[name] = _string_to_int(inputs[source_column], vocab)
       elif transform_name == IMAGE_TRANSFORM:
         make_image_to_vec_fn = _make_image_to_vec_tito(
-            checkpoint=transform.get('checkpoint', None))
+            name, checkpoint=transform.get('checkpoint', None))
         result[name] = make_image_to_vec_fn(inputs[source_column])
       else:
         raise ValueError('unknown transform %s' % transform_name)
@@ -802,10 +806,9 @@ def image_feature_engineering(features, feature_tensors_dict):
   engineered_features = {}
   for name, feature_tensor in six.iteritems(feature_tensors_dict):
     if name in features and features[name]['transform'] == IMAGE_TRANSFORM:
-      bottleneck_with_no_gradient = tf.stop_gradient(feature_tensor)
       with tf.name_scope(name, 'Wx_plus_b'):
         hidden = tf.contrib.layers.fully_connected(
-            bottleneck_with_no_gradient,
+            feature_tensor,
             IMAGE_HIDDEN_TENSOR_SIZE)
         engineered_features[name] = hidden
     else:

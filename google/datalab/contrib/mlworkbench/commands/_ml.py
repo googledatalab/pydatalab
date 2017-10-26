@@ -270,6 +270,8 @@ def ml(line, cell=None):
                             help='path of trained model directory.')
   train_parser.add_argument('--cloud', action='store_true', default=False,
                             help='whether to run training in cloud or local.')
+  train_parser.add_argument('--notb', action='store_true', default=False,
+                            help='If set, tensorboard is not automatically started.')
   train_parser.add_argument('--package', required=False,
                             help='A local or GCS tarball path to use as the source. '
                                  'If not set, the default source package will be used.')
@@ -383,7 +385,7 @@ def ml(line, cell=None):
   explain_parser = parser.subcommand(
       'explain',
       formatter_class=argparse.RawTextHelpFormatter,
-      help='Explain a prediction.')
+      help='Explain a prediction with LIME tool.')
   explain_parser.add_argument('--type', required=True, choices=['text', 'image'],
                               help='the type of column to explain.')
   explain_parser.add_argument('--model', required=True,
@@ -414,6 +416,26 @@ def ml(line, cell=None):
   explain_parser.add_cell_argument('data', required=True,
                                    help='Prediction Data. Can be a csv line, or a dict.')
   explain_parser.set_defaults(func=_explain)
+
+  probe_parser = parser.subcommand(
+      'probe',
+      help='Explain an image classification prediction using gradients.')
+  probe_parser.add_argument('--model', required=True,
+                            help='path of the model directory used for prediction.')
+  probe_parser.add_argument('--label', required=True,
+                            help='The label to explain.')
+  probe_parser.add_argument('--column_name',
+                            help='the name of the column to explain. Optional if text type ' +
+                                 'and there is only one text column, or image type and ' +
+                                 'there is only one image column.')
+  probe_parser.add_argument('--num_gradients', type=int, default=50,
+                            help='the number of scaled images to get gradients from. Larger ' +
+                                 'number usually produces better results but slower.')
+  probe_parser.add_argument('--percent_show', type=int, default=10,
+                            help='the percentage of top impactful pixels to show.')
+  probe_parser.add_cell_argument('data', required=True,
+                                 help='Prediction Data. Can be a csv line, or a dict.')
+  probe_parser.set_defaults(func=_probe)
 
   tensorboard_parser = parser.subcommand(
       'tensorboard',
@@ -763,10 +785,12 @@ def _train(args, cell):
       job_id = cloud_config.get('job_id', None)
       job = datalab_ml.Job.submit_training(job_request, job_id)
       _show_job_link(job)
-      datalab_ml.TensorBoard.start(args['output'])
+      if not args['notb']:
+        datalab_ml.TensorBoard.start(args['output'])
     else:
       cmd_args = ['python', '-m', 'trainer.task'] + job_args
-      datalab_ml.TensorBoard.start(args['output'])
+      if not args['notb']:
+        datalab_ml.TensorBoard.start(args['output'])
       _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=code_path)
   finally:
     if tmpdir:
@@ -873,6 +897,16 @@ def _explain(args, cell):
       fig = plt.figure()
       fig.suptitle(labels[i], fontsize=16)
       plt.imshow(mark_boundaries(image, mask))
+
+
+def _probe(args, cell):
+  explainer = _prediction_explainer.PredictionExplainer(args['model'])
+  ret = explainer.probe_image(args['label'], args['data'], column_name=args['column_name'],
+                              num_scaled_images=args['num_gradients'],
+                              top_percent=args['percent_show'])
+  raw_image, analysis_image = ret
+  IPython.display.display(raw_image)
+  IPython.display.display(analysis_image)
 
 
 def _tensorboard_start(args, cell):
