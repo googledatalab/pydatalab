@@ -95,7 +95,7 @@ def _get_load_parameters(bq_pipeline_input_config):
 
     table_exists = False
     if 'table' in bq_pipeline_input_config:
-      # The destination bigquery table name for loading
+      # The destination bigquery table name for loading.
       load_task_config['table'] = bq_pipeline_input_config['table']
       table_exists = True
 
