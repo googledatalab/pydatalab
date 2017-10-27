@@ -178,7 +178,7 @@ class TestCases(unittest.TestCase):
       mock_job.failed = False
       mock_job.errors = False
       mock_table_load.return_value = mock_job
-      self.assertDictEqual(load_operator.execute(context=None), {'result': 'test-result'})
+      load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=True)
@@ -186,23 +186,28 @@ class TestCases(unittest.TestCase):
       # Table does not exist
       mock_table_exists.return_value = False
       csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote': '"'}
+      schema = [
+        {"type": "INTEGER", "name": "key"},
+        {"type": "FLOAT", "name": "var1"},
+        {"type": "FLOAT", "name": "var2"}
+      ]
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
-                                   format=None, csv_options=csv_options,
-                                   schema=TestCases.test_schema, task_id='test_operator_id')
+                                   format=None, csv_options=csv_options, schema=schema,
+                                   task_id='test_operator_id')
       mock_job = mock.Mock()
       mock_job.result.return_value = 'test-result'
       mock_job.failed = False
       mock_job.errors = False
       mock_table_load.return_value = mock_job
-      self.assertDictEqual(load_operator.execute(context=None), {'result': 'test-result'})
+      load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=False)
-      mock_table_create.assert_called_with(schema=TestCases.test_schema)
+      mock_table_create.assert_called_with(schema=schema)
 
       # Table load fails
       load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
-                                   format=None, csv_options=None, schema=TestCases.test_schema,
+                                   format=None, csv_options=None, schema=schema,
                                    task_id='test_operator_id')
       mock_job = mock.Mock()
       mock_job.failed = True
