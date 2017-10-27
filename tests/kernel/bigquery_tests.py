@@ -765,7 +765,6 @@ WITH q1 AS (
     context = TestCases._create_context()
     mock_default_context.return_value = context
     mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
-    mock_blob_class.return_value  # noqa
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
     args = {'name': 'bq_pipeline_test'}

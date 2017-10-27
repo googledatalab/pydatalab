@@ -10,7 +10,6 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google
 import google.datalab.bigquery as bq
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
@@ -42,8 +41,7 @@ class LoadOperator(BaseOperator):
 
   def execute(self, context):
     if self._table:
-      pydatalab_context = google.datalab.Context.default()
-      table = bq.Table(self._table, context=pydatalab_context)
+      table = bq.Table(self._table, context=None)
 
     if self._mode == 'create':
       if table.exists():

@@ -121,6 +121,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     # https://stackoverflow.com/questions/46300173/import-apache-beam-metaclass-conflict
     'six==1.10.0',
     'urllib3==1.22',
+    'urllib3==1.22'
   ],
   package_data={
     'google.datalab.notebook': [
