@@ -22,97 +22,350 @@ import unittest
 
 class TestCases(unittest.TestCase):
 
+  test_input_config = {
+    'path': 'test_path',
+    'table': 'test_table',
+    'schema': 'test_schema',
+    'mode': 'append',
+    'format': 'csv',
+    'csv': {
+      'delimiter': ';',
+      'skip': 9,
+      'strict': False,
+      'quote': '"'
+    },
+  }
+
+  test_pipeline_config = {
+    'input': test_input_config,
+  }
+
   @staticmethod
   def _create_context():
     project_id = 'test'
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
-  def test_get_load_parameters(self):
-    input_config = {
-      'path': 'test_path',
-      'table': 'test_table',
-      'schema': 'test_schema',
-      'csv': {
-        'delimiter': ';',
-        'skip': 9
+  @mock.patch('google.datalab.utils.commands.get_notebook_item')
+  def test_get_pipeline_spec_from_config(self, mock_notebook_item):
+    mock_notebook_item.return_value = google.datalab.bigquery.Query('foo_query_sql_string')
+
+    # empty pipeline_spec
+    with self.assertRaisesRegexp(Exception, 'Pipeline has no tasks to execute.'):
+      bq._get_pipeline_spec_from_config({})
+
+    # empty input , transformation, output as path
+    pipeline_config = {
+      'transformation': {
+        'query': 'foo_query'
       },
-    }
-    actual_load_config = bq._get_load_parameters(input_config)
-    expected_load_config = {
-      'type': 'pydatalab.bq.load',
-      'format': 'csv',
-      'path': 'test_path',
-      'table': 'test_table',
-      'schema': 'test_schema',
-      'mode': 'create',
-      'csv_options': {
-        'delimiter': ';',
-        'skip': 9
+      'output': {
+        'path': 'foo_table'
       }
     }
-    self.assertDictEqual(actual_load_config, expected_load_config)
 
-    input_config = {
-      'path': 'test_path',
-      'table': 'test_table',
+    expected = {
+      'tasks': {
+        'bq_pipeline_execute_task': {
+          'sql': u'foo_query_sql_string',
+          'type': 'pydatalab.bq.execute'
+        },
+        'bq_pipeline_extract_task': {
+          'path': 'foo_table',
+          'type': 'pydatalab.bq.extract',
+          'up_stream': ['bq_pipeline_execute_task']
+        }
+      }
     }
-    actual_load_config = bq._get_load_parameters(input_config)
-    self.assertEqual(actual_load_config['mode'], 'append')
 
-    input_config = {
-      'table': 'test_table',
-      'schema': 'test_schema'
-    }
-    actual_load_config = bq._get_load_parameters(input_config)
-    self.assertIsNone(actual_load_config)
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
-    input_config = {
-      'schema': 'test_schema'
+    # input as path, transformation, output as path
+    pipeline_config = {
+      'input': {
+        'path': 'foo_path',
+        'data_source': 'foo_data_source',
+      },
+      'transformation': {
+        'query': 'foo_query'
+      },
+      'output': {
+        'path': 'foo_table'
+      }
     }
-    actual_load_config = bq._get_load_parameters(input_config)
-    self.assertIsNone(actual_load_config)
 
-    input_config = {
-      'path': 'test_path',
+    expected = {
+      'tasks': {
+        'bq_pipeline_execute_task': {
+          'sql': u'foo_query_sql_string',
+          'data_source': 'foo_data_source',
+          'path': 'foo_path',
+          'type': 'pydatalab.bq.execute'
+        },
+        'bq_pipeline_extract_task': {
+          'path': 'foo_table',
+          'type': 'pydatalab.bq.extract',
+          'up_stream': ['bq_pipeline_execute_task']
+        }
+      }
     }
-    actual_load_config = bq._get_load_parameters(input_config)
+
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+    # input as path->table, transformation, output as path
+    pipeline_config = {
+      'input': {
+        'path': 'foo_path',
+        'table': 'foo_table_1'
+      },
+      'transformation': {
+        'query': 'foo_query'
+      },
+      'output': {
+        'path': 'foo_path_2'
+      }
+    }
+
+    expected = {
+      'tasks': {
+        'bq_pipeline_load_task': {
+          'type': 'pydatalab.bq.load',
+          'path': 'foo_path',
+          'table': 'foo_table_1',
+        },
+        'bq_pipeline_execute_task': {
+          'sql': u'foo_query_sql_string',
+          'type': 'pydatalab.bq.execute',
+          'up_stream': ['bq_pipeline_load_task'],
+        },
+        'bq_pipeline_extract_task': {
+          'path': 'foo_path_2',
+          'type': 'pydatalab.bq.extract',
+          'up_stream': ['bq_pipeline_execute_task']
+        }
+      }
+    }
+
+    # input as table, transformation, output as path
+    pipeline_config = {
+      'input': {
+        'table': 'foo_table_1'
+      },
+      'transformation': {
+        'query': 'foo_query'
+      },
+      'output': {
+        'path': 'foo_path_2'
+      }
+    }
+
+    expected = {
+      'tasks': {
+        'bq_pipeline_execute_task': {
+          'sql': u'foo_query_sql_string',
+          'type': 'pydatalab.bq.execute',
+        },
+        'bq_pipeline_extract_task': {
+          'path': 'foo_path_2',
+          'type': 'pydatalab.bq.extract',
+          'up_stream': ['bq_pipeline_execute_task']
+        }
+      }
+    }
+
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+    # input as table, transformation, output as table
+    pipeline_config = {
+      'input': {
+        'table': 'foo_table_1'
+      },
+      'transformation': {
+        'query': 'foo_query'
+      },
+      'output': {
+        'table': 'foo_table_1'
+      }
+    }
+
+    expected = {
+      'tasks': {
+        'bq_pipeline_execute_task': {
+          'sql': u'foo_query_sql_string',
+          'type': 'pydatalab.bq.execute',
+          'table': 'foo_table_1'
+        },
+      }
+    }
+
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+    # input as table, no transformation, output as path
+    pipeline_config = {
+      'input': {
+        'table': 'foo_table'
+      },
+      'output': {
+        'path': 'foo_path'
+      }
+    }
+
+    expected = {
+      'tasks': {
+        'bq_pipeline_extract_task': {
+          'type': 'pydatalab.bq.extract',
+          'path': 'foo_path',
+          'table': 'foo_table'
+        },
+      }
+    }
+
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+    # output only; this should be identical to the above
+    pipeline_config = {
+      'output': {
+        'table': 'foo_table',
+        'path': 'foo_path'
+      }
+    }
+
+    expected = {
+      'tasks': {
+        'bq_pipeline_extract_task': {
+          'type': 'pydatalab.bq.extract',
+          'path': 'foo_path',
+          'table': 'foo_table'
+        },
+      }
+    }
+
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+    # input as path, no transformation, output as table
+    pipeline_config = {
+      'input': {
+        'path': 'foo_path'
+      },
+      'output': {
+        'table': 'foo_table'
+      }
+    }
+
+    expected = {
+      'tasks': {
+        'bq_pipeline_load_task': {
+          'type': 'pydatalab.bq.load',
+          'path': 'foo_path',
+          'table': 'foo_table'
+        },
+      }
+    }
+
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+    # input only; this should be identical to the above
+    pipeline_config = {
+      'input': {
+        'path': 'foo_path',
+        'table': 'foo_table'
+      },
+    }
+
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+    # only transformation
+    pipeline_config = {
+      'transformation': {
+        'query': 'foo_query'
+      },
+    }
+
+    expected = {
+      'tasks': {
+        'bq_pipeline_execute_task': {
+          'sql': u'foo_query_sql_string',
+          'type': 'pydatalab.bq.execute',
+        },
+      }
+    }
+
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+  def test_get_load_parameters(self):
+    actual_load_config = bq._get_load_parameters(TestCases.test_input_config, None, None)
     expected_load_config = {
       'type': 'pydatalab.bq.load',
+      'path': 'test_path',
+      'table': 'test_table',
+      'schema': 'test_schema',
+      'mode': 'append',
       'format': 'csv',
-      'csv_options': None,
-      'path': 'test_path',
+      'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
     }
     self.assertDictEqual(actual_load_config, expected_load_config)
 
+    # Table is present in output config
     input_config = {
       'path': 'test_path',
-      'format': 'json'
+      'format': 'csv',
+      'csv': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
     }
-    actual_load_config = bq._get_load_parameters(input_config)
-    expected_load_config = {
-      'type': 'pydatalab.bq.load',
-      'format': 'json',
-      'path': 'test_path',
-      'csv_options': None
+    output_config = {
+      'table': 'test_table',
+      'schema': 'test_schema',
+      'mode': 'append',
     }
+    actual_load_config = bq._get_load_parameters(input_config, None, output_config)
     self.assertDictEqual(actual_load_config, expected_load_config)
+
+    # Path is absent
+    input_config = {
+      'table': 'test_table',
+      'schema': 'test_schema'
+    }
+    actual_load_config = bq._get_load_parameters(input_config, None, None)
+    self.assertIsNone(actual_load_config)
+
+    # Path and table are absent
+    input_config = {
+      'schema': 'test_schema'
+    }
+    actual_load_config = bq._get_load_parameters(input_config, None, None)
+    self.assertIsNone(actual_load_config)
+
+    # Table is absent
+    input_config = {
+      'path': 'test_path',
+      'schema': 'test_schema'
+    }
+    actual_load_config = bq._get_load_parameters(input_config, None, None)
+    self.assertIsNone(actual_load_config)
 
   def test_get_extract_parameters(self):
-    input_config = {
+    output_config = {
       'path': 'test_path',
       'table': 'test_table',
     }
-    actual_extract_config = bq._get_extract_parameters('foo_execute_task', input_config)
+    actual_extract_config = bq._get_extract_parameters('foo_execute_task', None, None,
+                                                       output_config)
     expected_extract_config = {
       'type': 'pydatalab.bq.extract',
       'up_stream': ['foo_execute_task'],
-      'format': 'csv',
-      'csv_options': None,
       'path': 'test_path',
       'table': 'test_table',
     }
 
+    self.assertDictEqual(actual_extract_config, expected_extract_config)
+
+    input_config = {
+      'table': 'test_table',
+    }
+    output_config = {
+      'path': 'test_path',
+    }
+    actual_extract_config = bq._get_extract_parameters('foo_execute_task', input_config, None,
+                                                       output_config)
     self.assertDictEqual(actual_extract_config, expected_extract_config)
 
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
@@ -139,12 +392,12 @@ class TestCases(unittest.TestCase):
         'value': '1234'
       }
     ]
-    actual_execute_config = bq._get_execute_parameters('foo_load_task', transformation_config,
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        output_config, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'up_stream': ['foo_load_task'],
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'table': 'foo_table',
       'mode': 'foo_mode',
       'parameters': parameters_config
@@ -152,14 +405,32 @@ class TestCases(unittest.TestCase):
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
     # With empty output config
-    actual_execute_config = bq._get_execute_parameters('foo_load_task', transformation_config,
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        {}, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'up_stream': ['foo_load_task'],
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
       'parameters': parameters_config
     }
+
+    input_config = TestCases.test_input_config
+    input_config['data_source'] = 'foo_data_source'
+    self.assertDictEqual(actual_execute_config, expected_execute_config)
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', TestCases.test_input_config,
+                                                       transformation_config, {}, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'up_stream': ['foo_load_task'],
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'data_source': 'foo_data_source',
+      'path': 'test_path',
+      'schema': 'test_schema',
+      'source_format': 'csv',
+      'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
+      'parameters': parameters_config
+    }
+
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
   @mock.patch('google.datalab.Context.default')
@@ -263,8 +534,8 @@ default_args = {
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
 bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql='SELECT @column FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}` where endpoint=@endpoint', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', csv_options=None, format='csv', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), format='csv', mode='create', path='gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}', schema=(.*), table='cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}', dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path='gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}', schema=(.*), table='cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}', dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
