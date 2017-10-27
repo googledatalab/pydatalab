@@ -120,6 +120,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     # six needs to be pinned to 1.10.0 to work-around an apache_beam bug:
     # https://stackoverflow.com/questions/46300173/import-apache-beam-metaclass-conflict
     'six==1.10.0',
+    'urllib3==1.22'
   ],
   package_data={
     'google.datalab.notebook': [
