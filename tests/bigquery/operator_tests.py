@@ -147,7 +147,7 @@ class TestCases(unittest.TestCase):
       mock_job.failed = False
       mock_job.errors = False
       mock_table_load.return_value = mock_job
-      self.assertDictEqual(load_operator.execute(context=None), {'result': 'test-result'})
+      load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=True)
@@ -168,7 +168,7 @@ class TestCases(unittest.TestCase):
       mock_job.failed = False
       mock_job.errors = False
       mock_table_load.return_value = mock_job
-      self.assertDictEqual(load_operator.execute(context=None), {'result': 'test-result'})
+      load_operator.execute(context=None)
       mock_table_load.assert_called_with('test/path', mode='append',
                                          source_format='NEWLINE_DELIMITED_JSON',
                                          csv_options=mock.ANY, ignore_unknown_values=False)
