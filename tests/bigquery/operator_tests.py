@@ -60,7 +60,7 @@ class TestCases(unittest.TestCase):
     mock_table_extract.return_value.result = lambda: 'test-results'
     mock_table_extract.return_value.failed = False
     mock_table_extract.return_value.errors = None
-    self.assertDictEqual(extract_operator.execute(context=None), {'result': 'test-results'})
+    extract_operator.execute(context=None)
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
 
@@ -91,8 +91,7 @@ class TestCases(unittest.TestCase):
     mock_table_extract.return_value.result = lambda: 'test-results'
     mock_table_extract.return_value.failed = False
     mock_table_extract.return_value.errors = None
-    self.assertDictEqual(extract_operator.execute(context={'task_instance': mock_task_instance}),
-                         {'result': 'test-results'})
+    extract_operator.execute(context={'task_instance': mock_task_instance})
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
                                           csv_delimiter=None, csv_header=None, compress=None)
 
@@ -175,27 +174,6 @@ class TestCases(unittest.TestCase):
       job._errors = 'error'
       with self.assertRaisesRegexp(Exception, 'Load completed with errors: error'):
         load_operator.execute(context=None)
-
-      job._errors = None
-      query_results_table = load_operator.execute(context=None)['result'].name
-      self.assertEqual(query_results_table.project_id, 'project')
-      self.assertEqual(query_results_table.dataset_id, 'test')
-      self.assertEqual(query_results_table.table_id, 'table')
-      mock_table_load.assert_called_with('test/path', mode='create',
-                                         source_format='NEWLINE_DELIMITED_JSON',
-                                         csv_options=mock.ANY, ignore_unknown_values=True)
-
-      mock_table_exists.return_value = True
-      load_operator = LoadOperator(table=TestCases.test_table_name, path='test/path', mode='append',
-                                   format='csv', csv_options=None, schema=schema,
-                                   task_id='test_operator_id')
-      query_results_table = load_operator.execute(context=None)['result'].name
-      self.assertEqual(query_results_table.project_id, 'project')
-      self.assertEqual(query_results_table.dataset_id, 'test')
-      self.assertEqual(query_results_table.table_id, 'table')
-      mock_table_load.assert_called_with('test/path', mode='append',
-                                         source_format='csv', csv_options=mock.ANY,
-                                         ignore_unknown_values=True)
 
   def test_defaults_execute_operator(self):
     execute_operator = ExecuteOperator(task_id='foo_task_id', sql='foo_sql')
