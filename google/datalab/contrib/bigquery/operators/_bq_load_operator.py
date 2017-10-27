@@ -39,28 +39,28 @@ class LoadOperator(BaseOperator):
     self._csv_options = csv_options or {}
     self._schema = schema
 
+  # TODO(rajipb): In schema validation, make sure that mode is either 'append' or 'create'
   def execute(self, context):
-    if self._table:
-      table = bq.Table(self._table, context=None)
-
-    if self._mode == 'create':
-      if table.exists():
-        raise Exception(
-          "%s already exists; mode should be \'append\' or \'overwrite\'" % self._table)
-      if not self._schema:
-        raise Exception(
-          '%s does not exist, and no schema specified in cell; cannot load.' % self._table)
+    table = bq.Table(self._table, context=None)
+    if not table.exists():
       table.create(schema=self._schema)
-    elif not table.exists():
-      raise Exception('%s does not exist; mode should be \'create\'' % self._table)
 
-    csv_options = bq.CSVOptions(
-      delimiter=self._csv_options.get('delimiter'), skip_leading_rows=self._csv_options.get('skip'),
-      allow_jagged_rows=self._csv_options.get('strict'), quote=self._csv_options.get('quote'))
+    kwargs = {}
+    if 'delimiter' in self._csv_options:
+      kwargs['delimiter'] = self._csv_options['delimiter']
+    if 'skip' in self._csv_options:
+      kwargs['skip_leading_rows'] = self._csv_options['skip']
+    if 'strict' in self._csv_options:
+      kwargs['allow_jagged_rows'] = self._csv_options['strict']
+    if 'quote' in self._csv_options:
+      kwargs['quote'] = self._csv_options['quote']
+    csv_options = bq.CSVOptions(**kwargs)
+
     job = table.load(self._path, mode=self._mode,
                      source_format=('csv' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON'),
                      csv_options=csv_options,
                      ignore_unknown_values=not self._csv_options.get('strict'))
+
     if job.failed:
       raise Exception('Load failed: %s' % str(job.fatal_error))
     elif job.errors:
