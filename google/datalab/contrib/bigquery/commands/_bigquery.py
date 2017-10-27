@@ -89,14 +89,14 @@ def _get_load_parameters(bq_pipeline_input_config):
     load_task_config = {'type': 'pydatalab.bq.load'}
 
     # The path URL of the GCS load file(s).
+    if not bq_pipeline_input_config.get('path'):
+      return None
     load_task_config['path'] = bq_pipeline_input_config.get('path')
 
     # The destination bigquery table name for loading
-    load_task_config['table'] = bq_pipeline_input_config.get('table')
-
-    # If a table or path are absent, there is no load to be done so we return None
-    if load_task_config['table'] is None or load_task_config['path'] is None:
+    if not bq_pipeline_input_config.get('table'):
       return None
+    load_task_config['table'] = bq_pipeline_input_config.get('table')
 
     # The schema of the destination bigquery table
     if 'schema' in bq_pipeline_input_config:
