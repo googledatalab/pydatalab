@@ -114,8 +114,8 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
     source_of_table = bq_pipeline_input_config
     load_task_config['table'] = source_of_table.get('table')
     if load_task_config['table'] is None and not bq_pipeline_transformation_config and \
-            bq_pipeline_output_config  and 'table' in bq_pipeline_output_config and \
-                    'path' not in bq_pipeline_output_config:
+            bq_pipeline_output_config and 'table' in bq_pipeline_output_config and \
+            'path' not in bq_pipeline_output_config:
       # If we're here it means that there was no transformation config, but there was an output
       # config with only a table (and no path). We assume that the user was just trying to do a
       # gcs->table (or load) step, so we take that as the input table (and emit a load
