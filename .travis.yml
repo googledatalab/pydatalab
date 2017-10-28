@@ -1,32 +1,25 @@
-sudo: required
-
-dist: trusty
-
 language: python
+dist: trusty
+sudo: false
 
-python:
-  - 2.7
-  - 3.5
+matrix:
+  include:
+  - python: 2.7
+    env: TOX_ENV=py27
+  - python: 3.5
+    env: TOX_ENV=py35
+  - python: 2.7
+    env: TOX_ENV=flake8
+  - python: 2.7
+    env: TOX_ENV=coveralls
 
 before_install:
-  - sudo apt-get install -y python-setuptools
   - npm install -g typescript
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
-  - pip install -U pip
-  - pip install -U setuptools
-  - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install -U google-cloud-dataflow==0.5.5; fi
-  - pip install .
-  - pip install solutionbox/structured_data/
-  - pip install solutionbox/image_classification/  
-  - pip install -U tensorflow==1.0.0
-  - pip install -U protobuf==3.1.0  #v3.2.0 has the "python: double free or corruption" bug.
-  - pip install flake8
-
-before_script:
-  - flake8 .
-
+  # We use tox for actually running tests.
+  - pip install --upgrade pip tox
+  
 script:
-  - python ./tests/main.py
-  - python ./legacy_tests/main.py
-
+  # tox reads its configuration from tox.ini.
+  - tox -e $TOX_ENV
 

@@ -65,7 +65,7 @@ class Query(object):
           if value is None:
             raise Exception('Cannot find object %s' % item)
 
-        # for a dictionary of objects, each pair must be a string an object of the expected type
+        # for a dictionary of objects, each pair must be a string and object of the expected type
         elif isinstance(obj_container, dict):
           value = obj_container[item]
           if not isinstance(value, obj_type):
@@ -142,12 +142,13 @@ class Query(object):
           _recurse_subqueries(subquery[1])
         subqueries.extend([s for s in query._subqueries if s not in subqueries])
       if query._udfs:
-        udfs.extend([u for u in query._udfs if u not in udfs])
+        # query._udfs is a list of (name, UDF) tuples; we just want the UDF.
+        udfs.extend([u[1] for u in query._udfs if u[1] not in udfs])
 
     _recurse_subqueries(self)
 
     if udfs:
-      expanded_sql += '\n'.join([udfs[udf]._expanded_sql() for udf in udfs])
+      expanded_sql += '\n'.join([udf._expanded_sql() for udf in udfs])
       expanded_sql += '\n'
 
     def _indent_query(subquery):

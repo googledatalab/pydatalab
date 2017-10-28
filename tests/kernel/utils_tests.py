@@ -16,13 +16,14 @@ from builtins import range
 import datetime as dt
 import collections
 import mock
-from oauth2client.client import AccessTokenCredentials
 import pandas
 import unittest
 
 # import Python so we can mock the parts we need to here.
 import IPython
 import IPython.core.magic
+
+import google.auth
 
 
 IPython.core.magic.register_line_cell_magic = mock.Mock()
@@ -33,7 +34,7 @@ IPython.get_ipython = mock.Mock()
 
 import google.datalab  # noqa
 import google.datalab.bigquery  # noqa
-import google.datalab.utils.commands  # noqa
+import google.datalab.utils.commands._utils as _utils # noqa
 
 
 class TestCases(unittest.TestCase):
@@ -133,10 +134,10 @@ class TestCases(unittest.TestCase):
   def test_get_data_from_list_of_dicts(self):
     self._test_get_data(TestCases._get_test_data_as_list_of_dicts(), TestCases._get_expected_cols(),
                         TestCases._get_expected_rows(), 6,
-                        google.datalab.utils.commands._utils._get_data_from_list_of_dicts)
+                        _utils._get_data_from_list_of_dicts)
     self._test_get_data(TestCases._get_test_data_as_list_of_dicts(), TestCases._get_expected_cols(),
                         TestCases._get_expected_rows(), 6,
-                        google.datalab.utils.commands._utils.get_data)
+                        _utils.get_data)
 
   def test_get_data_from_list_of_lists(self):
     test_data = [
@@ -149,16 +150,16 @@ class TestCases(unittest.TestCase):
     ]
 
     self._test_get_data(test_data, TestCases._get_expected_cols(), TestCases._get_expected_rows(),
-                        6, google.datalab.utils.commands._utils._get_data_from_list_of_lists)
+                        6, _utils._get_data_from_list_of_lists)
     self._test_get_data(test_data, TestCases._get_expected_cols(), TestCases._get_expected_rows(),
-                        6, google.datalab.utils.commands._utils.get_data)
+                        6, _utils.get_data)
 
   def test_get_data_from_dataframe(self):
     df = pandas.DataFrame(self._get_test_data_as_list_of_dicts())
     self._test_get_data(df, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-                        google.datalab.utils.commands._utils._get_data_from_dataframe)
+                        _utils._get_data_from_dataframe)
     self._test_get_data(df, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-                        google.datalab.utils.commands._utils.get_data)
+                        _utils.get_data)
 
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
   @mock.patch('google.datalab.bigquery._table.Table.exists')
@@ -194,16 +195,16 @@ class TestCases(unittest.TestCase):
     mock_api_tabledata_list.side_effect = tabledata_list
     t = google.datalab.bigquery.Table('foo.bar')
     self._test_get_data(t, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-                        google.datalab.utils.commands._utils._get_data_from_table)
+                        _utils._get_data_from_table)
     self._test_get_data(t, TestCases._get_expected_cols(), TestCases._get_expected_rows(), 6,
-                        google.datalab.utils.commands._utils.get_data)
+                        _utils.get_data)
 
   def test_get_data_from_empty_list(self):
-    self._test_get_data([], [], [], 0, google.datalab.utils.commands._utils.get_data)
+    self._test_get_data([], [], [], 0, _utils.get_data)
 
   def test_get_data_from_malformed_list(self):
     with self.assertRaises(Exception) as error:
-      self._test_get_data(['foo', 'bar'], [], [], 0, google.datalab.utils.commands._utils.get_data)
+      self._test_get_data(['foo', 'bar'], [], [], 0, _utils.get_data)
     self.assertEquals('To get tabular data from a list it must contain dictionaries or lists.',
                       str(error.exception))
 
@@ -256,6 +257,172 @@ class TestCases(unittest.TestCase):
                      fields=['Column1', 'Column2', 'Column3', 'Column4', 'Column5', 'Column6'])
     self.assertEquals({'cols': cols, 'rows': rows}, data)
 
+  def test_expand_var(self):
+    env = {'var': 'test-var-value'}
+    resolved = _utils.expand_var('$var', env)
+    self.assertEqual(resolved, env['var'])
+
+    resolved = _utils.expand_var('', env)
+    self.assertEqual(resolved, '')
+
+    with self.assertRaisesRegexp(Exception, 'Cannot expand variable'):
+      _utils.expand_var('$badname', env)
+
+  def test_replace_vars(self):
+    config = {'var': '$value'}
+    env = {'value': 5}
+    _utils.replace_vars(config, env)
+    self.assertEqual(config, {'var': 5})
+
+    config = ['$value']
+    _utils.replace_vars(config, env)
+    self.assertEqual(config, [5])
+
+    config = ({'var1': '$value1'}, ['$value2'])
+    env = {'value1': 5, 'value2': 'stringvalue'}
+    _utils.replace_vars(config, env)
+    self.assertEqual(config, ({'var1': 5}, ['stringvalue']))
+
+  def test_validate_config(self):
+    with self.assertRaisesRegexp(Exception, 'config is not dict type'):
+      _utils.validate_config([], [])
+
+    config = {'key1': 'value1', 'key2': 'value2', 'key3': 'value3'}
+    _utils.validate_config(config, ['key1', 'key2'], ['key3'])
+    _utils.validate_config(config, [], ['key1', 'key2', 'key3'])
+    _utils.validate_config(config, ['key1', 'key2', 'key3'])
+
+    with self.assertRaisesRegexp(Exception, 'Invalid config with unexpected keys'):
+      _utils.validate_config(config, ['key1', 'key2'])
+
+    with self.assertRaisesRegexp(Exception, 'Invalid config with missing keys'):
+      _utils.validate_config(config, ['key1', 'key2', 'key3', 'key4'])
+
+  def test_validate_config_must_have(self):
+    config = {'key1': 'value1', 'key2': 'value2', 'key3': 'value3'}
+
+    _utils.validate_config_must_have(config, ['key1', 'key2'])
+
+    with self.assertRaisesRegexp(Exception, 'Invalid config with missing keys'):
+      _utils.validate_config_must_have(config, ['key1', 'key4'])
+
+  def test_validate_config_has_one_of(self):
+    config = {'key1': 'value1', 'key2': 'value2', 'key3': 'value3'}
+
+    _utils.validate_config_has_one_of(config, ['key1'])
+
+    with self.assertRaisesRegexp(Exception, 'Only one of the values'):
+      _utils.validate_config_has_one_of(config, ['key1', 'key2', 'key3'])
+
+    with self.assertRaisesRegexp(Exception, 'One of the values in'):
+      _utils.validate_config_has_one_of(config, ['key4', 'key5'])
+
+  def test_validate_config_value(self):
+    _utils.validate_config_value('val', ['val', 'val1', 'val2'])
+
+    with self.assertRaisesRegexp(Exception, 'Invalid config value'):
+      _utils.validate_config_value('val', ['val0', 'val1', 'val2'])
+
+  def test_validate_gcs_path(self):
+    _utils.validate_gcs_path('gs://testbucket/path/to/object', False)
+
+    with self.assertRaisesRegexp(Exception, 'Invalid GCS path'):
+      _utils.validate_gcs_path('path/to/object', False)
+
+    _utils.validate_gcs_path('gs://path', False)
+
+    with self.assertRaisesRegexp(Exception, 'It appears the GCS path "gs://path" is a bucket'):
+      _utils.validate_gcs_path('gs://path', True)
+
+  def test_parse_control_options_badtype(self):
+    control = {'label': None, 'type': 'badtype'}
+    with self.assertRaisesRegexp(Exception, 'Unknown control type badtype'):
+      _utils.parse_control_options({'test-control': control})
+
+  def test_parse_control_options_set(self):
+    control = {'label': None, 'choices': ['v1', 'v2'], 'min': 0, 'max': 10, 'step': 2}
+    defaults = {'test-control': ['value1', 'value2']}
+
+    control_html = _utils.parse_control_options({'test-control': control}, defaults)
+    self.assertIn('class="gchart-control"', control_html[0])
+    self.assertIn('<input type="checkbox"', control_html[0])
+    self.assertIn('value="v1"', control_html[0])
+    self.assertIn('value="v2"', control_html[0])
+    self.assertEqual(control_html[1], {'test-control': ['value1', 'value2']})
+
+    control['choices'] = []
+    with self.assertRaisesRegexp(Exception, 'set control must specify a nonempty set'):
+      _utils.parse_control_options({'test-control': control}, defaults)
+
+    # make sure value is picked from set of choices if not specified in any way
+    control['type'] = 'set'
+    control['choices'] = ['v1', 'v2']
+    _utils.parse_control_options({'test-control': control})
+
+  def test_parse_control_options_picker(self):
+    control = {'label': None, 'type': 'picker', 'choices': ['v1', 'v2'],
+               'min': 0, 'max': 10, 'step': 2}
+    defaults = {'test-control': ['value1', 'value2']}
+
+    control_html = _utils.parse_control_options({'test-control': control}, defaults)
+    self.assertIn('class="gchart-control"', control_html[0])
+    self.assertIn('<select', control_html[0])
+    self.assertIn('<option value="v1"', control_html[0])
+    self.assertIn('<option value="v2"', control_html[0])
+    self.assertEqual(control_html[1], {'test-control': ['value1', 'value2']})
+
+    control['choices'] = []
+    with self.assertRaisesRegexp(Exception, 'picker control must specify a nonempty set'):
+      _utils.parse_control_options({'test-control': control}, defaults)
+
+    # make sure value is picked from set of choices if not specified in any way
+    control['type'] = 'picker'
+    control['choices'] = ['v1', 'v2']
+    _utils.parse_control_options({'test-control': control})
+
+  def test_parse_control_options_textbox(self):
+    control = {'label': None, 'value': 'test-value', 'type': 'textbox',
+               'choices': None, 'min': 0, 'max': 10, 'step': 2}
+    defaults = {'test-control': None}
+
+    control_html = _utils.parse_control_options({'test-control': control}, defaults)
+    self.assertIn('class="gchart-control"', control_html[0])
+    self.assertIn('<input type="text"', control_html[0])
+    self.assertIn('value="test-value"', control_html[0])
+    self.assertEqual(control_html[1], {'test-control': 'test-value'})
+
+    control['value'] = None
+    control_html = _utils.parse_control_options({'test-control': control})
+    self.assertIn('value=""', control_html[0])
+
+  def test_parse_control_options_slider(self):
+    control = {'label': None, 'value': 5, 'type': 'slider',
+               'choices': None, 'min': 0, 'max': 10, 'step': 2}
+    control_html = _utils.parse_control_options({'test-control': control})
+    self.assertIn('class="gchart-slider_value"', control_html[0])
+    self.assertIn('<input type="range"', control_html[0])
+    self.assertIn('value="5"', control_html[0])
+    self.assertIn('min="0" max="10" step="2"', control_html[0])
+    self.assertEqual(control_html[1], {'test-control': 5})
+
+    control['min'] = None
+    with self.assertRaisesRegexp(Exception, 'slider control must specify a min and max'):
+      _utils.parse_control_options({'test-control': control})
+
+    control['min'] = 20
+    with self.assertRaisesRegexp(Exception,
+                                 'slider control must specify a min value less than max value'):
+      _utils.parse_control_options({'test-control': control})
+
+    control['min'] = 7
+    control['value'] = None
+    control_html = _utils.parse_control_options({'test-control': control})
+    self.assertIn('value="7"', control_html[0])
+
+  def test_parse_control_options_checkbox(self):
+    control_html = _utils.parse_control_options({'test-control': {'type': 'checkbox'}})
+    self.assertIn('<input type="checkbox"', control_html[0])
+
   @staticmethod
   def _create_api():
     context = TestCases._create_context()
@@ -264,5 +431,5 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)

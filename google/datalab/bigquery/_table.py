@@ -103,8 +103,11 @@ class Table(object):
   # Allowed characters in a BigQuery table column name
   _VALID_COLUMN_NAME_CHARACTERS = '_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
-  # When fetching table contents, the max number of rows to fetch per HTTP request
+  # When fetching table contents for a range or iteration, use a small page size per request
   _DEFAULT_PAGE_SIZE = 1024
+  # When fetching the entire table, use the maximum number of rows. The BigQuery service
+  # will always return fewer rows than this if their encoded JSON size is larger than 10MB
+  _MAX_PAGE_SIZE = 100000
 
   # Milliseconds per week
   _MSEC_PER_WEEK = 7 * 24 * 3600 * 1000
@@ -114,7 +117,7 @@ class Table(object):
 
     Args:
       name: the name of the table either as a string or a 3-part tuple (projectid, datasetid, name).
-        If a string, it must have the form '<project>:<dataset>.<table>' or '<dataset>.<table>'.
+        If a string, it must have the form '<project>.<dataset>.<table>' or '<dataset>.<table>'.
       context: an optional Context object providing project_id and credentials. If a specific
         project id or credentials are unspecified, the default ones configured at the global
         level are used.
@@ -385,7 +388,7 @@ class Table(object):
       job = _job.Job(job_id=response['jobReference']['jobId'], context=self._context)
     return job
 
-  def extract_async(self, destination, format='csv', csv_delimiter=',', csv_header=True,
+  def extract_async(self, destination, format='csv', csv_delimiter=None, csv_header=True,
                     compress=False):
     """Starts a job to export the table to GCS.
 
@@ -403,15 +406,17 @@ class Table(object):
     format = format.upper()
     if format == 'JSON':
       format = 'NEWLINE_DELIMITED_JSON'
+    if format == 'CSV' and csv_delimiter is None:
+      csv_delimiter = ','
     try:
       response = self._api.table_extract(self._name_parts, destination, format, compress,
                                          csv_delimiter, csv_header)
       return self._init_job_from_response(response)
     except Exception as e:
-      raise google.datalab.utils.JobError(location=traceback.format_exc(), message=str(e),
-                                          reason=str(type(e)))
+      raise google.datalab.JobError(location=traceback.format_exc(), message=str(e),
+                                    reason=str(type(e)))
 
-  def extract(self, destination, format='csv', csv_delimiter=',', csv_header=True, compress=False):
+  def extract(self, destination, format='csv', csv_delimiter=None, csv_header=True, compress=False):
     """Exports the table to GCS; blocks until complete.
 
     Args:
@@ -595,20 +600,26 @@ class Table(object):
     Returns:
       A Pandas dataframe containing the table data.
     """
-    fetcher = self._get_row_fetcher(start_row=start_row, max_rows=max_rows)
+    fetcher = self._get_row_fetcher(start_row=start_row,
+                                    max_rows=max_rows,
+                                    page_size=self._MAX_PAGE_SIZE)
     count = 0
     page_token = None
+
+    # Collect results of page fetcher in separate dataframe objects, then
+    # concatenate them to reduce the amount of copying
+    df_list = []
     df = None
+
     while True:
       page_rows, page_token = fetcher(page_token, count)
       if len(page_rows):
         count += len(page_rows)
-        if df is None:
-          df = pandas.DataFrame.from_records(page_rows)
-        else:
-          df = df.append(page_rows, ignore_index=True)
+        df_list.append(pandas.DataFrame.from_records(page_rows))
       if not page_token:
         break
+    if df_list:
+      df = pandas.concat(df_list, ignore_index=True, copy=False)
 
     # Need to reorder the dataframe to preserve column ordering
     ordered_fields = [field.name for field in self.schema]

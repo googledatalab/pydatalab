@@ -12,6 +12,7 @@
 
 
 import numpy as np
+import itertools
 import json
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -111,15 +112,48 @@ class ConfusionMatrix(object):
       cm[row['target']][row['predicted']] = row['count']
     return ConfusionMatrix(cm, labels)
 
-  def plot(self):
-    """Plot the confusion matrix."""
+  def to_dataframe(self):
+    """Convert the confusion matrix to a dataframe.
 
-    plt.imshow(self._cm, interpolation='nearest', cmap=plt.cm.Blues)
+    Returns:
+      A DataFrame with "target", "predicted", "count" columns.
+    """
+
+    data = []
+    for target_index, target_row in enumerate(self._cm):
+      for predicted_index, count in enumerate(target_row):
+        data.append((self._labels[target_index], self._labels[predicted_index], count))
+
+    return pd.DataFrame(data, columns=['target', 'predicted', 'count'])
+
+  def plot(self, figsize=None, rotation=45):
+    """Plot the confusion matrix.
+
+    Args:
+      figsize: tuple (x, y) of ints. Sets the size of the figure
+      rotation: the rotation angle of the labels on the x-axis.
+    """
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    plt.imshow(self._cm, interpolation='nearest', cmap=plt.cm.Blues, aspect='auto')
     plt.title('Confusion matrix')
     plt.colorbar()
     tick_marks = np.arange(len(self._labels))
-    plt.xticks(tick_marks, self._labels, rotation=45)
+    plt.xticks(tick_marks, self._labels, rotation=rotation)
     plt.yticks(tick_marks, self._labels)
+    if isinstance(self._cm, list):
+      # If cm is created from BigQuery then it is a list.
+      thresh = max(max(self._cm)) / 2.
+      for i, j in itertools.product(range(len(self._labels)), range(len(self._labels))):
+        plt.text(j, i, self._cm[i][j], horizontalalignment="center",
+                 color="white" if self._cm[i][j] > thresh else "black")
+    else:
+      # If cm is created from csv then it is a sklearn's confusion_matrix.
+      thresh = self._cm.max() / 2.
+      for i, j in itertools.product(range(len(self._labels)), range(len(self._labels))):
+        plt.text(j, i, self._cm[i, j], horizontalalignment="center",
+                 color="white" if self._cm[i, j] > thresh else "black")
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')

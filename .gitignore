@@ -2,9 +2,17 @@
 *.pyi
 *.map
 *.egg-info
+*.iml
 .idea
+.DS_Store
 MANIFEST
 build
 .coverage
 dist
 datalab.magics.rst
+datalab/notebook/static/*.js
+google/datalab/notebook/static/*.js
+
+# Test files
+.tox/
+.cache/

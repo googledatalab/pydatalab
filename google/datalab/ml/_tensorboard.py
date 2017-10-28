@@ -17,6 +17,7 @@ except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
 import argparse
+import os
 import pandas as pd
 import psutil
 import subprocess
@@ -26,19 +27,18 @@ import google.datalab as datalab
 
 
 class TensorBoard(object):
-  """Start, shutdown, and list TensorBoard instances.
-  """
+  """Start, shutdown, and list TensorBoard instances."""
 
   @staticmethod
   def list():
-    """List running TensorBoard instances.
-    """
+    """List running TensorBoard instances."""
+
     running_list = []
     parser = argparse.ArgumentParser()
     parser.add_argument('--logdir')
     parser.add_argument('--port')
     for p in psutil.process_iter():
-      if p.name() != 'tensorboard':
+      if p.name() != 'tensorboard' or p.status() == psutil.STATUS_ZOMBIE:
         continue
       cmd_args = p.cmdline()
       del cmd_args[0:2]  # remove 'python' and 'tensorboard'
@@ -64,10 +64,11 @@ class TensorBoard(object):
     port = datalab.utils.pick_unused_port()
     args = ['tensorboard', '--logdir=' + logdir, '--port=' + str(port)]
     p = subprocess.Popen(args)
-    retry = 5
+    retry = 10
     while (retry > 0):
       if datalab.utils.is_http_running_on(port):
-        url = '/_proxy/%d/' % port
+        basepath = os.environ.get('DATALAB_ENDPOINT_URL', '')
+        url = '%s/_proxy/%d/' % (basepath.rstrip('/'), port)
         html = '<p>TensorBoard was started successfully with pid %d. ' % p.pid
         html += 'Click <a href="%s" target="_blank">here</a> to access it.</p>' % url
         IPython.display.display_html(html, raw=True)
@@ -88,6 +89,5 @@ class TensorBoard(object):
       try:
         p = psutil.Process(pid)
         p.kill()
-        p.wait()
       except Exception:
         pass

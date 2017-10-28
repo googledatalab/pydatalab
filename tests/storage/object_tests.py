@@ -13,9 +13,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import mock
-from oauth2client.client import AccessTokenCredentials
 import unittest
 
+import google.auth
 import google.datalab
 import google.datalab.storage
 import google.datalab.utils
@@ -79,6 +79,39 @@ class TestCases(unittest.TestCase):
     self.assertEqual(objects[0].key, 'test_object1')
     self.assertEqual(objects[1].key, 'test_object2')
 
+  @mock.patch('google.datalab.storage._api.Api.objects_list')
+  def test_object_delete_with_wait(self, mock_objects_list):
+    stable_object_name = 'testobject'
+    object_to_delete = 'temporaryobject'
+    mock_objects_list.side_effect = [
+        {'items': [{'name': stable_object_name}], 'nextPageToken': 'yes'},
+        {'items': [{'name': object_to_delete}]},
+        {'items': [{'name': stable_object_name}]},
+    ]
+
+    b = TestCases._create_bucket()
+    o = b.object(object_to_delete)
+    o._info = {'name': object_to_delete}
+
+    with mock.patch.object(google.datalab.storage._api.Api, 'objects_delete',
+                           autospec=True) as mock_objects_delete:
+      o.delete(wait_for_deletion=False)
+    self.assertEqual(1, mock_objects_delete.call_count)
+    # storage.objects.list shouldn't have been called with
+    # wait_for_deletion=False.
+    self.assertEqual(0, mock_objects_list.call_count)
+
+    with mock.patch.object(google.datalab.storage._api.Api, 'objects_delete',
+                           autospec=True) as mock_objects_delete:
+      o.delete()
+    self.assertEqual(1, mock_objects_delete.call_count)
+    # storage.objects.list should have been called three times with
+    # wait_for_deletion=True:
+    #  * twice on the first run, paging through all results, with the object
+    #    still present in the bucket, and
+    #  * once on a second run, now with no object present in the list.
+    self.assertEqual(3, mock_objects_list.call_count)
+
   @staticmethod
   def _create_bucket(name='test_bucket'):
     return google.datalab.storage.Bucket(name, context=TestCases._create_context())
@@ -86,7 +119,7 @@ class TestCases(unittest.TestCase):
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
   @staticmethod

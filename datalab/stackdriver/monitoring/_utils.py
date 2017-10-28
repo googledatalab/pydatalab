@@ -26,5 +26,5 @@ def make_client(project_id=None, context=None):
       project=project_id,
       credentials=context.credentials,
   )
-  client._connection_class.USER_AGENT = 'pydatalab/v0'
+  client._connection.USER_AGENT = 'pydatalab/v0'
   return client

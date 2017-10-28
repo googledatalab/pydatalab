@@ -39,6 +39,7 @@ import six
 import subprocess
 import pandas as pd
 from tensorflow.python.lib.io import file_io
+import warnings
 
 # Note that subpackages of _structured_data are locally imported.
 # This is because this part of the mltoolbox is packaged up during training
@@ -50,7 +51,7 @@ from tensorflow.python.lib.io import file_io
 # dataflow workers should not need it.
 
 
-_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinux1_x86_64.whl'
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.2.0-cp27-none-linux_x86_64.whl'
 _PROTOBUF_GS_URL = 'gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl'
 
 
@@ -161,8 +162,10 @@ def analyze_async(output_dir, dataset, cloud=False, project_id=None):
     A google.datalab.utils.Job object that can be used to query state from or wait.
   """
   import google.datalab.utils as du
-  fn = lambda: _analyze(output_dir, dataset, cloud, project_id)  # noqa
-  return du.LambdaJob(fn, job_id=None)
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    fn = lambda: _analyze(output_dir, dataset, cloud, project_id)  # noqa
+    return du.LambdaJob(fn, job_id=None)
 
 
 def _analyze(output_dir, dataset, cloud=False, project_id=None):
@@ -189,14 +192,17 @@ def _analyze(output_dir, dataset, cloud=False, project_id=None):
                                            prefix='schema')
     file_io.write_string_to_file(schema_file_path, json.dumps(dataset.schema))
 
+    # TODO(brandondutra) use project_id in the local preprocess function.
     args = ['preprocess',
             '--input-file-pattern=%s' % dataset.input_files[0],
             '--output-dir=%s' % output_dir,
             '--schema-file=%s' % schema_file_path]
 
     if cloud:
+      if not project_id:
+        project_id = _default_project()
       print('Track BigQuery status at')
-      print('https://bigquery.cloud.google.com/queries/%s' % _default_project())
+      print('https://bigquery.cloud.google.com/queries/%s' % project_id)
       preprocess.cloud_preprocess.main(args)
     else:
       preprocess.local_preprocess.main(args)
@@ -310,30 +316,10 @@ def train_async(train_dataset,
                         'dnn_regression']:
     raise ValueError('Unknown model_type %s' % model_type)
 
-  if cloud:
-    return cloud_train(
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        analysis_dir=analysis_dir,
-        output_dir=output_dir,
-        features=features,
-        model_type=model_type,
-        max_steps=max_steps,
-        num_epochs=num_epochs,
-        train_batch_size=train_batch_size,
-        eval_batch_size=eval_batch_size,
-        min_eval_frequency=min_eval_frequency,
-        top_n=top_n,
-        layer_sizes=layer_sizes,
-        learning_rate=learning_rate,
-        epsilon=epsilon,
-        job_name=job_name,
-        job_name_prefix=job_name_prefix,
-        config=cloud,
-    )
-  else:
-    def fn():
-      return local_train(
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    if cloud:
+      return cloud_train(
           train_dataset=train_dataset,
           eval_dataset=eval_dataset,
           analysis_dir=analysis_dir,
@@ -348,8 +334,30 @@ def train_async(train_dataset,
           top_n=top_n,
           layer_sizes=layer_sizes,
           learning_rate=learning_rate,
-          epsilon=epsilon)
-    return du.LambdaJob(fn, job_id=None)
+          epsilon=epsilon,
+          job_name=job_name,
+          job_name_prefix=job_name_prefix,
+          config=cloud,
+      )
+    else:
+      def fn():
+        return local_train(
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            analysis_dir=analysis_dir,
+            output_dir=output_dir,
+            features=features,
+            model_type=model_type,
+            max_steps=max_steps,
+            num_epochs=num_epochs,
+            train_batch_size=train_batch_size,
+            eval_batch_size=eval_batch_size,
+            min_eval_frequency=min_eval_frequency,
+            top_n=top_n,
+            layer_sizes=layer_sizes,
+            learning_rate=learning_rate,
+            epsilon=epsilon)
+      return du.LambdaJob(fn, job_id=None)
 
 
 def local_train(train_dataset,
@@ -570,15 +578,18 @@ def predict(data, training_dir=None, model_name=None, model_version=None, cloud=
       raise ValueError('model_version or model_name is not set')
     if training_dir:
       raise ValueError('training_dir not needed when cloud is True')
-
-    return cloud_predict(model_name, model_version, data)
+    with warnings.catch_warnings():
+      warnings.simplefilter("ignore")
+      return cloud_predict(model_name, model_version, data)
   else:
     if not training_dir:
       raise ValueError('training_dir is not set')
     if model_version or model_name:
       raise ValueError('model_name and model_version not needed when cloud is '
                        'False.')
-    return local_predict(training_dir, data)
+    with warnings.catch_warnings():
+      warnings.simplefilter("ignore")
+      return local_predict(training_dir, data)
 
 
 def local_predict(training_dir, data):
@@ -752,14 +763,16 @@ def batch_predict_async(training_dir, prediction_input_file, output_dir,
     A google.datalab.utils.Job object that can be used to query state from or wait.
   """
   import google.datalab.utils as du
-  if cloud:
-    runner_results = cloud_batch_predict(training_dir, prediction_input_file, output_dir, mode,
-                                         batch_size, shard_files, output_format)
-    job = du.DataflowJob(runner_results)
-  else:
-    runner_results = local_batch_predict(training_dir, prediction_input_file, output_dir, mode,
-                                         batch_size, shard_files, output_format)
-    job = du.LambdaJob(lambda: runner_results.wait_until_finish(), job_id=None)
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    if cloud:
+      runner_results = cloud_batch_predict(training_dir, prediction_input_file, output_dir, mode,
+                                           batch_size, shard_files, output_format)
+      job = du.DataflowJob(runner_results)
+    else:
+      runner_results = local_batch_predict(training_dir, prediction_input_file, output_dir, mode,
+                                           batch_size, shard_files, output_format)
+      job = du.LambdaJob(lambda: runner_results.wait_until_finish(), job_id=None)
 
   return job
 

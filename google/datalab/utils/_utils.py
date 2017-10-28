@@ -30,6 +30,10 @@ import types
 import os
 import json
 import oauth2client.client
+import google.auth
+import google.auth.exceptions
+import google.auth.credentials
+import google.auth._oauth2client
 
 
 def print_exception_with_last_stack(e):
@@ -54,6 +58,8 @@ def get_item(env, name, default=None):
     The result of looking up the name, if found; else the default.
   """
   # TODO: handle attributes
+  if not name:
+    return default
   for key in name.split('.'):
     if isinstance(env, dict) and key in env:
       env = env[key]
@@ -158,6 +164,19 @@ def get_config_dir():
   return config_dir
 
 
+def _convert_oauth2client_creds(credentials):
+  new_credentials = google.oauth2.credentials.Credentials(
+    token=credentials.access_token,
+    refresh_token=credentials.refresh_token,
+    token_uri=credentials.token_uri,
+    client_id=credentials.client_id,
+    client_secret=credentials.client_secret,
+    scopes=credentials.scopes)
+
+  new_credentials._expires = credentials.token_expiry
+  return new_credentials
+
+
 def get_credentials():
   """ Get the credentials to use. We try application credentials first, followed by
       user credentials. The path to the application credentials can be overridden
@@ -168,9 +187,8 @@ def get_credentials():
       overriding these the defaults should suffice.
   """
   try:
-    credentials = oauth2client.client.GoogleCredentials.get_application_default()
-    if credentials.create_scoped_required():
-      credentials = credentials.create_scoped(CREDENTIAL_SCOPES)
+    credentials, _ = google.auth.default()
+    credentials = google.auth.credentials.with_scopes_if_required(credentials, CREDENTIAL_SCOPES)
     return credentials
   except Exception as e:
 
@@ -182,9 +200,10 @@ def get_credentials():
       # Use the first gcloud one we find
       for entry in creds['data']:
         if entry['key']['type'] == 'google-cloud-sdk':
-          return oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+          creds = oauth2client.client.OAuth2Credentials.from_json(json.dumps(entry['credential']))
+          return _convert_oauth2client_creds(creds)
 
-    if type(e) == oauth2client.client.ApplicationDefaultCredentialsError:
+    if type(e) == google.auth.exceptions.DefaultCredentialsError:
       # If we are in Datalab container, change the message to be about signing in.
       if _in_datalab_docker():
         raise Exception('No application credentials found. Perhaps you should sign in.')
@@ -246,6 +265,30 @@ def get_default_project_id():
   return None
 
 
+def _construct_context_for_args(args):
+  """Construct a new Context for the parsed arguments.
+
+  Args:
+    args: the dictionary of magic arguments.
+  Returns:
+    A new Context based on the current default context, but with any explicitly
+      specified arguments overriding the default's config.
+  """
+  global_default_context = google.datalab.Context.default()
+  config = {}
+  for key in global_default_context.config:
+    config[key] = global_default_context.config[key]
+
+  billing_tier_arg = args.get('billing', None)
+  if billing_tier_arg:
+    config['bigquery_billing_tier'] = billing_tier_arg
+
+  return google.datalab.Context(
+    project_id=global_default_context.project_id,
+    credentials=global_default_context.credentials,
+    config=config)
+
+
 def python_portable_string(string, encoding='utf-8'):
   """Converts bytes into a string type.
 
@@ -261,3 +304,53 @@ def python_portable_string(string, encoding='utf-8'):
     return string.decode(encoding)
 
   raise ValueError('Unsupported type %s' % str(type(string)))
+
+
+_sandboxed_output_hook = None
+
+
+def initialize_sandboxed_outputs():
+  """ Initializes global browser state which some visualizations require.
+  """
+
+  global _sandboxed_output_hook
+
+  if _sandboxed_output_hook:
+    return
+
+  try:
+    import IPython
+  except ImportError:
+    # If not executing within IPython then initialization is unnecessary.
+    return
+
+  def configure_global_state():
+    """ Called for every cell execution to configure the individual output. """
+    IPython.display.display(IPython.core.display.HTML('''
+          <script src="/static/components/requirejs/require.js"></script>
+          <script>
+            requirejs.config({
+              paths: {
+                base: '/static/base',
+              },
+            });
+          </script>
+          '''))
+  _sandboxed_output_hook = configure_global_state
+  IPython.get_ipython().events.register('pre_run_cell', _sandboxed_output_hook)
+  # Invoke immediately to enable for the current cell.
+  configure_global_state()
+
+
+def uninitialize_sandboxed_outputs():
+  """ Uninitializes initialize_sandboxed_outputs()
+  """
+  global _sandboxed_output_hook
+
+  if not _sandboxed_output_hook:
+    return
+
+  import IPython
+
+  IPython.get_ipython().events.unregister('pre_run_cell', _sandboxed_output_hook)
+  _sandboxed_output_hook = None

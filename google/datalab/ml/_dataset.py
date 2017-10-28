@@ -21,7 +21,7 @@ import json
 import numpy as np
 import pandas as pd
 import random
-import sys
+import six
 
 import google.datalab.bigquery as bq
 
@@ -37,7 +37,7 @@ class CsvDataSet(object):
     Args:
       file_pattern: A list of CSV files. or a string. Can contain wildcards in
         file names. Can be local or GCS path.
-      schema: A BigQuery schema object in the form of
+      schema: A google.datalab.bigquery.Schema object, or a json schema in the form of
         [{'name': 'col1', 'type': 'STRING'},
         {'name': 'col2', 'type': 'INTEGER'}]
         or a single string in of the form 'col1:STRING,col2:INTEGER,col3:FLOAT'.
@@ -50,7 +50,11 @@ class CsvDataSet(object):
       raise ValueError('schema and schema_file cannot both be None.')
 
     if schema is not None:
-      if isinstance(schema, list):
+      # This check needs to come before list check, because Schema
+      # is a subclass of list
+      if isinstance(schema, bq.Schema):
+        self._schema = schema._bq_schema
+      elif isinstance(schema, list):
         self._schema = schema
       else:
         self._schema = []
@@ -62,12 +66,7 @@ class CsvDataSet(object):
     else:
       self._schema = json.loads(_util.read_file_to_string(schema_file))
 
-    if sys.version_info.major > 2:
-      string_type = (str, bytes)  # for python 3 compatibility
-    else:
-      string_type = basestring  # noqa
-
-    if isinstance(file_pattern, string_type):
+    if isinstance(file_pattern, six.string_types):
       file_pattern = [file_pattern]
     self._input_files = file_pattern
 
@@ -113,9 +112,6 @@ class CsvDataSet(object):
       Exception if n is larger than number of rows.
     """
 
-    if sys.version_info.major > 2:
-      xrange = range  # for python 3 compatibility
-
     row_total_count = 0
     row_counts = []
     for file in self.files:
@@ -139,7 +135,7 @@ class CsvDataSet(object):
     skip_count = row_total_count - n
     # Get all skipped indexes. These will be distributed into each file.
     # Note that random.sample will raise Exception if skip_count is greater than rows count.
-    skip_all = sorted(random.sample(xrange(0, row_total_count), skip_count))
+    skip_all = sorted(random.sample(range(0, row_total_count), skip_count))
     dfs = []
     for file, row_count in zip(self.files, row_counts):
       skip = [x for x in skip_all if x < row_count]
@@ -186,7 +182,7 @@ class BigQueryDataSet(object):
     if self._schema is None:
       self._schema = bq.Query('SELECT * FROM %s LIMIT 1' %
                               self._get_source()).execute().result().schema
-    return self._schema
+    return self._schema._bq_schema
 
   @property
   def size(self):
@@ -220,3 +216,50 @@ class BigQueryDataSet(object):
     sample = bq.Query(source).execute(sampling=sampling).result()
     df = sample.to_dataframe()
     return df
+
+
+class TransformedDataSet(object):
+  """DataSet based on tf.example."""
+
+  def __init__(self, file_pattern):
+    """
+
+    Args:
+      file_pattern: A list of gzip TF Example files. or a string. Can contain wildcards in
+          file names. Can be local or GCS path.
+    """
+    if isinstance(file_pattern, six.string_types):
+      file_pattern = [file_pattern]
+    self._input_files = file_pattern
+    self._glob_files = []
+    self._size = None
+
+  @property
+  def input_files(self):
+    """Returns the file list that was given to this class without globing files."""
+    return self._input_files
+
+  @property
+  def files(self):
+    if not self._glob_files:
+      for file in self._input_files:
+        # glob_files() returns unicode strings which doesn't make DataFlow happy. So str().
+        self._glob_files += [str(x) for x in _util.glob_files(file)]
+
+    return self._glob_files
+
+  @property
+  def size(self):
+    """The number of instances in the data. If the underlying data source changes,
+       it may be outdated.
+    """
+    import tensorflow as tf
+
+    if self._size is None:
+      self._size = 0
+      options = tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.GZIP)
+      for tfexample_file in self.files:
+        self._size += sum(1 for x
+                          in tf.python_io.tf_record_iterator(tfexample_file, options=options))
+
+    return self._size

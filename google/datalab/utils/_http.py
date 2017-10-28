@@ -26,6 +26,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import httplib2
+import google_auth_httplib2
 import logging
 
 
@@ -43,7 +44,10 @@ class RequestException(Exception):
     self.message = 'HTTP request failed'
     # Try extract a message from the body; swallow possible resulting ValueErrors and KeyErrors.
     try:
-      error = json.loads(content)['error']
+      if type(content) == str:
+        error = json.loads(content)['error']
+      else:
+        error = json.loads(str(content, encoding='UTF-8'))['error']
       if 'errors' in error:
         error = error['errors'][0]
       self.message += ': ' + error['message']
@@ -132,7 +136,7 @@ class Http(object):
     if credentials is not None:
       # Make a copy of the shared http instance before we modify it.
       http = copy.copy(http)
-      http = credentials.authorize(http)
+      http = google_auth_httplib2.AuthorizedHttp(credentials)
     if stats is not None:
       stats['duration'] = datetime.datetime.utcnow()
 

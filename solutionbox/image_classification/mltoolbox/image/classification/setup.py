@@ -16,7 +16,7 @@ import datetime
 from setuptools import setup
 
 minor = datetime.datetime.now().strftime("%y%m%d%H%M")
-version = '0.1'
+version = '0.2'
 
 setup(
   name='mltoolbox_datalab_image_classification',
@@ -47,9 +47,6 @@ setup(
   long_description="""
   """,
   install_requires=[
-    'tensorflow==1.0',
-    'protobuf==3.1.0',
-    'google-cloud-dataflow==0.5.5',
     'pillow==3.4.1',
   ],
   package_data={

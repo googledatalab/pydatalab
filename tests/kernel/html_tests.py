@@ -19,6 +19,8 @@ import unittest
 import IPython
 import IPython.core.magic
 
+import google.datalab
+
 
 def noop_decorator(func):
   return func
@@ -33,8 +35,40 @@ IPython.get_ipython = mock.Mock()
 class TestCases(unittest.TestCase):
 
   def test_render_table(self):
-    # TODO(gram): complete this test
-    pass
+    builder = google.datalab.utils.commands.HtmlBuilder()
+    builder._render_objects({
+        'cols': [
+         {'label': 'col1'},
+         {'label': 'col2'},
+        ],
+        'rows': [
+          {'c': [
+            {'v': 'val1'},
+            {'v': 'val2'}
+          ]},
+          {'c': [
+            {'v': 'val3'},
+            {'v': 'val4'}
+          ]}
+        ]
+      }, ['col1', 'col2'], 'chartdata')
+    expected_html = ''.join('''
+    <table>
+      <tr>
+        <th>col1</th>
+        <th>col2</th>
+      </tr>
+      <tr>
+        <td>val1</td>
+        <td>val2</td>
+      </tr>
+      <tr>
+        <td>val3</td>
+        <td>val4</td>
+      </tr>
+    </table>
+'''.split())
+    self.assertEqual(builder._to_html(), expected_html)
 
   def test_render_text(self):
     # TODO(gram): complete this test

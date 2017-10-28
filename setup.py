@@ -14,7 +14,7 @@
 
 from setuptools import setup
 
-version = '1.0.1'
+version = '1.1.0'
 
 setup(
   name='datalab',
@@ -25,6 +25,14 @@ setup(
     'google.datalab.bigquery',
     'google.datalab.bigquery.commands',
     'google.datalab.commands',
+    'google.datalab.contrib',
+    'google.datalab.contrib.bigquery',
+    'google.datalab.contrib.bigquery.commands',
+    'google.datalab.contrib.bigquery.operators',
+    'google.datalab.contrib.mlworkbench',
+    'google.datalab.contrib.mlworkbench.commands',
+    'google.datalab.contrib.pipeline',
+    'google.datalab.contrib.pipeline.commands',
     'google.datalab.data',
     'google.datalab.kernel',
     'google.datalab.ml',
@@ -36,6 +44,7 @@ setup(
     'google.datalab.storage.commands',
     'google.datalab.utils',
     'google.datalab.utils.commands',
+    'google.datalab.utils.facets',
     'datalab.bigquery',
     'datalab.bigquery.commands',
     'datalab.context',
@@ -55,8 +64,8 @@ setup(
   description='Google Cloud Datalab',
   author='Google',
   author_email='google-cloud-datalab-feedback@googlegroups.com',
-  url='https://github.com/googledatalab/datalab',
-  download_url='https://github.com/googledatalab/datalab/tarball/0.1',
+  url='https://github.com/googledatalab/pydatalab',
+  download_url='https://github.com/googledatalab/pydatalab/archive/v1.1.0.zip',
   keywords=[
     'Google',
     'GCP',
@@ -79,25 +88,39 @@ Support package for Google Cloud Datalab. This provides cell magics and Python A
 for accessing Google's Cloud Platform services such as Google BigQuery.
   """,
   install_requires=[
+    'airflow==1.8.0',
+    'configparser==3.5.0',
     'mock==2.0.0',
     'future==0.16.0',
     'futures==3.0.5',
-    'google-cloud==0.19.0',
-    'google-api-python-client==1.5.1',
+    'google-cloud==0.27.0',
+    'google-cloud-core==0.27.1',
+    'google-cloud-storage==1.4.0',
+    'google-api-python-client==1.6.2',
     'seaborn==0.7.0',
     'plotly==1.12.5',
-    'httplib2==0.9.2',
+    'httplib2==0.10.3',
     'oauth2client==2.2.0',
-    'pandas>=0.17.1',
+    # TODO(rajivpb): Pinning pandas to 0.19.1 is a temporary work-around for
+    # https://issues.apache.org/jira/browse/AIRFLOW-1179, because the version of airflow on PyPI
+    # does not seem to have the fix. We should unpin after installing a version of airflow that's
+    # built from HEAD.
+    'pandas==0.19.1',
+    'google_auth_httplib2==0.0.2',
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
     'pytz>=2015.4',
     'pyyaml==3.11',
     'requests==2.9.1',
-    'scikit-learn==0.17.1',
+    'scikit-image==0.13.0',
+    'scikit-learn==0.18.2',
     'ipykernel==4.5.2',
     'psutil==4.3.0',
     'jsonschema==2.6.0',
+    # six needs to be pinned to 1.10.0 to work-around an apache_beam bug:
+    # https://stackoverflow.com/questions/46300173/import-apache-beam-metaclass-conflict
+    'six==1.10.0',
+    'urllib3==1.22'
   ],
   package_data={
     'google.datalab.notebook': [
@@ -116,6 +139,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/extern/d3.parcoords.css',
         'static/extern/sylvester.js',
         'static/extern/lantern-browser.html',
+        'static/extern/facets-jupyter.html',
       ],
     'datalab.notebook': [
         'static/bigquery.css',
@@ -133,6 +157,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
         'static/extern/d3.parcoords.css',
         'static/extern/sylvester.js',
         'static/extern/lantern-browser.html',
+        'static/extern/facets-jupyter.html',
       ]
   }
 )

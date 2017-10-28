@@ -17,6 +17,8 @@
 """
 
 import apache_beam as beam
+from apache_beam.transforms import window
+from apache_beam.utils.windowed_value import WindowedValue
 import collections
 import json
 import os
@@ -80,7 +82,7 @@ class EmitAsBatchDoFn(beam.DoFn):
 
   def finish_bundle(self, context=None):
     if len(self._cached) > 0:  # pylint: disable=g-explicit-length-test
-      yield self._cached
+      yield WindowedValue(self._cached, -1, [window.GlobalWindow()])
 
 
 class UnbatchDoFn(beam.DoFn):
@@ -95,7 +97,9 @@ class LoadImagesDoFn(beam.DoFn):
   """A DoFn that reads image from url."""
 
   def process(self, element):
-    with _util.open_local_or_gcs(element['image_url'], 'r') as ff:
+    from tensorflow.python.lib.io import file_io as tf_file_io
+
+    with tf_file_io.FileIO(element['image_url'], 'r') as ff:
       image_bytes = ff.read()
     out_element = {'image_bytes': image_bytes}
     out_element.update(element)
@@ -212,7 +216,7 @@ def configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table):
                     'Write Csv Results' >> beam.io.textio.WriteToText(output_csv,
                                                                       shard_name_template=''))
     (results_save |
-     beam.transforms.combiners.Sample.FixedSizeGlobally('Sample One', 1) |
+     'Sample One' >> beam.transforms.combiners.Sample.FixedSizeGlobally(1) |
      'Serialize Schema' >> beam.Map(lambda path: json.dumps(output_schema)) |
      'Write Schema' >> beam.io.textio.WriteToText(schema_file, shard_name_template=''))
 

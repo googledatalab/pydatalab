@@ -18,7 +18,6 @@
 
 
 import apache_beam as beam
-from apache_beam.io import fileio
 from apache_beam.io import tfrecordio
 from apache_beam.metrics import Metrics
 import cStringIO
@@ -87,10 +86,11 @@ class ReadImageAndConvertToJpegDoFn(beam.DoFn):
   """
 
   def process(self, element):
-    uri, label_id = element
+    from tensorflow.python.lib.io import file_io as tf_file_io
 
+    uri, label_id = element
     try:
-      with _util.open_local_or_gcs(uri, mode='r') as f:
+      with tf_file_io.FileIO(uri, 'r') as f:
         img = Image.open(f).convert('RGB')
     # A variety of different calling libraries throw different exceptions here.
     # They all correspond to an unreadable file so we treat them equivalently.
@@ -300,9 +300,7 @@ class SaveFeatures(beam.PTransform):
             'Write to %s' % self._file_path_prefix.replace('/', '_') >>
             tfrecordio.WriteToTFRecord(file_path_prefix=self._file_path_prefix,
                                        file_name_suffix='.tfrecord.gz',
-                                       shard_name_template=fileio.DEFAULT_SHARD_NAME_TEMPLATE,
-                                       coder=ExampleProtoCoder(),
-                                       compression_type=fileio.CompressionTypes.AUTO))
+                                       coder=ExampleProtoCoder()))
 
 
 def _labels_pipeline(sources):
@@ -354,6 +352,6 @@ def configure_pipeline(p, dataset_train, dataset_eval, checkpoint_path, output_d
   # Make sure we write "latest" file after train and eval data are successfully written.
   output_latest_file = os.path.join(output_dir, 'latest')
   ([eval_save, train_save, labels_save] | 'Wait for train eval saving' >> beam.Flatten() |
-      beam.transforms.combiners.Sample.FixedSizeGlobally('Fixed One', 1) |
+      'Fixed One' >> beam.transforms.combiners.Sample.FixedSizeGlobally(1) |
       beam.Map(lambda path: job_id) |
       'WriteLatest' >> beam.io.textio.WriteToText(output_latest_file, shard_name_template=''))

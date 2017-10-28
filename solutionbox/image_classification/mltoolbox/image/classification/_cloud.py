@@ -16,19 +16,20 @@
 """Cloud implementation for preprocessing, training and prediction for inception model.
 """
 
-import apache_beam as beam
+
 import base64
 import datetime
 import logging
 import os
+import shutil
+import tempfile
+from tensorflow.python.lib.io import file_io
 import urllib
 
-from . import _predictor
-from . import _preprocess
 from . import _util
 
 
-_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.0.0-cp27-cp27mu-manylinux1_x86_64.whl'
+_TF_GS_URL = 'gs://cloud-datalab/deploy/tf/tensorflow-1.2.0-cp27-none-linux_x86_64.whl'
 _PROTOBUF_GS_URL = 'gs://cloud-datalab/deploy/tf/protobuf-3.1.0-py2.py3-none-any.whl'
 
 
@@ -39,37 +40,51 @@ class Cloud(object):
   def preprocess(train_dataset, output_dir, eval_dataset, checkpoint, pipeline_option):
     """Preprocess data in Cloud with DataFlow."""
 
+    import apache_beam as beam
     import google.datalab.utils
+    from . import _preprocess
 
     if checkpoint is None:
       checkpoint = _util._DEFAULT_CHECKPOINT_GSURL
 
     job_name = ('preprocess-image-classification-' +
                 datetime.datetime.now().strftime('%y%m%d-%H%M%S'))
-    staging_package_url = _util.repackage_to_staging(output_dir)
-    options = {
-        'staging_location': os.path.join(output_dir, 'tmp', 'staging'),
-        'temp_location': os.path.join(output_dir, 'tmp'),
-        'job_name': job_name,
-        'project': _util.default_project(),
-        'extra_packages': [staging_package_url, _TF_GS_URL, _PROTOBUF_GS_URL],
-        'teardown_policy': 'TEARDOWN_ALWAYS',
-        'no_save_main_session': True
-    }
-    if pipeline_option is not None:
-      options.update(pipeline_option)
 
-    opts = beam.pipeline.PipelineOptions(flags=[], **options)
-    p = beam.Pipeline('DataflowRunner', options=opts)
-    _preprocess.configure_pipeline(p, train_dataset, eval_dataset, checkpoint, output_dir, job_name)
+    staging_package_url = _util.repackage_to_staging(output_dir)
+    tmpdir = tempfile.mkdtemp()
     # suppress DataFlow warnings about wheel package as extra package.
-    logger = logging.getLogger()
-    logger.setLevel(logging.ERROR)
-    original_level = logger.getEffectiveLevel()
+    original_level = logging.getLogger().getEffectiveLevel()
+    logging.getLogger().setLevel(logging.ERROR)
     try:
+      # Workaround for DataFlow 2.0, which doesn't work well with extra packages in GCS.
+      # Remove when the issue is fixed and new version of DataFlow is included in Datalab.
+      extra_packages = [staging_package_url, _TF_GS_URL, _PROTOBUF_GS_URL]
+      local_packages = [os.path.join(tmpdir, os.path.basename(p))
+                        for p in extra_packages]
+      for source, dest in zip(extra_packages, local_packages):
+        file_io.copy(source, dest, overwrite=True)
+
+      options = {
+          'staging_location': os.path.join(output_dir, 'tmp', 'staging'),
+          'temp_location': os.path.join(output_dir, 'tmp'),
+          'job_name': job_name,
+          'project': _util.default_project(),
+          'extra_packages': local_packages,
+          'teardown_policy': 'TEARDOWN_ALWAYS',
+          'no_save_main_session': True
+      }
+      if pipeline_option is not None:
+        options.update(pipeline_option)
+
+      opts = beam.pipeline.PipelineOptions(flags=[], **options)
+      p = beam.Pipeline('DataflowRunner', options=opts)
+      _preprocess.configure_pipeline(p, train_dataset, eval_dataset,
+                                     checkpoint, output_dir, job_name)
       job_results = p.run()
     finally:
-      logger.setLevel(original_level)
+      shutil.rmtree(tmpdir)
+      logging.getLogger().setLevel(original_level)
+
     if (_util.is_in_IPython()):
       import IPython
       dataflow_url = 'https://console.developers.google.com/dataflow?project=%s' % \
@@ -154,7 +169,9 @@ class Cloud(object):
   def batch_predict(dataset, model_dir, output_csv, output_bq_table, pipeline_option):
     """Batch predict running in cloud."""
 
+    import apache_beam as beam
     import google.datalab.utils
+    from . import _predictor
 
     if output_csv is None and output_bq_table is None:
       raise ValueError('output_csv and output_bq_table cannot both be None.')
@@ -164,26 +181,37 @@ class Cloud(object):
     job_name = ('batch-predict-image-classification-' +
                 datetime.datetime.now().strftime('%y%m%d-%H%M%S'))
     staging_package_url = _util.repackage_to_staging(pipeline_option['temp_location'])
-    options = {
-        'staging_location': os.path.join(pipeline_option['temp_location'], 'staging'),
-        'job_name': job_name,
-        'project': _util.default_project(),
-        'extra_packages': [staging_package_url, _TF_GS_URL, _PROTOBUF_GS_URL],
-        'teardown_policy': 'TEARDOWN_ALWAYS',
-        'no_save_main_session': True
-    }
-    options.update(pipeline_option)
-
-    opts = beam.pipeline.PipelineOptions(flags=[], **options)
-    p = beam.Pipeline('DataflowRunner', options=opts)
-    _predictor.configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table)
-    logger = logging.getLogger()
-    logger.setLevel(logging.ERROR)
-    original_level = logger.getEffectiveLevel()
+    tmpdir = tempfile.mkdtemp()
+    # suppress DataFlow warnings about wheel package as extra package.
+    original_level = logging.getLogger().getEffectiveLevel()
+    logging.getLogger().setLevel(logging.ERROR)
     try:
+      # Workaround for DataFlow 2.0, which doesn't work well with extra packages in GCS.
+      # Remove when the issue is fixed and new version of DataFlow is included in Datalab.
+      extra_packages = [staging_package_url, _TF_GS_URL, _PROTOBUF_GS_URL]
+      local_packages = [os.path.join(tmpdir, os.path.basename(p))
+                        for p in extra_packages]
+      for source, dest in zip(extra_packages, local_packages):
+        file_io.copy(source, dest, overwrite=True)
+
+      options = {
+          'staging_location': os.path.join(pipeline_option['temp_location'], 'staging'),
+          'job_name': job_name,
+          'project': _util.default_project(),
+          'extra_packages': local_packages,
+          'teardown_policy': 'TEARDOWN_ALWAYS',
+          'no_save_main_session': True
+      }
+      options.update(pipeline_option)
+
+      opts = beam.pipeline.PipelineOptions(flags=[], **options)
+      p = beam.Pipeline('DataflowRunner', options=opts)
+      _predictor.configure_pipeline(p, dataset, model_dir, output_csv, output_bq_table)
       job_results = p.run()
     finally:
-      logger.setLevel(original_level)
+      shutil.rmtree(tmpdir)
+      logging.getLogger().setLevel(original_level)
+
     if (_util.is_in_IPython()):
       import IPython
       dataflow_url = ('https://console.developers.google.com/dataflow?project=%s' %

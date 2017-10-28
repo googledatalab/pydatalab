@@ -32,6 +32,7 @@ import google.datalab.ml as dlml  # noqa: E402
 import unittest  # noqa: E402
 
 
+@unittest.skipIf(not six.PY2, 'Python 2 is required')
 class TestAnalyze(unittest.TestCase):
 
   def test_not_csvdataset(self):
@@ -108,11 +109,13 @@ class TestAnalyze(unittest.TestCase):
         dlml.CsvDataSet(
             file_pattern=['gs://file1.txt'],
             schema=schema),
-        cloud=True).wait()
+        cloud=True,
+        project_id='junk_project_id').wait()
       self.assertIn('Schema contains an unsupported type %s.' % col_type,
                     job.fatal_error.message)
 
 
+@unittest.skipIf(not six.PY2, 'Python 2 is required')
 class TestFunctionSignature(unittest.TestCase):
 
   def _argspec(self, fn_obj):

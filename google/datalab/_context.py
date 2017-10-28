@@ -36,7 +36,7 @@ class Context(object):
     """
     self._project_id = project_id
     self._credentials = credentials
-    self._config = config or Context._get_default_config()
+    self._config = config if config is not None else Context._get_default_config()
 
   @property
   def credentials(self):

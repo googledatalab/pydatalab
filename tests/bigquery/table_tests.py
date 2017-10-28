@@ -17,10 +17,10 @@ from builtins import object
 import calendar
 import datetime as dt
 import mock
-from oauth2client.client import AccessTokenCredentials
 import pandas
 import unittest
 
+import google.auth
 import google.datalab
 import google.datalab.bigquery
 import google.datalab.utils
@@ -504,12 +504,20 @@ class TestCases(unittest.TestCase):
     mock_api_tables_get.return_value = {}
     mock_api_jobs_get.return_value = {'status': {'state': 'DONE'}}
     mock_api_table_extract.return_value = None
+
     tbl = google.datalab.bigquery.Table('testds.testTable0', context=self._create_context())
+    tbl._api.table_extract = mock.Mock(return_value={'jobReference': {'jobId': 'bar'}})
+
     job = tbl.extract('gs://foo')
-    self.assertIsNone(job)
-    mock_api_table_extract.return_value = {'jobReference': {'jobId': 'bar'}}
-    job = tbl.extract('gs://foo')
+    tbl._api.table_extract.assert_called_with(tbl.name, 'gs://foo', 'CSV', False, ',', True)
     self.assertEquals('bar', job.id)
+
+    tbl.extract('gs://foo', format='json')
+    tbl._api.table_extract.assert_called_with(tbl.name, 'gs://foo', 'NEWLINE_DELIMITED_JSON',
+                                              False, None, True)
+
+    tbl.extract('gs://foo', format='avro')
+    tbl._api.table_extract.assert_called_with(tbl.name, 'gs://foo', 'AVRO', False, None, True)
 
   @mock.patch('google.datalab.bigquery._api.Api.tabledata_list')
   @mock.patch('google.datalab.bigquery._api.Api.tables_get')
@@ -657,10 +665,34 @@ class TestCases(unittest.TestCase):
     q = google.datalab.bigquery.Query.from_table(tbl, fields=['bar', 'foo'])
     self.assertEqual('SELECT bar,foo FROM `test.testds.testTable0`', q.sql)
 
+  @mock.patch('google.datalab.bigquery._api.Api.tables_get')
+  def test_row_fetcher(self, mock_api_tables_get):
+    schema = self._create_inferred_schema()
+    mock_api_tables_get.return_value = {'schema': {'fields': schema}}
+
+    dummy_row = {'f': [{'v': 1}, {'v': 'foo'}, {'v': 3.1415}]}
+    results = {
+      'rows': [dummy_row] * 10,
+      'pageToken': None
+    }
+    tbl = TestCases._create_table('test.table')
+    tbl._api.tabledata_list = mock.Mock(return_value=results)
+
+    # using Table.to_dataframe should use large pages to reduce traffic
+    tbl.to_dataframe()
+    tbl._api.tabledata_list.assert_called_with(tbl.name, max_results=100000, start_index=0)
+
+    # using Table.range or iterator should use smaller pages to reduce latency
+    list(tbl.range(start_row=0))
+    tbl._api.tabledata_list.assert_called_with(tbl.name, max_results=1024, start_index=0)
+
+    tbl[0]
+    tbl._api.tabledata_list.assert_called_with(tbl.name, max_results=1024, start_index=0)
+
   @staticmethod
   def _create_context():
     project_id = 'test'
-    creds = AccessTokenCredentials('test_token', 'test_ua')
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
   @staticmethod
