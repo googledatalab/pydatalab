@@ -75,8 +75,8 @@ from pytz import timezone
     for (task_id, task_details) in sorted(self._pipeline_spec['tasks'].items()):
       task_def = self._get_operator_definition(task_id, task_details)
       task_definitions = task_definitions + task_def
-      dependency_def = Pipeline._get_dependency_definition(
-          task_id, task_details.get('up_stream', []))
+      dependency_def = Pipeline._get_dependency_definition(task_id, task_details.get('up_stream',
+                                                                                     []))
       up_steam_statements = up_steam_statements + dependency_def
 
     self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
