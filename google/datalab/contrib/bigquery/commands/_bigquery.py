@@ -61,7 +61,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
 
   email_config = bq_pipeline_config.get('emails')
   if email_config:
-    pipeline_spec['emails'] = bq_pipeline_config.get('emails')
+    pipeline_spec['emails'] = email_config
 
   input_config = bq_pipeline_config.get('input')
   transformation_config = bq_pipeline_config.get('transformation')
