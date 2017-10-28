@@ -58,25 +58,25 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   output_config = bq_pipeline_config.get('output')
   parameters_config = bq_pipeline_config.get('parameters')
 
-  load_task_config_name = 'bq_pipeline_load_task'
-  execute_task_config_name = 'bq_pipeline_execute_task'
-  extract_task_config_name = 'bq_pipeline_extract_task'
+  load_task_id = 'bq_pipeline_load_task'
+  execute_task_id = 'bq_pipeline_execute_task'
+  extract_task_id = 'bq_pipeline_extract_task'
 
   load_task_config = _get_load_parameters(input_config)
-  execute_task_config = _get_execute_parameters(load_task_config_name, transformation_config,
+  execute_task_config = _get_execute_parameters(load_task_id, transformation_config,
                                                 output_config, parameters_config)
-  extract_task_config = _get_extract_parameters(execute_task_config_name, output_config)
+  extract_task_config = _get_extract_parameters(execute_task_id, output_config)
   pipeline_spec = {
     'schedule': bq_pipeline_config['schedule'],
   }
 
   pipeline_spec['tasks'] = {}
   if load_task_config:
-    pipeline_spec['tasks'][load_task_config_name] = load_task_config
+    pipeline_spec['tasks'][load_task_id] = load_task_config
   if execute_task_config:
-    pipeline_spec['tasks'][execute_task_config_name] = execute_task_config
+    pipeline_spec['tasks'][execute_task_id] = execute_task_config
   if extract_task_config:
-    pipeline_spec['tasks'][extract_task_config_name] = extract_task_config
+    pipeline_spec['tasks'][extract_task_id] = extract_task_config
   pipeline_spec['emails'] = bq_pipeline_config.get('emails')
 
   if not load_task_config and not execute_task_config and not extract_task_config:
@@ -87,92 +87,70 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
 
 def _get_load_parameters(bq_pipeline_input_config):
     load_task_config = {'type': 'pydatalab.bq.load'}
-    path_exists = False
-    if 'path' in bq_pipeline_input_config:
-      # The path URL of the GCS load file(s).
-      load_task_config['path'] = bq_pipeline_input_config['path']
-      path_exists = True
 
-    table_exists = False
-    if 'table' in bq_pipeline_input_config:
-      # The destination bigquery table name for loading
-      load_task_config['table'] = bq_pipeline_input_config['table']
-      table_exists = True
+    # The path URL of the GCS load file(s).
+    load_task_config['path'] = bq_pipeline_input_config.get('path')
 
-    schema_exists = False
+    # The destination bigquery table name for loading
+    load_task_config['table'] = bq_pipeline_input_config.get('table')
+
+    # If a table or path are absent, there is no load to be done so we return None
+    if load_task_config['table'] is None or load_task_config['path'] is None:
+      return None
+
+    # The schema of the destination bigquery table
     if 'schema' in bq_pipeline_input_config:
-      # The schema of the destination bigquery table
       load_task_config['schema'] = bq_pipeline_input_config['schema']
-      schema_exists = True
 
-    # We now figure out whether a load operation is required
-    if table_exists:
-      if path_exists:
-        if schema_exists:
-          # One of 'create' (default), 'append' or 'overwrite' for loading data into BigQuery. If a
-          # schema is specified, we assume that the table needs to be created.
-          load_task_config['mode'] = 'create'
-        else:
-          # If a schema is not specified, we assume that the table needs to be appended, since this
-          # is the most likely scenario for users running pipelines.
-          # TODO(rajivpb): Is the above assumption reasonable?
-          load_task_config['mode'] = 'append'
-      else:
-        # If table exists, but a path does not, then we have our data in BQ already and no load is
-        # required.
-        return None
-    else:
-      # If the table doesn't exist, but a path does, then it's likely an extended data-source (and
-      # the schema would need to be either present or auto-detected).
-      if not path_exists:
-        if 'format' in bq_pipeline_input_config:  # Some parameter validation
-          raise Exception('Path is not specified, but a format is.')
-        # If neither table or path exist, there is no load to be done.
-        return None
+    if 'mode' in bq_pipeline_input_config:
+      load_task_config['mode'] = bq_pipeline_input_config['mode']
 
-    assert(path_exists is True)
+    if 'format' in bq_pipeline_input_config:
+      load_task_config['format'] = bq_pipeline_input_config['format']
 
-    # One of 'csv' (default) or 'json' for the format of the load file.
-    load_task_config['format'] = bq_pipeline_input_config.get('format', 'csv')
-    load_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
+    if 'csv' in bq_pipeline_input_config:
+      load_task_config['csv_options'] = bq_pipeline_input_config['csv']
 
     return load_task_config
 
 
-def _get_execute_parameters(load_task_config_name, bq_pipeline_transformation_config,
+def _get_execute_parameters(load_task_id, bq_pipeline_transformation_config,
                             bq_pipeline_output_config, bq_pipeline_parameters_config):
     execute_task_config = {
       'type': 'pydatalab.bq.execute',
-      'up_stream': [load_task_config_name]
+      'up_stream': [load_task_id]
     }
 
     # The name of query for execution; if absent, we return None as we assume that there is
     # no query to execute
     if 'query' not in bq_pipeline_transformation_config:
       return None
+
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     execute_task_config['sql'] = query.sql
+
     if 'table' in bq_pipeline_output_config:
         execute_task_config['table'] = bq_pipeline_output_config['table']
+
     if 'mode' in bq_pipeline_output_config:
         execute_task_config['mode'] = bq_pipeline_output_config['mode']
+
     execute_task_config['parameters'] = bq_pipeline_parameters_config
+
     return execute_task_config
 
 
-def _get_extract_parameters(execute_task_config_name, bq_pipeline_output_config):
+def _get_extract_parameters(execute_task_id, bq_pipeline_output_config):
     extract_task_config = {
       'type': 'pydatalab.bq.extract',
-      'up_stream': [execute_task_config_name]
+      'up_stream': [execute_task_id]
     }
 
-    # Destination table name for the execution results. When present, this will need to be set in
-    # execute_task_config. When absent, it means that there is no extraction to be done, so we
-    # return None.
-    if 'table' not in bq_pipeline_output_config:
-      return None
+    # If a temporary table from the bigquery results is being used, this will not be present in the
+    # output section.
+    if 'table' in bq_pipeline_output_config:
+      extract_task_config['table'] = bq_pipeline_output_config['table']
 
-    extract_task_config['table'] = bq_pipeline_output_config['table']
     extract_task_config['path'] = bq_pipeline_output_config.get('path')
     if not extract_task_config['path']:
       # If a path is not specified, there is nothing to extract, so we return None after making
@@ -181,8 +159,10 @@ def _get_extract_parameters(execute_task_config_name, bq_pipeline_output_config)
         raise Exception('Path is not specified, but format is.')
       return None
 
-    # One of 'csv' (default) or 'json' for the format of the load file.
-    extract_task_config['format'] = bq_pipeline_output_config.get('format', 'csv')
-    extract_task_config['csv_options'] = bq_pipeline_output_config.get('csv')
+    if 'format' in bq_pipeline_output_config:
+      extract_task_config['format'] = bq_pipeline_output_config.get('format')
+
+    if 'csv' in bq_pipeline_output_config:
+      extract_task_config['csv_options'] = bq_pipeline_output_config.get('csv')
 
     return extract_task_config
