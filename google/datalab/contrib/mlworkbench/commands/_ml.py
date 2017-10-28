@@ -388,6 +388,8 @@ def ml(line, cell=None):
       help='Explain a prediction with LIME tool.')
   explain_parser.add_argument('--type', required=True, choices=['text', 'image'],
                               help='the type of column to explain.')
+  explain_parser.add_argument('--algorithm', choices=['lime', 'ig'], default='lime',
+                              help='the type of column to explain.')
   explain_parser.add_argument('--model', required=True,
                               help='path of the model directory used for prediction.')
   explain_parser.add_argument('--labels', required=True,
@@ -396,46 +398,32 @@ def ml(line, cell=None):
                               help='the name of the column to explain. Optional if text type ' +
                                    'and there is only one text column, or image type and ' +
                                    'there is only one image column.')
-  explain_parser.add_argument('--num_features', type=int,
-                              help='number of features to analyze. In text, it is number of ' +
-                                   'words. In image, it is number of areas.')
-  explain_parser.add_argument('--num_samples', type=int,
-                              help='size of the neighborhood to learn the linear model. ')
-  explain_parser.add_argument('--overview_only', action='store_true', default=False,
-                              help='whether to show only the overview. For text only.')
-  explain_parser.add_argument('--detailview_only', action='store_true', default=False,
-                              help='whether to show only the detail views for each label. ' +
-                                   'For text only.')
-  explain_parser.add_argument('--include_negative', action='store_true', default=False,
-                              help='whether to show only positive areas. For image only.')
   explain_parser.add_argument('--hide_color', type=int, default=0,
                               help='the color to use for perturbed area. If -1, average of ' +
                                    'each channel is used for each channel. For image only.')
-  explain_parser.add_argument('--batch_size', type=int, default=100,
-                              help='size of batches passed to prediction. For image only.')
   explain_parser.add_cell_argument('data', required=True,
                                    help='Prediction Data. Can be a csv line, or a dict.')
-  explain_parser.set_defaults(func=_explain)
 
-  probe_parser = parser.subcommand(
-      'probe',
-      help='Explain an image classification prediction using gradients.')
-  probe_parser.add_argument('--model', required=True,
-                            help='path of the model directory used for prediction.')
-  probe_parser.add_argument('--label', required=True,
-                            help='The label to explain.')
-  probe_parser.add_argument('--column_name',
-                            help='the name of the column to explain. Optional if text type ' +
-                                 'and there is only one text column, or image type and ' +
-                                 'there is only one image column.')
-  probe_parser.add_argument('--num_gradients', type=int, default=50,
-                            help='the number of scaled images to get gradients from. Larger ' +
-                                 'number usually produces better results but slower.')
-  probe_parser.add_argument('--percent_show', type=int, default=10,
-                            help='the percentage of top impactful pixels to show.')
-  probe_parser.add_cell_argument('data', required=True,
-                                 help='Prediction Data. Can be a csv line, or a dict.')
-  probe_parser.set_defaults(func=_probe)
+  # options specific for lime
+  explain_parser.add_argument('--num_features', type=int,
+                              help='number of features to analyze. In text, it is number of ' +
+                                   'words. In image, it is number of areas. For lime only.')
+  explain_parser.add_argument('--num_samples', type=int,
+                              help='size of the neighborhood to learn the linear model. ' +
+                                   'For lime only.')
+  explain_parser.add_argument('--include_negative', action='store_true', default=False,
+                              help='whether to show only positive areas. For lime image only.')
+  explain_parser.add_argument('--batch_size', type=int, default=100,
+                              help='size of batches passed to prediction. For lime only.')
+
+  # options specific for integrated gradients
+  explain_parser.add_argument('--num_gradients', type=int, default=50,
+                              help='the number of scaled images to get gradients from. Larger ' +
+                                   'number usually produces better results but slower.')
+  explain_parser.add_argument('--percent_show', type=int, default=10,
+                              help='the percentage of top impactful pixels to show.')
+
+  explain_parser.set_defaults(func=_explain)
 
   tensorboard_parser = parser.subcommand(
       'tensorboard',
@@ -873,40 +861,39 @@ def _explain(args, cell):
   explainer = _prediction_explainer.PredictionExplainer(args['model'])
   labels = args['labels'].split(',')
   if args['type'] == 'text':
+    if args['algorithm'] == 'ig':
+      raise ValueError('Algorithm "ig" does not support text type.')
+
     num_features = args['num_features'] if args['num_features'] else 10
     num_samples = args['num_samples'] if args['num_samples'] else 5000
     exp = explainer.explain_text(labels, args['data'], column_name=args['column_name'],
                                  num_features=num_features, num_samples=num_samples)
-    if not args['detailview_only']:
-      exp.show_in_notebook()
-
-    if not args['overview_only']:
-      for i in range(len(labels)):
-        exp.as_pyplot_figure(label=i)
+    exp.show_in_notebook()
 
   elif args['type'] == 'image':
-    num_features = args['num_features'] if args['num_features'] else 3
-    num_samples = args['num_samples'] if args['num_samples'] else 300
-    hide_color = None if args['hide_color'] == -1 else args['hide_color']
-    exp = explainer.explain_image(labels, args['data'], column_name=args['column_name'],
-                                  num_samples=num_samples, batch_size=args['batch_size'],
-                                  hide_color=hide_color)
-    for i in range(len(labels)):
-      image, mask = exp.get_image_and_mask(i, positive_only=not args['include_negative'],
-                                           num_features=num_features, hide_rest=False)
-      fig = plt.figure()
-      fig.suptitle(labels[i], fontsize=16)
-      plt.imshow(mark_boundaries(image, mask))
-
-
-def _probe(args, cell):
-  explainer = _prediction_explainer.PredictionExplainer(args['model'])
-  ret = explainer.probe_image(args['label'], args['data'], column_name=args['column_name'],
-                              num_scaled_images=args['num_gradients'],
-                              top_percent=args['percent_show'])
-  raw_image, analysis_image = ret
-  IPython.display.display(raw_image)
-  IPython.display.display(analysis_image)
+    if args['algorithm'] == 'lime':
+      num_features = args['num_features'] if args['num_features'] else 3
+      num_samples = args['num_samples'] if args['num_samples'] else 300
+      hide_color = None if args['hide_color'] == -1 else args['hide_color']
+      exp = explainer.explain_image(labels, args['data'], column_name=args['column_name'],
+                                    num_samples=num_samples, batch_size=args['batch_size'],
+                                    hide_color=hide_color)
+      for i in range(len(labels)):
+        image, mask = exp.get_image_and_mask(i, positive_only=not args['include_negative'],
+                                             num_features=num_features, hide_rest=False)
+        fig = plt.figure()
+        fig.suptitle(labels[i], fontsize=16)
+        plt.imshow(mark_boundaries(image, mask))
+    elif args['algorithm'] == 'ig':
+      explainer = _prediction_explainer.PredictionExplainer(args['model'])
+      ret = explainer.probe_image(labels, args['data'], column_name=args['column_name'],
+                                  num_scaled_images=args['num_gradients'],
+                                  top_percent=args['percent_show'])
+      raw_image, analysis_images = ret
+      IPython.display.display(raw_image)
+      for label, image in zip(labels, analysis_images):
+        print(label)
+        IPython.display.display(image)
 
 
 def _tensorboard_start(args, cell):

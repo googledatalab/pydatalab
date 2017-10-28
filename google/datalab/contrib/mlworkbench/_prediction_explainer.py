@@ -216,7 +216,7 @@ class PredictionExplainer(object):
 
         return grads_values
 
-    def probe_image(self, label, instance, column_name=None, num_scaled_images=50,
+    def probe_image(self, labels, instance, column_name=None, num_scaled_images=50,
                     top_percent=10):
         """ Get pixel importance of the image.
 
@@ -225,7 +225,7 @@ class PredictionExplainer(object):
         importance of each pixel.
 
         Args:
-            label: the label to compute gradients from.
+            labels: labels to compute gradients from.
             instance: the prediction instance. It needs to conform to model's input. Can be a csv
               line string, or a dict.
             img_column_name: the name of the image column to probe. If there is only one image
@@ -237,8 +237,9 @@ class PredictionExplainer(object):
                 only top 10% impactful pixels will be shown and rest of the pixels will be black.
 
         Returns:
-            A tuple. First is the resized original image (299x299x3). Second is the visualization
-                with same size that highlights the most important pixels.
+            A tuple. First is the resized original image (299x299x3). Second is a list of
+                the visualization with same size that highlights the most important pixels, one
+                per each label.
         """
 
         if len(self._image_columns) > 1 and not column_name:
@@ -277,19 +278,22 @@ class PredictionExplainer(object):
             writer.writerow(instance_copy)
             csv_lines.append(buf.getvalue())
 
-        # Send to tf model to get gradients.
-        grads = self._image_gradients(csv_lines, label, image_column_name)
-        integrated_grads = np.average(grads, axis=0)
+        integrated_gradients_images = []
+        for label in labels:
+          # Send to tf model to get gradients.
+          grads = self._image_gradients(csv_lines, label, image_column_name)
+          integrated_grads = np.average(grads, axis=0)
 
-        # Gray scale the grads by removing color dimension.
-        # abs() is for getting the most impactful pixels regardless positive or negative.
-        grayed = np.average(abs(integrated_grads), axis=2)
-        grayed = np.transpose([grayed, grayed, grayed], axes=[1, 2, 0])
+          # Gray scale the grads by removing color dimension.
+          # abs() is for getting the most impactful pixels regardless positive or negative.
+          grayed = np.average(abs(integrated_grads), axis=2)
+          grayed = np.transpose([grayed, grayed, grayed], axes=[1, 2, 0])
 
-        # Only show the most impactful pixels.
-        p = np.percentile(grayed, 100 - top_percent)
-        viz_window = np.where(grayed > p, 1, 0)
-        vis = resized_image * viz_window
-        im_vis = Image.fromarray(np.uint8(vis))
+          # Only show the most impactful pixels.
+          p = np.percentile(grayed, 100 - top_percent)
+          viz_window = np.where(grayed > p, 1, 0)
+          vis = resized_image * viz_window
+          im_vis = Image.fromarray(np.uint8(vis))
+          integrated_gradients_images.append(im_vis)
 
-        return resized_image, im_vis
+        return resized_image, integrated_gradients_images

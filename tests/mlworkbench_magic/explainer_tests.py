@@ -248,13 +248,14 @@ class TestMLExplainer(unittest.TestCase):
 
     self._create_image_test_data()
     explainer = PredictionExplainer(os.path.join(self._test_dir, 'trainimg', 'model'))
-    raw_image, grads_viz = explainer.probe_image(
-        'true',
+    raw_image, grads_vizs = explainer.probe_image(
+        ['true', 'false'],
         '4,2.0,word2 word1,%s' % os.path.join(self._test_dir, 'img1.jpg'),
         top_percent=20)
     self.assertEqual((299, 299, 3), np.asarray(raw_image).shape)
-    self.assertEqual((299, 299, 3), np.asarray(grads_viz).shape)
 
-    arr = np.asarray(grads_viz)
-    arr = arr.reshape(-1)
-    self.assertGreater(float((arr == 0).sum()) / len(arr), 0.79)
+    for im in grads_vizs:
+      self.assertEqual((299, 299, 3), np.asarray(im).shape)
+      arr = np.asarray(im)
+      arr = arr.reshape(-1)
+      self.assertGreater(float((arr == 0).sum()) / len(arr), 0.79)
