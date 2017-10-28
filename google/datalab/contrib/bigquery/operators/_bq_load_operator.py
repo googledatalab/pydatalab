@@ -65,3 +65,7 @@ class LoadOperator(BaseOperator):
       raise Exception('Load failed: %s' % str(job.fatal_error))
     elif job.errors:
       raise Exception('Load completed with errors: %s' % str(job.errors))
+
+    return {
+      'result': job.result()
+    }
