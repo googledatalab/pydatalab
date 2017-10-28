@@ -61,7 +61,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
 
   email_config = bq_pipeline_config.get('emails')
   if email_config:
-    pipeline_spec['emails'] = bq_pipeline_config.get('emails')
+    pipeline_spec['emails'] = email_config
 
   input_config = bq_pipeline_config.get('input')
   transformation_config = bq_pipeline_config.get('transformation')
@@ -116,23 +116,21 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
 
     # The destination bigquery table name for loading
     source_of_table = bq_pipeline_input_config
-    load_task_config['table'] = source_of_table.get('table')
-    if load_task_config['table'] is None and not bq_pipeline_transformation_config and \
-            bq_pipeline_output_config and 'table' in bq_pipeline_output_config and \
-            'path' not in bq_pipeline_output_config:
+    if (load_task_config['table'] is None and not bq_pipeline_transformation_config and
+        bq_pipeline_output_config and 'table' in bq_pipeline_output_config and
+            'path' not in bq_pipeline_output_config):
       # If we're here it means that there was no transformation config, but there was an output
       # config with only a table (and no path). We assume that the user was just trying to do a
       # gcs->table (or load) step, so we take that as the input table (and emit a load
       # operator).
       source_of_table = bq_pipeline_output_config
-      load_task_config['table'] = source_of_table.get('table')
 
     # If a table or path are absent, there is no load to be done so we return None
     if 'table' not in source_of_table:
       return None
 
     load_task_config['table'] = source_of_table.get('table')
-
+    
     if 'schema' in source_of_table:
       load_task_config['schema'] = source_of_table['schema']
 
@@ -226,8 +224,8 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
     # output section.
     if 'table' in bq_pipeline_output_config:
       extract_task_config['table'] = bq_pipeline_output_config['table']
-    elif bq_pipeline_input_config and not bq_pipeline_transformation_config \
-            and 'table' in bq_pipeline_input_config and 'path' not in bq_pipeline_input_config:
+    elif (bq_pipeline_input_config and not bq_pipeline_transformation_config and
+          'table' in bq_pipeline_input_config and 'path' not in bq_pipeline_input_config):
       # If we're here it means that there was no transformation config, but there was an input
       # config with only a table (and no path). We assume that the user was just trying to do a
       # table->gcs (or extract) step, so we take that as the input table (and emit an extract
