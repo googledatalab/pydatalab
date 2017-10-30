@@ -116,7 +116,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
 
     # The destination bigquery table name for loading
     source_of_table = bq_pipeline_input_config
-    if ('table' not in source_of_table and not bq_pipeline_transformation_config and
+    if ('table' not in bq_pipeline_input_config and not bq_pipeline_transformation_config and
         bq_pipeline_output_config and 'table' in bq_pipeline_output_config and
             'path' not in bq_pipeline_output_config):
       # If we're here it means that there was no transformation config, but there was an output
