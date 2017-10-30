@@ -52,3 +52,6 @@ class ExtractOperator(BaseOperator):
       raise Exception('Extract failed: %s' % str(job.fatal_error))
     elif job.errors:
       raise Exception('Extract completed with errors: %s' % str(job.errors))
+    return {
+      'result': job.result()
+    }
