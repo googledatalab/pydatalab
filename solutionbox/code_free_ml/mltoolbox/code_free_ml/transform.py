@@ -315,6 +315,9 @@ class TransformFeaturesDoFn(beam.DoFn):
     import six
     import tensorflow as tf
 
+    # This function is invoked by a separate sub-process so setting the logging level
+    # does not affect Datalab's kernel process.
+    tf.logging.set_verbosity(tf.logging.ERROR)
     try:
       clean_element = []
       for line in element:
@@ -512,8 +515,8 @@ def main(argv=None):
     pipeline_name = 'DataflowRunner'
   else:
     pipeline_name = 'DirectRunner'
-    # Suppress TF cpp warnings.
-    os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+    # Suppress TF warnings.
+    os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
   options = {
       'job_name': args.job_name,

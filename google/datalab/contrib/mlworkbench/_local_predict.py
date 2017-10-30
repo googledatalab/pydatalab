@@ -166,9 +166,9 @@ def get_model_schema_and_features(model_dir):
     A tuple of schema (list) and features config (dict).
   """
   schema_file = os.path.join(model_dir, 'assets.extra', 'schema.json')
-  schema = json.loads(file_io.read_file_to_string(schema_file).decode())
+  schema = json.loads(file_io.read_file_to_string(schema_file))
   features_file = os.path.join(model_dir, 'assets.extra', 'features.json')
-  features_config = json.loads(file_io.read_file_to_string(features_file).decode())
+  features_config = json.loads(file_io.read_file_to_string(features_file))
   return schema, features_config
 
 

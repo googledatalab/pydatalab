@@ -180,7 +180,7 @@ def parse_arguments(argv):
     '--model', required=True,
     choices=['linear_classification', 'linear_regression', 'dnn_classification', 'dnn_regression'])
   parser.add_argument(
-      '--top-n', type=int, default=1, metavar='N',
+      '--top-n', type=int, default=0, metavar='N',
       help=('For classification problems, the output graph will contain the '
             'labels and scores for the top n classes, and results will be in the form of '
             '"predicted, predicted_2, ..., probability, probability_2, ...". '

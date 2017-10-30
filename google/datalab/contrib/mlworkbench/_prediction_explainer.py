@@ -16,10 +16,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import base64
 import csv
+import io
 import numpy as np
 from PIL import Image
 import six
+import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
 from . import _local_predict
@@ -116,7 +119,7 @@ class PredictionExplainer(object):
 
         text_column_name = column_name if column_name else self._text_columns[0]
         if isinstance(instance, six.string_types):
-            instance = csv.DictReader([instance], fieldnames=self._headers).next()
+            instance = next(csv.DictReader([instance], fieldnames=self._headers))
 
         predict_fn = self._make_text_predict_fn(labels, instance, text_column_name)
         explainer = LimeTextExplainer(class_names=labels)
@@ -166,7 +169,7 @@ class PredictionExplainer(object):
 
         image_column_name = column_name if column_name else self._image_columns[0]
         if isinstance(instance, six.string_types):
-            instance = csv.DictReader([instance], fieldnames=self._headers).next()
+            instance = next(csv.DictReader([instance], fieldnames=self._headers))
 
         predict_fn = self._make_image_predict_fn(labels, instance, image_column_name)
         explainer = LimeImageExplainer()
@@ -179,3 +182,118 @@ class PredictionExplainer(object):
             hide_color=hide_color, num_features=num_features,
             num_samples=num_samples, batch_size=batch_size)
         return exp
+
+    def _image_gradients(self, input_csvlines, label, image_column_name):
+        """Compute gradients from prob of label to image. Used by integrated gradients (probe)."""
+
+        with tf.Graph().as_default() as g, tf.Session() as sess:
+            logging_level = tf.logging.get_verbosity()
+            try:
+                tf.logging.set_verbosity(tf.logging.ERROR)
+                meta_graph_pb = tf.saved_model.loader.load(
+                    sess=sess,
+                    tags=[tf.saved_model.tag_constants.SERVING],
+                    export_dir=self._model_dir)
+            finally:
+                tf.logging.set_verbosity(logging_level)
+
+            signature = meta_graph_pb.signature_def['serving_default']
+            input_alias_map = {name: tensor_info_proto.name
+                               for (name, tensor_info_proto) in signature.inputs.items()}
+            output_alias_map = {name: tensor_info_proto.name
+                                for (name, tensor_info_proto) in signature.outputs.items()}
+
+            csv_tensor_name = list(input_alias_map.values())[0]
+
+            # The image tensor is already built into ML Workbench graph.
+            float_image = g.get_tensor_by_name("import/gradients_%s:0" % image_column_name)
+            if label not in output_alias_map:
+                raise ValueError('The label "%s" does not exist in output map.' % label)
+
+            prob = g.get_tensor_by_name(output_alias_map[label])
+            grads = tf.gradients(prob, float_image)[0]
+            grads_values = sess.run(fetches=grads, feed_dict={csv_tensor_name: input_csvlines})
+
+        return grads_values
+
+    def probe_image(self, labels, instance, column_name=None, num_scaled_images=50,
+                    top_percent=10):
+        """ Get pixel importance of the image.
+
+        It performs pixel sensitivity analysis by showing only the most important pixels to a
+        certain label in the image. It uses integrated gradients to measure the
+        importance of each pixel.
+
+        Args:
+            labels: labels to compute gradients from.
+            instance: the prediction instance. It needs to conform to model's input. Can be a csv
+              line string, or a dict.
+            img_column_name: the name of the image column to probe. If there is only one image
+                column it can be None.
+            num_scaled_images: Number of scaled images to get grads from. For example, if 10,
+                the image will be scaled by 0.1, 0.2, ..., 0,9, 1.0 and it will produce
+                10 images for grads computation.
+            top_percent: The percentile of pixels to show only. for example, if 10,
+                only top 10% impactful pixels will be shown and rest of the pixels will be black.
+
+        Returns:
+            A tuple. First is the resized original image (299x299x3). Second is a list of
+                the visualization with same size that highlights the most important pixels, one
+                per each label.
+        """
+
+        if len(self._image_columns) > 1 and not column_name:
+            raise ValueError('There are multiple image columns in the input of the model. ' +
+                             'Please specify "column_name".')
+        elif column_name and column_name not in self._image_columns:
+            raise ValueError('Specified column_name "%s" not found in the model input.' %
+                             column_name)
+
+        image_column_name = column_name if column_name else self._image_columns[0]
+        if isinstance(instance, six.string_types):
+            instance = next(csv.DictReader([instance], fieldnames=self._headers))
+
+        image_path = instance[image_column_name]
+
+        with file_io.FileIO(image_path, 'rb') as fi:
+            im = Image.open(fi)
+
+        resized_image = im.resize((299, 299))
+
+        # Produce a list of scaled images, create instances (csv lines) from these images.
+        step = 1. / num_scaled_images
+        scales = np.arange(0.0, 1.0, step) + step
+        csv_lines = []
+        for s in scales:
+            pixels = (np.asarray(resized_image) * s).astype('uint8')
+            scaled_image = Image.fromarray(pixels)
+            buf = io.BytesIO()
+            scaled_image.save(buf, "JPEG")
+            encoded_image = base64.urlsafe_b64encode(buf.getvalue()).decode('ascii')
+            instance_copy = dict(instance)
+            instance_copy[image_column_name] = encoded_image
+
+            buf = six.StringIO()
+            writer = csv.DictWriter(buf, fieldnames=self._headers, lineterminator='')
+            writer.writerow(instance_copy)
+            csv_lines.append(buf.getvalue())
+
+        integrated_gradients_images = []
+        for label in labels:
+          # Send to tf model to get gradients.
+          grads = self._image_gradients(csv_lines, label, image_column_name)
+          integrated_grads = np.average(grads, axis=0)
+
+          # Gray scale the grads by removing color dimension.
+          # abs() is for getting the most impactful pixels regardless positive or negative.
+          grayed = np.average(abs(integrated_grads), axis=2)
+          grayed = np.transpose([grayed, grayed, grayed], axes=[1, 2, 0])
+
+          # Only show the most impactful pixels.
+          p = np.percentile(grayed, 100 - top_percent)
+          viz_window = np.where(grayed > p, 1, 0)
+          vis = resized_image * viz_window
+          im_vis = Image.fromarray(np.uint8(vis))
+          integrated_gradients_images.append(im_vis)
+
+        return resized_image, integrated_gradients_images
