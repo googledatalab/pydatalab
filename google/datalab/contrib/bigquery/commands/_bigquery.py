@@ -130,7 +130,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
       return None
 
     load_task_config['table'] = source_of_table.get('table')
-    
+
     if 'schema' in source_of_table:
       load_task_config['schema'] = source_of_table['schema']
 
