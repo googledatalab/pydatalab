@@ -101,6 +101,10 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
 
     load_task_config = {'type': 'pydatalab.bq.load'}
 
+    # The path URL of the GCS load file(s).
+    if 'path' not in bq_pipeline_input_config:
+      return None
+
     # The path URL of the GCS load file(s), and associated parameters
     load_task_config['path'] = bq_pipeline_input_config.get('path')
 
@@ -112,8 +116,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
 
     # The destination bigquery table name for loading
     source_of_table = bq_pipeline_input_config
-    load_task_config['table'] = source_of_table.get('table')
-    if (load_task_config['table'] is None and not bq_pipeline_transformation_config and
+    if ('table' not in bq_pipeline_input_config and not bq_pipeline_transformation_config and
         bq_pipeline_output_config and 'table' in bq_pipeline_output_config and
             'path' not in bq_pipeline_output_config):
       # If we're here it means that there was no transformation config, but there was an output
@@ -121,11 +124,12 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
       # gcs->table (or load) step, so we take that as the input table (and emit a load
       # operator).
       source_of_table = bq_pipeline_output_config
-      load_task_config['table'] = source_of_table.get('table')
 
     # If a table or path are absent, there is no load to be done so we return None
-    if load_task_config['table'] is None or load_task_config['path'] is None:
+    if 'table' not in source_of_table:
       return None
+
+    load_task_config['table'] = source_of_table.get('table')
 
     if 'schema' in source_of_table:
       load_task_config['schema'] = source_of_table['schema']
