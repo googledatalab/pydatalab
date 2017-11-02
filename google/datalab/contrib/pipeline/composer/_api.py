@@ -40,7 +40,7 @@ class Api(object):
     """The credentials associated with this API client."""
     return self._context.credentials
 
-  def environment_get(self, zone, environment):
+  def environment_details_get(self, zone, environment):
     """ Issues a request to load data from GCS to a BQ table
 
     Args:

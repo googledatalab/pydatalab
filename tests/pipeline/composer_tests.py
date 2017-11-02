@@ -20,6 +20,8 @@ from google.datalab.contrib.pipeline.composer._api import Api
 
 class TestCases(unittest.TestCase):
 
+  TEST_PROJECT_ID = 'test_project'
+
   def validate(self, mock_http_request, expected_url, expected_args=None, expected_data=None,
                expected_headers=None, expected_method=None):
     url = mock_http_request.call_args[0][0]
@@ -43,12 +45,12 @@ class TestCases(unittest.TestCase):
       self.assertNotIn('method', kwargs)
 
   @mock.patch('google.datalab.utils.Http.request')
-  def test_environment_get(self, mock_http_request):
+  def test_environment_details_get(self, mock_http_request):
     api = TestCases._create_api()
-    api.environment_get('ZONE', 'ENVIRONMENT')
+    api.environment_details_get('ZONE', 'ENVIRONMENT')
     self.validate(mock_http_request,
-                  'https://composer.googleapis.com/v1alpha1/projects/%s/locations/%s/'
-                  'environments/%s')
+                  'https://composer.googleapis.com/v1alpha1/projects/test_project/'
+                  'locations/ZONE/environments/ENVIRONMENT', expected_args={'timeoutMs': 60000})
 
   @staticmethod
   def _create_api(context=None):
@@ -58,7 +60,7 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _create_context():
-    project_id = 'test'
+    project_id = TestCases.TEST_PROJECT_ID
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
