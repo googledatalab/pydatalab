@@ -22,24 +22,6 @@ class Api(object):
 
   _DEFAULT_TIMEOUT = 60000
 
-  def __init__(self, context):
-    """Initializes the Composer helper with context information.
-
-    Args:
-      context: a Context object providing project_id and credentials.
-    """
-    self._context = context
-
-  @property
-  def project_id(self):
-    """The project_id associated with this API client."""
-    return self._context.project_id
-
-  @property
-  def credentials(self):
-    """The credentials associated with this API client."""
-    return self._context.credentials
-
   def environment_details_get(self, zone, environment):
     """ Issues a request to load data from GCS to a BQ table
 
@@ -51,10 +33,12 @@ class Api(object):
     Raises:
       Exception if there is an error performing the operation.
     """
-    url = Api._ENDPOINT + (Api._ENVIRONMENTS_PATH % (self.project_id, zone, environment))
+    default_context = google.datalab.Context.default()
+    url = Api._ENDPOINT + (Api._ENVIRONMENTS_PATH % (default_context.project_id, zone, environment))
 
     args = {
         'timeoutMs': Api._DEFAULT_TIMEOUT,
     }
 
-    return google.datalab.utils.Http.request(url, args=args, credentials=self.credentials)
+    return google.datalab.utils.Http.request(url, args=args,
+                                             credentials=default_context.credentials)

@@ -11,8 +11,6 @@
 # the License.
 
 import google.cloud.storage as gcs
-import google.datalab.bigquery as bigquery
-from google.datalab import utils
 
 
 class Composer(object):
@@ -41,4 +39,12 @@ class Composer(object):
 
   @property
   def bucket_name(self):
+    # TODO(rajivpb): Get this programmatically from the Composer API
+    return 'airflow-staging-test36490808-bucket'
+
+  @property
+  def get_bucket_name(self):
+    # environment_details = Api().environment_details_get(self._zone, self._environment)
+
+    # TODO(rajivpb): Get this programmatically from the Composer API
     return 'airflow-staging-test36490808-bucket'

@@ -44,23 +44,17 @@ class TestCases(unittest.TestCase):
     else:
       self.assertNotIn('method', kwargs)
 
+  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.Http.request')
-  def test_environment_details_get(self, mock_http_request):
-    api = TestCases._create_api()
-    api.environment_details_get('ZONE', 'ENVIRONMENT')
+  def test_environment_details_get(self, mock_http_request, mock_context_default):
+    mock_context_default.return_value = TestCases._create_context()
+    Api().environment_details_get('ZONE', 'ENVIRONMENT')
     self.validate(mock_http_request,
-                  'https://composer.googleapis.com/v1alpha1/projects/test_project/'
-                  'locations/ZONE/environments/ENVIRONMENT', expected_args={'timeoutMs': 60000})
-
-  @staticmethod
-  def _create_api(context=None):
-    if not context:
-      context = TestCases._create_context()
-    return Api(context)
+                  'https://composer.googleapis.com/v1alpha1/projects/test_project/locations/ZONE/'
+                  'environments/ENVIRONMENT', expected_args={'timeoutMs': 60000})
 
   @staticmethod
   def _create_context():
     project_id = TestCases.TEST_PROJECT_ID
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
-
