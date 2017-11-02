@@ -309,17 +309,6 @@ tasks:
                      datetime.datetime(2009, 5, 5, 22, 28, 15,
                                        tzinfo=timezone('UTC')))
 
-  @mock.patch('google.cloud.storage.Client')
-  @mock.patch('google.cloud.storage.Blob')
-  @mock.patch('google.cloud.storage.Client.get_bucket')
-  def test_write_to_gcs(self, mock_client_get_bucket, mock_blob_class, mock_client):
-    mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
-    mock_blob = mock_blob_class.return_value
-    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
-    test_pipeline = pipeline.Pipeline('foo_pipeline', dag_dict)
-    test_pipeline.write_to_gcs()
-    mock_blob.upload_from_string.assert_called_with(test_pipeline._get_airflow_spec())
-
   def test_get_default_args_with_email(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),

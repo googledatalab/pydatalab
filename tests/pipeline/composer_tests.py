@@ -15,52 +15,17 @@ import mock
 
 import google.auth
 import google.datalab.utils
-from google.datalab.contrib.pipeline.composer._api import Api
+from google.datalab.contrib.pipeline.composer._composer import Composer
 
 
 class TestCases(unittest.TestCase):
 
-  TEST_PROJECT_ID = 'test_project'
-
-  def validate(self, mock_http_request, expected_url, expected_args=None, expected_data=None,
-               expected_headers=None, expected_method=None):
-    url = mock_http_request.call_args[0][0]
-    kwargs = mock_http_request.call_args[1]
-    self.assertEquals(expected_url, url)
-    if expected_args is not None:
-      self.assertEquals(expected_args, kwargs['args'])
-    else:
-      self.assertNotIn('args', kwargs)
-    if expected_data is not None:
-      self.assertEquals(expected_data, kwargs['data'])
-    else:
-      self.assertNotIn('data', kwargs)
-    if expected_headers is not None:
-      self.assertEquals(expected_headers, kwargs['headers'])
-    else:
-      self.assertNotIn('headers', kwargs)
-    if expected_method is not None:
-      self.assertEquals(expected_method, kwargs['method'])
-    else:
-      self.assertNotIn('method', kwargs)
-
-  @mock.patch('google.datalab.utils.Http.request')
-  def test_environment_details_get(self, mock_http_request):
-    api = TestCases._create_api()
-    api.environment_details_get('ZONE', 'ENVIRONMENT')
-    self.validate(mock_http_request,
-                  'https://composer.googleapis.com/v1alpha1/projects/test_project/'
-                  'locations/ZONE/environments/ENVIRONMENT', expected_args={'timeoutMs': 60000})
-
-  @staticmethod
-  def _create_api(context=None):
-    if not context:
-      context = TestCases._create_context()
-    return Api(context)
-
-  @staticmethod
-  def _create_context():
-    project_id = TestCases.TEST_PROJECT_ID
-    creds = mock.Mock(spec=google.auth.credentials.Credentials)
-    return google.datalab.Context(project_id, creds)
-
+  @mock.patch('google.cloud.storage.Client')
+  @mock.patch('google.cloud.storage.Blob')
+  @mock.patch('google.cloud.storage.Client.get_bucket')
+  def test_deploy(self, mock_client_get_bucket, mock_blob_class, mock_client):
+      mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
+      mock_blob = mock_blob_class.return_value
+      test_composer = Composer('foo_zone', 'foo_environment')
+      test_composer.deploy('foo_name', 'foo_dag_string')
+      mock_blob.upload_from_string.assert_called_with('foo_dag_string')

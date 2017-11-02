@@ -39,14 +39,19 @@ def _pipeline_cell(args, cell_body):
     """
     name = args.get('name')
     if name is None:
-        raise Exception("Pipeline name was not specified.")
+        raise Exception('Pipeline name was not specified.')
 
     bq_pipeline_config = utils.commands.parse_config(
         cell_body, utils.commands.notebook_environment())
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
-    pipeline.write_to_gcs()
+
+    # If a composer environment and zone are specified, we deploy to composer
+    if 'environment' in args and 'zone' in args:
+        composer = google.datalab.contrib.pipeline.composer._composer.Composer(
+            args.get('zone'), args.get('environment'))
+        composer.deploy(name, pipeline._get_airflow_spec())
 
     # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
     return pipeline._get_airflow_spec()

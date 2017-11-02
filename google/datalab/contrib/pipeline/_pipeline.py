@@ -83,14 +83,6 @@ from pytz import timezone
         up_steam_statements
     return self._airflow_spec
 
-  # TODO(rajivpb): Un-hardcode the bucket. https://github.com/googledatalab/pydatalab/issues/501
-  def write_to_gcs(self):
-    client = gcs.Client()
-    bucket = client.get_bucket('airflow-staging-test36490808-bucket')
-    filename = 'dags/{0}.py'.format(self._name)
-    blob = gcs.Blob(filename, bucket)
-    blob.upload_from_string(self._get_airflow_spec())
-
   @staticmethod
   def get_pipeline_spec(spec_str, env=None):
     """ Gets a dict representation of the pipeline-spec, given a yaml string.

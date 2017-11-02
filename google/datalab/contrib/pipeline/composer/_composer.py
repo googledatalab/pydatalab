@@ -22,22 +22,20 @@ class Composer(object):
   This object can be used to generate the python airflow spec.
   """
 
-  def __init__(self, context, zone, environment):
+  def __init__(self, zone, environment):
     """ Initializes an instance of a Composer object.
 
     Args:
-      context: Pydatalab context object.
       zone: Zone in which Composer environment has been created.
       environment: Name of the Composer environment.
     """
-    self._context = context
     self._zone = zone
     self._environment = environment
 
-  def deploy(self, dag_string):
+  def deploy(self, name, dag_string):
     client = gcs.Client()
     bucket = client.get_bucket(self.bucket_name)
-    filename = 'dags/{0}.py'.format(self._name)
+    filename = 'dags/{0}.py'.format(name)
     blob = gcs.Blob(filename, bucket)
     blob.upload_from_string(dag_string)
 
