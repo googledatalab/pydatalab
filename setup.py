@@ -33,6 +33,7 @@ setup(
     'google.datalab.contrib.mlworkbench.commands',
     'google.datalab.contrib.pipeline',
     'google.datalab.contrib.pipeline.commands',
+    'google.datalab.contrib.pipeline.composer',
     'google.datalab.data',
     'google.datalab.kernel',
     'google.datalab.ml',
