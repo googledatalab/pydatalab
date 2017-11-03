@@ -462,8 +462,7 @@ class TestCases(unittest.TestCase):
         'SELECT @column FROM `{0}` where endpoint=@endpoint'.format(env['input_table_format']))
 
     mock_environment.return_value = env
-    args = {'name': 'bq_pipeline_test'}
-    # TODO(rajivpb): The references to foo_query need to be resolved.
+    args = {'name': 'bq_pipeline_test', 'environment': 'foo_environment', 'zone': 'foo_zone'}
     cell_body = """
             emails: foo1@test.com,foo2@test.com
             schedule:
