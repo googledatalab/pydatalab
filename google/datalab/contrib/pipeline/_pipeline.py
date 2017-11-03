@@ -10,7 +10,6 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google.cloud.storage as gcs
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
 
@@ -82,14 +81,6 @@ from pytz import timezone
     self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
         up_steam_statements
     return self._airflow_spec
-
-  # TODO(rajivpb): Un-hardcode the bucket. https://github.com/googledatalab/pydatalab/issues/501
-  def write_to_gcs(self):
-    client = gcs.Client()
-    bucket = client.get_bucket('airflow-staging-test36490808-bucket')
-    filename = 'dags/{0}.py'.format(self._name)
-    blob = gcs.Blob(filename, bucket)
-    blob.upload_from_string(self._get_airflow_spec())
 
   @staticmethod
   def get_pipeline_spec(spec_str, env=None):
