@@ -111,6 +111,14 @@ tasks:
         task_id, task_details)
     self.assertEqual(operator_def, "foo = BigQueryOperator(task_id='foo_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)\n")  # noqa
 
+    # Adding newlines to the query to mimic actual usage of %%bq query ...
+    task_details['query'] = google.datalab.bigquery.Query("""SELECT *
+FROM publicdata.samples.wikipedia
+LIMIT 5""")
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+        task_id, task_details)
+    self.assertEqual(operator_def, "foo = BigQueryOperator(task_id='foo_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)\n")  # noqa
+
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_extract_operator_definition(self, mock_table):
     mock_table.return_value = bq.Table(

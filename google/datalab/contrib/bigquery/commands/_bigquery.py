@@ -183,9 +183,10 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
         if 'csv' in bq_pipeline_input_config:
           execute_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
 
-    # Stuff from the transformation config
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
-    execute_task_config['sql'] = query.sql
+    # The user's sql could span multiple lines. Here, we replace new-lines (and the carriage-return)
+    # with spaces because it could result in malformed python.
+    execute_task_config['sql'] = query.sql.replace('\n', ' ').replace('\r', ' ')
 
     # Stuff from the output config
     if bq_pipeline_output_config:

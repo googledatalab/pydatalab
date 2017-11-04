@@ -240,7 +240,10 @@ default_args = {{
   @staticmethod
   def _get_bq_execute_params(operator_task_details):
     if 'query' in operator_task_details:
-      operator_task_details['bql'] = operator_task_details['query'].sql
+      # The user's sql could span multiple lines. Here, we replace new-lines (and the
+      # carriage-return) with spaces because it could result in malformed python.
+      operator_task_details['bql'] = operator_task_details['query'].sql.replace('\n', ' ').replace(
+        '\r', ' ')
       del operator_task_details['query']
 
     if 'parameters' in operator_task_details:

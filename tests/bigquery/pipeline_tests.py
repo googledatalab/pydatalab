@@ -370,8 +370,10 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_get_execute_parameters(self, mock_notebook_item):
-    mock_notebook_item.return_value = google.datalab.bigquery.Query(
-        'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint')
+    # Adding newlines to the query to mimic actual usage of %%bq query ...
+    mock_notebook_item.return_value = google.datalab.bigquery.Query("""SELECT @column
+FROM publicdata.samples.wikipedia
+WHERE endpoint=@endpoint""")
 
     transformation_config = {
       'query': 'foo_query'
@@ -397,7 +399,7 @@ class TestCases(unittest.TestCase):
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia WHERE endpoint=@endpoint',
       'table': 'foo_table',
       'mode': 'foo_mode',
       'parameters': parameters_config
@@ -410,7 +412,7 @@ class TestCases(unittest.TestCase):
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia WHERE endpoint=@endpoint',
       'parameters': parameters_config
     }
 
@@ -422,7 +424,7 @@ class TestCases(unittest.TestCase):
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'sql': 'SELECT @column FROM publicdata.samples.wikipedia WHERE endpoint=@endpoint',
       'data_source': 'foo_data_source',
       'path': 'test_path',
       'schema': 'test_schema',
