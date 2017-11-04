@@ -39,8 +39,8 @@ from pytz import timezone
   # These are documented here:
   # https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables
   _airflow_macros = {
-    # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-    'ds': '{{ ds_nodash }}',
+    # formatted as YYYY-MM-DD
+    'ds': '{{ ds }}',
     # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons, i.e. in
     # the YYYYMMDDTHHMMSSmmmmmm format.
     'ts': '{{ ts_nodash }}',

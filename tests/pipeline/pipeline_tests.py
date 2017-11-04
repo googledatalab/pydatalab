@@ -94,7 +94,7 @@ tasks:
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
-      """foo_task = BigQueryOperator(task_id='foo_task_id', bql='SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}`', use_legacy_sql=False, dag=dag)
+      """foo_task = BigQueryOperator(task_id='foo_task_id', bql='SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds }}`', use_legacy_sql=False, dag=dag)
 """)  # noqa
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
