@@ -90,7 +90,7 @@ tasks:
     task_details = {}
     task_details['type'] = 'BigQuery'
     task_details['query'] = google.datalab.bigquery.Query(
-      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_%(ds)s`')
+      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_%(ds_nodash)s`')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,

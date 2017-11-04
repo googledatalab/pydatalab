@@ -40,10 +40,15 @@ from pytz import timezone
   # https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables
   _airflow_macros = {
     # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-    'ds': '{{ ds_nodash }}',
+    'ds': '{{ ds }}',
     # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons, i.e. in
     # the YYYYMMDDTHHMMSSmmmmmm format.
-    'ts': '{{ ts_nodash }}',
+    'ts': '{{ ts }}',
+    # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
+    'ds_nodash': '{{ ds_nodash }}',
+    # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons, i.e. in
+    # the YYYYMMDDTHHMMSSmmmmmm format.
+    'ts_nodash': '{{ ts_nodash }}',
   }
 
   def __init__(self, name, pipeline_spec):

@@ -455,8 +455,8 @@ class TestCases(unittest.TestCase):
     env = {
       'endpoint': 'Interact2',
       'job_id': '1234',
-      'input_table_format': 'cloud-datalab-samples.httplogs.logs_%(ds)s',
-      'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(ds)s'
+      'input_table_format': 'cloud-datalab-samples.httplogs.logs_%(ds_nodash)s',
+      'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(ds_nodash)s'
     }
     mock_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT @column FROM `{0}` where endpoint=@endpoint'.format(env['input_table_format']))
@@ -470,7 +470,7 @@ class TestCases(unittest.TestCase):
                 end: 2009-05-06T22:28:15Z
                 interval: '@hourly'
             input:
-                path: gs://bucket/cloud-datalab-samples-httplogs_%(ds)s
+                path: gs://bucket/cloud-datalab-samples-httplogs_%(ds_nodash)s
                 table: $input_table_format
                 csv:
                   header: True
@@ -490,7 +490,7 @@ class TestCases(unittest.TestCase):
             transformation:
                 query: foo_query
             output:
-                path: gs://bucket/cloud-datalab-samples-endpoints_%(ds)s.csv
+                path: gs://bucket/cloud-datalab-samples-endpoints_%(ds_nodash)s.csv
                 table: $output_table_format
             parameters:
                 - name: endpoint
