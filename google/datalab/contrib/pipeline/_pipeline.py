@@ -164,7 +164,7 @@ default_args = {{
     # If the type is a python non-string (best guess), we don't quote it.
     if type(param_value) in [int, bool, float, type(None), list, dict]:
       return ', {0}={1}'
-    return ', {0}=\'{1}\''
+    return ', {0}="""{1}"""'
 
   def _get_dag_definition(self, schedule_interval):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
@@ -240,10 +240,7 @@ default_args = {{
   @staticmethod
   def _get_bq_execute_params(operator_task_details):
     if 'query' in operator_task_details:
-      # The user's sql could span multiple lines. Here, we replace new-lines (and the
-      # carriage-return) with spaces because it could result in malformed python.
-      operator_task_details['bql'] = operator_task_details['query'].sql.replace('\n', ' ').replace(
-        '\r', ' ')
+      operator_task_details['bql'] = operator_task_details['query'].sql
       del operator_task_details['query']
 
     if 'parameters' in operator_task_details:
@@ -291,8 +288,7 @@ default_args = {{
       operator_task_details['source_project_dataset_table'] = table.full_name
       del operator_task_details['table']
     if 'path' in operator_task_details:
-      operator_task_details['destination_cloud_storage_uris'] = '[{0}]'.format(
-          operator_task_details['path'])
+      operator_task_details['destination_cloud_storage_uris'] = [operator_task_details['path']]
       del operator_task_details['path']
     if 'format' in operator_task_details:
       operator_task_details['export_format'] = 'CSV' if operator_task_details['format'] == 'csv' \

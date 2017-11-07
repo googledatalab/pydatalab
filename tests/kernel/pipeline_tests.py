@@ -163,9 +163,9 @@ default_args = {
 
 dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)
 
-foo_task_1 = BigQueryOperator(task_id='foo_task_1_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)
-foo_task_2 = BashOperator(task_id='foo_task_2_id', bash_command='date', dag=dag)
-foo_task_3 = BashOperator(task_id='foo_task_3_id', bash_command='date -u', dag=dag)
+foo_task_1 = BigQueryOperator(task_id='foo_task_1_id', bql=\"\"\"SELECT * FROM publicdata.samples.wikipedia LIMIT 5\"\"\", use_legacy_sql=False, dag=dag)
+foo_task_2 = BashOperator(task_id='foo_task_2_id', bash_command=\"\"\"date\"\"\", dag=dag)
+foo_task_3 = BashOperator(task_id='foo_task_3_id', bash_command=\"\"\"date -u\"\"\", dag=dag)
 foo_task_3.set_upstream(print_pdt_date)
 """  # noqa
                      )

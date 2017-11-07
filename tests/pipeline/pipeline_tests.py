@@ -69,10 +69,8 @@ tasks:
     task_details['type'] = 'Bash'
     task_details['bash_command'] = 'date'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
-    self.assertEqual(
-        operator_def,
-        'print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', '
-        'bash_command=\'date\', dag=dag)\n')
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", dag=dag)
+""")  # noqa
 
   def test_get_templated_bash_operator_definition(self):
     task_id = 'foo_task'
@@ -82,7 +80,7 @@ tasks:
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
-      """foo_task = BashOperator(task_id='foo_task_id', bash_command='echo {{ ds }}', dag=dag)
+      """foo_task = BashOperator(task_id='foo_task_id', bash_command=\"\"\"echo {{ ds }}\"\"\", dag=dag)
 """)  # noqa
 
   def test_get_templated_bq_definition(self):
@@ -94,7 +92,7 @@ tasks:
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
-      """foo_task = BigQueryOperator(task_id='foo_task_id', bql='SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}`', use_legacy_sql=False, dag=dag)
+      """foo_task = BigQueryOperator(task_id='foo_task_id', bql=\"\"\"SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}`\"\"\", use_legacy_sql=False, dag=dag)
 """)  # noqa
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
@@ -105,11 +103,6 @@ tasks:
     task_id = 'foo'
     task_details = {}
     task_details['type'] = 'BigQuery'
-    task_details['query'] = google.datalab.bigquery.Query(
-      'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
-        task_id, task_details)
-    self.assertEqual(operator_def, "foo = BigQueryOperator(task_id='foo_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)\n")  # noqa
 
     # Adding newlines to the query to mimic actual usage of %%bq query ...
     task_details['query'] = google.datalab.bigquery.Query("""SELECT *
@@ -117,7 +110,8 @@ FROM publicdata.samples.wikipedia
 LIMIT 5""")
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    self.assertEqual(operator_def, "foo = BigQueryOperator(task_id='foo_id', bql='SELECT * FROM publicdata.samples.wikipedia LIMIT 5', use_legacy_sql=False, dag=dag)\n")  # noqa
+    self.assertEqual(operator_def, """foo = BigQueryOperator(task_id='foo_id', bql=\"\"\"SELECT *\nFROM publicdata.samples.wikipedia\nLIMIT 5\"\"\", use_legacy_sql=False, dag=dag)
+""")  # noqa
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_extract_operator_definition(self, mock_table):
@@ -135,21 +129,14 @@ LIMIT 5""")
     task_details['compress'] = True
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    self.assertEqual(operator_def, ('foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', '
-                                    'compression=\'GZIP\', destination_cloud_storage_uris=\''
-                                    '[foo_path]\', export_format=\'CSV\', field_delimiter=\'$\', '
-                                    'print_header=False, source_project_dataset_table=\''
-                                    'foo_project.foo_dataset.foo_table\', dag=dag)\n'))
+    self.assertEqual(operator_def, """foo = BigQueryToCloudStorageOperator(task_id='foo_id', compression=\"\"\"GZIP\"\"\", destination_cloud_storage_uris=[\'foo_path\'], export_format=\"\"\"CSV\"\"\", field_delimiter=\"\"\"$\"\"\", print_header=False, source_project_dataset_table=\"\"\"foo_project.foo_dataset.foo_table\"\"\", dag=dag)
+""")  # noqa
 
     task_details['format'] = 'json'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    self.assertEqual(operator_def, ('foo = BigQueryToCloudStorageOperator(task_id=\'foo_id\', '
-                                    'compression=\'GZIP\', destination_cloud_storage_uris=\''
-                                    '[foo_path]\', export_format=\'NEWLINE_DELIMITED_JSON\', '
-                                    'field_delimiter=\'$\', print_header=False, '
-                                    'source_project_dataset_table=\''
-                                    'foo_project.foo_dataset.foo_table\', dag=dag)\n'))
+    self.assertEqual(operator_def, """foo = BigQueryToCloudStorageOperator(task_id='foo_id', compression=\"\"\"GZIP\"\"\", destination_cloud_storage_uris=[\'foo_path\'], export_format=\"\"\"NEWLINE_DELIMITED_JSON\"\"\", field_delimiter=\"\"\"$\"\"\", print_header=False, source_project_dataset_table=\"\"\"foo_project.foo_dataset.foo_table\"\"\", dag=dag)
+""")  # noqa
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_load_operator_definition(self, mock_table):
@@ -166,21 +153,14 @@ LIMIT 5""")
     task_details['skip'] = False
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    self.assertEqual(operator_def, ('foo = GoogleCloudStorageToBigQueryOperator(task_id=\'foo_id\','
-                                    ' bucket=\'foo_bucket\', destination_project_dataset_table='
-                                    '\'foo_project.foo_dataset.foo_table\', export_format=\'CSV\', '
-                                    'field_delimiter=\'$\', skip_leading_rows=False, '
-                                    'source_objects=\'foo_file.csv\', dag=dag)\n'))
+    self.assertEqual(operator_def, """foo = GoogleCloudStorageToBigQueryOperator(task_id='foo_id', bucket=\"\"\"foo_bucket\"\"\", destination_project_dataset_table=\"\"\"foo_project.foo_dataset.foo_table\"\"\", export_format=\"\"\"CSV\"\"\", field_delimiter=\"\"\"$\"\"\", skip_leading_rows=False, source_objects=\"\"\"foo_file.csv\"\"\", dag=dag)
+""")  # noqa
 
     task_details['format'] = 'json'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    self.assertEqual(operator_def, ('foo = GoogleCloudStorageToBigQueryOperator(task_id=\'foo_id\','
-                                    ' bucket=\'foo_bucket\', destination_project_dataset_table='
-                                    '\'foo_project.foo_dataset.foo_table\', '
-                                    'export_format=\'NEWLINE_DELIMITED_JSON\', '
-                                    'field_delimiter=\'$\', skip_leading_rows=False, '
-                                    'source_objects=\'foo_file.csv\', dag=dag)\n'))
+    self.assertEqual(operator_def, """foo = GoogleCloudStorageToBigQueryOperator(task_id='foo_id', bucket=\"\"\"foo_bucket\"\"\", destination_project_dataset_table=\"\"\"foo_project.foo_dataset.foo_table\"\"\", export_format=\"\"\"NEWLINE_DELIMITED_JSON\"\"\", field_delimiter=\"\"\"$\"\"\", skip_leading_rows=False, source_objects=\"\"\"foo_file.csv\"\"\", dag=dag)
+""")  # noqa
 
   def test_get_pydatalab_bq_load_operator_definition(self):
     task_id = 'bq_pipeline_load_task'
@@ -212,7 +192,7 @@ LIMIT 5""")
 
     actual = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
-    pattern = re.compile("""bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=',', format='csv', mode='create', path='test/path', quote='"', schema=(.*), skip=0, strict=True, table='project.test.table', dag=dag\)""")  # noqa
+    pattern = re.compile("""bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=\"\"\",\"\"\", format=\"\"\"csv\"\"\", mode=\"\"\"create\"\"\", path=\"\"\"test/path\"\"\", quote=\"\"\""\"\"\", schema=(.*), skip=0, strict=True, table=\"\"\"project.test.table\"\"\", dag=dag\)""")  # noqa
 
     # group(1) has the string that follows the "schema=", i.e. the list of dicts.
     self.assertEqual(pattern.match(actual).group(1), str(schema))
@@ -227,7 +207,7 @@ LIMIT 5""")
     task_details['table'] = 'project.test.table'
 
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
-    expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode='create', sql='foo_query', table='project.test.table', dag=dag)
+    expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode=\"\"\"create\"\"\", sql=\"\"\"foo_query\"\"\", table=\"\"\"project.test.table\"\"\", dag=dag)
 """  # noqa
     self.assertEqual(actual, expected)
 
@@ -243,7 +223,7 @@ LIMIT 5""")
     task_details['path'] = 'test/path'
 
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
-    expected = """bq_pipeline_extract_task = ExtractOperator(task_id='bq_pipeline_extract_task_id', billing='foo', compress=True, delimiter=',', format='csv', header=True, path='test/path', dag=dag)
+    expected = """bq_pipeline_extract_task = ExtractOperator(task_id='bq_pipeline_extract_task_id', billing=\"\"\"foo\"\"\", compress=True, delimiter=\"\"\",\"\"\", format=\"\"\"csv\"\"\", header=True, path=\"\"\"test/path\"\"\", dag=dag)
 """  # noqa
     self.assertEqual(actual, expected)
 
@@ -293,7 +273,7 @@ LIMIT 5""")
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(operator_def,
                      'id = UnknownOperator(''task_id=\'id_id\', ' +
-                     'bar_typed=False, foo=\'bar\', dag=dag)\n')
+                     'bar_typed=False, foo="""bar""", dag=dag)\n')
 
   def test_get_random_operator_classname(self):
     self.assertEqual(pipeline.Pipeline._get_operator_classname('Unknown'),
