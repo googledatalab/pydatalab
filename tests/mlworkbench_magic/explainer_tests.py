@@ -18,6 +18,7 @@ from PIL import Image
 import mock
 import numpy as np
 import os
+import pandas as pd
 import shutil
 import six
 from six.moves.urllib.request import urlopen
@@ -59,6 +60,69 @@ class TestMLExplainer(unittest.TestCase):
   def tearDown(self):
     mlmagic.MLTOOLBOX_CODE_PATH = self._code_path
     shutil.rmtree(self._test_dir)
+
+  def _create_tabular_test_data(self):
+    """Create tabular model with text."""
+
+    test_data = """1,5.0,monday,word1 word2 word3,true
+    2,3.2,tuesday,word1 word3,true
+    3,-1.1,friday,word1,false"""
+    train_csv = os.path.join(self._test_dir, 'train.csv')
+    with open(train_csv, 'w') as f:
+      f.write(test_data)
+
+    df = pd.read_csv(train_csv, names=['key', 'num', 'weekday', 'garbage', 'target'])
+    analyze_dir = os.path.join(self._test_dir, 'analysistab')
+    train_dir = os.path.join(self._test_dir, 'traintab')
+
+    mlmagic.ml(
+        line='dataset create',
+        cell="""\
+            format: csv
+            name: mytabular
+            schema:
+                - name: key
+                  type: INTEGER
+                - name: num
+                  type: FLOAT
+                - name: weekday
+                  type: STRING
+                - name: garbage
+                  type: STRING
+                - name: target
+                  type: STRING
+            train: %s
+            eval: %s""" % (train_csv, train_csv))
+
+    mlmagic.ml(
+        line='analyze',
+        cell="""\
+            output: %s
+            data: mytabular
+            features:
+              key:
+                transform: key
+              num:
+                transform: scale
+              weekday:
+                transform: one_hot
+              garbage:
+                transform: bag_of_words
+              target:
+                transform: target""" % (analyze_dir))
+
+    mlmagic.ml(
+        line='train',
+        cell="""\
+            output: %s
+            analysis: %s
+            data: mytabular
+            notb: true
+            model_args:
+              model: linear_classification
+              top-n: 0
+              max-steps: 300""" % (train_dir, analyze_dir))
+    return df
 
   def _create_text_test_data(self):
     """Create text model."""
@@ -259,3 +323,26 @@ class TestMLExplainer(unittest.TestCase):
       arr = np.asarray(im)
       arr = arr.reshape(-1)
       self.assertGreater(float((arr == 0).sum()) / len(arr), 0.79)
+
+  @unittest.skipIf(not six.PY2, 'Integration test that invokes mlworkbench with DataFlow.')
+  def test_tabular_explainer(self):
+    """Test tabular explainer."""
+
+    train_df = self._create_tabular_test_data()
+
+    explainer = PredictionExplainer(os.path.join(self._test_dir, 'traintab', 'model'))
+    exp_instance = explainer.explain_tabular(train_df, ['true', 'false'], '8,-1.0,tuesday,word3',
+                                             num_features=5)
+    for i in range(2):
+      label_data = exp_instance.as_list(label=i)
+      # There should be 2 entries. One for categorical ("weekday") and one for numeric ("num")
+      # label_data should look like:
+      #    [
+      #      ("weekday=tuesday", 0.02),
+      #      ("num > 1.0", 0.03),
+      #    ]
+      self.assertEqual(2, len(label_data))
+      keys = [x[0] for x in label_data]
+      self.assertIn('weekday=tuesday', keys)
+      keys.remove('weekday=tuesday')
+      self.assertTrue('num' in keys[0])
