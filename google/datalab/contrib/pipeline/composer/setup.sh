@@ -1,19 +1,35 @@
 #!/usr/bin/env bash
+# We remove the local installation and install a version that allows custom repositories.
+sudo apt-get -y remove google-cloud-sdk
+
+curl https://sdk.cloud.google.com | CLOUDSDK_CORE_DISABLE_PROMPTS=1 bash
+
+# Recycling shell to pick up the new gcloud.
+exec -l $SHELL
+
+# These have to be set here and not on the top of the scrippt because we recycle the shell somewhere
+# between the start of this script and here.
 PROJECT=${1:-cloud-ml-dev}
 EMAIL=${2:-rajivpb@google.com}
 ZONE=${3:-us-central1}
-ENVIRONMENT=${3:-datalab-testing}
+ENVIRONMENT=${3:-datalab-testing-1}
 
 gcloud config set project $PROJECT
+gcloud config set account $EMAIL
 gcloud auth login --activate $EMAIL
-sudo gcloud components repositories add https://storage.googleapis.com/composer-trusted-tester/components-2.json
 
-sudo apt-get update
-sudo apt-get --only-upgrade install kubectl google-cloud-sdk google-cloud-sdk-datastore-emulator \
-google-cloud-sdk-pubsub-emulator google-cloud-sdk-app-engine-go google-cloud-sdk-app-engine-java \
-google-cloud-sdk-app-engine-python google-cloud-sdk-cbt google-cloud-sdk-bigtable-emulator \
-google-cloud-sdk-datalab
+gcloud components repositories add https://storage.googleapis.com/composer-trusted-tester/components-2.json
+gcloud components update -q
+gcloud components install -q alpha kubectl
 
 gcloud config set composer/location $ZONE
 gcloud alpha composer environments create $ENVIRONMENT
 gcloud alpha composer environments describe $ENVIRONMENT
+
+
+# To un-install gcloud:
+# gcloud info --format="value(installation.sdk_root)"
+# that'll give you the installation directory of whichever installation gets executed
+# you can remove that entire directory
+# restart shell, rinse and repeat until gcloud is no longer on your path
+# you might have to clean up your PATH in .bashrc and nuke the .config/gcloud directory
