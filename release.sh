@@ -17,7 +17,7 @@
 # to the pypi server specified as first parameter, defaults to testpypi
 # In order to run this script locally, make sure you have the following:
 # - Typescript installed
-# - A configured ~/.pypi.rc containing your pypi/testpypi credentials with
+# - A configured ~/.pypirc containing your pypi/testpypi credentials with
 #   the server names matching the name you're passing in. Do not include
 #   the repository URLs in the config file, this has been deprecated.
 # - Make sure the package version string in the setup.py file is updated.
@@ -28,7 +28,7 @@
 tsc --module amd --noImplicitAny datalab/notebook/static/*.ts
 tsc --module amd --noImplicitAny google/datalab/notebook/static/*.ts
 
-server="${1:-https://test.pypi.org/legacy/}"
+server="${1:-https://test.pypi.python.org/pypi}"
 echo "Submitting package to ${server}"
 
 # Build and upload a distribution package

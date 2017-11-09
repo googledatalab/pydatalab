@@ -39,11 +39,15 @@ from pytz import timezone
   # These are documented here:
   # https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables
   _airflow_macros = {
+    # the datetime formatted as YYYY-MM-DD
+    'ds': '{{ ds }}',
+    # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
+    'ts': '{{ ts }}',
     # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-    'ds': '{{ ds_nodash }}',
-    # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons, i.e. in
-    # the YYYYMMDDTHHMMSSmmmmmm format.
-    'ts': '{{ ts_nodash }}',
+    'ds_nodash': '{{ ds_nodash }}',
+    # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
+    # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
+    'ts_nodash': '{{ ts_nodash }}',
   }
 
   def __init__(self, name, pipeline_spec):
@@ -164,7 +168,7 @@ default_args = {{
     # If the type is a python non-string (best guess), we don't quote it.
     if type(param_value) in [int, bool, float, type(None), list, dict]:
       return ', {0}={1}'
-    return ', {0}=\'{1}\''
+    return ', {0}="""{1}"""'
 
   def _get_dag_definition(self, schedule_interval):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
@@ -288,8 +292,7 @@ default_args = {{
       operator_task_details['source_project_dataset_table'] = table.full_name
       del operator_task_details['table']
     if 'path' in operator_task_details:
-      operator_task_details['destination_cloud_storage_uris'] = '[{0}]'.format(
-          operator_task_details['path'])
+      operator_task_details['destination_cloud_storage_uris'] = [operator_task_details['path']]
       del operator_task_details['path']
     if 'format' in operator_task_details:
       operator_task_details['export_format'] = 'CSV' if operator_task_details['format'] == 'csv' \

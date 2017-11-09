@@ -20,6 +20,7 @@ import base64
 import csv
 import io
 import numpy as np
+import pandas as pd
 from PIL import Image
 import six
 import tensorflow as tf
@@ -41,11 +42,16 @@ class PredictionExplainer(object):
         schema, features = _local_predict.get_model_schema_and_features(model_dir)
         self._headers = [x['name'] for x in schema]
         self._text_columns, self._image_columns = [], []
+        self._categorical_columns, self._numeric_columns = [], []
         for k, v in six.iteritems(features):
             if v['transform'] in ['image_to_vec']:
                 self._image_columns.append(v['source_column'])
             elif v['transform'] in ['bag_of_words', 'tfidf']:
                 self._text_columns.append(v['source_column'])
+            elif v['transform'] in ['one_hot', 'embedding']:
+                self._categorical_columns.append(v['source_column'])
+            elif v['transform'] in ['identity', 'scale']:
+                self._numeric_columns.append(v['source_column'])
 
     def _make_text_predict_fn(self, labels, instance, column_to_explain):
         """Create a predict_fn that can be used by LIME text explainer. """
@@ -83,6 +89,115 @@ class PredictionExplainer(object):
 
         return _predict_fn
 
+    def _get_unique_categories(self, df):
+        """Get all categories for each categorical columns from training data."""
+
+        categories = []
+        for col in self._categorical_columns:
+            categocial = pd.Categorical(df[col])
+            col_categories = list(map(str, categocial.categories))
+            col_categories.append('_UNKNOWN')
+            categories.append(col_categories)
+        return categories
+
+    def _preprocess_data_for_tabular_explain(self, df, categories):
+        """Get preprocessed training set in numpy array, and categorical names from raw training data.
+
+        LIME tabular explainer requires a training set to know the distribution of numeric and
+        categorical values. The training set has to be numpy arrays, with all categorical values
+        converted to indices. It also requires list of names for each category.
+        """
+
+        df = df.copy()
+
+        # Remove non tabular columns (text, image).
+        for col in list(df.columns):
+            if col not in (self._categorical_columns + self._numeric_columns):
+                del df[col]
+
+        # Convert categorical values into indices.
+        for col_name, col_categories in zip(self._categorical_columns, categories):
+            df[col_name] = df[col_name].apply(
+                lambda x: col_categories.index(str(x)) if str(x) in col_categories
+                else len(col_categories) - 1)
+
+        # Make sure numeric values are really numeric
+        for numeric_col in self._numeric_columns:
+            df[numeric_col] = df[numeric_col].apply(lambda x: float(x))
+
+        return df.as_matrix(self._categorical_columns + self._numeric_columns)
+
+    def _make_tabular_predict_fn(self, labels, instance, categories):
+        """Create a predict_fn that can be used by LIME tabular explainer. """
+
+        def _predict_fn(np_instance):
+
+            df = pd.DataFrame(
+                np_instance,
+                columns=(self._categorical_columns + self._numeric_columns))
+
+            # Convert categorical indices back to categories.
+            for col_name, col_categories in zip(self._categorical_columns, categories):
+                df[col_name] = df[col_name].apply(lambda x: col_categories[int(x)])
+
+            # Add columns that do not exist in the perturbed data,
+            # such as key, text, and image data.
+            for col_name in self._headers:
+                if col_name not in (self._categorical_columns + self._numeric_columns):
+                    df[col_name] = instance[col_name]
+
+            r = _local_predict.get_prediction_results(
+                self._model_dir, df, self._headers, with_source=False)
+            probs = _local_predict.get_probs_for_labels(labels, r)
+            probs = np.asarray(probs)
+            return probs
+
+        return _predict_fn
+
+    def explain_tabular(self, trainset, labels, instance, num_features=5, kernel_width=3):
+        """Explain categorical and numeric features for a prediction.
+
+        It analyze the prediction by LIME, and returns a report of the most impactful tabular
+        features contributing to certain labels.
+
+        Args:
+          trainset: a DataFrame representing the training features that LIME can use to decide
+              value distributions.
+          labels: a list of labels to explain.
+          instance: the prediction instance. It needs to conform to model's input. Can be a csv
+              line string, or a dict.
+          num_features: maximum number of features to show.
+          kernel_width: Passed to LIME LimeTabularExplainer directly.
+
+        Returns:
+          A LIME's lime.explanation.Explanation.
+        """
+        from lime.lime_tabular import LimeTabularExplainer
+
+        if isinstance(instance, six.string_types):
+            instance = next(csv.DictReader([instance], fieldnames=self._headers))
+
+        categories = self._get_unique_categories(trainset)
+        np_trainset = self._preprocess_data_for_tabular_explain(trainset, categories)
+        predict_fn = self._make_tabular_predict_fn(labels, instance, categories)
+        prediction_df = pd.DataFrame([instance])
+        prediction_instance = self._preprocess_data_for_tabular_explain(prediction_df, categories)
+
+        explainer = LimeTabularExplainer(
+            np_trainset,
+            feature_names=(self._categorical_columns + self._numeric_columns),
+            class_names=labels,
+            categorical_features=range(len(categories)),
+            categorical_names={i: v for i, v in enumerate(categories)},
+            kernel_width=kernel_width)
+
+        exp = explainer.explain_instance(
+            prediction_instance[0],
+            predict_fn,
+            num_features=num_features,
+            labels=range(len(labels)))
+        return exp
+
     def explain_text(self, labels, instance, column_name=None, num_features=10, num_samples=5000):
         """Explain a text field of a prediction.
 
@@ -101,7 +216,7 @@ class PredictionExplainer(object):
               LIME LimeTextExplainer directly.
 
         Returns:
-          A LIME's LimeTextExplainer.
+          A LIME's lime.explanation.Explanation.
 
         Throws:
           ValueError if the given text column is not found in model input or column_name is None
@@ -151,7 +266,7 @@ class PredictionExplainer(object):
               LIME LimeImageExplainer directly.
 
         Returns:
-          A LIME's LimeImageExplainer.
+          A LIME's lime.explanation.Explanation.
 
         Throws:
           ValueError if the given image column is not found in model input or column_name is None

@@ -370,8 +370,10 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_get_execute_parameters(self, mock_notebook_item):
-    mock_notebook_item.return_value = google.datalab.bigquery.Query(
-        'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint')
+    # Adding newlines to the query to mimic actual usage of %%bq query ...
+    mock_notebook_item.return_value = google.datalab.bigquery.Query("""SELECT @column
+FROM publicdata.samples.wikipedia
+WHERE endpoint=@endpoint""")
 
     transformation_config = {
       'query': 'foo_query'
@@ -397,7 +399,7 @@ class TestCases(unittest.TestCase):
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
       'table': 'foo_table',
       'mode': 'foo_mode',
       'parameters': parameters_config
@@ -410,7 +412,7 @@ class TestCases(unittest.TestCase):
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
       'parameters': parameters_config
     }
 
@@ -422,7 +424,7 @@ class TestCases(unittest.TestCase):
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
-      'sql': 'SELECT @column FROM publicdata.samples.wikipedia where endpoint=@endpoint',
+      'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
       'data_source': 'foo_data_source',
       'path': 'test_path',
       'schema': 'test_schema',
@@ -455,8 +457,8 @@ class TestCases(unittest.TestCase):
     env = {
       'endpoint': 'Interact2',
       'job_id': '1234',
-      'input_table_format': 'cloud-datalab-samples.httplogs.logs_%(ds)s',
-      'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(ds)s'
+      'input_table_format': 'cloud-datalab-samples.httplogs.logs_%(ds_nodash)s',
+      'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(ds_nodash)s'
     }
     mock_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT @column FROM `{0}` where endpoint=@endpoint'.format(env['input_table_format']))
@@ -470,7 +472,7 @@ class TestCases(unittest.TestCase):
                 end: 2009-05-06T22:28:15Z
                 interval: '@hourly'
             input:
-                path: gs://bucket/cloud-datalab-samples-httplogs_%(ds)s
+                path: gs://bucket/cloud-datalab-samples-httplogs_%(ds_nodash)s
                 table: $input_table_format
                 csv:
                   header: True
@@ -490,7 +492,7 @@ class TestCases(unittest.TestCase):
             transformation:
                 query: foo_query
             output:
-                path: gs://bucket/cloud-datalab-samples-endpoints_%(ds)s.csv
+                path: gs://bucket/cloud-datalab-samples-endpoints_%(ds_nodash)s.csv
                 table: $output_table_format
             parameters:
                 - name: endpoint
@@ -532,9 +534,9 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql='SELECT @column FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}` where endpoint=@endpoint', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path='gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv', table='cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}', dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path='gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}', schema=(.*), table='cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}', dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql=\"\"\"SELECT @column FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}` where endpoint=@endpoint\"\"\", table=\"\"\"cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}\"\"\", dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path=\"\"\"gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv\"\"\", table=\"\"\"cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}\"\"\", dag=dag\)
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path=\"\"\"gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}\"\"\", schema=(.*), table=\"\"\"cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}\"\"\", dag=dag\)
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
