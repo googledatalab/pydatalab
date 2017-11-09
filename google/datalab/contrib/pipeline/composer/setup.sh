@@ -2,12 +2,20 @@
 # We remove the local installation and install a version that allows custom repositories.
 sudo apt-get -y remove google-cloud-sdk
 
+# If an installation still exists after executing apt-get remove, try the following:
+# gcloud info --format="value(installation.sdk_root)"
+# that'll give you the installation directory of whichever installation gets executed
+# you can remove that entire directory
+# restart shell, rinse and repeat until gcloud is no longer on your path
+# you might have to clean up your PATH in .bashrc and nuke the .config/gcloud directory
+
+# Hopefully by now the machine is clean, so install gcloud
 curl https://sdk.cloud.google.com | CLOUDSDK_CORE_DISABLE_PROMPTS=1 bash
 
 # Recycling shell to pick up the new gcloud.
 exec -l $SHELL
 
-# These have to be set here and not on the top of the scrippt because we recycle the shell somewhere
+# These have to be set here and not on the top of the script because we recycle the shell somewhere
 # between the start of this script and here.
 PROJECT=${1:-cloud-ml-dev}
 EMAIL=${2:-rajivpb@google.com}
@@ -27,9 +35,3 @@ gcloud alpha composer environments create $ENVIRONMENT
 gcloud alpha composer environments describe $ENVIRONMENT
 
 
-# To un-install gcloud:
-# gcloud info --format="value(installation.sdk_root)"
-# that'll give you the installation directory of whichever installation gets executed
-# you can remove that entire directory
-# restart shell, rinse and repeat until gcloud is no longer on your path
-# you might have to clean up your PATH in .bashrc and nuke the .config/gcloud directory
