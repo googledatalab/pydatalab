@@ -22,7 +22,8 @@ class Api(object):
 
   _DEFAULT_TIMEOUT = 60000
 
-  def environment_details_get(self, zone, environment):
+  @staticmethod
+  def environment_details_get(zone, environment):
     """ Issues a request to load data from GCS to a BQ table
 
     Args:
