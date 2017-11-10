@@ -16,6 +16,7 @@
 # Compiles the typescript sources to javascript and submits the files
 # to the pypi server specified as first parameter, defaults to testpypi
 # In order to run this script locally, make sure you have the following:
+# - A Python 3 environment (due to urllib issues)
 # - Typescript installed
 # - A configured ~/.pypirc containing your pypi/testpypi credentials with
 #   the server names matching the name you're passing in. Do not include
@@ -28,6 +29,7 @@
 tsc --module amd --noImplicitAny datalab/notebook/static/*.ts
 tsc --module amd --noImplicitAny google/datalab/notebook/static/*.ts
 
+# Provide https://upload.pypi.org/legacy/ for prod binaries
 server="${1:-https://test.pypi.python.org/pypi}"
 echo "Submitting package to ${server}"
 
