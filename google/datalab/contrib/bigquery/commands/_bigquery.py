@@ -12,7 +12,6 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
-import google
 import google.datalab.utils as utils
 
 
