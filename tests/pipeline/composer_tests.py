@@ -135,3 +135,15 @@ class TestCases(unittest.TestCase):
               ('Dag location as://foo_bucket from Composer environment foo_environment is in'
                ' incorrect format')):
         test_composer.gcs_dag_location
+
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs://foo_bucket/'  # trailing slash should be disallowed
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      with self.assertRaisesRegexp(
+              ValueError,
+              ('Dag location as://foo_bucket from Composer environment foo_environment is in'
+               ' incorrect format')):
+        test_composer.gcs_dag_location

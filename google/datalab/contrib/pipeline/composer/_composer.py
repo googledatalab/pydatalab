@@ -22,7 +22,7 @@ class Composer(object):
   This object can be used to generate the python airflow spec.
   """
 
-  gcs_file_regexp = re.compile('gs://.*')
+  gcs_file_regexp = re.compile('gs://.*[^/]$')
 
   def __init__(self, zone, environment):
     """ Initializes an instance of a Composer object.
