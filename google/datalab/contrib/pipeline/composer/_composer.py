@@ -11,6 +11,7 @@
 # the License.
 
 import google.cloud.storage as gcs
+import re
 from google.datalab.contrib.pipeline.composer._api import Api
 
 
@@ -20,6 +21,8 @@ class Composer(object):
 
   This object can be used to generate the python airflow spec.
   """
+
+  gcs_file_regexp = re.compile('gs://.*')
 
   def __init__(self, zone, environment):
     """ Initializes an instance of a Composer object.
@@ -34,30 +37,29 @@ class Composer(object):
 
   def deploy(self, name, dag_string):
     client = gcs.Client()
-    try:
-      gcs_dag_location_splits = self.gcs_dag_location.split('/')
-      bucket_name = gcs_dag_location_splits[2]
-      # Usually the splits are like ['gs:', '', 'foo_bucket', 'dags']. But we could have additional
-      # parts after the bucket. In those cases, the final file path needs to include those as well
-      additional_parts = ''
-      if len(gcs_dag_location_splits) > 4:
-        additional_parts = '/' + '/'.join(gcs_dag_location_splits[4:])
-      filename = self.gcs_dag_location.split('/')[3] + additional_parts + '/{0}.py'.format(name)
-    except (AttributeError, IndexError):
-      raise ValueError('Error in dag location from Composer environment {0}'.format(
-        self._environment))
+    _, _, bucket_name, file_path = self.gcs_dag_location.split('/', 3)  # setting maxsplit to 3
+    file_name = '{0}{1}.py'.format(file_path, name)
 
     bucket = client.get_bucket(bucket_name)
-    blob = gcs.Blob(filename, bucket)
+    blob = gcs.Blob(file_name, bucket)
     blob.upload_from_string(dag_string)
 
   @property
   def gcs_dag_location(self):
     if not self._gcs_dag_location:
       environment_details = Api.environment_details_get(self._zone, self._environment)
-      if 'config' not in environment_details \
-              or 'gcsDagLocation' not in environment_details.get('config'):
+
+      if ('config' not in environment_details or
+              'gcsDagLocation' not in environment_details.get('config')):
         raise ValueError('Dag location unavailable from Composer environment {0}'.format(
           self._environment))
-      self._gcs_dag_location = environment_details['config']['gcsDagLocation']
+      gcs_dag_location = environment_details['config']['gcsDagLocation']
+
+      if gcs_dag_location is None or not self.gcs_file_regexp.match(gcs_dag_location):
+        raise ValueError(
+          'Dag location {0} from Composer environment {1} is in incorrect format'.format(
+            gcs_dag_location, self._environment))
+
+      self._gcs_dag_location = gcs_dag_location + '/'
+
     return self._gcs_dag_location

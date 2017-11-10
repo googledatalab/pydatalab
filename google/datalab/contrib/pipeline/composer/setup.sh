@@ -24,7 +24,7 @@ ENVIRONMENT=${4:-datalab-testing-1}
 
 gcloud config set project $PROJECT
 gcloud config set account $EMAIL
-gcloud auth login --activate $EMAIL
+gcloud auth login $EMAIL
 
 gcloud components repositories add https://storage.googleapis.com/composer-trusted-tester/components-2.json
 gcloud components update -q
