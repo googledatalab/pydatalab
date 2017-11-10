@@ -20,7 +20,7 @@ exec -l $SHELL
 PROJECT=${1:-cloud-ml-dev}
 EMAIL=${2:-rajivpb@google.com}
 ZONE=${3:-us-central1}
-ENVIRONMENT=${3:-datalab-testing-1}
+ENVIRONMENT=${4:-datalab-testing-1}
 
 gcloud config set project $PROJECT
 gcloud config set account $EMAIL
