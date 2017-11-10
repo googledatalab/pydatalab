@@ -74,10 +74,17 @@ class TestCases(unittest.TestCase):
       test_composer = Composer('foo_zone', 'foo_environment')
       self.assertEqual('gs://foo_bucket/dags/', test_composer.gcs_dag_location)
 
-      # Composer returns good result
       mock_environment_details.return_value = {
         'config': {
-          'gcsDagLocation': 'gs://foo_bucket'
+          'gcsDagLocation': 'gs://foo_bucket'  # only bucket
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      self.assertEqual('gs://foo_bucket/', test_composer.gcs_dag_location)
+
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs://foo_bucket/'  # with trailing slash
         }
       }
       test_composer = Composer('foo_zone', 'foo_environment')
@@ -127,18 +134,6 @@ class TestCases(unittest.TestCase):
       mock_environment_details.return_value = {
         'config': {
           'gcsDagLocation': 'as://foo_bucket'
-        }
-      }
-      test_composer = Composer('foo_zone', 'foo_environment')
-      with self.assertRaisesRegexp(
-              ValueError,
-              ('Dag location as://foo_bucket from Composer environment foo_environment is in'
-               ' incorrect format')):
-        test_composer.gcs_dag_location
-
-      mock_environment_details.return_value = {
-        'config': {
-          'gcsDagLocation': 'gs://foo_bucket/'  # trailing slash should be disallowed
         }
       }
       test_composer = Composer('foo_zone', 'foo_environment')

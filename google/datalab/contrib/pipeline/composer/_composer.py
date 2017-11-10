@@ -22,7 +22,7 @@ class Composer(object):
   This object can be used to generate the python airflow spec.
   """
 
-  gcs_file_regexp = re.compile('gs://.*[^/]$')
+  gcs_file_regexp = re.compile('gs://.*')
 
   def __init__(self, zone, environment):
     """ Initializes an instance of a Composer object.
@@ -60,6 +60,8 @@ class Composer(object):
           'Dag location {0} from Composer environment {1} is in incorrect format'.format(
             gcs_dag_location, self._environment))
 
-      self._gcs_dag_location = gcs_dag_location + '/'
+      self._gcs_dag_location = gcs_dag_location
+      if gcs_dag_location.endswith('/') is False:
+        self._gcs_dag_location = self._gcs_dag_location + '/'
 
     return self._gcs_dag_location
