@@ -21,10 +21,10 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.cloud.storage.Blob')
   @mock.patch('google.cloud.storage.Client')
-  @mock.patch('google.cloud.storage.Client.get_bucket')
   @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
-  def test_deploy(self, mock_environment_details, mock_client_get_bucket, mock_client,
-                  mock_blob_class, mock_default_context):
+  def test_deploy(self, mock_environment_details, mock_client, mock_blob_class,
+                  mock_default_context):
+      # Happy path
       mock_environment_details.return_value = {
         'config': {
           'gcsDagLocation': 'gs://foo_bucket/dags'
@@ -37,6 +37,7 @@ class TestCases(unittest.TestCase):
       mock_blob = mock_blob_class.return_value
       mock_blob.upload_from_string.assert_called_with('foo_dag_string')
 
+      # GCS dag location has additional parts
       mock_environment_details.return_value = {
         'config': {
           'gcsDagLocation': 'gs://foo_bucket/foo_random/dags'
