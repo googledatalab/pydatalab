@@ -32,6 +32,7 @@ class TestCases(unittest.TestCase):
       }
       test_composer = Composer('foo_zone', 'foo_environment')
       test_composer.deploy('foo_name', 'foo_dag_string')
+      mock_client.return_value.get_bucket.assert_called_with('foo_bucket')
       mock_blob_class.assert_called_with('dags/foo_name.py', mock.ANY)
       mock_blob = mock_blob_class.return_value
       mock_blob.upload_from_string.assert_called_with('foo_dag_string')
@@ -43,6 +44,7 @@ class TestCases(unittest.TestCase):
       }
       test_composer = Composer('foo_zone', 'foo_environment')
       test_composer.deploy('foo_name', 'foo_dag_string')
+      mock_client.return_value.get_bucket.assert_called_with('foo_bucket')
       mock_blob_class.assert_called_with('foo_random/dags/foo_name.py', mock.ANY)
       mock_blob = mock_blob_class.return_value
       mock_blob.upload_from_string.assert_called_with('foo_dag_string')
