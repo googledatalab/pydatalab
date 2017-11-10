@@ -20,9 +20,8 @@ class Api(object):
   _ENDPOINT = 'https://composer.googleapis.com/v1alpha1'
   _ENVIRONMENTS_PATH = '/projects/%s/locations/%s/environments/%s'
 
-  _DEFAULT_TIMEOUT = 60000
-
-  def environment_details_get(self, zone, environment):
+  @staticmethod
+  def environment_details_get(zone, environment):
     """ Issues a request to load data from GCS to a BQ table
 
     Args:
@@ -36,9 +35,4 @@ class Api(object):
     default_context = google.datalab.Context.default()
     url = Api._ENDPOINT + (Api._ENVIRONMENTS_PATH % (default_context.project_id, zone, environment))
 
-    args = {
-        'timeoutMs': Api._DEFAULT_TIMEOUT,
-    }
-
-    return google.datalab.utils.Http.request(url, args=args,
-                                             credentials=default_context.credentials)
+    return google.datalab.utils.Http.request(url, credentials=default_context.credentials)

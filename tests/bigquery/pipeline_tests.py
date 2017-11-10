@@ -435,6 +435,7 @@ WHERE endpoint=@endpoint""")
 
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
+  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
@@ -445,7 +446,7 @@ WHERE endpoint=@endpoint""")
   @mock.patch('google.cloud.storage.Client.get_bucket')
   def test_pipeline_cell_golden(self, mock_client_get_bucket, mock_client, mock_blob_class,
                                 mock_get_table, mock_table_exists, mock_notebook_item,
-                                mock_environment, mock_default_context):
+                                mock_environment, mock_default_context, mock_composer_env):
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
     mock_table_exists.return_value = True
@@ -453,6 +454,12 @@ WHERE endpoint=@endpoint""")
     mock_default_context.return_value = context
     mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
     mock_blob = mock_blob_class.return_value
+
+    mock_composer_env.return_value = {
+      'config': {
+        'gcsDagLocation': 'gs://foo_bucket/dags'
+      }
+    }
 
     env = {
       'endpoint': 'Interact2',

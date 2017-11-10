@@ -11,6 +11,8 @@
 # the License.
 
 import google.cloud.storage as gcs
+import re
+from google.datalab.contrib.pipeline.composer._api import Api
 
 
 class Composer(object):
@@ -19,6 +21,8 @@ class Composer(object):
 
   This object can be used to generate the python airflow spec.
   """
+
+  gcs_file_regexp = re.compile('gs://.*')
 
   def __init__(self, zone, environment):
     """ Initializes an instance of a Composer object.
@@ -29,22 +33,35 @@ class Composer(object):
     """
     self._zone = zone
     self._environment = environment
+    self._gcs_dag_location = None
 
   def deploy(self, name, dag_string):
     client = gcs.Client()
-    bucket = client.get_bucket(self.bucket_name)
-    filename = 'dags/{0}.py'.format(name)
-    blob = gcs.Blob(filename, bucket)
+    _, _, bucket_name, file_path = self.gcs_dag_location.split('/', 3)  # setting maxsplit to 3
+    file_name = '{0}{1}.py'.format(file_path, name)
+
+    bucket = client.get_bucket(bucket_name)
+    blob = gcs.Blob(file_name, bucket)
     blob.upload_from_string(dag_string)
 
   @property
-  def bucket_name(self):
-    # TODO(rajivpb): Get this programmatically from the Composer API
-    return 'airflow-staging-test36490808-bucket'
+  def gcs_dag_location(self):
+    if not self._gcs_dag_location:
+      environment_details = Api.environment_details_get(self._zone, self._environment)
 
-  @property
-  def get_bucket_name(self):
-    # environment_details = Api().environment_details_get(self._zone, self._environment)
+      if ('config' not in environment_details or
+              'gcsDagLocation' not in environment_details.get('config')):
+        raise ValueError('Dag location unavailable from Composer environment {0}'.format(
+          self._environment))
+      gcs_dag_location = environment_details['config']['gcsDagLocation']
 
-    # TODO(rajivpb): Get this programmatically from the Composer API
-    return 'airflow-staging-test36490808-bucket'
+      if gcs_dag_location is None or not self.gcs_file_regexp.match(gcs_dag_location):
+        raise ValueError(
+          'Dag location {0} from Composer environment {1} is in incorrect format'.format(
+            gcs_dag_location, self._environment))
+
+      self._gcs_dag_location = gcs_dag_location
+      if gcs_dag_location.endswith('/') is False:
+        self._gcs_dag_location = self._gcs_dag_location + '/'
+
+    return self._gcs_dag_location

@@ -13,19 +13,132 @@
 import unittest
 import mock
 
-import google.auth
-import google.datalab.utils
 from google.datalab.contrib.pipeline.composer._composer import Composer
 
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('google.cloud.storage.Client')
+  @mock.patch('google.datalab.Context.default')
   @mock.patch('google.cloud.storage.Blob')
-  @mock.patch('google.cloud.storage.Client.get_bucket')
-  def test_deploy(self, mock_client_get_bucket, mock_blob_class, mock_client):
-      mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
-      mock_blob = mock_blob_class.return_value
+  @mock.patch('google.cloud.storage.Client')
+  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
+  def test_deploy(self, mock_environment_details, mock_client, mock_blob_class,
+                  mock_default_context):
+      # Happy path
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs://foo_bucket/dags'
+        }
+      }
       test_composer = Composer('foo_zone', 'foo_environment')
       test_composer.deploy('foo_name', 'foo_dag_string')
+      mock_client.return_value.get_bucket.assert_called_with('foo_bucket')
+      mock_blob_class.assert_called_with('dags/foo_name.py', mock.ANY)
+      mock_blob = mock_blob_class.return_value
       mock_blob.upload_from_string.assert_called_with('foo_dag_string')
+
+      # Only bucket with no path
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs://foo_bucket'
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      test_composer.deploy('foo_name', 'foo_dag_string')
+      mock_client.return_value.get_bucket.assert_called_with('foo_bucket')
+      mock_blob_class.assert_called_with('foo_name.py', mock.ANY)
+      mock_blob = mock_blob_class.return_value
+      mock_blob.upload_from_string.assert_called_with('foo_dag_string')
+
+      # GCS dag location has additional parts
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs://foo_bucket/foo_random/dags'
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      test_composer.deploy('foo_name', 'foo_dag_string')
+      mock_client.return_value.get_bucket.assert_called_with('foo_bucket')
+      mock_blob_class.assert_called_with('foo_random/dags/foo_name.py', mock.ANY)
+      mock_blob = mock_blob_class.return_value
+      mock_blob.upload_from_string.assert_called_with('foo_dag_string')
+
+  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
+  def test_gcs_dag_location(self, mock_environment_details):
+      # Composer returns good result
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs://foo_bucket/dags'
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      self.assertEqual('gs://foo_bucket/dags/', test_composer.gcs_dag_location)
+
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs://foo_bucket'  # only bucket
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      self.assertEqual('gs://foo_bucket/', test_composer.gcs_dag_location)
+
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs://foo_bucket/'  # with trailing slash
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      self.assertEqual('gs://foo_bucket/', test_composer.gcs_dag_location)
+
+      # Composer returns empty result
+      mock_environment_details.return_value = {}
+      test_composer = Composer('foo_zone', 'foo_environment')
+      with self.assertRaisesRegexp(
+              ValueError, 'Dag location unavailable from Composer environment foo_environment'):
+        test_composer.gcs_dag_location
+
+      # Composer returns empty result
+      mock_environment_details.return_value = {
+        'config': {}
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      with self.assertRaisesRegexp(
+              ValueError, 'Dag location unavailable from Composer environment foo_environment'):
+        test_composer.gcs_dag_location
+
+      # Composer returns None result
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': None
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      with self.assertRaisesRegexp(
+              ValueError,
+              'Dag location None from Composer environment foo_environment is in incorrect format'):
+        test_composer.gcs_dag_location
+
+      # Composer returns incorrect formats
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'gs:/foo_bucket'
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      with self.assertRaisesRegexp(
+              ValueError,
+              ('Dag location gs:/foo_bucket from Composer environment foo_environment is in'
+               ' incorrect format')):
+        test_composer.gcs_dag_location
+
+      mock_environment_details.return_value = {
+        'config': {
+          'gcsDagLocation': 'as://foo_bucket'
+        }
+      }
+      test_composer = Composer('foo_zone', 'foo_environment')
+      with self.assertRaisesRegexp(
+              ValueError,
+              ('Dag location as://foo_bucket from Composer environment foo_environment is in'
+               ' incorrect format')):
+        test_composer.gcs_dag_location
