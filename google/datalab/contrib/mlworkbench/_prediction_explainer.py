@@ -397,7 +397,7 @@ class PredictionExplainer(object):
         for label in labels:
           # Send to tf model to get gradients.
           grads = self._image_gradients(csv_lines, label, image_column_name)
-          integrated_grads = np.average(grads, axis=0)
+          integrated_grads = resized_image * np.average(grads, axis=0)
 
           # Gray scale the grads by removing color dimension.
           # abs() is for getting the most impactful pixels regardless positive or negative.
