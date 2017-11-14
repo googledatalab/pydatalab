@@ -33,5 +33,5 @@ gcloud components install -q alpha kubectl
 gcloud config set composer/location $ZONE
 gcloud alpha composer environments create $ENVIRONMENT
 gcloud alpha composer environments describe $ENVIRONMENT
-
+gcloud alpha composer environments set-python-dependencies $ENVIRONMENT requirements.txt
 
