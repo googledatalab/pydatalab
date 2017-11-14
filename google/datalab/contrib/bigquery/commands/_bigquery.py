@@ -61,10 +61,10 @@ def _pipeline_cell(args, cell_body):
         # https://github.com/googledatalab/pydatalab/issues/593
         import google.datalab.contrib.pipeline.composer._composer
         composer = google.datalab.contrib.pipeline.composer._composer.Composer(zone, environment)
-        composer.deploy(name, pipeline._get_airflow_spec())
+        composer.deploy(name, pipeline.get_airflow_spec())
 
     # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
-    return pipeline._get_airflow_spec()
+    return pipeline.get_airflow_spec()
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config):

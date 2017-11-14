@@ -527,15 +527,10 @@ from google.datalab.contrib.bigquery.operators._bq_extract_operator import Extra
 from datetime import timedelta
 
 default_args = {
-    'owner': 'Datalab',
-    'depends_on_past': False,
+    'owner': 'Google Cloud Datalab',
     'email': \['foo1@test.com', 'foo2@test.com'\],
     'start_date': datetime.datetime.strptime\('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S'\),
     'end_date': datetime.datetime.strptime\('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S'\),
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta\(minutes=1\),
 }
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
