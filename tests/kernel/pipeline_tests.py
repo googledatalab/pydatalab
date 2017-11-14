@@ -61,8 +61,7 @@ tasks:
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_create_cell_no_name(self, mock_default_context,
-                               mock_notebook_environment):
+  def test_create_cell_no_name(self, mock_default_context, mock_notebook_environment):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
@@ -78,8 +77,7 @@ tasks:
 
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
-  def test_create_cell_debug(self, mock_default_context,
-                             mock_notebook_environment):
+  def test_create_cell_debug(self, mock_default_context, mock_notebook_environment):
     env = {}
     mock_default_context.return_value = TestCases._create_context()
     mock_notebook_environment.return_value = env
@@ -134,7 +132,7 @@ tasks:
     google.datalab.contrib.pipeline.commands._pipeline._create_cell({'name': 'p1'}, p_body)
     p1 = env['p1']
     self.assertIsNotNone(p1)
-    self.assertEqual(p1._get_airflow_spec(), """
+    self.assertEqual(p1.get_airflow_spec(), """
 import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -150,15 +148,10 @@ from datetime import timedelta
 from pytz import timezone
 
 default_args = {
-    'owner': 'Datalab',
-    'depends_on_past': False,
+    'owner': 'Google Cloud Datalab',
     'email': ['foo1@test.com', 'foo2@test.com'],
     'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
     'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone('UTC')),
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
 }
 
 dag = DAG(dag_id='p1', schedule_interval='@hourly', default_args=default_args)

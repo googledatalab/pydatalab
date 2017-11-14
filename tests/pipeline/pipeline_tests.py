@@ -297,19 +297,37 @@ LIMIT 5""")
                      datetime.datetime(2009, 5, 5, 22, 28, 15,
                                        tzinfo=timezone('UTC')))
 
-  def test_get_default_args_with_email(self):
+  def test_get_default_args(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
-    actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
-                                                 dag_dict.get('schedule').get('end'),
-                                                 dag_dict.get('emails'))
+    actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule'), dag_dict.get('emails'))
+    self.assertIn(
+      "'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S')",
+      actual)
+    self.assertIn(
+      "'start_date': datetime.datetime.strptime('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S')",
+      actual)
     self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
+    self.assertIn("'owner': 'Google Cloud Datalab'", actual)
 
-  def test_get_default_args_without_email(self):
+    actual = pipeline.Pipeline._get_default_args({}, None)
+    self.assertIn("'end_date': None", actual)
+    self.assertIn("'start_date': datetime.datetime.strptime(", actual)
+    self.assertIn("'email': []", actual)
+    self.assertIn("'owner': 'Google Cloud Datalab'", actual)
+
+  def test_get_airflow_spec_with_default_schedule(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
-    actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule').get('start'),
-                                                 dag_dict.get('schedule').get('end'),
-                                                 None)
-    self.assertIn("'email': None", actual)
+    # We delete the schedule spec to test with defaults
+    del dag_dict['schedule']
+
+    test_pipeline = pipeline.Pipeline('foo_name', dag_dict)
+    actual = test_pipeline.get_airflow_spec()
+    self.assertIn('import datetime', actual)
+    self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
+    self.assertIn("schedule_interval='@once'", actual)
+    self.assertIn('current_timestamp_id', actual)
+    self.assertIn('tomorrows_timestamp_id', actual)
+    self.assertIn('tomorrows_timestamp.set_upstream(current_timestamp)', actual)
 
 
 if __name__ == '__main__':

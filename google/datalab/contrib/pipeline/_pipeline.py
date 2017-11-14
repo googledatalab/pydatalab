@@ -10,6 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import datetime
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
 
@@ -59,20 +60,9 @@ from pytz import timezone
     self._pipeline_spec = pipeline_spec
     self._name = name
 
-  def _get_airflow_spec(self):
+  def get_airflow_spec(self):
     """ Gets the airflow python spec (Composer service input) for the Pipeline object.
     """
-
-    # Work-around for yaml.load() limitation. Strings that look like datetimes
-    # are parsed into timezone _unaware_ timezone objects.
-    start_datetime_obj = self._pipeline_spec.get('schedule').get('start')
-    end_datetime_obj = self._pipeline_spec.get('schedule').get('end')
-
-    default_args = Pipeline._get_default_args(start_datetime_obj, end_datetime_obj,
-                                              self._pipeline_spec.get('emails'))
-    dag_definition = self._get_dag_definition(
-        self._pipeline_spec.get('schedule')['interval'])
-
     task_definitions = ''
     up_steam_statements = ''
     for (task_id, task_details) in sorted(self._pipeline_spec['tasks'].items()):
@@ -82,6 +72,11 @@ from pytz import timezone
                                                                                      []))
       up_steam_statements = up_steam_statements + dependency_def
 
+    schedule_config = self._pipeline_spec.get('schedule', {})
+
+    default_args = Pipeline._get_default_args(schedule_config,
+                                              self._pipeline_spec.get('emails', {}))
+    dag_definition = self._get_dag_definition(schedule_config.get('interval', '@once'))
     self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
         up_steam_statements
     return self._airflow_spec
@@ -103,33 +98,29 @@ from pytz import timezone
     return utils.commands.parse_config(spec_str, env)
 
   @staticmethod
-  def _get_default_args(start, end, emails):
-    start_date_str = Pipeline._get_datetime_expr_str(start)
-    end_date_str = Pipeline._get_datetime_expr_str(end)
+  def _get_default_args(schedule_config, emails):
+    start_datetime_obj = schedule_config.get('start', datetime.datetime.now())
+    end_datetime_obj = schedule_config.get('end')
+    start_date_str = Pipeline._get_datetime_expr_str(start_datetime_obj)
+    end_date_str = Pipeline._get_datetime_expr_str(end_datetime_obj)
 
-    email_list = emails
-    if emails:
-      email_list = emails.split(',')
-
-    # TODO(rajivpb): Get the email address in some other way.
     airflow_default_args_format = """
 default_args = {{
-    'owner': 'Datalab',
-    'depends_on_past': False,
+    'owner': 'Google Cloud Datalab',
     'email': {2},
     'start_date': {0},
     'end_date': {1},
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1),
 }}
 
 """
+    email_list = emails.split(',') if emails else []
     return airflow_default_args_format.format(start_date_str, end_date_str, email_list)
 
   @staticmethod
   def _get_datetime_expr_str(datetime_obj):
+    if not datetime_obj:
+      return None
+
     # User is expected to always provide start and end in UTC and in
     # the %Y-%m-%dT%H:%M:%SZ format (i.e. _with_ the trailing 'Z' to
     # signify UTC).
@@ -172,8 +163,7 @@ default_args = {{
 
   def _get_dag_definition(self, schedule_interval):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
-                     'default_args=default_args)\n\n'.format(self._name,
-                                                             schedule_interval)
+                     'default_args=default_args)\n\n'.format(self._name, schedule_interval)
     return dag_definition
 
   @staticmethod
