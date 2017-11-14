@@ -2,7 +2,7 @@
 PROJECT=${1:-cloud-ml-dev}
 EMAIL=${2:-rajivpb@google.com}
 ZONE=${3:-us-central1}
-ENVIRONMENT=${3:-rajivpb-airflow}
+ENVIRONMENT=${4:-rajivpb-airflow}
 
 gcloud config set project $PROJECT
 gcloud config set account $EMAIL
