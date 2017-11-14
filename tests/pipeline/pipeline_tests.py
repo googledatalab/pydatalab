@@ -18,7 +18,6 @@ import mock
 import re
 import unittest
 import yaml
-from pytz import timezone
 
 import google.auth
 import google.datalab
@@ -291,11 +290,8 @@ LIMIT 5""")
     datetime_expr = pipeline.Pipeline._get_datetime_expr_str(start)
 
     self.assertEqual(datetime_expr,
-                     'datetime.datetime.strptime(\'2009-05-05T22:28:15\', '
-                     '\'%Y-%m-%dT%H:%M:%S\').replace(tzinfo=timezone(\'UTC\'))')
-    self.assertEqual(eval(datetime_expr),
-                     datetime.datetime(2009, 5, 5, 22, 28, 15,
-                                       tzinfo=timezone('UTC')))
+                     'datetime.datetime.strptime(\'2009-05-05T22:28:15\', \'%Y-%m-%dT%H:%M:%S\')')
+    self.assertEqual(eval(datetime_expr), datetime.datetime(2009, 5, 5, 22, 28, 15))
 
   def test_get_default_args(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)

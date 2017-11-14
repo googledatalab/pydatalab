@@ -34,7 +34,6 @@ from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOper
 from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
 from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 from datetime import timedelta
-from pytz import timezone
 """
 
   # These are documented here:
@@ -121,18 +120,15 @@ default_args = {{
     if not datetime_obj:
       return None
 
-    # User is expected to always provide start and end in UTC and in
-    # the %Y-%m-%dT%H:%M:%SZ format (i.e. _with_ the trailing 'Z' to
-    # signify UTC).
-    # However, due to a bug/feature in yaml.load(), strings that look like
-    # datetimes are parsed into timezone *unaware* datetime objects (even if
-    # they do have a timezone 'Z'). To prevent any confusion, we will contrain
-    # the user to only input strings with the 'Z', and will explicitly set the
-    # timezone in the printed code.
-    # TODO(b/64951979): Validate that the 'Z' exists
+    # Apache Airflow assumes that all times are timezone-unaware, and are in UTC:
+    # https: // issues.apache.org / jira / browse / AIRFLOW - 1710
+    # Somewhat conveniently, yaml.load() recognizes and parses strings that look like datetimes
+    # into timezone unaware datetime objects (if the user input specifies the timezone, it's
+    # corrected and the result is assumed to be in UTC).
+    # Here, we serialize this object into the format laid down by ISO 8601, and generate python code
+    # that parses this format into a datetime object for Airflow.
     datetime_format = '%Y-%m-%dT%H:%M:%S'  # ISO 8601, timezone unaware
-    # We force UTC timezone
-    expr_format = 'datetime.datetime.strptime(\'{0}\', \'{1}\').replace(tzinfo=timezone(\'UTC\'))'
+    expr_format = 'datetime.datetime.strptime(\'{0}\', \'{1}\')'
     return expr_format.format(datetime_obj.strftime(datetime_format), datetime_format)
 
   def _get_operator_definition(self, task_id, task_details):

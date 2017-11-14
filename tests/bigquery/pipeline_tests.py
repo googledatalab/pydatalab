@@ -525,13 +525,12 @@ from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOper
 from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
 from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 from datetime import timedelta
-from pytz import timezone
 
 default_args = {
     'owner': 'Google Cloud Datalab',
     'email': \['foo1@test.com', 'foo2@test.com'\],
-    'start_date': datetime.datetime.strptime\('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S'\).replace\(tzinfo=timezone\('UTC'\)\),
-    'end_date': datetime.datetime.strptime\('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S'\).replace\(tzinfo=timezone\('UTC'\)\),
+    'start_date': datetime.datetime.strptime\('2009-05-05T22:28:15', '%Y-%m-%dT%H:%M:%S'\),
+    'end_date': datetime.datetime.strptime\('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S'\),
 }
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
