@@ -62,6 +62,21 @@ tasks:
     dependencies = pipeline.Pipeline._get_dependency_definition('t2', ['t1', 't3'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\nt2.set_upstream(t3)\n')
 
+  def test_resolve_airflow_macros(self):
+    test_pipeline = pipeline.Pipeline(None, None)
+    self.assertEqual(test_pipeline._resolve_airflow_macros('foo{ds}'), 'foo{{ ds }}')
+
+    test_pipeline = pipeline.Pipeline(None, None)
+    self.assertEqual(test_pipeline._resolve_airflow_macros(u'foo{ds}'), 'foo{{ ds }}')
+
+    test_pipeline = pipeline.Pipeline(None, None)
+    self.assertListEqual(test_pipeline._resolve_airflow_macros([u'foo{ds}', 'bar{ds}']),
+                         ['foo{{ ds }}', 'bar{{ ds }}'])
+
+    test_pipeline = pipeline.Pipeline(None, None)
+    self.assertDictEqual(test_pipeline._resolve_airflow_macros({u'key{ds}': u'value{ds}'}),
+                         {u'key{{ ds }}': u'value{{ ds }}'})
+
   def test_get_bash_operator_definition(self):
     task_id = 'print_pdt_date'
     task_details = {}
@@ -75,7 +90,7 @@ tasks:
     task_id = 'foo_task'
     task_details = {}
     task_details['type'] = 'Bash'
-    task_details['bash_command'] = 'echo {{ ds }}'
+    task_details['bash_command'] = 'echo {ds}'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
@@ -87,7 +102,7 @@ tasks:
     task_details = {}
     task_details['type'] = 'BigQuery'
     task_details['query'] = google.datalab.bigquery.Query(
-      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_%(ds_nodash)s`')
+      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_{ds_nodash}`')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
@@ -192,9 +207,12 @@ LIMIT 5""")
     actual = pipeline.Pipeline(None, None)._get_operator_definition(
         task_id, task_details)
     pattern = re.compile("""bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=\"\"\",\"\"\", format=\"\"\"csv\"\"\", mode=\"\"\"create\"\"\", path=\"\"\"test/path\"\"\", quote=\"\"\""\"\"\", schema=(.*), skip=0, strict=True, table=\"\"\"project.test.table\"\"\", dag=dag\)""")  # noqa
-
     # group(1) has the string that follows the "schema=", i.e. the list of dicts.
-    self.assertEqual(pattern.match(actual).group(1), str(schema))
+    # Since we're comparing string literals of dicts that have the items re-ordered, we just sort
+    # the string. This is a loose check.
+    sorted_string_of_actual_schema = ''.join(sorted(pattern.match(actual).group(1)))
+    sorted_string_of_expected_schema = ''.join(sorted(str(schema)))
+    self.assertEqual(sorted_string_of_actual_schema, sorted_string_of_expected_schema)
 
   def test_get_pydatalab_bq_execute_operator_definition(self):
     task_id = 'bq_pipeline_execute_task'
