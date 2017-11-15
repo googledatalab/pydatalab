@@ -121,9 +121,6 @@ def load_ipython_extension(shell):
   except TypeError:
     pass
 
-  # Enable support for sandboxed outputs by default.
-  google.datalab.utils.initialize_sandboxed_outputs()
-
 
 def unload_ipython_extension(shell):
   _shell.InteractiveShell.run_cell_magic = _orig_run_cell_magic
@@ -136,5 +133,4 @@ def unload_ipython_extension(shell):
   except Exception:
     pass  # We mock IPython for tests so we need this.
 
-  google.datalab.utils.uninitialize_sandboxed_outputs()
   # TODO(gram): unregister imports/magics/etc.
