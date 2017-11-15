@@ -156,7 +156,7 @@ default_args = {{
     if type(operator_param_value) is dict:
       return dict((self._resolve_airflow_macros(k), self._resolve_airflow_macros(v))
                   for k, v in operator_param_value.items())
-    if type(operator_param_value) in [str, unicode]:
+    if isinstance(operator_param_value, basestring):
       return operator_param_value.format(**self._airflow_macros)
     return operator_param_value
 
