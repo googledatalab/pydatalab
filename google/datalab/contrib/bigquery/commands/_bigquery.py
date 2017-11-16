@@ -22,8 +22,8 @@ def _create_pipeline_subparser(parser):
                                required=True)
   pipeline_parser.add_argument('-e', '--environment', type=str,
                                help='The name of the Composer environment.')
-  pipeline_parser.add_argument('-z', '--zone', type=str,
-                               help='The name of the Composer zone.')
+  pipeline_parser.add_argument('-l', '--location', type=str,
+                               help='The name of the Cloud location for the environment.')
   return pipeline_parser
 
 
@@ -53,14 +53,15 @@ def _pipeline_cell(args, cell_body):
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
 
-    zone = args.get('zone')
+    location = args.get('location')
     environment = args.get('environment')
-    # If a composer environment and zone are specified, we deploy to composer
-    if zone and environment:
+    # If a composer environment and location are specified, we deploy to composer
+    if location and environment:
         # TODO(rajivpb): This import is a stop-gap for
         # https://github.com/googledatalab/pydatalab/issues/593
         import google.datalab.contrib.pipeline.composer._composer
-        composer = google.datalab.contrib.pipeline.composer._composer.Composer(zone, environment)
+        composer = google.datalab.contrib.pipeline.composer._composer.Composer(location,
+                                                                               environment)
         composer.deploy(name, pipeline.get_airflow_spec())
 
     # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
