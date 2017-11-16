@@ -17,15 +17,18 @@ exec -l $SHELL
 
 # These have to be set here and not on the top of the script because we recycle the shell somewhere
 # between the start of this script and here.
-PROJECT=${1:-cloud-ml-dev}
 EMAIL=${2:-rajivpb@google.com}
-ZONE=${3:-us-central1}
-ENVIRONMENT=${4:-datalab-testing-1}
 
 gcloud config set project $PROJECT
 gcloud config set account $EMAIL
 gcloud auth login $EMAIL
 
+# If executing from a Datalab notebook, only the commands below are required
+PROJECT=${1:-cloud-ml-dev}
+ZONE=${3:-us-central1}
+ENVIRONMENT=${4:-datalab-testing-1}
+
+datalab project set -p $PROJECT
 gcloud components repositories add https://storage.googleapis.com/composer-trusted-tester/components-2.json
 gcloud components update -q
 gcloud components install -q alpha kubectl
@@ -33,5 +36,6 @@ gcloud components install -q alpha kubectl
 gcloud config set composer/location $ZONE
 gcloud alpha composer environments create $ENVIRONMENT
 gcloud alpha composer environments describe $ENVIRONMENT
+echo "datalab" > requirements.txt
 gcloud alpha composer environments set-python-dependencies $ENVIRONMENT requirements.txt
-
+rm requirements.txt
