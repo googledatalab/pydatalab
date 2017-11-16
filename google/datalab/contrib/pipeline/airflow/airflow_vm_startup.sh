@@ -15,9 +15,10 @@ pip install airflow
 .local/bin/airflow initdb
 
 # TODO(rajivpb): Replace this with pip install datalab
-gsutil cp gs://rajivpb-airflow-testing/datalab-1.1.0.tar .
-pip install datalab-1.1.0.tar
-rm datalab-1.1.0.tar
+DATALAB_TAR=datalab-1.1.0.tar
+gsutil cp gs://rajivpb-airflow-testing/$DATALAB_TAR $DATALAB_TAR
+pip install $DATALAB_TAR
+rm $DATALAB_TAR
 
 # We append a gsutil rsync command to the cron file and have this run every minute to sync dags.
 mkdir -p $LOCAL_DAG_PATH
