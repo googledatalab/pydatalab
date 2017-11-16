@@ -14,7 +14,6 @@ gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
 --machine-type "n1-standard-1" \
 --network "default" \
 --maintenance-policy "MIGRATE" \
---service-account "236417448818-compute@developer.gserviceaccount.com" \
 --scopes "https://www.googleapis.com/auth/cloud-platform" \
 --min-cpu-platform "Automatic" \
 --image "debian-9-stretch-v20171025" \
