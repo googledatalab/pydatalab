@@ -53,6 +53,8 @@ def _pipeline_cell(args, cell_body):
     pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
 
+    airflow_spec = pipeline.get_airflow_spec()
+
     location = args.get('location')
     environment = args.get('environment')
     # If a composer environment and location are specified, we deploy to composer
@@ -62,10 +64,21 @@ def _pipeline_cell(args, cell_body):
         import google.datalab.contrib.pipeline.composer._composer
         composer = google.datalab.contrib.pipeline.composer._composer.Composer(location,
                                                                                environment)
-        composer.deploy(name, pipeline.get_airflow_spec())
+        composer.deploy(name, airflow_spec)
+
+    gcs_dag_bucket = args.get('gcs_dag_bucket')
+    gcs_dag_file_path = args.get('gcs_dag_file_path')
+    # If a gcs_dag_bucket is specified, we deploy to it
+    if gcs_dag_bucket:
+        # TODO(rajivpb): This import is a stop-gap for
+        # https://github.com/googledatalab/pydatalab/issues/593
+        import google.datalab.contrib.pipeline.airflow._airflow
+        airflow = google.datalab.contrib.pipeline.airflow._airflow.Airflow(gcs_dag_bucket,
+                                                                           gcs_dag_file_path)
+        airflow.deploy(name, airflow_spec)
 
     # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
-    return pipeline.get_airflow_spec()
+    return airflow_spec
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config):
