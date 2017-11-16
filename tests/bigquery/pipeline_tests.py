@@ -472,7 +472,8 @@ WHERE endpoint=@endpoint""")
 
     mock_environment.return_value = env
     args = {'name': 'bq_pipeline_test', 'environment': 'foo_environment',
-            'location': 'foo_locaiton'}
+            'location': 'foo_locaiton', 'gcs_dag_bucket': 'foo_bucket',
+            'gcs_dag_file_path': 'foo_file_path'}
     cell_body = """
             emails: foo1@test.com,foo2@test.com
             schedule:

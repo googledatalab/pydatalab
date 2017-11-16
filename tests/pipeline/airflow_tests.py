@@ -30,7 +30,7 @@ class TestCases(unittest.TestCase):
       mock_blob = mock_blob_class.return_value
       mock_blob.upload_from_string.assert_called_with('foo_dag_string')
 
-      # Only bucket 
+      # Only bucket
       test_airflow = Airflow('foo_bucket')
       test_airflow.deploy('foo_name', 'foo_dag_string')
       mock_client.return_value.get_bucket.assert_called_with('foo_bucket')
