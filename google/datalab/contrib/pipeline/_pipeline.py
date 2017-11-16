@@ -13,6 +13,7 @@
 import datetime
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
+from past.builtins import basestring
 
 
 class Pipeline(object):
@@ -157,7 +158,7 @@ default_args = {{
       return dict((self._resolve_airflow_macros(k), self._resolve_airflow_macros(v))
                   for k, v in operator_param_value.items())
     if isinstance(operator_param_value, basestring):
-      return operator_param_value.format(**self._airflow_macros)
+      return operator_param_value % self._airflow_macros
     return operator_param_value
 
   @staticmethod

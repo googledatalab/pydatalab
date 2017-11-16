@@ -64,17 +64,14 @@ tasks:
 
   def test_resolve_airflow_macros(self):
     test_pipeline = pipeline.Pipeline(None, None)
-    self.assertEqual(test_pipeline._resolve_airflow_macros('foo{ds}'), 'foo{{ ds }}')
+    self.assertEqual(test_pipeline._resolve_airflow_macros('foo%(ds)s'), 'foo{{ ds }}')
 
+    self.assertEqual(test_pipeline._resolve_airflow_macros(u'foo%(ds)s'), 'foo{{ ds }}')
     test_pipeline = pipeline.Pipeline(None, None)
-    self.assertEqual(test_pipeline._resolve_airflow_macros(u'foo{ds}'), 'foo{{ ds }}')
-
-    test_pipeline = pipeline.Pipeline(None, None)
-    self.assertListEqual(test_pipeline._resolve_airflow_macros([u'foo{ds}', 'bar{ds}']),
+    self.assertListEqual(test_pipeline._resolve_airflow_macros([u'foo%(ds)s', 'bar%(ds)s']),
                          ['foo{{ ds }}', 'bar{{ ds }}'])
 
-    test_pipeline = pipeline.Pipeline(None, None)
-    self.assertDictEqual(test_pipeline._resolve_airflow_macros({u'key{ds}': u'value{ds}'}),
+    self.assertDictEqual(test_pipeline._resolve_airflow_macros({u'key%(ds)s': u'value%(ds)s'}),
                          {u'key{{ ds }}': u'value{{ ds }}'})
 
   def test_get_bash_operator_definition(self):
@@ -90,7 +87,7 @@ tasks:
     task_id = 'foo_task'
     task_details = {}
     task_details['type'] = 'Bash'
-    task_details['bash_command'] = 'echo {ds}'
+    task_details['bash_command'] = 'echo %(ds)s'
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
@@ -102,7 +99,7 @@ tasks:
     task_details = {}
     task_details['type'] = 'BigQuery'
     task_details['query'] = google.datalab.bigquery.Query(
-      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_{ds_nodash}`')
+      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_%(ds_nodash)s`')
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
     self.assertEqual(
       operator_def,
