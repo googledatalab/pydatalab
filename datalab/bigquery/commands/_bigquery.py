@@ -910,10 +910,12 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   _HTML_TEMPLATE = u"""
     <div class="bqtv" id="{div_id}">{static_table}</div>
     <br />{meta_data}<br />
+    <script src="/static/components/requirejs/require.js"></script>
     <script>
 
       require.config({{
         paths: {{
+          base: '/static/base',
           d3: '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
           plotly: 'https://cdn.plot.ly/plotly-1.5.1.min.js?noext',
           jquery: '//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min'
@@ -1015,8 +1017,13 @@ def _repr_html_table(results):
 def _repr_html_table_schema(schema):
   _HTML_TEMPLATE = """
     <div class="bqsv" id="%s"></div>
+
+    <script src="/static/components/requirejs/require.js"></script>
     <script>
       require.config({
+        paths: {
+          base: '/static/base',
+        },
         map: {
           '*': {
             datalab: 'nbextensions/gcpdatalab'

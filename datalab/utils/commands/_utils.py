@@ -603,10 +603,12 @@ def chart_html(driver_name, chart_type, source, chart_options=None, fields='*', 
       <div class="bqgc {extra_class}" id="{id}">
       </div>
     </div>
+    <script src="/static/components/requirejs/require.js"></script>
     <script>
 
       require.config({{
         paths: {{
+          base: '/static/base',
           d3: '//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3',
           plotly: 'https://cdn.plot.ly/plotly-1.5.1.min.js?noext',
           jquery: '//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min'
