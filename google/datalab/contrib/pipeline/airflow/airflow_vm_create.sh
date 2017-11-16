@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VM_NAME="instance-7"
+VM_NAME="instance-12"
 PROJECT_ID="cloud-ml-dev"
 ZONE="us-central1-b"
 
@@ -21,9 +21,10 @@ gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
 --boot-disk-size "10" \
 --boot-disk-type "pd-standard" \
 --boot-disk-device-name $VM_NAME \
---metadata-from-file startup-script-url=$AIRFLOW_VM_STARTUP_SCRIPT \
+--metadata startup-script-url=$AIRFLOW_VM_STARTUP_SCRIPT \
 
 # TODO(rajivpb): Eventually, we need to set this metadata so that they can be parameters
 # --metadata GCS_DAG_BUCKET=$GCS_DAG_BUCKET_FOR_AIRFLOW,GCS_DAG_PATH=$GCS_DAG_PATH_FOR_AIRFLOW \
 
+sleep 30
 gcloud compute --project $PROJECT_ID ssh --zone $ZONE $VM_NAME
