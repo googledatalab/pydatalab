@@ -13,6 +13,7 @@
 import datetime
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
+import six
 
 
 class Pipeline(object):
@@ -142,13 +143,23 @@ default_args = {{
     operator_param_values = Pipeline._get_operator_param_name_and_values(
         operator_classname, task_details)
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
+      operator_param_value = self._resolve_airflow_macros(operator_param_value)
       param_format_string = Pipeline._get_param_format_string(
           operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
-      param_string = param_string % self._airflow_macros
       full_param_string = full_param_string + param_string
 
     return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_classname, full_param_string)
+
+  def _resolve_airflow_macros(self, operator_param_value):
+    if isinstance(operator_param_value, list):
+      return [self._resolve_airflow_macros(item) for item in operator_param_value]
+    if isinstance(operator_param_value, dict):
+      return {self._resolve_airflow_macros(k): self._resolve_airflow_macros(v)
+              for k, v in operator_param_value.items()}
+    if isinstance(operator_param_value, six.string_types):
+      return operator_param_value % self._airflow_macros
+    return operator_param_value
 
   @staticmethod
   def _get_param_format_string(param_value):
