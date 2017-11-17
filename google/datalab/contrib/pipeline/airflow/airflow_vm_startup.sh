@@ -8,10 +8,10 @@ apt-get --assume-yes install python-pip
 pip install airflow
 mkdir $AIRFLOW_HOME
 chmod a+rwx $AIRFLOW_HOME
-# Run Airflow a first time to create the airflow.cfg
-airflow version
-airflow initdb
 
+airflow initdb
+airflow scheduler
+airflow worker
 
 # TODO(rajivpb): Replace this with 'pip install datalab'
 DATALAB_TAR=datalab-1.1.0.tar

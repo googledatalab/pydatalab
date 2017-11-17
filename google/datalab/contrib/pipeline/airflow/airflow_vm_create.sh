@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 PROJECT_ID=${1:-cloud-ml-dev}
-VM_NAME=${2:-instance-26}
+VM_NAME=${2:-instance-27}
 ZONE=${3:-us-central1-b}
 
 # Make a GCS bucket. This will fail if the bucket already exists, and that's ok.
@@ -27,4 +27,4 @@ gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
 sleep 90
 
 # TODO(rajivpb): To be deleted; left here only for convenience
-# gcloud compute --project $PROJECT_ID ssh --zone $ZONE $VM_NAME
+gcloud compute --project $PROJECT_ID ssh --zone $ZONE $VM_NAME
