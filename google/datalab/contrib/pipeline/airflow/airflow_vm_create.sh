@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 PROJECT_ID=${1:-cloud-ml-dev}
-VM_NAME=${2:-instance-23}
+VM_NAME=${2:-instance-24}
 ZONE=${3:-us-central1-b}
 
 # Make a GCS bucket
