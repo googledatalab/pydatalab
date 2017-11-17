@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-VM_NAME=$1
-PROJECT_ID=$2
+PROJECT_ID=${1:-cloud-ml-dev}
+VM_NAME=${2:-instance-13}
 ZONE=us-central1-b
 
 $GSUTIL=gsutil
