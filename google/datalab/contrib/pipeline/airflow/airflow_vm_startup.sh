@@ -16,9 +16,9 @@ rm $DATALAB_TAR
 # We append a gsutil rsync command to the cron file and have this run every minute to sync dags.
 AIRFLOW_CRON=temp_crontab.txt
 crontab -l > $AIRFLOW_CRON
-DAG_PATH="/dags"
-LOCAL_DAG_PATH=$AIRFLOW_HOME$DAG_PATH
+DAG_FOLDER="dags"
+LOCAL_DAG_PATH=$AIRFLOW_HOME/$DAG_FOLDER
 mkdir -p $LOCAL_DAG_PATH
-echo "* * * * * gsutil rsync gs://$GCS_DAG_BUCKET/$DAG_PATH $LOCAL_DAG_PATH" >> $AIRFLOW_CRON
+echo "* * * * * gsutil rsync gs://$GCS_DAG_BUCKET/$DAG_FOLDER $LOCAL_DAG_PATH" >> $AIRFLOW_CRON
 crontab $AIRFLOW_CRON
 rm $AIRFLOW_CRON
