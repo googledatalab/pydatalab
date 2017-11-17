@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 PROJECT_ID=${1:-cloud-ml-dev}
-VM_NAME=${2:-instance-18}
+VM_NAME=${2:-instance-19}
 ZONE=${3:-us-central1-b}
 
 # Make bucket
