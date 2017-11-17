@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 PROJECT_ID=${1:-cloud-ml-dev}
-VM_NAME=${2:-instance-16}
-ZONE=us-central1-b
+VM_NAME=${2:-instance-18}
+ZONE=${3:-us-central1-b}
 
 # Make bucket
 GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 gsutil mb gs://$GCS_DAG_BUCKET
 
-DATALAB_PIPELINES_BUCKET=datalab-pipelines
-AIRFLOW_VM_STARTUP_SCRIPT=gs://$DATALAB_PIPELINES_BUCKET/airflow_vm_startup.sh
-
-# The default values here were grabbed from Pantheon's "command-line" button for creating a VM
+# Create VM
+AIRFLOW_VM_STARTUP_SCRIPT=gs://datalab-pipelines/airflow_vm_startup.sh
 gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
     --zone $ZONE \
     --machine-type "n1-standard-1" \

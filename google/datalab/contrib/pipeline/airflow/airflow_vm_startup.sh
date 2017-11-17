@@ -9,7 +9,7 @@ airflow initdb
 
 # TODO(rajivpb): Replace this with 'pip install datalab'
 DATALAB_TAR=datalab-1.1.0.tar
-gsutil cp gs://$GCS_DAG_BUCKET/$DATALAB_TAR $DATALAB_TAR
+gsutil cp gs://datalab-pipelines/$DATALAB_TAR $DATALAB_TAR
 pip install $DATALAB_TAR
 rm $DATALAB_TAR
 
