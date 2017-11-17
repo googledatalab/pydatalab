@@ -1,5 +1,5 @@
 #!/bin/bash
-export AIRFLOW_HOME=airflow
+export AIRFLOW_HOME=/etc/airflow
 PROJECT_ID=cloud-ml-dev
 GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 
@@ -19,6 +19,11 @@ crontab -l > $AIRFLOW_CRON
 DAG_FOLDER="dags"
 LOCAL_DAG_PATH=$AIRFLOW_HOME/$DAG_FOLDER
 mkdir -p $LOCAL_DAG_PATH
+
+# TODO(rajivpb): Temporarily give other users permissions to peek into the dag folder for debugging
+chmod a+rwx $AIRFLOW_HOME
+chmod a+rwx $LOCAL_DAG_PATH
+
 echo "* * * * * gsutil rsync gs://$GCS_DAG_BUCKET/$DAG_FOLDER $LOCAL_DAG_PATH" >> $AIRFLOW_CRON
 crontab $AIRFLOW_CRON
 rm $AIRFLOW_CRON
