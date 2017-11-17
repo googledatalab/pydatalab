@@ -3,13 +3,16 @@ export AIRFLOW_HOME=/etc/airflow
 PROJECT_ID=cloud-ml-dev
 GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 
+GSUTIL=gsutil
+GCLOUD=gcloud
+
 apt-get --assume-yes install python-pip
 pip install airflow
 airflow initdb
 
 # TODO(rajivpb): Replace this with 'pip install datalab'
 DATALAB_TAR=datalab-1.1.0.tar
-gsutil cp gs:///$GCS_DAG_BUCKET/$DATALAB_TAR $DATALAB_TAR
+$GSUTIL cp gs:///$GCS_DAG_BUCKET/$DATALAB_TAR $DATALAB_TAR
 pip install $DATALAB_TAR
 rm $DATALAB_TAR
 
