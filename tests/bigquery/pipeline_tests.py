@@ -453,7 +453,6 @@ WHERE endpoint=@endpoint""")
     context = TestCases._create_context()
     mock_default_context.return_value = context
     mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
-    mock_blob = mock_blob_class.return_value
 
     mock_composer_env.return_value = {
       'config': {
@@ -472,7 +471,8 @@ WHERE endpoint=@endpoint""")
 
     mock_environment.return_value = env
     args = {'name': 'bq_pipeline_test', 'environment': 'foo_environment',
-            'location': 'foo_locaiton'}
+            'location': 'foo_location', 'gcs_dag_bucket': 'foo_bucket',
+            'gcs_dag_file_path': 'foo_file_path'}
     cell_body = """
             emails: foo1@test.com,foo2@test.com
             schedule:
@@ -573,4 +573,8 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
     self.assertIn("'name': 'col2'", actual_schema_str)
     self.assertIn("'description': 'description1'", actual_schema_str)
 
+    mock_blob = mock_blob_class.return_value
+    mock_client.return_value.get_bucket.assert_called_with('foo_bucket')
+    mock_blob_class.assert_called_with('foo_file_path/bq_pipeline_test.py',
+                                       mock.ANY)
     mock_blob.upload_from_string.assert_called_with(output)
