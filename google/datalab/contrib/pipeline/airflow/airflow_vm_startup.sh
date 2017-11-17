@@ -11,7 +11,7 @@ chmod a+rwx $AIRFLOW_HOME
 
 airflow initdb
 airflow scheduler &
-airflow worker
+airflow worker &
 
 # TODO(rajivpb): Replace this with 'pip install datalab'
 DATALAB_TAR=datalab-1.1.0.tar
