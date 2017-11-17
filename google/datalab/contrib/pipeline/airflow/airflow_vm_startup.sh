@@ -10,7 +10,7 @@ mkdir $AIRFLOW_HOME
 chmod a+rwx $AIRFLOW_HOME
 
 airflow initdb
-airflow scheduler
+airflow scheduler &
 airflow worker
 
 # TODO(rajivpb): Replace this with 'pip install datalab'
