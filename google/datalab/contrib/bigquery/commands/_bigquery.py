@@ -25,7 +25,7 @@ def _create_pipeline_subparser(parser):
   pipeline_parser.add_argument('-l', '--location', type=str,
                                help='The name of the Cloud location for the environment.')
   pipeline_parser.add_argument('-d', '--gcs_dag_bucket', type=str,
-                               help='The GCS bucket for the dags for Airflow.')
+                               help='The Google Cloud Storage bucket for the dags for Airflow.')
   pipeline_parser.add_argument('-f', '--gcs_dag_file_path', type=str,
                                help='The file path suffix for the dags for Airflow.')
   return pipeline_parser

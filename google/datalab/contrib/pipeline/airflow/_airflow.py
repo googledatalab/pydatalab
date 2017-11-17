@@ -24,8 +24,8 @@ class Airflow(object):
     """ Initializes an instance of a Airflow object.
 
     Args:
-      gcs_dag_bucket: Zone in which Airflow environment has been created.
-      gcs_dag_file_path: Name of the Airflow environment.
+      gcs_dag_bucket: Bucket where Airflow expects dag files to be uploaded.
+      gcs_dag_file_path: File path of the Airflow dag files.
     """
     self._gcs_dag_bucket = gcs_dag_bucket
     self._gcs_dag_file_path = gcs_dag_file_path or ''
