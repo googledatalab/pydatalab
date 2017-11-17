@@ -5,7 +5,7 @@ GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 
 apt-get --assume-yes install python-pip
 pip install airflow
-/usr/local/bin/airflow initdb
+airflow initdb
 
 # TODO(rajivpb): Replace this with 'pip install datalab'
 DATALAB_TAR=datalab-1.1.0.tar
