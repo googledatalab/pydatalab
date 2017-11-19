@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 PROJECT_ID=${1:-cloud-ml-dev}
-VM_NAME=${2:-instance-38}
+VM_NAME=${2:-instance-39}
 ZONE=${3:-us-central1-b}
 
-# Make a GCS bucket. This will fail if the bucket already exists, and that's ok.
+# Make the GCS bucket to store the dags. The name follows a convention between this and the startup
+# script for the VM creation, so if this name is changed here, it needs to be changed there as well.
+# This will fail if the bucket already exists, and that's ok.
 GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 gsutil mb gs://$GCS_DAG_BUCKET
 
@@ -24,7 +26,7 @@ gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
     --metadata startup-script-url=$AIRFLOW_VM_STARTUP_SCRIPT \
 
 # Meditate.
-sleep 90
+sleep 120
 
 # TODO(rajivpb): To be deleted; left here only for convenience
 gcloud compute --project $PROJECT_ID ssh --zone $ZONE $VM_NAME
