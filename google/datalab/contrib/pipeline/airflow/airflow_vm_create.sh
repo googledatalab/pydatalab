@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 ZONE=${1:-us-central1-b}
 
 # Make the GCS bucket to store the dags. The name follows a convention between this and the startup
