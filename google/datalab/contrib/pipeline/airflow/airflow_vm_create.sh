@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-PROJECT_ID=${1:-cloud-ml-dev}
-VM_NAME=${2:-instance-39}
-ZONE=${3:-us-central1-b}
+ZONE=${1:-us-central1-b}
 
 # Make the GCS bucket to store the dags. The name follows a convention between this and the startup
 # script for the VM creation, so if this name is changed here, it needs to be changed there as well.
 # This will fail if the bucket already exists, and that's ok.
+PROJECT_ID=$(gcloud info --format='get(config.project)')
 GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 gsutil mb gs://$GCS_DAG_BUCKET
 
 # Create the VM.
+VM_NAME=datalab-airflow
 AIRFLOW_VM_STARTUP_SCRIPT=gs://datalab-pipelines/airflow_vm_startup.sh
 gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
     --zone $ZONE \
