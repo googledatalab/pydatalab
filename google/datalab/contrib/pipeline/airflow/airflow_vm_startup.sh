@@ -6,8 +6,6 @@ GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 
 apt-get --assume-yes install python-pip
 
-# Install airflow
-# pip install airflow
 mkdir $AIRFLOW_HOME
 chmod a+rwx $AIRFLOW_HOME
 
@@ -19,7 +17,6 @@ rm $DATALAB_TAR
 
 airflow initdb
 airflow scheduler &
-airflow worker &
 
 # We append a gsutil rsync command to the cron file and have this run every minute to sync dags.
 AIRFLOW_CRON=temp_crontab.txt
