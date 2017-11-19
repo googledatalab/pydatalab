@@ -1,7 +1,8 @@
 #!/bin/bash
+PROJECT_ID=cloud-ml-dev
 export AIRFLOW_HOME=/airflow
 export AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
-PROJECT_ID=cloud-ml-dev
+AIRFLOW__CORE__LOAD_EXAMPLES=False
 GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 
 apt-get --assume-yes install python-pip
