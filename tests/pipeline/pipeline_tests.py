@@ -120,6 +120,14 @@ tasks:
       """foo_task = BashOperator(task_id='foo_task_id', bash_command=\"\"\"echo {{ ds }}\"\"\", dag=dag)
 """)  # noqa
 
+    task_details['bash_command'] = 'echo %(ds)s_%(custom_key)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+      task_id, task_details, [{'name': 'custom_key', 'value': 'custom_value', 'type': 'STRING'}])
+    self.assertEqual(
+      operator_def,
+      """foo_task = BashOperator(task_id='foo_task_id', bash_command=\"\"\"echo {{ ds }}_custom_value\"\"\", dag=dag)
+""")  # noqa
+
   def test_get_templated_bq_definition(self):
     task_id = 'foo_task'
     task_details = {}
