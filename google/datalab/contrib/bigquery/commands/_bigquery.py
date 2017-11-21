@@ -13,6 +13,9 @@
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
 import google.datalab.utils as utils
+# TODO(rajivpb): This import is a stop-gap for
+# https://github.com/googledatalab/pydatalab/issues/593
+from google.datalab.contrib.pipeline._pipeline import Pipeline
 
 
 def _create_pipeline_subparser(parser):
@@ -51,10 +54,7 @@ def _pipeline_cell(args, cell_body):
     bq_pipeline_config = utils.commands.parse_config(
         cell_body, utils.commands.notebook_environment())
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
-    # TODO(rajivpb): This import is a stop-gap for
-    # https://github.com/googledatalab/pydatalab/issues/593
-    import google.datalab.contrib.pipeline._pipeline
-    pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
+    pipeline = Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
 
     airflow_spec = pipeline.get_airflow_spec()
@@ -101,6 +101,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   output_config = bq_pipeline_config.get('output')
   parameters_config = bq_pipeline_config.get('parameters')
 
+  pipeline_spec['parameters'] = parameters_config
   pipeline_spec['tasks'] = {}
 
   load_task_id = None
@@ -224,6 +225,11 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
 
     if bq_pipeline_parameters_config:
       execute_task_config['parameters'] = bq_pipeline_parameters_config
+      # We merge the parameters with the airflow macros so that users can specify airflow macro
+      # names (like '@ds') in sql
+      airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
+                             for key, value in Pipeline.airflow_macros.iteritems()]
+      execute_task_config['parameters'].append(airflow_macros_list)
 
     return execute_task_config
 

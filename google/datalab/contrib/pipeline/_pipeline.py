@@ -39,7 +39,7 @@ from datetime import timedelta
 
   # These are documented here:
   # https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables
-  _airflow_macros = {
+  airflow_macros = {
     # the datetime formatted as YYYY-MM-DD
     'ds': '{{ ds }}',
     # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
@@ -65,8 +65,9 @@ from datetime import timedelta
     """
     task_definitions = ''
     up_steam_statements = ''
+    parameters = self._pipeline_spec.get('parameters')
     for (task_id, task_details) in sorted(self._pipeline_spec['tasks'].items()):
-      task_def = self._get_operator_definition(task_id, task_details)
+      task_def = self._get_operator_definition(task_id, task_details, parameters)
       task_definitions = task_definitions + task_def
       dependency_def = Pipeline._get_dependency_definition(task_id, task_details.get('up_stream',
                                                                                      []))
@@ -132,9 +133,10 @@ default_args = {{
     expr_format = 'datetime.datetime.strptime(\'{0}\', \'{1}\')'
     return expr_format.format(datetime_obj.strftime(datetime_format), datetime_format)
 
-  def _get_operator_definition(self, task_id, task_details):
+  def _get_operator_definition(self, task_id, task_details, parameters):
     """ Internal helper that gets the definition of the airflow operator for the task with the
       python parameters. All the parameters are also expanded with the airflow macros.
+      :param parameters:
     """
     operator_type = task_details['type']
     full_param_string = 'task_id=\'{0}_id\''.format(task_id)
@@ -142,8 +144,9 @@ default_args = {{
 
     operator_param_values = Pipeline._get_operator_param_name_and_values(
         operator_classname, task_details)
+    merged_parameters = self._merge_parameters(parameters)
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
-      operator_param_value = self._resolve_airflow_macros(operator_param_value)
+      operator_param_value = self._resolve_parameters(operator_param_value, merged_parameters)
       param_format_string = Pipeline._get_param_format_string(
           operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
@@ -151,14 +154,25 @@ default_args = {{
 
     return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_classname, full_param_string)
 
-  def _resolve_airflow_macros(self, operator_param_value):
+  def _merge_parameters(self, parameters):
+    # We merge the user-provided parameters and the airflow macros
+    merged_parameters = self.airflow_macros.copy()
+    # TODO(rajivpb): Ignoring 'type' for now; figure out how to use that later.
+    parameters_dict = None
+    if parameters:
+      parameters_dict = {item['name']: item['value'] for item in parameters}
+      merged_parameters.update(parameters_dict)
+
+    return merged_parameters
+
+  def _resolve_parameters(self, operator_param_value, merged_parameters):
     if isinstance(operator_param_value, list):
-      return [self._resolve_airflow_macros(item) for item in operator_param_value]
+      return [self._resolve_parameters(item, merged_parameters) for item in operator_param_value]
     if isinstance(operator_param_value, dict):
-      return {self._resolve_airflow_macros(k): self._resolve_airflow_macros(v)
-              for k, v in operator_param_value.items()}
-    if isinstance(operator_param_value, six.string_types):
-      return operator_param_value % self._airflow_macros
+      return {self._resolve_parameters(k, merged_parameters): self._resolve_parameters(
+        v, merged_parameters) for k, v in operator_param_value.items()}
+    if isinstance(operator_param_value, six.string_types) and merged_parameters:
+      return operator_param_value % merged_parameters
     return operator_param_value
 
   @staticmethod

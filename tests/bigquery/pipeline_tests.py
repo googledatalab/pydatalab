@@ -65,6 +65,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
@@ -77,7 +78,6 @@ class TestCases(unittest.TestCase):
         }
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # input as path, transformation, output as path
@@ -95,6 +95,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
@@ -127,6 +128,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_load_task': {
           'type': 'pydatalab.bq.load',
@@ -160,6 +162,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
@@ -189,6 +192,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
@@ -211,6 +215,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_extract_task': {
           'type': 'pydatalab.bq.extract',
@@ -231,6 +236,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_extract_task': {
           'type': 'pydatalab.bq.extract',
@@ -253,6 +259,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_load_task': {
           'type': 'pydatalab.bq.load',
@@ -282,6 +289,7 @@ class TestCases(unittest.TestCase):
     }
 
     expected = {
+      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
