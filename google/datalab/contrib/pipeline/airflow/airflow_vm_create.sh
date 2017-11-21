@@ -25,7 +25,7 @@ gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
     --metadata startup-script='#!/bin/bash
 apt-get --assume-yes install python-pip
 
-# TODO(rajivpb): Replace this with 'pip install datalab'
+# TODO(rajivpb): Replace this with "pip install datalab"
 DATALAB_TAR=datalab-1.1.0.tar
 gsutil cp gs://datalab-pipelines/$DATALAB_TAR $DATALAB_TAR
 pip install $DATALAB_TAR
@@ -39,7 +39,7 @@ airflow initdb
 airflow scheduler &
 
 # We append a gsutil rsync command to the cron file and have this run every minute to sync dags.
-PROJECT_ID=$(gcloud info --format='get(config.project)')
+PROJECT_ID=$(gcloud info --format="get(config.project)")
 GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
 AIRFLOW_CRON=temp_crontab.txt
 crontab -l > $AIRFLOW_CRON
