@@ -54,6 +54,7 @@ def _pipeline_cell(args, cell_body):
     bq_pipeline_config = utils.commands.parse_config(
         cell_body, utils.commands.notebook_environment())
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
+
     pipeline = Pipeline(name, pipeline_spec)
     utils.commands.notebook_environment()[name] = pipeline
 
@@ -229,7 +230,7 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
       # names (like '@ds') in sql
       airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
                              for key, value in Pipeline.airflow_macros.iteritems()]
-      execute_task_config['parameters'].append(airflow_macros_list)
+      execute_task_config['parameters'].extend(airflow_macros_list)
 
     return execute_task_config
 
