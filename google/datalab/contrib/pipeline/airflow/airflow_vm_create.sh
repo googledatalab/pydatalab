@@ -10,7 +10,6 @@ gsutil mb gs://$GCS_DAG_BUCKET
 
 # Create the VM.
 VM_NAME=datalab-airflow
-AIRFLOW_VM_STARTUP_SCRIPT=gs://datalab-pipelines/airflow_vm_startup.sh
 gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
     --zone $ZONE \
     --machine-type "n1-standard-1" \
@@ -23,10 +22,33 @@ gcloud beta compute --project $PROJECT_ID instances create $VM_NAME \
     --boot-disk-size "10" \
     --boot-disk-type "pd-standard" \
     --boot-disk-device-name $VM_NAME \
-    --metadata startup-script-url=$AIRFLOW_VM_STARTUP_SCRIPT \
+    --metadata startup-script='#!/bin/bash
+apt-get --assume-yes install python-pip
+
+# TODO(rajivpb): Replace this with 'pip install datalab'
+DATALAB_TAR=datalab-1.1.0.tar
+gsutil cp gs://datalab-pipelines/$DATALAB_TAR $DATALAB_TAR
+pip install $DATALAB_TAR
+rm $DATALAB_TAR
+
+# Airflow is installed by datalab. So any airflow commands should follow the datalab install.
+export AIRFLOW_HOME=/airflow
+export AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+export AIRFLOW__CORE__LOAD_EXAMPLES=False
+airflow initdb
+airflow scheduler &
+
+# We append a gsutil rsync command to the cron file and have this run every minute to sync dags.
+PROJECT_ID=$(gcloud info --format='get(config.project)')
+GCS_DAG_BUCKET=$PROJECT_ID-datalab-airflow
+AIRFLOW_CRON=temp_crontab.txt
+crontab -l > $AIRFLOW_CRON
+DAG_FOLDER="dags"
+LOCAL_DAG_PATH=$AIRFLOW_HOME/$DAG_FOLDER
+echo "* * * * * gsutil rsync gs://$GCS_DAG_BUCKET/$DAG_FOLDER $LOCAL_DAG_PATH" >> $AIRFLOW_CRON
+crontab $AIRFLOW_CRON
+rm $AIRFLOW_CRON
+EOF'
 
 # Meditate.
 sleep 120
-
-# TODO(rajivpb): To be deleted; left here only for convenience
-gcloud compute --project $PROJECT_ID ssh --zone $ZONE $VM_NAME
