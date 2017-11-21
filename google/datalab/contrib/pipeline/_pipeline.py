@@ -158,7 +158,6 @@ default_args = {{
     # We merge the user-provided parameters and the airflow macros
     merged_parameters = self.airflow_macros.copy()
     # TODO(rajivpb): Ignoring 'type' for now; figure out how to use that later.
-    parameters_dict = None
     if parameters:
       parameters_dict = {item['name']: item['value'] for item in parameters}
       merged_parameters.update(parameters_dict)

@@ -62,6 +62,24 @@ tasks:
     dependencies = pipeline.Pipeline._get_dependency_definition('t2', ['t1', 't3'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\nt2.set_upstream(t3)\n')
 
+  def test_merged_parameters(self):
+    test_pipeline = pipeline.Pipeline(None, None)
+    parameters = [
+        {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
+        {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
+    ]
+    merged_parameters = test_pipeline._merge_parameters(parameters)
+    expected = {
+      'foo1': 'foo1',
+      'foo2': 'foo2',
+      'ds': '{{ ds }}',
+      'ts': '{{ ts }}',
+      'ds_nodash': '{{ ds_nodash }}',
+      'ts_nodash': '{{ ts_nodash }}',
+    }
+
+    self.assertDictEqual(merged_parameters, expected)
+
   def test_resolve_parameters(self):
     test_pipeline = pipeline.Pipeline(None, None)
     params = pipeline.Pipeline.airflow_macros

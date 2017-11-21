@@ -300,6 +300,46 @@ class TestCases(unittest.TestCase):
 
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
+    # only transformation with parameters
+    pipeline_config = {
+      'transformation': {
+        'query': 'foo_query'
+      },
+      'parameters': [
+        {'name': 'foo1', 'value': 'foo1', 'type': 'foo1'},
+        {'name': 'foo1', 'value': 'foo1', 'type': 'foo1'},
+      ]
+    }
+
+    expected = {
+      'parameters': [
+        {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
+        {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
+        {'type': 'STRING', 'name': 'ts_nodash', 'value': '{{ ts_nodash }}'},
+        {'type': 'STRING', 'name': 'ds', 'value': '{{ ds }}'},
+        {'type': 'STRING', 'name': 'ds_nodash', 'value': '{{ ds_nodash }}'},
+        {'type': 'STRING', 'name': 'ts', 'value': '{{ ts }}'}
+      ],
+      'tasks': {
+        'bq_pipeline_execute_task': {
+          'sql': u'foo_query_sql_string',
+          'type': 'pydatalab.bq.execute',
+          'parameters': [
+            {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
+            {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
+            {'type': 'STRING', 'name': 'ts_nodash', 'value': '{{ ts_nodash }}'},
+            {'type': 'STRING', 'name': 'ds', 'value': '{{ ds }}'},
+            {'type': 'STRING', 'name': 'ds_nodash', 'value': '{{ ds_nodash }}'},
+            {'type': 'STRING', 'name': 'ts', 'value': '{{ ts }}'}
+          ]
+        },
+      }
+    }
+
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertDictEqual(actual['tasks'], expected['tasks'])
+    self.assertItemsEqual(actual['parameters'], expected['parameters'])
+
   def test_get_load_parameters(self):
     actual_load_config = bq._get_load_parameters(TestCases.test_input_config, None, None)
     expected_load_config = {
