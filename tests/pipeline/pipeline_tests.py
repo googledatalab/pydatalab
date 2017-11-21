@@ -84,14 +84,19 @@ tasks:
     test_pipeline = pipeline.Pipeline(None, None)
     params = pipeline.Pipeline.airflow_macros
     self.assertEqual(test_pipeline._resolve_parameters('foo%(ds)s', params), 'foo{{ ds }}')
-
     self.assertEqual(test_pipeline._resolve_parameters(u'foo%(ds)s', params), 'foo{{ ds }}')
-    test_pipeline = pipeline.Pipeline(None, None)
     self.assertListEqual(test_pipeline._resolve_parameters([u'foo%(ds)s', 'bar%(ds)s'], params),
                          ['foo{{ ds }}', 'bar{{ ds }}'])
-
     self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(ds)s': u'value%(ds)s'}, params),
                          {u'key{{ ds }}': u'value{{ ds }}'})
+    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(ds)s': u'value%(ds)s'}, params),
+                         {u'key{{ ds }}': u'value{{ ds }}'})
+    self.assertDictEqual(test_pipeline._resolve_parameters(
+      {u'key%(ds)s': {'key': u'value%(ds)s'}}, params), {u'key{{ ds }}': {'key': u'value{{ ds }}'}})
+    params.update({'custom_key': 'custom_value'})
+    self.assertDictEqual(test_pipeline._resolve_parameters(
+      {u'key%(custom_key)s': u'value%(custom_key)s'}, params),
+      {u'keycustom_value': u'valuecustom_value'})
 
   def test_get_bash_operator_definition(self):
     task_id = 'print_pdt_date'
