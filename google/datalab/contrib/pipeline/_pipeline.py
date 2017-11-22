@@ -59,6 +59,7 @@ from datetime import timedelta
     """
     self._pipeline_spec = pipeline_spec
     self._name = name
+    self._replace_macros = False
 
   def get_airflow_spec(self):
     """ Gets the airflow python spec (Composer service input) for the Pipeline object.
@@ -144,9 +145,10 @@ default_args = {{
 
     operator_param_values = Pipeline._get_operator_param_name_and_values(
         operator_classname, task_details)
-    merged_parameters = self._merge_parameters(parameters)
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
-      operator_param_value = self._resolve_parameters(operator_param_value, merged_parameters)
+      if self._replace_macros:
+        operator_param_value = self._resolve_parameters(operator_param_value,
+                                                        self._merge_parameters(parameters))
       param_format_string = Pipeline._get_param_format_string(
           operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)

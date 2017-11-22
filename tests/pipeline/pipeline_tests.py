@@ -108,39 +108,6 @@ tasks:
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", dag=dag)
 """)  # noqa
 
-  def test_get_templated_bash_operator_definition(self):
-    task_id = 'foo_task'
-    task_details = {}
-    task_details['type'] = 'Bash'
-    task_details['bash_command'] = 'echo %(ds)s'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
-    self.assertEqual(
-      operator_def,
-      """foo_task = BashOperator(task_id='foo_task_id', bash_command=\"\"\"echo {{ ds }}\"\"\", dag=dag)
-""")  # noqa
-
-    task_details['bash_command'] = 'echo %(ds)s_%(custom_key)s'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
-      task_id, task_details, [{'name': 'custom_key', 'value': 'custom_value', 'type': 'STRING'}])
-    self.assertEqual(
-      operator_def,
-      """foo_task = BashOperator(task_id='foo_task_id', bash_command=\"\"\"echo {{ ds }}_custom_value\"\"\", dag=dag)
-""")  # noqa
-
-  def test_get_templated_bq_definition(self):
-    task_id = 'foo_task'
-    task_details = {}
-    task_details['type'] = 'BigQuery'
-    task_details['query'] = google.datalab.bigquery.Query(
-      'SELECT * FROM `cloud-datalab-samples.httplogs.logs_%(ds_nodash)s`')
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
-    self.assertEqual(
-      operator_def,
-      """foo_task = BigQueryOperator(task_id='foo_task_id', bql=\"\"\"SELECT * FROM `cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}`\"\"\", use_legacy_sql=False, dag=dag)
-""")  # noqa
-
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_get_bq_execute_operator_definition(self, mock_table):
     mock_table.return_value = bq.Table(
