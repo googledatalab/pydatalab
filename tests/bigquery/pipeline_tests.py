@@ -23,7 +23,7 @@ import unittest
 
 
 class TestCases(unittest.TestCase):
-  maxDiff = None
+
   test_input_config = {
     'path': 'test_path_%(ts_month)s',
     'table': 'test_table',
@@ -345,10 +345,8 @@ class TestCases(unittest.TestCase):
         },
       }
     }
-
     actual = bq._get_pipeline_spec_from_config(pipeline_config)
-    self.assertDictEqual(actual['tasks'], expected['tasks'])
-    self.assertItemsEqual(actual['parameters'], expected['parameters'])
+    self.assertEqual(str(actual), str(expected))
 
   def test_get_load_parameters(self):
     actual_load_config = bq._get_load_parameters(TestCases.test_input_config, None, None)
