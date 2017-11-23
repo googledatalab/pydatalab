@@ -53,8 +53,8 @@ from datetime import timedelta
     'ts_month': "{{ execution_date.month }}",
     'ts_day': "{{ execution_date.day }}",
     'ts_hour': "{{ execution_date.hour }}",
-    'ts_min': "{{ execution_date.min }}",
-    'ts_sec': "{{ execution_date.sec }}",
+    'ts_min': "{{ execution_date.minute }}",
+    'ts_sec': "{{ execution_date.second }}",
   }
 
   def __init__(self, name, pipeline_spec, resolve_airflow_macros=False):
