@@ -225,13 +225,14 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
       if 'mode' in bq_pipeline_output_config:
           execute_task_config['mode'] = bq_pipeline_output_config['mode']
 
+    execute_task_config['parameters'] = []
     if bq_pipeline_parameters_config:
-      execute_task_config['parameters'] = bq_pipeline_parameters_config[:]
-      # We merge the parameters with the airflow macros so that users can specify airflow macro
-      # names (like '@ds') in sql
-      airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                             for key, value in Pipeline.airflow_macros.items()]
-      execute_task_config['parameters'].extend(airflow_macros_list)
+      execute_task_config['parameters'].extend(bq_pipeline_parameters_config)
+    # We merge the parameters with the airflow macros so that users can specify airflow macro
+    # names (like '@ds') in sql
+    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
+                           for key, value in Pipeline.airflow_macros.items()]
+    execute_task_config['parameters'].extend(airflow_macros_list)
 
     return execute_task_config
 
