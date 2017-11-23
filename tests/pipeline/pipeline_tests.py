@@ -79,8 +79,8 @@ tasks:
       'ts_month': "{{ execution_date.month }}",
       'ts_day': "{{ execution_date.day }}",
       'ts_hour': "{{ execution_date.hour }}",
-      'ts_min': "{{ execution_date.min }}",
-      'ts_sec': "{{ execution_date.sec }}",
+      'ts_minute': "{{ execution_date.minute }}",
+      'ts_second': "{{ execution_date.second }}",
     }
 
     self.assertDictEqual(merged_parameters, expected)

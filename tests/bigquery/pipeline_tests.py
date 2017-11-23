@@ -309,25 +309,27 @@ class TestCases(unittest.TestCase):
       },
       'parameters': [
         {'name': 'foo1', 'value': 'foo1', 'type': 'foo1'},
-        {'name': 'foo1', 'value': 'foo1', 'type': 'foo1'},
+        {'name': 'foo2', 'value': 'foo2', 'type': 'foo2'},
       ]
     }
 
     expected = {
-      'parameters': [{'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
-                     {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'}],
+      'parameters': [
+        {'name': 'foo1', 'value': 'foo1', 'type': 'foo1'},
+        {'name': 'foo2', 'value': 'foo2', 'type': 'foo2'},
+      ],
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'parameters': [{'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
-                         {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
-                         {'type': 'STRING', 'name': 'ts_min',
-                          'value': '{{ execution_date.min }}'},
+                         {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
+                         {'type': 'STRING', 'name': 'ts_minute',
+                          'value': '{{ execution_date.minute }}'},
                          {'type': 'STRING', 'name': 'ts_day',
                           'value': '{{ execution_date.day }}'},
-                         {'type': 'STRING', 'name': 'ts_sec',
-                          'value': '{{ execution_date.sec }}'},
+                         {'type': 'STRING', 'name': 'ts_second',
+                          'value': '{{ execution_date.second }}'},
                          {'type': 'STRING', 'name': 'ts_nodash',
                           'value': '{{ ts_nodash }}'},
                          {'type': 'STRING', 'name': 'ts_month',
@@ -346,7 +348,13 @@ class TestCases(unittest.TestCase):
       }
     }
     actual = bq._get_pipeline_spec_from_config(pipeline_config)
-    self.assertEqual(str(actual), str(expected))
+    self.assertItemsEqual(actual.keys(), ['parameters', 'tasks'])
+    self.assertItemsEqual(actual['parameters'], expected['parameters'])
+    self.assertTrue('bq_pipeline_execute_task' in actual['tasks'])
+    self.assertEqual(actual['tasks']['bq_pipeline_execute_task']['sql'], u'foo_query_sql_string')
+    self.assertEqual(actual['tasks']['bq_pipeline_execute_task']['type'], 'pydatalab.bq.execute')
+    self.assertItemsEqual(actual['tasks']['bq_pipeline_execute_task']['parameters'],
+                     expected['tasks']['bq_pipeline_execute_task']['parameters'])
 
   def test_get_load_parameters(self):
     actual_load_config = bq._get_load_parameters(TestCases.test_input_config, None, None)
