@@ -342,7 +342,7 @@ class TestCases(unittest.TestCase):
     actual_params = actual['tasks']['bq_pipeline_execute_task']['parameters']
     actual_paramaters_dict = {item['name']: (item['value'], item['type']) for item in actual_params}
     expected_paramaters_dict = {item['name']: (item['value'], item['type'])
-                              for item in expected_parameters}
+                                for item in expected_parameters}
     self.assertDictEqual(actual_paramaters_dict, expected_paramaters_dict)
 
     del actual['tasks']['bq_pipeline_execute_task']['parameters']
