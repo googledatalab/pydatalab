@@ -23,7 +23,7 @@ import unittest
 
 
 class TestCases(unittest.TestCase):
-
+  maxDiff = None
   test_input_config = {
     'path': 'test_path_%(ts_month)s',
     'table': 'test_table',
