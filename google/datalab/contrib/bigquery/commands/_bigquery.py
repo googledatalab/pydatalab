@@ -141,7 +141,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
       return None
 
     # The path URL of the GCS load file(s), and associated parameters
-    load_task_config['path'] = bq_pipeline_input_config.get('path')
+    load_task_config['path'] = bq_pipeline_input_config.get('path') % Pipeline.airflow_macros
 
     if 'format' in bq_pipeline_input_config:
       load_task_config['format'] = bq_pipeline_input_config['format']
@@ -164,7 +164,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
     if 'table' not in source_of_table:
       return None
 
-    load_task_config['table'] = source_of_table.get('table')
+    load_task_config['table'] = source_of_table.get('table') % Pipeline.airflow_macros
 
     if 'schema' in source_of_table:
       load_task_config['schema'] = source_of_table['schema']
@@ -199,7 +199,8 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
 
         # All the below are applicable only if data_source is specified
         if 'path' in bq_pipeline_input_config:
-            execute_task_config['path'] = bq_pipeline_input_config['path']
+            # We format the path since this could contain format modifiers
+            execute_task_config['path'] = bq_pipeline_input_config['path'] % Pipeline.airflow_macros
 
         if 'schema' in bq_pipeline_input_config:
             execute_task_config['schema'] = bq_pipeline_input_config['schema']
@@ -219,13 +220,13 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
     # Stuff from the output config
     if bq_pipeline_output_config:
       if 'table' in bq_pipeline_output_config:
-        execute_task_config['table'] = bq_pipeline_output_config['table']
+        execute_task_config['table'] = bq_pipeline_output_config['table'] % Pipeline.airflow_macros
 
       if 'mode' in bq_pipeline_output_config:
           execute_task_config['mode'] = bq_pipeline_output_config['mode']
 
     if bq_pipeline_parameters_config:
-      execute_task_config['parameters'] = bq_pipeline_parameters_config
+      execute_task_config['parameters'] = bq_pipeline_parameters_config[:]
       # We merge the parameters with the airflow macros so that users can specify airflow macro
       # names (like '@ds') in sql
       airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
@@ -251,7 +252,7 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
     if 'path' not in bq_pipeline_output_config:
       return None
 
-    extract_task_config['path'] = bq_pipeline_output_config.get('path')
+    extract_task_config['path'] = bq_pipeline_output_config.get('path') % Pipeline.airflow_macros
 
     if 'format' in bq_pipeline_output_config:
       extract_task_config['format'] = bq_pipeline_output_config.get('format')
@@ -261,14 +262,18 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
 
     # If a temporary table from the bigquery results is being used, this will not be present in the
     # output section.
+    source_of_table = None
     if 'table' in bq_pipeline_output_config:
-      extract_task_config['table'] = bq_pipeline_output_config['table']
+      source_of_table = bq_pipeline_output_config
     elif (bq_pipeline_input_config and not bq_pipeline_transformation_config and
           'table' in bq_pipeline_input_config and 'path' not in bq_pipeline_input_config):
       # If we're here it means that there was no transformation config, but there was an input
       # config with only a table (and no path). We assume that the user was just trying to do a
       # table->gcs (or extract) step, so we take that as the input table (and emit an extract
       # operator).
-      extract_task_config['table'] = bq_pipeline_input_config['table']
+      source_of_table = bq_pipeline_input_config
+
+    if source_of_table:
+      extract_task_config['table'] = source_of_table['table'] % Pipeline.airflow_macros
 
     return extract_task_config

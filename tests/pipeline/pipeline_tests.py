@@ -63,12 +63,11 @@ tasks:
     self.assertEqual(dependencies, 't2.set_upstream(t1)\nt2.set_upstream(t3)\n')
 
   def test_merged_parameters(self):
-    test_pipeline = pipeline.Pipeline(None, None)
     parameters = [
         {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
         {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
     ]
-    merged_parameters = test_pipeline._merge_parameters(parameters)
+    merged_parameters = pipeline.Pipeline.merge_parameters(parameters)
     expected = {
       'foo1': 'foo1',
       'foo2': 'foo2',
@@ -76,6 +75,12 @@ tasks:
       'ts': '{{ ts }}',
       'ds_nodash': '{{ ds_nodash }}',
       'ts_nodash': '{{ ts_nodash }}',
+      'ts_year': "{{ execution_date.year }}",
+      'ts_month': "{{ execution_date.month }}",
+      'ts_day': "{{ execution_date.day }}",
+      'ts_hour': "{{ execution_date.hour }}",
+      'ts_min': "{{ execution_date.min }}",
+      'ts_sec': "{{ execution_date.sec }}",
     }
 
     self.assertDictEqual(merged_parameters, expected)
