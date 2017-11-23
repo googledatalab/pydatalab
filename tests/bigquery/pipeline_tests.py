@@ -339,8 +339,11 @@ class TestCases(unittest.TestCase):
     }
     actual = bq._get_pipeline_spec_from_config(pipeline_config)
     # assertDictEqual doesn't handle nested lists of dicts very well. So comparing separately.
-    self.assertItemsEqual(actual['tasks']['bq_pipeline_execute_task']['parameters'],
-                          expected['tasks']['bq_pipeline_execute_task']['parameters'])
+    actual_params = actual['tasks']['bq_pipeline_execute_task']['parameters']
+    actual_paramaters_dict = {item['name']: (item['value'], item['type']) for item in actual_params}
+    expected_paramaters_dict = {item['name']: (item['value'], item['type'])
+                              for item in expected_parameters}
+    self.assertDictEqual(actual_paramaters_dict, expected_paramaters_dict)
 
     del actual['tasks']['bq_pipeline_execute_task']['parameters']
     del expected['tasks']['bq_pipeline_execute_task']['parameters']
