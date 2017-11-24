@@ -142,7 +142,7 @@ class TestCases(unittest.TestCase):
                                              mock_query_class, mock_external_data_source,
                                              mock_context_default):
     mock_context_default.return_value = self._create_context()
-    csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote': '"'}
+    csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote': 'l'}
     execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql',
                                        data_source='foo_data_source', path='foo_path',
                                        max_bad_records=20, schema=TestCases.test_schema,
