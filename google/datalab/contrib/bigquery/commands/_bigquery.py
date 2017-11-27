@@ -193,9 +193,12 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
     if load_task_id:
       execute_task_config['up_stream'] = [load_task_id]
 
-    # Stuff from the input config
-    if bq_pipeline_input_config and 'data_source' in bq_pipeline_input_config:
-        execute_task_config['data_source'] = bq_pipeline_input_config['data_source']
+    # If the input config has a path but no table, we assume that the user has specified an
+    # external data_source either explicitly (i.e. via specifying a "data_source" key in the input
+    # config, or implicitly (i.e. by letting us assume that this is called "input")
+    if (bq_pipeline_input_config and 'path' in bq_pipeline_input_config and
+            'table' not in bq_pipeline_input_config):
+        execute_task_config['data_source'] = bq_pipeline_input_config.get('data_source', 'input')
 
         # All the below are applicable only if data_source is specified
         if 'path' in bq_pipeline_input_config:

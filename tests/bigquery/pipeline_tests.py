@@ -427,7 +427,6 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_get_execute_parameters(self, mock_notebook_item):
-    # Adding newlines to the query to mimic actual usage of %%bq query ...
     mock_notebook_item.return_value = google.datalab.bigquery.Query("""SELECT @column
 FROM publicdata.samples.wikipedia
 WHERE endpoint=@endpoint""")
@@ -451,6 +450,8 @@ WHERE endpoint=@endpoint""")
         'value': '1234'
       }
     ]
+
+    # Empty input config
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        output_config, parameters_config)
     expected_parameters_config = parameters_config[:]
@@ -468,7 +469,7 @@ WHERE endpoint=@endpoint""")
     }
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
-    # With empty output config
+    # Empty input, empty output configs
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        {}, parameters_config)
     expected_execute_config = {
@@ -477,11 +478,34 @@ WHERE endpoint=@endpoint""")
       'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
       'parameters': expected_parameters_config
     }
-
-    input_config = TestCases.test_input_config
-    input_config['data_source'] = 'foo_data_source'
     self.assertDictEqual(actual_execute_config, expected_execute_config)
+
+    # Empty output config. Expected config is same as output with empty input and empty output.
     actual_execute_config = bq._get_execute_parameters('foo_load_task', TestCases.test_input_config,
+                                                       transformation_config, {}, parameters_config)
+    self.assertDictEqual(actual_execute_config, expected_execute_config)
+
+    # With implicit data_source
+    input_config = TestCases.test_input_config.copy()
+    del input_config['table']
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
+                                                       transformation_config, {}, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'up_stream': ['foo_load_task'],
+      'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
+      'data_source': 'input',
+      'path': 'test_path_{{ execution_date.month }}',
+      'schema': 'test_schema',
+      'source_format': 'csv',
+      'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
+      'parameters': expected_parameters_config
+    }
+    self.assertDictEqual(actual_execute_config, expected_execute_config)
+
+    # With explicit data_source
+    input_config['data_source'] = 'foo_data_source'
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
                                                        transformation_config, {}, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
@@ -494,7 +518,6 @@ WHERE endpoint=@endpoint""")
       'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
       'parameters': expected_parameters_config
     }
-
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
   @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
