@@ -301,7 +301,8 @@ def build_feature_columns(features, stats, model_type):
 
     if transform_name in feature_transforms.NUMERIC_TRANSFORMS:
       new_feature = tf.contrib.layers.real_valued_column(name, dimension=1)
-    elif transform_name == feature_transforms.ONE_HOT_TRANSFORM:
+    elif (transform_name == feature_transforms.ONE_HOT_TRANSFORM or
+          transform_name == feature_transforms.MULTI_HOT_TRANSFORM):
       sparse = tf.contrib.layers.sparse_column_with_integerized_feature(
           name,
           bucket_size=stats['column_stats'][source_column]['vocab_size'])
@@ -332,8 +333,7 @@ def build_feature_columns(features, stats, model_type):
           weight_column_name=name + '_weights',
           dtype=dtypes.float32)
       if is_dnn:
-        # TODO(brandondutra): Figure out why one_hot_column does not work.
-        # Use new_feature = tf.contrib.layers.one_hot_column(sparse_weights)
+        new_feature = tf.contrib.layers.one_hot_column(sparse_ids)
         dimension = int(math.log(stats['column_stats'][source_column]['vocab_size'])) + 1
         new_feature = tf.contrib.layers.embedding_column(
             sparse_weights,

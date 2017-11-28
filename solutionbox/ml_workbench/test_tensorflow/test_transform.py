@@ -20,7 +20,7 @@ import google.datalab.bigquery as bq
 import google.datalab.storage as storage
 
 CODE_PATH = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
+    os.path.dirname(__file__), '..', 'tensorflow'))
 
 # Some tests put files in GCS or use BigQuery. If HAS_CREDENTIALS is false,
 # those tests will not run.
