@@ -18,7 +18,7 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 
 class ExecuteOperator(BaseOperator):
 
-  template_fields = ('_sql', '_table')
+  template_fields = ('_table', '_parameters', '_path')
 
   @apply_defaults
   def __init__(self, sql, parameters=None, table=None, mode=None, data_source=None, path=None,
@@ -36,8 +36,8 @@ class ExecuteOperator(BaseOperator):
     self._max_bad_records = max_bad_records
 
   def execute(self, context):
-    kwargs = {}
     if self._data_source:
+      kwargs = {}
       if self._csv_options and self._csv_options.__len__() > 1:
         csv_kwargs = {}
         if 'delimiter' in self._csv_options:
@@ -48,7 +48,7 @@ class ExecuteOperator(BaseOperator):
           csv_kwargs['allow_jagged_rows'] = self._csv_options['strict']
         if 'quote' in self._csv_options:
           csv_kwargs['quote'] = self._csv_options['quote']
-          kwargs['csv_options'] = bq.CSVOptions(**csv_kwargs)
+        kwargs['csv_options'] = bq.CSVOptions(**csv_kwargs)
 
       if self._format:
         kwargs['source_format'] = self._format

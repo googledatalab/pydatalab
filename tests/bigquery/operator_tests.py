@@ -111,7 +111,7 @@ class TestCases(unittest.TestCase):
     task_details['sql'] = 'test_sql'
     task_details['mode'] = 'create'
 
-    actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details)
+    actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details, None)
     expected = """foo = ExecuteOperator(task_id='foo_id', mode=\"\"\"create\"\"\", sql=\"\"\"test_sql\"\"\", dag=dag)
 """  # noqa
     self.assertEqual(actual, expected)
@@ -142,7 +142,7 @@ class TestCases(unittest.TestCase):
                                              mock_query_class, mock_external_data_source,
                                              mock_context_default):
     mock_context_default.return_value = self._create_context()
-    csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote': '"'}
+    csv_options = {'delimiter': 'f', 'skip': 9, 'strict': True, 'quote': 'l'}
     execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql',
                                        data_source='foo_data_source', path='foo_path',
                                        max_bad_records=20, schema=TestCases.test_schema,
@@ -228,21 +228,20 @@ class TestCases(unittest.TestCase):
       with self.assertRaisesRegexp(Exception, 'Load completed with errors: error'):
         load_operator.execute(context=None)
 
-  def test_defaults_execute_operator(self):
+  def test_execute_operator_defaults(self):
     execute_operator = ExecuteOperator(task_id='foo_task_id', sql='foo_sql')
     self.assertIsNone(execute_operator._parameters)
     self.assertIsNone(execute_operator._table)
     self.assertIsNone(execute_operator._mode)
+    self.assertEqual(execute_operator.template_fields, ('_table', '_parameters', '_path'))
 
-    self.assertEqual(execute_operator.template_fields, ('_sql', '_table'))
-
-  def test_default_parameters_extract_operator(self):
+  def test_extract_operator_defaults(self):
     extract_operator = ExtractOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
     self.assertEquals(extract_operator._format, 'csv')
     self.assertDictEqual(extract_operator._csv_options, {})
     self.assertEqual(extract_operator.template_fields, ('_table', '_path'))
 
-  def test_default_parameters_load_operator(self):
+  def test_load_operator_defaults(self):
     load_operator = LoadOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
     self.assertEquals(load_operator._format, 'csv')
     self.assertEquals(load_operator._mode, 'append')
