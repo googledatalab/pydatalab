@@ -376,17 +376,45 @@ def _get_query_parameters(args, cell_body):
   if config:
     jsonschema.validate(config, BigQuerySchema.QUERY_PARAMS_SCHEMA)
 
+    # We merge the parameters with the airflow macros so that users can specify certain airflow
+    # macro names (like '@ds') in their sql. This is useful for enabling the user to progressively
+    # author a pipeline with %bq pipeline.
+
+    import datetime
+    canned_parameters = {
+      # the datetime formatted as YYYY-MM-DD
+      'ds': {'name': 'ds', 'type': 'STRING', 'value': datetime.date.today().isoformat()},
+      # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
+      'ts': {'name': 'ts', 'type': 'STRING', 'value': datetime.datetime.now().isoformat()},
+      # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
+      'ds_nodash': {'name': 'ds', 'type': 'STRING', 'value': datetime.date.today().strftime('%Y%m%d')},
+      # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
+      # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
+      'ts_nodash': {'name': 'ds', 'type': 'STRING', 'value': datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')},
+      'ts_year': {'name': 'ds', 'type': 'STRING', 'value': datetime.date.today().strftime('%Y')},
+      'ts_month': {'name': 'ds', 'type': 'STRING', 'value': datetime.date.today().strftime('%m')},
+      'ts_day': {'name': 'ds', 'type': 'STRING', 'value': datetime.date.today().strftime('%d')},
+      'ts_hour': {'name': 'ds', 'type': 'STRING', 'value': datetime.datetime.now().strftime('%H')},
+      'ts_minute': {'name': 'ds', 'type': 'STRING', 'value': datetime.datetime.now().strftime('%M')},
+      'ts_second': {'name': 'ds', 'type': 'STRING', 'value': datetime.datetime.now().strftime('%S')},
+    }
+
+    # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
+    # the parameter name. We then use this to update the canned parameters dictionary. This will
+    # have the effect of using user-provided parameters in case of naming conflicts.
+    parameters = {item['name']: item for item in config['parameters']}
+    merged_parameters = canned_parameters.update(parameters)
     # Parse query_params. We're exposing a simpler schema format than the one actually required
     # by BigQuery to make magics easier. We need to convert between the two formats
     parsed_params = []
-    for param in config['parameters']:
+    for key, value in merged_parameters.items():
       parsed_params.append({
-        'name': param['name'],
+        'name': key,
         'parameterType': {
-          'type': param['type']
+          'type': value['type']
         },
         'parameterValue': {
-          'value': param['value']
+          'value': value['value']
         }
       })
     return parsed_params
