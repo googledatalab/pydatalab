@@ -18,7 +18,7 @@ from tensorflow.python.lib.io import file_io
 
 # To make 'import analyze' work without installing it.
 sys.path.append(os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml', 'trainer')))
+    os.path.join(os.path.dirname(__file__), '..', 'tensorflow', 'trainer')))
 
 import feature_transforms  # noqa: E303
 
@@ -194,6 +194,53 @@ class TestGraphBuilding(unittest.TestCase):
       self.assertEqual(results['cat1_weights'].values.size, len(expected_weights))
       for weight, expected_weight in zip(results['cat1_weights'].values.tolist(), expected_weights):
         self.assertAlmostEqual(weight, expected_weight)
+
+    finally:
+      shutil.rmtree(output_folder)
+
+  def test_make_transform_graph_text_multi_hot(self):
+    output_folder = tempfile.mkdtemp()
+    try:
+      # vocab  id
+      # red    0
+      # blue   1
+      # green  2
+      # oov    3 (out of vocab)
+      file_io.write_string_to_file(
+          os.path.join(output_folder,
+                       feature_transforms.VOCAB_ANALYSIS_FILE % 'cat1'),
+          '\n'.join(['red,2', 'blue,2', 'green,1']))
+
+      stats = {'column_stats': {}}
+      file_io.write_string_to_file(
+          os.path.join(output_folder, feature_transforms.STATS_FILE),
+          json.dumps(stats))  # Stats file needed but unused.
+
+      # decode_csv does not like 1 column files with an empty row, so add
+      # a key column
+      schema = [{'name': 'key', 'type': 'STRING'},
+                {'name': 'cat1', 'type': 'STRING'}]
+      features = {'key': {'transform': 'key', 'source_column': 'key'},
+                  'cat1': {'transform': 'multi_hot', 'source_column': 'cat1', 'separator': '|'}}
+      input_data = ['0,red',    # doc 0
+                    '1,red|green',  # doc 1
+                    '2,blue',           # doc 2
+                    '3,red|blue|green',      # doc 3
+                    '4,']               # doc 4
+
+      results = self._run_graph(output_folder, features, schema, stats, input_data)
+
+      # indices are in the form [doc id, vocab id]
+      expected_indices = [[0, 0],
+                          [1, 0], [1, 1],
+                          [2, 0],
+                          [3, 0], [3, 1], [3, 2]]
+
+      # doc id            0  1  1  2  3  3  3
+      expected_ids =     [0, 0, 2, 1, 0, 1, 2] # noqa
+      self.assertEqual(results['cat1'].indices.tolist(), expected_indices)
+      self.assertEqual(results['cat1'].dense_shape.tolist(), [5, 3])
+      self.assertEqual(results['cat1'].values.tolist(), expected_ids)
 
     finally:
       shutil.rmtree(output_folder)

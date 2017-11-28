@@ -20,7 +20,7 @@ from tensorflow.python.lib.io import file_io
 
 
 CODE_PATH = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
+    os.path.dirname(__file__), '..', 'tensorflow'))
 
 
 def run_exported_model(model_path, csv_data):
@@ -237,8 +237,9 @@ class TestMultipleFeatures(unittest.TestCase):
           'num2': {'transform': 'key', 'source_column': 'num'},
           'target': {'transform': 'target'},
           'text': {'transform': 'bag_of_words'},
-          'text2': {'transform': 'tfidf', 'source_column': 'text'},
-          'text3': {'transform': 'key', 'source_column': 'text'}}
+          'text2': {'transform': 'multi_hot', 'source_column': 'text'},
+          'text3': {'transform': 'tfidf', 'source_column': 'text'},
+          'text4': {'transform': 'key', 'source_column': 'text'}}
       schema = [
           {'name': 'num', 'type': 'integer'},
           {'name': 'target', 'type': 'float'},
@@ -280,7 +281,7 @@ class TestMultipleFeatures(unittest.TestCase):
 
       # check keys were made
       self.assertEqual(20, result['num2'])
-      self.assertEqual('hello moon', result['text3'])
+      self.assertEqual('hello moon', result['text4'])
     finally:
       shutil.rmtree(output_dir)
 
@@ -293,8 +294,9 @@ class TestMultipleFeatures(unittest.TestCase):
           'num2': {'transform': 'key', 'source_column': 'num'},
           'target': {'transform': 'target'},
           'text': {'transform': 'bag_of_words'},
-          'text2': {'transform': 'tfidf', 'source_column': 'text'},
-          'text3': {'transform': 'key', 'source_column': 'text'}}
+          'text2': {'transform': 'multi_hot', 'source_column': 'text'},
+          'text3': {'transform': 'tfidf', 'source_column': 'text'},
+          'text4': {'transform': 'key', 'source_column': 'text'}}
       schema = [
           {'name': 'num', 'type': 'integer'},
           {'name': 'target', 'type': 'float'},
@@ -335,22 +337,22 @@ class TestMultipleFeatures(unittest.TestCase):
       self.assertEqual(1, len(tf_example.features.feature['target'].float_list.value))
       self.assertEqual(2, len(tf_example.features.feature['text_ids'].int64_list.value))
       self.assertEqual(2, len(tf_example.features.feature['text_weights'].float_list.value))
-      self.assertEqual(2, len(tf_example.features.feature['text2_ids'].int64_list.value))
-      self.assertEqual(2, len(tf_example.features.feature['text2_weights'].float_list.value))
-      self.assertEqual(1, len(tf_example.features.feature['text3'].bytes_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text2'].int64_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text3_ids'].int64_list.value))
+      self.assertEqual(2, len(tf_example.features.feature['text3_weights'].float_list.value))
+      self.assertEqual(1, len(tf_example.features.feature['text4'].bytes_list.value))
 
       cmd = ['cd %s && ' % CODE_PATH,
              'python -m trainer.task',
-             '--train=' + os.path.join(output_dir, 'data.csv'),
-             '--eval=' + os.path.join(output_dir, 'data.csv'),
+             '--train=' + os.path.join(output_dir, 'transform', 'features*'),
+             '--eval=' + os.path.join(output_dir, 'transform', 'features*'),
              '--job-dir=' + os.path.join(output_dir, 'training'),
              '--analysis=' + os.path.join(output_dir, 'analysis'),
              '--model=linear_regression',
              '--train-batch-size=4',
              '--eval-batch-size=4',
              '--max-steps=200',
-             '--learning-rate=0.1',
-             '--transform']
+             '--learning-rate=0.1']
       subprocess.check_call(' '.join(cmd), shell=True)
 
       result = run_exported_model(
@@ -359,7 +361,7 @@ class TestMultipleFeatures(unittest.TestCase):
 
       # check keys were made
       self.assertEqual(20, result['num2'])
-      self.assertEqual('hello moon', result['text3'])
+      self.assertEqual('hello moon', result['text4'])
     finally:
       shutil.rmtree(output_dir)
 
@@ -512,13 +514,13 @@ class TestTrainer(unittest.TestCase):
 
   def make_image_files(self):
     img1_file = os.path.join(self._test_dir, 'img1.jpg')
-    image1 = Image.new('RGBA', size=(300, 300), color=(155, 0, 0))
+    image1 = Image.new('RGB', size=(300, 300), color=(155, 0, 0))
     image1.save(img1_file)
     img2_file = os.path.join(self._test_dir, 'img2.jpg')
-    image2 = Image.new('RGBA', size=(50, 50), color=(125, 240, 0))
+    image2 = Image.new('RGB', size=(50, 50), color=(125, 240, 0))
     image2.save(img2_file)
     img3_file = os.path.join(self._test_dir, 'img3.jpg')
-    image3 = Image.new('RGBA', size=(800, 600), color=(33, 55, 77))
+    image3 = Image.new('RGB', size=(800, 600), color=(33, 55, 77))
     image3.save(img3_file)
     self._image_files = [img1_file, img2_file, img3_file]
 

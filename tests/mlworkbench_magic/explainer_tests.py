@@ -51,14 +51,13 @@ class TestMLExplainer(unittest.TestCase):
   """Integration tests of PredictionExplainer"""
 
   def setUp(self):
-    self._code_path = mlmagic.MLTOOLBOX_CODE_PATH
-    mlmagic.MLTOOLBOX_CODE_PATH = os.path.abspath(
-        os.path.join(os.path.dirname(__file__),
-                     '../../solutionbox/code_free_ml/mltoolbox/code_free_ml'))
+    self._code_path = mlmagic.DEFAULT_PACKAGE_PATH
+    mlmagic.DEFAULT_PACKAGE_PATH = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '../../solutionbox/ml_workbench/tensorflow'))
     self._test_dir = tempfile.mkdtemp()
 
   def tearDown(self):
-    mlmagic.MLTOOLBOX_CODE_PATH = self._code_path
+    mlmagic.DEFAULT_PACKAGE_PATH = self._code_path
     shutil.rmtree(self._test_dir)
 
   def _create_tabular_test_data(self):

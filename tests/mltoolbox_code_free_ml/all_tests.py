@@ -33,7 +33,7 @@ class RunTestScript(unittest.TestCase):
     self._root_path = os.path.abspath(
         os.path.join(
             os.path.dirname(__file__),
-            '..', '..', 'solutionbox', 'code_free_ml', 'test_mltoolbox'))
+            '..', '..', 'solutionbox', 'ml_workbench', 'test_tensorflow'))
 
   @unittest.skipIf(not six.PY2, 'Python 2 is required')
   def test_local(self):

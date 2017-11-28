@@ -98,6 +98,8 @@ def parse_arguments(argv):
                 column.
              {"transform": "embedding", "embedding_dim": d}: makes an embedding
                 of a string column.
+             {"transform": "multi_hot", "separator": ' '}: makes a multi-hot
+                encoding of a string column.
              {"transform": "bag_of_words"}: bag of words transform for string
                 columns.
              {"transform": "tfidf"}: TFIDF transform for string columns.
@@ -227,13 +229,14 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
   # Make a copy of inverted_features and update the target transform to be
   # identity or one hot depending on the schema.
   inverted_features_target = copy.deepcopy(inverted_features)
-  for name, transform_set in six.iteritems(inverted_features_target):
+  for name, transforms in six.iteritems(inverted_features_target):
+    transform_set = {x['transform'] for x in transforms}
     if transform_set == set([constant.TARGET_TRANSFORM]):
       target_schema = next(col['type'].lower() for col in schema if col['name'] == name)
       if target_schema in constant.NUMERIC_SCHEMA:
-        inverted_features_target[name] = {constant.IDENTITY_TRANSFORM}
+        inverted_features_target[name] = [{'transform': constant.IDENTITY_TRANSFORM}]
       else:
-        inverted_features_target[name] = {constant.ONE_HOT_TRANSFORM}
+        inverted_features_target[name] = [{'transform': constant.ONE_HOT_TRANSFORM}]
 
   numerical_vocab_stats = {}
   for col_name, transform_set in six.iteritems(inverted_features_target):
@@ -241,10 +244,10 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
     sys.stdout.flush()
     # All transforms in transform_set require the same analysis. So look
     # at the first transform.
-    transform_name = next(iter(transform_set))
-    if (transform_name in constant.CATEGORICAL_TRANSFORMS or
-       transform_name in constant.TEXT_TRANSFORMS):
-      if transform_name in constant.TEXT_TRANSFORMS:
+    transform = next(iter(transform_set))
+    if (transform['transform'] in constant.CATEGORICAL_TRANSFORMS or
+       transform['transform'] in constant.TEXT_TRANSFORMS):
+      if transform['transform'] in constant.TEXT_TRANSFORMS:
         # Split strings on space, then extract labels and how many rows each
         # token is in. This is done by making two temp tables:
         #   SplitTable: each text row is made into an array of strings. The
@@ -253,8 +256,9 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
         # Then to flatten the arrays, TokenTable has to be joined with itself.
         # See the sections 'Flattening Arrays' and 'Filtering Arrays' at
         # https://cloud.google.com/bigquery/docs/reference/standard-sql/arrays
+        separator = transform.get('separator', ' ')
         sql = ('WITH SplitTable AS '
-               '         (SELECT SPLIT({name}, \' \') as token_array FROM {table}), '
+               '         (SELECT SPLIT({name}, \'{separator}\') as token_array FROM {table}), '
                '     TokenTable AS '
                '         (SELECT ARRAY(SELECT DISTINCT x '
                '                       FROM UNNEST(token_array) AS x) AS unique_tokens_per_row '
@@ -264,7 +268,8 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
                'CROSS JOIN UNNEST(TokenTable.unique_tokens_per_row) as token '
                'WHERE LENGTH(token) > 0 '
                'GROUP BY token '
-               'ORDER BY token_count DESC, token ASC').format(name=col_name,
+               'ORDER BY token_count DESC, token ASC').format(separator=separator,
+                                                              name=col_name,
                                                               table=table_name)
       else:
         # Extract label and frequency
@@ -287,7 +292,7 @@ def run_cloud_analysis(output_dir, csv_file_pattern, bigquery_table, schema,
       # free memeory
       del csv_string
       del df
-    elif transform_name in constant.NUMERIC_TRANSFORMS:
+    elif transform['transform'] in constant.NUMERIC_TRANSFORMS:
       # get min/max/average
       sql = ('SELECT max({name}) as max_value, min({name}) as min_value, '
              'avg({name}) as avg_value from {table}').format(name=col_name,
