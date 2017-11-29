@@ -96,14 +96,21 @@ class UDF(object):
     params = ','.join(['%s %s' % named_param for named_param in params])
     imports = ','.join(['library="%s"' % i for i in imports])
 
-    udf = 'CREATE TEMPORARY FUNCTION {name} ({params})\n' +\
-          'RETURNS {return_type}\n' +\
-          'LANGUAGE {language}\n' +\
-          'AS """\n' +\
-          '{code}\n' +\
-          '"""\n' +\
-          'OPTIONS (\n' +\
-          '{imports}\n' +\
-          ');'
+    if language.lower() == 'sql':
+        udf = 'CREATE TEMPORARY FUNCTION {name} ({params})\n' + \
+              'RETURNS {return_type}\n' + \
+              'AS (\n' + \
+              '{code}\n' + \
+              ');'
+    else:
+        udf = 'CREATE TEMPORARY FUNCTION {name} ({params})\n' +\
+              'RETURNS {return_type}\n' + \
+              'LANGUAGE {language}\n' + \
+              'AS """\n' +\
+              '{code}\n' +\
+              '"""\n' +\
+              'OPTIONS (\n' +\
+              '{imports}\n' +\
+              ');'
     return udf.format(name=name, params=params, return_type=return_type,
                       language=language, code=code, imports=imports)
