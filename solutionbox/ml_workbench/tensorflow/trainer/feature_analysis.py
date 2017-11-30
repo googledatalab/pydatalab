@@ -47,7 +47,8 @@ def check_schema_transforms_match(schema, inverted_features):
 
     # Check each transform and schema are compatible
     if col_name in inverted_features:
-      for transform_name in inverted_features[col_name]:
+      for transform in inverted_features[col_name]:
+        transform_name = transform['transform']
         if transform_name == constant.TARGET_TRANSFORM:
           num_target_transforms += 1
           continue
@@ -66,13 +67,14 @@ def check_schema_transforms_match(schema, inverted_features):
 
     # Check each transform is compatible for the same source column.
     # inverted_features[col_name] should belong to exactly 1 of the 5 groups.
-    if col_name in inverted_features and 1 != (
-      sum([inverted_features[col_name].issubset(set(constant.NUMERIC_TRANSFORMS)),
-           inverted_features[col_name].issubset(set(constant.CATEGORICAL_TRANSFORMS)),
-           inverted_features[col_name].issubset(set(constant.TEXT_TRANSFORMS)),
-           inverted_features[col_name].issubset(set([constant.IMAGE_TRANSFORM])),
-           inverted_features[col_name].issubset(set([constant.TARGET_TRANSFORM]))])):
-      message = """
+    if col_name in inverted_features:
+      transform_set = {x['transform'] for x in inverted_features[col_name]}
+      if 1 != sum([transform_set.issubset(set(constant.NUMERIC_TRANSFORMS)),
+                   transform_set.issubset(set(constant.CATEGORICAL_TRANSFORMS)),
+                   transform_set.issubset(set(constant.TEXT_TRANSFORMS)),
+                   transform_set.issubset(set([constant.IMAGE_TRANSFORM])),
+                   transform_set.issubset(set([constant.TARGET_TRANSFORM]))]):
+        message = """
           The source column of a feature can only be used in multiple
           features within the same family of transforms. The familes are
 
@@ -91,8 +93,8 @@ def check_schema_transforms_match(schema, inverted_features):
                  constant.IMAGE_TRANSFORM,
                  constant.TARGET_TRANSFORM,
                  col_name,
-                 str(inverted_features[col_name]))
-      raise ValueError(message)
+                 str(transform_set))
+        raise ValueError(message)
 
   if num_target_transforms != 1:
     raise ValueError('Must have exactly one target transform')
@@ -172,13 +174,12 @@ def invert_features(features):
 
   Note that the key transform is removed.
   """
-  inverted_features = collections.defaultdict(set)
+  inverted_features = collections.defaultdict(list)
   for transform in six.itervalues(features):
     source_column = transform['source_column']
-    transform_name = transform['transform']
-    if transform_name == constant.KEY_TRANSFORM:
+    if transform['transform'] == constant.KEY_TRANSFORM:
       continue
-    inverted_features[source_column].add(transform_name)
+    inverted_features[source_column].append(transform)
 
   return dict(inverted_features)  # convert from defaultdict to dict
 
@@ -213,13 +214,14 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
   # Make a copy of inverted_features and update the target transform to be
   # identity or one hot depending on the schema.
   inverted_features_target = copy.deepcopy(inverted_features)
-  for name, transform_set in six.iteritems(inverted_features_target):
+  for name, transforms in six.iteritems(inverted_features_target):
+    transform_set = {x['transform'] for x in transforms}
     if transform_set == set([constant.TARGET_TRANSFORM]):
       target_schema = next(col['type'].lower() for col in schema if col['name'] == name)
       if target_schema in constant.NUMERIC_SCHEMA:
-        inverted_features_target[name] = {constant.IDENTITY_TRANSFORM}
+        inverted_features_target[name] = [{'transform': constant.IDENTITY_TRANSFORM}]
       else:
-        inverted_features_target[name] = {constant.ONE_HOT_TRANSFORM}
+        inverted_features_target[name] = [{'transform': constant.ONE_HOT_TRANSFORM}]
 
   # initialize the results
   def _init_numerical_results():
@@ -247,9 +249,10 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
         for col_name, transform_set in six.iteritems(inverted_features_target):
           # All transforms in transform_set require the same analysis. So look
           # at the first transform.
-          transform_name = next(iter(transform_set))
-          if transform_name in constant.TEXT_TRANSFORMS:
-            split_strings = parsed_line[col_name].split(' ')
+          transform = next(iter(transform_set))
+          if transform['transform'] in constant.TEXT_TRANSFORMS:
+            separator = transform.get('separator', ' ')
+            split_strings = parsed_line[col_name].split(separator)
 
             # If a label is in the row N times, increase it's vocab count by 1.
             # This is needed for TFIDF, but it's also an interesting stat.
@@ -257,10 +260,10 @@ def run_local_analysis(output_dir, csv_file_pattern, schema, features):
               # Filter out empty strings
               if one_label:
                 vocabs[col_name][one_label] += 1
-          elif transform_name in constant.CATEGORICAL_TRANSFORMS:
+          elif transform['transform'] in constant.CATEGORICAL_TRANSFORMS:
             if parsed_line[col_name]:
               vocabs[col_name][parsed_line[col_name]] += 1
-          elif transform_name in constant.NUMERIC_TRANSFORMS:
+          elif transform['transform'] in constant.NUMERIC_TRANSFORMS:
             if not parsed_line[col_name].strip():
               continue
 

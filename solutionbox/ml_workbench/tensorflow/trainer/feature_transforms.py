@@ -31,6 +31,7 @@ IDENTITY_TRANSFORM = 'identity'
 SCALE_TRANSFORM = 'scale'
 ONE_HOT_TRANSFORM = 'one_hot'
 EMBEDDING_TRANSFROM = 'embedding'
+MULTI_HOT_TRANSFORM = 'multi_hot'
 BOW_TRANSFORM = 'bag_of_words'
 TFIDF_TRANSFORM = 'tfidf'
 KEY_TRANSFORM = 'key'
@@ -50,7 +51,7 @@ VOCAB_ANALYSIS_FILE = 'vocab_%s.csv'
 # Transform collections
 NUMERIC_TRANSFORMS = [IDENTITY_TRANSFORM, SCALE_TRANSFORM]
 CATEGORICAL_TRANSFORMS = [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM]
-TEXT_TRANSFORMS = [BOW_TRANSFORM, TFIDF_TRANSFORM]
+TEXT_TRANSFORMS = [MULTI_HOT_TRANSFORM, BOW_TRANSFORM, TFIDF_TRANSFORM]
 
 # If the features file is missing transforms, apply these.
 DEFAULT_NUMERIC_TRANSFORM = IDENTITY_TRANSFORM
@@ -387,13 +388,14 @@ def make_preprocessing_fn(output_dir, features, keep_target):
             max_x_value=stats['column_stats'][source_column]['max'],
             output_min=transform.get('value', 1) * (-1),
             output_max=transform.get('value', 1))
-      elif transform_name in [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM,
+      elif transform_name in [ONE_HOT_TRANSFORM, EMBEDDING_TRANSFROM, MULTI_HOT_TRANSFORM,
                               TFIDF_TRANSFORM, BOW_TRANSFORM]:
         vocab, ex_count = read_vocab_file(
             os.path.join(output_dir, VOCAB_ANALYSIS_FILE % source_column))
 
         if transform_name == TFIDF_TRANSFORM:
-          tokens = tf.string_split(inputs[source_column], ' ')
+          separator = transform.get('separator', ' ')
+          tokens = tf.string_split(inputs[source_column], separator)
           ids = _string_to_int(tokens, vocab)
           weights = _tfidf(
               x=ids,
@@ -404,12 +406,17 @@ def make_preprocessing_fn(output_dir, features, keep_target):
           result[name + '_ids'] = ids
           result[name + '_weights'] = weights
         elif transform_name == BOW_TRANSFORM:
-          tokens = tf.string_split(inputs[source_column], ' ')
+          separator = transform.get('separator', ' ')
+          tokens = tf.string_split(inputs[source_column], separator)
           ids = _string_to_int(tokens, vocab)
           weights = _bag_of_words(x=ids)
 
           result[name + '_ids'] = ids
           result[name + '_weights'] = weights
+        elif transform_name == MULTI_HOT_TRANSFORM:
+          separator = transform.get('separator', ' ')
+          tokens = tf.string_split(inputs[source_column], separator)
+          result[name] = _string_to_int(tokens, vocab)
         else:
           # ONE_HOT_TRANSFORM: making a dense vector is done at training
           # EMBEDDING_TRANSFROM: embedding vectors have to be done at training
@@ -459,6 +466,9 @@ def get_transformed_feature_info(features, schema):
     elif transform_name == EMBEDDING_TRANSFROM:
       info[name]['dtype'] = tf.int64
       info[name]['size'] = 1
+    elif transform_name == MULTI_HOT_TRANSFORM:
+      info[name]['dtype'] = tf.int64
+      info[name]['size'] = None
     elif transform_name == BOW_TRANSFORM or transform_name == TFIDF_TRANSFORM:
       info[name + '_ids']['dtype'] = tf.int64
       info[name + '_weights']['dtype'] = tf.float32

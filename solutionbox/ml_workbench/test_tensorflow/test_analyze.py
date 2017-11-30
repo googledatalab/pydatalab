@@ -20,7 +20,7 @@ import google.datalab.storage as storage
 
 # To make 'import analyze' work without installing it.
 CODE_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
+    os.path.join(os.path.dirname(__file__), '..', '', 'tensorflow'))
 sys.path.append(CODE_PATH)
 
 
@@ -223,18 +223,20 @@ class TestLocalAnalyze(unittest.TestCase):
     output_folder = tempfile.mkdtemp()
     input_file_path = tempfile.mkstemp(dir=output_folder)[1]
     try:
-      csv_file = ['the quick brown fox,raining in kir,true',
-                  'quick   brown brown chicken,raining in pdx,false']
+      csv_file = ['the quick brown fox,raining in kir,cat1|cat2,true',
+                  'quick   brown brown chicken,raining in pdx,cat2|cat3|cat4,false']
       file_io.write_string_to_file(
         input_file_path,
         '\n'.join(csv_file))
 
       schema = [{'name': 'col1', 'type': 'STRING'},
                 {'name': 'col2', 'type': 'STRING'},
-                {'name': 'col3', 'type': 'STRING'}]
+                {'name': 'col3', 'type': 'STRING'},
+                {'name': 'col4', 'type': 'STRING'}]
       features = {'col1': {'transform': 'bag_of_words', 'source_column': 'col1'},
                   'col2': {'transform': 'tfidf', 'source_column': 'col2'},
-                  'col3': {'transform': 'target'}}
+                  'col3': {'transform': 'multi_hot', 'source_column': 'col3', 'separator': '|'},
+                  'col4': {'transform': 'target'}}
       feature_analysis.run_local_analysis(
         output_folder, [input_file_path], schema, features)
 
@@ -243,6 +245,7 @@ class TestLocalAnalyze(unittest.TestCase):
               os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
       self.assertEqual(stats['column_stats']['col1']['vocab_size'], 5)
       self.assertEqual(stats['column_stats']['col2']['vocab_size'], 4)
+      self.assertEqual(stats['column_stats']['col3']['vocab_size'], 4)
 
       vocab_str = file_io.read_file_to_string(
           os.path.join(output_folder,
@@ -448,18 +451,20 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
     output_folder = os.path.join(test_folder, 'test_output')
     file_io.recursive_create_dir(output_folder)
 
-    csv_file = ['the quick brown fox,raining in kir,true',
-                'quick   brown brown chicken,raining in pdx,false']
+    csv_file = ['the quick brown fox,raining in kir,cat1|cat2,true',
+                'quick   brown brown chicken,raining in pdx,cat2|cat3|cat4,false']
     file_io.write_string_to_file(
       input_file_path,
       '\n'.join(csv_file))
 
     schema = [{'name': 'col1', 'type': 'STRING'},
               {'name': 'col2', 'type': 'STRING'},
-              {'name': 'col3', 'type': 'STRING'}]
+              {'name': 'col3', 'type': 'STRING'},
+              {'name': 'col4', 'type': 'STRING'}]
     features = {'col1': {'transform': 'bag_of_words', 'source_column': 'col1'},
                 'col2': {'transform': 'tfidf', 'source_column': 'col2'},
-                'col3': {'transform': 'target'}}
+                'col3': {'transform': 'multi_hot', 'source_column': 'col3', 'separator': '|'},
+                'col4': {'transform': 'target'}}
     analyze.run_cloud_analysis(
         output_dir=output_folder,
         csv_file_pattern=input_file_path,
@@ -472,6 +477,7 @@ class TestCloudAnalyzeFromCSVFiles(unittest.TestCase):
             os.path.join(output_folder, analyze.constant.STATS_FILE)).decode())
     self.assertEqual(stats['column_stats']['col1']['vocab_size'], 5)
     self.assertEqual(stats['column_stats']['col2']['vocab_size'], 4)
+    self.assertEqual(stats['column_stats']['col3']['vocab_size'], 4)
 
     vocab_str = file_io.read_file_to_string(
         os.path.join(output_folder,

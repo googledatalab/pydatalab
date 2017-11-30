@@ -411,7 +411,8 @@ def serialize_example(transformed_json_data, info_dict):
     return tf.train.Feature(float_list=tf.train.FloatList(value=x))
 
   if sorted(six.iterkeys(transformed_json_data)) != sorted(six.iterkeys(info_dict)):
-    raise ValueError('Keys do not match %s, %s' % (six.iterkeys(transformed_json_data), six.iterkeys(info_dict)))
+    raise ValueError('Keys do not match %s, %s' % (list(six.iterkeys(transformed_json_data)),
+                     list(six.iterkeys(info_dict))))
 
   ex_dict = {}
   for name, info in six.iteritems(info_dict):

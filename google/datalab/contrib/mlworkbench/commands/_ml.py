@@ -50,7 +50,7 @@ import google.datalab.contrib.mlworkbench._archive as _archive
 import google.datalab.contrib.mlworkbench._prediction_explainer as _prediction_explainer
 
 
-MLTOOLBOX_CODE_PATH = '/datalab/lib/pydatalab/solutionbox/code_free_ml/mltoolbox/code_free_ml/'
+DEFAULT_PACKAGE_PATH = '/datalab/lib/pydatalab/solutionbox/ml_workbench/tensorflow/'
 
 
 @IPython.core.magic.register_line_cell_magic
@@ -282,7 +282,7 @@ def ml(line, cell=None):
 
   package_model_help = subprocess.Popen(
       ['python', '-m', 'trainer.task', '--datalab-help'],
-      cwd=MLTOOLBOX_CODE_PATH,
+      cwd=DEFAULT_PACKAGE_PATH,
       stdout=subprocess.PIPE).communicate()[0]
   package_model_help = ('model_args: a dictionary of model specific args, including:\n\n' +
                         package_model_help.decode())
@@ -659,7 +659,7 @@ def _analyze(args, cell):
       code_path = os.path.join(tmpdir, 'package')
       _archive.extract_archive(args['package'], code_path)
     else:
-      code_path = MLTOOLBOX_CODE_PATH
+      code_path = DEFAULT_PACKAGE_PATH
 
     _shell_process.run_and_monitor(cmd_args, os.getpid(), cwd=code_path)
   finally:
@@ -720,7 +720,7 @@ def _transform(args, cell):
         code_path = os.path.join(tmpdir, 'package')
         _archive.extract_archive(args['package'], code_path)
       else:
-        code_path = MLTOOLBOX_CODE_PATH
+        code_path = DEFAULT_PACKAGE_PATH
       _shell_process.run_and_monitor(cmd_args_copy, os.getpid(), cwd=code_path)
     finally:
       if tmpdir:
@@ -762,7 +762,7 @@ def _train(args, cell):
       code_path = os.path.join(tmpdir, 'package')
       _archive.extract_archive(args['package'], code_path)
     else:
-      code_path = MLTOOLBOX_CODE_PATH
+      code_path = DEFAULT_PACKAGE_PATH
 
     if args['cloud']:
       cloud_config = args['cloud_config']

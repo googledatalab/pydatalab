@@ -17,7 +17,7 @@ import uuid
 from tensorflow.python.lib.io import file_io
 
 CODE_PATH = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', 'mltoolbox', 'code_free_ml'))
+    os.path.dirname(__file__), '..', 'tensorflow'))
 
 
 class TestCloudServices(unittest.TestCase):
