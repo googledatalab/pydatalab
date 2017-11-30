@@ -41,20 +41,20 @@ from datetime import timedelta
   # https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables
   airflow_macros = {
     # the datetime formatted as YYYY-MM-DD
-    'ds': '{{ ds }}',
+    '_ds': '{{ ds }}',
     # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-    'ts': '{{ ts }}',
+    '_ts': '{{ ts }}',
     # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-    'ds_nodash': '{{ ds_nodash }}',
+    '_ds_nodash': '{{ ds_nodash }}',
     # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
     # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-    'ts_nodash': '{{ ts_nodash }}',
-    'ts_year': "{{ execution_date.year }}",
-    'ts_month': "{{ execution_date.month }}",
-    'ts_day': "{{ execution_date.day }}",
-    'ts_hour': "{{ execution_date.hour }}",
-    'ts_minute': "{{ execution_date.minute }}",
-    'ts_second': "{{ execution_date.second }}",
+    '_ts_nodash': '{{ ts_nodash }}',
+    '_ts_year': "{{ execution_date.year }}",
+    '_ts_month': "{{ execution_date.month }}",
+    '_ts_day': "{{ execution_date.day }}",
+    '_ts_hour': "{{ execution_date.hour }}",
+    '_ts_minute': "{{ execution_date.minute }}",
+    '_ts_second': "{{ execution_date.second }}",
   }
 
   def __init__(self, name, pipeline_spec, resolve_airflow_macros=False):
