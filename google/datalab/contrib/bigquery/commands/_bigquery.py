@@ -13,9 +13,12 @@
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
 import google.datalab.utils as utils
-# TODO(rajivpb): This import is a stop-gap for
+
+# TODO(rajivpb): These contrib imports are a stop-gap for
 # https://github.com/googledatalab/pydatalab/issues/593
 from google.datalab.contrib.pipeline._pipeline import Pipeline
+from google.datalab.contrib.pipeline.composer._composer import Composer
+from  google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
 
 def _create_pipeline_subparser(parser):
@@ -24,13 +27,13 @@ def _create_pipeline_subparser(parser):
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)
   pipeline_parser.add_argument('-e', '--environment', type=str,
-                               help='The name of the Composer environment.')
+                               help='The name of the Google Cloud Composer environment.')
   pipeline_parser.add_argument('-l', '--location', type=str,
-                               help='The name of the Cloud location for the environment.')
+                               help='The location of the Google Cloud Composer environment.')
   pipeline_parser.add_argument('-d', '--gcs_dag_bucket', type=str,
-                               help='The Google Cloud Storage bucket for the dags for Airflow.')
+                               help='The Google Cloud Storage bucket for the Airflow dags.')
   pipeline_parser.add_argument('-f', '--gcs_dag_file_path', type=str,
-                               help='The file path suffix for the dags for Airflow.')
+                               help='The file path suffix for the Airflow dags.')
   return pipeline_parser
 
 
@@ -60,26 +63,18 @@ def _pipeline_cell(args, cell_body):
 
     airflow_spec = pipeline.get_airflow_spec()
 
+    # If a composer environment and location are specified, we deploy to composer
     location = args.get('location')
     environment = args.get('environment')
-    # If a composer environment and location are specified, we deploy to composer
     if location and environment:
-        # TODO(rajivpb): This import is a stop-gap for
-        # https://github.com/googledatalab/pydatalab/issues/593
-        import google.datalab.contrib.pipeline.composer._composer
-        composer = google.datalab.contrib.pipeline.composer._composer.Composer(location,
-                                                                               environment)
+        composer = Composer(location, environment)
         composer.deploy(name, airflow_spec)
 
+    # If a gcs_dag_bucket is specified, we deploy to it so that the Airflow VM rsyncs it.
     gcs_dag_bucket = args.get('gcs_dag_bucket')
     gcs_dag_file_path = args.get('gcs_dag_file_path')
-    # If a gcs_dag_bucket is specified, we deploy to it
     if gcs_dag_bucket:
-        # TODO(rajivpb): This import is a stop-gap for
-        # https://github.com/googledatalab/pydatalab/issues/593
-        import google.datalab.contrib.pipeline.airflow._airflow
-        airflow = google.datalab.contrib.pipeline.airflow._airflow.Airflow(gcs_dag_bucket,
-                                                                           gcs_dag_file_path)
+        airflow = Airflow(gcs_dag_bucket, gcs_dag_file_path)
         airflow.deploy(name, airflow_spec)
 
     # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
@@ -97,9 +92,9 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   if email_config:
     pipeline_spec['emails'] = email_config
 
-  input_config = bq_pipeline_config.get('input')
+  input_config = bq_pipeline_config.get('input') or bq_pipeline_config.get('load')
   transformation_config = bq_pipeline_config.get('transformation')
-  output_config = bq_pipeline_config.get('output')
+  output_config = bq_pipeline_config.get('output') or bq_pipeline_config.get('export')
   parameters_config = bq_pipeline_config.get('parameters')
 
   pipeline_spec['parameters'] = parameters_config
