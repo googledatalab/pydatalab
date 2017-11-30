@@ -957,32 +957,32 @@ WITH q1 AS (
     now = datetime.now()
     default_query_parameters = {
       # the datetime formatted as YYYY-MM-DD
-      '__ds': {'type': 'STRING', 'value': today.isoformat()},
+      '_ds': {'type': 'STRING', 'value': today.isoformat()},
       # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-      '__ts': {'type': 'STRING', 'value': now.isoformat()},
+      '_ts': {'type': 'STRING', 'value': now.isoformat()},
       # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-      '__ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
+      '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
       # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
       # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-      '__ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
-      '__ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
-      '__ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
-      '__ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
-      '__ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
-      '__ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
-      '__ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
+      '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
+      '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
+      '_ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
+      '_ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
+      '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
+      '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
+      '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
     }
-    self.assertEqual(params_dict['__ts']['type'], 'STRING')
-    actual_ts = datetime.strptime(params_dict['__ts']['value'], '%Y-%m-%dT%H:%M:%S.%f')
+    self.assertEqual(params_dict['_ts']['type'], 'STRING')
+    actual_ts = datetime.strptime(params_dict['_ts']['value'], '%Y-%m-%dT%H:%M:%S.%f')
     self.assertTrue(isinstance(actual_ts, datetime))
-    del default_query_parameters['__ts']
-    del params_dict['__ts']
+    del default_query_parameters['_ts']
+    del params_dict['_ts']
 
-    self.assertEqual(params_dict['__ts_nodash']['type'], 'STRING')
-    actual_ts_nodash = datetime.strptime(params_dict['__ts_nodash']['value'], '%Y%m%d%H%M%S%f')
+    self.assertEqual(params_dict['_ts_nodash']['type'], 'STRING')
+    actual_ts_nodash = datetime.strptime(params_dict['_ts_nodash']['value'], '%Y%m%d%H%M%S%f')
     self.assertTrue(isinstance(actual_ts_nodash, datetime))
-    del default_query_parameters['__ts_nodash']
-    del params_dict['__ts_nodash']
+    del default_query_parameters['_ts_nodash']
+    del params_dict['_ts_nodash']
 
     self.assertDictEqual(params_dict, default_query_parameters)
 

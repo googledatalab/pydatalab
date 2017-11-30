@@ -384,20 +384,20 @@ def _get_query_parameters(args, cell_body):
   now = datetime.datetime.now()
   default_query_parameters = {
     # the datetime formatted as YYYY-MM-DD
-    '__ds': {'type': 'STRING', 'value': today.isoformat()},
+    '_ds': {'type': 'STRING', 'value': today.isoformat()},
     # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-    '__ts': {'type': 'STRING', 'value': now.isoformat()},
+    '_ts': {'type': 'STRING', 'value': now.isoformat()},
     # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-    '__ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
+    '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
     # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
     # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-    '__ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
-    '__ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
-    '__ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
-    '__ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
-    '__ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
-    '__ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
-    '__ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
+    '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
+    '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
+    '_ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
+    '_ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
+    '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
+    '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
+    '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
   }
   # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
   # the parameter name. We then use this to update the canned parameters dictionary. This will

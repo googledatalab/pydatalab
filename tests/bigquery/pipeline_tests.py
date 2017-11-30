@@ -25,7 +25,7 @@ import unittest
 class TestCases(unittest.TestCase):
 
   test_input_config = {
-    'path': 'test_path_%(ts_month)s',
+    'path': 'test_path_%(_ts_month)s',
     'table': 'test_table',
     'schema': 'test_schema',
     'mode': 'append',
@@ -364,7 +364,7 @@ class TestCases(unittest.TestCase):
 
     # Table is present in output config
     input_config = {
-      'path': 'test_path_%(ts_month)s',
+      'path': 'test_path_%(_ts_month)s',
       'format': 'csv',
       'csv': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
     }
@@ -401,8 +401,8 @@ class TestCases(unittest.TestCase):
 
   def test_get_extract_parameters(self):
     output_config = {
-      'path': 'test_path_%(ts_month)s',
-      'table': 'test_table_%(ts_month)s',
+      'path': 'test_path_%(_ts_month)s',
+      'table': 'test_table_%(_ts_month)s',
     }
     actual_extract_config = bq._get_extract_parameters('foo_execute_task', None, None,
                                                        output_config)
@@ -416,10 +416,10 @@ class TestCases(unittest.TestCase):
     self.assertDictEqual(actual_extract_config, expected_extract_config)
 
     input_config = {
-      'table': 'test_table_%(ts_month)s',
+      'table': 'test_table_%(_ts_month)s',
     }
     output_config = {
-      'path': 'test_path_%(ts_month)s',
+      'path': 'test_path_%(_ts_month)s',
     }
     actual_extract_config = bq._get_extract_parameters('foo_execute_task', input_config, None,
                                                        output_config)
@@ -435,7 +435,7 @@ WHERE endpoint=@endpoint""")
       'query': 'foo_query'
     }
     output_config = {
-      'table': 'foo_table_%(ts_month)s',
+      'table': 'foo_table_%(_ts_month)s',
       'mode': 'foo_mode'
     }
     parameters_config = [
@@ -548,8 +548,8 @@ WHERE endpoint=@endpoint""")
     env = {
       'endpoint': 'Interact2',
       'job_id': '1234',
-      'input_table_format': 'cloud-datalab-samples.httplogs.logs_%(ds_nodash)s',
-      'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(ds_nodash)s'
+      'input_table_format': 'cloud-datalab-samples.httplogs.logs_%(_ds_nodash)s',
+      'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(_ds_nodash)s'
     }
     mock_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT @column FROM `{0}` where endpoint=@endpoint'.format(
@@ -566,7 +566,7 @@ WHERE endpoint=@endpoint""")
                 end: 2009-05-06T22:28:15Z
                 interval: '@hourly'
             input:
-                path: gs://bucket/cloud-datalab-samples-httplogs_%(ds_nodash)s
+                path: gs://bucket/cloud-datalab-samples-httplogs_%(_ds_nodash)s
                 table: $input_table_format
                 csv:
                   header: True
@@ -586,7 +586,7 @@ WHERE endpoint=@endpoint""")
             transformation:
                 query: foo_query
             output:
-                path: gs://bucket/cloud-datalab-samples-endpoints_%(ds_nodash)s.csv
+                path: gs://bucket/cloud-datalab-samples-endpoints_%(_ds_nodash)s.csv
                 table: $output_table_format
             parameters:
                 - name: endpoint
