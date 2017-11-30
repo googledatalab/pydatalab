@@ -18,6 +18,7 @@ import pandas
 import six
 import unittest
 
+from datetime import date
 from datetime import datetime
 
 import google.auth
@@ -938,7 +939,46 @@ WITH q1 AS (
 
     args['query'] = 'test_sql'
     params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
-    self.assertEqual(params, {})
+    # We push the params into a dict so that it's easier to test
+    params_dict = {
+      item['name']: {
+        'type': item['parameterType']['type'],
+        'value': item['parameterValue']['value']
+      } for item in params
+    }
+
+    today = date.today()
+    now = datetime.now()
+    default_query_parameters = {
+      # the datetime formatted as YYYY-MM-DD
+      '__ds': {'type': 'STRING', 'value': today.isoformat()},
+      # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
+      '__ts': {'type': 'STRING', 'value': now.isoformat()},
+      # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
+      '__ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
+      # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
+      # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
+      '__ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
+      '__ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
+      '__ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
+      '__ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
+      '__ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
+      '__ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
+      '__ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
+    }
+    self.assertEqual(params_dict['__ts']['type'], 'STRING')
+    actual_ts = datetime.strptime(params_dict['__ts']['value'], '%Y-%m-%dT%H:%M:%S.%f')
+    self.assertTrue(isinstance(actual_ts, datetime))
+    del default_query_parameters['__ts']
+    del params_dict['__ts']
+
+    self.assertEqual(params_dict['__ts_nodash']['type'], 'STRING')
+    actual_ts_nodash = datetime.strptime(params_dict['__ts_nodash']['value'], '%Y%m%d%H%M%S%f')
+    self.assertTrue(isinstance(actual_ts_nodash, datetime))
+    del default_query_parameters['__ts_nodash']
+    del params_dict['__ts_nodash']
+
+    self.assertDictEqual(params_dict, default_query_parameters)
 
     cell_body = {
       'parameters': [
@@ -949,21 +989,13 @@ WITH q1 AS (
     cell_body['parameters'].append({'name': 'arg2', 'type': 'string', 'value': 'val2'})
     cell_body['parameters'].append({'name': 'arg3', 'type': 'date', 'value': 'val3'})
     params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
-    self.assertEqual(len(params), 3)
-    self.assertEqual(params, [
-      {
-        'name': 'arg1',
-        'parameterType': {'type': 'INT64'},
-        'parameterValue': {'value': 5}
-      },
-      {
-        'name': 'arg2',
-        'parameterType': {'type': 'string'},
-        'parameterValue': {'value': 'val2'}
-      },
-      {
-        'name': 'arg3',
-        'parameterType': {'type': 'date'},
-        'parameterValue': {'value': 'val3'}
-      }
-    ])
+    self.assertEqual(len(params), 13)
+    params_dict = {
+      item['name']: {
+        'type': item['parameterType']['type'],
+        'value': item['parameterValue']['value']
+      } for item in params
+    }
+    self.assertDictEqual(params_dict['arg1'], {'type': 'INT64', 'value': 5})
+    self.assertDictEqual(params_dict['arg2'], {'type': 'string', 'value': 'val2'})
+    self.assertDictEqual(params_dict['arg3'], {'type': 'date', 'value': 'val3'})
