@@ -18,7 +18,7 @@ import google.datalab.utils as utils
 # https://github.com/googledatalab/pydatalab/issues/593
 from google.datalab.contrib.pipeline._pipeline import Pipeline
 from google.datalab.contrib.pipeline.composer._composer import Composer
-from  google.datalab.contrib.pipeline.airflow._airflow import Airflow
+from google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
 
 def _create_pipeline_subparser(parser):
