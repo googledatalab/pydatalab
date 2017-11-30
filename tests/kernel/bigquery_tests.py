@@ -650,11 +650,17 @@ WITH q1 AS (
     bq.commands._bigquery._extract_cell(args, json.dumps(cell_body))
     mock_get_notebook_item.assert_called_with('test-query')
     call_args = mock_query_execute.call_args[1]
-    self.assertDictEqual(call_args['query_params'][0], {
-      'parameterValue': {'value': 5},
-      'name': 'arg1',
-      'parameterType': {'type': 'INT64'}
-    })
+
+    found_item = False
+    for item in call_args['query_params']:
+      if item['name'] == 'arg1':
+        found_item = True
+        self.assertDictEqual(item, {
+          'parameterValue': {'value': 5},
+          'name': 'arg1',
+          'parameterType': {'type': 'INT64'}
+        })
+    self.assertTrue(found_item)
 
   @mock.patch('google.datalab.bigquery.Table.extract')
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
