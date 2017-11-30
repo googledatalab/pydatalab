@@ -237,9 +237,9 @@ class TestCases(unittest.TestCase):
     }
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
-    # output can also be called export, and it should be identical to the above
+    # output can also be called extract, and it should be identical to the above
     pipeline_config = {
-      'export': {
+      'extract': {
         'table': 'foo_table',
         'path': 'foo_path'
       }

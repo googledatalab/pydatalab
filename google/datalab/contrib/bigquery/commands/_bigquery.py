@@ -94,7 +94,7 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
 
   input_config = bq_pipeline_config.get('input') or bq_pipeline_config.get('load')
   transformation_config = bq_pipeline_config.get('transformation')
-  output_config = bq_pipeline_config.get('output') or bq_pipeline_config.get('export')
+  output_config = bq_pipeline_config.get('output') or bq_pipeline_config.get('extract')
   parameters_config = bq_pipeline_config.get('parameters')
 
   pipeline_spec['parameters'] = parameters_config
