@@ -68,7 +68,6 @@ class TestCases(unittest.TestCase):
         'path': 'foo_table'
       }
     }
-
     expected = {
       'parameters': None,
       'tasks': {
@@ -99,7 +98,6 @@ class TestCases(unittest.TestCase):
         'path': 'foo_table'
       }
     }
-
     expected = {
       'parameters': None,
       'tasks': {
@@ -117,7 +115,6 @@ class TestCases(unittest.TestCase):
         }
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # input as path->table, transformation, output as path
@@ -133,7 +130,6 @@ class TestCases(unittest.TestCase):
         'path': 'foo_path_2'
       }
     }
-
     expected = {
       'parameters': None,
       'tasks': {
@@ -155,7 +151,6 @@ class TestCases(unittest.TestCase):
         }
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # input as table, transformation, output as path
@@ -170,7 +165,6 @@ class TestCases(unittest.TestCase):
         'path': 'foo_path_2'
       }
     }
-
     expected = {
       'parameters': None,
       'tasks': {
@@ -186,7 +180,6 @@ class TestCases(unittest.TestCase):
         }
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # input as table, transformation, output as table
@@ -201,7 +194,6 @@ class TestCases(unittest.TestCase):
         'table': 'foo_table_1'
       }
     }
-
     expected = {
       'parameters': None,
       'tasks': {
@@ -213,7 +205,6 @@ class TestCases(unittest.TestCase):
         },
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # input as table, no transformation, output as path
@@ -225,7 +216,6 @@ class TestCases(unittest.TestCase):
         'path': 'foo_path'
       }
     }
-
     expected = {
       'parameters': None,
       'tasks': {
@@ -236,7 +226,6 @@ class TestCases(unittest.TestCase):
         },
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # output only; this should be identical to the above
@@ -246,18 +235,15 @@ class TestCases(unittest.TestCase):
         'path': 'foo_path'
       }
     }
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
-    expected = {
-      'parameters': None,
-      'tasks': {
-        'bq_pipeline_extract_task': {
-          'type': 'pydatalab.bq.extract',
-          'path': 'foo_path',
-          'table': 'foo_table'
-        },
+    # output can also be called extract, and it should be identical to the above
+    pipeline_config = {
+      'extract': {
+        'table': 'foo_table',
+        'path': 'foo_path'
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # input as path, no transformation, output as table
@@ -269,7 +255,6 @@ class TestCases(unittest.TestCase):
         'table': 'foo_table'
       }
     }
-
     expected = {
       'parameters': None,
       'tasks': {
@@ -280,7 +265,6 @@ class TestCases(unittest.TestCase):
         },
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # input only; this should be identical to the above
@@ -290,7 +274,15 @@ class TestCases(unittest.TestCase):
         'table': 'foo_table'
       },
     }
+    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
+    # input can also be called load, and it should be identical to the above
+    pipeline_config = {
+      'load': {
+        'path': 'foo_path',
+        'table': 'foo_table'
+      },
+    }
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     # only transformation
@@ -299,7 +291,6 @@ class TestCases(unittest.TestCase):
         'query': 'foo_query'
       },
     }
-
     expected = {
       'parameters': None,
       'tasks': {
@@ -310,7 +301,6 @@ class TestCases(unittest.TestCase):
         },
       }
     }
-
     self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
 
     user_parameters = [
