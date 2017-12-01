@@ -167,7 +167,7 @@ def expand_defaults(schema, features):
         raise NotImplementedError('Unknown type %s' % schema_type)
 
 
-# TODO(brandondutra): introduce the notion an analysis plan/classes if we
+# TODO(qimingj): introduce the notion an analysis plan/classes if we
 # support more complicated transforms like binning by quratiles.
 def invert_features(features):
   """Make a dict in the form source column : set of transforms.
