@@ -319,7 +319,19 @@ LIMIT 5""")
     self.assertEqual(eval(datetime_expr), datetime.datetime(2009, 5, 5, 22, 28, 15))
 
   def test_get_default_args(self):
+    actual = pipeline.Pipeline._get_default_args({}, None)
+    self.assertIn("'end_date': None", actual)
+    self.assertIn("'start_date': datetime.datetime.strptime(", actual)
+    self.assertIn("'email': []", actual)
+    self.assertIn("'owner': 'Google Cloud Datalab'", actual)
+
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
+    dag_dict['schedule']['retries'] = 5
+    dag_dict['schedule']['email_on_retry'] = False
+    dag_dict['schedule']['email_on_failure'] = False
+    dag_dict['schedule']['retry_exponential_backoff'] = False
+    dag_dict['schedule']['retry_delay_seconds'] = 10
+    dag_dict['schedule']['max_retry_delay_seconds'] = 15
     actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule'), dag_dict.get('emails'))
     self.assertIn(
       "'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S')",
@@ -329,12 +341,12 @@ LIMIT 5""")
       actual)
     self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
     self.assertIn("'owner': 'Google Cloud Datalab'", actual)
-
-    actual = pipeline.Pipeline._get_default_args({}, None)
-    self.assertIn("'end_date': None", actual)
-    self.assertIn("'start_date': datetime.datetime.strptime(", actual)
-    self.assertIn("'email': []", actual)
-    self.assertIn("'owner': 'Google Cloud Datalab'", actual)
+    self.assertIn("'retries': 5", actual)
+    self.assertIn("'email_on_retry': False", actual)
+    self.assertIn("'email_on_failure': False", actual)
+    self.assertIn("'retry_exponential_backoff': False", actual)
+    self.assertIn("'retry_delay': timedelta(seconds=10)", actual)
+    self.assertIn("'max_retry_delay': timedelta(seconds=15)", actual)
 
   def test_get_airflow_spec_with_default_schedule(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
