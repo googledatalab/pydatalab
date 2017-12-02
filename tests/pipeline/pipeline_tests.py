@@ -88,21 +88,21 @@ tasks:
   def test_resolve_parameters(self):
     test_pipeline = pipeline.Pipeline(None, None)
     params = pipeline.Pipeline.airflow_macros
-    self.assertEqual(test_pipeline._resolve_parameters('foo%(_ds)s', params), 'foo{{ ds }}')
-    self.assertEqual(test_pipeline._resolve_parameters(u'foo%(_ds)s', params), 'foo{{ ds }}')
-    self.assertListEqual(test_pipeline._resolve_parameters([u'foo%(_ds)s', 'bar%(_ds)s'], params),
+    self.assertEqual(test_pipeline.resolve_parameters('foo%(_ds)s', params), 'foo{{ ds }}')
+    self.assertEqual(test_pipeline.resolve_parameters(u'foo%(_ds)s', params), 'foo{{ ds }}')
+    self.assertListEqual(test_pipeline.resolve_parameters([u'foo%(_ds)s', 'bar%(_ds)s'], params),
                          ['foo{{ ds }}', 'bar{{ ds }}'])
-    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
-                                                           params),
+    self.assertDictEqual(test_pipeline.resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
+                                                          params),
                          {u'key{{ ds }}': u'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
-                                                           params),
+    self.assertDictEqual(test_pipeline.resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
+                                                          params),
                          {u'key{{ ds }}': u'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline._resolve_parameters(
+    self.assertDictEqual(test_pipeline.resolve_parameters(
       {u'key%(_ds)s': {'key': u'value%(_ds)s'}}, params),
       {u'key{{ ds }}': {'key': u'value{{ ds }}'}})
     params.update({'custom_key': 'custom_value'})
-    self.assertDictEqual(test_pipeline._resolve_parameters(
+    self.assertDictEqual(test_pipeline.resolve_parameters(
       {u'key%(custom_key)s': u'value%(custom_key)s'}, params),
       {u'keycustom_value': u'valuecustom_value'})
 

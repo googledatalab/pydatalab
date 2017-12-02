@@ -415,6 +415,7 @@ class TestCases(unittest.TestCase):
                                                        output_config)
     self.assertDictEqual(actual_extract_config, expected_extract_config)
 
+  maxDiff = None
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_get_execute_parameters(self, mock_notebook_item):
     mock_notebook_item.return_value = google.datalab.bigquery.Query("""SELECT @column
@@ -455,8 +456,19 @@ WHERE endpoint=@endpoint""")
       'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
       'table': 'foo_table_{{ execution_date.month }}',
       'mode': 'foo_mode',
-      'parameters': expected_parameters_config
     }
+
+    # assertDictEqual doesn't handle nested lists of dicts very well. So comparing separately.
+    actual_params = actual_execute_config['parameters']
+    actual_paramaters_dict = {item['name']: (item['value'], item['type']) for item in actual_params}
+    expected_paramaters_dict = {item['name']: (item['value'], item['type'])
+                                for item in expected_parameters_config}
+    self.assertDictEqual(actual_paramaters_dict, expected_paramaters_dict)
+
+    del actual_execute_config['parameters']
+    self.assertDictEqual(actual_execute_config, expected_execute_config)
+
+
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
     # Empty input, empty output configs

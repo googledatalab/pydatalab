@@ -153,8 +153,8 @@ default_args = {{
         operator_classname, task_details)
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
       if self._resolve_airflow_macros:
-        operator_param_value = self._resolve_parameters(operator_param_value,
-                                                        Pipeline.merge_parameters(parameters))
+        operator_param_value = self.resolve_parameters(operator_param_value,
+                                                       Pipeline.merge_parameters(parameters))
       param_format_string = Pipeline._get_param_format_string(
           operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
@@ -166,18 +166,20 @@ default_args = {{
   def merge_parameters(parameters):
     # We merge the user-provided parameters and the airflow macros
     merged_parameters = Pipeline.airflow_macros.copy()
-    # TODO(rajivpb): Ignoring 'type' for now; figure out how to use that later.
+    # We don't need item['type'] here because we want to create the dictionary of format modifiers
+    # and values
     if parameters:
       parameters_dict = {item['name']: item['value'] for item in parameters}
       merged_parameters.update(parameters_dict)
 
     return merged_parameters
 
-  def _resolve_parameters(self, operator_param_value, merged_parameters):
+  @staticmethod
+  def resolve_parameters(operator_param_value, merged_parameters):
     if isinstance(operator_param_value, list):
-      return [self._resolve_parameters(item, merged_parameters) for item in operator_param_value]
+      return [Pipeline.resolve_parameters(item, merged_parameters) for item in operator_param_value]
     if isinstance(operator_param_value, dict):
-      return {self._resolve_parameters(k, merged_parameters): self._resolve_parameters(
+      return {Pipeline.resolve_parameters(k, merged_parameters): Pipeline.resolve_parameters(
         v, merged_parameters) for k, v in operator_param_value.items()}
     if isinstance(operator_param_value, six.string_types) and merged_parameters:
       return operator_param_value % merged_parameters
