@@ -71,16 +71,16 @@ tasks:
     expected = {
       'foo1': 'foo1',
       'foo2': 'foo2',
-      'ds': '{{ ds }}',
-      'ts': '{{ ts }}',
-      'ds_nodash': '{{ ds_nodash }}',
-      'ts_nodash': '{{ ts_nodash }}',
-      'ts_year': "{{ execution_date.year }}",
-      'ts_month': "{{ execution_date.month }}",
-      'ts_day': "{{ execution_date.day }}",
-      'ts_hour': "{{ execution_date.hour }}",
-      'ts_minute': "{{ execution_date.minute }}",
-      'ts_second': "{{ execution_date.second }}",
+      '_ds': '{{ ds }}',
+      '_ts': '{{ ts }}',
+      '_ds_nodash': '{{ ds_nodash }}',
+      '_ts_nodash': '{{ ts_nodash }}',
+      '_ts_year': "{{ execution_date.year }}",
+      '_ts_month': "{{ execution_date.month }}",
+      '_ts_day': "{{ execution_date.day }}",
+      '_ts_hour': "{{ execution_date.hour }}",
+      '_ts_minute': "{{ execution_date.minute }}",
+      '_ts_second': "{{ execution_date.second }}",
     }
 
     self.assertDictEqual(merged_parameters, expected)
@@ -88,16 +88,19 @@ tasks:
   def test_resolve_parameters(self):
     test_pipeline = pipeline.Pipeline(None, None)
     params = pipeline.Pipeline.airflow_macros
-    self.assertEqual(test_pipeline._resolve_parameters('foo%(ds)s', params), 'foo{{ ds }}')
-    self.assertEqual(test_pipeline._resolve_parameters(u'foo%(ds)s', params), 'foo{{ ds }}')
-    self.assertListEqual(test_pipeline._resolve_parameters([u'foo%(ds)s', 'bar%(ds)s'], params),
+    self.assertEqual(test_pipeline._resolve_parameters('foo%(_ds)s', params), 'foo{{ ds }}')
+    self.assertEqual(test_pipeline._resolve_parameters(u'foo%(_ds)s', params), 'foo{{ ds }}')
+    self.assertListEqual(test_pipeline._resolve_parameters([u'foo%(_ds)s', 'bar%(_ds)s'], params),
                          ['foo{{ ds }}', 'bar{{ ds }}'])
-    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(ds)s': u'value%(ds)s'}, params),
+    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
+                                                           params),
                          {u'key{{ ds }}': u'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(ds)s': u'value%(ds)s'}, params),
+    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
+                                                           params),
                          {u'key{{ ds }}': u'value{{ ds }}'})
     self.assertDictEqual(test_pipeline._resolve_parameters(
-      {u'key%(ds)s': {'key': u'value%(ds)s'}}, params), {u'key{{ ds }}': {'key': u'value{{ ds }}'}})
+      {u'key%(_ds)s': {'key': u'value%(_ds)s'}}, params),
+      {u'key{{ ds }}': {'key': u'value{{ ds }}'}})
     params.update({'custom_key': 'custom_value'})
     self.assertDictEqual(test_pipeline._resolve_parameters(
       {u'key%(custom_key)s': u'value%(custom_key)s'}, params),
