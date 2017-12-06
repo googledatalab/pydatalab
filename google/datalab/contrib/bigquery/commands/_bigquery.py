@@ -30,7 +30,7 @@ def _create_pipeline_subparser(parser):
                                help='The name of the Google Cloud Composer environment.')
   pipeline_parser.add_argument('-l', '--location', type=str,
                                help='The location of the Google Cloud Composer environment. '
-                                    'Refer https://cloud.google.com/about/locations/ for further'
+                                    'Refer https://cloud.google.com/about/locations/ for further '
                                     'details.')
   pipeline_parser.add_argument('-d', '--gcs_dag_bucket', type=str,
                                help='The Google Cloud Storage bucket for the Airflow dags.')
