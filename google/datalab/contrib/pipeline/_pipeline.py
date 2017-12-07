@@ -113,17 +113,31 @@ from datetime import timedelta
     start_date_str = Pipeline._get_datetime_expr_str(start_datetime_obj)
     end_date_str = Pipeline._get_datetime_expr_str(end_datetime_obj)
 
-    airflow_default_args_format = """
-default_args = {{
+    default_arg_literals = """
     'owner': 'Google Cloud Datalab',
-    'email': {2},
-    'start_date': {0},
-    'end_date': {1},
-}}
+    'email': {0},
+    'start_date': {1},
+    'end_date': {2},
+""".format(emails.split(',') if emails else [], start_date_str, end_date_str)
 
-"""
-    email_list = emails.split(',') if emails else []
-    return airflow_default_args_format.format(start_date_str, end_date_str, email_list)
+    configurable_keys = ['email_on_retry', 'email_on_failure', 'retries',
+                         'retry_exponential_backoff']
+    for configurable_key in configurable_keys:
+      if configurable_key in schedule_config:
+        default_arg_literals = default_arg_literals + """    \'{0}\': {1},
+""".format(configurable_key, schedule_config.get(configurable_key))
+
+    # We deal with these separately as they need to be timedelta literals.
+    retry_delay_keys = ['retry_delay_seconds', 'max_retry_delay_seconds']
+    for retry_delay_key in retry_delay_keys:
+      if retry_delay_key in schedule_config:
+        default_arg_literals = default_arg_literals + """    \'{0}\': timedelta(seconds={1}),
+""".format(retry_delay_key[:-8], schedule_config.get(retry_delay_key))
+
+    return """
+default_args = {{{0}}}
+
+""".format(default_arg_literals)
 
   @staticmethod
   def _get_datetime_expr_str(datetime_obj):
