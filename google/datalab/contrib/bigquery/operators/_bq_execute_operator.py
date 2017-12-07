@@ -18,18 +18,18 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 
 class ExecuteOperator(BaseOperator):
 
-  template_fields = ('_table', '_parameters', '_path')
+  template_fields = ('table', 'parameters', 'path')
 
   @apply_defaults
   def __init__(self, sql, parameters=None, table=None, mode=None, data_source=None, path=None,
                format=None, csv_options=None, schema=None, max_bad_records=None, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)
     self._sql = sql
-    self._table = table
+    self.table = table
     self._mode = mode
-    self._parameters = parameters
+    self.parameters = parameters
     self._data_source = data_source
-    self._path = path
+    self.path = path
     self._format = format
     self._csv_options = csv_options or {}
     self._schema = schema
@@ -57,17 +57,17 @@ class ExecuteOperator(BaseOperator):
         kwargs['max_bad_records'] = self._max_bad_records
 
       external_data_source = bq.ExternalDataSource(
-        source=self._path, schema=bq.Schema(self._schema), **kwargs)
+        source=self.path, schema=bq.Schema(self._schema), **kwargs)
       query = bq.Query(sql=self._sql, data_sources={self._data_source: external_data_source})
     else:
       query = bq.Query(sql=self._sql)
 
     # use_cache is False since this is most likely the case in pipeline scenarios
     # allow_large_results can be True only if table is specified (i.e. when it's not None)
-    output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
-                                          allow_large_results=self._table is not None)
+    output_options = bq.QueryOutput.table(name=self.table, mode=self._mode, use_cache=False,
+                                          allow_large_results=self.table is not None)
 
-    query_params = Pipeline._get_query_parameters(self._parameters)
+    query_params = Pipeline._get_query_parameters(self.parameters)
     job = query.execute(output_options, query_params=query_params)
 
     # Returning the table-name here makes it available for downstream task instances.

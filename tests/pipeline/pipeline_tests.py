@@ -299,8 +299,8 @@ LIMIT 5""")
                      'id = UnknownOperator(''task_id=\'id_id\', ' +
                      'bar_typed=False, foo="""bar""", dag=dag)\n')
 
-  def test_get_random_operator_classname(self):
-    self.assertEqual(pipeline.Pipeline._get_operator_classname('Unknown'),
+  def test_get_random_operator_class_name(self):
+    self.assertEqual(pipeline.Pipeline._get_operator_class_name('Unknown'),
                      'UnknownOperator')
 
   def test_get_dag_definition(self):

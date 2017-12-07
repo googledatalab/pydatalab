@@ -14,6 +14,7 @@ import datetime
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
 import six
+import sys
 
 
 class Pipeline(object):
@@ -147,12 +148,14 @@ default_args = {{
     """
     operator_type = task_details['type']
     full_param_string = 'task_id=\'{0}_id\''.format(task_id)
-    operator_classname = Pipeline._get_operator_classname(operator_type)
+    operator_class_name = Pipeline._get_operator_class_name(operator_type)
+    operator_class_instance = getattr(sys.modules[__name__], operator_class_name)
+    templated_fields = operator_class_instance.template_fields
 
     operator_param_values = Pipeline._get_operator_param_name_and_values(
-        operator_classname, task_details)
+        operator_class_name, task_details)
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
-      if self._resolve_airflow_macros:
+      if operator_param_name in templated_fields:
         operator_param_value = self.resolve_parameters(operator_param_value,
                                                        Pipeline.merge_parameters(parameters))
       param_format_string = Pipeline._get_param_format_string(
@@ -160,7 +163,7 @@ default_args = {{
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string
 
-    return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_classname, full_param_string)
+    return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_class_name, full_param_string)
 
   @staticmethod
   def merge_parameters(parameters):
@@ -209,7 +212,7 @@ default_args = {{
     return set_upstream_statements
 
   @staticmethod
-  def _get_operator_classname(task_detail_type):
+  def _get_operator_class_name(task_detail_type):
     """ Internal helper gets the name of the Airflow operator class. We maintain
       this in a map, so this method really returns the enum name, concatenated
       with the string "Operator".

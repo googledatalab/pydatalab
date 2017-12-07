@@ -26,14 +26,14 @@ class LoadOperator(BaseOperator):
     A message about whether the load succeeded or failed.
   """
 
-  template_fields = ('_table', '_path')
+  template_fields = ('table', 'path')
 
   @apply_defaults
   def __init__(self, table, path, mode='append', format='csv', schema=None, csv_options=None, *args,
                **kwargs):
     super(LoadOperator, self).__init__(*args, **kwargs)
-    self._table = table
-    self._path = path
+    self.table = table
+    self.path = path
     self._mode = mode
     self._format = format
     self._csv_options = csv_options or {}
@@ -41,7 +41,7 @@ class LoadOperator(BaseOperator):
 
   # TODO(rajipb): In schema validation, make sure that mode is either 'append' or 'create'
   def execute(self, context):
-    table = bq.Table(self._table, context=None)
+    table = bq.Table(self.table, context=None)
     if not table.exists():
       table.create(schema=self._schema)
 
@@ -56,7 +56,7 @@ class LoadOperator(BaseOperator):
       kwargs['quote'] = self._csv_options['quote']
     csv_options = bq.CSVOptions(**kwargs)
 
-    job = table.load(self._path, mode=self._mode,
+    job = table.load(self.path, mode=self._mode,
                      source_format=('csv' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON'),
                      csv_options=csv_options,
                      ignore_unknown_values=not self._csv_options.get('strict'))

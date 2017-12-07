@@ -233,13 +233,13 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(execute_operator._parameters)
     self.assertIsNone(execute_operator._table)
     self.assertIsNone(execute_operator._mode)
-    self.assertEqual(execute_operator.template_fields, ('_table', '_parameters', '_path'))
+    self.assertEqual(execute_operator.template_fields, ('table', 'parameters', 'path'))
 
   def test_extract_operator_defaults(self):
     extract_operator = ExtractOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
     self.assertEquals(extract_operator._format, 'csv')
     self.assertDictEqual(extract_operator._csv_options, {})
-    self.assertEqual(extract_operator.template_fields, ('_table', '_path'))
+    self.assertEqual(extract_operator.template_fields, ('table', 'path'))
 
   def test_load_operator_defaults(self):
     load_operator = LoadOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
@@ -247,4 +247,4 @@ class TestCases(unittest.TestCase):
     self.assertEquals(load_operator._mode, 'append')
     self.assertIsNone(load_operator._schema)
     self.assertDictEqual(load_operator._csv_options, {})
-    self.assertEqual(load_operator.template_fields, ('_table', '_path'))
+    self.assertEqual(load_operator.template_fields, ('table', 'path'))
