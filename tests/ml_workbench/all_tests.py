@@ -30,10 +30,12 @@ class RunTestScript(unittest.TestCase):
     super(RunTestScript, self).__init__(*args, **kwargs)
 
     # Path to the test script.
-    self._root_path = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            '..', '..', 'solutionbox', 'ml_workbench', 'test_tensorflow'))
+    self._root_paths = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__),
+                        '..', '..', 'solutionbox', 'ml_workbench', 'test_tensorflow')),
+        os.path.abspath(os.path.join(os.path.dirname(__file__),
+                        '..', '..', 'solutionbox', 'ml_workbench', 'test_xgboost')),
+    ]
 
   @unittest.skipIf(not six.PY2, 'Python 2 is required')
   def test_local(self):
@@ -41,5 +43,6 @@ class RunTestScript(unittest.TestCase):
 
     Tests that use GCS services like GCS or BigQuery are not ran.
     """
-    cmd = 'bash %s' % os.path.join(self._root_path, 'run_all.sh')
-    subprocess.check_call(cmd, cwd=self._root_path, shell=True)
+    for root_path in self._root_paths:
+      cmd = 'bash %s' % os.path.join(root_path, 'run_all.sh')
+      subprocess.check_call(cmd, cwd=root_path, shell=True)
