@@ -16,6 +16,9 @@ from google.datalab import utils
 import six
 import sys
 
+from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator
+from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
+from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 
 class Pipeline(object):
   """ Represents a Pipeline object that encapsulates an Airflow pipeline spec.
