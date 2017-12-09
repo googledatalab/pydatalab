@@ -250,43 +250,6 @@ LIMIT 5""")
 """  # noqa
     self.assertEqual(actual, expected)
 
-  def test_get_query_params(self):
-    task_details = {}
-    task_details['parameters'] = [
-        {
-          'name': 'endpoint',
-          'type': 'STRING',
-          'value': 'Interact3'
-        },
-        {
-          'name': 'table_name',
-          'type': 'STRING',
-          'value': 'cloud-datalab-samples.httplogs.logs_20140615'
-        }
-    ]
-    actual = pipeline.Pipeline._get_query_parameters(task_details['parameters'])
-    expected = [
-      {
-        'name': 'endpoint',
-        'parameterType': {
-          'type': 'STRING'
-        },
-        'parameterValue': {
-          'value': 'Interact3'
-        }
-      },
-      {
-        'name': 'table_name',
-        'parameterType': {
-         'type': 'STRING'
-        },
-        'parameterValue': {
-          'value': 'cloud-datalab-samples.httplogs.logs_20140615'
-        }
-      }
-    ]
-    self.assertListEqual(actual, expected)
-
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
     task_details = {}

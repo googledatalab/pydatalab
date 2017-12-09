@@ -13,7 +13,6 @@
 import google.datalab.bigquery as bq
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
-from google.datalab.contrib.pipeline._pipeline import Pipeline
 
 
 class ExecuteOperator(BaseOperator):
@@ -67,7 +66,8 @@ class ExecuteOperator(BaseOperator):
     output_options = bq.QueryOutput.table(name=self.table, mode=self._mode, use_cache=False,
                                           allow_large_results=self.table is not None)
 
-    query_params = Pipeline._get_query_parameters(self.parameters)
+
+    query_params = bq.commands._bigquery._get_query_parameters_internal(self.parameters)
     job = query.execute(output_options, query_params=query_params)
 
     # Returning the table-name here makes it available for downstream task instances.

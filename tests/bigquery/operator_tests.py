@@ -230,8 +230,8 @@ class TestCases(unittest.TestCase):
 
   def test_execute_operator_defaults(self):
     execute_operator = ExecuteOperator(task_id='foo_task_id', sql='foo_sql')
-    self.assertIsNone(execute_operator._parameters)
-    self.assertIsNone(execute_operator._table)
+    self.assertIsNone(execute_operator.parameters)
+    self.assertIsNone(execute_operator.table)
     self.assertIsNone(execute_operator._mode)
     self.assertEqual(execute_operator.template_fields, ('table', 'parameters', 'path'))
 

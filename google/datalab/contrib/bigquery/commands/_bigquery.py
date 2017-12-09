@@ -216,21 +216,10 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
 
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     execute_task_config['sql'] = query.sql
-
-    merged_parameters = Pipeline.merge_parameters(bq_pipeline_parameters_config)
-
-    #####
-    # Parameters are present in both pipeline and bq_pipeline_parameters. Figure this out.
-    #####
-
-    # We merge the parameters with the airflow macros so that users can specify airflow macro
-    # names (like '@ds') in sql
-    execute_task_config['parameters'] = bq_pipeline_parameters_config[:]
-    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                              for key, value in Pipeline.airflow_macros.items()]
-    execute_task_config['parameters'].extend(airflow_macros_list)
+    execute_task_config['parameters'] = bq_pipeline_parameters_config
 
     # Stuff from the output config
+    merged_parameters = Pipeline.merge_parameters(bq_pipeline_parameters_config)
     if bq_pipeline_output_config:
       if 'table' in bq_pipeline_output_config:
         execute_task_config['table'] = Pipeline.resolve_parameters(

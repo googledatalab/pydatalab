@@ -16,9 +16,6 @@ from google.datalab import utils
 import six
 import sys
 
-from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator
-from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
-from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 
 class Pipeline(object):
   """ Represents a Pipeline object that encapsulates an Airflow pipeline spec.
@@ -289,8 +286,9 @@ default_args = {{{0}}}
       del operator_task_details['query']
 
     if 'parameters' in operator_task_details:
-      operator_task_details['query_params'] = Pipeline._get_query_parameters(
-        operator_task_details['parameters'])
+      operator_task_details['query_params'] = \
+        bigquery.commands._bigquery._get_query_parameters_internal(
+          operator_task_details['parameters'])
       del operator_task_details['parameters']
 
     # Add over-rides of Airflow defaults here.
@@ -298,33 +296,6 @@ default_args = {{{0}}}
       operator_task_details['use_legacy_sql'] = False
 
     return operator_task_details
-
-  @staticmethod
-  def _get_query_parameters(input_query_parameters):
-    """Extract query parameters from dict if provided
-    Also validates the cell body schema using jsonschema to catch errors. This validation isn't
-    complete, however; it does not validate recursive schemas, but it acts as a good filter
-    against most simple schemas.
-
-    Args:
-      operator_task_details: dict of input param names to values.
-
-    Returns:
-      Validated object containing query parameters.
-    """
-    parsed_params = []
-    if input_query_parameters:
-      for param in input_query_parameters:
-        parsed_params.append({
-          'name': param['name'],
-          'parameterType': {
-            'type': param['type']
-          },
-          'parameterValue': {
-            'value': param['value']
-          }
-        })
-    return parsed_params
 
   @staticmethod
   def _get_bq_extract_params(operator_task_details):
