@@ -74,7 +74,7 @@ class TestCases(unittest.TestCase):
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
-          'parameters': airflow_macros_list,
+          'parameters': None,
         },
         'bq_pipeline_extract_task': {
           'path': 'foo_table',
@@ -106,7 +106,7 @@ class TestCases(unittest.TestCase):
           'data_source': 'foo_data_source',
           'path': 'foo_path',
           'type': 'pydatalab.bq.execute',
-          'parameters': airflow_macros_list,
+          'parameters': None,
         },
         'bq_pipeline_extract_task': {
           'path': 'foo_table',
@@ -142,7 +142,7 @@ class TestCases(unittest.TestCase):
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'up_stream': ['bq_pipeline_load_task'],
-          'parameters': airflow_macros_list,
+          'parameters': None,
         },
         'bq_pipeline_extract_task': {
           'path': 'foo_path_2',
@@ -171,7 +171,7 @@ class TestCases(unittest.TestCase):
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
-          'parameters': airflow_macros_list,
+          'parameters': None,
         },
         'bq_pipeline_extract_task': {
           'path': 'foo_path_2',
@@ -201,7 +201,7 @@ class TestCases(unittest.TestCase):
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'table': 'foo_table_1',
-          'parameters': airflow_macros_list,
+          'parameters': None,
         },
       }
     }
@@ -297,7 +297,7 @@ class TestCases(unittest.TestCase):
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
-          'parameters': airflow_macros_list,
+          'parameters': None,
         },
       }
     }
@@ -315,15 +315,12 @@ class TestCases(unittest.TestCase):
       'parameters': user_parameters
     }
 
-    expected_parameters = airflow_macros_list[:]
-    expected_parameters.extend(user_parameters)
     expected = {
       'parameters': user_parameters,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
-          'parameters': expected_parameters
         },
       }
     }
@@ -332,11 +329,10 @@ class TestCases(unittest.TestCase):
     actual_params = actual['tasks']['bq_pipeline_execute_task']['parameters']
     actual_paramaters_dict = {item['name']: (item['value'], item['type']) for item in actual_params}
     expected_paramaters_dict = {item['name']: (item['value'], item['type'])
-                                for item in expected_parameters}
+                                for item in user_parameters}
     self.assertDictEqual(actual_paramaters_dict, expected_paramaters_dict)
 
     del actual['tasks']['bq_pipeline_execute_task']['parameters']
-    del expected['tasks']['bq_pipeline_execute_task']['parameters']
     self.assertDictEqual(actual, expected)
 
   def test_get_load_parameters(self):
@@ -446,9 +442,6 @@ WHERE endpoint=@endpoint""")
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        output_config, parameters_config)
     expected_parameters_config = parameters_config[:]
-    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                           for key, value in Pipeline.airflow_macros.items()]
-    expected_parameters_config.extend(airflow_macros_list)
 
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',

@@ -232,19 +232,19 @@ class TestCases(unittest.TestCase):
     execute_operator = ExecuteOperator(task_id='foo_task_id', sql='foo_sql')
     self.assertIsNone(execute_operator.parameters)
     self.assertIsNone(execute_operator.table)
-    self.assertIsNone(execute_operator._mode)
+    self.assertIsNone(execute_operator.mode)
     self.assertEqual(execute_operator.template_fields, ('table', 'parameters', 'path'))
 
   def test_extract_operator_defaults(self):
     extract_operator = ExtractOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
-    self.assertEquals(extract_operator._format, 'csv')
-    self.assertDictEqual(extract_operator._csv_options, {})
+    self.assertEquals(extract_operator.format, 'csv')
+    self.assertDictEqual(extract_operator.csv_options, {})
     self.assertEqual(extract_operator.template_fields, ('table', 'path'))
 
   def test_load_operator_defaults(self):
     load_operator = LoadOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
-    self.assertEquals(load_operator._format, 'csv')
-    self.assertEquals(load_operator._mode, 'append')
-    self.assertIsNone(load_operator._schema)
-    self.assertDictEqual(load_operator._csv_options, {})
+    self.assertEquals(load_operator.format, 'csv')
+    self.assertEquals(load_operator.mode, 'append')
+    self.assertIsNone(load_operator.schema)
+    self.assertDictEqual(load_operator.csv_options, {})
     self.assertEqual(load_operator.template_fields, ('table', 'path'))

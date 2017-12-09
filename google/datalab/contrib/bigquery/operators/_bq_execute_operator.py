@@ -23,47 +23,47 @@ class ExecuteOperator(BaseOperator):
   def __init__(self, sql, parameters=None, table=None, mode=None, data_source=None, path=None,
                format=None, csv_options=None, schema=None, max_bad_records=None, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)
-    self._sql = sql
+    self.sql = sql
     self.table = table
-    self._mode = mode
+    self.mode = mode
     self.parameters = parameters
-    self._data_source = data_source
+    self.data_source = data_source
     self.path = path
-    self._format = format
-    self._csv_options = csv_options or {}
-    self._schema = schema
-    self._max_bad_records = max_bad_records
+    self.format = format
+    self.csv_options = csv_options or {}
+    self.schema = schema
+    self.max_bad_records = max_bad_records
 
   def execute(self, context):
-    if self._data_source:
+    if self.data_source:
       kwargs = {}
-      if self._csv_options and self._csv_options.__len__() > 1:
+      if self.csv_options and self.csv_options.__len__() > 1:
         csv_kwargs = {}
-        if 'delimiter' in self._csv_options:
-          csv_kwargs['delimiter'] = self._csv_options['delimiter']
-        if 'skip' in self._csv_options:
-          csv_kwargs['skip_leading_rows'] = self._csv_options['skip']
-        if 'strict' in self._csv_options:
-          csv_kwargs['allow_jagged_rows'] = self._csv_options['strict']
-        if 'quote' in self._csv_options:
-          csv_kwargs['quote'] = self._csv_options['quote']
+        if 'delimiter' in self.csv_options:
+          csv_kwargs['delimiter'] = self.csv_options['delimiter']
+        if 'skip' in self.csv_options:
+          csv_kwargs['skip_leading_rows'] = self.csv_options['skip']
+        if 'strict' in self.csv_options:
+          csv_kwargs['allow_jagged_rows'] = self.csv_options['strict']
+        if 'quote' in self.csv_options:
+          csv_kwargs['quote'] = self.csv_options['quote']
         kwargs['csv_options'] = bq.CSVOptions(**csv_kwargs)
 
-      if self._format:
-        kwargs['source_format'] = self._format
+      if self.format:
+        kwargs['source_format'] = self.format
 
-      if self._max_bad_records:
-        kwargs['max_bad_records'] = self._max_bad_records
+      if self.max_bad_records:
+        kwargs['max_bad_records'] = self.max_bad_records
 
       external_data_source = bq.ExternalDataSource(
-        source=self.path, schema=bq.Schema(self._schema), **kwargs)
-      query = bq.Query(sql=self._sql, data_sources={self._data_source: external_data_source})
+        source=self.path, schema=bq.Schema(self.schema), **kwargs)
+      query = bq.Query(sql=self.sql, data_sources={self.data_source: external_data_source})
     else:
-      query = bq.Query(sql=self._sql)
+      query = bq.Query(sql=self.sql)
 
     # use_cache is False since this is most likely the case in pipeline scenarios
     # allow_large_results can be True only if table is specified (i.e. when it's not None)
-    output_options = bq.QueryOutput.table(name=self.table, mode=self._mode, use_cache=False,
+    output_options = bq.QueryOutput.table(name=self.table, mode=self.mode, use_cache=False,
                                           allow_large_results=self.table is not None)
 
 

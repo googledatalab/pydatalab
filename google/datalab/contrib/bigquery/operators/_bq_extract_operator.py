@@ -23,9 +23,9 @@ class ExtractOperator(BaseOperator):
   def __init__(self, path, table=None, format='csv', csv_options=None, *args, **kwargs):
     super(ExtractOperator, self).__init__(*args, **kwargs)
     self.table = table
-    self._path = path
-    self._format = format
-    self._csv_options = csv_options or {}
+    self.path = path
+    self.format = format
+    self.csv_options = csv_options or {}
 
   def execute(self, context):
     if not self.table:
@@ -44,9 +44,9 @@ class ExtractOperator(BaseOperator):
 
     source_table = google.datalab.bigquery.Table(self.table, context=None)
     job = source_table.extract(
-      self.path, format='CSV' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON',
-      csv_delimiter=self._csv_options.get('delimiter'),
-      csv_header=self._csv_options.get('header'), compress=self._csv_options.get('compress'))
+      self.path, format='CSV' if self.format == 'csv' else 'NEWLINE_DELIMITED_JSON',
+      csv_delimiter=self.csv_options.get('delimiter'),
+      csv_header=self.csv_options.get('header'), compress=self.csv_options.get('compress'))
 
     if job.failed:
       raise Exception('Extract failed: %s' % str(job.fatal_error))
