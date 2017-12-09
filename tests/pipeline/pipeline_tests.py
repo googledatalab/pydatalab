@@ -229,6 +229,7 @@ LIMIT 5""")
     task_details['sql'] = 'foo_query'
     task_details['table'] = 'project.test.table'
 
+    from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details, None)
     expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode=\"\"\"create\"\"\", sql=\"\"\"foo_query\"\"\", table=\"\"\"project.test.table\"\"\", dag=dag)
 """  # noqa

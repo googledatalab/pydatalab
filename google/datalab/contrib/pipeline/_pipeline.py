@@ -163,7 +163,7 @@ default_args = {{{0}}}
     operator_type = task_details['type']
     full_param_string = 'task_id=\'{0}_id\''.format(task_id)
     operator_class_name = Pipeline._get_operator_class_name(operator_type)
-    operator_class_instance = getattr(sys.modules[__name__], operator_class_name)
+    operator_class_instance = getattr(sys.modules['google.datalab.contrib.bigquery.operators._bq_execute_operator'], operator_class_name)
     templated_fields = operator_class_instance.template_fields
 
     operator_param_values = Pipeline._get_operator_param_name_and_values(
