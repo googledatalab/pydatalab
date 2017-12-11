@@ -236,8 +236,10 @@ default_args = {{{0}}}
     """
     # TODO(rajivpb): Rename this var correctly.
     task_type_to_operator_prefix_mapping = {
-      'pydatalab.bq.execute': ('Execute', 'google.datalab.contrib.bigquery.operators._bq_execute_operator'),
-      'pydatalab.bq.extract': ('Extract', 'google.datalab.contrib.bigquery.operators._bq_extract_operator'),
+      'pydatalab.bq.execute': ('Execute',
+                               'google.datalab.contrib.bigquery.operators._bq_execute_operator'),
+      'pydatalab.bq.extract': ('Extract',
+                               'google.datalab.contrib.bigquery.operators._bq_extract_operator'),
       'pydatalab.bq.load': ('Load', 'google.datalab.contrib.bigquery.operators._bq_load_operator'),
     }
     (operator_class_prefix, module) = task_type_to_operator_prefix_mapping.get(

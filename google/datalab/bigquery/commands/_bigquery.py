@@ -381,6 +381,7 @@ def _get_query_parameters(args, cell_body):
   config_parameters = config.get('parameters', {})
   return _get_query_parameters_internal(config_parameters)
 
+
 def _get_query_parameters_internal(config_parameters):
   # We merge the parameters with the airflow macros so that users can specify certain airflow
   # macro names (like '@ds') in their sql. This is useful for enabling the user to progressively

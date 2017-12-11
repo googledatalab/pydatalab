@@ -15,7 +15,6 @@
 import google
 import google.auth
 import google.datalab.contrib.bigquery.commands._bigquery as bq
-from google.datalab.contrib.pipeline._pipeline import Pipeline
 
 import mock
 import re
@@ -55,9 +54,6 @@ class TestCases(unittest.TestCase):
     # empty pipeline_spec
     with self.assertRaisesRegexp(Exception, 'Pipeline has no tasks to execute.'):
       bq._get_pipeline_spec_from_config({})
-
-    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                           for key, value in Pipeline.airflow_macros.items()]
 
     # empty input , transformation, output as path
     pipeline_config = {
@@ -411,7 +407,6 @@ class TestCases(unittest.TestCase):
                                                        output_config)
     self.assertDictEqual(actual_extract_config, expected_extract_config)
 
-  maxDiff = None
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_get_execute_parameters(self, mock_notebook_item):
     mock_notebook_item.return_value = google.datalab.bigquery.Query("""SELECT @column
@@ -460,7 +455,6 @@ WHERE endpoint=@endpoint""")
 
     del actual_execute_config['parameters']
     self.assertDictEqual(actual_execute_config, expected_execute_config)
-
 
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
