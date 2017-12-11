@@ -162,18 +162,21 @@ default_args = {{{0}}}
     """
     operator_type = task_details['type']
     full_param_string = 'task_id=\'{0}_id\''.format(task_id)
-    operator_class_name = Pipeline._get_operator_class_name(operator_type)
-    operator_class_instance = getattr(sys.modules['google.datalab.contrib.bigquery.operators._bq_execute_operator'], operator_class_name)
-    templated_fields = operator_class_instance.template_fields
+    operator_class_name, module = Pipeline._get_operator_class_name(operator_type)
+    operator_class_instance = getattr(sys.modules[module], operator_class_name, None)
+    templated_fields = operator_class_instance.template_fields if operator_class_instance else ()
 
     operator_param_values = Pipeline._get_operator_param_name_and_values(
         operator_class_name, task_details)
+
+    # Resolves all the macros and builds up the final string
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
+      # We replace modifiers in the parameter values with either the user-defined values, or with
+      # with the airflow macros, as applicable.
       if operator_param_name in templated_fields:
         operator_param_value = self.resolve_parameters(operator_param_value,
                                                        Pipeline.merge_parameters(parameters))
-      param_format_string = Pipeline._get_param_format_string(
-          operator_param_value)
+      param_format_string = Pipeline._get_param_format_string(operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string
 
@@ -231,17 +234,19 @@ default_args = {{{0}}}
       this in a map, so this method really returns the enum name, concatenated
       with the string "Operator".
     """
+    # TODO(rajivpb): Rename this var correctly.
     task_type_to_operator_prefix_mapping = {
-      'pydatalab.bq.execute': 'Execute',
-      'pydatalab.bq.extract': 'Extract',
-      'pydatalab.bq.load': 'Load',
+      'pydatalab.bq.execute': ('Execute', 'google.datalab.contrib.bigquery.operators._bq_execute_operator'),
+      'pydatalab.bq.extract': ('Extract', 'google.datalab.contrib.bigquery.operators._bq_extract_operator'),
+      'pydatalab.bq.load': ('Load', 'google.datalab.contrib.bigquery.operators._bq_load_operator'),
     }
-    operator_class_prefix = task_type_to_operator_prefix_mapping.get(
-        task_detail_type)
+    (operator_class_prefix, module) = task_type_to_operator_prefix_mapping.get(
+        task_detail_type, (None, __name__))
     format_string = '{0}Operator'
-    if operator_class_prefix is not None:
-      return format_string.format(operator_class_prefix)
-    return format_string.format(task_detail_type)
+    operator_class_name = format_string.format(operator_class_prefix)
+    if operator_class_prefix is None:
+      return format_string.format(task_detail_type), module
+    return operator_class_name, module
 
   @staticmethod
   def _get_operator_param_name_and_values(operator_class_name, task_details):
@@ -271,6 +276,8 @@ default_args = {{{0}}}
 
     # We special-case certain operators if we do some translation of the parameter names. This is
     # usually the case when we use syntactic sugar to expose the functionality.
+    # TODO(rajivpb): It should be possible to make this a lookup from the modules mapping via
+    # getattr() or equivalent. Avoid hard-coding these class-names here.
     if (operator_class_name == 'BigQueryOperator'):
       return Pipeline._get_bq_execute_params(operator_task_details)
     if (operator_class_name == 'BigQueryToCloudStorageOperator'):
