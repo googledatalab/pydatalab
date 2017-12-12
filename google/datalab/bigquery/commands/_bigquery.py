@@ -377,6 +377,12 @@ def _get_query_parameters(args, cell_body):
   if config:
     jsonschema.validate(config, BigQuerySchema.QUERY_PARAMS_SCHEMA)
 
+  config = config or {}
+  config_parameters = config.get('parameters', {})
+  return _get_query_parameters_internal(config_parameters)
+
+
+def _get_query_parameters_internal(config_parameters):
   # We merge the parameters with the airflow macros so that users can specify certain airflow
   # macro names (like '@ds') in their sql. This is useful for enabling the user to progressively
   # author a pipeline with %bq pipeline.
@@ -402,12 +408,12 @@ def _get_query_parameters(args, cell_body):
   # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
   # the parameter name. We then use this to update the canned parameters dictionary. This will
   # have the effect of using user-provided parameters in case of naming conflicts.
-  config = config or {}
+  config_parameters = config_parameters or {}
   input_query_parameters = {
     item['name']: {
       'type': item['type'],
       'value': item['value']
-    } for item in config.get('parameters', {})
+    } for item in config_parameters
   }
   merged_parameters = default_query_parameters.copy()
   merged_parameters.update(input_query_parameters)

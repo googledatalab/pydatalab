@@ -14,6 +14,7 @@ import datetime
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
 import six
+import sys
 
 
 class Pipeline(object):
@@ -161,37 +162,47 @@ default_args = {{{0}}}
     """
     operator_type = task_details['type']
     full_param_string = 'task_id=\'{0}_id\''.format(task_id)
-    operator_classname = Pipeline._get_operator_classname(operator_type)
+    operator_class_name, module = Pipeline._get_operator_class_name(operator_type)
+    operator_class_instance = getattr(sys.modules[module], operator_class_name, None)
+    templated_fields = operator_class_instance.template_fields if operator_class_instance else ()
 
     operator_param_values = Pipeline._get_operator_param_name_and_values(
-        operator_classname, task_details)
+        operator_class_name, task_details)
+
+    # This loop resolves all the macros and builds up the final string
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
-      if self._resolve_airflow_macros:
+      # We replace modifiers in the parameter values with either the user-defined values, or with
+      # with the airflow macros, as applicable.
+      # An important assumption that this makes is that the operators parameters have the same names
+      # as the templated_fields. TODO(rajivpb): There may be a better way to do this.
+      if operator_param_name in templated_fields:
         operator_param_value = self._resolve_parameters(operator_param_value,
-                                                        Pipeline.merge_parameters(parameters))
-      param_format_string = Pipeline._get_param_format_string(
-          operator_param_value)
+                                                        Pipeline._merge_parameters(parameters))
+      param_format_string = Pipeline._get_param_format_string(operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string
 
-    return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_classname, full_param_string)
+    return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_class_name, full_param_string)
 
   @staticmethod
-  def merge_parameters(parameters):
+  def _merge_parameters(parameters):
     # We merge the user-provided parameters and the airflow macros
     merged_parameters = Pipeline.airflow_macros.copy()
-    # TODO(rajivpb): Ignoring 'type' for now; figure out how to use that later.
+    # We don't need item['type'] here because we want to create the dictionary of format modifiers
+    # and values
     if parameters:
       parameters_dict = {item['name']: item['value'] for item in parameters}
       merged_parameters.update(parameters_dict)
 
     return merged_parameters
 
-  def _resolve_parameters(self, operator_param_value, merged_parameters):
+  @staticmethod
+  def _resolve_parameters(operator_param_value, merged_parameters):
     if isinstance(operator_param_value, list):
-      return [self._resolve_parameters(item, merged_parameters) for item in operator_param_value]
+      return [Pipeline._resolve_parameters(item, merged_parameters)
+              for item in operator_param_value]
     if isinstance(operator_param_value, dict):
-      return {self._resolve_parameters(k, merged_parameters): self._resolve_parameters(
+      return {Pipeline._resolve_parameters(k, merged_parameters): Pipeline._resolve_parameters(
         v, merged_parameters) for k, v in operator_param_value.items()}
     if isinstance(operator_param_value, six.string_types) and merged_parameters:
       return operator_param_value % merged_parameters
@@ -221,22 +232,27 @@ default_args = {{{0}}}
     return set_upstream_statements
 
   @staticmethod
-  def _get_operator_classname(task_detail_type):
+  def _get_operator_class_name(task_detail_type):
     """ Internal helper gets the name of the Airflow operator class. We maintain
       this in a map, so this method really returns the enum name, concatenated
       with the string "Operator".
     """
+    # TODO(rajivpb): Rename this var correctly.
     task_type_to_operator_prefix_mapping = {
-      'pydatalab.bq.execute': 'Execute',
-      'pydatalab.bq.extract': 'Extract',
-      'pydatalab.bq.load': 'Load',
+      'pydatalab.bq.execute': ('Execute',
+                               'google.datalab.contrib.bigquery.operators._bq_execute_operator'),
+      'pydatalab.bq.extract': ('Extract',
+                               'google.datalab.contrib.bigquery.operators._bq_extract_operator'),
+      'pydatalab.bq.load': ('Load', 'google.datalab.contrib.bigquery.operators._bq_load_operator'),
+      'Bash': ('Bash', 'airflow.operators.bash_operator')
     }
-    operator_class_prefix = task_type_to_operator_prefix_mapping.get(
-        task_detail_type)
+    (operator_class_prefix, module) = task_type_to_operator_prefix_mapping.get(
+        task_detail_type, (None, __name__))
     format_string = '{0}Operator'
-    if operator_class_prefix is not None:
-      return format_string.format(operator_class_prefix)
-    return format_string.format(task_detail_type)
+    operator_class_name = format_string.format(operator_class_prefix)
+    if operator_class_prefix is None:
+      return format_string.format(task_detail_type), module
+    return operator_class_name, module
 
   @staticmethod
   def _get_operator_param_name_and_values(operator_class_name, task_details):
@@ -266,6 +282,8 @@ default_args = {{{0}}}
 
     # We special-case certain operators if we do some translation of the parameter names. This is
     # usually the case when we use syntactic sugar to expose the functionality.
+    # TODO(rajivpb): It should be possible to make this a lookup from the modules mapping via
+    # getattr() or equivalent. Avoid hard-coding these class-names here.
     if (operator_class_name == 'BigQueryOperator'):
       return Pipeline._get_bq_execute_params(operator_task_details)
     if (operator_class_name == 'BigQueryToCloudStorageOperator'):
@@ -281,8 +299,9 @@ default_args = {{{0}}}
       del operator_task_details['query']
 
     if 'parameters' in operator_task_details:
-      operator_task_details['query_params'] = Pipeline._get_query_parameters(
-        operator_task_details['parameters'])
+      operator_task_details['query_params'] = \
+        bigquery.commands._bigquery._get_query_parameters_internal(
+          operator_task_details['parameters'])
       del operator_task_details['parameters']
 
     # Add over-rides of Airflow defaults here.
@@ -290,33 +309,6 @@ default_args = {{{0}}}
       operator_task_details['use_legacy_sql'] = False
 
     return operator_task_details
-
-  @staticmethod
-  def _get_query_parameters(input_query_parameters):
-    """Extract query parameters from dict if provided
-    Also validates the cell body schema using jsonschema to catch errors. This validation isn't
-    complete, however; it does not validate recursive schemas, but it acts as a good filter
-    against most simple schemas.
-
-    Args:
-      operator_task_details: dict of input param names to values.
-
-    Returns:
-      Validated object containing query parameters.
-    """
-    parsed_params = []
-    if input_query_parameters:
-      for param in input_query_parameters:
-        parsed_params.append({
-          'name': param['name'],
-          'parameterType': {
-            'type': param['type']
-          },
-          'parameterValue': {
-            'value': param['value']
-          }
-        })
-    return parsed_params
 
   @staticmethod
   def _get_bq_extract_params(operator_task_details):

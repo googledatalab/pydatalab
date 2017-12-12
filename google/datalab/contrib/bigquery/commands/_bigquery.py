@@ -138,7 +138,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
       return None
 
     # The path URL of the GCS load file(s), and associated parameters
-    load_task_config['path'] = bq_pipeline_input_config.get('path') % Pipeline.airflow_macros
+    load_task_config['path'] = bq_pipeline_input_config.get('path')
 
     if 'format' in bq_pipeline_input_config:
       load_task_config['format'] = bq_pipeline_input_config['format']
@@ -161,7 +161,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
     if 'table' not in source_of_table:
       return None
 
-    load_task_config['table'] = source_of_table.get('table') % Pipeline.airflow_macros
+    load_task_config['table'] = source_of_table.get('table')
 
     if 'schema' in source_of_table:
       load_task_config['schema'] = source_of_table['schema']
@@ -200,7 +200,7 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
         # All the below are applicable only if data_source is specified
         if 'path' in bq_pipeline_input_config:
             # We format the path since this could contain format modifiers
-            execute_task_config['path'] = bq_pipeline_input_config['path'] % Pipeline.airflow_macros
+            execute_task_config['path'] = bq_pipeline_input_config['path']
 
         if 'schema' in bq_pipeline_input_config:
             execute_task_config['schema'] = bq_pipeline_input_config['schema']
@@ -217,22 +217,28 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     execute_task_config['sql'] = query.sql
 
-    # Stuff from the output config
+    # We merge the user's parameters with the airflow macros so that users can specify names like
+    # '@_ds' in their sql
+    merged_query_parameters = {name: (value, 'STRING')
+                               for name, value in Pipeline.airflow_macros.items()}
+    if bq_pipeline_parameters_config:
+      user_defined_query_parameters = {item['name']: (item['value'], item['type'])
+                                       for item in bq_pipeline_parameters_config}
+      # The below update will over-write the airflow macros with user-defined ones in case of
+      # name conflicts.
+      merged_query_parameters.update(user_defined_query_parameters)
+
+    execute_task_config['parameters'] = [
+      {'name': name, 'type': type, 'value': value}
+      for name, (value, type) in merged_query_parameters.items()
+    ]
+
     if bq_pipeline_output_config:
       if 'table' in bq_pipeline_output_config:
-        execute_task_config['table'] = bq_pipeline_output_config['table'] % Pipeline.airflow_macros
+        execute_task_config['table'] = bq_pipeline_output_config['table']
 
       if 'mode' in bq_pipeline_output_config:
           execute_task_config['mode'] = bq_pipeline_output_config['mode']
-
-    execute_task_config['parameters'] = []
-    if bq_pipeline_parameters_config:
-      execute_task_config['parameters'].extend(bq_pipeline_parameters_config)
-    # We merge the parameters with the airflow macros so that users can specify airflow macro
-    # names (like '@ds') in sql
-    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                           for key, value in Pipeline.airflow_macros.items()]
-    execute_task_config['parameters'].extend(airflow_macros_list)
 
     return execute_task_config
 
@@ -253,7 +259,7 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
     if 'path' not in bq_pipeline_output_config:
       return None
 
-    extract_task_config['path'] = bq_pipeline_output_config.get('path') % Pipeline.airflow_macros
+    extract_task_config['path'] = bq_pipeline_output_config.get('path')
 
     if 'format' in bq_pipeline_output_config:
       extract_task_config['format'] = bq_pipeline_output_config.get('format')
@@ -275,6 +281,6 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
       source_of_table = bq_pipeline_input_config
 
     if source_of_table:
-      extract_task_config['table'] = source_of_table['table'] % Pipeline.airflow_macros
+      extract_task_config['table'] = source_of_table['table']
 
     return extract_task_config

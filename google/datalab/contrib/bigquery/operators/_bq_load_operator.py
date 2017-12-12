@@ -26,40 +26,40 @@ class LoadOperator(BaseOperator):
     A message about whether the load succeeded or failed.
   """
 
-  template_fields = ('_table', '_path')
+  template_fields = ('table', 'path')
 
   @apply_defaults
   def __init__(self, table, path, mode='append', format='csv', schema=None, csv_options=None, *args,
                **kwargs):
     super(LoadOperator, self).__init__(*args, **kwargs)
-    self._table = table
-    self._path = path
-    self._mode = mode
-    self._format = format
-    self._csv_options = csv_options or {}
-    self._schema = schema
+    self.table = table
+    self.path = path
+    self.mode = mode
+    self.format = format
+    self.csv_options = csv_options or {}
+    self.schema = schema
 
   # TODO(rajipb): In schema validation, make sure that mode is either 'append' or 'create'
   def execute(self, context):
-    table = bq.Table(self._table, context=None)
+    table = bq.Table(self.table, context=None)
     if not table.exists():
-      table.create(schema=self._schema)
+      table.create(schema=self.schema)
 
     kwargs = {}
-    if 'delimiter' in self._csv_options:
-      kwargs['delimiter'] = self._csv_options['delimiter']
-    if 'skip' in self._csv_options:
-      kwargs['skip_leading_rows'] = self._csv_options['skip']
-    if 'strict' in self._csv_options:
-      kwargs['allow_jagged_rows'] = self._csv_options['strict']
-    if 'quote' in self._csv_options:
-      kwargs['quote'] = self._csv_options['quote']
+    if 'delimiter' in self.csv_options:
+      kwargs['delimiter'] = self.csv_options['delimiter']
+    if 'skip' in self.csv_options:
+      kwargs['skip_leading_rows'] = self.csv_options['skip']
+    if 'strict' in self.csv_options:
+      kwargs['allow_jagged_rows'] = self.csv_options['strict']
+    if 'quote' in self.csv_options:
+      kwargs['quote'] = self.csv_options['quote']
     csv_options = bq.CSVOptions(**kwargs)
 
-    job = table.load(self._path, mode=self._mode,
-                     source_format=('csv' if self._format == 'csv' else 'NEWLINE_DELIMITED_JSON'),
+    job = table.load(self.path, mode=self.mode,
+                     source_format=('csv' if self.format == 'csv' else 'NEWLINE_DELIMITED_JSON'),
                      csv_options=csv_options,
-                     ignore_unknown_values=not self._csv_options.get('strict'))
+                     ignore_unknown_values=not self.csv_options.get('strict'))
 
     if job.failed:
       raise Exception('Load failed: %s' % str(job.fatal_error))
