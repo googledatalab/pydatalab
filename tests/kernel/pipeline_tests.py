@@ -99,6 +99,10 @@ tasks:
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.Context.default')
   def test_create_cell_golden(self, mock_default_context, mock_notebook_environment):
+    # This import is required by the test to run successfully because we dynamically check the
+    # imports to instantiate the class-type.
+    from airflow.operators.bash_operator import BashOperator  # noqa
+
     mock_default_context.return_value = TestCases._create_context()
     env = {}
     env['foo_query'] = google.datalab.bigquery.Query(

@@ -67,7 +67,7 @@ tasks:
         {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
         {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
     ]
-    merged_parameters = pipeline.Pipeline.merge_parameters(parameters)
+    merged_parameters = pipeline.Pipeline._merge_parameters(parameters)
     expected = {
       'foo1': 'foo1',
       'foo2': 'foo2',
@@ -88,21 +88,21 @@ tasks:
   def test_resolve_parameters(self):
     test_pipeline = pipeline.Pipeline(None, None)
     params = pipeline.Pipeline.airflow_macros
-    self.assertEqual(test_pipeline.resolve_parameters('foo%(_ds)s', params), 'foo{{ ds }}')
-    self.assertEqual(test_pipeline.resolve_parameters(u'foo%(_ds)s', params), 'foo{{ ds }}')
-    self.assertListEqual(test_pipeline.resolve_parameters([u'foo%(_ds)s', 'bar%(_ds)s'], params),
+    self.assertEqual(test_pipeline._resolve_parameters('foo%(_ds)s', params), 'foo{{ ds }}')
+    self.assertEqual(test_pipeline._resolve_parameters(u'foo%(_ds)s', params), 'foo{{ ds }}')
+    self.assertListEqual(test_pipeline._resolve_parameters([u'foo%(_ds)s', 'bar%(_ds)s'], params),
                          ['foo{{ ds }}', 'bar{{ ds }}'])
-    self.assertDictEqual(test_pipeline.resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
-                                                          params),
+    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
+                                                           params),
                          {u'key{{ ds }}': u'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline.resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
-                                                          params),
+    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
+                                                           params),
                          {u'key{{ ds }}': u'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline.resolve_parameters(
+    self.assertDictEqual(test_pipeline._resolve_parameters(
       {u'key%(_ds)s': {'key': u'value%(_ds)s'}}, params),
       {u'key{{ ds }}': {'key': u'value{{ ds }}'}})
     params.update({'custom_key': 'custom_value'})
-    self.assertDictEqual(test_pipeline.resolve_parameters(
+    self.assertDictEqual(test_pipeline._resolve_parameters(
       {u'key%(custom_key)s': u'value%(custom_key)s'}, params),
       {u'keycustom_value': u'valuecustom_value'})
 
@@ -111,9 +111,53 @@ tasks:
     task_details = {}
     task_details['type'] = 'Bash'
     task_details['bash_command'] = 'date'
+
+    # This import is required by the test to run successfully because we dynamically check the
+    # imports to instantiate the class-type.
+    from airflow.operators.bash_operator import BashOperator  # noqa
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
                                                                           None)
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", dag=dag)
+""")  # noqa
+
+  def test_get_bash_operator_definition_with_templates(self):
+    task_id = 'print_pdt_date'
+    task_details = {}
+    task_details['type'] = 'Bash'
+    task_details['output_encoding'] = 'utf-8'
+    task_details['bash_command'] = 'date_%(_ds)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
+                                                                          None)
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_{{ ds }}\"\"\", output_encoding=\"\"\"utf-8\"\"\", dag=dag)
+""")  # noqa
+
+    # Airflow macros should get replaced in templated fields
+    task_details['bash_command'] = 'date_%(_ds)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
+                                                                          None)
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_{{ ds }}\"\"\", output_encoding=\"\"\"utf-8\"\"\", dag=dag)
+""")  # noqa
+
+    # Airflow macros should not get replaced in non-templated fields
+    task_details['bash_command'] = 'date'
+    task_details['output_encoding'] = 'foo_%(_ds)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
+                                                                          None)
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
+""")  # noqa
+
+    # User-defined modifiers should get replaced in templated fields
+    task_details['bash_command'] = 'date_%(foo_key)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+      task_id, task_details, [{'name': 'foo_key', 'value': 'foo_value', 'type': 'STRING'}])
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_foo_value\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
+""")  # noqa
+
+    # User-defined modifiers should take precedence over the built-in airflow macros
+    task_details['bash_command'] = 'date_%(_ds)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+      task_id, task_details, [{'name': '_ds', 'value': 'user_value', 'type': 'STRING'}])
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_user_value\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
 """)  # noqa
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
@@ -228,7 +272,6 @@ LIMIT 5""")
     task_details['mode'] = 'create'
     task_details['sql'] = 'foo_query'
     task_details['table'] = 'project.test.table'
-
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details, None)
     expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode=\"\"\"create\"\"\", sql=\"\"\"foo_query\"\"\", table=\"\"\"project.test.table\"\"\", dag=dag)
 """  # noqa

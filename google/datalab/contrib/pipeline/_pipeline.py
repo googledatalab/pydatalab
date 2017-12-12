@@ -169,13 +169,15 @@ default_args = {{{0}}}
     operator_param_values = Pipeline._get_operator_param_name_and_values(
         operator_class_name, task_details)
 
-    # Resolves all the macros and builds up the final string
+    # This loop resolves all the macros and builds up the final string
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
       # We replace modifiers in the parameter values with either the user-defined values, or with
       # with the airflow macros, as applicable.
+      # An important assumption that this makes is that the operators parameters have the same names
+      # as the templated_fields. TODO(rajivpb): There may be a better way to do this.
       if operator_param_name in templated_fields:
-        operator_param_value = self.resolve_parameters(operator_param_value,
-                                                       Pipeline.merge_parameters(parameters))
+        operator_param_value = self._resolve_parameters(operator_param_value,
+                                                        Pipeline._merge_parameters(parameters))
       param_format_string = Pipeline._get_param_format_string(operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string
@@ -183,7 +185,7 @@ default_args = {{{0}}}
     return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_class_name, full_param_string)
 
   @staticmethod
-  def merge_parameters(parameters):
+  def _merge_parameters(parameters):
     # We merge the user-provided parameters and the airflow macros
     merged_parameters = Pipeline.airflow_macros.copy()
     # We don't need item['type'] here because we want to create the dictionary of format modifiers
@@ -195,11 +197,12 @@ default_args = {{{0}}}
     return merged_parameters
 
   @staticmethod
-  def resolve_parameters(operator_param_value, merged_parameters):
+  def _resolve_parameters(operator_param_value, merged_parameters):
     if isinstance(operator_param_value, list):
-      return [Pipeline.resolve_parameters(item, merged_parameters) for item in operator_param_value]
+      return [Pipeline._resolve_parameters(item, merged_parameters)
+              for item in operator_param_value]
     if isinstance(operator_param_value, dict):
-      return {Pipeline.resolve_parameters(k, merged_parameters): Pipeline.resolve_parameters(
+      return {Pipeline._resolve_parameters(k, merged_parameters): Pipeline._resolve_parameters(
         v, merged_parameters) for k, v in operator_param_value.items()}
     if isinstance(operator_param_value, six.string_types) and merged_parameters:
       return operator_param_value % merged_parameters
@@ -241,6 +244,7 @@ default_args = {{{0}}}
       'pydatalab.bq.extract': ('Extract',
                                'google.datalab.contrib.bigquery.operators._bq_extract_operator'),
       'pydatalab.bq.load': ('Load', 'google.datalab.contrib.bigquery.operators._bq_load_operator'),
+      'Bash': ('Bash', 'airflow.operators.bash_operator')
     }
     (operator_class_prefix, module) = task_type_to_operator_prefix_mapping.get(
         task_detail_type, (None, __name__))
