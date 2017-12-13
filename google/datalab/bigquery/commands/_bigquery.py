@@ -378,7 +378,7 @@ def _get_query_parameters(args, cell_body):
 
   config = config or {}
   config_parameters = config.get('parameters', {})
-  return bigquery._utils.get_query_parameters_internal(config_parameters)
+  return bigquery.Query.get_query_parameters(config_parameters)
 
 
 def _sample_cell(args, cell_body):

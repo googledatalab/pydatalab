@@ -17,7 +17,6 @@ from builtins import str
 from past.builtins import basestring
 
 import collections
-import datetime
 import re
 
 
@@ -169,54 +168,3 @@ def parse_table_name(name, project_id=None, dataset_id=None):
 
 def format_query_errors(errors):
   return '\n'.join(['%s: %s' % (error['reason'], error['message']) for error in errors])
-
-
-def get_query_parameters_internal(config_parameters):
-  # We merge the parameters with the airflow macros so that users can specify certain airflow
-  # macro names (like '@ds') in their sql. This is useful for enabling the user to progressively
-  # author a pipeline with %bq pipeline.
-  today = datetime.date.today()
-  now = datetime.datetime.now()
-  default_query_parameters = {
-    # the datetime formatted as YYYY-MM-DD
-    '_ds': {'type': 'STRING', 'value': today.isoformat()},
-    # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-    '_ts': {'type': 'STRING', 'value': now.isoformat()},
-    # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-    '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
-    # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
-    # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-    '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
-    '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
-    '_ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
-    '_ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
-    '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
-    '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
-    '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
-  }
-  # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
-  # the parameter name. We then use this to update the canned parameters dictionary. This will
-  # have the effect of using user-provided parameters in case of naming conflicts.
-  config_parameters = config_parameters or {}
-  input_query_parameters = {
-    item['name']: {
-      'type': item['type'],
-      'value': item['value']
-    } for item in config_parameters
-  }
-  merged_parameters = default_query_parameters.copy()
-  merged_parameters.update(input_query_parameters)
-  # Parse query_params. We're exposing a simpler schema format than the one actually required
-  # by BigQuery to make magics easier. We need to convert between the two formats
-  parsed_params = []
-  for key, value in merged_parameters.items():
-    parsed_params.append({
-      'name': key,
-      'parameterType': {
-        'type': value['type']
-      },
-      'parameterValue': {
-        'value': value['value']
-      }
-    })
-  return parsed_params
