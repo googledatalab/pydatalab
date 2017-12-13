@@ -92,6 +92,7 @@ class TestCases(unittest.TestCase):
           'type': 'pydatalab.bq.execute',
         },
         'bq_pipeline_extract_task': {
+          'table': """{{ ti.xcom_pull(task_ids='bq_pipeline_execute_task_id') }}""",
           'path': 'foo_table',
           'type': 'pydatalab.bq.extract',
           'up_stream': ['bq_pipeline_execute_task']
@@ -124,6 +125,7 @@ class TestCases(unittest.TestCase):
           'type': 'pydatalab.bq.execute',
         },
         'bq_pipeline_extract_task': {
+          'table': """{{ ti.xcom_pull(task_ids='bq_pipeline_execute_task_id') }}""",
           'path': 'foo_table',
           'type': 'pydatalab.bq.extract',
           'up_stream': ['bq_pipeline_execute_task']
@@ -159,6 +161,7 @@ class TestCases(unittest.TestCase):
           'up_stream': ['bq_pipeline_load_task'],
         },
         'bq_pipeline_extract_task': {
+          'table': """{{ ti.xcom_pull(task_ids='bq_pipeline_execute_task_id') }}""",
           'path': 'foo_path_2',
           'type': 'pydatalab.bq.extract',
           'up_stream': ['bq_pipeline_execute_task']
@@ -187,6 +190,7 @@ class TestCases(unittest.TestCase):
           'type': 'pydatalab.bq.execute',
         },
         'bq_pipeline_extract_task': {
+          'table': """{{ ti.xcom_pull(task_ids='bq_pipeline_execute_task_id') }}""",
           'path': 'foo_path_2',
           'type': 'pydatalab.bq.extract',
           'up_stream': ['bq_pipeline_execute_task']

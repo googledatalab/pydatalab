@@ -83,24 +83,6 @@ class TestCases(unittest.TestCase):
     with self.assertRaisesRegexp(Exception, 'Extract completed with errors: foo_error'):
       extract_operator.execute(context=None)
 
-  @mock.patch('google.datalab.Context.default')
-  @mock.patch('google.datalab.bigquery.Table.extract')
-  @mock.patch('airflow.models.TaskInstance')
-  def test_extract_operator_with_temporary_table(self, mock_task_instance, mock_table_extract,
-                                                 mock_context_default):
-    mock_context_default.return_value = TestCases._create_context()
-    mock_task_instance.xcom_pull.return_value = {'table': TestCases.test_project_id + '.test_table'}
-    extract_operator = ExtractOperator(path='test_path', format=None,
-                                       task_id='test_extract_operator')
-
-    mock_table_extract.return_value.result = lambda: 'test-results'
-    mock_table_extract.return_value.failed = False
-    mock_table_extract.return_value.errors = None
-    self.assertDictEqual(extract_operator.execute(context={'task_instance': mock_task_instance}),
-                         {'result': 'test-results'})
-    mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
-                                          csv_delimiter=None, csv_header=None, compress=None)
-
   @mock.patch('google.datalab.bigquery.Query.execute')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_execute_operator_definition(self, mock_get_notebook_item, mock_query_execute):
