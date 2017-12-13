@@ -65,11 +65,10 @@ class ExecuteOperator(BaseOperator):
     # allow_large_results can be True only if table is specified (i.e. when it's not None)
     output_options = bq.QueryOutput.table(name=self.table, mode=self.mode, use_cache=False,
                                           allow_large_results=self.table is not None)
-
     query_params = bq.Query.get_query_parameters(self.parameters)
-    job = query.execute(output_options, query_params=query_params)
+    job = query.execute(output_options=output_options, query_params=query_params)
 
     # Returning the table-name here makes it available for downstream task instances.
     return {
-      'table': job.result().name
+      'table': job.result().full_name
     }
