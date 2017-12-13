@@ -254,8 +254,8 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
 
     if execute_task_id:
       extract_task_config['up_stream'] = [execute_task_id]
-      extract_task_config['table'] = """{{{{ ti.xcom_pull(task_ids='{0}_id') }}}}""".format(
-          execute_task_id)
+      extract_task_config['table'] = """{{{{ ti.xcom_pull(task_ids='{0}_id').get('table') }}}}"""\
+          .format(execute_task_id)
 
     # If a path is not specified, there is no extract to be done, so we return None
     if 'path' not in bq_pipeline_output_config:
