@@ -108,10 +108,9 @@ class TestCases(unittest.TestCase):
 
     execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql')
     mock_query_execute.return_value = mock_query_job
-    query_results_table_name = 'foo_table'
-    mock_query_job.result.return_value.name = query_results_table_name
+    mock_query_job.result.return_value = google.datalab.bigquery.Table(TestCases.test_table_name)
     self.assertDictEqual(execute_operator.execute(context=None),
-                         {'table': query_results_table_name})
+                         {'table': TestCases.test_table_name})
     mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
                                                allow_large_results=False)
 
@@ -131,9 +130,9 @@ class TestCases(unittest.TestCase):
                                        csv_options=csv_options, format='csv')
     mock_query_instance = mock_query_class.return_value
     mock_query_instance.execute.return_value = mock_query_job
-    mock_query_job.result.return_value.name = 'foo_table'
+    mock_query_job.result.return_value = google.datalab.bigquery.Table(TestCases.test_table_name)
     self.assertDictEqual(execute_operator.execute(context=None),
-                         {'table': 'foo_table'})
+                         {'table': TestCases.test_table_name})
     mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
                                                allow_large_results=False)
     mock_query_class.assert_called_with(
