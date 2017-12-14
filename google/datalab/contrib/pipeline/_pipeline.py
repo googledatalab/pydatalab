@@ -299,9 +299,8 @@ default_args = {{{0}}}
       del operator_task_details['query']
 
     if 'parameters' in operator_task_details:
-      operator_task_details['query_params'] = \
-        bigquery.commands._bigquery._get_query_parameters_internal(
-          operator_task_details['parameters'])
+      operator_task_details['query_params'] = bigquery.Query.get_query_parameters(
+        operator_task_details['parameters'])
       del operator_task_details['parameters']
 
     # Add over-rides of Airflow defaults here.

@@ -254,6 +254,8 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
 
     if execute_task_id:
       extract_task_config['up_stream'] = [execute_task_id]
+      extract_task_config['table'] = """{{{{ ti.xcom_pull(task_ids='{0}_id').get('table') }}}}"""\
+          .format(execute_task_id)
 
     # If a path is not specified, there is no extract to be done, so we return None
     if 'path' not in bq_pipeline_output_config:
@@ -275,7 +277,7 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
     elif (bq_pipeline_input_config and not bq_pipeline_transformation_config and
           'table' in bq_pipeline_input_config and 'path' not in bq_pipeline_input_config):
       # If we're here it means that there was no transformation config, but there was an input
-      # config with only a table (and no path). We assume that the user was just trying to do a
+      # config with only a table and no path. We assume that the user was just trying to do a
       # table->gcs (or extract) step, so we take that as the input table (and emit an extract
       # operator).
       source_of_table = bq_pipeline_input_config
