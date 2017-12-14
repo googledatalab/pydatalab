@@ -350,25 +350,7 @@ class Query(object):
       A Query object that will return the specified fields from the records in the Table.
     """
     # We
-    today = datetime.date.today()
-    now = datetime.datetime.now()
-    default_query_parameters = {
-      # the datetime formatted as YYYY-MM-DD
-      '_ds': {'type': 'STRING', 'value': today.isoformat()},
-      # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-      '_ts': {'type': 'STRING', 'value': now.isoformat()},
-      # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-      '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
-      # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
-      # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-      '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
-      '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
-      '_ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
-      '_ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
-      '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
-      '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
-      '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
-    }
+    default_query_parameters = Query.airflow_macro_formats(datetime.datetime.now())
     # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
     # the parameter name. We then use this to update the canned parameters dictionary. This will
     # have the effect of using user-provided parameters in case of naming conflicts.
@@ -395,3 +377,25 @@ class Query(object):
         }
       })
     return parsed_params
+
+  @staticmethod
+  def airflow_macro_formats(now):
+    today = now.date()
+    return {
+      # the datetime formatted as YYYY-MM-DD
+      '_ds': {'type': 'STRING', 'value': today.isoformat()},
+      # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
+      '_ts': {'type': 'STRING', 'value': now.isoformat()},
+      # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
+      '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
+      # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
+      # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
+      '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
+      '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
+      '_ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
+      '_ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
+      '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
+      '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
+      '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
+    }
+
