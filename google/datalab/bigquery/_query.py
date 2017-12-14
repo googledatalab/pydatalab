@@ -350,7 +350,7 @@ class Query(object):
       A Query object that will return the specified fields from the records in the Table.
     """
     # We
-    default_query_parameters = Query.airflow_macro_formats(datetime.datetime.now())
+    merged_parameters = Query.airflow_macro_formats(datetime.datetime.now())
     # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
     # the parameter name. We then use this to update the canned parameters dictionary. This will
     # have the effect of using user-provided parameters in case of naming conflicts.
@@ -361,7 +361,6 @@ class Query(object):
         'value': item['value']
       } for item in config_parameters
     }
-    merged_parameters = default_query_parameters.copy()
     merged_parameters.update(input_query_parameters)
     # Parse query_params. We're exposing a simpler schema format than the one actually required
     # by BigQuery to make magics easier. We need to convert between the two formats
@@ -379,9 +378,9 @@ class Query(object):
     return parsed_params
 
   @staticmethod
-  def airflow_macro_formats(now):
+  def airflow_macro_formats(now, types_and_values=False, macros=False):
     today = now.date()
-    return {
+    airflow_macros = {
       # the datetime formatted as YYYY-MM-DD
       '_ds': {'type': 'STRING', 'value': today.isoformat()},
       # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
@@ -398,4 +397,18 @@ class Query(object):
       '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
       '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
     }
+
+    if macros:
+      return {key: value['macro'] for key, value in airflow_macros.items()}
+
+    if types_and_values:
+      return {
+        key: {
+          'type': item['type'],
+          'value': item['value']
+        } for key, item in airflow_macros.items()
+      }
+
+    # By default only return values
+    return {key: value['value'] for key, value in airflow_macros.items()}
 

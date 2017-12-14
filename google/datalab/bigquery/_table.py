@@ -403,9 +403,8 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    now = datetime.datetime.now()
-    today = now.date()
-    destination = destination %
+    destination = destination % google.datalab.bigquery.Query.airflow_macro_formats(
+      datetime.datetime.now())
     format = format.upper()
     if format == 'JSON':
       format = 'NEWLINE_DELIMITED_JSON'
@@ -461,6 +460,11 @@ class Table(object):
     Raises:
       Exception if the load job failed to be started or invalid arguments were supplied.
     """
+
+    # Resolve any macros necessary
+    source = source % google.datalab.bigquery.Query.airflow_macro_formats(
+      datetime.datetime.now())
+
     if source_format == 'csv':
       source_format = 'CSV'
     elif source_format == 'json':
