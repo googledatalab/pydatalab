@@ -350,7 +350,7 @@ class Query(object):
       A Query object that will return the specified fields from the records in the Table.
     """
     # We
-    merged_parameters = Query.airflow_macro_formats(datetime.datetime.now())
+    merged_parameters = Query.airflow_macro_formats(datetime.datetime.now(), types_and_values=True)
     # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
     # the parameter name. We then use this to update the canned parameters dictionary. This will
     # have the effect of using user-provided parameters in case of naming conflicts.
@@ -382,20 +382,28 @@ class Query(object):
     today = now.date()
     airflow_macros = {
       # the datetime formatted as YYYY-MM-DD
-      '_ds': {'type': 'STRING', 'value': today.isoformat()},
+      '_ds': {'type': 'STRING', 'value': today.isoformat(), 'macro': '{{ ds }}'},
       # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-      '_ts': {'type': 'STRING', 'value': now.isoformat()},
+      '_ts': {'type': 'STRING', 'value': now.isoformat(), 'macro': '{{ ts }}'},
       # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-      '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
+      '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d'),
+                     'macro': '{{ ds_nodash }}'},
       # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
       # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-      '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
-      '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
-      '_ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
-      '_ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
-      '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
-      '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
-      '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
+      '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f'),
+                     'macro': '{{ ts_nodash }}'},
+      '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y'),
+                   'macro': '{{ execution_date.year }}'},
+      '_ts_month': {'type': 'STRING', 'value': today.strftime('%m'),
+                    'macro': '{{ execution_date.month }}'},
+      '_ts_day': {'type': 'STRING', 'value': today.strftime('%d'),
+                  'macro': '{{ execution_date.day }}'},
+      '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H'),
+                   'macro': '{{ execution_date.hour }}'},
+      '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M'),
+                     'macro': '{{ execution_date.minute }}'},
+      '_ts_second': {'type': 'STRING', 'value': now.strftime('%S'),
+                     'macro': '{{ execution_date.second }}'},
     }
 
     if macros:
@@ -411,4 +419,3 @@ class Query(object):
 
     # By default only return values
     return {key: value['value'] for key, value in airflow_macros.items()}
-

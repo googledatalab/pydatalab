@@ -12,6 +12,8 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
+import datetime
+import google
 import google.datalab.utils as utils
 
 # TODO(rajivpb): These contrib imports are a stop-gap for
@@ -219,8 +221,10 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
 
     # We merge the user's parameters with the airflow macros so that users can specify names like
     # '@_ds' in their sql
-    merged_query_parameters = {name: (value, 'STRING')
-                               for name, value in Pipeline.airflow_macros.items()}
+    merged_query_parameters = {
+      name: (value, 'STRING')
+      for name, value in google.datalab.bigquery.Query.airflow_macro_formats(
+        datetime.datetime.now(), macros=True).items()}
     if bq_pipeline_parameters_config:
       user_defined_query_parameters = {item['name']: (item['value'], item['type'])
                                        for item in bq_pipeline_parameters_config}

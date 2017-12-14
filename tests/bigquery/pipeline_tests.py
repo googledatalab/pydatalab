@@ -12,10 +12,10 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import datetime
 import google
 import google.auth
 import google.datalab.contrib.bigquery.commands._bigquery as bq
-from google.datalab.contrib.pipeline._pipeline import Pipeline
 import mock
 import re
 import unittest
@@ -537,7 +537,8 @@ WHERE endpoint=@endpoint""")
   def compare_parameters(self, actual_parameters, user_parameters):
     user_parameters = user_parameters or []
     airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                           for key, value in Pipeline.airflow_macros.items()]
+                           for key, value in google.datalab.bigquery.Query.airflow_macro_formats(
+        datetime.datetime.now(), macros=True).items()]
     expected_parameters = user_parameters[:]
     expected_parameters.extend(airflow_macros_list)
     actual_paramaters_dict = {item['name']: (item['value'], item['type'])
