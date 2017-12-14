@@ -18,7 +18,6 @@ import pandas
 import six
 import unittest
 
-from datetime import date
 from datetime import datetime
 
 import google.auth
@@ -940,11 +939,13 @@ WITH q1 AS (
   def test_get_query_parameters(self):
     args = {'query': None}
     cell_body = ''
+    now = datetime.now()
+    today = now.date()
     with self.assertRaises(Exception):
       bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
 
     args['query'] = 'test_sql'
-    params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
+    params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body), date_time=now)
     # We push the params into a dict so that it's easier to test
     params_dict = {
       item['name']: {
@@ -953,8 +954,6 @@ WITH q1 AS (
       } for item in params
     }
 
-    today = date.today()
-    now = datetime.now()
     default_query_parameters = {
       # the datetime formatted as YYYY-MM-DD
       '_ds': {'type': 'STRING', 'value': today.isoformat()},

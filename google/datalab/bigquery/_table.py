@@ -403,8 +403,7 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    destination = destination % google.datalab.bigquery.Query.airflow_macro_formats(
-      datetime.datetime.now())
+    destination = destination
     format = format.upper()
     if format == 'JSON':
       format = 'NEWLINE_DELIMITED_JSON'
@@ -462,8 +461,7 @@ class Table(object):
     """
 
     # Resolve any macros necessary
-    source = source % google.datalab.bigquery.Query.airflow_macro_formats(
-      datetime.datetime.now())
+    source = source
 
     if source_format == 'csv':
       source_format = 'CSV'

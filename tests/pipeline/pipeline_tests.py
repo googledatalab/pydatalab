@@ -61,51 +61,6 @@ tasks:
   def test_get_dependency_definition_multiple(self):
     dependencies = pipeline.Pipeline._get_dependency_definition('t2', ['t1', 't3'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\nt2.set_upstream(t3)\n')
-  maxDiff = None
-  def test_merged_parameters(self):
-    parameters = [
-        {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
-        {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
-    ]
-    merged_parameters = pipeline.Pipeline._merge_parameters(parameters)
-    expected = {
-      'foo1': 'foo1',
-      'foo2': 'foo2',
-      '_ds': '{{ ds }}',
-      '_ts': '{{ ts }}',
-      '_ds_nodash': '{{ ds_nodash }}',
-      '_ts_nodash': '{{ ts_nodash }}',
-      '_ts_year': '{{ execution_date.year }}',
-      '_ts_month': '{{ execution_date.month }}',
-      '_ts_day': '{{ execution_date.day }}',
-      '_ts_hour': '{{ execution_date.hour }}',
-      '_ts_minute': '{{ execution_date.minute }}',
-      '_ts_second': '{{ execution_date.second }}',
-    }
-    self.assertDictEqual(merged_parameters, expected)
-
-  def test_resolve_parameters(self):
-    test_pipeline = pipeline.Pipeline(None, None)
-
-    params = google.datalab.bigquery.Query.airflow_macro_formats(datetime.datetime.now(),
-                                                                 macros=True)
-    self.assertEqual(test_pipeline._resolve_parameters('foo%(_ds)s', params), 'foo{{ ds }}')
-    self.assertEqual(test_pipeline._resolve_parameters('foo%(_ds)s', params), 'foo{{ ds }}')
-    self.assertListEqual(test_pipeline._resolve_parameters(['foo%(_ds)s', 'bar%(_ds)s'], params),
-                         ['foo{{ ds }}', 'bar{{ ds }}'])
-    self.assertDictEqual(test_pipeline._resolve_parameters({'key%(_ds)s': 'value%(_ds)s'},
-                                                           params),
-                         {'key{{ ds }}': 'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline._resolve_parameters({'key%(_ds)s': 'value%(_ds)s'},
-                                                           params),
-                         {'key{{ ds }}': 'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline._resolve_parameters(
-      {'key%(_ds)s': {'key': 'value%(_ds)s'}}, params),
-      {'key{{ ds }}': {'key': 'value{{ ds }}'}})
-    params.update({'custom_key': 'custom_value'})
-    self.assertDictEqual(test_pipeline._resolve_parameters(
-      {'key%(custom_key)s': 'value%(custom_key)s'}, params),
-      {'keycustom_value': 'valuecustom_value'})
 
   def test_get_bash_operator_definition(self):
     task_id = 'print_pdt_date'

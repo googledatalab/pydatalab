@@ -24,6 +24,7 @@ try:
 except ImportError:
   raise Exception('This module can only be loaded in ipython.')
 
+import datetime
 import jsonschema
 import fnmatch
 import json
@@ -352,7 +353,7 @@ def _get_query_argument(args, cell, env):
     raise Exception('Expected a query object, got %s.' % type(item))
 
 
-def _get_query_parameters(args, cell_body):
+def _get_query_parameters(args, cell_body, date_time=datetime.datetime.now()):
   """Extract query parameters from cell body if provided
   Also validates the cell body schema using jsonschema to catch errors before sending the http
   request. This validation isn't complete, however; it does not validate recursive schemas,
@@ -377,8 +378,8 @@ def _get_query_parameters(args, cell_body):
     jsonschema.validate(config, BigQuerySchema.QUERY_PARAMS_SCHEMA)
 
   config = config or {}
-  config_parameters = config.get('parameters', {})
-  return bigquery.Query.get_query_parameters(config_parameters)
+  config_parameters = config.get('parameters', [])
+  return bigquery.Query.get_query_parameters(config_parameters, date_time=date_time)
 
 
 def _sample_cell(args, cell_body):
@@ -749,16 +750,19 @@ def _extract_cell(args, cell_body):
     args: the arguments following '%bigquery extract'.
   """
 
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+  parameters = config.get('parameters')
   if args['table']:
-    source = _get_table(args['table'])
+    table = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
+    source = _get_table(table)
     if not source:
-      raise Exception('Could not find table %s' % args['table'])
+      raise Exception('Could not find table %s' % table)
 
     csv_delimiter = args['delimiter'] if args['format'] == 'csv' else None
-    job = source.extract(args['path'],
-                         format=args['format'],
-                         csv_delimiter=csv_delimiter, csv_header=args['header'],
-                         compress=args['compress'])
+    path = google.datalab.bigquery.Query.resolve_parameters(args['path'], parameters)
+    job = source.extract(path, format=args['format'], csv_delimiter=csv_delimiter,
+                         csv_header=args['header'], compress=args['compress'])
   elif args['query'] or args['view']:
     source_name = args['view'] or args['query']
     source = google.datalab.utils.commands.get_notebook_item(source_name)
@@ -797,7 +801,10 @@ def _load_cell(args, cell_body):
   Returns:
     A message about whether the load succeeded or failed.
   """
-  name = args['table']
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+  parameters = config.get('parameters')
+  name = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
   table = _get_table(name)
   if not table:
     table = bigquery.Table(name)
@@ -808,8 +815,6 @@ def _load_cell(args, cell_body):
     if not cell_body or 'schema' not in cell_body:
       raise Exception('Table does not exist, and no schema specified in cell; cannot load.')
 
-    env = google.datalab.utils.commands.notebook_environment()
-    config = google.datalab.utils.commands.parse_config(cell_body, env, False)
     schema = config['schema']
     # schema can be an instance of bigquery.Schema.
     # For example, user can run "my_schema = bigquery.Schema.from_data(df)" in a previous cell and
@@ -823,10 +828,8 @@ def _load_cell(args, cell_body):
 
   csv_options = bigquery.CSVOptions(delimiter=args['delimiter'], skip_leading_rows=args['skip'],
                                     allow_jagged_rows=not args['strict'], quote=args['quote'])
-  job = table.load(args['path'],
-                   mode=args['mode'],
-                   source_format=args['format'],
-                   csv_options=csv_options,
+  path = google.datalab.bigquery.Query.resolve_parameters(args['path'], parameters)
+  job = table.load(path, mode=args['mode'], source_format=args['format'], csv_options=csv_options,
                    ignore_unknown_values=not args['strict'])
   if job.failed:
     raise Exception('Load failed: %s' % str(job.fatal_error))

@@ -12,7 +12,6 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import datetime
 import google
 import google.auth
 import google.datalab.contrib.bigquery.commands._bigquery as bq
@@ -538,7 +537,7 @@ WHERE endpoint=@endpoint""")
     user_parameters = user_parameters or []
     airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
                            for key, value in google.datalab.bigquery.Query.airflow_macro_formats(
-        datetime.datetime.now(), macros=True).items()]
+        macros=True).items()]
     expected_parameters = user_parameters[:]
     expected_parameters.extend(airflow_macros_list)
     actual_paramaters_dict = {item['name']: (item['value'], item['type'])

@@ -298,3 +298,41 @@ q1 AS (
         'fields': schema
       },
     }
+
+  def test_merged_parameters(self):
+    parameters = [
+        {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
+        {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
+    ]
+    merged_parameters = google.datalab.bigquery.Query._merge_parameters(parameters)
+    expected = {
+      'foo1': 'foo1',
+      'foo2': 'foo2',
+      '_ds': '{{ ds }}',
+      '_ts': '{{ ts }}',
+      '_ds_nodash': '{{ ds_nodash }}',
+      '_ts_nodash': '{{ ts_nodash }}',
+      '_ts_year': '{{ execution_date.year }}',
+      '_ts_month': '{{ execution_date.month }}',
+      '_ts_day': '{{ execution_date.day }}',
+      '_ts_hour': '{{ execution_date.hour }}',
+      '_ts_minute': '{{ execution_date.minute }}',
+      '_ts_second': '{{ execution_date.second }}',
+    }
+    self.assertDictEqual(merged_parameters, expected)
+
+  def test_resolve_parameters(self):
+    self.assertEqual(google.datalab.bigquery.Query.resolve_parameters('foo%(_ds)s', []),
+                     'foo{{ ds }}')
+    self.assertEqual(google.datalab.bigquery.Query.resolve_parameters('foo%(_ds)s', []),
+                     'foo{{ ds }}')
+    self.assertListEqual(google.datalab.bigquery.Query.resolve_parameters(
+      ['foo%(_ds)s', 'bar%(_ds)s'], []), ['foo{{ ds }}', 'bar{{ ds }}'])
+    self.assertDictEqual(google.datalab.bigquery.Query.resolve_parameters(
+      {'key%(_ds)s': 'value%(_ds)s'}, []), {'key{{ ds }}': 'value{{ ds }}'})
+    self.assertDictEqual(google.datalab.bigquery.Query.resolve_parameters(
+      {'key%(_ds)s': {'key': 'value%(_ds)s'}}, []), {'key{{ ds }}': {'key': 'value{{ ds }}'}})
+    params = [{'name': 'custom_key', 'value': 'custom_value'}]
+    self.assertDictEqual(google.datalab.bigquery.Query.resolve_parameters(
+      {'key%(custom_key)s': 'value%(custom_key)s'}, params),
+      {'keycustom_value': 'valuecustom_value'})

@@ -19,6 +19,7 @@ import datetime
 import google.datalab
 import google.datalab.data
 import google.datalab.utils
+import six
 
 from ._query_output import QueryOutput
 from . import _api
@@ -338,23 +339,21 @@ class Query(object):
                               query_params=query_params).wait()
 
   @staticmethod
-  def get_query_parameters(config_parameters):
+  def get_query_parameters(config_parameters, date_time=datetime.datetime.now()):
     """ Merge the given parameters with the airflow macros. Enables macros (like '@_ds') in sql.
 
     Args:
-      table: the Table object to construct a Query out of
-      fields: the fields to return. If None, all fields will be returned. This can be a string
-          which will be injected into the Query after SELECT, or a list of field names.
+      config_parameters: List of user-provided parameters
 
     Returns:
-      A Query object that will return the specified fields from the records in the Table.
+      A list of query parameters that are in the format for the BQ service
     """
     # We
-    merged_parameters = Query.airflow_macro_formats(datetime.datetime.now(), types_and_values=True)
+    merged_parameters = Query.airflow_macro_formats(date_time=date_time, types_and_values=True)
     # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
     # the parameter name. We then use this to update the canned parameters dictionary. This will
     # have the effect of using user-provided parameters in case of naming conflicts.
-    config_parameters = config_parameters or {}
+    config_parameters = config_parameters or []
     input_query_parameters = {
       item['name']: {
         'type': item['type'],
@@ -378,31 +377,32 @@ class Query(object):
     return parsed_params
 
   @staticmethod
-  def airflow_macro_formats(now, types_and_values=False, macros=False):
-    today = now.date()
+  def airflow_macro_formats(date_time=datetime.datetime.now(), types_and_values=False,
+                            macros=False):
+    day = date_time.date()
     airflow_macros = {
       # the datetime formatted as YYYY-MM-DD
-      '_ds': {'type': 'STRING', 'value': today.isoformat(), 'macro': '{{ ds }}'},
+      '_ds': {'type': 'STRING', 'value': day.isoformat(), 'macro': '{{ ds }}'},
       # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-      '_ts': {'type': 'STRING', 'value': now.isoformat(), 'macro': '{{ ts }}'},
+      '_ts': {'type': 'STRING', 'value': date_time.isoformat(), 'macro': '{{ ts }}'},
       # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-      '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d'),
+      '_ds_nodash': {'type': 'STRING', 'value': day.strftime('%Y%m%d'),
                      'macro': '{{ ds_nodash }}'},
       # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
       # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-      '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f'),
+      '_ts_nodash': {'type': 'STRING', 'value': date_time.strftime('%Y%m%d%H%M%S%f'),
                      'macro': '{{ ts_nodash }}'},
-      '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y'),
+      '_ts_year': {'type': 'STRING', 'value': day.strftime('%Y'),
                    'macro': '{{ execution_date.year }}'},
-      '_ts_month': {'type': 'STRING', 'value': today.strftime('%m'),
+      '_ts_month': {'type': 'STRING', 'value': day.strftime('%m'),
                     'macro': '{{ execution_date.month }}'},
-      '_ts_day': {'type': 'STRING', 'value': today.strftime('%d'),
+      '_ts_day': {'type': 'STRING', 'value': day.strftime('%d'),
                   'macro': '{{ execution_date.day }}'},
-      '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H'),
+      '_ts_hour': {'type': 'STRING', 'value': date_time.strftime('%H'),
                    'macro': '{{ execution_date.hour }}'},
-      '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M'),
+      '_ts_minute': {'type': 'STRING', 'value': date_time.strftime('%M'),
                      'macro': '{{ execution_date.minute }}'},
-      '_ts_second': {'type': 'STRING', 'value': now.strftime('%S'),
+      '_ts_second': {'type': 'STRING', 'value': date_time.strftime('%S'),
                      'macro': '{{ execution_date.second }}'},
     }
 
@@ -419,3 +419,32 @@ class Query(object):
 
     # By default only return values
     return {key: value['value'] for key, value in airflow_macros.items()}
+
+  @staticmethod
+  def _merge_parameters(parameters):
+    # We merge the user-provided parameters and the airflow macros
+    merged_parameters = Query.airflow_macro_formats(macros=True)
+    # We don't need item['type'] here because we want to create the dictionary of format modifiers
+    # and values
+    if parameters:
+      parameters_dict = {item['name']: item['value'] for item in parameters}
+      merged_parameters.update(parameters_dict)
+
+    return merged_parameters
+
+  @staticmethod
+  def resolve_parameters(value, parameters):
+    merged_parameters = Query._merge_parameters(parameters)
+    return Query._resolve_parameters(value, merged_parameters)
+
+  @staticmethod
+  def _resolve_parameters(operator_param_value, merged_parameters):
+    if isinstance(operator_param_value, list):
+      return [Query._resolve_parameters(item, merged_parameters)
+              for item in operator_param_value]
+    if isinstance(operator_param_value, dict):
+      return {Query._resolve_parameters(k, merged_parameters): Query._resolve_parameters(
+        v, merged_parameters) for k, v in operator_param_value.items()}
+    if isinstance(operator_param_value, six.string_types) and merged_parameters:
+      return operator_param_value % merged_parameters
+    return operator_param_value

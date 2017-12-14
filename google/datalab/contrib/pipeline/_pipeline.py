@@ -14,8 +14,8 @@ import datetime
 import google
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
-import six
 import sys
+
 # Any operators need to be imported here. This is required for dynamically getting the list of
 # templated fields from the operators. Static code-analysis will report that this is not
 # necessary, hence the '# noqa' annotations
@@ -163,38 +163,13 @@ default_args = {{{0}}}
       # An important assumption that this makes is that the operators parameters have the same names
       # as the templated_fields. TODO(rajivpb): There may be a better way to do this.
       if operator_param_name in templated_fields:
-        operator_param_value = self._resolve_parameters(operator_param_value,
-                                                        Pipeline._merge_parameters(parameters))
+        operator_param_value = google.datalab.bigquery.Query.resolve_parameters(
+          operator_param_value, parameters)
       param_format_string = Pipeline._get_param_format_string(operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string
 
     return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_class_name, full_param_string)
-
-  @staticmethod
-  def _merge_parameters(parameters):
-    # We merge the user-provided parameters and the airflow macros
-    merged_parameters = google.datalab.bigquery.Query.airflow_macro_formats(datetime.datetime.now(),
-                                                                            macros=True)
-    # We don't need item['type'] here because we want to create the dictionary of format modifiers
-    # and values
-    if parameters:
-      parameters_dict = {item['name']: item['value'] for item in parameters}
-      merged_parameters.update(parameters_dict)
-
-    return merged_parameters
-
-  @staticmethod
-  def _resolve_parameters(operator_param_value, merged_parameters):
-    if isinstance(operator_param_value, list):
-      return [Pipeline._resolve_parameters(item, merged_parameters)
-              for item in operator_param_value]
-    if isinstance(operator_param_value, dict):
-      return {Pipeline._resolve_parameters(k, merged_parameters): Pipeline._resolve_parameters(
-        v, merged_parameters) for k, v in operator_param_value.items()}
-    if isinstance(operator_param_value, six.string_types) and merged_parameters:
-      return operator_param_value % merged_parameters
-    return operator_param_value
 
   @staticmethod
   def _get_param_format_string(param_value):
