@@ -20,6 +20,7 @@ import sys
 from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator  # noqa
 from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator  # noqa
 from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator  # noqa
+from airflow.operators.bash_operator import BashOperator  # noqa
 
 class Pipeline(object):
   """ Represents a Pipeline object that encapsulates an Airflow pipeline spec.
@@ -248,6 +249,7 @@ default_args = {{{0}}}
       'pydatalab.bq.extract': ('Extract',
                                'google.datalab.contrib.bigquery.operators._bq_extract_operator'),
       'pydatalab.bq.load': ('Load', 'google.datalab.contrib.bigquery.operators._bq_load_operator'),
+      'bash': ('Bash', 'airflow.operators.bash_operator')
     }
     (operator_class_prefix, module) = task_type_to_operator_prefix_mapping.get(
         task_detail_type, (None, __name__))
