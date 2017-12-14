@@ -113,9 +113,6 @@ tasks:
     task_details['type'] = 'Bash'
     task_details['bash_command'] = 'date'
 
-    # This import is required by the test to run successfully because we dynamically check the
-    # imports to instantiate the class-type.
-    from airflow.operators.bash_operator import BashOperator  # noqa
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
                                                                           None)
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", dag=dag)
