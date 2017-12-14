@@ -15,12 +15,13 @@ import google.datalab.bigquery as bigquery
 from google.datalab import utils
 import six
 import sys
-
-# Any operators need to be imported here
+# Any operators need to be imported here. This is required for dynamically getting the list of
+# templated fields from the operators. Static code-analysis will report that this is not
+# necessary, hence the '# noqa' annotations
 from google.datalab.contrib.bigquery.operators._bq_load_operator import LoadOperator  # noqa
 from google.datalab.contrib.bigquery.operators._bq_execute_operator import ExecuteOperator  # noqa
 from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator  # noqa
-from airflow.operators.bash_operator import BashOperator  # noqa
+
 
 class Pipeline(object):
   """ Represents a Pipeline object that encapsulates an Airflow pipeline spec.
@@ -249,7 +250,7 @@ default_args = {{{0}}}
       'pydatalab.bq.extract': ('Extract',
                                'google.datalab.contrib.bigquery.operators._bq_extract_operator'),
       'pydatalab.bq.load': ('Load', 'google.datalab.contrib.bigquery.operators._bq_load_operator'),
-      'bash': ('Bash', 'airflow.operators.bash_operator')
+      'Bash': ('Bash', 'airflow.operators.bash_operator')
     }
     (operator_class_prefix, module) = task_type_to_operator_prefix_mapping.get(
         task_detail_type, (None, __name__))
