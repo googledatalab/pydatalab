@@ -23,6 +23,7 @@ from google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
 import jsonschema
 
+
 def _create_pipeline_subparser(parser):
   pipeline_parser = parser.subcommand('pipeline', 'Creates a pipeline to execute a SQL query to '
                                                   'transform data using BigQuery.')
