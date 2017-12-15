@@ -342,29 +342,15 @@ class Query(object):
   def get_query_parameters(config_parameters, date_time=datetime.datetime.now()):
     """ Merge the given parameters with the airflow macros. Enables macros (like '@_ds') in sql.
 
-    Args:
-      config_parameters: List of user-provided parameters
-
     Returns:
       A list of query parameters that are in the format for the BQ service
     """
-    # We
-    merged_parameters = Query.airflow_macro_formats(date_time=date_time, types_and_values=True)
-    # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
-    # the parameter name. We then use this to update the canned parameters dictionary. This will
-    # have the effect of using user-provided parameters in case of naming conflicts.
-    config_parameters = config_parameters or []
-    input_query_parameters = {
-      item['name']: {
-        'type': item['type'],
-        'value': item['value']
-      } for item in config_parameters
-    }
-    merged_parameters.update(input_query_parameters)
-    # Parse query_params. We're exposing a simpler schema format than the one actually required
-    # by BigQuery to make magics easier. We need to convert between the two formats
+    all_parameters = Query.resolve_parameters(config_parameters, date_time=date_time,
+                                              types_and_values=True)
+    # We're exposing a simpler schema format than the one actually required by BigQuery to make
+    # magics easier. We need to convert between the two formats
     parsed_params = []
-    for key, value in merged_parameters.items():
+    for key, value in all_parameters.items():
       parsed_params.append({
         'name': key,
         'parameterType': {
@@ -377,8 +363,26 @@ class Query(object):
     return parsed_params
 
   @staticmethod
-  def airflow_macro_formats(date_time=datetime.datetime.now(), types_and_values=False,
-                            macros=False):
+  def resolve_parameters(value, parameters, date_time=datetime.datetime.now(), macros=False,
+                         types_and_values=False):
+    merged_parameters = Query._merge_parameters(parameters, date_time=date_time, macros=macros,
+                                                types_and_values=types_and_values)
+    return Query._resolve_parameters(value, merged_parameters)
+
+  @staticmethod
+  def _resolve_parameters(operator_param_value, merged_parameters):
+    if isinstance(operator_param_value, list):
+      return [Query._resolve_parameters(item, merged_parameters)
+              for item in operator_param_value]
+    if isinstance(operator_param_value, dict):
+      return {Query._resolve_parameters(k, merged_parameters): Query._resolve_parameters(
+        v, merged_parameters) for k, v in operator_param_value.items()}
+    if isinstance(operator_param_value, six.string_types) and merged_parameters:
+      return operator_param_value % merged_parameters
+    return operator_param_value
+
+  @staticmethod
+  def _airflow_macro_formats(date_time, macros, types_and_values):
     day = date_time.date()
     airflow_macros = {
       # the datetime formatted as YYYY-MM-DD
@@ -421,9 +425,10 @@ class Query(object):
     return {key: value['value'] for key, value in airflow_macros.items()}
 
   @staticmethod
-  def _merge_parameters(parameters):
+  def _merge_parameters(parameters, date_time, macros, types_and_values):
     # We merge the user-provided parameters and the airflow macros
-    merged_parameters = Query.airflow_macro_formats(macros=True)
+    merged_parameters = Query._airflow_macro_formats(date_time=date_time, macros=macros,
+                                                    types_and_values=types_and_values)
     # We don't need item['type'] here because we want to create the dictionary of format modifiers
     # and values
     if parameters:
@@ -431,20 +436,3 @@ class Query(object):
       merged_parameters.update(parameters_dict)
 
     return merged_parameters
-
-  @staticmethod
-  def resolve_parameters(value, parameters):
-    merged_parameters = Query._merge_parameters(parameters)
-    return Query._resolve_parameters(value, merged_parameters)
-
-  @staticmethod
-  def _resolve_parameters(operator_param_value, merged_parameters):
-    if isinstance(operator_param_value, list):
-      return [Query._resolve_parameters(item, merged_parameters)
-              for item in operator_param_value]
-    if isinstance(operator_param_value, dict):
-      return {Query._resolve_parameters(k, merged_parameters): Query._resolve_parameters(
-        v, merged_parameters) for k, v in operator_param_value.items()}
-    if isinstance(operator_param_value, six.string_types) and merged_parameters:
-      return operator_param_value % merged_parameters
-    return operator_param_value

@@ -94,7 +94,7 @@ class BigQuerySchema(object):
             'properties': {
               'name': {'type': 'string'},
               'type': {'type': 'string', 'enum': DATATYPES + DATATYPES_LOWER},
-              'value': {'type': ['string', 'integer']}
+              'value': {'type': ['string', 'integer', 'number']}
             },
             'required': ['name', 'type', 'value'],
             'additionalProperties': False
@@ -803,8 +803,12 @@ def _load_cell(args, cell_body):
   """
   env = google.datalab.utils.commands.notebook_environment()
   config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+
   parameters = config.get('parameters')
+  if parameters:
+    jsonschema.validate({'parameters': parameters}, BigQuerySchema.QUERY_PARAMS_SCHEMA)
   name = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
+
   table = _get_table(name)
   if not table:
     table = bigquery.Table(name)
@@ -820,7 +824,7 @@ def _load_cell(args, cell_body):
     # For example, user can run "my_schema = bigquery.Schema.from_data(df)" in a previous cell and
     # specify "schema: $my_schema" in cell input.
     if not isinstance(schema, bigquery.Schema):
-      jsonschema.validate(config, BigQuerySchema.TABLE_SCHEMA_SCHEMA)
+      jsonschema.validate({'schema': schema}, BigQuerySchema.TABLE_SCHEMA_SCHEMA)
       schema = bigquery.Schema(schema)
     table.create(schema=schema)
   elif not table.exists():

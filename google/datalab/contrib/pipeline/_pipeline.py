@@ -164,7 +164,7 @@ default_args = {{{0}}}
       # as the templated_fields. TODO(rajivpb): There may be a better way to do this.
       if operator_param_name in templated_fields:
         operator_param_value = google.datalab.bigquery.Query.resolve_parameters(
-          operator_param_value, parameters)
+          operator_param_value, parameters, macros=True)
       param_format_string = Pipeline._get_param_format_string(operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string
