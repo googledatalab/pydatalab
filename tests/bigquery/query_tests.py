@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import str
+import datetime
 import mock
 import unittest
 
@@ -304,7 +305,8 @@ q1 AS (
         {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
         {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
     ]
-    merged_parameters = google.datalab.bigquery.Query._merge_parameters(parameters)
+    merged_parameters = google.datalab.bigquery.Query._merge_parameters(
+      parameters, date_time=datetime.datetime.now(), macros=True, types_and_values=False)
     expected = {
       'foo1': 'foo1',
       'foo2': 'foo2',

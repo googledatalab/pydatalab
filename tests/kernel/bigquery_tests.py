@@ -707,8 +707,9 @@ WITH q1 AS (
   def test_load_cell(self, mock_get_table, mock_table_load, mock_table_exists,
                      mock_table_create, mock_default_context):
 
-    args = {'table': 'project.test.table', 'mode': 'create', 'path': 'test/path_%(_ds)s', 'skip': None,
-            'csv': None, 'delimiter': None, 'format': 'csv', 'strict': None, 'quote': None}
+    args = {'table': 'project.test.table', 'mode': 'create', 'path': 'test/path_%(_ds)s',
+            'skip': None, 'csv': None, 'delimiter': None, 'format': 'csv', 'strict': None,
+            'quote': None}
     context = self._create_context()
     mock_get_table.return_value = bq.Table('project.test.table')
     job = bq._query_job.QueryJob('test_id', 'project.test.table', 'test_sql', context)
@@ -744,7 +745,7 @@ WITH q1 AS (
 
     job._errors = None
     bq.commands._bigquery._load_cell(args, json.dumps(cell_body))
-    today = datetime.datetime.now().date().isoformat()
+    today = datetime.now().date().isoformat()
     mock_table_load.assert_called_with('test/path_{0}'.format(today), mode='create',
                                        source_format='csv',
                                        csv_options=mock.ANY, ignore_unknown_values=True)
@@ -986,12 +987,12 @@ WITH q1 AS (
 
     cell_body = {
       'parameters': [
-          {'name': 'arg1', 'type': 'INT64', 'value': 5}
+          {'name': 'arg1', 'type': 'INT64', 'value': 5},
+          {'name': 'arg2', 'type': 'string', 'value': 'val2'},
+          {'name': 'arg3', 'type': 'date', 'value': 'val3'}
       ]
     }
 
-    cell_body['parameters'].append({'name': 'arg2', 'type': 'string', 'value': 'val2'})
-    cell_body['parameters'].append({'name': 'arg3', 'type': 'date', 'value': 'val3'})
     params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
     self.assertEqual(len(params), 13)
     params_dict = {

@@ -345,8 +345,8 @@ class Query(object):
     Returns:
       A list of query parameters that are in the format for the BQ service
     """
-    all_parameters = Query.resolve_parameters(config_parameters, date_time=date_time,
-                                              types_and_values=True)
+    all_parameters = Query._merge_parameters(config_parameters, date_time=date_time,
+                                             macros=False, types_and_values=True)
     # We're exposing a simpler schema format than the one actually required by BigQuery to make
     # magics easier. We need to convert between the two formats
     parsed_params = []
@@ -428,11 +428,15 @@ class Query(object):
   def _merge_parameters(parameters, date_time, macros, types_and_values):
     # We merge the user-provided parameters and the airflow macros
     merged_parameters = Query._airflow_macro_formats(date_time=date_time, macros=macros,
-                                                    types_and_values=types_and_values)
-    # We don't need item['type'] here because we want to create the dictionary of format modifiers
-    # and values
+                                                     types_and_values=types_and_values)
     if parameters:
-      parameters_dict = {item['name']: item['value'] for item in parameters}
-      merged_parameters.update(parameters_dict)
+      if types_and_values:
+        parameters = {
+          item['name']: {'value': item['value'], 'type': item['type']}
+          for item in parameters
+        }
+      else:  # macros = True, or the default (i.e. just values)
+        parameters = {item['name']: item['value'] for item in parameters}
 
+      merged_parameters.update(parameters)
     return merged_parameters
