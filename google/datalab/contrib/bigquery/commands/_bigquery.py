@@ -12,8 +12,6 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
-import datetime
-import google
 import google.datalab.utils as utils
 
 # TODO(rajivpb): These contrib imports are a stop-gap for

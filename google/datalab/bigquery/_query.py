@@ -346,7 +346,7 @@ class Query(object):
       A list of query parameters that are in the format for the BQ service
     """
     merged_parameters = Query.merge_parameters(config_parameters, date_time=date_time,
-                                            macros=False, types_and_values=True)
+                                               macros=False, types_and_values=True)
     # We're exposing a simpler schema format than the one actually required by BigQuery to make
     # magics easier. We need to convert between the two formats
     parsed_params = []
@@ -363,10 +363,9 @@ class Query(object):
     return parsed_params
 
   @staticmethod
-  def resolve_parameters(value, parameters, date_time=datetime.datetime.now(), macros=False,
-                         types_and_values=False):
-    merged_parameters = Query.merge_parameters(parameters, date_time=date_time, macros=macros,
-                                               types_and_values=types_and_values)
+  def resolve_parameters(value, parameters, date_time=datetime.datetime.now()):
+    merged_parameters = Query.merge_parameters(parameters, date_time=date_time, macros=False,
+                                               types_and_values=False)
     return Query._resolve_parameters(value, merged_parameters)
 
   @staticmethod

@@ -363,21 +363,25 @@ q1 AS (
     }
     self.assertDictEqual(merged_parameters, expected)
 
-
   def test_resolve_parameters(self):
-    self.assertEqual(google.datalab.bigquery.Query.resolve_parameters('foo%(_ds)s', [],
-                                                                      macros=True), 'foo{{ ds }}')
-    self.assertEqual(google.datalab.bigquery.Query.resolve_parameters('foo%(_ds)s', [],
-                                                                      macros=True),
-                     'foo{{ ds }}')
+    date_time = datetime.datetime.now()
+    day = date_time.date()
+    day_string = day.isoformat()
+    self.assertEqual(google.datalab.bigquery.Query.resolve_parameters('foo%(_ds)s', []),
+                     'foo{0}'.format(day_string))
     self.assertListEqual(google.datalab.bigquery.Query.resolve_parameters(
-      ['foo%(_ds)s', 'bar%(_ds)s'], [], macros=True), ['foo{{ ds }}', 'bar{{ ds }}'])
+      ['foo%(_ds)s', 'bar%(_ds)s'], []), ['foo{0}'.format(day_string), 'bar{0}'.format(day_string)])
     self.assertDictEqual(google.datalab.bigquery.Query.resolve_parameters(
-      {'key%(_ds)s': 'value%(_ds)s'}, [], macros=True), {'key{{ ds }}': 'value{{ ds }}'})
+      {'key%(_ds)s': 'value%(_ds)s'}, []),
+      {'key{0}'.format(day_string): 'value{0}'.format(day_string)})
     self.assertDictEqual(google.datalab.bigquery.Query.resolve_parameters(
-      {'key%(_ds)s': {'key': 'value%(_ds)s'}}, [], macros=True),
-      {'key{{ ds }}': {'key': 'value{{ ds }}'}})
+      {'key%(_ds)s': {'key': 'value%(_ds)s'}}, []),
+      {'key{0}'.format(day_string): {'key': 'value{0}'.format(day_string)}})
     params = [{'name': 'custom_key', 'value': 'custom_value'}]
     self.assertDictEqual(google.datalab.bigquery.Query.resolve_parameters(
-      {'key%(custom_key)s': 'value%(custom_key)s'}, params, macros=True),
+      {'key%(custom_key)s': 'value%(custom_key)s'}, params),
+      {'keycustom_value': 'valuecustom_value'})
+    params = [{'name': '_ds', 'value': 'custom_value'}]
+    self.assertDictEqual(google.datalab.bigquery.Query.resolve_parameters(
+      {'key%(_ds)s': 'value%(_ds)s'}, params),
       {'keycustom_value': 'valuecustom_value'})
