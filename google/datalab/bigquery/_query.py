@@ -345,12 +345,12 @@ class Query(object):
     Returns:
       A list of query parameters that are in the format for the BQ service
     """
-    all_parameters = Query._merge_parameters(config_parameters, date_time=date_time,
-                                             macros=False, types_and_values=True)
+    merged_parameters = Query.merge_parameters(config_parameters, date_time=date_time,
+                                            macros=False, types_and_values=True)
     # We're exposing a simpler schema format than the one actually required by BigQuery to make
     # magics easier. We need to convert between the two formats
     parsed_params = []
-    for key, value in all_parameters.items():
+    for key, value in merged_parameters.items():
       parsed_params.append({
         'name': key,
         'parameterType': {
@@ -365,8 +365,8 @@ class Query(object):
   @staticmethod
   def resolve_parameters(value, parameters, date_time=datetime.datetime.now(), macros=False,
                          types_and_values=False):
-    merged_parameters = Query._merge_parameters(parameters, date_time=date_time, macros=macros,
-                                                types_and_values=types_and_values)
+    merged_parameters = Query.merge_parameters(parameters, date_time=date_time, macros=macros,
+                                               types_and_values=types_and_values)
     return Query._resolve_parameters(value, merged_parameters)
 
   @staticmethod
@@ -425,7 +425,7 @@ class Query(object):
     return {key: value['value'] for key, value in airflow_macros.items()}
 
   @staticmethod
-  def _merge_parameters(parameters, date_time, macros, types_and_values):
+  def merge_parameters(parameters, date_time, macros, types_and_values):
     # We merge the user-provided parameters and the airflow macros
     merged_parameters = Query._airflow_macro_formats(date_time=date_time, macros=macros,
                                                      types_and_values=types_and_values)

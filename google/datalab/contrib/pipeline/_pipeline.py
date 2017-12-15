@@ -157,14 +157,16 @@ default_args = {{{0}}}
         operator_class_name, task_details)
 
     # This loop resolves all the macros and builds up the final string
+    merged_parameters = google.datalab.bigquery.Query.merge_parameters(
+      parameters, date_time=datetime.datetime.now(), macros=True, types_and_values=False)
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
       # We replace modifiers in the parameter values with either the user-defined values, or with
       # with the airflow macros, as applicable.
       # An important assumption that this makes is that the operators parameters have the same names
       # as the templated_fields. TODO(rajivpb): There may be a better way to do this.
       if operator_param_name in templated_fields:
-        operator_param_value = google.datalab.bigquery.Query.resolve_parameters(
-          operator_param_value, parameters, macros=True)
+        operator_param_value = google.datalab.bigquery.Query._resolve_parameters(
+          operator_param_value, merged_parameters)
       param_format_string = Pipeline._get_param_format_string(operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string

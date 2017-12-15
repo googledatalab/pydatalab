@@ -353,7 +353,7 @@ def _get_query_argument(args, cell, env):
     raise Exception('Expected a query object, got %s.' % type(item))
 
 
-def _get_query_parameters(args, cell_body, date_time=datetime.datetime.now()):
+def get_query_parameters(args, cell_body, date_time=datetime.datetime.now()):
   """Extract query parameters from cell body if provided
   Also validates the cell body schema using jsonschema to catch errors before sending the http
   request. This validation isn't complete, however; it does not validate recursive schemas,
@@ -403,7 +403,7 @@ def _sample_cell(args, cell_body):
     query = google.datalab.utils.commands.get_notebook_item(args['query'])
     if query is None:
       raise Exception('Cannot find query %s.' % args['query'])
-    query_params = _get_query_parameters(args, cell_body)
+    query_params = get_query_parameters(args, cell_body)
 
   elif args['table']:
     table = _get_table(args['table'])
@@ -583,7 +583,7 @@ def _execute_cell(args, cell_body):
   if args['verbose']:
     print(query.sql)
 
-  query_params = _get_query_parameters(args, cell_body)
+  query_params = get_query_parameters(args, cell_body)
 
   if args['to_dataframe']:
     # re-parse the int arguments because they're passed as strings
@@ -770,7 +770,7 @@ def _extract_cell(args, cell_body):
       raise Exception('Could not find ' +
                       ('view ' + args['view'] if args['view'] else 'query ' + args['query']))
     query = source if args['query'] else bigquery.Query.from_view(source)
-    query_params = _get_query_parameters(args, cell_body) if args['query'] else None
+    query_params = get_query_parameters(args, cell_body) if args['query'] else None
 
     output_options = QueryOutput.file(path=args['path'], format=args['format'],
                                       csv_delimiter=args['delimiter'],

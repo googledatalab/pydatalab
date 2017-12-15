@@ -942,10 +942,10 @@ WITH q1 AS (
     now = datetime.now()
     today = now.date()
     with self.assertRaises(Exception):
-      bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
+      bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body))
 
     args['query'] = 'test_sql'
-    params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body), date_time=now)
+    params = bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body), date_time=now)
     # We push the params into a dict so that it's easier to test
     params_dict = {
       item['name']: {
@@ -993,7 +993,7 @@ WITH q1 AS (
       ]
     }
 
-    params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
+    params = bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body))
     self.assertEqual(len(params), 13)
     params_dict = {
       item['name']: {

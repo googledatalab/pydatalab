@@ -218,24 +218,7 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
 
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     execute_task_config['sql'] = query.sql
-
-    # We merge the user's parameters with the airflow macros so that users can specify names like
-    # '@_ds' in their sql
-    merged_query_parameters = {
-      name: (value, 'STRING')
-      for name, value in google.datalab.bigquery.Query._airflow_macro_formats(
-        datetime.datetime.now(), macros=True, types_and_values=False).items()}
-    if bq_pipeline_parameters_config:
-      user_defined_query_parameters = {item['name']: (item['value'], item['type'])
-                                       for item in bq_pipeline_parameters_config}
-      # The below update will over-write the airflow macros with user-defined ones in case of
-      # name conflicts.
-      merged_query_parameters.update(user_defined_query_parameters)
-
-    execute_task_config['parameters'] = [
-      {'name': name, 'type': type, 'value': value}
-      for name, (value, type) in merged_query_parameters.items()
-    ]
+    execute_task_config['parameters'] = bq_pipeline_parameters_config
 
     if bq_pipeline_output_config:
       if 'table' in bq_pipeline_output_config:
