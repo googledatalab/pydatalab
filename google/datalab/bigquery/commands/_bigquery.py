@@ -394,6 +394,12 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+  parameters = config.get('parameters') or []
+  if parameters:
+    jsonschema.validate({'parameters': parameters}, BigQuerySchema.QUERY_PARAMS_SCHEMA)
+
   query = None
   table = None
   view = None
@@ -406,7 +412,8 @@ def _sample_cell(args, cell_body):
     query_params = get_query_parameters(args, cell_body)
 
   elif args['table']:
-    table = _get_table(args['table'])
+    table_name = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
+    table = _get_table(table_name)
     if not table:
       raise Exception('Could not find table %s' % args['table'])
   elif args['view']:
@@ -579,6 +586,13 @@ def _execute_cell(args, cell_body):
   Returns:
     QueryResultsTable containing query result
   """
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+  parameters = config.get('parameters') or []
+  if parameters:
+    jsonschema.validate({'parameters': parameters}, BigQuerySchema.QUERY_PARAMS_SCHEMA)
+  table_name = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
+
   query = google.datalab.utils.commands.get_notebook_item(args['query'])
   if args['verbose']:
     print(query.sql)
@@ -592,9 +606,9 @@ def _execute_cell(args, cell_body):
     output_options = QueryOutput.dataframe(start_row=start_row, max_rows=max_rows,
                                            use_cache=not args['nocache'])
   else:
-    output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
-                                       use_cache=not args['nocache'],
-                                       allow_large_results=args['large'])
+    output_options = QueryOutput.table(
+      name=table_name, mode=args['mode'], use_cache=not args['nocache'],
+      allow_large_results=args['large'])
   context = google.datalab.utils._utils._construct_context_for_args(args)
   r = query.execute(output_options, context=context, query_params=query_params)
   return r.result()
@@ -804,7 +818,7 @@ def _load_cell(args, cell_body):
   env = google.datalab.utils.commands.notebook_environment()
   config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
 
-  parameters = config.get('parameters')
+  parameters = config.get('parameters') or []
   if parameters:
     jsonschema.validate({'parameters': parameters}, BigQuerySchema.QUERY_PARAMS_SCHEMA)
   name = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
