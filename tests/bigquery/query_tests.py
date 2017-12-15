@@ -304,13 +304,14 @@ q1 AS (
     parameters = [
         {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
         {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
+        {'type': 'foo3', 'name': '_ds', 'value': 'foo3'},
     ]
     merged_parameters = google.datalab.bigquery.Query.merge_parameters(
       parameters, date_time=datetime.datetime.now(), macros=True, types_and_values=False)
     expected = {
       'foo1': 'foo1',
       'foo2': 'foo2',
-      '_ds': '{{ ds }}',
+      '_ds': 'foo3',
       '_ts': '{{ ts }}',
       '_ds_nodash': '{{ ds_nodash }}',
       '_ts_nodash': '{{ ts_nodash }}',
@@ -322,6 +323,46 @@ q1 AS (
       '_ts_second': '{{ execution_date.second }}',
     }
     self.assertDictEqual(merged_parameters, expected)
+
+    date_time = datetime.datetime.now()
+    day = date_time.date()
+
+    merged_parameters = google.datalab.bigquery.Query.merge_parameters(
+      parameters, date_time=date_time, macros=False, types_and_values=False)
+    expected = {
+      u'_ts_nodash': date_time.strftime('%Y%m%d%H%M%S%f'),
+      u'_ts_second': date_time.strftime('%S'),
+      u'_ts_day': day.strftime('%d'),
+      u'_ts_minute': date_time.strftime('%M'),
+      u'_ts': date_time.isoformat(),
+      u'_ts_hour': date_time.strftime('%H'),
+      u'_ts_month': day.strftime('%m'),
+      u'_ds_nodash': day.strftime('%Y%m%d'),
+      u'_ds': 'foo3',
+      u'_ts_year': day.strftime('%Y'),
+      u'foo1': 'foo1',
+      u'foo2': 'foo2'
+    }
+    self.assertDictEqual(merged_parameters, expected)
+
+    merged_parameters = google.datalab.bigquery.Query.merge_parameters(
+      parameters, date_time=date_time, macros=False, types_and_values=True)
+    expected = {
+      u'_ts_nodash': {u'type': u'STRING', u'value': date_time.strftime('%Y%m%d%H%M%S%f')},
+      u'_ts_second': {u'type': u'STRING', u'value': date_time.strftime('%S')},
+      u'_ts_day': {u'type': u'STRING', u'value': day.strftime('%d')},
+      u'_ts_minute': {u'type': u'STRING', u'value': date_time.strftime('%M')},
+      u'_ts': {u'type': u'STRING', u'value': date_time.isoformat()},
+      u'_ts_hour': {u'type': u'STRING', u'value': date_time.strftime('%H')},
+      u'_ts_month': {u'type': u'STRING', u'value': day.strftime('%m')},
+      u'_ds_nodash': {u'type': u'STRING', u'value': day.strftime('%Y%m%d')},
+      u'_ds': {u'type': u'foo3', u'value': 'foo3'},
+      u'_ts_year': {u'type': u'STRING', u'value': day.strftime('%Y')},
+      u'foo1': {u'type': u'foo1', u'value': u'foo1'},
+      u'foo2': {u'type': u'foo2', u'value': u'foo2'}
+    }
+    self.assertDictEqual(merged_parameters, expected)
+
 
   def test_resolve_parameters(self):
     self.assertEqual(google.datalab.bigquery.Query.resolve_parameters('foo%(_ds)s', [],
