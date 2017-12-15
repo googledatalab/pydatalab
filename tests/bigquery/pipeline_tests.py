@@ -323,8 +323,8 @@ class TestCases(unittest.TestCase):
     self.assertPipelineConfigEquals(actual, expected, None)
 
     user_parameters = [
-      {'name': 'foo1', 'value': 'foo1', 'type': 'foo1'},
-      {'name': 'foo2', 'value': 'foo2', 'type': 'foo2'},
+      {'name': 'foo1', 'value': 'foo1', 'type': 'STRING'},
+      {'name': 'foo2', 'value': 'foo2', 'type': 'INTEGER'},
     ]
     # only transformation with parameters
     pipeline_config = {

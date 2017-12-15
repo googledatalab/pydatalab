@@ -940,13 +940,13 @@ WITH q1 AS (
     args = {'query': None}
     cell_body = ''
     now = datetime.now()
-    today = now.date()
     with self.assertRaises(Exception):
       bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body))
 
     args['query'] = 'test_sql'
     params = bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body), date_time=now)
-    # We push the params into a dict so that it's easier to test
+
+    # We push the params into a dict so that it's easier to compare
     params_dict = {
       item['name']: {
         'type': item['parameterType']['type'],
@@ -954,6 +954,7 @@ WITH q1 AS (
       } for item in params
     }
 
+    today = now.date()
     default_query_parameters = {
       # the datetime formatted as YYYY-MM-DD
       '_ds': {'type': 'STRING', 'value': today.isoformat()},
@@ -971,18 +972,6 @@ WITH q1 AS (
       '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
       '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
     }
-    self.assertEqual(params_dict['_ts']['type'], 'STRING')
-    actual_ts = datetime.strptime(params_dict['_ts']['value'], '%Y-%m-%dT%H:%M:%S.%f')
-    self.assertTrue(isinstance(actual_ts, datetime))
-    del default_query_parameters['_ts']
-    del params_dict['_ts']
-
-    self.assertEqual(params_dict['_ts_nodash']['type'], 'STRING')
-    actual_ts_nodash = datetime.strptime(params_dict['_ts_nodash']['value'], '%Y%m%d%H%M%S%f')
-    self.assertTrue(isinstance(actual_ts_nodash, datetime))
-    del default_query_parameters['_ts_nodash']
-    del params_dict['_ts_nodash']
-
     self.assertDictEqual(params_dict, default_query_parameters)
 
     cell_body = {
@@ -992,15 +981,19 @@ WITH q1 AS (
           {'name': 'arg3', 'type': 'date', 'value': 'val3'}
       ]
     }
-
-    params = bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body))
-    self.assertEqual(len(params), 13)
+    params = bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body), date_time=now)
+    # We push the params into a dict so that it's easier to compare
     params_dict = {
       item['name']: {
         'type': item['parameterType']['type'],
         'value': item['parameterValue']['value']
       } for item in params
     }
-    self.assertDictEqual(params_dict['arg1'], {'type': 'INT64', 'value': 5})
-    self.assertDictEqual(params_dict['arg2'], {'type': 'string', 'value': 'val2'})
-    self.assertDictEqual(params_dict['arg3'], {'type': 'date', 'value': 'val3'})
+    cell_body_params_dict = {
+      item['name']: {
+        'type': item['type'],
+        'value': item['value']
+      } for item in cell_body['parameters']
+    }
+    default_query_parameters.update(cell_body_params_dict)
+    self.assertDictEqual(params_dict, default_query_parameters)

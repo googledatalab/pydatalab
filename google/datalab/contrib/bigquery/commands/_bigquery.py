@@ -12,6 +12,7 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
+import google
 import google.datalab.utils as utils
 
 # TODO(rajivpb): These contrib imports are a stop-gap for
@@ -20,6 +21,7 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 from google.datalab.contrib.pipeline.composer._composer import Composer
 from google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
+import jsonschema
 
 def _create_pipeline_subparser(parser):
   pipeline_parser = parser.subcommand('pipeline', 'Creates a pipeline to execute a SQL query to '
@@ -97,9 +99,14 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   input_config = bq_pipeline_config.get('input') or bq_pipeline_config.get('load')
   transformation_config = bq_pipeline_config.get('transformation')
   output_config = bq_pipeline_config.get('output') or bq_pipeline_config.get('extract')
-  parameters_config = bq_pipeline_config.get('parameters')
 
+  parameters_config = bq_pipeline_config.get('parameters')
+  if parameters_config:
+    jsonschema.validate(
+      {'parameters': parameters_config},
+      google.datalab.bigquery.commands._bigquery.BigQuerySchema.QUERY_PARAMS_SCHEMA)
   pipeline_spec['parameters'] = parameters_config
+
   pipeline_spec['tasks'] = {}
 
   load_task_id = None
