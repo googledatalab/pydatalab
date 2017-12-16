@@ -362,6 +362,7 @@ def get_query_parameters(args, cell_body, date_time=datetime.datetime.now()):
   Args:
     args: arguments passed to the magic cell
     cell_body: body of the magic cell
+    date_time: The timestamp at which the date-time related parameters need to be resolved.
 
   Returns:
     Validated object containing query parameters
