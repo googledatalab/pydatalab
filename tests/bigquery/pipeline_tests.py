@@ -491,7 +491,13 @@ WHERE endpoint=@endpoint""")
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
-      'sql': 'WITH input AS (\n  SELECT * FROM `test_table`\n)\n\nSELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
+      'sql': """WITH input AS (
+  SELECT * FROM `test_table`
+)
+
+SELECT @column
+FROM publicdata.samples.wikipedia
+WHERE endpoint=@endpoint""",
     }
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
@@ -543,7 +549,13 @@ WHERE endpoint=@endpoint""")
                                                        {}, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
-        'sql': 'WITH input AS (\n  SELECT * FROM `test_table_{0}`\n)\n\nSELECT @column\nFROM input\nWHERE endpoint=@endpoint'.format(datetime.datetime.now().date().isoformat())  #noqa
+      'sql': """WITH input AS (
+  SELECT * FROM `test_table_{0}`
+)
+
+SELECT @column
+FROM input
+WHERE endpoint=@endpoint""".format(datetime.datetime.now().date().isoformat())
     }
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
@@ -667,11 +679,16 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-(.*)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql=\"\"\"WITH input AS \(
+  SELECT \* FROM `cloud-datalab-samples\.httplogs.logs_20171216`
+\)
+
+SELECT @column FROM input where endpoint=@endpoint\"\"\", table=\"\"\"cloud-datalab-samples\.endpoints\.logs_{{ ds_nodash }}\"\"\", dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path=\"\"\"gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}\.csv\"\"\", table=\"\"\"cloud-datalab-samples\.endpoints\.logs_{{ ds_nodash }}\"\"\", dag=dag\).*
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path=\"\"\"gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}\"\"\", schema=(.*), table=\"\"\"cloud-datalab-samples\.httplogs\.logs_{{ ds_nodash }}\"\"\", dag=dag\).*
+bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
-
-    print(output)
 
     self.assertIsNotNone(pattern.match(output))
 
