@@ -12,6 +12,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
+import datetime
 import google
 import google.auth
 import google.datalab.contrib.bigquery.commands._bigquery as bq
@@ -155,7 +156,7 @@ class TestCases(unittest.TestCase):
           'table': 'foo_table_1',
         },
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input input AS (SELECT * FROM `foo_table_1`) foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'up_stream': ['bq_pipeline_load_task'],
         },
@@ -185,7 +186,7 @@ class TestCases(unittest.TestCase):
     expected = {
       'tasks': {
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input input AS (SELECT * FROM `foo_table_1`) foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
         },
         'bq_pipeline_extract_task': {
@@ -214,7 +215,7 @@ class TestCases(unittest.TestCase):
     expected = {
       'tasks': {
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input input AS (SELECT * FROM `foo_table_1`) foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'table': 'foo_table_1',
         },
@@ -460,7 +461,7 @@ WHERE endpoint=@endpoint""")
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
 
-    # Empty parameters config
+    # Empty input and parameters config
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        output_config, None)
     expected_execute_config = {
@@ -473,7 +474,7 @@ WHERE endpoint=@endpoint""")
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    None)
 
-    # Empty input, empty output configs
+    # Empty input and empty output configs
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        {}, parameters_config)
     expected_execute_config = {
@@ -490,7 +491,7 @@ WHERE endpoint=@endpoint""")
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
 
-    # With implicit data_source
+    # With no table, and implicit data_source
     input_config = TestCases.test_input_config.copy()
     del input_config['table']
     actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
@@ -508,7 +509,7 @@ WHERE endpoint=@endpoint""")
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
 
-    # With explicit data_source
+    # With no table, and explicit data_source
     input_config['data_source'] = 'foo_data_source'
     actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
                                                        transformation_config, {}, parameters_config)
@@ -521,6 +522,23 @@ WHERE endpoint=@endpoint""")
       'schema': 'test_schema',
       'source_format': 'csv',
       'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
+    }
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   parameters_config)
+
+    # With table and implicit sub-query
+    mock_notebook_item.return_value = google.datalab.bigquery.Query("""SELECT @column
+FROM input
+WHERE endpoint=@endpoint""")
+    input_config = {
+      'path': 'test_path_%(_ds)s',
+      'table': 'test_table_%(_ds)s',
+    }
+    actual_execute_config = bq._get_execute_parameters(None, input_config, transformation_config,
+                                                       {}, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'sql': 'WITH input AS (SELECT * FROM `test_table_{0}`) SELECT @column\nFROM input\nWHERE endpoint=@endpoint'.format(datetime.datetime.now().date().isoformat()),  # noqa
     }
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)

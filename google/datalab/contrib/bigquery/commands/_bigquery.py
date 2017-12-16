@@ -222,6 +222,13 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
         if 'csv' in bq_pipeline_input_config:
           execute_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
 
+    # If there is a table in the input config, we assume that the user could have specified the
+    # query with an implicit table (i.e. something like 'SELECT col1 FROM input WHERE ...', so we
+    # include the input table as as subquery with the query object. If the keyword 'input' is not
+    # referenced, the BigQuery will just ignore it.n
+    if (bq_pipeline_input_config and 'table' in bq_pipeline_input_config):
+      input =
+
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     execute_task_config['sql'] = query.sql
     execute_task_config['parameters'] = bq_pipeline_parameters_config
