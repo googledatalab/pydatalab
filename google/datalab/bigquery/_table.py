@@ -459,10 +459,6 @@ class Table(object):
     Raises:
       Exception if the load job failed to be started or invalid arguments were supplied.
     """
-
-    # Resolve any macros necessary
-    source = source
-
     if source_format == 'csv':
       source_format = 'CSV'
     elif source_format == 'json':

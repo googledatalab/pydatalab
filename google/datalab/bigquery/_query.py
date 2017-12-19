@@ -377,6 +377,9 @@ class Query(object):
       parameters: The user-specified list of parameters in the cell-body.
       date_time: The timestamp at which the parameters need to be evaluated. E.g. when the table
           is <project-id>.<dataset-id>.logs_%(_ds)s, the '_ds' evaluates to the current date-time.
+      macros: When true, the format modifers in the value are replaced with the corresponding
+          airflow macro equivalents (like '{{ ds }}'. When false, the actual values are used (like
+          '2015-12-12'.
 
     Returns:
       The resolved value, i.e. the value with the format modifiers replaced with the corresponding
