@@ -11,10 +11,11 @@
 # the License.
 
 import datetime
+import google
 import google.datalab.bigquery as bigquery
 from google.datalab import utils
-import six
 import sys
+
 # Any operators need to be imported here. This is required for dynamically getting the list of
 # templated fields from the operators. Static code-analysis will report that this is not
 # necessary, hence the '# noqa' annotations
@@ -43,26 +44,6 @@ from google.datalab.contrib.bigquery.operators._bq_execute_operator import Execu
 from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator
 from datetime import timedelta
 """
-
-  # These are documented here:
-  # https://airflow.incubator.apache.org/code.html?highlight=macros#default-variables
-  airflow_macros = {
-    # the datetime formatted as YYYY-MM-DD
-    '_ds': '{{ ds }}',
-    # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-    '_ts': '{{ ts }}',
-    # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-    '_ds_nodash': '{{ ds_nodash }}',
-    # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
-    # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-    '_ts_nodash': '{{ ts_nodash }}',
-    '_ts_year': "{{ execution_date.year }}",
-    '_ts_month': "{{ execution_date.month }}",
-    '_ts_day': "{{ execution_date.day }}",
-    '_ts_hour': "{{ execution_date.hour }}",
-    '_ts_minute': "{{ execution_date.minute }}",
-    '_ts_second': "{{ execution_date.second }}",
-  }
 
   def __init__(self, name, pipeline_spec, resolve_airflow_macros=False):
     """ Initializes an instance of a Pipeline object.
@@ -176,43 +157,21 @@ default_args = {{{0}}}
         operator_class_name, task_details)
 
     # This loop resolves all the macros and builds up the final string
+    merged_parameters = google.datalab.bigquery.Query.merge_parameters(
+      parameters, date_time=datetime.datetime.now(), macros=True, types_and_values=False)
     for (operator_param_name, operator_param_value) in sorted(operator_param_values.items()):
       # We replace modifiers in the parameter values with either the user-defined values, or with
       # with the airflow macros, as applicable.
       # An important assumption that this makes is that the operators parameters have the same names
       # as the templated_fields. TODO(rajivpb): There may be a better way to do this.
       if operator_param_name in templated_fields:
-        operator_param_value = self._resolve_parameters(operator_param_value,
-                                                        Pipeline._merge_parameters(parameters))
+        operator_param_value = google.datalab.bigquery.Query._resolve_parameters(
+          operator_param_value, merged_parameters)
       param_format_string = Pipeline._get_param_format_string(operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string
 
     return '{0} = {1}({2}, dag=dag)\n'.format(task_id, operator_class_name, full_param_string)
-
-  @staticmethod
-  def _merge_parameters(parameters):
-    # We merge the user-provided parameters and the airflow macros
-    merged_parameters = Pipeline.airflow_macros.copy()
-    # We don't need item['type'] here because we want to create the dictionary of format modifiers
-    # and values
-    if parameters:
-      parameters_dict = {item['name']: item['value'] for item in parameters}
-      merged_parameters.update(parameters_dict)
-
-    return merged_parameters
-
-  @staticmethod
-  def _resolve_parameters(operator_param_value, merged_parameters):
-    if isinstance(operator_param_value, list):
-      return [Pipeline._resolve_parameters(item, merged_parameters)
-              for item in operator_param_value]
-    if isinstance(operator_param_value, dict):
-      return {Pipeline._resolve_parameters(k, merged_parameters): Pipeline._resolve_parameters(
-        v, merged_parameters) for k, v in operator_param_value.items()}
-    if isinstance(operator_param_value, six.string_types) and merged_parameters:
-      return operator_param_value % merged_parameters
-    return operator_param_value
 
   @staticmethod
   def _get_param_format_string(param_value):

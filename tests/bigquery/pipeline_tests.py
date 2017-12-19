@@ -15,7 +15,6 @@
 import google
 import google.auth
 import google.datalab.contrib.bigquery.commands._bigquery as bq
-from google.datalab.contrib.pipeline._pipeline import Pipeline
 import mock
 import re
 import unittest
@@ -324,8 +323,8 @@ class TestCases(unittest.TestCase):
     self.assertPipelineConfigEquals(actual, expected, None)
 
     user_parameters = [
-      {'name': 'foo1', 'value': 'foo1', 'type': 'foo1'},
-      {'name': 'foo2', 'value': 'foo2', 'type': 'foo2'},
+      {'name': 'foo1', 'value': 'foo1', 'type': 'STRING'},
+      {'name': 'foo2', 'value': 'foo2', 'type': 'INTEGER'},
     ]
     # only transformation with parameters
     pipeline_config = {
@@ -535,16 +534,14 @@ WHERE endpoint=@endpoint""")
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
   def compare_parameters(self, actual_parameters, user_parameters):
-    user_parameters = user_parameters or []
-    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                           for key, value in Pipeline.airflow_macros.items()]
-    expected_parameters = user_parameters[:]
-    expected_parameters.extend(airflow_macros_list)
-    actual_paramaters_dict = {item['name']: (item['value'], item['type'])
-                              for item in actual_parameters}
-    expected_parameters_dict = {item['name']: (item['value'], item['type'])
-                                for item in expected_parameters}
-    self.assertDictEqual(actual_paramaters_dict, expected_parameters_dict)
+    actual_paramaters_dict = user_parameters_dict = {}
+    if actual_parameters:
+      actual_paramaters_dict = {item['name']: (item['value'], item['type'])
+                                for item in actual_parameters}
+    if user_parameters:
+      user_parameters_dict = {item['name']: (item['value'], item['type'])
+                              for item in user_parameters}
+    self.assertDictEqual(actual_paramaters_dict, user_parameters_dict)
 
   @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
   @mock.patch('google.datalab.Context.default')

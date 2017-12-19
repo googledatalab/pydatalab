@@ -12,6 +12,7 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
+import google
 import google.datalab.utils as utils
 
 # TODO(rajivpb): These contrib imports are a stop-gap for
@@ -19,6 +20,8 @@ import google.datalab.utils as utils
 from google.datalab.contrib.pipeline._pipeline import Pipeline
 from google.datalab.contrib.pipeline.composer._composer import Composer
 from google.datalab.contrib.pipeline.airflow._airflow import Airflow
+
+import jsonschema
 
 
 def _create_pipeline_subparser(parser):
@@ -97,9 +100,14 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   input_config = bq_pipeline_config.get('input') or bq_pipeline_config.get('load')
   transformation_config = bq_pipeline_config.get('transformation')
   output_config = bq_pipeline_config.get('output') or bq_pipeline_config.get('extract')
-  parameters_config = bq_pipeline_config.get('parameters')
 
+  parameters_config = bq_pipeline_config.get('parameters')
+  if parameters_config:
+    jsonschema.validate(
+      {'parameters': parameters_config},
+      google.datalab.bigquery.commands._bigquery.BigQuerySchema.QUERY_PARAMS_SCHEMA)
   pipeline_spec['parameters'] = parameters_config
+
   pipeline_spec['tasks'] = {}
 
   load_task_id = None
@@ -216,22 +224,7 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
 
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     execute_task_config['sql'] = query.sql
-
-    # We merge the user's parameters with the airflow macros so that users can specify names like
-    # '@_ds' in their sql
-    merged_query_parameters = {name: (value, 'STRING')
-                               for name, value in Pipeline.airflow_macros.items()}
-    if bq_pipeline_parameters_config:
-      user_defined_query_parameters = {item['name']: (item['value'], item['type'])
-                                       for item in bq_pipeline_parameters_config}
-      # The below update will over-write the airflow macros with user-defined ones in case of
-      # name conflicts.
-      merged_query_parameters.update(user_defined_query_parameters)
-
-    execute_task_config['parameters'] = [
-      {'name': name, 'type': type, 'value': value}
-      for name, (value, type) in merged_query_parameters.items()
-    ]
+    execute_task_config['parameters'] = bq_pipeline_parameters_config
 
     if bq_pipeline_output_config:
       if 'table' in bq_pipeline_output_config:

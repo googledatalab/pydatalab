@@ -18,7 +18,6 @@ import pandas
 import six
 import unittest
 
-from datetime import date
 from datetime import datetime
 
 import google.auth
@@ -707,19 +706,19 @@ WITH q1 AS (
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
   def test_load_cell(self, mock_get_table, mock_table_load, mock_table_exists,
                      mock_table_create, mock_default_context):
-    args = {'table': 'project.test.table', 'mode': 'create', 'path': 'test/path', 'skip': None,
-            'csv': None, 'delimiter': None, 'format': 'csv', 'strict': None, 'quote': None}
+
+    args = {'table': 'project.test.table', 'mode': 'create', 'path': 'test/path_%(_ds)s',
+            'skip': None, 'csv': None, 'delimiter': None, 'format': 'csv', 'strict': None,
+            'quote': None}
     context = self._create_context()
-    table = bq.Table('project.test.table')
-    mock_get_table.return_value = table
-    mock_table_exists.return_value = True
+    mock_get_table.return_value = bq.Table('project.test.table')
     job = bq._query_job.QueryJob('test_id', 'project.test.table', 'test_sql', context)
 
+    mock_table_exists.return_value = True
     with self.assertRaisesRegexp(Exception, 'already exists; use "append" or "overwrite" as mode.'):
       bq.commands._bigquery._load_cell(args, None)
 
     mock_table_exists.return_value = False
-
     with self.assertRaisesRegexp(Exception, 'Table does not exist, and no schema specified'):
       bq.commands._bigquery._load_cell(args, None)
 
@@ -727,26 +726,27 @@ WITH q1 AS (
       'schema': [
         {'name': 'col1', 'type': 'int64', 'mode': 'NULLABLE', 'description': 'description1'},
         {'name': 'col1', 'type': 'STRING', 'mode': 'required', 'description': 'description1'}
+      ],
+      'parameters': [
+        {'name': 'custom', 'type': 'FLOAT', 'value': 4.23}
       ]
     }
+
     mock_table_load.return_value = job
     job._is_complete = True
     job._fatal_error = 'fatal error'
-
     with self.assertRaisesRegexp(Exception, 'Load failed: fatal error'):
       bq.commands._bigquery._load_cell(args, json.dumps(cell_body))
 
     job._fatal_error = None
     job._errors = 'error'
-
     with self.assertRaisesRegexp(Exception, 'Load completed with errors: error'):
       bq.commands._bigquery._load_cell(args, json.dumps(cell_body))
 
     job._errors = None
-
     bq.commands._bigquery._load_cell(args, json.dumps(cell_body))
-
-    mock_table_load.assert_called_with('test/path', mode='create',
+    today = datetime.now().date().isoformat()
+    mock_table_load.assert_called_with('test/path_{0}'.format(today), mode='create',
                                        source_format='csv',
                                        csv_options=mock.ANY, ignore_unknown_values=True)
 
@@ -756,8 +756,7 @@ WITH q1 AS (
     args['format'] = 'csv'
 
     bq.commands._bigquery._load_cell(args, None)
-
-    mock_table_load.assert_called_with('test/path', mode='append',
+    mock_table_load.assert_called_with('test/path_{0}'.format(today), mode='append',
                                        source_format='csv', csv_options=mock.ANY,
                                        ignore_unknown_values=True)
 
@@ -940,12 +939,14 @@ WITH q1 AS (
   def test_get_query_parameters(self):
     args = {'query': None}
     cell_body = ''
+    now = datetime.now()
     with self.assertRaises(Exception):
-      bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
+      bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body))
 
     args['query'] = 'test_sql'
-    params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
-    # We push the params into a dict so that it's easier to test
+    params = bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body), date_time=now)
+
+    # We push the params into a dict so that it's easier to compare
     params_dict = {
       item['name']: {
         'type': item['parameterType']['type'],
@@ -953,8 +954,7 @@ WITH q1 AS (
       } for item in params
     }
 
-    today = date.today()
-    now = datetime.now()
+    today = now.date()
     default_query_parameters = {
       # the datetime formatted as YYYY-MM-DD
       '_ds': {'type': 'STRING', 'value': today.isoformat()},
@@ -972,36 +972,28 @@ WITH q1 AS (
       '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
       '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
     }
-    self.assertEqual(params_dict['_ts']['type'], 'STRING')
-    actual_ts = datetime.strptime(params_dict['_ts']['value'], '%Y-%m-%dT%H:%M:%S.%f')
-    self.assertTrue(isinstance(actual_ts, datetime))
-    del default_query_parameters['_ts']
-    del params_dict['_ts']
-
-    self.assertEqual(params_dict['_ts_nodash']['type'], 'STRING')
-    actual_ts_nodash = datetime.strptime(params_dict['_ts_nodash']['value'], '%Y%m%d%H%M%S%f')
-    self.assertTrue(isinstance(actual_ts_nodash, datetime))
-    del default_query_parameters['_ts_nodash']
-    del params_dict['_ts_nodash']
-
     self.assertDictEqual(params_dict, default_query_parameters)
 
     cell_body = {
       'parameters': [
-          {'name': 'arg1', 'type': 'INT64', 'value': 5}
+          {'name': 'arg1', 'type': 'INT64', 'value': 5},
+          {'name': 'arg2', 'type': 'string', 'value': 'val2'},
+          {'name': 'arg3', 'type': 'date', 'value': 'val3'}
       ]
     }
-
-    cell_body['parameters'].append({'name': 'arg2', 'type': 'string', 'value': 'val2'})
-    cell_body['parameters'].append({'name': 'arg3', 'type': 'date', 'value': 'val3'})
-    params = bq.commands._bigquery._get_query_parameters(args, json.dumps(cell_body))
-    self.assertEqual(len(params), 13)
+    params = bq.commands._bigquery.get_query_parameters(args, json.dumps(cell_body), date_time=now)
+    # We push the params into a dict so that it's easier to compare
     params_dict = {
       item['name']: {
         'type': item['parameterType']['type'],
         'value': item['parameterValue']['value']
       } for item in params
     }
-    self.assertDictEqual(params_dict['arg1'], {'type': 'INT64', 'value': 5})
-    self.assertDictEqual(params_dict['arg2'], {'type': 'string', 'value': 'val2'})
-    self.assertDictEqual(params_dict['arg3'], {'type': 'date', 'value': 'val3'})
+    cell_body_params_dict = {
+      item['name']: {
+        'type': item['type'],
+        'value': item['value']
+      } for item in cell_body['parameters']
+    }
+    default_query_parameters.update(cell_body_params_dict)
+    self.assertDictEqual(params_dict, default_query_parameters)
