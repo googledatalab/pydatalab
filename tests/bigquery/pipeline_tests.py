@@ -679,7 +679,7 @@ default_args = {
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
 bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql=\"\"\"WITH input AS \(
-  SELECT \* FROM `cloud-datalab-samples\.httplogs.logs_{{ ds }}`
+  SELECT \* FROM `cloud-datalab-samples\.httplogs\.logs_{{ ds_nodash }}`
 \)
 
 SELECT @column FROM input where endpoint=@endpoint\"\"\", table=\"\"\"cloud-datalab-samples\.endpoints\.logs_{{ ds_nodash }}\"\"\", dag=dag\)
@@ -688,8 +688,6 @@ bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_op
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
-
-    print(output)
 
     self.assertIsNotNone(pattern.match(output))
 
