@@ -223,6 +223,22 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
           execute_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
 
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
+    # If there is a table in the input config, we allow the user to reference table with the name
+    # 'input' in their sql, i.e. via something like 'SELECT col1 FROM input WHERE ...'. To enable
+    # this, we include the input table as as subquery with the query object. If the user's sql does
+    # not reference an 'input' table, BigQuery will just ignore it. Things get interesting if the
+    # user's sql specifies a subquery named 'input' and that will provide override the sub-query
+    # that we use. TODO(rajivpb): Verify this.
+    if (bq_pipeline_input_config and 'table' in bq_pipeline_input_config):
+      table_name = google.datalab.bigquery.Query.resolve_parameters(
+          bq_pipeline_input_config.get('table'), bq_pipeline_parameters_config, macros=True)
+      input_subquery_sql = 'SELECT * FROM `{0}`'.format(table_name)
+      input_subquery = google.datalab.bigquery.Query(input_subquery_sql)
+      # We artificially create an env with just the 'input' key, and the new input_query value to
+      # fool the Query object into using the subquery correctly.
+      query = google.datalab.bigquery.Query(query.sql, env={'input': input_subquery},
+                                            subqueries=['input'])
+
     execute_task_config['sql'] = query.sql
     execute_task_config['parameters'] = bq_pipeline_parameters_config
 

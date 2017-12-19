@@ -155,7 +155,7 @@ class TestCases(unittest.TestCase):
           'table': 'foo_table_1',
         },
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input AS (\n  SELECT * FROM `foo_table_1`\n)\n\nfoo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'up_stream': ['bq_pipeline_load_task'],
         },
@@ -185,7 +185,7 @@ class TestCases(unittest.TestCase):
     expected = {
       'tasks': {
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input AS (\n  SELECT * FROM `foo_table_1`\n)\n\nfoo_query_sql_string',
           'type': 'pydatalab.bq.execute',
         },
         'bq_pipeline_extract_task': {
@@ -214,7 +214,7 @@ class TestCases(unittest.TestCase):
     expected = {
       'tasks': {
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input AS (\n  SELECT * FROM `foo_table_1`\n)\n\nfoo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'table': 'foo_table_1',
         },
@@ -460,7 +460,7 @@ WHERE endpoint=@endpoint""")
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
 
-    # Empty parameters config
+    # Empty input and parameters config
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        output_config, None)
     expected_execute_config = {
@@ -473,7 +473,7 @@ WHERE endpoint=@endpoint""")
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    None)
 
-    # Empty input, empty output configs
+    # Empty input and empty output configs
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        {}, parameters_config)
     expected_execute_config = {
@@ -487,10 +487,21 @@ WHERE endpoint=@endpoint""")
     # Empty output config. Expected config is same as output with empty input and empty output.
     actual_execute_config = bq._get_execute_parameters('foo_load_task', TestCases.test_input_config,
                                                        transformation_config, {}, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'up_stream': ['foo_load_task'],
+      'sql': """WITH input AS (
+  SELECT * FROM `test_table`
+)
+
+SELECT @column
+FROM publicdata.samples.wikipedia
+WHERE endpoint=@endpoint""",
+    }
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
 
-    # With implicit data_source
+    # With no table, and implicit data_source
     input_config = TestCases.test_input_config.copy()
     del input_config['table']
     actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
@@ -508,7 +519,7 @@ WHERE endpoint=@endpoint""")
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
 
-    # With explicit data_source
+    # With no table, and explicit data_source
     input_config['data_source'] = 'foo_data_source'
     actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
                                                        transformation_config, {}, parameters_config)
@@ -521,6 +532,29 @@ WHERE endpoint=@endpoint""")
       'schema': 'test_schema',
       'source_format': 'csv',
       'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
+    }
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   parameters_config)
+
+    # With table and implicit sub-query
+    mock_notebook_item.return_value = google.datalab.bigquery.Query("""SELECT @column
+FROM input
+WHERE endpoint=@endpoint""")
+    input_config = {
+      'path': 'test_path_%(_ds)s',
+      'table': 'test_table_%(_ds)s',
+    }
+    actual_execute_config = bq._get_execute_parameters(None, input_config, transformation_config,
+                                                       {}, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'sql': """WITH input AS (
+  SELECT * FROM `test_table_{{ ds }}`
+)
+
+SELECT @column
+FROM input
+WHERE endpoint=@endpoint"""
     }
     self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
                                    parameters_config)
@@ -575,8 +609,7 @@ WHERE endpoint=@endpoint""")
       'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(_ds_nodash)s'
     }
     mock_notebook_item.return_value = google.datalab.bigquery.Query(
-        'SELECT @column FROM `{0}` where endpoint=@endpoint'.format(
-          'cloud-datalab-samples.httplogs.logs_@ds_nodash'))
+        'SELECT @column FROM input where endpoint=@endpoint')
 
     mock_environment.return_value = env
     args = {'name': 'bq_pipeline_test', 'environment': 'foo_environment',
@@ -645,9 +678,13 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql=\"\"\"SELECT @column FROM `cloud-datalab-samples.httplogs.logs_@ds_nodash` where endpoint=@endpoint\"\"\", table=\"\"\"cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}\"\"\", dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path=\"\"\"gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv\"\"\", table=\"\"\"cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}\"\"\", dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path=\"\"\"gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}\"\"\", schema=(.*), table=\"\"\"cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}\"\"\", dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql=\"\"\"WITH input AS \(
+  SELECT \* FROM `cloud-datalab-samples\.httplogs\.logs_{{ ds_nodash }}`
+\)
+
+SELECT @column FROM input where endpoint=@endpoint\"\"\", table=\"\"\"cloud-datalab-samples\.endpoints\.logs_{{ ds_nodash }}\"\"\", dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path=\"\"\"gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}\.csv\"\"\", table=\"\"\"cloud-datalab-samples\.endpoints\.logs_{{ ds_nodash }}\"\"\", dag=dag\).*
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path=\"\"\"gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}\"\"\", schema=(.*), table=\"\"\"cloud-datalab-samples\.httplogs\.logs_{{ ds_nodash }}\"\"\", dag=dag\).*
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa
