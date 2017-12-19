@@ -231,12 +231,12 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
     # that we use. TODO(rajivpb): Verify this.
     if (bq_pipeline_input_config and 'table' in bq_pipeline_input_config):
       table_name = google.datalab.bigquery.Query.resolve_parameters(
-          bq_pipeline_input_config.get('table'), bq_pipeline_parameters_config)
-      input_sql = 'SELECT * FROM `{0}`'.format(table_name)
-      input_query = google.datalab.bigquery.Query(input_sql)
+          bq_pipeline_input_config.get('table'), bq_pipeline_parameters_config, macros=True)
+      input_subquery_sql = 'SELECT * FROM `{0}`'.format(table_name)
+      input_subquery = google.datalab.bigquery.Query(input_subquery_sql)
       # We artificially create an env with just the 'input' key, and the new input_query value to
       # fool the Query object into using the subquery correctly.
-      query = google.datalab.bigquery.Query(query.sql, env={'input': input_query},
+      query = google.datalab.bigquery.Query(query.sql, env={'input': input_subquery},
                                             subqueries=['input'])
 
     execute_task_config['sql'] = query.sql

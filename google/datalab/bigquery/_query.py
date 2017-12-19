@@ -368,7 +368,7 @@ class Query(object):
     return parsed_params
 
   @staticmethod
-  def resolve_parameters(value, parameters, date_time=datetime.datetime.now()):
+  def resolve_parameters(value, parameters, date_time=datetime.datetime.now(), macros=False):
     """ Resolve a format modifier with the corresponding value.
 
     Args:
@@ -383,7 +383,7 @@ class Query(object):
           parameter-values. E.g. if value is <project-id>.<dataset-id>.logs_%(_ds)s, the returned
           value is something like <project-id>.<dataset-id>.logs_2017-12-21
     """
-    merged_parameters = Query.merge_parameters(parameters, date_time=date_time, macros=False,
+    merged_parameters = Query.merge_parameters(parameters, date_time=date_time, macros=macros,
                                                types_and_values=False)
     return Query._resolve_parameters(value, merged_parameters)
 
