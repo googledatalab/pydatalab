@@ -368,7 +368,6 @@ class Query(object):
     return parsed_params
 
   @staticmethod
-
   def resolve_parameters(value, parameters, date_time=datetime.datetime.now(), macros=False):
     """ Resolve a format modifier with the corresponding value.
 
