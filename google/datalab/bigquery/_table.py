@@ -403,7 +403,6 @@ class Table(object):
     Returns:
       A Job object for the export Job if it was started successfully; else None.
     """
-    destination = destination
     format = format.upper()
     if format == 'JSON':
       format = 'NEWLINE_DELIMITED_JSON'
