@@ -1,0 +1,3 @@
+Everything under datalab namespace is actively maintained but no new features are being added. Please use corresponding libraries under google.datalab namespace (source code under google/datalab directory).
+
+To migrate existing code that relies on datalab namespace, since most API interfaces are the same between google.datalab and datalab, usually you just need to change the import namespace. The magic interface is different for bigquery though (%%sql --> %%bq).
