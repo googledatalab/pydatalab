@@ -56,7 +56,7 @@ from datetime import timedelta
     self._resolve_airflow_macros = resolve_airflow_macros
 
   def get_airflow_spec(self):
-    """ Gets the airflow python spec (Composer service input) for the Pipeline object.
+    """ Gets the airflow python spec for the Pipeline object.
     """
     task_definitions = ''
     up_steam_statements = ''
