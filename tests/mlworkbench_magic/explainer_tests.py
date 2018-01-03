@@ -15,6 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
 from PIL import Image
+import logging
 import mock
 import numpy as np
 import os
@@ -23,6 +24,7 @@ import shutil
 import six
 from six.moves.urllib.request import urlopen
 import tempfile
+import sys
 
 
 # import Python so we can mock the parts we need to here.
