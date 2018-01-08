@@ -101,3 +101,26 @@ SELECT test_udf(col) FROM mytable\
     # Alternate form of passing the udf using notebook environment
     query = google.datalab.bigquery.Query(sql, udfs=['udf'], env={'udf': udf})
     self.assertEquals(query.sql, expected_sql)
+
+  def test_query_with_sql_udf(self):
+    code = 'test_param + 1'
+    return_type = 'INT64'
+    params = [('test_param', 'INT64')]
+    language = 'sql'
+    imports = ''
+    udf = google.datalab.bigquery.UDF('test_udf', code, return_type, params, language, imports)
+    sql = 'SELECT test_udf(col) FROM mytable'
+    expected_sql = '''\
+CREATE TEMPORARY FUNCTION test_udf (test_param INT64)
+RETURNS INT64
+AS (
+test_param + 1
+);
+SELECT test_udf(col) FROM mytable\
+'''
+    query = google.datalab.bigquery.Query(sql, udfs={'udf': udf})
+    self.assertEquals(query.sql, expected_sql)
+
+    # Alternate form of passing the udf using notebook environment
+    query = google.datalab.bigquery.Query(sql, udfs=['udf'], env={'udf': udf})
+    self.assertEquals(query.sql, expected_sql)
