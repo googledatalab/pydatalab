@@ -33,6 +33,7 @@ import analyze  # noqa: E303
 HAS_CREDENTIALS = True
 try:
   dl.Context.default().project_id
+  print(dl.Context.default().project_id)
 except Exception:
   HAS_CREDENTIALS = False
 
@@ -286,6 +287,7 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
   """
 
   def test_numerics(self):
+    print('project is: ' + dl.Context.default().project_id)
     """Build a BQ table, and then call analyze on it."""
     schema = [{'name': 'col1', 'type': 'INTEGER'},
               {'name': 'col2', 'type': 'FLOAT'},
