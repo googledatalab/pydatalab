@@ -15,8 +15,6 @@
 import google
 import google.auth
 import google.datalab.contrib.bigquery.commands._bigquery as bq
-from google.datalab.contrib.pipeline._pipeline import Pipeline
-
 import mock
 import re
 import unittest
@@ -48,6 +46,27 @@ class TestCases(unittest.TestCase):
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
     return google.datalab.Context(project_id, creds)
 
+  def assertPipelineConfigEquals(self, actual, expected, expected_pipeline_parameters):
+    expected_copy = expected.copy()
+
+    actual_execute_config = actual['tasks'].get('bq_pipeline_execute_task', None)
+    expected_execute_config = expected_copy['tasks'].get('bq_pipeline_execute_task', None)
+    if actual_execute_config and expected_execute_config:
+      self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                     expected_pipeline_parameters)
+      del actual['tasks']['bq_pipeline_execute_task']
+      del expected_copy['tasks']['bq_pipeline_execute_task']
+
+    actual_params = actual['parameters'] or []
+    actual_paramaters_dict = {item['name']: (item['value'], item['type']) for item in actual_params}
+    expected_pipeline_parameters = expected_pipeline_parameters or []
+    expected_paramaters_dict = {item['name']: (item['value'], item['type'])
+                                for item in expected_pipeline_parameters}
+    self.assertDictEqual(actual_paramaters_dict, expected_paramaters_dict)
+
+    del actual['parameters']
+    self.assertDictEqual(actual, expected_copy)
+
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_get_pipeline_spec_from_config(self, mock_notebook_item):
     mock_notebook_item.return_value = google.datalab.bigquery.Query('foo_query_sql_string')
@@ -55,9 +74,6 @@ class TestCases(unittest.TestCase):
     # empty pipeline_spec
     with self.assertRaisesRegexp(Exception, 'Pipeline has no tasks to execute.'):
       bq._get_pipeline_spec_from_config({})
-
-    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                           for key, value in Pipeline.airflow_macros.items()]
 
     # empty input , transformation, output as path
     pipeline_config = {
@@ -69,21 +85,22 @@ class TestCases(unittest.TestCase):
       }
     }
     expected = {
-      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
-          'parameters': airflow_macros_list,
         },
         'bq_pipeline_extract_task': {
+          'table': """{{ ti.xcom_pull(task_ids='bq_pipeline_execute_task_id').get('table') }}""",
           'path': 'foo_table',
           'type': 'pydatalab.bq.extract',
           'up_stream': ['bq_pipeline_execute_task']
         }
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # input as path, transformation, output as path
     pipeline_config = {
@@ -99,23 +116,23 @@ class TestCases(unittest.TestCase):
       }
     }
     expected = {
-      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'data_source': 'foo_data_source',
           'path': 'foo_path',
           'type': 'pydatalab.bq.execute',
-          'parameters': airflow_macros_list,
         },
         'bq_pipeline_extract_task': {
+          'table': """{{ ti.xcom_pull(task_ids='bq_pipeline_execute_task_id').get('table') }}""",
           'path': 'foo_table',
           'type': 'pydatalab.bq.extract',
           'up_stream': ['bq_pipeline_execute_task']
         }
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # input as path->table, transformation, output as path
     pipeline_config = {
@@ -131,7 +148,6 @@ class TestCases(unittest.TestCase):
       }
     }
     expected = {
-      'parameters': None,
       'tasks': {
         'bq_pipeline_load_task': {
           'type': 'pydatalab.bq.load',
@@ -139,19 +155,20 @@ class TestCases(unittest.TestCase):
           'table': 'foo_table_1',
         },
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input AS (\n  SELECT * FROM `foo_table_1`\n)\n\nfoo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'up_stream': ['bq_pipeline_load_task'],
-          'parameters': airflow_macros_list,
         },
         'bq_pipeline_extract_task': {
+          'table': """{{ ti.xcom_pull(task_ids='bq_pipeline_execute_task_id').get('table') }}""",
           'path': 'foo_path_2',
           'type': 'pydatalab.bq.extract',
           'up_stream': ['bq_pipeline_execute_task']
         }
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # input as table, transformation, output as path
     pipeline_config = {
@@ -166,21 +183,21 @@ class TestCases(unittest.TestCase):
       }
     }
     expected = {
-      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input AS (\n  SELECT * FROM `foo_table_1`\n)\n\nfoo_query_sql_string',
           'type': 'pydatalab.bq.execute',
-          'parameters': airflow_macros_list,
         },
         'bq_pipeline_extract_task': {
+          'table': """{{ ti.xcom_pull(task_ids='bq_pipeline_execute_task_id').get('table') }}""",
           'path': 'foo_path_2',
           'type': 'pydatalab.bq.extract',
           'up_stream': ['bq_pipeline_execute_task']
         }
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # input as table, transformation, output as table
     pipeline_config = {
@@ -195,17 +212,16 @@ class TestCases(unittest.TestCase):
       }
     }
     expected = {
-      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
-          'sql': u'foo_query_sql_string',
+          'sql': u'WITH input AS (\n  SELECT * FROM `foo_table_1`\n)\n\nfoo_query_sql_string',
           'type': 'pydatalab.bq.execute',
           'table': 'foo_table_1',
-          'parameters': airflow_macros_list,
         },
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # input as table, no transformation, output as path
     pipeline_config = {
@@ -217,7 +233,6 @@ class TestCases(unittest.TestCase):
       }
     }
     expected = {
-      'parameters': None,
       'tasks': {
         'bq_pipeline_extract_task': {
           'type': 'pydatalab.bq.extract',
@@ -226,7 +241,8 @@ class TestCases(unittest.TestCase):
         },
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # output only; this should be identical to the above
     pipeline_config = {
@@ -235,7 +251,8 @@ class TestCases(unittest.TestCase):
         'path': 'foo_path'
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # output can also be called extract, and it should be identical to the above
     pipeline_config = {
@@ -244,7 +261,8 @@ class TestCases(unittest.TestCase):
         'path': 'foo_path'
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # input as path, no transformation, output as table
     pipeline_config = {
@@ -256,7 +274,6 @@ class TestCases(unittest.TestCase):
       }
     }
     expected = {
-      'parameters': None,
       'tasks': {
         'bq_pipeline_load_task': {
           'type': 'pydatalab.bq.load',
@@ -265,7 +282,8 @@ class TestCases(unittest.TestCase):
         },
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # input only; this should be identical to the above
     pipeline_config = {
@@ -274,7 +292,8 @@ class TestCases(unittest.TestCase):
         'table': 'foo_table'
       },
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # input can also be called load, and it should be identical to the above
     pipeline_config = {
@@ -283,7 +302,8 @@ class TestCases(unittest.TestCase):
         'table': 'foo_table'
       },
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     # only transformation
     pipeline_config = {
@@ -292,20 +312,19 @@ class TestCases(unittest.TestCase):
       },
     }
     expected = {
-      'parameters': None,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
-          'parameters': airflow_macros_list,
         },
       }
     }
-    self.assertDictEqual(bq._get_pipeline_spec_from_config(pipeline_config), expected)
+    actual = bq._get_pipeline_spec_from_config(pipeline_config)
+    self.assertPipelineConfigEquals(actual, expected, None)
 
     user_parameters = [
-      {'name': 'foo1', 'value': 'foo1', 'type': 'foo1'},
-      {'name': 'foo2', 'value': 'foo2', 'type': 'foo2'},
+      {'name': 'foo1', 'value': 'foo1', 'type': 'STRING'},
+      {'name': 'foo2', 'value': 'foo2', 'type': 'INTEGER'},
     ]
     # only transformation with parameters
     pipeline_config = {
@@ -315,35 +334,22 @@ class TestCases(unittest.TestCase):
       'parameters': user_parameters
     }
 
-    expected_parameters = airflow_macros_list[:]
-    expected_parameters.extend(user_parameters)
     expected = {
-      'parameters': user_parameters,
       'tasks': {
         'bq_pipeline_execute_task': {
           'sql': u'foo_query_sql_string',
           'type': 'pydatalab.bq.execute',
-          'parameters': expected_parameters
         },
       }
     }
     actual = bq._get_pipeline_spec_from_config(pipeline_config)
-    # assertDictEqual doesn't handle nested lists of dicts very well. So comparing separately.
-    actual_params = actual['tasks']['bq_pipeline_execute_task']['parameters']
-    actual_paramaters_dict = {item['name']: (item['value'], item['type']) for item in actual_params}
-    expected_paramaters_dict = {item['name']: (item['value'], item['type'])
-                                for item in expected_parameters}
-    self.assertDictEqual(actual_paramaters_dict, expected_paramaters_dict)
-
-    del actual['tasks']['bq_pipeline_execute_task']['parameters']
-    del expected['tasks']['bq_pipeline_execute_task']['parameters']
-    self.assertDictEqual(actual, expected)
+    self.assertPipelineConfigEquals(actual, expected, user_parameters)
 
   def test_get_load_parameters(self):
     actual_load_config = bq._get_load_parameters(TestCases.test_input_config, None, None)
     expected_load_config = {
       'type': 'pydatalab.bq.load',
-      'path': 'test_path_{{ execution_date.month }}',
+      'path': 'test_path_%(_ts_month)s',
       'table': 'test_table',
       'schema': 'test_schema',
       'mode': 'append',
@@ -399,8 +405,8 @@ class TestCases(unittest.TestCase):
     expected_extract_config = {
       'type': 'pydatalab.bq.extract',
       'up_stream': ['foo_execute_task'],
-      'path': 'test_path_{{ execution_date.month }}',
-      'table': 'test_table_{{ execution_date.month }}',
+      'path': 'test_path_%(_ts_month)s',
+      'table': 'test_table_%(_ts_month)s',
     }
 
     self.assertDictEqual(actual_extract_config, expected_extract_config)
@@ -444,38 +450,58 @@ WHERE endpoint=@endpoint""")
     # Empty input config
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        output_config, parameters_config)
-    expected_parameters_config = parameters_config[:]
-    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                           for key, value in Pipeline.airflow_macros.items()]
-    expected_parameters_config.extend(airflow_macros_list)
-
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
       'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
-      'table': 'foo_table_{{ execution_date.month }}',
+      'table': 'foo_table_%(_ts_month)s',
       'mode': 'foo_mode',
-      'parameters': expected_parameters_config
     }
-    self.assertDictEqual(actual_execute_config, expected_execute_config)
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   parameters_config)
 
-    # Empty input, empty output configs
+    # Empty input and parameters config
+    actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
+                                                       output_config, None)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'up_stream': ['foo_load_task'],
+      'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
+      'table': 'foo_table_%(_ts_month)s',
+      'mode': 'foo_mode',
+    }
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   None)
+
+    # Empty input and empty output configs
     actual_execute_config = bq._get_execute_parameters('foo_load_task', {}, transformation_config,
                                                        {}, parameters_config)
     expected_execute_config = {
       'type': 'pydatalab.bq.execute',
       'up_stream': ['foo_load_task'],
       'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
-      'parameters': expected_parameters_config
     }
-    self.assertDictEqual(actual_execute_config, expected_execute_config)
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   parameters_config)
 
     # Empty output config. Expected config is same as output with empty input and empty output.
     actual_execute_config = bq._get_execute_parameters('foo_load_task', TestCases.test_input_config,
                                                        transformation_config, {}, parameters_config)
-    self.assertDictEqual(actual_execute_config, expected_execute_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'up_stream': ['foo_load_task'],
+      'sql': """WITH input AS (
+  SELECT * FROM `test_table`
+)
 
-    # With implicit data_source
+SELECT @column
+FROM publicdata.samples.wikipedia
+WHERE endpoint=@endpoint""",
+    }
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   parameters_config)
+
+    # With no table, and implicit data_source
     input_config = TestCases.test_input_config.copy()
     del input_config['table']
     actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
@@ -485,15 +511,15 @@ WHERE endpoint=@endpoint""")
       'up_stream': ['foo_load_task'],
       'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
       'data_source': 'input',
-      'path': 'test_path_{{ execution_date.month }}',
+      'path': 'test_path_%(_ts_month)s',
       'schema': 'test_schema',
       'source_format': 'csv',
       'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
-      'parameters': expected_parameters_config
     }
-    self.assertDictEqual(actual_execute_config, expected_execute_config)
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   parameters_config)
 
-    # With explicit data_source
+    # With no table, and explicit data_source
     input_config['data_source'] = 'foo_data_source'
     actual_execute_config = bq._get_execute_parameters('foo_load_task', input_config,
                                                        transformation_config, {}, parameters_config)
@@ -502,15 +528,55 @@ WHERE endpoint=@endpoint""")
       'up_stream': ['foo_load_task'],
       'sql': 'SELECT @column\nFROM publicdata.samples.wikipedia\nWHERE endpoint=@endpoint',
       'data_source': 'foo_data_source',
-      'path': 'test_path_{{ execution_date.month }}',
+      'path': 'test_path_%(_ts_month)s',
       'schema': 'test_schema',
       'source_format': 'csv',
       'csv_options': {'delimiter': ';', 'quote': '"', 'skip': 9, 'strict': False},
-      'parameters': expected_parameters_config
     }
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   parameters_config)
+
+    # With table and implicit sub-query
+    mock_notebook_item.return_value = google.datalab.bigquery.Query("""SELECT @column
+FROM input
+WHERE endpoint=@endpoint""")
+    input_config = {
+      'path': 'test_path_%(_ds)s',
+      'table': 'test_table_%(_ds)s',
+    }
+    actual_execute_config = bq._get_execute_parameters(None, input_config, transformation_config,
+                                                       {}, parameters_config)
+    expected_execute_config = {
+      'type': 'pydatalab.bq.execute',
+      'sql': """WITH input AS (
+  SELECT * FROM `test_table_{{ ds }}`
+)
+
+SELECT @column
+FROM input
+WHERE endpoint=@endpoint"""
+    }
+    self.assertExecuteConfigEquals(actual_execute_config, expected_execute_config,
+                                   parameters_config)
+
+  def assertExecuteConfigEquals(self, actual_execute_config, expected_execute_config,
+                                parameters_config):
+    actual_parameters = actual_execute_config['parameters'] if actual_execute_config else []
+    self.compare_parameters(actual_parameters, parameters_config)
+    if actual_execute_config:
+      del actual_execute_config['parameters']
     self.assertDictEqual(actual_execute_config, expected_execute_config)
 
-  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
+  def compare_parameters(self, actual_parameters, user_parameters):
+    actual_paramaters_dict = user_parameters_dict = {}
+    if actual_parameters:
+      actual_paramaters_dict = {item['name']: (item['value'], item['type'])
+                                for item in actual_parameters}
+    if user_parameters:
+      user_parameters_dict = {item['name']: (item['value'], item['type'])
+                              for item in user_parameters}
+    self.assertDictEqual(actual_paramaters_dict, user_parameters_dict)
+
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
@@ -521,19 +587,13 @@ WHERE endpoint=@endpoint""")
   @mock.patch('google.cloud.storage.Client.get_bucket')
   def test_pipeline_cell_golden(self, mock_client_get_bucket, mock_client, mock_blob_class,
                                 mock_get_table, mock_table_exists, mock_notebook_item,
-                                mock_environment, mock_default_context, mock_composer_env):
+                                mock_environment, mock_default_context):
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
     mock_table_exists.return_value = True
     context = TestCases._create_context()
     mock_default_context.return_value = context
     mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
-
-    mock_composer_env.return_value = {
-      'config': {
-        'gcsDagLocation': 'gs://foo_bucket/dags'
-      }
-    }
 
     env = {
       'endpoint': 'Interact2',
@@ -542,8 +602,7 @@ WHERE endpoint=@endpoint""")
       'output_table_format': 'cloud-datalab-samples.endpoints.logs_%(_ds_nodash)s'
     }
     mock_notebook_item.return_value = google.datalab.bigquery.Query(
-        'SELECT @column FROM `{0}` where endpoint=@endpoint'.format(
-          'cloud-datalab-samples.httplogs.logs_@ds_nodash'))
+        'SELECT @column FROM input where endpoint=@endpoint')
 
     mock_environment.return_value = env
     args = {'name': 'bq_pipeline_test', 'environment': 'foo_environment',
@@ -612,9 +671,13 @@ default_args = {
 
 dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', default_args=default_args\)
 
-bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql=\"\"\"SELECT @column FROM `cloud-datalab-samples.httplogs.logs_@ds_nodash` where endpoint=@endpoint\"\"\", table=\"\"\"cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}\"\"\", dag=dag\)
-bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path=\"\"\"gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}.csv\"\"\", table=\"\"\"cloud-datalab-samples.endpoints.logs_{{ ds_nodash }}\"\"\", dag=dag\)
-bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path=\"\"\"gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}\"\"\", schema=(.*), table=\"\"\"cloud-datalab-samples.httplogs.logs_{{ ds_nodash }}\"\"\", dag=dag\)
+bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql=\"\"\"WITH input AS \(
+  SELECT \* FROM `cloud-datalab-samples\.httplogs\.logs_{{ ds_nodash }}`
+\)
+
+SELECT @column FROM input where endpoint=@endpoint\"\"\", table=\"\"\"cloud-datalab-samples\.endpoints\.logs_{{ ds_nodash }}\"\"\", dag=dag\)
+bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id', path=\"\"\"gs://bucket/cloud-datalab-samples-endpoints_{{ ds_nodash }}\.csv\"\"\", table=\"\"\"cloud-datalab-samples\.endpoints\.logs_{{ ds_nodash }}\"\"\", dag=dag\).*
+bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path=\"\"\"gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}\"\"\", schema=(.*), table=\"\"\"cloud-datalab-samples\.httplogs\.logs_{{ ds_nodash }}\"\"\", dag=dag\).*
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 """)  # noqa

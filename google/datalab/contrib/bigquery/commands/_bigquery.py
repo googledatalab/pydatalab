@@ -12,13 +12,15 @@
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 from builtins import str
+import google
 import google.datalab.utils as utils
 
 # TODO(rajivpb): These contrib imports are a stop-gap for
 # https://github.com/googledatalab/pydatalab/issues/593
 from google.datalab.contrib.pipeline._pipeline import Pipeline
-from google.datalab.contrib.pipeline.composer._composer import Composer
 from google.datalab.contrib.pipeline.airflow._airflow import Airflow
+
+import jsonschema
 
 
 def _create_pipeline_subparser(parser):
@@ -26,10 +28,6 @@ def _create_pipeline_subparser(parser):
                                                   'transform data using BigQuery.')
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)
-  pipeline_parser.add_argument('-e', '--environment', type=str,
-                               help='The name of the Google Cloud Composer environment.')
-  pipeline_parser.add_argument('-l', '--location', type=str,
-                               help='The location of the Google Cloud Composer environment.')
   pipeline_parser.add_argument('-d', '--gcs_dag_bucket', type=str,
                                help='The Google Cloud Storage bucket for the Airflow dags.')
   pipeline_parser.add_argument('-f', '--gcs_dag_file_path', type=str,
@@ -63,13 +61,6 @@ def _pipeline_cell(args, cell_body):
 
     airflow_spec = pipeline.get_airflow_spec()
 
-    # If a composer environment and location are specified, we deploy to composer
-    location = args.get('location')
-    environment = args.get('environment')
-    if location and environment:
-        composer = Composer(location, environment)
-        composer.deploy(name, airflow_spec)
-
     # If a gcs_dag_bucket is specified, we deploy to it so that the Airflow VM rsyncs it.
     gcs_dag_bucket = args.get('gcs_dag_bucket')
     gcs_dag_file_path = args.get('gcs_dag_file_path')
@@ -95,9 +86,14 @@ def _get_pipeline_spec_from_config(bq_pipeline_config):
   input_config = bq_pipeline_config.get('input') or bq_pipeline_config.get('load')
   transformation_config = bq_pipeline_config.get('transformation')
   output_config = bq_pipeline_config.get('output') or bq_pipeline_config.get('extract')
-  parameters_config = bq_pipeline_config.get('parameters')
 
+  parameters_config = bq_pipeline_config.get('parameters')
+  if parameters_config:
+    jsonschema.validate(
+      {'parameters': parameters_config},
+      google.datalab.bigquery.commands._bigquery.BigQuerySchema.QUERY_PARAMS_SCHEMA)
   pipeline_spec['parameters'] = parameters_config
+
   pipeline_spec['tasks'] = {}
 
   load_task_id = None
@@ -136,7 +132,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
       return None
 
     # The path URL of the GCS load file(s), and associated parameters
-    load_task_config['path'] = bq_pipeline_input_config.get('path') % Pipeline.airflow_macros
+    load_task_config['path'] = bq_pipeline_input_config.get('path')
 
     if 'format' in bq_pipeline_input_config:
       load_task_config['format'] = bq_pipeline_input_config['format']
@@ -159,7 +155,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
     if 'table' not in source_of_table:
       return None
 
-    load_task_config['table'] = source_of_table.get('table') % Pipeline.airflow_macros
+    load_task_config['table'] = source_of_table.get('table')
 
     if 'schema' in source_of_table:
       load_task_config['schema'] = source_of_table['schema']
@@ -198,7 +194,7 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
         # All the below are applicable only if data_source is specified
         if 'path' in bq_pipeline_input_config:
             # We format the path since this could contain format modifiers
-            execute_task_config['path'] = bq_pipeline_input_config['path'] % Pipeline.airflow_macros
+            execute_task_config['path'] = bq_pipeline_input_config['path']
 
         if 'schema' in bq_pipeline_input_config:
             execute_task_config['schema'] = bq_pipeline_input_config['schema']
@@ -213,24 +209,31 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
           execute_task_config['csv_options'] = bq_pipeline_input_config.get('csv')
 
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
-    execute_task_config['sql'] = query.sql
+    # If there is a table in the input config, we allow the user to reference table with the name
+    # 'input' in their sql, i.e. via something like 'SELECT col1 FROM input WHERE ...'. To enable
+    # this, we include the input table as as subquery with the query object. If the user's sql does
+    # not reference an 'input' table, BigQuery will just ignore it. Things get interesting if the
+    # user's sql specifies a subquery named 'input' and that will provide override the sub-query
+    # that we use. TODO(rajivpb): Verify this.
+    if (bq_pipeline_input_config and 'table' in bq_pipeline_input_config):
+      table_name = google.datalab.bigquery.Query.resolve_parameters(
+          bq_pipeline_input_config.get('table'), bq_pipeline_parameters_config, macros=True)
+      input_subquery_sql = 'SELECT * FROM `{0}`'.format(table_name)
+      input_subquery = google.datalab.bigquery.Query(input_subquery_sql)
+      # We artificially create an env with just the 'input' key, and the new input_query value to
+      # fool the Query object into using the subquery correctly.
+      query = google.datalab.bigquery.Query(query.sql, env={'input': input_subquery},
+                                            subqueries=['input'])
 
-    # Stuff from the output config
+    execute_task_config['sql'] = query.sql
+    execute_task_config['parameters'] = bq_pipeline_parameters_config
+
     if bq_pipeline_output_config:
       if 'table' in bq_pipeline_output_config:
-        execute_task_config['table'] = bq_pipeline_output_config['table'] % Pipeline.airflow_macros
+        execute_task_config['table'] = bq_pipeline_output_config['table']
 
       if 'mode' in bq_pipeline_output_config:
           execute_task_config['mode'] = bq_pipeline_output_config['mode']
-
-    execute_task_config['parameters'] = []
-    if bq_pipeline_parameters_config:
-      execute_task_config['parameters'].extend(bq_pipeline_parameters_config)
-    # We merge the parameters with the airflow macros so that users can specify airflow macro
-    # names (like '@ds') in sql
-    airflow_macros_list = [{'name': key, 'type': 'STRING', 'value': value}
-                           for key, value in Pipeline.airflow_macros.items()]
-    execute_task_config['parameters'].extend(airflow_macros_list)
 
     return execute_task_config
 
@@ -246,12 +249,14 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
 
     if execute_task_id:
       extract_task_config['up_stream'] = [execute_task_id]
+      extract_task_config['table'] = """{{{{ ti.xcom_pull(task_ids='{0}_id').get('table') }}}}"""\
+          .format(execute_task_id)
 
     # If a path is not specified, there is no extract to be done, so we return None
     if 'path' not in bq_pipeline_output_config:
       return None
 
-    extract_task_config['path'] = bq_pipeline_output_config.get('path') % Pipeline.airflow_macros
+    extract_task_config['path'] = bq_pipeline_output_config.get('path')
 
     if 'format' in bq_pipeline_output_config:
       extract_task_config['format'] = bq_pipeline_output_config.get('format')
@@ -267,12 +272,12 @@ def _get_extract_parameters(execute_task_id, bq_pipeline_input_config,
     elif (bq_pipeline_input_config and not bq_pipeline_transformation_config and
           'table' in bq_pipeline_input_config and 'path' not in bq_pipeline_input_config):
       # If we're here it means that there was no transformation config, but there was an input
-      # config with only a table (and no path). We assume that the user was just trying to do a
+      # config with only a table and no path. We assume that the user was just trying to do a
       # table->gcs (or extract) step, so we take that as the input table (and emit an extract
       # operator).
       source_of_table = bq_pipeline_input_config
 
     if source_of_table:
-      extract_task_config['table'] = source_of_table['table'] % Pipeline.airflow_macros
+      extract_task_config['table'] = source_of_table['table']
 
     return extract_task_config

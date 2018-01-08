@@ -94,7 +94,7 @@ class BigQuerySchema(object):
             'properties': {
               'name': {'type': 'string'},
               'type': {'type': 'string', 'enum': DATATYPES + DATATYPES_LOWER},
-              'value': {'type': ['string', 'integer']}
+              'value': {'type': ['string', 'integer', 'number']}
             },
             'required': ['name', 'type', 'value'],
             'additionalProperties': False
@@ -353,7 +353,7 @@ def _get_query_argument(args, cell, env):
     raise Exception('Expected a query object, got %s.' % type(item))
 
 
-def _get_query_parameters(args, cell_body):
+def get_query_parameters(args, cell_body, date_time=datetime.datetime.now()):
   """Extract query parameters from cell body if provided
   Also validates the cell body schema using jsonschema to catch errors before sending the http
   request. This validation isn't complete, however; it does not validate recursive schemas,
@@ -362,6 +362,7 @@ def _get_query_parameters(args, cell_body):
   Args:
     args: arguments passed to the magic cell
     cell_body: body of the magic cell
+    date_time: The timestamp at which the date-time related parameters need to be resolved.
 
   Returns:
     Validated object containing query parameters
@@ -377,54 +378,9 @@ def _get_query_parameters(args, cell_body):
   if config:
     jsonschema.validate(config, BigQuerySchema.QUERY_PARAMS_SCHEMA)
 
-  # We merge the parameters with the airflow macros so that users can specify certain airflow
-  # macro names (like '@ds') in their sql. This is useful for enabling the user to progressively
-  # author a pipeline with %bq pipeline.
-  today = datetime.date.today()
-  now = datetime.datetime.now()
-  default_query_parameters = {
-    # the datetime formatted as YYYY-MM-DD
-    '_ds': {'type': 'STRING', 'value': today.isoformat()},
-    # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
-    '_ts': {'type': 'STRING', 'value': now.isoformat()},
-    # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
-    '_ds_nodash': {'type': 'STRING', 'value': today.strftime('%Y%m%d')},
-    # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
-    # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
-    '_ts_nodash': {'type': 'STRING', 'value': now.strftime('%Y%m%d%H%M%S%f')},
-    '_ts_year': {'type': 'STRING', 'value': today.strftime('%Y')},
-    '_ts_month': {'type': 'STRING', 'value': today.strftime('%m')},
-    '_ts_day': {'type': 'STRING', 'value': today.strftime('%d')},
-    '_ts_hour': {'type': 'STRING', 'value': now.strftime('%H')},
-    '_ts_minute': {'type': 'STRING', 'value': now.strftime('%M')},
-    '_ts_second': {'type': 'STRING', 'value': now.strftime('%S')},
-  }
-  # We merge the parameters by first pushing in the query parameters into a dictionary keyed by
-  # the parameter name. We then use this to update the canned parameters dictionary. This will
-  # have the effect of using user-provided parameters in case of naming conflicts.
   config = config or {}
-  input_query_parameters = {
-    item['name']: {
-      'type': item['type'],
-      'value': item['value']
-    } for item in config.get('parameters', {})
-  }
-  merged_parameters = default_query_parameters.copy()
-  merged_parameters.update(input_query_parameters)
-  # Parse query_params. We're exposing a simpler schema format than the one actually required
-  # by BigQuery to make magics easier. We need to convert between the two formats
-  parsed_params = []
-  for key, value in merged_parameters.items():
-    parsed_params.append({
-      'name': key,
-      'parameterType': {
-        'type': value['type']
-      },
-      'parameterValue': {
-        'value': value['value']
-      }
-    })
-  return parsed_params
+  config_parameters = config.get('parameters', [])
+  return bigquery.Query.get_query_parameters(config_parameters, date_time=date_time)
 
 
 def _sample_cell(args, cell_body):
@@ -439,6 +395,12 @@ def _sample_cell(args, cell_body):
     The results of executing the sampling query, or a profile of the sample data.
   """
 
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+  parameters = config.get('parameters') or []
+  if parameters:
+    jsonschema.validate({'parameters': parameters}, BigQuerySchema.QUERY_PARAMS_SCHEMA)
+
   query = None
   table = None
   view = None
@@ -448,10 +410,11 @@ def _sample_cell(args, cell_body):
     query = google.datalab.utils.commands.get_notebook_item(args['query'])
     if query is None:
       raise Exception('Cannot find query %s.' % args['query'])
-    query_params = _get_query_parameters(args, cell_body)
+    query_params = get_query_parameters(args, cell_body)
 
   elif args['table']:
-    table = _get_table(args['table'])
+    table_name = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
+    table = _get_table(table_name)
     if not table:
       raise Exception('Could not find table %s' % args['table'])
   elif args['view']:
@@ -624,11 +587,18 @@ def _execute_cell(args, cell_body):
   Returns:
     QueryResultsTable containing query result
   """
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+  parameters = config.get('parameters') or []
+  if parameters:
+    jsonschema.validate({'parameters': parameters}, BigQuerySchema.QUERY_PARAMS_SCHEMA)
+  table_name = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
+
   query = google.datalab.utils.commands.get_notebook_item(args['query'])
   if args['verbose']:
     print(query.sql)
 
-  query_params = _get_query_parameters(args, cell_body)
+  query_params = get_query_parameters(args, cell_body)
 
   if args['to_dataframe']:
     # re-parse the int arguments because they're passed as strings
@@ -637,9 +607,9 @@ def _execute_cell(args, cell_body):
     output_options = QueryOutput.dataframe(start_row=start_row, max_rows=max_rows,
                                            use_cache=not args['nocache'])
   else:
-    output_options = QueryOutput.table(name=args['table'], mode=args['mode'],
-                                       use_cache=not args['nocache'],
-                                       allow_large_results=args['large'])
+    output_options = QueryOutput.table(
+      name=table_name, mode=args['mode'], use_cache=not args['nocache'],
+      allow_large_results=args['large'])
   context = google.datalab.utils._utils._construct_context_for_args(args)
   r = query.execute(output_options, context=context, query_params=query_params)
   return r.result()
@@ -795,16 +765,19 @@ def _extract_cell(args, cell_body):
     args: the arguments following '%bigquery extract'.
   """
 
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+  parameters = config.get('parameters')
   if args['table']:
-    source = _get_table(args['table'])
+    table = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
+    source = _get_table(table)
     if not source:
-      raise Exception('Could not find table %s' % args['table'])
+      raise Exception('Could not find table %s' % table)
 
     csv_delimiter = args['delimiter'] if args['format'] == 'csv' else None
-    job = source.extract(args['path'],
-                         format=args['format'],
-                         csv_delimiter=csv_delimiter, csv_header=args['header'],
-                         compress=args['compress'])
+    path = google.datalab.bigquery.Query.resolve_parameters(args['path'], parameters)
+    job = source.extract(path, format=args['format'], csv_delimiter=csv_delimiter,
+                         csv_header=args['header'], compress=args['compress'])
   elif args['query'] or args['view']:
     source_name = args['view'] or args['query']
     source = google.datalab.utils.commands.get_notebook_item(source_name)
@@ -812,7 +785,7 @@ def _extract_cell(args, cell_body):
       raise Exception('Could not find ' +
                       ('view ' + args['view'] if args['view'] else 'query ' + args['query']))
     query = source if args['query'] else bigquery.Query.from_view(source)
-    query_params = _get_query_parameters(args, cell_body) if args['query'] else None
+    query_params = get_query_parameters(args, cell_body) if args['query'] else None
 
     output_options = QueryOutput.file(path=args['path'], format=args['format'],
                                       csv_delimiter=args['delimiter'],
@@ -843,7 +816,14 @@ def _load_cell(args, cell_body):
   Returns:
     A message about whether the load succeeded or failed.
   """
-  name = args['table']
+  env = google.datalab.utils.commands.notebook_environment()
+  config = google.datalab.utils.commands.parse_config(cell_body, env, False) or {}
+
+  parameters = config.get('parameters') or []
+  if parameters:
+    jsonschema.validate({'parameters': parameters}, BigQuerySchema.QUERY_PARAMS_SCHEMA)
+  name = google.datalab.bigquery.Query.resolve_parameters(args['table'], parameters)
+
   table = _get_table(name)
   if not table:
     table = bigquery.Table(name)
@@ -854,14 +834,12 @@ def _load_cell(args, cell_body):
     if not cell_body or 'schema' not in cell_body:
       raise Exception('Table does not exist, and no schema specified in cell; cannot load.')
 
-    env = google.datalab.utils.commands.notebook_environment()
-    config = google.datalab.utils.commands.parse_config(cell_body, env, False)
     schema = config['schema']
     # schema can be an instance of bigquery.Schema.
     # For example, user can run "my_schema = bigquery.Schema.from_data(df)" in a previous cell and
     # specify "schema: $my_schema" in cell input.
     if not isinstance(schema, bigquery.Schema):
-      jsonschema.validate(config, BigQuerySchema.TABLE_SCHEMA_SCHEMA)
+      jsonschema.validate({'schema': schema}, BigQuerySchema.TABLE_SCHEMA_SCHEMA)
       schema = bigquery.Schema(schema)
     table.create(schema=schema)
   elif not table.exists():
@@ -869,10 +847,8 @@ def _load_cell(args, cell_body):
 
   csv_options = bigquery.CSVOptions(delimiter=args['delimiter'], skip_leading_rows=args['skip'],
                                     allow_jagged_rows=not args['strict'], quote=args['quote'])
-  job = table.load(args['path'],
-                   mode=args['mode'],
-                   source_format=args['format'],
-                   csv_options=csv_options,
+  path = google.datalab.bigquery.Query.resolve_parameters(args['path'], parameters)
+  job = table.load(path, mode=args['mode'], source_format=args['format'], csv_options=csv_options,
                    ignore_unknown_values=not args['strict'])
   if job.failed:
     raise Exception('Load failed: %s' % str(job.fatal_error))

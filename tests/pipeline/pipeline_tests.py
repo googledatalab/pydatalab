@@ -62,58 +62,55 @@ tasks:
     dependencies = pipeline.Pipeline._get_dependency_definition('t2', ['t1', 't3'])
     self.assertEqual(dependencies, 't2.set_upstream(t1)\nt2.set_upstream(t3)\n')
 
-  def test_merged_parameters(self):
-    parameters = [
-        {'type': 'foo1', 'name': 'foo1', 'value': 'foo1'},
-        {'type': 'foo2', 'name': 'foo2', 'value': 'foo2'},
-    ]
-    merged_parameters = pipeline.Pipeline.merge_parameters(parameters)
-    expected = {
-      'foo1': 'foo1',
-      'foo2': 'foo2',
-      '_ds': '{{ ds }}',
-      '_ts': '{{ ts }}',
-      '_ds_nodash': '{{ ds_nodash }}',
-      '_ts_nodash': '{{ ts_nodash }}',
-      '_ts_year': "{{ execution_date.year }}",
-      '_ts_month': "{{ execution_date.month }}",
-      '_ts_day': "{{ execution_date.day }}",
-      '_ts_hour': "{{ execution_date.hour }}",
-      '_ts_minute': "{{ execution_date.minute }}",
-      '_ts_second': "{{ execution_date.second }}",
-    }
-
-    self.assertDictEqual(merged_parameters, expected)
-
-  def test_resolve_parameters(self):
-    test_pipeline = pipeline.Pipeline(None, None)
-    params = pipeline.Pipeline.airflow_macros
-    self.assertEqual(test_pipeline._resolve_parameters('foo%(_ds)s', params), 'foo{{ ds }}')
-    self.assertEqual(test_pipeline._resolve_parameters(u'foo%(_ds)s', params), 'foo{{ ds }}')
-    self.assertListEqual(test_pipeline._resolve_parameters([u'foo%(_ds)s', 'bar%(_ds)s'], params),
-                         ['foo{{ ds }}', 'bar{{ ds }}'])
-    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
-                                                           params),
-                         {u'key{{ ds }}': u'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline._resolve_parameters({u'key%(_ds)s': u'value%(_ds)s'},
-                                                           params),
-                         {u'key{{ ds }}': u'value{{ ds }}'})
-    self.assertDictEqual(test_pipeline._resolve_parameters(
-      {u'key%(_ds)s': {'key': u'value%(_ds)s'}}, params),
-      {u'key{{ ds }}': {'key': u'value{{ ds }}'}})
-    params.update({'custom_key': 'custom_value'})
-    self.assertDictEqual(test_pipeline._resolve_parameters(
-      {u'key%(custom_key)s': u'value%(custom_key)s'}, params),
-      {u'keycustom_value': u'valuecustom_value'})
-
   def test_get_bash_operator_definition(self):
     task_id = 'print_pdt_date'
     task_details = {}
     task_details['type'] = 'Bash'
     task_details['bash_command'] = 'date'
+
     operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
                                                                           None)
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", dag=dag)
+""")  # noqa
+
+  def test_get_bash_operator_definition_with_templates(self):
+    task_id = 'print_pdt_date'
+    task_details = {}
+    task_details['type'] = 'Bash'
+    task_details['output_encoding'] = 'utf-8'
+    task_details['bash_command'] = 'date_%(_ds)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
+                                                                          None)
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_{{ ds }}\"\"\", output_encoding=\"\"\"utf-8\"\"\", dag=dag)
+""")  # noqa
+
+    # Airflow macros should get replaced in templated fields
+    task_details['bash_command'] = 'date_%(_ds)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
+                                                                          None)
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_{{ ds }}\"\"\", output_encoding=\"\"\"utf-8\"\"\", dag=dag)
+""")  # noqa
+
+    # Airflow macros should not get replaced in non-templated fields
+    task_details['bash_command'] = 'date'
+    task_details['output_encoding'] = 'foo_%(_ds)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
+                                                                          None)
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
+""")  # noqa
+
+    # User-defined modifiers should get replaced in templated fields
+    task_details['bash_command'] = 'date_%(foo_key)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+      task_id, task_details, [{'name': 'foo_key', 'value': 'foo_value', 'type': 'STRING'}])
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_foo_value\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
+""")  # noqa
+
+    # User-defined modifiers should take precedence over the built-in airflow macros
+    task_details['bash_command'] = 'date_%(_ds)s'
+    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+      task_id, task_details, [{'name': '_ds', 'value': 'user_value', 'type': 'STRING'}])
+    self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_user_value\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
 """)  # noqa
 
   @mock.patch('google.datalab.bigquery.commands._bigquery._get_table')
@@ -228,7 +225,6 @@ LIMIT 5""")
     task_details['mode'] = 'create'
     task_details['sql'] = 'foo_query'
     task_details['table'] = 'project.test.table'
-
     actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details, None)
     expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode=\"\"\"create\"\"\", sql=\"\"\"foo_query\"\"\", table=\"\"\"project.test.table\"\"\", dag=dag)
 """  # noqa
@@ -250,43 +246,6 @@ LIMIT 5""")
 """  # noqa
     self.assertEqual(actual, expected)
 
-  def test_get_query_params(self):
-    task_details = {}
-    task_details['parameters'] = [
-        {
-          'name': 'endpoint',
-          'type': 'STRING',
-          'value': 'Interact3'
-        },
-        {
-          'name': 'table_name',
-          'type': 'STRING',
-          'value': 'cloud-datalab-samples.httplogs.logs_20140615'
-        }
-    ]
-    actual = pipeline.Pipeline._get_query_parameters(task_details['parameters'])
-    expected = [
-      {
-        'name': 'endpoint',
-        'parameterType': {
-          'type': 'STRING'
-        },
-        'parameterValue': {
-          'value': 'Interact3'
-        }
-      },
-      {
-        'name': 'table_name',
-        'parameterType': {
-         'type': 'STRING'
-        },
-        'parameterValue': {
-          'value': 'cloud-datalab-samples.httplogs.logs_20140615'
-        }
-      }
-    ]
-    self.assertListEqual(actual, expected)
-
   def test_get_unknown_operator_definition(self):
     task_id = 'id'
     task_details = {}
@@ -299,9 +258,9 @@ LIMIT 5""")
                      'id = UnknownOperator(''task_id=\'id_id\', ' +
                      'bar_typed=False, foo="""bar""", dag=dag)\n')
 
-  def test_get_random_operator_classname(self):
-    self.assertEqual(pipeline.Pipeline._get_operator_classname('Unknown'),
-                     'UnknownOperator')
+  def test_get_random_operator_class_name(self):
+    self.assertEqual(pipeline.Pipeline._get_operator_class_name('Unknown'),
+                     ('UnknownOperator', 'google.datalab.contrib.pipeline._pipeline'))
 
   def test_get_dag_definition(self):
     test_pipeline = pipeline.Pipeline('foo', None)
@@ -319,7 +278,19 @@ LIMIT 5""")
     self.assertEqual(eval(datetime_expr), datetime.datetime(2009, 5, 5, 22, 28, 15))
 
   def test_get_default_args(self):
+    actual = pipeline.Pipeline._get_default_args({}, None)
+    self.assertIn("'end_date': None", actual)
+    self.assertIn("'start_date': datetime.datetime.strptime(", actual)
+    self.assertIn("'email': []", actual)
+    self.assertIn("'owner': 'Google Cloud Datalab'", actual)
+
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
+    dag_dict['schedule']['retries'] = 5
+    dag_dict['schedule']['email_on_retry'] = False
+    dag_dict['schedule']['email_on_failure'] = False
+    dag_dict['schedule']['retry_exponential_backoff'] = False
+    dag_dict['schedule']['retry_delay_seconds'] = 10
+    dag_dict['schedule']['max_retry_delay_seconds'] = 15
     actual = pipeline.Pipeline._get_default_args(dag_dict.get('schedule'), dag_dict.get('emails'))
     self.assertIn(
       "'end_date': datetime.datetime.strptime('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S')",
@@ -329,12 +300,12 @@ LIMIT 5""")
       actual)
     self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
     self.assertIn("'owner': 'Google Cloud Datalab'", actual)
-
-    actual = pipeline.Pipeline._get_default_args({}, None)
-    self.assertIn("'end_date': None", actual)
-    self.assertIn("'start_date': datetime.datetime.strptime(", actual)
-    self.assertIn("'email': []", actual)
-    self.assertIn("'owner': 'Google Cloud Datalab'", actual)
+    self.assertIn("'retries': 5", actual)
+    self.assertIn("'email_on_retry': False", actual)
+    self.assertIn("'email_on_failure': False", actual)
+    self.assertIn("'retry_exponential_backoff': False", actual)
+    self.assertIn("'retry_delay': timedelta(seconds=10)", actual)
+    self.assertIn("'max_retry_delay': timedelta(seconds=15)", actual)
 
   def test_get_airflow_spec_with_default_schedule(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)

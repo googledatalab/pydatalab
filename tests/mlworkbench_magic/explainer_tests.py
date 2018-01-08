@@ -15,6 +15,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
 from PIL import Image
+import logging
 import mock
 import numpy as np
 import os
@@ -23,6 +24,7 @@ import shutil
 import six
 from six.moves.urllib.request import urlopen
 import tempfile
+import sys
 
 
 # import Python so we can mock the parts we need to here.
@@ -51,6 +53,11 @@ class TestMLExplainer(unittest.TestCase):
   """Integration tests of PredictionExplainer"""
 
   def setUp(self):
+    self._logger = logging.getLogger('TestExplainerLogger')
+    self._logger.setLevel(logging.DEBUG)
+    if not self._logger.handlers:
+      self._logger.addHandler(logging.StreamHandler(stream=sys.stdout))
+
     self._code_path = mlmagic.DEFAULT_PACKAGE_PATH
     mlmagic.DEFAULT_PACKAGE_PATH = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '../../solutionbox/ml_workbench/tensorflow'))
@@ -272,6 +279,7 @@ class TestMLExplainer(unittest.TestCase):
   def test_text_explainer(self):
     """Test text explainer."""
 
+    self._logger.debug('Starting text explainer test.')
     self._create_text_test_data()
     explainer = PredictionExplainer(os.path.join(self._test_dir, 'traintxt', 'model'))
     exp_instance = explainer.explain_text(['apple', 'lime', 'cucumber'], '4,green long')
@@ -291,6 +299,7 @@ class TestMLExplainer(unittest.TestCase):
   def test_image_explainer(self):
     """Test image explainer."""
 
+    self._logger.debug('Starting image explainer test.')
     self._create_image_test_data()
     explainer = PredictionExplainer(os.path.join(self._test_dir, 'trainimg', 'model'))
     exp_instance = explainer.explain_image(
@@ -309,11 +318,13 @@ class TestMLExplainer(unittest.TestCase):
   def test_image_prober(self):
     """Test image explainer."""
 
+    self._logger.debug('Starting image prober test.')
     self._create_image_test_data()
     explainer = PredictionExplainer(os.path.join(self._test_dir, 'trainimg', 'model'))
     raw_image, grads_vizs = explainer.probe_image(
         ['true', 'false'],
         '4,2.0,word2 word1,%s' % os.path.join(self._test_dir, 'img1.jpg'),
+        num_scaled_images=5,
         top_percent=20)
     self.assertEqual((299, 299, 3), np.asarray(raw_image).shape)
 
@@ -327,6 +338,7 @@ class TestMLExplainer(unittest.TestCase):
   def test_tabular_explainer(self):
     """Test tabular explainer."""
 
+    self._logger.debug('Starting tabular explainer test.')
     train_df = self._create_tabular_test_data()
 
     explainer = PredictionExplainer(os.path.join(self._test_dir, 'traintab', 'model'))

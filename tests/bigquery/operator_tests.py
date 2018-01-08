@@ -83,24 +83,6 @@ class TestCases(unittest.TestCase):
     with self.assertRaisesRegexp(Exception, 'Extract completed with errors: foo_error'):
       extract_operator.execute(context=None)
 
-  @mock.patch('google.datalab.Context.default')
-  @mock.patch('google.datalab.bigquery.Table.extract')
-  @mock.patch('airflow.models.TaskInstance')
-  def test_extract_operator_with_temporary_table(self, mock_task_instance, mock_table_extract,
-                                                 mock_context_default):
-    mock_context_default.return_value = TestCases._create_context()
-    mock_task_instance.xcom_pull.return_value = {'table': TestCases.test_project_id + '.test_table'}
-    extract_operator = ExtractOperator(path='test_path', format=None,
-                                       task_id='test_extract_operator')
-
-    mock_table_extract.return_value.result = lambda: 'test-results'
-    mock_table_extract.return_value.failed = False
-    mock_table_extract.return_value.errors = None
-    self.assertDictEqual(extract_operator.execute(context={'task_instance': mock_task_instance}),
-                         {'result': 'test-results'})
-    mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
-                                          csv_delimiter=None, csv_header=None, compress=None)
-
   @mock.patch('google.datalab.bigquery.Query.execute')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   def test_execute_operator_definition(self, mock_get_notebook_item, mock_query_execute):
@@ -126,10 +108,9 @@ class TestCases(unittest.TestCase):
 
     execute_operator = ExecuteOperator(task_id='test_execute_operator', sql='test_sql')
     mock_query_execute.return_value = mock_query_job
-    query_results_table_name = 'foo_table'
-    mock_query_job.result.return_value.name = query_results_table_name
+    mock_query_job.result.return_value = google.datalab.bigquery.Table(TestCases.test_table_name)
     self.assertDictEqual(execute_operator.execute(context=None),
-                         {'table': query_results_table_name})
+                         {'table': TestCases.test_table_name})
     mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
                                                allow_large_results=False)
 
@@ -149,9 +130,9 @@ class TestCases(unittest.TestCase):
                                        csv_options=csv_options, format='csv')
     mock_query_instance = mock_query_class.return_value
     mock_query_instance.execute.return_value = mock_query_job
-    mock_query_job.result.return_value.name = 'foo_table'
+    mock_query_job.result.return_value = google.datalab.bigquery.Table(TestCases.test_table_name)
     self.assertDictEqual(execute_operator.execute(context=None),
-                         {'table': 'foo_table'})
+                         {'table': TestCases.test_table_name})
     mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
                                                allow_large_results=False)
     mock_query_class.assert_called_with(
@@ -230,21 +211,21 @@ class TestCases(unittest.TestCase):
 
   def test_execute_operator_defaults(self):
     execute_operator = ExecuteOperator(task_id='foo_task_id', sql='foo_sql')
-    self.assertIsNone(execute_operator._parameters)
-    self.assertIsNone(execute_operator._table)
-    self.assertIsNone(execute_operator._mode)
-    self.assertEqual(execute_operator.template_fields, ('_table', '_parameters', '_path'))
+    self.assertIsNone(execute_operator.parameters)
+    self.assertIsNone(execute_operator.table)
+    self.assertIsNone(execute_operator.mode)
+    self.assertEqual(execute_operator.template_fields, ('table', 'parameters', 'path'))
 
   def test_extract_operator_defaults(self):
     extract_operator = ExtractOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
-    self.assertEquals(extract_operator._format, 'csv')
-    self.assertDictEqual(extract_operator._csv_options, {})
-    self.assertEqual(extract_operator.template_fields, ('_table', '_path'))
+    self.assertEquals(extract_operator.format, 'csv')
+    self.assertDictEqual(extract_operator.csv_options, {})
+    self.assertEqual(extract_operator.template_fields, ('table', 'path'))
 
   def test_load_operator_defaults(self):
     load_operator = LoadOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
-    self.assertEquals(load_operator._format, 'csv')
-    self.assertEquals(load_operator._mode, 'append')
-    self.assertIsNone(load_operator._schema)
-    self.assertDictEqual(load_operator._csv_options, {})
-    self.assertEqual(load_operator.template_fields, ('_table', '_path'))
+    self.assertEquals(load_operator.format, 'csv')
+    self.assertEquals(load_operator.mode, 'append')
+    self.assertIsNone(load_operator.schema)
+    self.assertDictEqual(load_operator.csv_options, {})
+    self.assertEqual(load_operator.template_fields, ('table', 'path'))

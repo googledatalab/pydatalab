@@ -13,64 +13,62 @@
 import google.datalab.bigquery as bq
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
-from google.datalab.contrib.pipeline._pipeline import Pipeline
 
 
 class ExecuteOperator(BaseOperator):
 
-  template_fields = ('_table', '_parameters', '_path')
+  template_fields = ('table', 'parameters', 'path')
 
   @apply_defaults
   def __init__(self, sql, parameters=None, table=None, mode=None, data_source=None, path=None,
                format=None, csv_options=None, schema=None, max_bad_records=None, *args, **kwargs):
     super(ExecuteOperator, self).__init__(*args, **kwargs)
-    self._sql = sql
-    self._table = table
-    self._mode = mode
-    self._parameters = parameters
-    self._data_source = data_source
-    self._path = path
-    self._format = format
-    self._csv_options = csv_options or {}
-    self._schema = schema
-    self._max_bad_records = max_bad_records
+    self.sql = sql
+    self.table = table
+    self.mode = mode
+    self.parameters = parameters
+    self.data_source = data_source
+    self.path = path
+    self.format = format
+    self.csv_options = csv_options or {}
+    self.schema = schema
+    self.max_bad_records = max_bad_records
 
   def execute(self, context):
-    if self._data_source:
+    if self.data_source:
       kwargs = {}
-      if self._csv_options and self._csv_options.__len__() > 1:
+      if self.csv_options and self.csv_options.__len__() > 1:
         csv_kwargs = {}
-        if 'delimiter' in self._csv_options:
-          csv_kwargs['delimiter'] = self._csv_options['delimiter']
-        if 'skip' in self._csv_options:
-          csv_kwargs['skip_leading_rows'] = self._csv_options['skip']
-        if 'strict' in self._csv_options:
-          csv_kwargs['allow_jagged_rows'] = self._csv_options['strict']
-        if 'quote' in self._csv_options:
-          csv_kwargs['quote'] = self._csv_options['quote']
+        if 'delimiter' in self.csv_options:
+          csv_kwargs['delimiter'] = self.csv_options['delimiter']
+        if 'skip' in self.csv_options:
+          csv_kwargs['skip_leading_rows'] = self.csv_options['skip']
+        if 'strict' in self.csv_options:
+          csv_kwargs['allow_jagged_rows'] = self.csv_options['strict']
+        if 'quote' in self.csv_options:
+          csv_kwargs['quote'] = self.csv_options['quote']
         kwargs['csv_options'] = bq.CSVOptions(**csv_kwargs)
 
-      if self._format:
-        kwargs['source_format'] = self._format
+      if self.format:
+        kwargs['source_format'] = self.format
 
-      if self._max_bad_records:
-        kwargs['max_bad_records'] = self._max_bad_records
+      if self.max_bad_records:
+        kwargs['max_bad_records'] = self.max_bad_records
 
       external_data_source = bq.ExternalDataSource(
-        source=self._path, schema=bq.Schema(self._schema), **kwargs)
-      query = bq.Query(sql=self._sql, data_sources={self._data_source: external_data_source})
+        source=self.path, schema=bq.Schema(self.schema), **kwargs)
+      query = bq.Query(sql=self.sql, data_sources={self.data_source: external_data_source})
     else:
-      query = bq.Query(sql=self._sql)
+      query = bq.Query(sql=self.sql)
 
     # use_cache is False since this is most likely the case in pipeline scenarios
     # allow_large_results can be True only if table is specified (i.e. when it's not None)
-    output_options = bq.QueryOutput.table(name=self._table, mode=self._mode, use_cache=False,
-                                          allow_large_results=self._table is not None)
-
-    query_params = Pipeline._get_query_parameters(self._parameters)
-    job = query.execute(output_options, query_params=query_params)
+    output_options = bq.QueryOutput.table(name=self.table, mode=self.mode, use_cache=False,
+                                          allow_large_results=self.table is not None)
+    query_params = bq.Query.get_query_parameters(self.parameters)
+    job = query.execute(output_options=output_options, query_params=query_params)
 
     # Returning the table-name here makes it available for downstream task instances.
     return {
-      'table': job.result().name
+      'table': job.result().full_name
     }

@@ -15,9 +15,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
+import datetime
 import google.datalab
 import google.datalab.data
 import google.datalab.utils
+import six
 
 from ._query_output import QueryOutput
 from . import _api
@@ -335,3 +337,167 @@ class Query(object):
     """
     return self.execute_async(output_options, sampling=sampling, context=context,
                               query_params=query_params).wait()
+
+  @staticmethod
+  def get_query_parameters(config_parameters, date_time=datetime.datetime.now()):
+    """ Merge the given parameters with the airflow macros. Enables macros (like '@_ds') in sql.
+
+    Args:
+      config_parameters: The user-specified list of parameters in the cell-body.
+      date_time: The timestamp at which the parameters need to be evaluated. E.g. when the table
+          is <project-id>.<dataset-id>.logs_%(_ds)s, the '_ds' evaluates to the current date-time.
+
+    Returns:
+      A list of query parameters that are in the format for the BQ service
+    """
+    merged_parameters = Query.merge_parameters(config_parameters, date_time=date_time,
+                                               macros=False, types_and_values=True)
+    # We're exposing a simpler schema format than the one actually required by BigQuery to make
+    # magics easier. We need to convert between the two formats
+    parsed_params = []
+    for key, value in merged_parameters.items():
+      parsed_params.append({
+        'name': key,
+        'parameterType': {
+          'type': value['type']
+        },
+        'parameterValue': {
+          'value': value['value']
+        }
+      })
+    return parsed_params
+
+  @staticmethod
+  def resolve_parameters(value, parameters, date_time=datetime.datetime.now(), macros=False):
+    """ Resolve a format modifier with the corresponding value.
+
+    Args:
+      value: The string (path, table, or any other artifact in a cell_body) which may have format
+          modifiers. E.g. a table name could be <project-id>.<dataset-id>.logs_%(_ds)s
+      parameters: The user-specified list of parameters in the cell-body.
+      date_time: The timestamp at which the parameters need to be evaluated. E.g. when the table
+          is <project-id>.<dataset-id>.logs_%(_ds)s, the '_ds' evaluates to the current date-time.
+      macros: When true, the format modifers in the value are replaced with the corresponding
+          airflow macro equivalents (like '{{ ds }}'. When false, the actual values are used (like
+          '2015-12-12'.
+
+    Returns:
+      The resolved value, i.e. the value with the format modifiers replaced with the corresponding
+          parameter-values. E.g. if value is <project-id>.<dataset-id>.logs_%(_ds)s, the returned
+          value is something like <project-id>.<dataset-id>.logs_2017-12-21
+    """
+    merged_parameters = Query.merge_parameters(parameters, date_time=date_time, macros=macros,
+                                               types_and_values=False)
+    return Query._resolve_parameters(value, merged_parameters)
+
+  @staticmethod
+  def _resolve_parameters(operator_param_value, merged_parameters):
+    """ Resolve a format modifier with the corresponding value.
+
+    Args:
+      operator_param_value: The object with the format-modifiers that need to be evaluated. This
+          could either be a string, or a more complex type like a list or a dict. This function
+          will recursively replace the format-modifiers from all the string values that it can
+          find.
+      merged_parameters: The full set of parameters that include the user-specified list of
+          parameters from the cell-body, and the built-in airflow macros (either the macros or the
+          evaluated-values).
+
+    Returns:
+      The resolved value, i.e. the value with the format modifiers replaced with the corresponding
+          parameter-values. E.g. if value is <project-id>.<dataset-id>.logs_%(_ds)s, the returned
+          value could be <project-id>.<dataset-id>.logs_2017-12-21.
+    """
+    if isinstance(operator_param_value, list):
+      return [Query._resolve_parameters(item, merged_parameters)
+              for item in operator_param_value]
+    if isinstance(operator_param_value, dict):
+      return {Query._resolve_parameters(k, merged_parameters): Query._resolve_parameters(
+        v, merged_parameters) for k, v in operator_param_value.items()}
+    if isinstance(operator_param_value, six.string_types) and merged_parameters:
+      return operator_param_value % merged_parameters
+    return operator_param_value
+
+  @staticmethod
+  def _airflow_macro_formats(date_time, macros, types_and_values):
+    """ Return a mapping from airflow macro names (prefixed with '_') to values
+
+    Args:
+      date_time: The timestamp at which the macro values need to be evaluated. This is only
+          applicable when types_and_values = True
+      macros: If true, the items in the returned dict are the macro strings (like '_ds': '{{ ds }}')
+      types_and_values: If true, the values in the returned dict are dictionaries of the types and
+          the values of the parameters (i.e like '_ds': {'type': STRING, 'value': 2017-12-21})
+    Returns:
+      The resolved value, i.e. the value with the format modifiers replaced with the corresponding
+          parameter-values. E.g. if value is <project-id>.<dataset-id>.logs_%(_ds)s, the returned
+          value could be <project-id>.<dataset-id>.logs_2017-12-21.
+    """
+    day = date_time.date()
+    airflow_macros = {
+      # the datetime formatted as YYYY-MM-DD
+      '_ds': {'type': 'STRING', 'value': day.isoformat(), 'macro': '{{ ds }}'},
+      # the full ISO-formatted timestamp YYYY-MM-DDTHH:MM:SS.mmmmmm
+      '_ts': {'type': 'STRING', 'value': date_time.isoformat(), 'macro': '{{ ts }}'},
+      # the datetime formatted as YYYYMMDD (i.e. YYYY-MM-DD with 'no dashes')
+      '_ds_nodash': {'type': 'STRING', 'value': day.strftime('%Y%m%d'),
+                     'macro': '{{ ds_nodash }}'},
+      # the timestamp formatted as YYYYMMDDTHHMMSSmmmmmm (i.e full ISO-formatted timestamp
+      # YYYY-MM-DDTHH:MM:SS.mmmmmm with no dashes or colons).
+      '_ts_nodash': {'type': 'STRING', 'value': date_time.strftime('%Y%m%d%H%M%S%f'),
+                     'macro': '{{ ts_nodash }}'},
+      '_ts_year': {'type': 'STRING', 'value': day.strftime('%Y'),
+                   'macro': '{{ execution_date.year }}'},
+      '_ts_month': {'type': 'STRING', 'value': day.strftime('%m'),
+                    'macro': '{{ execution_date.month }}'},
+      '_ts_day': {'type': 'STRING', 'value': day.strftime('%d'),
+                  'macro': '{{ execution_date.day }}'},
+      '_ts_hour': {'type': 'STRING', 'value': date_time.strftime('%H'),
+                   'macro': '{{ execution_date.hour }}'},
+      '_ts_minute': {'type': 'STRING', 'value': date_time.strftime('%M'),
+                     'macro': '{{ execution_date.minute }}'},
+      '_ts_second': {'type': 'STRING', 'value': date_time.strftime('%S'),
+                     'macro': '{{ execution_date.second }}'},
+    }
+
+    if macros:
+      return {key: value['macro'] for key, value in airflow_macros.items()}
+
+    if types_and_values:
+      return {
+        key: {
+          'type': item['type'],
+          'value': item['value']
+        } for key, item in airflow_macros.items()
+      }
+
+    # By default only return values
+    return {key: value['value'] for key, value in airflow_macros.items()}
+
+  @staticmethod
+  def merge_parameters(parameters, date_time, macros, types_and_values):
+    """ Merge Return a mapping from airflow macro names (prefixed with '_') to values
+
+    Args:
+      date_time: The timestamp at which the macro values need to be evaluated. This is only
+          applicable when types_and_values = True
+      macros: If true, the values in the returned dict are the macro strings (like '{{ ds }}')
+
+    Returns:
+      The resolved value, i.e. the value with the format modifiers replaced with the corresponding
+          parameter-values. E.g. if value is <project-id>.<dataset-id>.logs_%(_ds)s, the returned
+          value could be <project-id>.<dataset-id>.logs_2017-12-21.
+    """
+    merged_parameters = Query._airflow_macro_formats(date_time=date_time, macros=macros,
+                                                     types_and_values=types_and_values)
+    if parameters:
+      if types_and_values:
+        parameters = {
+          item['name']: {'value': item['value'], 'type': item['type']}
+          for item in parameters
+        }
+      else:  # macros = True, or the default (i.e. just values)
+        parameters = {item['name']: item['value'] for item in parameters}
+
+      merged_parameters.update(parameters)
+    return merged_parameters
