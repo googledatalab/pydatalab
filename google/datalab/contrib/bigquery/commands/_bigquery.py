@@ -21,14 +21,11 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 from google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
 import jsonschema
-import textwrap
 
 def _create_pipeline_subparser(parser):
   pipeline_parser = parser.subcommand(
     'pipeline',
-    help="""\
-      Format of the cell is as follows -
-
+    help="""Creates a GCS/BigQuery ETL pipeline.
       input:
         table | path: <BQ table name or GCS path>; both if path->table load is required
         format: {csv (default) | json}
