@@ -288,6 +288,10 @@ class TestCloudAnalyzeFromBQTable(unittest.TestCase):
 
   def test_numerics(self):
     print('project is: ' + dl.Context.default().project_id)
+    print(dl.Context.default().credentials)
+    if dl.Context.default().credentials is not None:
+      print('credential not None')
+
     """Build a BQ table, and then call analyze on it."""
     schema = [{'name': 'col1', 'type': 'INTEGER'},
               {'name': 'col2', 'type': 'FLOAT'},
