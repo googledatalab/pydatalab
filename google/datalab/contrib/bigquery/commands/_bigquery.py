@@ -37,16 +37,9 @@ def _create_pipeline_subparser(parser):
 
 def _pipeline_cell(args, cell_body):
     """Implements the pipeline subcommand in the %%bq magic.
-
-    The supported syntax is:
-
-        %%bq pipeline <args>
-        [<inline YAML>]
-        TODO(rajivpb): Add schema here so that it's clear from the documentation what the expected
-        format is. https://github.com/googledatalab/pydatalab/issues/499.
     Args:
       args: the arguments following '%%bq pipeline'.
-      cell_body: the contents of the cell
+      cell_body: Cell contents.
     """
     name = args.get('name')
     if name is None:
@@ -140,7 +133,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
     if 'csv' in bq_pipeline_input_config:
       load_task_config['csv_options'] = bq_pipeline_input_config['csv']
 
-    # The destination bigquery table name for loading
+    # The destination BQ table name for loading
     source_of_table = bq_pipeline_input_config
     if ('table' not in bq_pipeline_input_config and not bq_pipeline_transformation_config and
         bq_pipeline_output_config and 'table' in bq_pipeline_output_config and
@@ -191,7 +184,6 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
             'table' not in bq_pipeline_input_config):
         execute_task_config['data_source'] = bq_pipeline_input_config.get('data_source', 'input')
 
-        # All the below are applicable only if data_source is specified
         if 'path' in bq_pipeline_input_config:
             # We format the path since this could contain format modifiers
             execute_task_config['path'] = bq_pipeline_input_config['path']
@@ -211,10 +203,10 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     # If there is a table in the input config, we allow the user to reference table with the name
     # 'input' in their sql, i.e. via something like 'SELECT col1 FROM input WHERE ...'. To enable
-    # this, we include the input table as as subquery with the query object. If the user's sql does
+    # this, we include the input table as a subquery with the query object. If the user's sql does
     # not reference an 'input' table, BigQuery will just ignore it. Things get interesting if the
-    # user's sql specifies a subquery named 'input' and that will provide override the sub-query
-    # that we use. TODO(rajivpb): Verify this.
+    # user's sql specifies a subquery named 'input' - that should override the subquery that we use.
+    # TODO(rajivpb): Verify this.
     if (bq_pipeline_input_config and 'table' in bq_pipeline_input_config):
       table_name = google.datalab.bigquery.Query.resolve_parameters(
           bq_pipeline_input_config.get('table'), bq_pipeline_parameters_config, macros=True)

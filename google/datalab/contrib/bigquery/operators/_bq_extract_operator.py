@@ -29,10 +29,17 @@ class ExtractOperator(BaseOperator):
 
   def execute(self, context):
     source_table = google.datalab.bigquery.Table(self.table, context=None)
+
+    csv_kwargs = {}
+    if 'delimiter' in self.csv_options:
+      csv_kwargs['csv_delimiter'] = self.csv_options['delimiter']
+    if 'header' in self.csv_options:
+      csv_kwargs['csv_header'] = self.csv_options['header']
+    if 'compress' in self.csv_options:
+      csv_kwargs['compress'] = self.csv_options['compress']
+
     job = source_table.extract(
-      self.path, format='CSV' if self.format == 'csv' else 'NEWLINE_DELIMITED_JSON',
-      csv_delimiter=self.csv_options.get('delimiter'),
-      csv_header=self.csv_options.get('header'), compress=self.csv_options.get('compress'))
+      self.path, format='CSV' if self.format == 'csv' else 'NEWLINE_DELIMITED_JSON', **csv_kwargs)
 
     if job.failed:
       raise Exception('Extract failed: %s' % str(job.fatal_error))

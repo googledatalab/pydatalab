@@ -59,7 +59,8 @@ class TestCases(unittest.TestCase):
     mock_context_default.return_value = TestCases._create_context()
     extract_operator = ExtractOperator(table=TestCases.test_project_id + '.test_table',
                                        path='test_path', format=None,
-                                       task_id='test_extract_operator')
+                                       task_id='test_extract_operator',
+                                       csv_options={'delimiter': '$'})
 
     # Happy path
     mock_table_extract.return_value.result = lambda: 'test-results'
@@ -67,7 +68,7 @@ class TestCases(unittest.TestCase):
     mock_table_extract.return_value.errors = None
     self.assertDictEqual(extract_operator.execute(context=None), {'result': 'test-results'})
     mock_table_extract.assert_called_with('test_path', format='NEWLINE_DELIMITED_JSON',
-                                          csv_delimiter=None, csv_header=None, compress=None)
+                                          csv_delimiter='$')
 
     # Extract failed
     mock_table_extract.return_value.result = lambda: 'test-results'
