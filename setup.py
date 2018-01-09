@@ -100,7 +100,6 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'httplib2==0.10.3',
     'oauth2client==2.2.0',
     'pandas==0.22.0',
-    'pandas-gbq==0.3.0',
     'google_auth_httplib2==0.0.2',
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
