@@ -27,8 +27,8 @@ def _create_pipeline_subparser(parser):
   pipeline_parser = parser.subcommand(
     'pipeline',
     help='',
-    epilog=textwrap.dedent("""\
-      Format of the cell contents is as follows -
+    epilog="""\
+      Format of the cell is as follows -
 
       input:
         table | path: <BQ table name or GCS path>; both if path->table load is required
@@ -56,7 +56,7 @@ def _create_pipeline_subparser(parser):
         end:  <formatted as yyyy-mm-ddThh:mm:ss; default is 'forever'>
         interval: {@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}
       parameters:
-        <syntax is same as that in '%%bq execute'>')"""))
+        <syntax is same as that in '%%bq execute'>')""")
 
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)

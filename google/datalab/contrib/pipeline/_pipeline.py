@@ -45,42 +45,11 @@ from google.datalab.contrib.bigquery.operators._bq_extract_operator import Extra
 from datetime import timedelta
 """
 
-  def __init__(self, name, pipeline_spec, resolve_airflow_macros=False):
+  def __init__(self, name, pipeline_spec):
     """ Initializes an instance of a Pipeline object.
-
-    Args:
-      pipeline_spec: Dict of yaml spec that's specified as:
-        input:
-          table | path: <BQ table name or GCS path>; both if path->table load is required
-          format: {csv (default) | json}
-          csv: (if 'csv' is the 'format')
-            delimiter: the field delimiter to use. Defaults to ','.
-            skip: Number of rows at the top of a CSV file to skip. Defaults to 0.
-            strict: If False (default), does not accept rows with missing trailing optional columns.
-            quote: The value used to quote data sections. Defaults to '"'.
-          schema:
-            <syntax is same as that in '%%bq execute'>
-          mode: {append (default) | overwrite}; required if loading from path to table.
-          max_bad_records: Number of allowed bad records before returning an 'invalid' job result.
-        transformation:
-          query: <name of BQ query defined via "%%bq query --name ...">
-        output:
-          table | path: <BQ table name or GCS path>; both if table->path extract is required
-          format: {csv (default) | json}
-          csv: (if 'csv' is the 'format')
-            delimiter: the field delimiter to use. Defaults to ','
-            header: {True (default) | False}; Whether to include an initial header line.
-            compress: {True | False (default) }; Whether to compress the data on export.
-        schedule: (optional; defaults below will apply when omitted)
-          start: <formatted as yyyy-mm-ddThh:mm:ss; default is 'now'>
-          end:  <formatted as yyyy-mm-ddThh:mm:ss; default is 'forever'>
-          interval: {@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}
-        parameters:
-          <syntax is same as that in '%%bq execute'>
     """
     self._pipeline_spec = pipeline_spec
     self._name = name
-    self._resolve_airflow_macros = resolve_airflow_macros
 
   def get_airflow_spec(self):
     """ Gets the airflow python spec for the Pipeline object.
