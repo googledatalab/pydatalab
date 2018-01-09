@@ -21,11 +21,43 @@ from google.datalab.contrib.pipeline._pipeline import Pipeline
 from google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
 import jsonschema
-
+import textwrap
 
 def _create_pipeline_subparser(parser):
-  pipeline_parser = parser.subcommand('pipeline', 'Creates a pipeline to execute a SQL query to '
-                                                  'transform data using BigQuery.')
+  pipeline_parser = parser.subcommand(
+    'pipeline',
+    help='',
+    epilog=textwrap.dedent("""\
+      Format of the cell contents is as follows -
+
+      input:
+        table | path: <BQ table name or GCS path>; both if path->table load is required
+        format: {csv (default) | json}
+        csv: (if 'csv' is the 'format')
+          delimiter: the field delimiter to use. Defaults to ','.
+          skip: Number of rows at the top of a CSV file to skip. Defaults to 0.
+          strict: If False (default), does not accept rows with missing trailing optional columns.
+          quote: The value used to quote data sections. Defaults to '"'.
+        schema:
+          <syntax is same as that in '%%bq execute'>
+        mode: {append (default) | overwrite}; required if loading from path to table.
+        max_bad_records: Number of allowed bad records before returning an 'invalid' job result.
+      transformation:
+        query: <name of BQ query defined via "%%bq query --name ...">
+      output:
+        table | path: <BQ table name or GCS path>; both if table->path extract is required
+        format: {csv (default) | json}
+        csv: (if 'csv' is the 'format')
+          delimiter: the field delimiter to use. Defaults to ','
+          header: {True (default) | False}; Whether to include an initial header line.
+          compress: {True | False (default) }; Whether to compress the data on export.
+      schedule: (optional; defaults below will apply when omitted)
+        start: <formatted as yyyy-mm-ddThh:mm:ss; default is 'now'>
+        end:  <formatted as yyyy-mm-ddThh:mm:ss; default is 'forever'>
+        interval: {@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}
+      parameters:
+        <syntax is same as that in '%%bq execute'>')"""))
+
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)
   pipeline_parser.add_argument('-d', '--gcs_dag_bucket', type=str,
