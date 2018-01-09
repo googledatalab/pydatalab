@@ -99,11 +99,8 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'plotly==1.12.5',
     'httplib2==0.10.3',
     'oauth2client==2.2.0',
-    # TODO(rajivpb): Pinning pandas to 0.19.1 is a temporary work-around for
-    # https://issues.apache.org/jira/browse/AIRFLOW-1179, because the version of airflow on PyPI
-    # does not seem to have the fix. We should unpin after installing a version of airflow that's
-    # built from HEAD.
-    'pandas==0.19.1',
+    'pandas==0.22.0',
+    'pandas-gbq==0.3.0',
     'google_auth_httplib2==0.0.2',
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
