@@ -31,15 +31,14 @@ def _create_pipeline_subparser(parser):
 Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
   input:
     table | path: <BQ table name or GCS path>; both if path->table load is required
-    format: {csv (default) | json}
     schema: <syntax is same as that in '%%bq execute'>
-    mode: {append (default) | overwrite}; required if loading from path to table.
-    max_bad_records: Number of allowed bad records before returning an 'invalid' job result.
+    format: {csv (default) | json}
     csv: (if 'csv' is the 'format')
       delimiter: the field delimiter to use. Defaults to ','.
       skip: Number of rows at the top of a CSV file to skip. Defaults to 0.
       strict: If False (default), does not accept rows with missing trailing optional columns.
       quote: The value used to quote data sections. Defaults to '"'.
+    mode: {append (default) | overwrite}; required if loading from path to table.
   transformation:
     query: <name of BQ query defined via "%%bq query --name ...">
   output:
