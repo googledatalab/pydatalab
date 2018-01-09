@@ -26,8 +26,7 @@ import textwrap
 def _create_pipeline_subparser(parser):
   pipeline_parser = parser.subcommand(
     'pipeline',
-    help='',
-    epilog="""\
+    help="""\
       Format of the cell is as follows -
 
       input:
