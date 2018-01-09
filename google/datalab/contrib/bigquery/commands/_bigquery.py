@@ -20,12 +20,42 @@ import google.datalab.utils as utils
 from google.datalab.contrib.pipeline._pipeline import Pipeline
 from google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
+import argparse
 import jsonschema
 
 
 def _create_pipeline_subparser(parser):
-  pipeline_parser = parser.subcommand('pipeline', 'Creates a pipeline to execute a SQL query to '
-                                                  'transform data using BigQuery.')
+  pipeline_parser = parser.subcommand(
+    'pipeline',
+    formatter_class=argparse.RawTextHelpFormatter,
+    help="""
+Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
+  input:
+    table | path: <BQ table name or GCS path>; both if path->table load is required
+    schema: <syntax is same as that in '%%bq execute'>
+    format: {csv (default) | json}
+    csv: (if 'csv' is the 'format')
+      delimiter: the field delimiter to use. Defaults to ','.
+      skip: Number of rows at the top of a CSV file to skip. Defaults to 0.
+      strict: If False (default), does not accept rows with missing trailing optional columns.
+      quote: The value used to quote data sections. Defaults to '"'.
+    mode: {append (default) | overwrite}; required if loading from path to table.
+  transformation:
+    query: <name of BQ query defined via "%%bq query --name ...">
+  output:
+    table | path: <BQ table name or GCS path>; both if table->path extract is required
+    format: {csv (default) | json}
+    csv: (if 'csv' is the 'format')
+      delimiter: the field delimiter to use. Defaults to ','
+      header: {True (default) | False}; Whether to include an initial header line.
+      compress: {True | False (default) }; Whether to compress the data on export.
+  schedule: (optional; defaults below will apply when omitted)
+    start: <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'now'>
+    end:  <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'forever'>
+    interval: {@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}
+  parameters: <syntax is same as that in '%%bq execute'>')
+""")
+
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)
   pipeline_parser.add_argument('-d', '--gcs_dag_bucket', type=str,
@@ -37,16 +67,9 @@ def _create_pipeline_subparser(parser):
 
 def _pipeline_cell(args, cell_body):
     """Implements the pipeline subcommand in the %%bq magic.
-
-    The supported syntax is:
-
-        %%bq pipeline <args>
-        [<inline YAML>]
-        TODO(rajivpb): Add schema here so that it's clear from the documentation what the expected
-        format is. https://github.com/googledatalab/pydatalab/issues/499.
     Args:
       args: the arguments following '%%bq pipeline'.
-      cell_body: the contents of the cell
+      cell_body: Cell contents.
     """
     name = args.get('name')
     if name is None:
@@ -140,7 +163,7 @@ def _get_load_parameters(bq_pipeline_input_config, bq_pipeline_transformation_co
     if 'csv' in bq_pipeline_input_config:
       load_task_config['csv_options'] = bq_pipeline_input_config['csv']
 
-    # The destination bigquery table name for loading
+    # The destination BQ table name for loading
     source_of_table = bq_pipeline_input_config
     if ('table' not in bq_pipeline_input_config and not bq_pipeline_transformation_config and
         bq_pipeline_output_config and 'table' in bq_pipeline_output_config and
@@ -191,7 +214,6 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
             'table' not in bq_pipeline_input_config):
         execute_task_config['data_source'] = bq_pipeline_input_config.get('data_source', 'input')
 
-        # All the below are applicable only if data_source is specified
         if 'path' in bq_pipeline_input_config:
             # We format the path since this could contain format modifiers
             execute_task_config['path'] = bq_pipeline_input_config['path']
@@ -211,10 +233,10 @@ def _get_execute_parameters(load_task_id, bq_pipeline_input_config,
     query = utils.commands.get_notebook_item(bq_pipeline_transformation_config['query'])
     # If there is a table in the input config, we allow the user to reference table with the name
     # 'input' in their sql, i.e. via something like 'SELECT col1 FROM input WHERE ...'. To enable
-    # this, we include the input table as as subquery with the query object. If the user's sql does
+    # this, we include the input table as a subquery with the query object. If the user's sql does
     # not reference an 'input' table, BigQuery will just ignore it. Things get interesting if the
-    # user's sql specifies a subquery named 'input' and that will provide override the sub-query
-    # that we use. TODO(rajivpb): Verify this.
+    # user's sql specifies a subquery named 'input' - that should override the subquery that we use.
+    # TODO(rajivpb): Verify this.
     if (bq_pipeline_input_config and 'table' in bq_pipeline_input_config):
       table_name = google.datalab.bigquery.Query.resolve_parameters(
           bq_pipeline_input_config.get('table'), bq_pipeline_parameters_config, macros=True)

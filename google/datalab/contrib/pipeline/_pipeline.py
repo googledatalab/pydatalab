@@ -45,15 +45,11 @@ from google.datalab.contrib.bigquery.operators._bq_extract_operator import Extra
 from datetime import timedelta
 """
 
-  def __init__(self, name, pipeline_spec, resolve_airflow_macros=False):
+  def __init__(self, name, pipeline_spec):
     """ Initializes an instance of a Pipeline object.
-
-    Args:
-      pipeline_spec: Dict with pipeline-spec in key-value form.
     """
     self._pipeline_spec = pipeline_spec
     self._name = name
-    self._resolve_airflow_macros = resolve_airflow_macros
 
   def get_airflow_spec(self):
     """ Gets the airflow python spec for the Pipeline object.
