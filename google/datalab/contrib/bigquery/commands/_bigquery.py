@@ -49,11 +49,10 @@ Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
       header: {True (default) | False}; Whether to include an initial header line.
       compress: {True | False (default) }; Whether to compress the data on export.
   schedule: (optional; defaults below will apply when omitted)
-    start: <formatted as yyyy-mm-ddThh:mm:ss; default is 'now'>
-    end:  <formatted as yyyy-mm-ddThh:mm:ss; default is 'forever'>
+    start: <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'now'>
+    end:  <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'forever'>
     interval: {@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}
-  parameters:
-    <syntax is same as that in '%%bq execute'>')
+  parameters: <syntax is same as that in '%%bq execute'>')
 """)
 
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
