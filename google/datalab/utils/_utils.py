@@ -21,14 +21,16 @@ try:
 except ImportError:
     import httplib
 
+import logging
+import os
+import json
 import pytz
 import six
 import subprocess
 import socket
 import traceback
 import types
-import os
-import json
+
 import oauth2client.client
 import google.auth
 import google.auth.exceptions
@@ -187,8 +189,14 @@ def get_credentials():
       overriding these the defaults should suffice.
   """
   try:
+    # We temporarily disable warning logs from the "_default" module to avoid
+    # a spurious warning about the project not being set.
+    authDefaultLogger = logging.getLogger("google.auth._default")
+    previousLevel = authDefaultLogger.getEffectiveLevel()
+    authDefaultLogger.setLevel(logging.ERROR)
     credentials, _ = google.auth.default()
     credentials = google.auth.credentials.with_scopes_if_required(credentials, CREDENTIAL_SCOPES)
+    authDefaultLogger.setLevel(previousLevel)
     return credentials
   except Exception as e:
 
