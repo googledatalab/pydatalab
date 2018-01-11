@@ -53,6 +53,7 @@ Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
     start: <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'now'>
     end:  <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'forever'>
     interval: {@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}
+    catchup: {True (default) | False}; Whether to have pipelines execute in the past.
   parameters: <syntax is same as that in '%%bq execute'>')
 """)
 
