@@ -264,14 +264,9 @@ LIMIT 5""")
 
   def test_get_dag_definition(self):
     test_pipeline = pipeline.Pipeline('foo', None)
-    self.assertEqual(test_pipeline._get_dag_definition('bar'),
+    self.assertEqual(test_pipeline._get_dag_definition('bar', False),
                      'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', '
                      'catchup=False, default_args=default_args)\n\n')
-
-    test_pipeline = pipeline.Pipeline('foo', None)
-    self.assertEqual(test_pipeline._get_dag_definition('bar', True),
-                     'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', '
-                     'catchup=True, default_args=default_args)\n\n')
 
   def test_get_datetime_expr(self):
     dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)

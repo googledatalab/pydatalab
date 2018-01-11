@@ -669,7 +669,7 @@ default_args = {
     'end_date': datetime.datetime.strptime\('2009-05-06T22:28:15', '%Y-%m-%dT%H:%M:%S'\),
 }
 
-dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', catchup=False, default_args=default_args\)
+dag = DAG\(dag_id='bq_pipeline_test', schedule_interval='@hourly', catchup=True, default_args=default_args\)
 
 bq_pipeline_execute_task = ExecuteOperator\(task_id='bq_pipeline_execute_task_id', parameters=(.*), sql=\"\"\"WITH input AS \(
   SELECT \* FROM `cloud-datalab-samples\.httplogs\.logs_{{ ds_nodash }}`

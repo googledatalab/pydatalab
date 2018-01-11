@@ -69,7 +69,7 @@ from datetime import timedelta
     default_args = Pipeline._get_default_args(schedule_config,
                                               self._pipeline_spec.get('emails', {}))
     dag_definition = self._get_dag_definition(schedule_config.get('interval', '@once'),
-                                              schedule_config.get('catchup', False))
+                                              schedule_config.get('catchup', True))
     self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
         up_steam_statements
     return self._airflow_spec
@@ -177,7 +177,7 @@ default_args = {{{0}}}
       return ', {0}={1}'
     return ', {0}="""{1}"""'
 
-  def _get_dag_definition(self, schedule_interval, catchup=False):
+  def _get_dag_definition(self, schedule_interval, catchup):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
                      'catchup={2}, default_args=default_args)\n\n'.format(self._name,
                                                                           schedule_interval,
