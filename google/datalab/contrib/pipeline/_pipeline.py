@@ -13,7 +13,6 @@
 import datetime
 import google
 import google.datalab.bigquery as bigquery
-from google.datalab import utils
 import sys
 
 # Any operators need to be imported here. This is required for dynamically getting the list of
@@ -24,7 +23,7 @@ from google.datalab.contrib.bigquery.operators._bq_execute_operator import Execu
 from google.datalab.contrib.bigquery.operators._bq_extract_operator import ExtractOperator  # noqa
 
 
-class Pipeline(object):
+class PipelineGenerator(object):
   """ Represents a Pipeline object that encapsulates an Airflow pipeline spec.
 
   This object can be used to generate the python airflow spec.
@@ -45,57 +44,35 @@ from google.datalab.contrib.bigquery.operators._bq_extract_operator import Extra
 from datetime import timedelta
 """
 
-  def __init__(self, name, pipeline_spec):
-    """ Initializes an instance of a Pipeline object.
-    """
-    self._pipeline_spec = pipeline_spec
-    self._name = name
-
-  def get_airflow_spec(self):
+  @staticmethod
+  def generate_airflow_spec(name, pipeline_spec):
     """ Gets the airflow python spec for the Pipeline object.
     """
     task_definitions = ''
     up_steam_statements = ''
-    parameters = self._pipeline_spec.get('parameters')
-    for (task_id, task_details) in sorted(self._pipeline_spec['tasks'].items()):
-      task_def = self._get_operator_definition(task_id, task_details, parameters)
+    parameters = pipeline_spec.get('parameters')
+    for (task_id, task_details) in sorted(pipeline_spec['tasks'].items()):
+      task_def = PipelineGenerator._get_operator_definition(task_id, task_details, parameters)
       task_definitions = task_definitions + task_def
-      dependency_def = Pipeline._get_dependency_definition(task_id, task_details.get('up_stream',
-                                                                                     []))
+      dependency_def = PipelineGenerator._get_dependency_definition(
+        task_id, task_details.get('up_stream', []))
       up_steam_statements = up_steam_statements + dependency_def
 
-    schedule_config = self._pipeline_spec.get('schedule', {})
+    schedule_config = pipeline_spec.get('schedule', {})
 
-    default_args = Pipeline._get_default_args(schedule_config,
-                                              self._pipeline_spec.get('emails', {}))
-    dag_definition = self._get_dag_definition(schedule_config.get('interval', '@once'),
-                                              schedule_config.get('catchup', False))
-    self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
+    default_args = PipelineGenerator._get_default_args(schedule_config,
+                                                       pipeline_spec.get('emails', {}))
+    dag_definition = PipelineGenerator._get_dag_definition(
+      name, schedule_config.get('interval', '@once'), schedule_config.get('catchup', False))
+    return PipelineGenerator._imports + default_args + dag_definition + task_definitions + \
         up_steam_statements
-    return self._airflow_spec
-
-  @staticmethod
-  def get_pipeline_spec(spec_str, env=None):
-    """ Gets a dict representation of the pipeline-spec, given a yaml string.
-    Args:
-      spec_str: string representation of the pipeline's yaml spec
-      env: a dictionary containing objects from the pipeline execution context,
-          used to get references to Bigquery SQL objects, and other python
-          objects defined in the notebook.
-
-    Returns:
-      Dict with pipeline-spec in key-value form.
-    """
-    if not spec_str:
-      return None
-    return utils.commands.parse_config(spec_str, env)
 
   @staticmethod
   def _get_default_args(schedule_config, emails):
     start_datetime_obj = schedule_config.get('start', datetime.datetime.now())
     end_datetime_obj = schedule_config.get('end')
-    start_date_str = Pipeline._get_datetime_expr_str(start_datetime_obj)
-    end_date_str = Pipeline._get_datetime_expr_str(end_datetime_obj)
+    start_date_str = PipelineGenerator._get_datetime_expr_str(start_datetime_obj)
+    end_date_str = PipelineGenerator._get_datetime_expr_str(end_datetime_obj)
 
     default_arg_literals = """
     'owner': 'Google Cloud Datalab',
@@ -139,18 +116,19 @@ default_args = {{{0}}}
     expr_format = 'datetime.datetime.strptime(\'{0}\', \'{1}\')'
     return expr_format.format(datetime_obj.strftime(datetime_format), datetime_format)
 
-  def _get_operator_definition(self, task_id, task_details, parameters):
+  @staticmethod
+  def _get_operator_definition(task_id, task_details, parameters):
     """ Internal helper that gets the definition of the airflow operator for the task with the
       python parameters. All the parameters are also expanded with the airflow macros.
       :param parameters:
     """
     operator_type = task_details['type']
     full_param_string = 'task_id=\'{0}_id\''.format(task_id)
-    operator_class_name, module = Pipeline._get_operator_class_name(operator_type)
+    operator_class_name, module = PipelineGenerator._get_operator_class_name(operator_type)
     operator_class_instance = getattr(sys.modules[module], operator_class_name, None)
     templated_fields = operator_class_instance.template_fields if operator_class_instance else ()
 
-    operator_param_values = Pipeline._get_operator_param_name_and_values(
+    operator_param_values = PipelineGenerator._get_operator_param_name_and_values(
         operator_class_name, task_details)
 
     # This loop resolves all the macros and builds up the final string
@@ -164,7 +142,7 @@ default_args = {{{0}}}
       if operator_param_name in templated_fields:
         operator_param_value = google.datalab.bigquery.Query._resolve_parameters(
           operator_param_value, merged_parameters)
-      param_format_string = Pipeline._get_param_format_string(operator_param_value)
+      param_format_string = PipelineGenerator._get_param_format_string(operator_param_value)
       param_string = param_format_string.format(operator_param_name, operator_param_value)
       full_param_string = full_param_string + param_string
 
@@ -177,9 +155,10 @@ default_args = {{{0}}}
       return ', {0}={1}'
     return ', {0}="""{1}"""'
 
-  def _get_dag_definition(self, schedule_interval, catchup=False):
+  @staticmethod
+  def _get_dag_definition(name, schedule_interval, catchup=False):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
-                     'catchup={2}, default_args=default_args)\n\n'.format(self._name,
+                     'catchup={2}, default_args=default_args)\n\n'.format(name,
                                                                           schedule_interval,
                                                                           catchup)
     return dag_definition
@@ -249,11 +228,11 @@ default_args = {{{0}}}
     # TODO(rajivpb): It should be possible to make this a lookup from the modules mapping via
     # getattr() or equivalent. Avoid hard-coding these class-names here.
     if (operator_class_name == 'BigQueryOperator'):
-      return Pipeline._get_bq_execute_params(operator_task_details)
+      return PipelineGenerator._get_bq_execute_params(operator_task_details)
     if (operator_class_name == 'BigQueryToCloudStorageOperator'):
-      return Pipeline._get_bq_extract_params(operator_task_details)
+      return PipelineGenerator._get_bq_extract_params(operator_task_details)
     if (operator_class_name == 'GoogleCloudStorageToBigQueryOperator'):
-      return Pipeline._get_bq_load_params(operator_task_details)
+      return PipelineGenerator._get_bq_load_params(operator_task_details)
     return operator_task_details
 
   @staticmethod
@@ -322,7 +301,8 @@ default_args = {{{0}}}
       del operator_task_details['skip']
 
     if 'path' in operator_task_details:
-      bucket, source_object = Pipeline._get_bucket_and_source_object(operator_task_details['path'])
+      bucket, source_object = PipelineGenerator._get_bucket_and_source_object(
+        operator_task_details['path'])
       operator_task_details['bucket'] = bucket
       operator_task_details['source_objects'] = source_object
       del operator_task_details['path']

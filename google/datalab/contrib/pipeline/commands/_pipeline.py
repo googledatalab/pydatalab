@@ -15,13 +15,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-try:
-  import IPython
-  import IPython.core.display
-  import IPython.core.magic
-except ImportError:
-  raise Exception('This module can only be deployed in ipython.')
-
 import google
 
 
@@ -37,15 +30,14 @@ def _create_cell(args, cell_body):
   name = args.get('name')
   if name is None:
     raise Exception("Pipeline name was not specified.")
-
-  pipeline_spec = google.datalab.contrib.pipeline._pipeline.Pipeline.get_pipeline_spec(
-      cell_body, google.datalab.utils.commands.notebook_environment())
-  pipeline = google.datalab.contrib.pipeline._pipeline.Pipeline(name, pipeline_spec)
-  google.datalab.utils.commands.notebook_environment()[name] = pipeline
+  pipeline_spec = google.datalab.utils.commands.parse_config(
+    cell_body, google.datalab.utils.commands.notebook_environment())
+  airflow_spec = google.datalab.contrib.pipeline._pipeline.PipelineGenerator.generate_airflow_spec(
+      name, pipeline_spec)
 
   debug = args.get('debug')
   if debug is True:
-    return pipeline.get_airflow_spec()
+    return airflow_spec
 
 
 def _create_create_subparser(parser):
@@ -144,24 +136,3 @@ def _dispatch_handler(args, cell, parser, handler, cell_required=False,
     raise Exception('The %s command requires additional data' % parser.prog)
 
   return handler(args, cell)
-
-
-def _repr_html_pipeline(pipeline):
-  return google.datalab.utils.commands.HtmlBuilder.render_text(
-      pipeline.get_airflow_spec(), preformatted=True)
-
-
-def _register_html_formatters():
-  try:
-    ipy = IPython.get_ipython()
-    html_formatter = ipy.display_formatter.formatters['text/html']
-
-    html_formatter.for_type_by_name(
-        'google.datalab.pipeline._pipeline', 'Pipeline', _repr_html_pipeline)
-
-  except TypeError:
-    # For when running unit tests
-    pass
-
-
-_register_html_formatters()
