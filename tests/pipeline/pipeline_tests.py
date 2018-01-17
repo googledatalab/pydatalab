@@ -318,7 +318,7 @@ LIMIT 5""")
     del dag_dict['schedule']
 
     test_pipeline = pipeline.Pipeline('foo_name', dag_dict)
-    actual = test_pipeline.get_airflow_spec()
+    actual = test_pipeline.generate_airflow_spec()
     self.assertIn('import datetime', actual)
     self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
     self.assertIn("schedule_interval='@once'", actual)

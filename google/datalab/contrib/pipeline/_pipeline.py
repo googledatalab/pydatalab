@@ -50,7 +50,7 @@ from datetime import timedelta
     self._pipeline_spec = pipeline_spec
     self._name = name
 
-  def get_airflow_spec(self):
+  def generate_airflow_spec(self):
     """ Gets the airflow python spec for the Pipeline object.
     """
     task_definitions = ''
