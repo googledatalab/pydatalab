@@ -253,13 +253,11 @@ LIMIT 5""")
                      ('UnknownOperator', 'google.datalab.contrib.pipeline._pipeline'))
 
   def test_get_dag_definition(self):
-    test_pipeline = pipeline.Pipeline('foo', None)
-    self.assertEqual(test_pipeline._get_dag_definition('bar'),
+    self.assertEqual(pipeline.Pipeline._get_dag_definition('foo', 'bar', ),
                      'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', '
                      'catchup=False, default_args=default_args)\n\n')
 
-    test_pipeline = pipeline.Pipeline('foo', None)
-    self.assertEqual(test_pipeline._get_dag_definition('bar', True),
+    self.assertEqual(pipeline.Pipeline._get_dag_definition('foo', 'bar', True),
                      'dag = DAG(dag_id=\'foo\', schedule_interval=\'bar\', '
                      'catchup=True, default_args=default_args)\n\n')
 
@@ -307,8 +305,7 @@ LIMIT 5""")
     # We delete the schedule spec to test with defaults
     del dag_dict['schedule']
 
-    test_pipeline = pipeline.Pipeline('foo_name', dag_dict)
-    actual = test_pipeline.generate_airflow_spec()
+    actual = pipeline.Pipeline.generate_airflow_spec('foo_name', dag_dict)
     self.assertIn('import datetime', actual)
     self.assertIn("'email': ['foo1@test.com', 'foo2@test.com']", actual)
     self.assertIn("schedule_interval='@once'", actual)

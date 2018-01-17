@@ -79,10 +79,7 @@ def _pipeline_cell(args, cell_body):
         cell_body, utils.commands.notebook_environment())
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
 
-    pipeline = Pipeline(name, pipeline_spec)
-    utils.commands.notebook_environment()[name] = pipeline
-
-    airflow_spec = pipeline.generate_airflow_spec()
+    airflow_spec = Pipeline.generate_airflow_spec(name, pipeline_spec)
 
     # If a gcs_dag_bucket is specified, we deploy to it so that the Airflow VM rsyncs it.
     gcs_dag_bucket = args.get('gcs_dag_bucket')

@@ -44,34 +44,28 @@ from google.datalab.contrib.bigquery.operators._bq_extract_operator import Extra
 from datetime import timedelta
 """
 
-  def __init__(self, name, pipeline_spec):
-    """ Initializes an instance of a Pipeline object.
-    """
-    self._pipeline_spec = pipeline_spec
-    self._name = name
-
-  def generate_airflow_spec(self):
+  @staticmethod
+  def generate_airflow_spec(name, pipeline_spec):
     """ Gets the airflow python spec for the Pipeline object.
     """
     task_definitions = ''
     up_steam_statements = ''
-    parameters = self._pipeline_spec.get('parameters')
-    for (task_id, task_details) in sorted(self._pipeline_spec['tasks'].items()):
+    parameters = pipeline_spec.get('parameters')
+    for (task_id, task_details) in sorted(pipeline_spec['tasks'].items()):
       task_def = Pipeline._get_operator_definition(task_id, task_details, parameters)
       task_definitions = task_definitions + task_def
       dependency_def = Pipeline._get_dependency_definition(task_id, task_details.get('up_stream',
                                                                                      []))
       up_steam_statements = up_steam_statements + dependency_def
 
-    schedule_config = self._pipeline_spec.get('schedule', {})
+    schedule_config = pipeline_spec.get('schedule', {})
 
     default_args = Pipeline._get_default_args(schedule_config,
-                                              self._pipeline_spec.get('emails', {}))
-    dag_definition = self._get_dag_definition(schedule_config.get('interval', '@once'),
-                                              schedule_config.get('catchup', False))
-    self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
+                                              pipeline_spec.get('emails', {}))
+    dag_definition = Pipeline._get_dag_definition(name, schedule_config.get('interval', '@once'),
+                                                  schedule_config.get('catchup', False))
+    return Pipeline._imports + default_args + dag_definition + task_definitions + \
         up_steam_statements
-    return self._airflow_spec
 
   @staticmethod
   def _get_default_args(schedule_config, emails):
@@ -161,9 +155,10 @@ default_args = {{{0}}}
       return ', {0}={1}'
     return ', {0}="""{1}"""'
 
-  def _get_dag_definition(self, schedule_interval, catchup=False):
+  @staticmethod
+  def _get_dag_definition(name, schedule_interval, catchup=False):
     dag_definition = 'dag = DAG(dag_id=\'{0}\', schedule_interval=\'{1}\', ' \
-                     'catchup={2}, default_args=default_args)\n\n'.format(self._name,
+                     'catchup={2}, default_args=default_args)\n\n'.format(name,
                                                                           schedule_interval,
                                                                           catchup)
     return dag_definition

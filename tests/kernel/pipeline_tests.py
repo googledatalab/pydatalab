@@ -132,11 +132,9 @@ tasks:
       - print_pdt_date
 """
 
-    # no pipeline name specified. should execute
-    google.datalab.contrib.pipeline.commands._pipeline._create_cell({'name': 'p1'}, p_body)
-    p1 = env['p1']
-    self.assertIsNotNone(p1)
-    self.assertEqual(p1.generate_airflow_spec(), """
+    spec = google.datalab.contrib.pipeline.commands._pipeline._create_cell(
+      {'name': 'p1', 'debug': True}, p_body)
+    self.assertEqual(spec, """
 import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
