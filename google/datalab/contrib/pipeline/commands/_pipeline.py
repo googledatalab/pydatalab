@@ -32,7 +32,7 @@ def _create_cell(args, cell_body):
     raise Exception("Pipeline name was not specified.")
   pipeline_spec = google.datalab.utils.commands.parse_config(
     cell_body, google.datalab.utils.commands.notebook_environment())
-  airflow_spec = google.datalab.contrib.pipeline._pipeline.Pipeline.generate_airflow_spec(
+  airflow_spec = google.datalab.contrib.pipeline._pipeline.PipelineGenerator.generate_airflow_spec(
       name, pipeline_spec)
 
   debug = args.get('debug')

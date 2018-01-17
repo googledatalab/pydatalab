@@ -17,7 +17,7 @@ import google.datalab.utils as utils
 
 # TODO(rajivpb): These contrib imports are a stop-gap for
 # https://github.com/googledatalab/pydatalab/issues/593
-from google.datalab.contrib.pipeline._pipeline import Pipeline
+from google.datalab.contrib.pipeline._pipeline import PipelineGenerator
 from google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
 import argparse
@@ -79,7 +79,7 @@ def _pipeline_cell(args, cell_body):
         cell_body, utils.commands.notebook_environment())
     pipeline_spec = _get_pipeline_spec_from_config(bq_pipeline_config)
 
-    airflow_spec = Pipeline.generate_airflow_spec(name, pipeline_spec)
+    airflow_spec = PipelineGenerator.generate_airflow_spec(name, pipeline_spec)
 
     # If a gcs_dag_bucket is specified, we deploy to it so that the Airflow VM rsyncs it.
     gcs_dag_bucket = args.get('gcs_dag_bucket')
