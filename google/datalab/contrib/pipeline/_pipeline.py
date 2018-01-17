@@ -13,7 +13,6 @@
 import datetime
 import google
 import google.datalab.bigquery as bigquery
-from google.datalab import utils
 import sys
 
 # Any operators need to be imported here. This is required for dynamically getting the list of
@@ -73,22 +72,6 @@ from datetime import timedelta
     self._airflow_spec = Pipeline._imports + default_args + dag_definition + task_definitions + \
         up_steam_statements
     return self._airflow_spec
-
-  @staticmethod
-  def get_pipeline_spec(spec_str, env=None):
-    """ Gets a dict representation of the pipeline-spec, given a yaml string.
-    Args:
-      spec_str: string representation of the pipeline's yaml spec
-      env: a dictionary containing objects from the pipeline execution context,
-          used to get references to Bigquery SQL objects, and other python
-          objects defined in the notebook.
-
-    Returns:
-      Dict with pipeline-spec in key-value form.
-    """
-    if not spec_str:
-      return None
-    return utils.commands.parse_config(spec_str, env)
 
   @staticmethod
   def _get_default_args(schedule_config, emails):
