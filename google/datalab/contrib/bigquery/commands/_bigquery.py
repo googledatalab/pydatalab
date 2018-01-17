@@ -31,30 +31,31 @@ def _create_pipeline_subparser(parser):
     help="""
 Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
   input:
-    table | path: <BQ table name or GCS path>; both if path->table load is required
-    schema: <syntax is same as that in '%%bq execute'>
+    table | path: <BQ table name or GCS path; both if path->table load is also required>
+    schema: <For syntax, refer '%%bq execute'>
     format: {csv (default) | json}
-    csv: (if 'csv' is the 'format')
-      delimiter: the field delimiter to use. Defaults to ','.
-      skip: Number of rows at the top of a CSV file to skip. Defaults to 0.
-      strict: If False (default), does not accept rows with missing trailing optional columns.
-      quote: The value used to quote data sections. Defaults to '"'.
-    mode: {append (default) | overwrite}; required if loading from path to table.
-  transformation:
+    csv: <This section is relevant only when 'format' is 'csv'>
+      delimiter: <The field delimiter to use; default is ','>
+      skip: <Number of rows at the top of a CSV file to skip; default is 0>
+      strict: <{True | False (default)}; whether to accept rows with missing trailing (or optional) columns>
+      quote: <Value used to quote data sections; default is '"'>
+    mode: <{append (default) | overwrite}; required if path->table load>
+  transformation: <optional; when absent, a direct conversion is done from input (path|table) to output (table|path)>
     query: <name of BQ query defined via "%%bq query --name ...">
   output:
-    table | path: <BQ table name or GCS path>; both if table->path extract is required
-    format: {csv (default) | json}
-    csv: (if 'csv' is the 'format')
-      delimiter: the field delimiter to use. Defaults to ','
-      header: {True (default) | False}; Whether to include an initial header line.
-      compress: {True | False (default) }; Whether to compress the data on export.
-  schedule: (optional; defaults below will apply when omitted)
+    table | path: <BQ table name or GCS path; both if table->path extract is required>
+    format: <{csv (default) | json}>
+    csv: <This section is relevant only when 'format' is 'csv'>
+      delimiter: <the field delimiter to use. Defaults to ','>
+      header: <{True (default) | False}; Whether to include an initial header line>
+      compress: <{True | False (default) }; Whether to compress the data on export>
+  schedule:
     start: <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'now'>
     end:  <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'forever'>
-    interval: {@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}
-  parameters: <syntax is same as that in '%%bq execute'>')
-""")
+    interval: <{@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}>
+    catchup: <{True | False (default)}; Whether to have pipelines execute in the past>
+  parameters: <For syntax, refer '%%bq execute'>
+""")  # noqa
 
   pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
                                required=True)
