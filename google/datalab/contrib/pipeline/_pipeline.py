@@ -57,7 +57,7 @@ from datetime import timedelta
     up_steam_statements = ''
     parameters = self._pipeline_spec.get('parameters')
     for (task_id, task_details) in sorted(self._pipeline_spec['tasks'].items()):
-      task_def = self._get_operator_definition(task_id, task_details, parameters)
+      task_def = Pipeline._get_operator_definition(task_id, task_details, parameters)
       task_definitions = task_definitions + task_def
       dependency_def = Pipeline._get_dependency_definition(task_id, task_details.get('up_stream',
                                                                                      []))
@@ -122,7 +122,8 @@ default_args = {{{0}}}
     expr_format = 'datetime.datetime.strptime(\'{0}\', \'{1}\')'
     return expr_format.format(datetime_obj.strftime(datetime_format), datetime_format)
 
-  def _get_operator_definition(self, task_id, task_details, parameters):
+  @staticmethod
+  def _get_operator_definition(task_id, task_details, parameters):
     """ Internal helper that gets the definition of the airflow operator for the task with the
       python parameters. All the parameters are also expanded with the airflow macros.
       :param parameters:

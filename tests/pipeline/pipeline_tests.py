@@ -68,8 +68,7 @@ tasks:
     task_details['type'] = 'Bash'
     task_details['bash_command'] = 'date'
 
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", dag=dag)
 """)  # noqa
 
@@ -79,36 +78,33 @@ tasks:
     task_details['type'] = 'Bash'
     task_details['output_encoding'] = 'utf-8'
     task_details['bash_command'] = 'date_%(_ds)s'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_{{ ds }}\"\"\", output_encoding=\"\"\"utf-8\"\"\", dag=dag)
 """)  # noqa
 
     # Airflow macros should get replaced in templated fields
     task_details['bash_command'] = 'date_%(_ds)s'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_{{ ds }}\"\"\", output_encoding=\"\"\"utf-8\"\"\", dag=dag)
 """)  # noqa
 
     # Airflow macros should not get replaced in non-templated fields
     task_details['bash_command'] = 'date'
     task_details['output_encoding'] = 'foo_%(_ds)s'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
 """)  # noqa
 
     # User-defined modifiers should get replaced in templated fields
     task_details['bash_command'] = 'date_%(foo_key)s'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+    operator_def = pipeline.Pipeline._get_operator_definition(
       task_id, task_details, [{'name': 'foo_key', 'value': 'foo_value', 'type': 'STRING'}])
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_foo_value\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
 """)  # noqa
 
     # User-defined modifiers should take precedence over the built-in airflow macros
     task_details['bash_command'] = 'date_%(_ds)s'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(
+    operator_def = pipeline.Pipeline._get_operator_definition(
       task_id, task_details, [{'name': '_ds', 'value': 'user_value', 'type': 'STRING'}])
     self.assertEqual(operator_def, """print_pdt_date = BashOperator(task_id=\'print_pdt_date_id\', bash_command=\"\"\"date_user_value\"\"\", output_encoding=\"\"\"foo_%(_ds)s\"\"\", dag=dag)
 """)  # noqa
@@ -126,8 +122,7 @@ tasks:
     task_details['query'] = google.datalab.bigquery.Query("""SELECT *
 FROM publicdata.samples.wikipedia
 LIMIT 5""")
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """foo = BigQueryOperator(task_id='foo_id', bql=\"\"\"SELECT *\nFROM publicdata.samples.wikipedia\nLIMIT 5\"\"\", use_legacy_sql=False, dag=dag)
 """)  # noqa
 
@@ -145,14 +140,12 @@ LIMIT 5""")
     task_details['delimiter'] = '$'
     task_details['header'] = False
     task_details['compress'] = True
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """foo = BigQueryToCloudStorageOperator(task_id='foo_id', compression=\"\"\"GZIP\"\"\", destination_cloud_storage_uris=[\'foo_path\'], export_format=\"\"\"CSV\"\"\", field_delimiter=\"\"\"$\"\"\", print_header=False, source_project_dataset_table=\"\"\"foo_project.foo_dataset.foo_table\"\"\", dag=dag)
 """)  # noqa
 
     task_details['format'] = 'json'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """foo = BigQueryToCloudStorageOperator(task_id='foo_id', compression=\"\"\"GZIP\"\"\", destination_cloud_storage_uris=[\'foo_path\'], export_format=\"\"\"NEWLINE_DELIMITED_JSON\"\"\", field_delimiter=\"\"\"$\"\"\", print_header=False, source_project_dataset_table=\"\"\"foo_project.foo_dataset.foo_table\"\"\", dag=dag)
 """)  # noqa
 
@@ -169,14 +162,12 @@ LIMIT 5""")
     task_details['format'] = 'csv'
     task_details['delimiter'] = '$'
     task_details['skip'] = False
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """foo = GoogleCloudStorageToBigQueryOperator(task_id='foo_id', bucket=\"\"\"foo_bucket\"\"\", destination_project_dataset_table=\"\"\"foo_project.foo_dataset.foo_table\"\"\", export_format=\"\"\"CSV\"\"\", field_delimiter=\"\"\"$\"\"\", skip_leading_rows=False, source_objects=\"\"\"foo_file.csv\"\"\", dag=dag)
 """)  # noqa
 
     task_details['format'] = 'json'
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def, """foo = GoogleCloudStorageToBigQueryOperator(task_id='foo_id', bucket=\"\"\"foo_bucket\"\"\", destination_project_dataset_table=\"\"\"foo_project.foo_dataset.foo_table\"\"\", export_format=\"\"\"NEWLINE_DELIMITED_JSON\"\"\", field_delimiter=\"\"\"$\"\"\", skip_leading_rows=False, source_objects=\"\"\"foo_file.csv\"\"\", dag=dag)
 """)  # noqa
 
@@ -208,7 +199,7 @@ LIMIT 5""")
     task_details['strict'] = True
     task_details['table'] = 'project.test.table'
 
-    actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details, None)
+    actual = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     pattern = re.compile("""bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', delimiter=\"\"\",\"\"\", format=\"\"\"csv\"\"\", mode=\"\"\"create\"\"\", path=\"\"\"test/path\"\"\", quote=\"\"\""\"\"\", schema=(.*), skip=0, strict=True, table=\"\"\"project.test.table\"\"\", dag=dag\)""")  # noqa
     # group(1) has the string that follows the "schema=", i.e. the list of dicts.
     # Since we're comparing string literals of dicts that have the items re-ordered, we just sort
@@ -225,7 +216,7 @@ LIMIT 5""")
     task_details['mode'] = 'create'
     task_details['sql'] = 'foo_query'
     task_details['table'] = 'project.test.table'
-    actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details, None)
+    actual = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     expected = """bq_pipeline_execute_task = ExecuteOperator(task_id='bq_pipeline_execute_task_id', large=True, mode=\"\"\"create\"\"\", sql=\"\"\"foo_query\"\"\", table=\"\"\"project.test.table\"\"\", dag=dag)
 """  # noqa
     self.assertEqual(actual, expected)
@@ -241,7 +232,7 @@ LIMIT 5""")
     task_details['header'] = True
     task_details['path'] = 'test/path'
 
-    actual = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details, None)
+    actual = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     expected = """bq_pipeline_extract_task = ExtractOperator(task_id='bq_pipeline_extract_task_id', billing=\"\"\"foo\"\"\", compress=True, delimiter=\"\"\",\"\"\", format=\"\"\"csv\"\"\", header=True, path=\"\"\"test/path\"\"\", dag=dag)
 """  # noqa
     self.assertEqual(actual, expected)
@@ -252,8 +243,7 @@ LIMIT 5""")
     task_details['type'] = 'Unknown'
     task_details['foo'] = 'bar'
     task_details['bar_typed'] = False
-    operator_def = pipeline.Pipeline(None, None)._get_operator_definition(task_id, task_details,
-                                                                          None)
+    operator_def = pipeline.Pipeline._get_operator_definition(task_id, task_details, None)
     self.assertEqual(operator_def,
                      'id = UnknownOperator(''task_id=\'id_id\', ' +
                      'bar_typed=False, foo="""bar""", dag=dag)\n')
