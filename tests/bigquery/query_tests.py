@@ -315,12 +315,12 @@ q1 AS (
       '_ts': '{{ ts }}',
       '_ds_nodash': '{{ ds_nodash }}',
       '_ts_nodash': '{{ ts_nodash }}',
-      '_ts_year': '{{ execution_date.year }}',
-      '_ts_month': '{{ execution_date.month }}',
-      '_ts_day': '{{ execution_date.day }}',
-      '_ts_hour': '{{ execution_date.hour }}',
-      '_ts_minute': '{{ execution_date.minute }}',
-      '_ts_second': '{{ execution_date.second }}',
+      '_ts_year': """{{ '{:04d}'.format(execution_date.year) }}""",
+      '_ts_month': """{{ '{:02d}'.format(execution_date.month) }}""",
+      '_ts_day': """{{ '{:02d}'.format(execution_date.day) }}""",
+      '_ts_hour': """{{ '{:02d}'.format(execution_date.hour) }}""",
+      '_ts_minute': """{{ '{:02d}'.format(execution_date.minute) }}""",
+      '_ts_second': """{{ '{:02d}'.format(execution_date.second) }}""",
     }
     self.assertDictEqual(merged_parameters, expected)
 
