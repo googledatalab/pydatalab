@@ -230,7 +230,7 @@ class TestCases(unittest.TestCase):
     self.assertIsNone(execute_operator.parameters)
     self.assertIsNone(execute_operator.table)
     self.assertIsNone(execute_operator.mode)
-    self.assertEqual(execute_operator.template_fields, ('table', 'parameters', 'path'))
+    self.assertEqual(execute_operator.template_fields, ('table', 'parameters', 'path', 'sql'))
 
   def test_extract_operator_defaults(self):
     extract_operator = ExtractOperator(task_id='foo_task_id', path='foo_path', table='foo_table')
