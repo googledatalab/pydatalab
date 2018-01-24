@@ -30,14 +30,14 @@ class ExecuteOperator(BaseOperator):
     self.data_source = data_source
     self.path = path
     self.format = format
-    self.csv_options = csv_options or {}
+    self.csv_options = csv_options
     self.schema = schema
     self.max_bad_records = max_bad_records
 
   def execute(self, context):
     if self.data_source:
       kwargs = {}
-      if self.csv_options and self.csv_options.__len__() > 1:
+      if self.csv_options:
         csv_kwargs = {}
         if 'delimiter' in self.csv_options:
           csv_kwargs['delimiter'] = self.csv_options['delimiter']
