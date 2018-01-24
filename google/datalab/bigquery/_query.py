@@ -447,17 +447,17 @@ class Query(object):
       '_ts_nodash': {'type': 'STRING', 'value': date_time.strftime('%Y%m%d%H%M%S%f'),
                      'macro': '{{ ts_nodash }}'},
       '_ts_year': {'type': 'STRING', 'value': day.strftime('%Y'),
-                   'macro': '{{ execution_date.year }}'},
+                   'macro': """{{ '{:04d}'.format(execution_date.year) }}"""},
       '_ts_month': {'type': 'STRING', 'value': day.strftime('%m'),
-                    'macro': '{{ execution_date.month }}'},
+                    'macro': """{{ '{:02d}'.format(execution_date.month) }}"""},
       '_ts_day': {'type': 'STRING', 'value': day.strftime('%d'),
-                  'macro': '{{ execution_date.day }}'},
+                  'macro': """{{ '{:02d}'.format(execution_date.day) }}"""},
       '_ts_hour': {'type': 'STRING', 'value': date_time.strftime('%H'),
-                   'macro': '{{ execution_date.hour }}'},
+                   'macro': """{{ '{:02d}'.format(execution_date.hour) }}"""},
       '_ts_minute': {'type': 'STRING', 'value': date_time.strftime('%M'),
-                     'macro': '{{ execution_date.minute }}'},
+                     'macro': """{{ '{:02d}'.format(execution_date.minute) }}"""},
       '_ts_second': {'type': 'STRING', 'value': date_time.strftime('%S'),
-                     'macro': '{{ execution_date.second }}'},
+                     'macro': """{{ '{:02d}'.format(execution_date.second) }}"""},
     }
 
     if macros:
