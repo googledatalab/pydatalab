@@ -17,7 +17,7 @@ from airflow.utils.decorators import apply_defaults
 
 class ExecuteOperator(BaseOperator):
 
-  template_fields = ('table', 'parameters', 'path')
+  template_fields = ('table', 'parameters', 'path', 'sql')
 
   @apply_defaults
   def __init__(self, sql, parameters=None, table=None, mode=None, data_source=None, path=None,
