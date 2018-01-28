@@ -112,7 +112,7 @@ class TestCases(unittest.TestCase):
     mock_query_job.result.return_value = google.datalab.bigquery.Table(TestCases.test_table_name)
     self.assertDictEqual(execute_operator.execute(context=None),
                          {'table': TestCases.test_table_name})
-    mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
+    mock_query_output_table.assert_called_with(name=None, use_cache=False,
                                                allow_large_results=False)
 
   @mock.patch('google.datalab.Context.default')
@@ -134,7 +134,7 @@ class TestCases(unittest.TestCase):
     mock_query_job.result.return_value = google.datalab.bigquery.Table(TestCases.test_table_name)
     self.assertDictEqual(execute_operator.execute(context=None),
                          {'table': TestCases.test_table_name})
-    mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
+    mock_query_output_table.assert_called_with(name=None, use_cache=False,
                                                allow_large_results=False)
     mock_query_class.assert_called_with(
         sql='test_sql', data_sources={'foo_data_source': mock_external_data_source.return_value})
@@ -148,7 +148,7 @@ class TestCases(unittest.TestCase):
     mock_query_instance = mock_query_class.return_value
     mock_query_instance.execute.return_value = mock_query_job
     execute_operator.execute(None)
-    mock_query_output_table.assert_called_with(name=None, mode=None, use_cache=False,
+    mock_query_output_table.assert_called_with(name=None, use_cache=False,
                                                allow_large_results=False)
     mock_query_class.assert_called_with(sql='test_sql',
                                         data_sources={'foo_data_source':
