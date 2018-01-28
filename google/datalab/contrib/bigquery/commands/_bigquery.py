@@ -92,6 +92,7 @@ def _pipeline_cell(args, cell_body):
 
     if args.get('debug'):
         return airflow_spec
+    return "Pipeline successfully deployed! View Airflow dashboard for more details."
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config):
