@@ -55,6 +55,8 @@ Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
     end:  <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'forever'>
     interval: <{@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}>
     catchup: <{True | False (default)}; when True, backfill is performed for start and end times.
+    retries: Number of attempts to run the pipeline; default is 0
+  emails: <comma separated list of emails to notify in case of retries, failures, etc.>
   parameters: <For syntax, refer '%%bq execute'>
 """)  # noqa
 
