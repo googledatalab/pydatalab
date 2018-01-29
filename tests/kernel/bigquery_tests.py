@@ -773,7 +773,7 @@ WITH q1 AS (
     mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
-    args = {'name': 'bq_pipeline_test'}
+    args = {'name': 'bq_pipeline_test', 'debug': True}
     small_cell_body = """
             emails: foo1@test.com
             schedule:

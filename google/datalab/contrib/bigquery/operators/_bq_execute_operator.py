@@ -63,8 +63,12 @@ class ExecuteOperator(BaseOperator):
 
     # use_cache is False since this is most likely the case in pipeline scenarios
     # allow_large_results can be True only if table is specified (i.e. when it's not None)
-    output_options = bq.QueryOutput.table(name=self.table, mode=self.mode, use_cache=False,
-                                          allow_large_results=self.table is not None)
+    kwargs = {}
+    if self.mode is not None:
+      kwargs['mode'] = self.mode
+    output_options = bq.QueryOutput.table(name=self.table, use_cache=False,
+                                          allow_large_results=self.table is not None,
+                                          **kwargs)
     query_params = bq.Query.get_query_parameters(self.parameters)
     job = query.execute(output_options=output_options, query_params=query_params)
 

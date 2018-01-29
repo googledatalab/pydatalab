@@ -39,11 +39,12 @@ Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
       skip: <Number of rows at the top of a CSV file to skip; default is 0>
       strict: <{True | False (default)}; whether to accept rows with missing trailing (or optional) columns>
       quote: <Value used to quote data sections; default is '"'>
-    mode: <{append (default) | overwrite}; required if path->table load>
+    mode: <{append (default) | overwrite}; applicable if path->table load>
   transformation: <optional; when absent, a direct conversion is done from input (path|table) to output (table|path)>
     query: <name of BQ query defined via "%%bq query --name ...">
   output:
     table | path: <BQ table name or GCS path; both if table->path extract is required>
+    mode: <{append | overwrite | create (default)}; applicable only when table is specified.
     format: <{csv (default) | json}>
     csv: <This section is relevant only when 'format' is 'csv'>
       delimiter: <the field delimiter to use. Defaults to ','>
@@ -53,7 +54,9 @@ Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
     start: <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'now'>
     end:  <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'forever'>
     interval: <{@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}>
-    catchup: <{True | False (default)}; Whether to have pipelines execute in the past>
+    catchup: <{True | False (default)}; when True, backfill is performed for start and end times.
+    retries: Number of attempts to run the pipeline; default is 0
+  emails: <comma separated list of emails to notify in case of retries, failures, etc.>
   parameters: <For syntax, refer '%%bq execute'>
 """)  # noqa
 
@@ -89,8 +92,9 @@ def _pipeline_cell(args, cell_body):
         airflow = Airflow(gcs_dag_bucket, gcs_dag_file_path)
         airflow.deploy(name, airflow_spec)
 
-    # TODO(rajivpb): See https://github.com/googledatalab/pydatalab/issues/501. Don't return python.
-    return airflow_spec
+    if args.get('debug'):
+        return airflow_spec
+    return "Pipeline successfully deployed! View Airflow dashboard for more details."
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config):
