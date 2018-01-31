@@ -761,16 +761,14 @@ WITH q1 AS (
                                        ignore_unknown_values=True)
 
   @mock.patch('google.datalab.Context.default')
-  @mock.patch('google.cloud.storage.Client')
-  @mock.patch('google.cloud.storage.Blob')
-  @mock.patch('google.cloud.storage.Client.get_bucket')
+  @mock.patch('google.datalab.storage.Bucket')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
-  def test_pipeline_cell(self, mock_env, mock_get_notebook_item, mock_client_get_bucket,
-                         mock_blob_class, mock_client, mock_default_context):
+  def test_pipeline_cell(self, mock_env, mock_get_notebook_item, mock_bucket_class,
+                         mock_default_context):
     context = TestCases._create_context()
     mock_default_context.return_value = context
-    mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
+    mock_bucket_class.return_value = mock.Mock(spec=google.datalab.storage.Bucket)
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
     args = {'name': 'bq_pipeline_test', 'debug': True}
