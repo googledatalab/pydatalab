@@ -10,5 +10,3 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 from _bigquery import get_airflow_spec_from_config  # noqa
-
-#__all__ = ['get_airflow_spec_from_config']
