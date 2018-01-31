@@ -915,11 +915,12 @@ def _pipeline_cell(args, cell_body):
 
     import google.datalab.utils as utils
     bq_pipeline_config = utils.commands.parse_config(
-        cell_body, utils.commands.notebook_environment())
+      cell_body, utils.commands.notebook_environment())
 
     try:
-      pipeline_spec = google.datalab.contrib.bigquery.commands._bigquery._get_pipeline_spec_from_config(bq_pipeline_config)
-      airflow_spec = google.datalab.contrib.pipeline._pipeline.PipelineGenerator.generate_airflow_spec(name, pipeline_spec)
+      airflow_spec = \
+        google.datalab.contrib.bigquery.commands._bigquery.get_airflow_spec_from_config(
+          name, bq_pipeline_config)
     except AttributeError:
       return "Perhaps you're missing: import google.datalab.contrib.bigquery.commands"
 
@@ -928,11 +929,18 @@ def _pipeline_cell(args, cell_body):
     gcs_dag_bucket = args.get('gcs_dag_bucket')
     gcs_dag_file_path = args.get('gcs_dag_file_path')
     if gcs_dag_bucket:
-        airflow = Airflow(gcs_dag_bucket, gcs_dag_file_path)
+      try:
+        airflow = google.datalab.contrib.pipeline.airflow._airflow.Airflow(gcs_dag_bucket,
+                                                                           gcs_dag_file_path)
         airflow.deploy(name, airflow_spec)
         error_message += "Pipeline successfully deployed! View Airflow dashboard for more details."
+
+      except NameError:
+        return "Perhaps you're missing: import google.datalab.contrib.pipeline.airflow"
+
     if args.get('debug'):
-        error_message += '\n\n' + airflow_spec
+      error_message += '\n\n' + airflow_spec
+
     return error_message
 
 

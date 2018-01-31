@@ -11,14 +11,17 @@
 # the License.
 
 """Google Cloud Platform library - BigQuery IPython Functionality."""
-from builtins import str
 import google
 import google.datalab.utils as utils
-from google.datalab.contrib.pipeline._pipeline import PipelineGenerator
-from google.datalab.contrib.pipeline.airflow._airflow import Airflow
 
-import argparse
 import jsonschema
+
+
+def get_airflow_spec_from_config(name, bq_pipeline_config):
+  pipeline_spec = google.datalab.contrib.bigquery.commands._bigquery._get_pipeline_spec_from_config(
+    bq_pipeline_config)
+  return google.datalab.contrib.pipeline._pipeline.PipelineGenerator.generate_airflow_spec(
+    name, pipeline_spec)
 
 
 def _get_pipeline_spec_from_config(bq_pipeline_config):
