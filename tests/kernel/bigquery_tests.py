@@ -20,10 +20,12 @@ import unittest
 
 from datetime import datetime
 
+import google
 import google.auth
 import google.datalab  # noqa
 import google.datalab.bigquery as bq
 import google.datalab.bigquery.commands
+import google.datalab.storage
 import google.datalab.utils.commands  # noqa
 # import Python so we can mock the parts we need to here.
 import IPython
@@ -768,10 +770,9 @@ WITH q1 AS (
                          mock_default_context):
     context = TestCases._create_context()
     mock_default_context.return_value = context
-    mock_bucket_class.return_value = mock.Mock(spec=google.datalab.storage.Bucket)
-    mock_get_notebook_item.return_value = google.datalab.bigquery.Query(
+    mock_bucket_class.return_value = mock.Mock()
+    mock_get_notebook_item.return_value = bq.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
-    args = {'name': 'bq_pipeline_test', 'debug': True}
     small_cell_body = """
             emails: foo1@test.com
             schedule:
@@ -785,9 +786,14 @@ WITH q1 AS (
             output:
                 table: project.test.table
        """
+    args = {'name': 'bq_pipeline_test', 'gcs_dag_bucket': 'foo_bucket', 'gcs_dag_folder': 'dags'}
+    actual = bq.commands._bigquery._pipeline_cell(args, small_cell_body)
+    self.assertIn("successfully deployed", actual)
+    self.assertNotIn("'email': ['foo1@test.com']", actual)
 
-    actual = google.datalab.contrib.bigquery.commands._bigquery._pipeline_cell(args,
-                                                                               small_cell_body)
+    args['debug'] = True
+    actual = bq.commands._bigquery._pipeline_cell(args, small_cell_body)
+    self.assertIn("successfully deployed", actual)
     self.assertIn("'email': ['foo1@test.com']", actual)
 
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')

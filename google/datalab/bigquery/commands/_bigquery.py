@@ -31,7 +31,6 @@ import json
 import re
 
 import google.datalab.bigquery as bigquery
-import google.datalab.contrib.bigquery.commands._bigquery as contrib_bq
 import google.datalab.data
 import google.datalab.utils
 import google.datalab.utils.commands
@@ -856,6 +855,93 @@ def _load_cell(args, cell_body):
     raise Exception('Load completed with errors: %s' % str(job.errors))
 
 
+def _create_pipeline_subparser(parser):
+  import argparse
+  pipeline_parser = parser.subcommand(
+    'pipeline',
+    formatter_class=argparse.RawTextHelpFormatter,
+    help="""
+Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
+  input:
+    table | path: <BQ table name or GCS path; both if path->table load is also required>
+    schema: <For syntax, refer '%%bq execute'>
+    format: {csv (default) | json}
+    csv: <This section is relevant only when 'format' is 'csv'>
+      delimiter: <The field delimiter to use; default is ','>
+      skip: <Number of rows at the top of a CSV file to skip; default is 0>
+      strict: <{True | False (default)}; whether to accept rows with missing trailing (or optional) columns>
+      quote: <Value used to quote data sections; default is '"'>
+    mode: <{append (default) | overwrite}; applicable if path->table load>
+  transformation: <optional; when absent, a direct conversion is done from input (path|table) to output (table|path)>
+    query: <name of BQ query defined via "%%bq query --name ...">
+  output:
+    table | path: <BQ table name or GCS path; both if table->path extract is required>
+    mode: <{append | overwrite | create (default)}; applicable only when table is specified.
+    format: <{csv (default) | json}>
+    csv: <This section is relevant only when 'format' is 'csv'>
+      delimiter: <the field delimiter to use. Defaults to ','>
+      header: <{True (default) | False}; Whether to include an initial header line>
+      compress: <{True | False (default) }; Whether to compress the data on export>
+  schedule:
+    start: <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'now'>
+    end:  <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'forever'>
+    interval: <{@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}>
+    catchup: <{True | False (default)}; when True, backfill is performed for start and end times.
+    retries: Number of attempts to run the pipeline; default is 0
+  emails: <comma separated list of emails to notify in case of retries, failures, etc.>
+  parameters: <For syntax, refer '%%bq execute'>
+""")  # noqa
+
+  pipeline_parser.add_argument('-n', '--name', type=str, help='BigQuery pipeline name',
+                               required=True)
+  pipeline_parser.add_argument('-d', '--gcs_dag_bucket', type=str,
+                               help='The Google Cloud Storage bucket for the Airflow dags.')
+  pipeline_parser.add_argument('-f', '--gcs_dag_file_path', type=str,
+                               help='The file path suffix for the Airflow dags.')
+  pipeline_parser.add_argument('-g', '--debug', type=str,
+                               help='Debug output with the airflow spec.')
+  return pipeline_parser
+
+
+def _pipeline_cell(args, cell_body):
+    """Implements the pipeline subcommand in the %%bq magic.
+    Args:
+      args: the arguments following '%%bq pipeline'.
+      cell_body: Cell contents.
+    """
+    name = args.get('name')
+    if name is None:
+        raise Exception('Pipeline name was not specified.')
+
+    import google.datalab.utils as utils
+    bq_pipeline_config = utils.commands.parse_config(
+      cell_body, utils.commands.notebook_environment())
+
+    try:
+      airflow_spec = \
+        google.datalab.contrib.bigquery.commands.get_airflow_spec_from_config(name,
+                                                                              bq_pipeline_config)
+    except AttributeError:
+      return "Perhaps you're missing: import google.datalab.contrib.bigquery.commands"
+
+    # If a gcs_dag_bucket is specified, we deploy to it so that the Airflow VM rsyncs it.
+    error_message = ''
+    gcs_dag_bucket = args.get('gcs_dag_bucket')
+    gcs_dag_file_path = args.get('gcs_dag_file_path')
+    if gcs_dag_bucket:
+      try:
+        airflow = google.datalab.contrib.pipeline.airflow.Airflow(gcs_dag_bucket, gcs_dag_file_path)
+        airflow.deploy(name, airflow_spec)
+        error_message += "Pipeline successfully deployed! View Airflow dashboard for more details."
+      except AttributeError:
+        return "Perhaps you're missing: import google.datalab.contrib.pipeline.airflow"
+
+    if args.get('debug'):
+      error_message += '\n\n' + airflow_spec
+
+    return error_message
+
+
 def _add_command(parser, subparser_fn, handler, cell_required=False, cell_prohibited=False):
   """ Create and initialize a bigquery subcommand handler. """
   sub_parser = subparser_fn(parser)
@@ -910,8 +996,7 @@ for help on a specific command.
   _add_command(parser, _create_load_subparser, _load_cell)
 
   # %bq pipeline
-  _add_command(parser, contrib_bq._create_pipeline_subparser, contrib_bq._pipeline_cell,
-               cell_required=True)
+  _add_command(parser, _create_pipeline_subparser, _pipeline_cell)
 
   return parser
 

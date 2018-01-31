@@ -585,6 +585,7 @@ WHERE endpoint=@endpoint"""
   @mock.patch('google.datalab.storage.Bucket')
   def test_pipeline_cell_golden(self, mock_bucket_class, mock_get_table, mock_table_exists,
                                 mock_notebook_item, mock_environment, mock_default_context):
+    import google.datalab.contrib.pipeline.airflow
     table = google.datalab.bigquery.Table('project.test.table')
     mock_get_table.return_value = table
     mock_table_exists.return_value = True
@@ -601,7 +602,8 @@ WHERE endpoint=@endpoint"""
         'SELECT @column FROM input where endpoint=@endpoint')
 
     mock_environment.return_value = env
-    args = {'name': 'bq_pipeline_test', 'environment': 'foo_environment',
+    name = 'bq_pipeline_test'
+    args = {'name': name, 'environment': 'foo_environment',
             'location': 'foo_location', 'gcs_dag_bucket': 'foo_bucket',
             'gcs_dag_file_path': 'foo_file_path', 'debug': True}
     cell_body = """
@@ -642,9 +644,10 @@ WHERE endpoint=@endpoint"""
                   value: $job_id
     """
 
-    output = bq._pipeline_cell(args, cell_body)
+    output = google.datalab.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
 
-    pattern = re.compile("""
+    error_message = "Pipeline successfully deployed! View Airflow dashboard for more details."
+    airflow_spec_pattern = """
 import datetime
 from airflow import DAG
 from airflow.operators.bash_operator import BashOperator
@@ -676,7 +679,9 @@ bq_pipeline_extract_task = ExtractOperator\(task_id='bq_pipeline_extract_task_id
 bq_pipeline_load_task = LoadOperator\(task_id='bq_pipeline_load_task_id', csv_options=(.*), path=\"\"\"gs://bucket/cloud-datalab-samples-httplogs_{{ ds_nodash }}\"\"\", schema=(.*), table=\"\"\"cloud-datalab-samples\.httplogs\.logs_{{ ds_nodash }}\"\"\", dag=dag\).*
 bq_pipeline_execute_task.set_upstream\(bq_pipeline_load_task\)
 bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
-""")  # noqa
+"""  # noqa
+
+    pattern = re.compile(error_message + '\n\n' + airflow_spec_pattern)
 
     self.assertIsNotNone(pattern.match(output))
 
@@ -708,7 +713,13 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
     self.assertIn("'name': 'col2'", actual_schema_str)
     self.assertIn("'description': 'description1'", actual_schema_str)
 
+    import google.datalab.utils as utils
+    cell_body_dict = utils.commands.parse_config(cell_body, utils.commands.notebook_environment())
+    expected_airflow_spec = \
+        google.datalab.contrib.bigquery.commands._bigquery.get_airflow_spec_from_config(
+          name, cell_body_dict)
+
     mock_bucket_class.assert_called_with('foo_bucket')
     mock_bucket_class.return_value.object.assert_called_with('foo_file_path/bq_pipeline_test.py')
     mock_bucket_class.return_value.object.return_value.write_stream.assert_called_with(
-      output, 'text/plain')
+      expected_airflow_spec, 'text/plain')
