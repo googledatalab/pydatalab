@@ -13,6 +13,7 @@
 """Google Cloud Platform library - BigQuery IPython Functionality."""
 import google
 import google.datalab.utils as utils
+import google.datalab.contrib.pipeline._pipeline
 
 import jsonschema
 

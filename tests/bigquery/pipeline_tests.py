@@ -687,8 +687,6 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
 
     pattern = re.compile(error_message + '\n\n' + airflow_spec_pattern)
 
-    print(output)
-
     self.assertIsNotNone(pattern.match(output))
 
     # String that follows the "parameters=", for the execute operator.

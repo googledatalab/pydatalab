@@ -919,8 +919,8 @@ def _pipeline_cell(args, cell_body):
 
     try:
       airflow_spec = \
-        google.datalab.contrib.bigquery.commands._bigquery.get_airflow_spec_from_config(
-          name, bq_pipeline_config)
+        google.datalab.contrib.bigquery.commands.get_airflow_spec_from_config(name,
+                                                                              bq_pipeline_config)
     except AttributeError:
       return "Perhaps you're missing: import google.datalab.contrib.bigquery.commands"
 
@@ -930,12 +930,11 @@ def _pipeline_cell(args, cell_body):
     gcs_dag_file_path = args.get('gcs_dag_file_path')
     if gcs_dag_bucket:
       try:
-        airflow = google.datalab.contrib.pipeline.airflow._airflow.Airflow(gcs_dag_bucket,
-                                                                           gcs_dag_file_path)
+        airflow = google.datalab.contrib.pipeline.airflow.Airflow(gcs_dag_bucket, gcs_dag_file_path)
         airflow.deploy(name, airflow_spec)
         error_message += "Pipeline successfully deployed! View Airflow dashboard for more details."
 
-      except NameError:
+      except AttributeError:
         return "Perhaps you're missing: import google.datalab.contrib.pipeline.airflow"
 
     if args.get('debug'):
