@@ -718,7 +718,7 @@ bq_pipeline_extract_task.set_upstream\(bq_pipeline_execute_task\)
     expected_airflow_spec = \
         google.datalab.contrib.bigquery.commands._bigquery.get_airflow_spec_from_config(
           name, cell_body_dict)
-      
+
     mock_bucket_class.assert_called_with('foo_bucket')
     mock_bucket_class.return_value.object.assert_called_with('foo_file_path/bq_pipeline_test.py')
     mock_bucket_class.return_value.object.return_value.write_stream.assert_called_with(
