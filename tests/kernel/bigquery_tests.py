@@ -773,7 +773,6 @@ WITH q1 AS (
     mock_client_get_bucket.return_value = mock.Mock(spec=google.cloud.storage.Bucket)
     mock_get_notebook_item.return_value = google.datalab.bigquery.Query(
         'SELECT * FROM publicdata.samples.wikipedia LIMIT 5')
-    args = {'name': 'bq_pipeline_test', 'debug': True}
     small_cell_body = """
             emails: foo1@test.com
             schedule:
@@ -787,8 +786,14 @@ WITH q1 AS (
             output:
                 table: project.test.table
        """
-
+    args = {'name': 'bq_pipeline_test', 'gcs_dag_bucket': 'foo_bucket', 'gcs_dag_folder': 'dags'}
     actual = bq.commands._bigquery._pipeline_cell(args, small_cell_body)
+    self.assertIn("successfully deployed", actual)
+    self.assertNotIn("'email': ['foo1@test.com']", actual)
+
+    args['debug'] = True
+    actual = bq.commands._bigquery._pipeline_cell(args, small_cell_body)
+    self.assertIn("successfully deployed", actual)
     self.assertIn("'email': ['foo1@test.com']", actual)
 
   @mock.patch('google.datalab.utils.commands._html.Html.next_id')

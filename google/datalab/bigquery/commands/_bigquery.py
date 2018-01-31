@@ -933,7 +933,6 @@ def _pipeline_cell(args, cell_body):
         airflow = google.datalab.contrib.pipeline.airflow.Airflow(gcs_dag_bucket, gcs_dag_file_path)
         airflow.deploy(name, airflow_spec)
         error_message += "Pipeline successfully deployed! View Airflow dashboard for more details."
-
       except AttributeError:
         return "Perhaps you're missing: import google.datalab.contrib.pipeline.airflow"
 
