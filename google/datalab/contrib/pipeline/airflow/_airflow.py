@@ -10,7 +10,7 @@
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
 
-import google.cloud.storage as gcs
+import google.datalab.storage as storage
 
 
 class Airflow(object):
@@ -31,11 +31,10 @@ class Airflow(object):
     self._gcs_dag_file_path = gcs_dag_file_path or ''
 
   def deploy(self, name, dag_string):
-    client = gcs.Client()
     if self._gcs_dag_file_path is not '' and self._gcs_dag_file_path.endswith('/') is False:
       self._gcs_dag_file_path = self._gcs_dag_file_path + '/'
     file_name = '{0}{1}.py'.format(self._gcs_dag_file_path, name)
 
-    bucket = client.get_bucket(self._gcs_dag_bucket)
-    blob = gcs.Blob(file_name, bucket)
-    blob.upload_from_string(dag_string)
+    bucket = storage.Bucket(self._gcs_dag_bucket)
+    file_object = bucket.object(file_name)
+    file_object.write_stream(dag_string, 'text/plain')
