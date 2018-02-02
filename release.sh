@@ -29,11 +29,13 @@
 tsc --module amd --noImplicitAny datalab/notebook/static/*.ts
 tsc --module amd --noImplicitAny google/datalab/notebook/static/*.ts
 
-# Provide https://upload.pypi.org/legacy/ for prod binaries
-server="${1:-https://test.pypi.python.org/pypi}"
+# This is the test url, you should change this to
+# https://upload.pypi.org/legacy/ for prod binaries
+server="${https://test.pypi.python.org/pypi}"
 echo "Submitting package to ${server}"
 
 # Build and upload a distribution package
+rm dist/*
 python setup.py sdist
 twine upload --repository-url "${server}" dist/*
 
