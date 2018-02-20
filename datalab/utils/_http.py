@@ -44,12 +44,12 @@ class RequestException(Exception):
     self.message = 'HTTP request failed'
     # Try extract a message from the body; swallow possible resulting ValueErrors and KeyErrors.
     try:
-      error = json.loads(content)['error']
+      error = json.loads(content.decode('utf-8'))['error']
       if 'errors' in error:
         error = error['errors'][0]
       self.message += ': ' + error['message']
     except Exception:
-      lines = content.split('\n') if isinstance(content, basestring) else []
+      lines = content.splitlines() if isinstance(content, basestring) else []
       if lines:
         self.message += ': ' + lines[0]
 
