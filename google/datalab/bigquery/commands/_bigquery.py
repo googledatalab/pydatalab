@@ -883,8 +883,8 @@ Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
       header: <{True (default) | False}; Whether to include an initial header line>
       compress: <{True | False (default) }; Whether to compress the data on export>
   schedule:
-    start: <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'now'>
-    end:  <formatted as '%Y-%m-%dT%H:%M:%S'; default is 'forever'>
+    start: <formatted as '%%Y-%%m-%%dT%%H:%%M:%%S'; default is 'now'>
+    end:  <formatted as '%%Y-%%m-%%dT%%H:%%M:%%S'; default is 'forever'>
     interval: <{@once (default) | @hourly | @daily | @weekly | @ monthly | @yearly | <cron ex>}>
     catchup: <{True | False (default)}; when True, backfill is performed for start and end times.
     retries: Number of attempts to run the pipeline; default is 0
