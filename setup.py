@@ -104,7 +104,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'pandas-profiling>=1.0.0a2',
     'python-dateutil==2.5.0',
     'pytz>=2015.4',
-    'pyyaml==3.11',
+    'pyyaml>=3.11',
     'requests==2.9.1',
     'scikit-image==0.13.0',
     'scikit-learn==0.18.2',
