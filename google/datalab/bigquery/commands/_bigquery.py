@@ -899,6 +899,12 @@ Creates a GCS/BigQuery ETL pipeline. The cell-body is specified as follows:
                                help='The Google Cloud Storage bucket for the Airflow dags.')
   pipeline_parser.add_argument('-f', '--gcs_dag_file_path', type=str,
                                help='The file path suffix for the Airflow dags.')
+  pipeline_parser.add_argument('-e', '--environment', type=str,
+                               help='The name of the Google Cloud Composer environment.')
+  pipeline_parser.add_argument('-l', '--location', type=str,
+                               help='The location of the Google Cloud Composer environment. '
+                                    'Refer https://cloud.google.com/about/locations/ for further '
+                                    'details.')
   pipeline_parser.add_argument('-g', '--debug', type=str,
                                help='Debug output with the airflow spec.')
   return pipeline_parser
@@ -936,6 +942,16 @@ def _pipeline_cell(args, cell_body):
         error_message += "Pipeline successfully deployed! View Airflow dashboard for more details."
       except AttributeError:
         return "Perhaps you're missing: import google.datalab.contrib.pipeline.airflow"
+
+    location = args.get('location')
+    environment = args.get('environment')
+
+    if location and environment:
+      try:
+        composer = google.datalab.contrib.pipeline.composer.Composer(location, environment)
+        composer.deploy(name, airflow_spec)
+      except AttributeError:
+        return "Perhaps you're missing: import google.datalab.contrib.pipeline.composer"
 
     if args.get('debug'):
       error_message += '\n\n' + airflow_spec
