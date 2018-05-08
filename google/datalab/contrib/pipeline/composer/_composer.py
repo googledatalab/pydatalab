@@ -1,4 +1,4 @@
-# Copyright 2017 Google Inc. All rights reserved.
+# Copyright 2018 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -36,7 +36,7 @@ class Composer(object):
     self._gcs_dag_location = None
 
   def deploy(self, name, dag_string):
-    _, _, bucket_name, file_path = self.gcs_dag_location.split('/', 3)  # setting maxsplit to 3
+    bucket_name, file_path = self.gcs_dag_location.split('/', 3)[2:]  # setting maxsplit to 3
     file_name = '{0}{1}.py'.format(file_path, name)
 
     bucket = storage.Bucket(bucket_name)
@@ -46,7 +46,7 @@ class Composer(object):
   @property
   def gcs_dag_location(self):
     if not self._gcs_dag_location:
-      environment_details = Api.environment_details_get(self._zone, self._environment)
+      environment_details = Api.get_environment_details(self._zone, self._environment)
 
       if ('config' not in environment_details or
               'gcsDagLocation' not in environment_details.get('config')):

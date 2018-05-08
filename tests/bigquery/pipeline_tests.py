@@ -577,7 +577,7 @@ WHERE endpoint=@endpoint"""
                               for item in user_parameters}
     self.assertDictEqual(actual_paramaters_dict, user_parameters_dict)
 
-  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
+  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.get_environment_details')
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.utils.commands.notebook_environment')
   @mock.patch('google.datalab.utils.commands.get_notebook_item')

@@ -1,4 +1,4 @@
-# Copyright 2015 Google Inc. All rights reserved.
+# Copyright 2018 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -48,7 +48,7 @@ class TestCases(unittest.TestCase):
   @mock.patch('google.datalab.utils.Http.request')
   def test_environment_details_get(self, mock_http_request, mock_context_default):
     mock_context_default.return_value = TestCases._create_context()
-    Api.environment_details_get('ZONE', 'ENVIRONMENT')
+    Api.get_environment_details('ZONE', 'ENVIRONMENT')
     self.validate(mock_http_request,
                   'https://composer.googleapis.com/v1alpha1/projects/test_project/locations/ZONE/'
                   'environments/ENVIRONMENT')

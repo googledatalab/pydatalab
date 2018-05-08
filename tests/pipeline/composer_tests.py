@@ -1,4 +1,4 @@
-# Copyright 2015 Google Inc. All rights reserved.
+# Copyright 2018 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -20,7 +20,7 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('google.datalab.Context.default')
   @mock.patch('google.datalab.storage.Bucket')
-  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
+  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.get_environment_details')
   def test_deploy(self, mock_environment_details, mock_bucket_class, mock_default_context):
       # Happy path
       mock_environment_details.return_value = {
@@ -61,7 +61,7 @@ class TestCases(unittest.TestCase):
       mock_bucket_class.return_value.object.return_value.write_stream.assert_called_with(
           'foo_dag_string', 'text/plain')
 
-  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.environment_details_get')
+  @mock.patch('google.datalab.contrib.pipeline.composer._api.Api.get_environment_details')
   def test_gcs_dag_location(self, mock_environment_details):
       # Composer returns good result
       mock_environment_details.return_value = {
