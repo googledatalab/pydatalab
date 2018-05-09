@@ -56,6 +56,8 @@ import mlworkbench_magic.local_predict_tests
 import mlworkbench_magic.ml_tests
 import mlworkbench_magic.shell_process_tests
 import pipeline.airflow_tests
+import pipeline.composer_tests
+import pipeline.composer_api_tests
 import pipeline.pipeline_tests
 import stackdriver.commands.monitoring_tests
 import stackdriver.monitoring.group_tests
@@ -104,6 +106,8 @@ _UNIT_TEST_MODULES = [
     ml.metrics_tests,
     ml.summary_tests,
     mlworkbench_magic.ml_tests,
+    pipeline.composer_api_tests,
+    pipeline.composer_tests,
     pipeline.airflow_tests,
     pipeline.pipeline_tests,
     stackdriver.commands.monitoring_tests,
