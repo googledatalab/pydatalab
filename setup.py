@@ -93,7 +93,6 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'configparser>=3.5.0',
     'mock>=2.0.0',
     'future>=0.16.0',
-    'futures>=3.0.5',
     'google-cloud>=0.30.0',
     'google-api-python-client>=1.6.2',
     'seaborn>=0.7.0',
@@ -117,6 +116,11 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'six==1.10.0',
     'urllib3>=1.22',
   ],
+  extras_require={
+    ':python_version == "2.7"': [
+      'futures>=3.0.5',
+    ]
+  },
   package_data={
     'google.datalab.notebook': [
         'static/bigquery.css',
