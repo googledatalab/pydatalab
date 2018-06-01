@@ -239,16 +239,18 @@ class Datasets(object):
     self._context = context
     self._api = _api.Api(context)
     self._project_id = context.project_id if context else self._api.project_id
+    self._page_size = 0
 
-  def _retrieve_datasets(self, page_token, count):
+  def _retrieve_datasets(self, page_token, _):
     try:
-      list_info = self._api.datasets_list(self._project_id, max_results=count,
+      list_info = self._api.datasets_list(self._project_id, max_results=self._page_size,
                                           page_token=page_token)
     except Exception as e:
       raise e
 
     datasets = list_info.get('datasets', [])
     if len(datasets):
+      self._page_size = self._page_size or len(datasets)
       try:
         datasets = [Dataset((info['datasetReference']['projectId'],
                              info['datasetReference']['datasetId']), self._context)

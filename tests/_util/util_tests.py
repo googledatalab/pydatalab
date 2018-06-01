@@ -19,6 +19,7 @@ import mock
 import os
 
 import google.datalab.utils._utils as _utils
+import google.datalab.utils._iterator as _iterator
 from datetime import datetime
 import google.auth
 import google.auth.exceptions
@@ -186,3 +187,19 @@ class TestCases(unittest.TestCase):
 
     with mock.patch.dict(os.environ, {'PROJECT_ID': 'test-project3'}):
       self.assertEquals(_utils.get_default_project_id(), 'test-project3')
+
+  def test_iterator(self):
+    max_count = 100
+    page_size = 10
+
+    def limited_retriever(next_item, running_count):
+      next_item = next_item or 1
+      result_count = min(page_size, max_count - running_count)
+      if result_count <= 0:
+        return [], None
+      return range(next_item, next_item + result_count), next_item + result_count
+
+    read_count = 0
+    for item in _iterator.Iterator(limited_retriever):
+      read_count += 1
+      self.assertLessEqual(read_count, max_count)
