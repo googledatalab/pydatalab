@@ -37,8 +37,7 @@ class Iterator(object):
 
       self._page_token = next_page_token
       self._first_page = False
-      if self._count == 0:
-        self._count = len(items)
+      self._count += len(items)
 
       for item in items:
         yield item
