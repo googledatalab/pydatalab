@@ -38,7 +38,8 @@ class Models(object):
 
   def _retrieve_models(self, page_token, _):
     list_info = self._api.projects().models().list(
-        parent='projects/' + self._project_id, pageToken=page_token, pageSize=self._page_size).execute()
+        parent='projects/' + self._project_id, pageToken=page_token,
+        pageSize=self._page_size).execute()
     models = list_info.get('models', [])
     self._page_size = self._page_size or len(models)
     page_token = list_info.get('nextPageToken', None)
