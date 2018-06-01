@@ -164,12 +164,14 @@ class Jobs(object):
     self._filter = filter
     self._context = datalab.Context.default()
     self._api = discovery.build('ml', 'v1', credentials=self._context.credentials)
+    self._page_size = 0
 
-  def _retrieve_jobs(self, page_token, page_size):
+  def _retrieve_jobs(self, page_token, _):
     list_info = self._api.projects().jobs().list(parent='projects/' + self._context.project_id,
-                                                 pageToken=page_token, pageSize=page_size,
+                                                 pageToken=page_token, pageSize=self._page_size,
                                                  filter=self._filter).execute()
     jobs = list_info.get('jobs', [])
+    self._page_size = self._page_size or len(jobs)
     page_token = list_info.get('nextPageToken', None)
     return jobs, page_token
 

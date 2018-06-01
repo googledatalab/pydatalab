@@ -34,11 +34,13 @@ class Models(object):
     self._project_id = project_id
     self._credentials = datalab.Context.default().credentials
     self._api = discovery.build('ml', 'v1', credentials=self._credentials)
+    self._page_size = 0
 
-  def _retrieve_models(self, page_token, page_size):
+  def _retrieve_models(self, page_token, _):
     list_info = self._api.projects().models().list(
-        parent='projects/' + self._project_id, pageToken=page_token, pageSize=page_size).execute()
+        parent='projects/' + self._project_id, pageToken=page_token, pageSize=self._page_size).execute()
     models = list_info.get('models', [])
+    self._page_size = self._page_size or len(models)
     page_token = list_info.get('nextPageToken', None)
     return models, page_token
 
@@ -142,13 +144,15 @@ class ModelVersions(object):
       model_name = ('projects/%s/models/%s' % (self._project_id, model_name))
     self._full_model_name = model_name
     self._model_name = self._full_model_name.split('/')[-1]
+    self._page_size = 0
 
-  def _retrieve_versions(self, page_token, page_size):
+  def _retrieve_versions(self, page_token, _):
     parent = self._full_model_name
     list_info = self._api.projects().models().versions().list(parent=parent,
                                                               pageToken=page_token,
-                                                              pageSize=page_size).execute()
+                                                              pageSize=self._page_size).execute()
     versions = list_info.get('versions', [])
+    self._page_size = self._page_size or len(versions)
     page_token = list_info.get('nextPageToken', None)
     return versions, page_token
 
