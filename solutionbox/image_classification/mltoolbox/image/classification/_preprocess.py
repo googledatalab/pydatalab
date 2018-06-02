@@ -24,13 +24,10 @@ import cStringIO
 import logging
 import os
 from PIL import Image
-import tensorflow as tf
 
 from . import _inceptionlib
 from . import _util
 
-
-slim = tf.contrib.slim
 
 error_count = Metrics.counter('main', 'errorCount')
 rows_count = Metrics.counter('main', 'rowsCount')
@@ -117,6 +114,8 @@ class EmbeddingsGraph(object):
   CHANNELS = 3
 
   def __init__(self, tf_session, checkpoint_path):
+    import tensorflow as tf
+
     self.tf_session = tf_session
     # input_jpeg is the tensor that contains raw image bytes.
     # It is used to feed image bytes and obtain embeddings.
@@ -141,6 +140,7 @@ class EmbeddingsGraph(object):
       embedding: The embeddings tensor, that will be materialized later.
     """
 
+    import tensorflow as tf
     input_jpeg = tf.placeholder(tf.string, shape=None)
     image = tf.image.decode_jpeg(input_jpeg, channels=self.CHANNELS)
 
@@ -160,7 +160,7 @@ class EmbeddingsGraph(object):
 
     # Build Inception layers, which expect a tensor of type float from [-1, 1)
     # and shape [batch_size, height, width, channels].
-    with slim.arg_scope(_inceptionlib.inception_v3_arg_scope()):
+    with tf.contrib.slim.arg_scope(_inceptionlib.inception_v3_arg_scope()):
       _, end_points = _inceptionlib.inception_v3(inception_input, is_training=False)
 
     embedding = end_points['PreLogits']
@@ -175,6 +175,7 @@ class EmbeddingsGraph(object):
     Args:
       checkpoint_path: Path to the checkpoint file for the Inception graph.
     """
+    import tensorflow as tf
     # Get all variables to restore. Exclude Logits and AuxLogits because they
     # depend on the input data and we do not need to intialize them from
     # checkpoint.
@@ -222,6 +223,7 @@ class TFExampleFromImageDoFn(beam.DoFn):
     # The same instance of session is re-used between bundles.
     # Session is closed by the destructor of Session object, which is called
     # when instance of TFExampleFromImageDoFn() is destructed.
+    import tensorflow as tf
     if not self.graph:
       self.graph = tf.Graph()
       self.tf_session = tf.InteractiveSession(graph=self.graph)
@@ -234,6 +236,7 @@ class TFExampleFromImageDoFn(beam.DoFn):
 
   def process(self, element):
 
+    import tensorflow as tf
     def _bytes_feature(value):
       return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
 
@@ -274,15 +277,12 @@ class TrainEvalSplitPartitionFn(beam.PartitionFn):
 class ExampleProtoCoder(beam.coders.Coder):
   """A coder to encode and decode TensorFlow Example objects."""
 
-  def __init__(self):
-    import tensorflow as tf  # pylint: disable=g-import-not-at-top
-    self._tf_train = tf.train
-
   def encode(self, example_proto):
     return example_proto.SerializeToString()
 
   def decode(self, serialized_str):
-    example = self._tf_train.Example()
+    import tensorflow as tf 
+    example = tf.train.Example()
     example.ParseFromString(serialized_str)
     return example
 
