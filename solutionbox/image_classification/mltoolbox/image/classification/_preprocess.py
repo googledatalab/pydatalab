@@ -237,6 +237,7 @@ class TFExampleFromImageDoFn(beam.DoFn):
   def process(self, element):
 
     import tensorflow as tf
+
     def _bytes_feature(value):
       return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
 
@@ -281,7 +282,7 @@ class ExampleProtoCoder(beam.coders.Coder):
     return example_proto.SerializeToString()
 
   def decode(self, serialized_str):
-    import tensorflow as tf 
+    import tensorflow as tf
     example = tf.train.Example()
     example.ParseFromString(serialized_str)
     return example
