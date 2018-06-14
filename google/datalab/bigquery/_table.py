@@ -205,7 +205,7 @@ class Table(object):
     """
     self._load_info()
     return 'type' not in self._info or 'MODEL' != self._info['type']
-    
+
   def delete(self):
     """ Delete the table.
 
