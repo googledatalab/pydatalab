@@ -192,6 +192,15 @@ class Table(object):
     self._info = info
     return True
 
+  def is_listable(self):
+    """ Determine if the table can be listed.
+
+    Returns:
+      True is the Table can be listed; False otherwise.
+    """
+    self._load_info()
+    return 'type' not in self._info or 'MODEL' != self._info['type']
+
   def delete(self):
     """ Delete the table.
 
