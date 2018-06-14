@@ -907,6 +907,9 @@ def _table_viewer(table, rows_per_page=25, fields=None):
   if not table.exists():
     raise Exception('Table %s does not exist' % str(table))
 
+  if not table.is_listable():
+    return "Done"
+
   _HTML_TEMPLATE = u"""
     <div class="bqtv" id="{div_id}">{static_table}</div>
     <br />{meta_data}<br />
