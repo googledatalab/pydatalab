@@ -212,8 +212,7 @@ class RunGraphDoFn(beam.DoFn):
         yield predictions
 
     except Exception as e:  # pylint: disable=broad-except
-      yield beam.pvalue.SideOutputValue('errors',
-                                        (str(e), element))
+      yield beam.pvalue.TaggedOutput('errors', (str(e), element))
 
 
 class RawJsonCoder(beam.coders.Coder):

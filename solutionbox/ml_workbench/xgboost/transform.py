@@ -349,8 +349,7 @@ class TransformFeaturesDoFn(beam.DoFn):
         yield transformed_features
 
     except Exception as e:  # pylint: disable=broad-except
-      yield beam.pvalue.SideOutputValue('errors',
-                                        (str(e), element))
+      yield beam.pvalue.TaggedOutput('errors', (str(e), element))
 
 
 def decode_csv(csv_string, column_names):
