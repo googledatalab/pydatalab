@@ -157,7 +157,10 @@ class RunGraphDoFn(beam.DoFn):
     self._aliases, self._tensor_names = zip(*self._output_alias_map.items())
 
   def finish_bundle(self, element=None):
+    import tensorflow as tf
+
     self._session.close()
+    tf.reset_default_graph()
 
   def process(self, element):
     """Run batch prediciton on a TF graph.
