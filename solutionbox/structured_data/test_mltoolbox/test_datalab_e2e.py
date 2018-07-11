@@ -152,7 +152,9 @@ class TestLinearRegression(unittest.TestCase):
     # check errors file is empty
     errors = file_io.get_matching_files(os.path.join(output_dir, 'errors*'))
     self.assertEqual(len(errors), 1)
-    self.assertEqual(os.path.getsize(errors[0]), 0)
+    if os.path.getsize(errors[0]):
+      with open(errors[0]) as errors_file:
+        self.fail(msg=errors_file.read())
 
     # check predictions files are not empty
     predictions = file_io.get_matching_files(os.path.join(output_dir,
