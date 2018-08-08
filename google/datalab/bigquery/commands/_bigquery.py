@@ -950,6 +950,7 @@ def _pipeline_cell(args, cell_body):
       try:
         composer = google.datalab.contrib.pipeline.composer.Composer(location, environment)
         composer.deploy(name, airflow_spec)
+        error_message += "Pipeline successfully deployed! View Composer dashboard for more details."
       except AttributeError:
         return "Perhaps you're missing: import google.datalab.contrib.pipeline.composer"
 
