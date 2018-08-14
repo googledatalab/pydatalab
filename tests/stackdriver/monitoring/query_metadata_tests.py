@@ -14,9 +14,9 @@ from __future__ import absolute_import
 import mock
 import unittest
 
-from google.cloud.monitoring import Resource
-from google.cloud.monitoring import Metric
-from google.cloud.monitoring import TimeSeries
+from google.cloud.logging.resource import Resource
+from google.cloud.monitoring_v3.types import Metric
+from google.cloud.monitoring_v3.types import TimeSeries
 
 import google.auth
 import google.datalab

@@ -15,7 +15,7 @@ import datetime
 import mock
 import unittest
 
-from google.cloud.monitoring import Query as BaseQuery
+from google.cloud.monitoring_v3.query import Query as BaseQuery
 
 import google.auth
 import google.datalab

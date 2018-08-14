@@ -93,6 +93,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'configparser>=3.5.0',
     'mock>=2.0.0',
     'future>=0.16.0',
+    'google-cloud-logging>=1.6.0',
     'google-cloud-monitoring>=0.30.1',
     'google-api-python-client>=1.6.2',
     'seaborn>=0.7.0',
