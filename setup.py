@@ -93,8 +93,13 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'configparser>=3.5.0',
     'mock>=2.0.0',
     'future>=0.16.0',
+<<<<<<< HEAD
     'google-cloud-monitoring==0.31.1',
     'google-api-core>=1.10.0',
+=======
+    'google-cloud-logging>=1.6.0',
+    'google-cloud-monitoring>=0.30.1',
+>>>>>>> Fix additional imports, add google-cloud-logging
     'google-api-python-client>=1.6.2',
     'seaborn>=0.7.0',
     'plotly>=1.12.5',
