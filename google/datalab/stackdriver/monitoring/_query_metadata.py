@@ -17,7 +17,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import google.cloud.monitoring
+from google.cloud.monitoring_v3 import _dataframe
 import pandas
 
 
@@ -78,7 +78,7 @@ class QueryMetadata(object):
            for col in dataframe.columns])
 
       # Re-order the columns.
-      resource_keys = google.cloud.monitoring._dataframe._sorted_resource_labels(
+      resource_keys = _dataframe._sorted_resource_labels(
           dataframe['resource.labels'].columns)
       sorted_columns = [('resource.type', '')]
       sorted_columns += [('resource.labels', key) for key in resource_keys]

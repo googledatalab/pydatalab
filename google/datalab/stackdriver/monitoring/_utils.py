@@ -14,14 +14,14 @@
 
 from __future__ import absolute_import
 
-import google.cloud.monitoring
+from google.cloud.logging.client import Client
 
 import google.datalab
 
 
 def make_client(context=None):
   context = context or google.datalab.Context.default()
-  client = google.cloud.monitoring.Client(
+  client = Client(
       project=context.project_id,
       credentials=context.credentials,
   )
