@@ -14,7 +14,11 @@
 
 from __future__ import absolute_import
 
-from google.cloud.monitoring import Aligner, Reducer
+from google.cloud.monitoring import enums
+
+Aligner = enums.Aggregation.Aligner
+Reducer = enums.Aggregation.Reducer
+
 from ._group import Groups
 from ._metric import MetricDescriptors
 from ._query import Query
