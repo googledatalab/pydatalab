@@ -14,7 +14,7 @@ from __future__ import absolute_import
 import mock
 import unittest
 
-import google.cloud.monitoring
+import google.cloud.monitoring_v3
 
 import google.auth
 import google.datalab
@@ -59,7 +59,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
     self.assertIsNone(descriptors._descriptors)
 
-  @mock.patch('google.cloud.monitoring.Client.list_resource_descriptors')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_monitored_resource_descriptors')
   def test_list(self, mock_api_list_descriptors):
     mock_api_list_descriptors.return_value = self._list_resources_get_result()
 
@@ -70,7 +70,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(resource_descriptor_list[0].type, RESOURCE_TYPES[0])
     self.assertEqual(resource_descriptor_list[1].type, RESOURCE_TYPES[1])
 
-  @mock.patch('google.cloud.monitoring.Client.list_resource_descriptors')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_monitored_resource_descriptors')
   def test_list_w_api_filter(self, mock_api_list_descriptors):
     mock_api_list_descriptors.return_value = self._list_resources_get_result()
 
@@ -84,7 +84,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(resource_descriptor_list[0].type, RESOURCE_TYPES[0])
     self.assertEqual(resource_descriptor_list[1].type, RESOURCE_TYPES[1])
 
-  @mock.patch('google.cloud.monitoring.Client.list_resource_descriptors')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_monitored_resource_descriptors')
   def test_list_w_pattern_match(self, mock_api_list_descriptors):
     mock_api_list_descriptors.return_value = self._list_resources_get_result()
 
@@ -94,7 +94,7 @@ class TestCases(unittest.TestCase):
     self.assertEqual(len(resource_descriptor_list), 1)
     self.assertEqual(resource_descriptor_list[0].type, RESOURCE_TYPES[1])
 
-  @mock.patch('google.cloud.monitoring.Client.list_resource_descriptors')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_monitored_resource_descriptors')
   def test_list_caching(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = (
         self._list_resources_get_result())
@@ -144,10 +144,10 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _list_resources_get_result():
-    all_labels = [google.cloud.monitoring.LabelDescriptor(**labels)
+    all_labels = [google.cloud.monitoring_v3.enums.LabelDescriptor(**labels)
                   for labels in LABELS]
     descriptors = [
-        google.cloud.monitoring.ResourceDescriptor(
+        google.cloud.monitoring_v3.types.MonitoredResourceDescriptor(
             name=None, type_=resource_type, display_name=display_name,
             description=None, labels=all_labels,
         )

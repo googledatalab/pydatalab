@@ -57,7 +57,9 @@ class Query(google.cloud.monitoring_v3.query.Query):
             :meth:`~google.cloud.monitoring_v3.query.Query.select_interval`.
     """
     client = _utils.make_client(context)
-    super(Query, self).__init__(client, metric_type,
+    super(Query, self).__init__(client,
+                                project=context.project_id,
+                                metric_type=metric_type,
                                 end_time=end_time,
                                 days=days, hours=hours, minutes=minutes)
 
