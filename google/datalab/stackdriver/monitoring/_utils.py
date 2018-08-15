@@ -14,15 +14,18 @@
 
 from __future__ import absolute_import
 
-from google.cloud.logging.client import Client
+# google.cloud.monitoring used to have a single Client, but
+# it has now been broken up into multiple subclients. Most
+# of the usages I found aligned with the MetricServiceClient,
+# but other uses, such as those in group_tests.py, require a
+# GroupServiceClient, and there are potentially others.
+from google.cloud.monitoring_v3 import MetricServiceClient
 
 import google.datalab
 
-
 def make_client(context=None):
   context = context or google.datalab.Context.default()
-  client = Client(
-      project=context.project_id,
+  client = MetricServiceClient(
       credentials=context.credentials,
   )
   client._connection.USER_AGENT = 'pydatalab/v0'
