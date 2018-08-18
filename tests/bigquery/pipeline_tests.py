@@ -650,7 +650,8 @@ WHERE endpoint=@endpoint"""
 
     output = google.datalab.bigquery.commands._bigquery._pipeline_cell(args, cell_body)
 
-    error_message = "Pipeline successfully deployed! View Airflow dashboard for more details."
+    error_message = ("Airflow pipeline successfully deployed! View dashboard for more details.\n"
+                     "Composer pipeline successfully deployed! View dashboard for more details.\n")
     airflow_spec_pattern = """
 import datetime
 from airflow import DAG
