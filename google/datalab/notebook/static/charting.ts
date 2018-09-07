@@ -444,7 +444,7 @@ module Charting {
       const timestampFormatter = new this.driver.chartModule.DateFormat({
         'pattern' : 'yyyy-MM-dd HH:mm:ss',
         'valueType' : 'datetime',
-        'timeZone' : 0
+        'timeZone' : -new Date().getTimezoneOffset() / 60,
       });
       // Timestamp formatter with fractional seconds.
       // BQ and python store time down to the microsecond, but javascript Date
@@ -452,7 +452,7 @@ module Charting {
       const timestampWithFractionalSecondsFormatter = new this.driver.chartModule.DateFormat({
         'pattern' : 'yyyy-MM-dd HH:mm:ss.SSS',
         'valueType' : 'datetime',
-        'timeZone' : 0
+        'timeZone' : -new Date().getTimezoneOffset() / 60,
       });
 
       // Javascript has terrible support for timezones. When Date objects get converted to
