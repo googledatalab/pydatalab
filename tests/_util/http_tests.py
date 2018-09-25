@@ -93,14 +93,14 @@ class TestCases(unittest.TestCase):
   @mock.patch('httplib2.Response')
   @mock.patch('google.datalab.utils._http.Http.http.request')
   def test_raises_http_error(self, mock_request, mock_response):
-    TestCases._setup_mocks(mock_request, mock_response, 'Not Found', 404)
+    TestCases._setup_mocks(mock_request, mock_response, b'Not Found', 404)
 
     with self.assertRaises(Exception) as error:
       Http.request('http://www.example.org')
 
     e = error.exception
     self.assertEqual(e.status, 404)
-    self.assertEqual(e.content, 'Not Found')
+    self.assertEqual(e.content, b'Not Found')
 
   @staticmethod
   def _setup_mocks(mock_request, mock_response, content, status=200):
