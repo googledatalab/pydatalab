@@ -68,16 +68,21 @@ class Summary(object):
       A dictionary. Key is the name of a event. Value is a set of dirs that contain that event.
     """
     event_dir_dict = collections.defaultdict(set)
+
     for event_file in self._glob_events_files(self._paths, recursive=True):
       dir = os.path.dirname(event_file)
-      for record in tf_record.tf_record_iterator(event_file):
-        event = event_pb2.Event.FromString(record)
-        if event.summary is None or event.summary.value is None:
-          continue
-        for value in event.summary.value:
-          if value.simple_value is None or value.tag is None:
+      try:
+        for record in tf_record.tf_record_iterator(event_file):
+          event = event_pb2.Event.FromString(record)
+          if event.summary is None or event.summary.value is None:
             continue
-          event_dir_dict[value.tag].add(dir)
+          for value in event.summary.value:
+            if value.simple_value is None or value.tag is None:
+              continue
+            event_dir_dict[value.tag].add(dir)
+      except tf.errors.DataLossError:
+        # DataLossError seems happening sometimes for small logs. We want to show good records regardless.
+        continue
     return dict(event_dir_dict)
 
   def get_events(self, event_names):
@@ -103,22 +108,26 @@ class Summary(object):
     ret_events = [collections.defaultdict(lambda: pd.DataFrame(columns=['time', 'step', 'value']))
                   for i in range(len(event_names))]
     for event_file in self._glob_events_files(dirs_to_look, recursive=False):
-      for record in tf_record.tf_record_iterator(event_file):
-        event = event_pb2.Event.FromString(record)
-        if event.summary is None or event.wall_time is None or event.summary.value is None:
-          continue
-
-        event_time = datetime.datetime.fromtimestamp(event.wall_time)
-        for value in event.summary.value:
-          if value.tag not in event_names or value.simple_value is None:
+      try:
+        for record in tf_record.tf_record_iterator(event_file):
+          event = event_pb2.Event.FromString(record)
+          if event.summary is None or event.wall_time is None or event.summary.value is None:
             continue
 
-          index = event_names.index(value.tag)
-          dir_event_dict = ret_events[index]
-          dir = os.path.dirname(event_file)
-          # Append a row.
-          df = dir_event_dict[dir]
-          df.loc[len(df)] = [event_time, event.step, value.simple_value]
+          event_time = datetime.datetime.fromtimestamp(event.wall_time)
+          for value in event.summary.value:
+            if value.tag not in event_names or value.simple_value is None:
+              continue
+
+            index = event_names.index(value.tag)
+            dir_event_dict = ret_events[index]
+            dir = os.path.dirname(event_file)
+            # Append a row.
+            df = dir_event_dict[dir]
+            df.loc[len(df)] = [event_time, event.step, value.simple_value]
+      except tf.errors.DataLossError:
+        # DataLossError seems happening sometimes for small logs. We want to show good records regardless.
+        continue
 
     for idx, dir_event_dict in enumerate(ret_events):
       for df in dir_event_dict.values():
