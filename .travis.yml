@@ -14,7 +14,7 @@ matrix:
     env: TOX_ENV=coveralls
 
 before_install:
-  - npm install -g typescript
+  - npm install -g typescript@3.0.3
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
   # We use tox for actually running tests.
   - pip install --upgrade pip tox
