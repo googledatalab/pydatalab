@@ -81,7 +81,8 @@ class Summary(object):
               continue
             event_dir_dict[value.tag].add(dir)
       except tf.errors.DataLossError:
-        # DataLossError seems to happen sometimes for small logs. We want to show good records regardless.
+        # DataLossError seems to happen sometimes for small logs.
+        # We want to show good records regardless.
         continue
     return dict(event_dir_dict)
 
@@ -126,7 +127,8 @@ class Summary(object):
             df = dir_event_dict[dir]
             df.loc[len(df)] = [event_time, event.step, value.simple_value]
       except tf.errors.DataLossError:
-        # DataLossError seems to happen sometimes for small logs. We want to show good records regardless.
+        # DataLossError seems to happen sometimes for small logs.
+        # We want to show good records regardless.
         continue
 
     for idx, dir_event_dict in enumerate(ret_events):
