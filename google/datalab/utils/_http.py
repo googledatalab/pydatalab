@@ -52,7 +52,7 @@ class RequestException(Exception):
         error = error['errors'][0]
       self.message += ': ' + error['message']
     except Exception:
-      lines = str(content).split('\n') if isinstance(content, basestring) else []
+      lines = content.decode('utf-8').split('\n') if isinstance(content, basestring) else []
       if lines:
         self.message += ': ' + lines[0]
 
