@@ -92,29 +92,40 @@ class TestCases(unittest.TestCase):
 
   @mock.patch('httplib2.Response')
   @mock.patch('google.datalab.utils._http.Http.http.request')
-  def test_raises_http_error_str(self, mock_request, mock_response):
-    TestCases._setup_mocks(mock_request, mock_response, 'Not Found\nDiscarded Msg', 404)
-
+  def test_raises_http_error_json(self, mock_request, mock_response):
+    TestCases._setup_mocks(
+      mock_request, mock_response,
+      b'{"error": {"errors": [{"message": "Not Found"}]}}', 404)
     with self.assertRaises(Exception) as error:
       Http.request('http://www.example.org')
 
     e = error.exception
     self.assertEqual(e.status, 404)
-    self.assertEqual(e.content, 'Not Found\nDiscarded Msg')
     self.assertEqual(e.message, 'HTTP request failed: Not Found')
 
   @mock.patch('httplib2.Response')
   @mock.patch('google.datalab.utils._http.Http.http.request')
-  def test_raises_http_error_bytes(self, mock_request, mock_response):
-    TestCases._setup_mocks(mock_request, mock_response, b'Not Found\nDiscarded Msg', 404)
+  def test_raises_http_error_str(self, mock_request, mock_response):
+    TestCases._setup_mocks(mock_request, mock_response, 'Not Found', 404)
 
     with self.assertRaises(Exception) as error:
       Http.request('http://www.example.org')
 
     e = error.exception
     self.assertEqual(e.status, 404)
-    self.assertEqual(e.content, b'Not Found\nDiscarded Msg')
-    self.assertEqual(e.message, 'HTTP request failed: Not Found')
+    self.assertEqual(e.content, 'Not Found')
+
+  @mock.patch('httplib2.Response')
+  @mock.patch('google.datalab.utils._http.Http.http.request')
+  def test_raises_http_error_bytes(self, mock_request, mock_response):
+    TestCases._setup_mocks(mock_request, mock_response, b'Not Found', 404)
+
+    with self.assertRaises(Exception) as error:
+      Http.request('http://www.example.org')
+
+    e = error.exception
+    self.assertEqual(e.status, 404)
+    self.assertEqual(e.content, b'Not Found')
 
   @staticmethod
   def _setup_mocks(mock_request, mock_response, content, status=200):
