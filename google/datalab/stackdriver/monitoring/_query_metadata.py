@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 from builtins import object
 
 from google.cloud.monitoring_v3 import _dataframe
+from google.protobuf.json_format import MessageToDict
 import pandas
 
 
@@ -64,8 +65,9 @@ class QueryMetadata(object):
       """
       max_rows = len(self._timeseries_list) if max_rows is None else max_rows
       headers = [{
-          'resource': ts.resource._asdict(), 'metric': ts.metric._asdict()}
-          for ts in self._timeseries_list[:max_rows]]
+          'resource': MessageToDict(ts.resource),
+          'metric': MessageToDict(ts.metric)
+      } for ts in self._timeseries_list[:max_rows]]
 
       if not headers:
         return pandas.DataFrame()

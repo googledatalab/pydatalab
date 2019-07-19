@@ -15,15 +15,14 @@ import datetime
 import mock
 import unittest
 
-from google.cloud.monitoring import Query as BaseQuery
+from google.cloud.monitoring_v3.query import Query as BaseQuery
 
 import google.auth
-import datalab.context
-import datalab.stackdriver.monitoring as gcm
+import google.datalab
+import google.datalab.stackdriver.monitoring as gcm
 
 
 PROJECT = 'my-project'
-
 METRIC_TYPE = 'compute.googleapis.com/instance/cpu/utilization'
 RESOURCE_TYPE = 'gce_instance'
 INSTANCE_NAMES = ['instance-1', 'instance-2']
@@ -33,26 +32,24 @@ INSTANCE_IDS = ['1234567890123456789', '9876543210987654321']
 
 class TestCases(unittest.TestCase):
 
-  @mock.patch('datalab.context._context.Context.default')
+  def setUp(self):
+    creds = mock.Mock(spec=google.auth.credentials.Credentials)
+    self.context = google.datalab.Context(PROJECT, creds)
+
+  @mock.patch('google.datalab.Context.default')
   def test_constructor_minimal(self, mock_context_default):
-    default_context = self._create_context()
-    mock_context_default.return_value = default_context
+    mock_context_default.return_value = self.context
 
     query = gcm.Query()
-
-    expected_client = gcm._utils.make_client(context=default_context)
-    self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client._connection.credentials,
-                     expected_client._connection.credentials)
 
     self.assertEqual(query._filter.metric_type, BaseQuery.DEFAULT_METRIC_TYPE)
 
     self.assertIsNone(query._start_time)
     self.assertIsNone(query._end_time)
 
-    self.assertIsNone(query._per_series_aligner)
-    self.assertIsNone(query._alignment_period_seconds)
-    self.assertIsNone(query._cross_series_reducer)
+    self.assertEqual(query._per_series_aligner, 0)
+    self.assertEqual(query._alignment_period_seconds, 0)
+    self.assertEqual(query._cross_series_reducer, 0)
     self.assertEqual(query._group_by_fields, ())
 
   def test_constructor_maximal(self):
@@ -61,37 +58,25 @@ class TestCases(unittest.TestCase):
     DAYS, HOURS, MINUTES = 1, 2, 3
     T0 = T1 - datetime.timedelta(days=DAYS, hours=HOURS, minutes=MINUTES)
 
-    context = self._create_context(PROJECT)
     query = gcm.Query(UPTIME_METRIC,
                       end_time=T1, days=DAYS, hours=HOURS, minutes=MINUTES,
-                      project_id=PROJECT, context=context)
-
-    expected_client = gcm._utils.make_client(
-        context=context, project_id=PROJECT)
-    self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client._connection.credentials,
-                     expected_client._connection.credentials)
+                      context=self.context)
 
     self.assertEqual(query._filter.metric_type, UPTIME_METRIC)
 
     self.assertEqual(query._start_time, T0)
     self.assertEqual(query._end_time, T1)
 
-    self.assertIsNone(query._per_series_aligner)
-    self.assertIsNone(query._alignment_period_seconds)
-    self.assertIsNone(query._cross_series_reducer)
+    self.assertEqual(query._per_series_aligner, 0)
+    self.assertEqual(query._alignment_period_seconds, 0)
+    self.assertEqual(query._cross_series_reducer, 0)
     self.assertEqual(query._group_by_fields, ())
 
-  @mock.patch('datalab.stackdriver.monitoring.Query.iter')
+  @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')
   def test_metadata(self, mock_query_iter):
-    query = gcm.Query(METRIC_TYPE, hours=1, context=self._create_context())
+    query = gcm.Query(METRIC_TYPE, hours=1, context=self.context)
     query_metadata = query.metadata()
 
     mock_query_iter.assert_called_once_with(headers_only=True)
     self.assertIsInstance(query_metadata, gcm.QueryMetadata)
     self.assertEqual(query_metadata.metric_type, METRIC_TYPE)
-
-  @staticmethod
-  def _create_context(project_id='test'):
-    creds = mock.Mock(spec=google.auth.credentials.Credentials)
-    return datalab.context.Context(project_id, creds)

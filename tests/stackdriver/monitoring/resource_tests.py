@@ -43,8 +43,6 @@ class TestCases(unittest.TestCase):
     mock_context_default.return_value = self.context
     descriptors = gcm.ResourceDescriptors()
     self.assertEqual(descriptors._client.project, DEFAULT_PROJECT)
-    self.assertEqual(descriptors._client._connection.credentials,
-                     self.context.credentials)
     self.assertIsNone(descriptors._filter_string)
     self.assertIsNone(descriptors._descriptors)
 
@@ -53,8 +51,6 @@ class TestCases(unittest.TestCase):
     descriptors = gcm.ResourceDescriptors(
         filter_string=FILTER_STRING, context=context)
     self.assertEqual(descriptors._client.project, PROJECT)
-    self.assertEqual(descriptors._client._connection.credentials,
-                     context.credentials)
 
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
     self.assertIsNone(descriptors._descriptors)
@@ -65,7 +61,8 @@ class TestCases(unittest.TestCase):
 
     resource_descriptor_list = self.descriptors.list()
 
-    mock_api_list_descriptors.assert_called_once_with(filter_string=None)
+    mock_api_list_descriptors.assert_called_once_with(
+        DEFAULT_PROJECT, filter_=None)
     self.assertEqual(len(resource_descriptor_list), 2)
     self.assertEqual(resource_descriptor_list[0].type, RESOURCE_TYPES[0])
     self.assertEqual(resource_descriptor_list[1].type, RESOURCE_TYPES[1])
@@ -79,7 +76,7 @@ class TestCases(unittest.TestCase):
     resource_descriptor_list = descriptors.list()
 
     mock_api_list_descriptors.assert_called_once_with(
-        filter_string=FILTER_STRING)
+        DEFAULT_PROJECT, filter_=FILTER_STRING)
     self.assertEqual(len(resource_descriptor_list), 2)
     self.assertEqual(resource_descriptor_list[0].type, RESOURCE_TYPES[0])
     self.assertEqual(resource_descriptor_list[1].type, RESOURCE_TYPES[1])
@@ -90,7 +87,8 @@ class TestCases(unittest.TestCase):
 
     resource_descriptor_list = self.descriptors.list(pattern='*ec2*')
 
-    mock_api_list_descriptors.assert_called_once_with(filter_string=None)
+    mock_api_list_descriptors.assert_called_once_with(
+        DEFAULT_PROJECT, filter_=None)
     self.assertEqual(len(resource_descriptor_list), 1)
     self.assertEqual(resource_descriptor_list[0].type, RESOURCE_TYPES[1])
 
@@ -102,15 +100,17 @@ class TestCases(unittest.TestCase):
     actual_list1 = self.descriptors.list()
     actual_list2 = self.descriptors.list()
 
-    mock_gcloud_list_descriptors.assert_called_once_with(filter_string=None)
+    mock_gcloud_list_descriptors.assert_called_once_with(
+        DEFAULT_PROJECT, filter_=None)
     self.assertEqual(actual_list1, actual_list2)
 
-  @mock.patch('google.datalab.stackdriver.monitoring.ResourceDescriptors.list')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_monitored_resource_descriptors')
   def test_as_dataframe(self, mock_datalab_list_descriptors):
     mock_datalab_list_descriptors.return_value = (
         self._list_resources_get_result())
     dataframe = self.descriptors.as_dataframe()
-    mock_datalab_list_descriptors.assert_called_once_with('*')
+    mock_datalab_list_descriptors.assert_called_once_with(
+        DEFAULT_PROJECT, filter_=None)
 
     expected_headers = list(gcm.ResourceDescriptors._DISPLAY_HEADERS)
     self.assertEqual(dataframe.columns.tolist(), expected_headers)
@@ -125,12 +125,13 @@ class TestCases(unittest.TestCase):
         for resource_type, display_name in zip(RESOURCE_TYPES, DISPLAY_NAMES)]
     self.assertEqual(dataframe.values.tolist(), expected_values)
 
-  @mock.patch('google.datalab.stackdriver.monitoring.ResourceDescriptors.list')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_monitored_resource_descriptors')
   def test_as_dataframe_w_all_args(self, mock_datalab_list_descriptors):
     mock_datalab_list_descriptors.return_value = (
         self._list_resources_get_result())
     dataframe = self.descriptors.as_dataframe(pattern='*instance*', max_rows=1)
-    mock_datalab_list_descriptors.assert_called_once_with('*instance*')
+    mock_datalab_list_descriptors.assert_called_once_with(
+        DEFAULT_PROJECT, filter_=None)
 
     expected_headers = list(gcm.ResourceDescriptors._DISPLAY_HEADERS)
     self.assertEqual(dataframe.columns.tolist(), expected_headers)
@@ -144,11 +145,11 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _list_resources_get_result():
-    all_labels = [google.cloud.monitoring_v3.enums.LabelDescriptor(**labels)
+    all_labels = [google.cloud.monitoring_v3.types.LabelDescriptor(**labels)
                   for labels in LABELS]
     descriptors = [
         google.cloud.monitoring_v3.types.MonitoredResourceDescriptor(
-            name=None, type_=resource_type, display_name=display_name,
+            name=None, type=resource_type, display_name=display_name,
             description=None, labels=all_labels,
         )
         for resource_type, display_name in zip(RESOURCE_TYPES, DISPLAY_NAMES)]

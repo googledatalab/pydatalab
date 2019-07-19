@@ -26,8 +26,6 @@ class TestCases(unittest.TestCase):
     client = gcm._utils.make_client(context)
 
     self.assertEqual(client.project, context.project_id)
-    self.assertEqual(client._connection.credentials, context.credentials)
-    self.assertEqual(client._connection.USER_AGENT, 'pydatalab/v0')
 
   @mock.patch('google.datalab.Context.default')
   def test_make_client_w_defaults(self, mock_context_default):
@@ -36,9 +34,6 @@ class TestCases(unittest.TestCase):
     client = gcm._utils.make_client()
 
     self.assertEqual(client.project, default_context.project_id)
-    self.assertEqual(
-        client._connection.credentials, default_context.credentials)
-    self.assertEqual(client._connection.USER_AGENT, 'pydatalab/v0')
 
   @staticmethod
   def _create_context():

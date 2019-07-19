@@ -55,7 +55,7 @@ class Groups(object):
     """
     if self._group_dict is None:
       self._group_dict = collections.OrderedDict(
-          (group.id, group) for group in self._client.list_groups())
+          (group.name, group) for group in self._client.list_groups())
 
     return [group for group in self._group_dict.values()
             if fnmatch.fnmatch(group.display_name, pattern)]
@@ -76,10 +76,10 @@ class Groups(object):
     for i, group in enumerate(self.list(pattern)):
       if max_rows is not None and i >= max_rows:
         break
-      parent = self._group_dict.get(group.parent_id)
+      parent = self._group_dict.get(group.parent_name)
       parent_display_name = '' if parent is None else parent.display_name
       data.append([
-          group.id, group.display_name, group.parent_id,
+          group.name, group.display_name, group.parent_name,
           parent_display_name, group.is_cluster, group.filter])
 
     return pandas.DataFrame(data, columns=self._DISPLAY_HEADERS)

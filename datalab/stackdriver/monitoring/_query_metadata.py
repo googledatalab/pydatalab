@@ -17,7 +17,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from builtins import object
 
-import google.cloud.monitoring
+from google.cloud.monitoring_v3 import _dataframe
+from google.protobuf.json_format import MessageToDict
 import pandas
 
 
@@ -64,8 +65,9 @@ class QueryMetadata(object):
       """
       max_rows = len(self._timeseries_list) if max_rows is None else max_rows
       headers = [{
-          'resource': ts.resource._asdict(), 'metric': ts.metric._asdict()}
-          for ts in self._timeseries_list[:max_rows]]
+          'resource': MessageToDict(ts.resource),
+          'metric': MessageToDict(ts.metric)
+      } for ts in self._timeseries_list[:max_rows]]
 
       if not headers:
         return pandas.DataFrame()
@@ -78,7 +80,7 @@ class QueryMetadata(object):
            for col in dataframe.columns])
 
       # Re-order the columns.
-      resource_keys = google.cloud.monitoring._dataframe._sorted_resource_labels(
+      resource_keys = _dataframe._sorted_resource_labels(
           dataframe['resource.labels'].columns)
       sorted_columns = [('resource.type', '')]
       sorted_columns += [('resource.labels', key) for key in resource_keys]

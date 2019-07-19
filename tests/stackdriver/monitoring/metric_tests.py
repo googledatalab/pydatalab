@@ -11,6 +11,7 @@
 # the License.
 
 from __future__ import absolute_import
+
 import mock
 import unittest
 
@@ -49,8 +50,6 @@ class TestCases(unittest.TestCase):
     descriptors = gcm.MetricDescriptors()
 
     self.assertEqual(descriptors._client.project, DEFAULT_PROJECT)
-    self.assertEqual(descriptors._client._connection.credentials,
-                     self.context.credentials)
 
     self.assertIsNone(descriptors._filter_string)
     self.assertIsNone(descriptors._type_prefix)
@@ -63,8 +62,6 @@ class TestCases(unittest.TestCase):
         context=context)
 
     self.assertEqual(descriptors._client.project, PROJECT)
-    self.assertEqual(descriptors._client._connection.credentials,
-                     context.credentials)
 
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
     self.assertEqual(descriptors._type_prefix, TYPE_PREFIX)
@@ -78,7 +75,7 @@ class TestCases(unittest.TestCase):
     metric_descriptor_list = self.descriptors.list()
 
     mock_gcloud_list_descriptors.assert_called_once_with(
-        filter_string=None, type_prefix=None)
+        DEFAULT_PROJECT, filter_='')
     self.assertEqual(len(metric_descriptor_list), 2)
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[0])
     self.assertEqual(metric_descriptor_list[1].type, METRIC_TYPES[1])
@@ -93,8 +90,11 @@ class TestCases(unittest.TestCase):
         context=self.context)
     metric_descriptor_list = descriptors.list()
 
+    expected_filter = '{} AND metric.type = starts_with("{}")'.format(
+        FILTER_STRING, TYPE_PREFIX)
+
     mock_gcloud_list_descriptors.assert_called_once_with(
-        filter_string=FILTER_STRING, type_prefix=TYPE_PREFIX)
+        DEFAULT_PROJECT, filter_=expected_filter)
     self.assertEqual(len(metric_descriptor_list), 2)
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[0])
     self.assertEqual(metric_descriptor_list[1].type, METRIC_TYPES[1])
@@ -107,7 +107,7 @@ class TestCases(unittest.TestCase):
     metric_descriptor_list = self.descriptors.list(pattern='*usage_time')
 
     mock_gcloud_list_descriptors.assert_called_once_with(
-        filter_string=None, type_prefix=None)
+        DEFAULT_PROJECT, filter_='')
     self.assertEqual(len(metric_descriptor_list), 1)
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[1])
 
@@ -120,7 +120,7 @@ class TestCases(unittest.TestCase):
     actual_list2 = self.descriptors.list()
 
     mock_gcloud_list_descriptors.assert_called_once_with(
-        filter_string=None, type_prefix=None)
+        DEFAULT_PROJECT, filter_='')
     self.assertEqual(actual_list1, actual_list2)
 
   @mock.patch('google.datalab.stackdriver.monitoring.MetricDescriptors.list')
@@ -163,12 +163,11 @@ class TestCases(unittest.TestCase):
 
   @staticmethod
   def _list_metrics_get_result(context):
-    client = gcm._utils.make_client(context=context)
-    all_labels = [google.cloud.monitoring_v3.enums.LabelDescriptor(**labels)
+    all_labels = [google.cloud.monitoring_v3.types.LabelDescriptor(**labels)
                   for labels in LABELS]
     descriptors = [
-        client.create_metric_descriptor(
-            metric_type, metric_kind=METRIC_KIND, value_type=VALUE_TYPE,
+        google.cloud.monitoring_v3.types.MetricDescriptor(
+            type=metric_type, metric_kind=METRIC_KIND, value_type=VALUE_TYPE,
             unit=UNIT, display_name=display_name, labels=all_labels,
         )
         for metric_type, display_name in zip(METRIC_TYPES, DISPLAY_NAMES)]

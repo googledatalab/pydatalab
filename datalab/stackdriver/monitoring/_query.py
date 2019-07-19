@@ -14,19 +14,18 @@
 
 from __future__ import absolute_import
 
-import google.cloud.monitoring
+import google.cloud.monitoring_v3.query
 
 from . import _query_metadata
 from . import _utils
 
 
-class Query(google.cloud.monitoring.Query):
+class Query(google.cloud.monitoring_v3.query.Query):
   """Query object for retrieving metric data."""
 
   def __init__(self,
-               metric_type=google.cloud.monitoring.Query.DEFAULT_METRIC_TYPE,
-               end_time=None, days=0, hours=0, minutes=0,
-               project_id=None, context=None):
+               metric_type=google.cloud.monitoring_v3.query.Query.DEFAULT_METRIC_TYPE,
+               end_time=None, days=0, hours=0, minutes=0, context=None):
     """Initializes the core query parameters.
 
     The start time (exclusive) is determined by combining the
@@ -34,13 +33,13 @@ class Query(google.cloud.monitoring.Query):
     the resulting duration from the end time.
 
     It is also allowed to omit the end time and duration here,
-    in which case :meth:`~google.cloud.monitoring.query.Query.select_interval`
+    in which case :meth:`~google.cloud.monitoring_v3.query.Query.select_interval`
     must be called before the query is executed.
 
     Args:
       metric_type: The metric type name. The default value is
           :data:`Query.DEFAULT_METRIC_TYPE
-          <google.cloud.monitoring.query.Query.DEFAULT_METRIC_TYPE>`, but
+          <google.cloud.monitoring_v3.query.Query.DEFAULT_METRIC_TYPE>`, but
           please note that this default value is provided only for
           demonstration purposes and is subject to change.
       end_time: The end time (inclusive) of the time interval for which
@@ -49,18 +48,18 @@ class Query(google.cloud.monitoring.Query):
       days: The number of days in the time interval.
       hours: The number of hours in the time interval.
       minutes: The number of minutes in the time interval.
-      project_id: An optional project ID or number to override the one provided
-          by the context.
       context: An optional Context object to use instead of the global default.
 
     Raises:
         ValueError: ``end_time`` was specified but ``days``, ``hours``, and
             ``minutes`` are all zero. If you really want to specify a point in
             time, use
-            :meth:`~google.cloud.monitoring.query.Query.select_interval`.
+            :meth:`~google.cloud.monitoring_v3.query.Query.select_interval`.
     """
-    client = _utils.make_client(project_id, context)
-    super(Query, self).__init__(client, metric_type,
+    client = _utils.make_client(context)
+    super(Query, self).__init__(client.metrics_client,
+                                project=client.project,
+                                metric_type=metric_type,
                                 end_time=end_time,
                                 days=days, hours=hours, minutes=minutes)
 

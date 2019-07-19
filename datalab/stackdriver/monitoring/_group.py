@@ -21,7 +21,7 @@ import fnmatch
 
 import pandas
 
-import datalab.context
+import google.datalab
 
 from . import _utils
 
@@ -32,17 +32,14 @@ class Groups(object):
   _DISPLAY_HEADERS = ('Group ID', 'Group name', 'Parent ID', 'Parent name',
                       'Is cluster', 'Filter')
 
-  def __init__(self, project_id=None, context=None):
+  def __init__(self, context=None):
     """Initializes the Groups for a Stackdriver project.
 
     Args:
-      project_id: An optional project ID or number to override the one provided
-          by the context.
       context: An optional Context object to use instead of the global default.
     """
-    self._context = context or datalab.context.Context.default()
-    self._project_id = project_id or self._context.project_id
-    self._client = _utils.make_client(project_id, context)
+    self._context = context or google.datalab.Context.default()
+    self._client = _utils.make_client(self._context)
     self._group_dict = None
 
   def list(self, pattern='*'):
@@ -58,7 +55,7 @@ class Groups(object):
     """
     if self._group_dict is None:
       self._group_dict = collections.OrderedDict(
-          (group.id, group) for group in self._client.list_groups())
+          (group.name, group) for group in self._client.list_groups())
 
     return [group for group in self._group_dict.values()
             if fnmatch.fnmatch(group.display_name, pattern)]
@@ -79,10 +76,10 @@ class Groups(object):
     for i, group in enumerate(self.list(pattern)):
       if max_rows is not None and i >= max_rows:
         break
-      parent = self._group_dict.get(group.parent_id)
+      parent = self._group_dict.get(group.parent_name)
       parent_display_name = '' if parent is None else parent.display_name
       data.append([
-          group.id, group.display_name, group.parent_id,
+          group.name, group.display_name, group.parent_name,
           parent_display_name, group.is_cluster, group.filter])
 
     return pandas.DataFrame(data, columns=self._DISPLAY_HEADERS)

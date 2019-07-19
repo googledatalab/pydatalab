@@ -14,17 +14,54 @@
 
 from __future__ import absolute_import
 
-import google.cloud.monitoring
+from google.api_core.gapic_v1.client_info import ClientInfo
+from google.cloud.monitoring_v3 import MetricServiceClient
+from google.cloud.monitoring_v3 import GroupServiceClient
 
-import datalab.context
+import google.datalab
 
 
-def make_client(project_id=None, context=None):
-  context = context or datalab.context.Context.default()
-  project_id = project_id or context.project_id
-  client = google.cloud.monitoring.Client(
-      project=project_id,
+# _MonitoringClient holds instances of individual google.cloud.monitoring
+# clients and translates each call from the old signature, since the prior
+# client has been updated and has split into multiple client classes.
+class _MonitoringClient(object):
+  def __init__(self, context):
+    self.project = context.project_id
+    client_info = ClientInfo(user_agent='pydatalab/v0')
+    self.metrics_client = MetricServiceClient(
       credentials=context.credentials,
-  )
-  client._connection.USER_AGENT = 'pydatalab/v0'
+      client_info=client_info
+    )
+    self.group_client = GroupServiceClient(
+      credentials=context.credentials,
+      client_info=client_info
+    )
+
+  def list_metric_descriptors(self, filter_string=None, type_prefix=None):
+    filters = []
+    if filter_string is not None:
+      filters.append(filter_string)
+
+    if type_prefix is not None:
+      filters.append('metric.type = starts_with("{prefix}")'.format(
+          prefix=type_prefix))
+
+    metric_filter = ' AND '.join(filters)
+    metrics = self.metrics_client.list_metric_descriptors(
+        self.project, filter_=metric_filter)
+    return metrics
+
+  def list_resource_descriptors(self, filter_string=None):
+    resources = self.metrics_client.list_monitored_resource_descriptors(
+        self.project, filter_=filter_string)
+    return resources
+
+  def list_groups(self):
+    groups = self.group_client.list_groups(self.project)
+    return groups
+
+
+def make_client(context=None):
+  context = context or google.datalab.Context.default()
+  client = _MonitoringClient(context)
   return client

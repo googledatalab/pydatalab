@@ -11,15 +11,17 @@
 # the License.
 
 from __future__ import absolute_import
+
 import mock
 import unittest
 
-import google.cloud.monitoring
+import google.cloud.monitoring_v3
 
 import google.auth
-import datalab.context
-import datalab.stackdriver.monitoring as gcm
+import google.datalab
+import google.datalab.stackdriver.monitoring as gcm
 
+DEFAULT_PROJECT = 'test'
 PROJECT = 'my-project'
 METRIC_TYPES = ['compute.googleapis.com/instances/cpu/utilization',
                 'compute.googleapis.com/instances/cpu/usage_time']
@@ -38,19 +40,16 @@ TYPE_PREFIX = 'compute'
 class TestCases(unittest.TestCase):
 
   def setUp(self):
-    self.context = self._create_context()
+    self.context = self._create_context(DEFAULT_PROJECT)
     self.descriptors = gcm.MetricDescriptors(context=self.context)
 
-  @mock.patch('datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_constructor_minimal(self, mock_context_default):
     mock_context_default.return_value = self.context
 
     descriptors = gcm.MetricDescriptors()
 
-    expected_client = gcm._utils.make_client(context=self.context)
-    self.assertEqual(descriptors._client.project, expected_client.project)
-    self.assertEqual(descriptors._client._connection.credentials,
-                     expected_client._connection.credentials)
+    self.assertEqual(descriptors._client.project, DEFAULT_PROJECT)
 
     self.assertIsNone(descriptors._filter_string)
     self.assertIsNone(descriptors._type_prefix)
@@ -60,19 +59,15 @@ class TestCases(unittest.TestCase):
     context = self._create_context(PROJECT)
     descriptors = gcm.MetricDescriptors(
         filter_string=FILTER_STRING, type_prefix=TYPE_PREFIX,
-        project_id=PROJECT, context=context)
+        context=context)
 
-    expected_client = gcm._utils.make_client(
-        context=context, project_id=PROJECT)
-    self.assertEqual(descriptors._client.project, expected_client.project)
-    self.assertEqual(descriptors._client._connection.credentials,
-                     expected_client._connection.credentials)
+    self.assertEqual(descriptors._client.project, PROJECT)
 
     self.assertEqual(descriptors._filter_string, FILTER_STRING)
     self.assertEqual(descriptors._type_prefix, TYPE_PREFIX)
     self.assertIsNone(descriptors._descriptors)
 
-  @mock.patch('google.cloud.monitoring.Client.list_metric_descriptors')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_metric_descriptors')
   def test_list(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -80,12 +75,12 @@ class TestCases(unittest.TestCase):
     metric_descriptor_list = self.descriptors.list()
 
     mock_gcloud_list_descriptors.assert_called_once_with(
-        filter_string=None, type_prefix=None)
+        DEFAULT_PROJECT, filter_='')
     self.assertEqual(len(metric_descriptor_list), 2)
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[0])
     self.assertEqual(metric_descriptor_list[1].type, METRIC_TYPES[1])
 
-  @mock.patch('google.cloud.monitoring.Client.list_metric_descriptors')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_metric_descriptors')
   def test_list_w_api_filter(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -95,13 +90,16 @@ class TestCases(unittest.TestCase):
         context=self.context)
     metric_descriptor_list = descriptors.list()
 
+    expected_filter = '{} AND metric.type = starts_with("{}")'.format(
+        FILTER_STRING, TYPE_PREFIX)
+
     mock_gcloud_list_descriptors.assert_called_once_with(
-        filter_string=FILTER_STRING, type_prefix=TYPE_PREFIX)
+        DEFAULT_PROJECT, filter_=expected_filter)
     self.assertEqual(len(metric_descriptor_list), 2)
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[0])
     self.assertEqual(metric_descriptor_list[1].type, METRIC_TYPES[1])
 
-  @mock.patch('google.cloud.monitoring.Client.list_metric_descriptors')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_metric_descriptors')
   def test_list_w_pattern_match(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -109,11 +107,11 @@ class TestCases(unittest.TestCase):
     metric_descriptor_list = self.descriptors.list(pattern='*usage_time')
 
     mock_gcloud_list_descriptors.assert_called_once_with(
-        filter_string=None, type_prefix=None)
+        DEFAULT_PROJECT, filter_='')
     self.assertEqual(len(metric_descriptor_list), 1)
     self.assertEqual(metric_descriptor_list[0].type, METRIC_TYPES[1])
 
-  @mock.patch('google.cloud.monitoring.Client.list_metric_descriptors')
+  @mock.patch('google.cloud.monitoring_v3.MetricServiceClient.list_metric_descriptors')
   def test_list_caching(self, mock_gcloud_list_descriptors):
     mock_gcloud_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -122,10 +120,10 @@ class TestCases(unittest.TestCase):
     actual_list2 = self.descriptors.list()
 
     mock_gcloud_list_descriptors.assert_called_once_with(
-        filter_string=None, type_prefix=None)
+        DEFAULT_PROJECT, filter_='')
     self.assertEqual(actual_list1, actual_list2)
 
-  @mock.patch('datalab.stackdriver.monitoring.MetricDescriptors.list')
+  @mock.patch('google.datalab.stackdriver.monitoring.MetricDescriptors.list')
   def test_as_dataframe(self, mock_datalab_list_descriptors):
     mock_datalab_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -146,7 +144,7 @@ class TestCases(unittest.TestCase):
         for metric_type, display_name in zip(METRIC_TYPES, DISPLAY_NAMES)]
     self.assertEqual(dataframe.values.tolist(), expected_values)
 
-  @mock.patch('datalab.stackdriver.monitoring.MetricDescriptors.list')
+  @mock.patch('google.datalab.stackdriver.monitoring.MetricDescriptors.list')
   def test_as_dataframe_w_all_args(self, mock_datalab_list_descriptors):
     mock_datalab_list_descriptors.return_value = self._list_metrics_get_result(
         context=self.context)
@@ -159,18 +157,17 @@ class TestCases(unittest.TestCase):
     self.assertEqual(dataframe.iloc[0, 0], METRIC_TYPES[0])
 
   @staticmethod
-  def _create_context(project_id='test'):
+  def _create_context(project_id):
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.Context(project_id, creds)
 
   @staticmethod
   def _list_metrics_get_result(context):
-    client = gcm._utils.make_client(context=context)
-    all_labels = [google.cloud.monitoring.LabelDescriptor(**labels)
+    all_labels = [google.cloud.monitoring_v3.types.LabelDescriptor(**labels)
                   for labels in LABELS]
     descriptors = [
-        client.metric_descriptor(
-            metric_type, metric_kind=METRIC_KIND, value_type=VALUE_TYPE,
+        google.cloud.monitoring_v3.types.MetricDescriptor(
+            type=metric_type, metric_kind=METRIC_KIND, value_type=VALUE_TYPE,
             unit=UNIT, display_name=display_name, labels=all_labels,
         )
         for metric_type, display_name in zip(METRIC_TYPES, DISPLAY_NAMES)]

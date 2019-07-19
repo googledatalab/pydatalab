@@ -15,33 +15,27 @@ import mock
 import unittest
 
 import google.auth
-import datalab.context
-import datalab.stackdriver.monitoring as gcm
+import google.datalab
+import google.datalab.stackdriver.monitoring as gcm
 
 
 class TestCases(unittest.TestCase):
 
   def test_make_client(self):
-    project_id = 'project_id'
     context = self._create_context()
-    client = gcm._utils.make_client(project_id, context)
+    client = gcm._utils.make_client(context)
 
-    self.assertEqual(client.project, project_id)
-    self.assertEqual(client._connection.credentials, context.credentials)
-    self.assertEqual(client._connection.USER_AGENT, 'pydatalab/v0')
+    self.assertEqual(client.project, context.project_id)
 
-  @mock.patch('datalab.context._context.Context.default')
+  @mock.patch('google.datalab.Context.default')
   def test_make_client_w_defaults(self, mock_context_default):
     default_context = self._create_context()
     mock_context_default.return_value = default_context
     client = gcm._utils.make_client()
 
     self.assertEqual(client.project, default_context.project_id)
-    self.assertEqual(
-        client._connection.credentials, default_context.credentials)
-    self.assertEqual(client._connection.USER_AGENT, 'pydatalab/v0')
 
   @staticmethod
-  def _create_context(project_id='test'):
+  def _create_context():
     creds = mock.Mock(spec=google.auth.credentials.Credentials)
-    return datalab.context.Context(project_id, creds)
+    return google.datalab.Context('test_project', creds)
