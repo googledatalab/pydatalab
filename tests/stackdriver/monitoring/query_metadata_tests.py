@@ -14,9 +14,9 @@ from __future__ import absolute_import
 import mock
 import unittest
 
-from google.cloud.monitoring import Resource
-from google.cloud.monitoring import Metric
-from google.cloud.monitoring import TimeSeries
+from google.cloud.monitoring_v3.types import Metric
+from google.cloud.monitoring_v3.types import MonitoredResource
+from google.cloud.monitoring_v3.types import TimeSeries
 
 import google.auth
 import google.datalab
@@ -142,7 +142,7 @@ class TestCases(unittest.TestCase):
     for metric_labels, resource_labels in zip(METRIC_LABELS, RESOURCE_LABELS):
       yield TimeSeries(
         metric=Metric(type=METRIC_TYPE, labels=metric_labels),
-        resource=Resource(type=RESOURCE_TYPE, labels=resource_labels),
+        resource=MonitoredResource(type=RESOURCE_TYPE, labels=resource_labels),
         metric_kind='GAUGE',
         value_type='DOUBLE',
         points=[],

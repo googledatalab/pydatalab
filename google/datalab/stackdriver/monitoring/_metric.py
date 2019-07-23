@@ -15,6 +15,8 @@
 from __future__ import absolute_import
 from builtins import object
 
+from google.cloud.monitoring_v3 import enums
+
 import fnmatch
 import pandas
 
@@ -78,7 +80,9 @@ class MetricDescriptors(object):
         break
       labels = ', '. join([l.key for l in metric.labels])
       data.append([
-          metric.type, metric.display_name, metric.metric_kind,
-          metric.value_type, metric.unit, labels])
+          metric.type, metric.display_name,
+          enums.MetricDescriptor.MetricKind(metric.metric_kind).name,
+          enums.MetricDescriptor.ValueType(metric.value_type).name,
+          metric.unit, labels])
 
     return pandas.DataFrame(data, columns=self._DISPLAY_HEADERS)

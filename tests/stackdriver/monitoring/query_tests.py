@@ -15,7 +15,7 @@ import datetime
 import mock
 import unittest
 
-from google.cloud.monitoring import Query as BaseQuery
+from google.cloud.monitoring_v3.query import Query as BaseQuery
 
 import google.auth
 import google.datalab
@@ -42,19 +42,14 @@ class TestCases(unittest.TestCase):
 
     query = gcm.Query()
 
-    expected_client = gcm._utils.make_client(context=self.context)
-    self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client._connection.credentials,
-                     expected_client._connection.credentials)
-
     self.assertEqual(query._filter.metric_type, BaseQuery.DEFAULT_METRIC_TYPE)
 
     self.assertIsNone(query._start_time)
     self.assertIsNone(query._end_time)
 
-    self.assertIsNone(query._per_series_aligner)
-    self.assertIsNone(query._alignment_period_seconds)
-    self.assertIsNone(query._cross_series_reducer)
+    self.assertEqual(query._per_series_aligner, 0)
+    self.assertEqual(query._alignment_period_seconds, 0)
+    self.assertEqual(query._cross_series_reducer, 0)
     self.assertEqual(query._group_by_fields, ())
 
   def test_constructor_maximal(self):
@@ -67,19 +62,14 @@ class TestCases(unittest.TestCase):
                       end_time=T1, days=DAYS, hours=HOURS, minutes=MINUTES,
                       context=self.context)
 
-    expected_client = gcm._utils.make_client(context=self.context)
-    self.assertEqual(query._client.project, expected_client.project)
-    self.assertEqual(query._client._connection.credentials,
-                     expected_client._connection.credentials)
-
     self.assertEqual(query._filter.metric_type, UPTIME_METRIC)
 
     self.assertEqual(query._start_time, T0)
     self.assertEqual(query._end_time, T1)
 
-    self.assertIsNone(query._per_series_aligner)
-    self.assertIsNone(query._alignment_period_seconds)
-    self.assertIsNone(query._cross_series_reducer)
+    self.assertEqual(query._per_series_aligner, 0)
+    self.assertEqual(query._alignment_period_seconds, 0)
+    self.assertEqual(query._cross_series_reducer, 0)
     self.assertEqual(query._group_by_fields, ())
 
   @mock.patch('google.datalab.stackdriver.monitoring.Query.iter')

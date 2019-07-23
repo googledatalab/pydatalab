@@ -93,7 +93,8 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'configparser>=3.5.0',
     'mock>=2.0.0',
     'future>=0.16.0',
-    'google-cloud-monitoring==0.28.0',
+    'google-cloud-monitoring==0.31.1',
+    'google-api-core>=1.10.0',
     'google-api-python-client>=1.6.2',
     'seaborn>=0.7.0',
     'plotly>=1.12.5',
@@ -101,7 +102,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'oauth2client>=2.2.0',
     'pandas>=0.22.0',
     'google_auth_httplib2>=0.0.2',
-    'pandas-profiling>=1.0.0a2',
+    'pandas-profiling==1.4.0',
     'python-dateutil>=2.5.0',
     'pytz>=2015.4',
     'pyyaml>=3.11',
@@ -111,9 +112,7 @@ for accessing Google's Cloud Platform services such as Google BigQuery.
     'ipykernel>=4.5.2',
     'psutil>=4.3.0',
     'jsonschema>=2.6.0',
-    # six needs to be pinned to 1.10.0 to work-around an apache_beam bug:
-    # https://stackoverflow.com/questions/46300173/import-apache-beam-metaclass-conflict
-    'six==1.10.0',
+    'six>=1.10.0',
     'urllib3>=1.22',
   ],
   extras_require={

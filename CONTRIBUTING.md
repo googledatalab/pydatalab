@@ -23,7 +23,7 @@ use Github pull requests for this purpose.
 ### Running tests
 We use [`tox`](https://tox.readthedocs.io/) for running our tests. To run tests
 before sending out a pull request, just
-[install tox](https://http://tox.readthedocs.io/en/latest/install.html) and run
+[install tox](https://tox.readthedocs.io/en/latest/install.html) and run
 
 ```shell
 $ tox
