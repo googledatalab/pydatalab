@@ -216,7 +216,7 @@ class Schema(list):
           a definition of the schema as a list of dictionaries with 'name' and 'type' entries
           and possibly 'mode' and 'description' entries. Only used if no data argument was provided.
           'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
-          https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
+          https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types
 
           Note that there is potential ambiguity when passing a list of lists or a list of
           dicts between whether that should be treated as a list of records or a single record
@@ -263,7 +263,7 @@ class Schema(list):
       definition: a definition of the schema as a list of dictionaries with 'name' and 'type'
           entries and possibly 'mode' and 'description' entries. Only used if no data argument was
           provided. 'mode' can be 'NULLABLE', 'REQUIRED' or 'REPEATED'. For the allowed types, see:
-          https://cloud.google.com/bigquery/preparing-data-for-bigquery#datatypes
+          https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types
     """
     super(Schema, self).__init__()
     self._map = {}
