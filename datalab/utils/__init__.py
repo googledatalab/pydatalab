@@ -12,7 +12,7 @@
 
 """Google Cloud Platform library - Internal Helpers."""
 
-from ._async import async, async_function, async_method
+from ._async import asynchron, async_function, async_method
 from ._gcp_job import GCPJob
 from ._http import Http, RequestException
 from ._iterator import Iterator
@@ -24,7 +24,7 @@ from ._dataflow_job import DataflowJob
 from ._utils import print_exception_with_last_stack, get_item, compare_datetimes, \
     pick_unused_port, is_http_running_on, gcs_copy_file
 
-__all__ = ['async', 'async_function', 'async_method', 'GCPJob', 'Http', 'RequestException',
+__all__ = ['asynchron', 'async_function', 'async_method', 'GCPJob', 'Http', 'RequestException',
            'Iterator', 'Job', 'JobError', 'JSONEncoder', 'LRUCache', 'LambdaJob', 'DataflowJob',
            'print_exception_with_last_stack', 'get_item', 'compare_datetimes', 'pick_unused_port',
            'is_http_running_on', 'gcs_copy_file']

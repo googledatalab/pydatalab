@@ -30,7 +30,7 @@ class LambdaJob(_job.Job):
       job_id: an optional ID for the job. If None, a UUID will be generated.
     """
     super(LambdaJob, self).__init__(job_id)
-    self._future = _async.async.executor.submit(fn, *args, **kwargs)
+    self._future = _async.asynchron.executor.submit(fn, *args, **kwargs)
 
   def __repr__(self):
     """Returns a representation for the job for showing in the notebook.

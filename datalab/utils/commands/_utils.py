@@ -324,7 +324,7 @@ def parse_config(config, env, as_dict=True):
   elif stripped[0] == '{':
     config = json.loads(config)
   else:
-    config = yaml.load(config)
+    config = yaml.load(config, Loader=yaml.FullLoader)
   if as_dict:
     config = dict(config)
 

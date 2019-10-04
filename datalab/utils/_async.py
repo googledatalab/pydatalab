@@ -23,7 +23,7 @@ from . import _job
 from future.utils import with_metaclass
 
 
-class async(with_metaclass(abc.ABCMeta, object)):
+class asynchron(with_metaclass(abc.ABCMeta, object)):
   """ Base class for async_function/async_method. Creates a wrapped function/method that will
       run the original function/method on a thread pool worker thread and return a Job instance
       for monitoring the status of the thread.
@@ -55,7 +55,7 @@ class async(with_metaclass(abc.ABCMeta, object)):
     return _job.Job(future=self.executor.submit(self._call, *args, **kwargs))
 
 
-class async_function(async):
+class async_function(asynchron):
   """ This decorator can be applied to any static function that makes blocking calls to create
       a modified version that creates a Job and returns immediately; the original
       method will be called on a thread pool worker thread.
@@ -63,10 +63,10 @@ class async_function(async):
 
   def _call(self, *args, **kwargs):
     # Call the wrapped method.
-    return self._function(*async._preprocess_args(*args), **async._preprocess_kwargs(**kwargs))
+    return self._function(*asynchron._preprocess_args(*args), **asynchron._preprocess_kwargs(**kwargs))
 
 
-class async_method(async):
+class async_method(asynchron):
   """ This decorator can be applied to any class instance method that makes blocking calls to create
       a modified version that creates a Job and returns immediately; the original method will be
       called on a thread pool worker thread.
@@ -74,8 +74,8 @@ class async_method(async):
 
   def _call(self, *args, **kwargs):
     # Call the wrapped method.
-    return self._function(self.obj, *async._preprocess_args(*args),
-                          **async._preprocess_kwargs(**kwargs))
+    return self._function(self.obj, *asynchron._preprocess_args(*args),
+                          **asynchron._preprocess_kwargs(**kwargs))
 
   def __get__(self, instance, owner):
     # This is important for attribute inheritance and setting self.obj so it can be
