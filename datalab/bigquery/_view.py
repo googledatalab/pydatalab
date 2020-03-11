@@ -188,7 +188,7 @@ class View(object):
 
   def execute_async(self, table_name=None, table_mode='create', use_cache=True, priority='high',
                     allow_large_results=False, dialect=None, billing_tier=None):
-    """Materialize the View async_ously.
+    """Materialize the View asynchronously.
 
     Args:
       table_name: the result table name; if None, then a temporary table will be used.
