@@ -30,6 +30,7 @@ try:
   import pandas_profiling
 except ImportError:
   pass
+import six
 import sys
 import types
 import yaml
@@ -323,8 +324,10 @@ def parse_config(config, env, as_dict=True):
     config = {}
   elif stripped[0] == '{':
     config = json.loads(config)
-  else:
+  elif six.PY3:
     config = yaml.load(config, Loader=yaml.FullLoader)
+  else:
+    config = yaml.load(config)
   if as_dict:
     config = dict(config)
 
