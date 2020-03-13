@@ -95,7 +95,10 @@ class TestCases(unittest.TestCase):
                               'string4: value4\nflag1: false')
     self.assertEqual(args, {'string1': 'value1', 'string2': 'value2', 'string3': 'value3',
                             'command': 'subcommand2', 'flag1': False})
-    self.assertEqual(yaml.load(cell), {'string3': 'value3', 'string4': 'value4'})
+    if six.PY3:
+      self.assertEqual(yaml.load(cell, Loader=yaml.FullLoader), {'string3': 'value3', 'string4': 'value4'})
+    else:
+      self.assertEqual(yaml.load(cell), {'string3': 'value3', 'string4': 'value4'})
 
     # Regular arg and cell arg cannot be the same name.
     with self.assertRaises(ValueError):
@@ -133,7 +136,10 @@ class TestCases(unittest.TestCase):
     args, cell = parser.parse('subcommand1 --string1 $var1', 'a: b\nstring2: $var2', namespace)
     self.assertEqual(args,
                      {'string1': 'value1', 'string2': 'value2', 'flag1': False, 'dict1': None})
-    self.assertEqual(yaml.load(cell), {'a': 'b', 'string2': '$var2'})
+    if six.PY3:
+      self.assertEqual(yaml.load(cell, Loader=yaml.FullLoader), {'a': 'b', 'string2': '$var2'})
+    else:
+      self.assertEqual(yaml.load(cell), {'a': 'b', 'string2': '$var2'})
 
     cell = """
 dict1:
