@@ -21,7 +21,7 @@ before_install:
   - tsc --module amd --noImplicitAny --outdir datalab/notebook/static datalab/notebook/static/*.ts
   # We use tox for actually running tests.
   - pip install --upgrade pip tox
-  
+
 script:
   # tox reads its configuration from tox.ini.
   - tox -e $TOX_ENV
