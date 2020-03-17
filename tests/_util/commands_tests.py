@@ -96,7 +96,10 @@ class TestCases(unittest.TestCase):
     self.assertEqual(args, {'string1': 'value1', 'string2': 'value2', 'string3': 'value3',
                             'command': 'subcommand2', 'flag1': False})
     if six.PY3:
-      self.assertEqual(yaml.load(cell, Loader=yaml.FullLoader), {'string3': 'value3', 'string4': 'value4'})
+      self.assertEqual(
+        yaml.load(cell, Loader=yaml.FullLoader),
+        {'string3': 'value3', 'string4': 'value4'}
+      )
     else:
       self.assertEqual(yaml.load(cell), {'string3': 'value3', 'string4': 'value4'})
 
