@@ -47,7 +47,7 @@ setup(
   long_description="""
   """,
   install_requires=[
-    'pillow==3.4.1',
+    'pillow==6.2.0',
   ],
   package_data={
   }
