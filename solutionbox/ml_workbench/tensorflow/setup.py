@@ -27,7 +27,7 @@ setup(
   long_description="""
   """,
   install_requires=[
-    'tensorflow==1.8.0',
+    'tensorflow==1.15.2',
     'protobuf==3.1.0',
     'pillow==3.4.1',  # ML Engine does not have PIL installed
   ],
