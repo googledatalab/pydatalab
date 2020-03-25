@@ -14,7 +14,7 @@
 
 from setuptools import setup
 
-version = '1.1.5'
+version = '1.2.0'
 
 setup(
   name='datalab',
