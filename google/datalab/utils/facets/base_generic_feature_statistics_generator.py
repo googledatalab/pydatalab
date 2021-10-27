@@ -144,7 +144,7 @@ class BaseGenericFeatureStatisticsGenerator(object):
             examples.
           - 'size': The number of examples parsed for the dataset.
           - 'name': The name of the dataset.
-      features: A list of strings that is a whitelist of feature names to create
+      features: A list of strings that is an allowlist of feature names to create
           feature statistics for. If set to None then all features in the
             dataset
           are analyzed. Defaults to None.
@@ -152,7 +152,7 @@ class BaseGenericFeatureStatisticsGenerator(object):
       The feature statistics proto for the provided datasets.
     """
     features_seen = set()
-    whitelist_features = set(features) if features else None
+    allowlist_features = set(features) if features else None
     all_datasets = self.datasets_proto()
 
     # TODO(jwexler): Add ability to generate weighted feature stats
@@ -166,10 +166,10 @@ class BaseGenericFeatureStatisticsGenerator(object):
     # datasets, we check the feature once against all datasets.
     for outer_dataset in datasets:
       for key, value in outer_dataset['entries'].items():
-        # If we have a feature whitelist and this feature is not in the
-        # whitelist then do not process it.
+        # If we have a feature allowlist and this feature is not in the
+        # allowlist then do not process it.
         # If we have processed this feature already, no need to do it again.
-        if ((whitelist_features and key not in whitelist_features) or
+        if ((allowlist_features and key not in allowlist_features) or
             key in features_seen):
           continue
         features_seen.add(key)
