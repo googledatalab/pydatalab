@@ -16,6 +16,7 @@
 import datetime
 import mock
 import re
+import six
 import unittest
 import yaml
 
@@ -262,7 +263,10 @@ LIMIT 5""")
                      'catchup=True, default_args=default_args)\n\n')
 
   def test_get_datetime_expr(self):
-    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
+    if six.PY3:
+      dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec, Loader=yaml.FullLoader)
+    else:
+      dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     start = dag_dict.get('schedule').get('start')
     datetime_expr = pipeline.PipelineGenerator._get_datetime_expr_str(start)
 
@@ -277,7 +281,10 @@ LIMIT 5""")
     self.assertIn("'email': []", actual)
     self.assertIn("'owner': 'Google Cloud Datalab'", actual)
 
-    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
+    if six.PY3:
+      dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec, Loader=yaml.FullLoader)
+    else:
+      dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     dag_dict['schedule']['retries'] = 5
     dag_dict['schedule']['email_on_retry'] = False
     dag_dict['schedule']['email_on_failure'] = False
@@ -302,7 +309,10 @@ LIMIT 5""")
     self.assertIn("'max_retry_delay': timedelta(seconds=15)", actual)
 
   def test_get_airflow_spec_with_default_schedule(self):
-    dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
+    if six.PY3:
+      dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec, Loader=yaml.FullLoader)
+    else:
+      dag_dict = yaml.load(PipelineTest._test_pipeline_yaml_spec)
     # We delete the schedule spec to test with defaults
     del dag_dict['schedule']
 
