@@ -46,7 +46,7 @@ def ProtoFromTfRecordFiles(files,
         and a 'name' field to identify the dataset in the proto.
     max_entries: The maximum number of examples to load from each dataset
         in order to create the proto. Defaults to 10000.
-    features: A list of strings that is a whitelist of feature names to create
+    features: A list of strings that is a allowlist of feature names to create
         feature statistics for. If set to None then all features in the
           dataset
         are analyzed. Defaults to None.

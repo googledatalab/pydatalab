@@ -148,7 +148,7 @@ class GenericFeatureStatisticsGeneratorTest(googletest.TestCase):
     self.assertEqual(2, buckets[9].high_value)
     self.assertEqual(.3, buckets[9].sample_count)
 
-  def testGetDatasetsProtoWithWhitelist(self):
+  def testGetDatasetsProtoWithAllowlist(self):
     entries = {}
     entries['testFeature'] = {
         'vals': [1, 2, 3],
