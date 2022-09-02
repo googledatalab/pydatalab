@@ -12,5 +12,8 @@
 
 from google.datalab._context import Context
 from google.datalab._job import Job, JobError
+import warnings
 
 __all__ = ['Context', 'Job', 'JobError']
+
+warnings.warn("Datalab is deprecated. For more information, see https://cloud.google.com/datalab/docs/resources/deprecation.", DeprecationWarning)

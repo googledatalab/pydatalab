@@ -12,9 +12,12 @@
 
 # To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
 
+import warnings
 from setuptools import setup
 
-version = '1.2.0'
+warnings.warn("Datalab is deprecated. For more information, see https://cloud.google.com/datalab/docs/resources/deprecation.", DeprecationWarning)
+
+version = '1.2.1'
 
 setup(
   name='datalab',
@@ -79,16 +82,23 @@ setup(
       "Programming Language :: Python",
       "Programming Language :: Python :: 2",
       "Programming Language :: Python :: 3",
-      "Development Status :: 4 - Beta",
+      "Development Status :: 7 - Inactive",
       "Environment :: Other Environment",
       "Intended Audience :: Developers",
       "License :: OSI Approved :: Apache Software License",
       "Operating System :: OS Independent",
       "Topic :: Software Development :: Libraries :: Python Modules"
   ],
+  long_description_content_type='text/markdown',
   long_description="""\
-Support package for Google Cloud Datalab. This provides cell magics and Python APIs
-for accessing Google's Cloud Platform services such as Google BigQuery.
+Datalab is deprecated. [Vertex AI Workbench](https://cloud.google.com/vertex-ai/docs/workbench)
+provides a notebook-based environment that offers capabilities beyond Datalab.
+We recommend that you use Vertex AI Workbench for new projects and
+[migrate your Datalab notebooks to Vertex AI Workbench](https://cloud.google.com/datalab/docs/resources/troubleshooting#migrate).
+For more information, see
+[Deprecation information](https://cloud.google.com/datalab/docs/resources/deprecation).
+To get help migrating Datalab projects to Vertex AI Workbench see
+[Get help](https://cloud.google.com/datalab/docs/resources/support#get-help).
   """,
   install_requires=[
     'configparser>=3.5.0',
