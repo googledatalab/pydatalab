@@ -12,10 +12,7 @@
 
 # To publish to PyPi use: python setup.py bdist_wheel upload -r pypi
 
-import warnings
 from setuptools import setup
-
-warnings.warn("Datalab is deprecated. For more information, see https://cloud.google.com/datalab/docs/resources/deprecation.", DeprecationWarning)
 
 version = '1.2.1'
 
