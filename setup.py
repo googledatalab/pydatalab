@@ -110,7 +110,7 @@ To get help migrating Datalab projects to Vertex AI Workbench see
     'oauth2client>=2.2.0',
     'pandas>=0.22.0',
     'google_auth_httplib2>=0.0.2',
-    'pandas-profiling==1.4.0',
+    'pandas-profiling>=2.0.0',
     'python-dateutil>=2.5.0',
     'pytz>=2015.4',
     'pyyaml>=3.11',
