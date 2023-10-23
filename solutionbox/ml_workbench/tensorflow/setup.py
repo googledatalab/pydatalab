@@ -29,7 +29,7 @@ setup(
   install_requires=[
     'tensorflow==1.15.2',
     'protobuf==3.1.0',
-    'pillow==6.2.0',  # ML Engine does not have PIL installed
+    'pillow==9.0.1',  # ML Engine does not have PIL installed
   ],
   package_data={
   },
